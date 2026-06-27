@@ -25,6 +25,7 @@ import DataService from '../services/dataService';
 import MCQService from '../services/mcqService';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
+import ProctoringInstructions from './ProctoringInstructions';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -151,7 +152,9 @@ const StudentDashboard = () => {
             questions: module.questions || 0,
             duration: module.duration_minutes || 60,
             slug: derivedSlug,
-            type: 'mcq'
+            type: 'mcq',
+            proctored: module.proctored,
+            maxViolations: module.maxViolations
           };
         });
 
@@ -190,7 +193,9 @@ const StudentDashboard = () => {
             duration: module.duration_minutes || 60,
             slug: derivedSlug,
             type: 'coding',
-            languages: module.languages || ["c", "cpp", "java", "python"]
+            languages: module.languages || ["c", "cpp", "java", "python"],
+            proctored: module.proctored,
+            maxViolations: module.maxViolations
           };
         });
 
@@ -792,52 +797,62 @@ const StudentDashboard = () => {
 
       {/* Step 4: Anti-malpractice instructions */}
       {launchStep === 'instructions' && selectedAssessment && (
-        <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '540px' }}>
-            <div className="lw-card-header">
-              <div className="lw-step-badge">Step 4 of 4</div>
-              <h3 className="lw-title">Test Details & Instructions</h3>
-            </div>
-            <div className="lw-card-body">
-              {/* Test meta-info */}
-              <div className="lw-info-grid">
-                <div className="lw-info-cell">
-                  <span className="lw-info-label">Assessment</span>
-                  <span className="lw-info-value">{selectedAssessment.name}</span>
-                </div>
-                <div className="lw-info-cell">
-                  <span className="lw-info-label">Type</span>
-                  <span className="lw-info-value" style={{ textTransform: 'capitalize' }}>{selectedAssessment.type}</span>
-                </div>
-                <div className="lw-info-cell">
-                  <span className="lw-info-label">Duration</span>
-                  <span className="lw-info-value">{selectedAssessment.duration} minutes</span>
-                </div>
-                <div className="lw-info-cell">
-                  <span className="lw-info-label">Questions</span>
-                  <span className="lw-info-value">{selectedAssessment.questions || '—'}</span>
-                </div>
+        (selectedAssessment.proctored === true ||
+        selectedAssessment.proctored === 1 ||
+        selectedAssessment.proctored === "1" ||
+        selectedAssessment.proctored === "true") ? (
+          <ProctoringInstructions
+            onContinue={handleAgreeAndLaunch}
+            onCancel={cancelWizard}
+          />
+        ) : (
+          <div className="lw-overlay" style={{ zIndex: 1200 }}>
+            <div className="lw-card" style={{ maxWidth: '540px' }}>
+              <div className="lw-card-header">
+                <div className="lw-step-badge">Step 4 of 4</div>
+                <h3 className="lw-title">Test Details & Instructions</h3>
               </div>
+              <div className="lw-card-body">
+                {/* Test meta-info */}
+                <div className="lw-info-grid">
+                  <div className="lw-info-cell">
+                    <span className="lw-info-label">Assessment</span>
+                    <span className="lw-info-value">{selectedAssessment.name}</span>
+                  </div>
+                  <div className="lw-info-cell">
+                    <span className="lw-info-label">Type</span>
+                    <span className="lw-info-value" style={{ textTransform: 'capitalize' }}>{selectedAssessment.type}</span>
+                  </div>
+                  <div className="lw-info-cell">
+                    <span className="lw-info-label">Duration</span>
+                    <span className="lw-info-value">{selectedAssessment.duration} minutes</span>
+                  </div>
+                  <div className="lw-info-cell">
+                    <span className="lw-info-label">Questions</span>
+                    <span className="lw-info-value">{selectedAssessment.questions || '—'}</span>
+                  </div>
+                </div>
 
-              {/* Malpractice Warning Box */}
-              <div className="lw-malpractice-box">
-                <p className="lw-malpractice-title">⚠️ Proctoring System Active</p>
-                <ul className="lw-malpractice-list">
-                  <li>Do not switch tabs or leave this window during the test.</li>
-                  <li>3 tab-switch violations will auto-lock and submit your assessment.</li>
-                  <li>Do not use any external assistance, websites, or AI tools.</li>
-                  <li>This is a <strong>one-time attempt</strong> — you cannot retake this test.</li>
-                </ul>
+                {/* Malpractice Warning Box */}
+                <div className="lw-malpractice-box">
+                  <p className="lw-malpractice-title">⚠️ Proctoring System Active</p>
+                  <ul className="lw-malpractice-list">
+                    <li>Do not switch tabs or leave this window during the test.</li>
+                    <li>3 tab-switch violations will auto-lock and submit your assessment.</li>
+                    <li>Do not use any external assistance, websites, or AI tools.</li>
+                    <li>This is a <strong>one-time attempt</strong> — you cannot retake this test.</li>
+                  </ul>
+                </div>
               </div>
-            </div>
-            <div className="lw-card-footer">
-              <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
-              <button className="lw-btn-success" onClick={handleAgreeAndLaunch}>
-                <FaCheckCircle style={{ marginRight: '6px' }}/>I Agree & Start Assessment
-              </button>
+              <div className="lw-card-footer">
+                <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
+                <button className="lw-btn-success" onClick={handleAgreeAndLaunch}>
+                  <FaCheckCircle style={{ marginRight: '6px' }}/>I Agree & Start Assessment
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )
       )}
 
       {/* Step 5: Launching overlay */}
