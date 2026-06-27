@@ -724,14 +724,15 @@ const CodingAssessmentPage = () => {
     const runSampleTestCases = async () => {
         if (!currentQuestion) return;
 
-        setIsRunning(true);
+        // setIsRunning(true);
         setActiveResultTab('results');
         setRunResults(null);
         setStderr('');
         setStdout('');
 
         // Yield to React so the overlay renders before the backend call starts
-        await new Promise(r => setTimeout(r, 80));
+        // await new Promise(r => setTimeout(r, 80));
+        // await new Promise(r => setTimeout(r, 80));
 
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const sampleTests = currentQuestion.sampleTests || [];
@@ -772,7 +773,7 @@ const CodingAssessmentPage = () => {
             setStderr(`Compiler execution failure: ${err.message}`);
         } finally {
             // Keep loader up until backend fully responds (already done above)
-            setIsRunning(false);
+            // setIsRunning(false);
         }
     };
 
@@ -781,12 +782,12 @@ const CodingAssessmentPage = () => {
     const evaluateQuestion = async () => {
         if (!currentQuestion) return;
 
-        setIsEvaluating(true);
+        // setIsEvaluating(true);
         setEvalResults(null);
         setActiveResultTab('results');
 
         // Yield a tick so the overlay renders before backend starts
-        await new Promise(r => setTimeout(r, 80));
+        // await new Promise(r => setTimeout(r, 80));
 
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const hiddenTests = currentQuestion.hiddenTests || currentQuestion.sampleTests || [];
@@ -831,15 +832,15 @@ const CodingAssessmentPage = () => {
             evalError = err.message;
         } finally {
             // Enforce minimum 5-second evaluating display
-            const elapsed = Date.now() - startTimestamp;
-            const remaining = Math.max(0, 5000 - elapsed);
-            if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
+            // const elapsed = Date.now() - startTimestamp;
+            // const remaining = Math.max(0, 5000 - elapsed);
+            // if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
 
             // Close the evaluating overlay FIRST
-            setIsEvaluating(false);
+            // setIsEvaluating(false);
 
             // Yield another tick so overlay is gone before alert appears
-            await new Promise(r => setTimeout(r, 60));
+            // await new Promise(r => setTimeout(r, 60));
 
             // NOW show the result (after overlay is closed)
             if (evalError) {
