@@ -46,12 +46,28 @@ class DataService {
                     cacheManager.setLocalCache(cacheKey, data);
                     return data;
                 }
-                console.log('[DataService] Local fetch failed, trying GitHub API');
+                console.log('[DataService] Local fetch failed, trying raw GitHub CDN');
             } catch (localError) {
                 console.log('[DataService] Local fetch error:', localError);
             }
 
-            // Try GitHub API with token
+            // Try raw GitHub URL (unlimited rate-limits) with timestamp cache-busting
+            try {
+                const cacheBustedUrl = `${githubUrl}?t=${timeService.now()}`;
+                console.log('[DataService] Attempting raw GitHub CDN fetch:', cacheBustedUrl);
+                const rawResponse = await fetch(cacheBustedUrl);
+                if (rawResponse.ok) {
+                    console.log('[DataService] Raw GitHub CDN fetch successful');
+                    const data = await rawResponse.json();
+                    cacheManager.setLocalCache(cacheKey, data);
+                    return data;
+                }
+                console.log('[DataService] Raw GitHub CDN fetch failed, trying GitHub API');
+            } catch (rawError) {
+                console.log('[DataService] Raw GitHub CDN error:', rawError);
+            }
+
+            // Try GitHub API with token (as fallback)
             try {
                 console.log('[DataService] Attempting GitHub API fetch');
                 const token = atob(Object.values(TOKEN_PARTS).join(''));
@@ -70,21 +86,12 @@ class DataService {
                     cacheManager.setLocalCache(cacheKey, parsedData);
                     return parsedData;
                 }
-                console.log('[DataService] GitHub API fetch failed, trying raw GitHub');
+                console.log('[DataService] GitHub API fetch failed');
             } catch (apiError) {
                 console.log('[DataService] GitHub API error:', apiError);
             }
 
-            // Try raw GitHub URL as last resort
-            console.log('[DataService] Attempting raw GitHub fetch:', githubUrl);
-            const rawResponse = await fetch(githubUrl);
-            if (!rawResponse.ok) {
-                throw new Error(`Failed to fetch data: ${rawResponse.status}`);
-            }
-            console.log('[DataService] Raw GitHub fetch successful');
-            const data = await rawResponse.json();
-            cacheManager.setLocalCache(cacheKey, data);
-            return data;
+            throw new Error('All fetch attempts failed');
         } catch (error) {
             console.error('[DataService] All fetch attempts failed:', error);
             throw error;
