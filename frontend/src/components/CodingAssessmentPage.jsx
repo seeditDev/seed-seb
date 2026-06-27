@@ -337,7 +337,9 @@ const CodingAssessmentPage = () => {
                         questions: module.questions || 0,
                         duration: module.duration_minutes || 60,
                         slug: module.slug || slugify(module.id || module.name || key),
-                        languages: module.languages || ["c", "cpp", "java", "python"]
+                        languages: module.languages || ["c", "cpp", "java", "python"],
+                        proctored: module.proctored,
+                        maxViolations: module.maxViolations
                     };
                 });
 

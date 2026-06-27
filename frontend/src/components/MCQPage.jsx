@@ -310,7 +310,9 @@ const MCQPage = () => {
                     difficulty: module.difficulty || 'Medium',
                     questions: module.questions || 0,
                     duration: module.duration_minutes || 60,
-                    slug: module.slug || slugify(module.id || module.name || key)
+                    slug: module.slug || slugify(module.id || module.name || key),
+                    proctored: module.proctored,
+                    maxViolations: module.maxViolations
                 }));
 
             console.log('Loaded accessible MCQ tests:', accessibleTests);
