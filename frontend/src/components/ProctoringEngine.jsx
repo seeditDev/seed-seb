@@ -22,7 +22,8 @@ const ProctoringEngine = ({
   testID, 
   onAutoSubmit,
   isTestActive = true,
-  onViolationUpdate
+  onViolationUpdate,
+  maxViolations = 5
 }) => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -312,7 +313,7 @@ const ProctoringEngine = ({
           showAlert('Person not detected in repeated checks - Please stay in front of camera', 'warning');
           notifyViolationEvent('no_face', newCount);
 
-          if (newCount >= MAX_VIOLATIONS && onAutoSubmit) {
+          if (newCount >= maxViolations && onAutoSubmit) {
             console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
             showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
 
@@ -502,7 +503,7 @@ const ProctoringEngine = ({
       {/* Top Section: Violation Counter and Camera Preview - Side by side */}
       <div className="proctoring-top-section">
         <div className="proctoring-top-row">
-          <ViolationCounter count={violationCount} />
+          <ViolationCounter count={violationCount} maxViolations={maxViolations} />
           
           {/* Mini Camera View - Next to violation counter */}
           <div className="mini-camera-view">
@@ -518,8 +519,8 @@ const ProctoringEngine = ({
               <span className="camera-rec-dot" /> LIVE
             </div>
             {/* Violation count badge overlaid on camera */}
-            <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= 4 ? 'badge-critical' : 'badge-warn'}`}>
-              ⚠ {violationCount}/{5}
+            <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= Math.round(maxViolations * 0.8) ? 'badge-critical' : 'badge-warn'}`}>
+              ⚠ {violationCount}/{maxViolations}
             </div>
           </div>
         </div>

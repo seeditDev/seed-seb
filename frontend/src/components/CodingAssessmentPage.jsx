@@ -729,7 +729,7 @@ const CodingAssessmentPage = () => {
     const runSampleTestCases = async () => {
         if (!currentQuestion) return;
 
-        // setIsRunning(true);
+        setIsRunning(true);
         setActiveResultTab('results');
         setRunResults(null);
         setStderr('');
@@ -778,7 +778,7 @@ const CodingAssessmentPage = () => {
             setStderr(`Compiler execution failure: ${err.message}`);
         } finally {
             // Keep loader up until backend fully responds (already done above)
-            // setIsRunning(false);
+            setIsRunning(false);
         }
     };
 
@@ -787,7 +787,7 @@ const CodingAssessmentPage = () => {
     const evaluateQuestion = async () => {
         if (!currentQuestion) return;
 
-        // setIsEvaluating(true);
+        setIsEvaluating(true);
         setEvalResults(null);
         setActiveResultTab('results');
 
@@ -842,7 +842,7 @@ const CodingAssessmentPage = () => {
             // if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
 
             // Close the evaluating overlay FIRST
-            // setIsEvaluating(false);
+            setIsEvaluating(false);
 
             // Yield another tick so overlay is gone before alert appears
             // await new Promise(r => setTimeout(r, 60));
@@ -1465,6 +1465,7 @@ const CodingAssessmentPage = () => {
                     testID={currentAssessment.id || 'unknown'}
                     onAutoSubmit={() => autoSubmitAttempt('proctoring_violations')}
                     isTestActive={!!currentAssessment && !submissionSuccess}
+                    maxViolations={Number(currentAssessment.maxViolations) || 5}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
                         setProctoringData(prev => ({
@@ -1924,7 +1925,8 @@ const CodingAssessmentPage = () => {
                 </div>
             )}
 
-            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) */}
+            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) - Commented out to run inline inside buttons */}
+            {/*
             {(isRunning || isEvaluating) && (
                 <div className="compiling-workspace-overlay" style={{ zIndex: 1100 }}>
                     <div className="compiling-loader-container">
@@ -1938,6 +1940,7 @@ const CodingAssessmentPage = () => {
                     </div>
                 </div>
             )}
+            */}
 
             {/* Custom Alert Modal */}
             {alertConfig && (

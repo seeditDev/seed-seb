@@ -2465,6 +2465,7 @@ const MCQPage = () => {
                     testID={currentTest.testInfo?.id || currentTest.id || 'unknown'}
                     onAutoSubmit={handleAutoSubmit}
                     isTestActive={!!currentTest && !currentTest.submitted}
+                    maxViolations={Number(currentTest.testInfo?.maxViolations) || 5}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
                         setProctoringData(prev => ({

@@ -579,7 +579,7 @@ class MainWindow(QMainWindow):
 
         # Back / Forward / Refresh buttons
         back_btn = QPushButton("← Back")
-        back_btn.clicked.connect(self.handle_back_clicked)
+        back_btn.clicked.connect(self.web_view.back)
         forward_btn = QPushButton("Forward →")
         forward_btn.clicked.connect(self.web_view.forward)
         refresh_btn = QPushButton("↻ Refresh")
@@ -779,46 +779,28 @@ class MainWindow(QMainWindow):
         super().changeEvent(event)
 
     def on_url_changed(self, url):
-        """Monitors the active page URL to hide exits and navigation controls during assessments."""
+        """Monitors the active page URL to hide exits and navigation controls during active assessments."""
         url_str = url.toString().lower()
         
-        # Determine if user is currently inside an active assessment
-        is_assessment = any(x in url_str for x in ["/mcq/assessment", "/coding/assessment", "/coding-workspace", "/assessment"])
+        # Determine if user is currently inside an active assessment (slug page e.g. /student/mcq/python-basics)
+        import urllib.parse
+        try:
+            parsed = urllib.parse.urlparse(url_str)
+            path = parsed.path.rstrip('/')
+            parts = path.split('/')
+            is_assessment = len(parts) >= 4 and parts[1] == "student" and parts[2] in ["mcq", "coding"]
+        except Exception:
+            is_assessment = False
+
         self.is_assessment_active = is_assessment
         
-        # Show/Hide/Rename navigation buttons based on assessment state
-        if is_assessment:
-            self.back_btn.setText("🔙 Back to Portal")
-            self.back_btn.setEnabled(True)
-            self.forward_btn.setVisible(False)
-            self.logout_btn.setVisible(False)
-            self.force_close_btn.setVisible(False)
-        else:
-            self.back_btn.setText("← Back")
-            self.back_btn.setEnabled(True)
-            self.forward_btn.setVisible(True)
-            self.logout_btn.setVisible(True)
-            self.force_close_btn.setVisible(True)
-            
+        # Hide exit/navigation buttons on assessment pages, show them on dashboards/login
+        self.back_btn.setVisible(not is_assessment)
+        self.forward_btn.setVisible(not is_assessment)
+        self.logout_btn.setVisible(not is_assessment)
+        self.force_close_btn.setVisible(not is_assessment)
+        
         logging.info(f"URL changed: {url.toString()} (Assessment Active: {is_assessment})")
-
-    def handle_back_clicked(self):
-        """Action handler when the back button is clicked. Warns user during assessments."""
-        if getattr(self, 'is_assessment_active', False):
-            reply = QMessageBox.question(
-                self,
-                "Warning: Submit Assessment",
-                "Going back to the portal will automatically submit your assessment.\nAre you sure you want to proceed?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
-            )
-            if reply == QMessageBox.StandardButton.Yes:
-                logging.info("User confirmed back-to-portal action. Navigating to student dashboard.")
-                self.web_view.page().runJavaScript("if (window.submitAssessmentOnExit) { window.submitAssessmentOnExit(); }")
-                # Redirect to dashboard URL
-                self.web_view.setUrl(QUrl(self.seed_base_url + "/student/dashboard"))
-        else:
-            self.web_view.back()
 
     def verify_internet_connectivity(self):
         """Periodic check for internet connectivity. If lost, opens the custom WiFi configuration dialog."""
