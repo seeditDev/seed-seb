@@ -66,10 +66,17 @@ const ProctoringEngine = ({
     try {
       globalModelsLoading = true;
       
-      console.log('[ProctoringEngine] Loading COCO-SSD models (first time only)...');
+      console.log('[ProctoringEngine] Loading COCO-SSD models with 10s timeout (first time only)...');
       
       await tf.ready();
-      window.cocoSsdModel = await cocoSsd.load();
+      
+      // Load model with a 10-second timeout race
+      const modelPromise = cocoSsd.load();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Model load timed out after 10s')), 10000)
+      );
+      
+      window.cocoSsdModel = await Promise.race([modelPromise, timeoutPromise]);
       
       globalModelsLoaded = true;
       modelsLoadedRef.current = true;
@@ -78,8 +85,9 @@ const ProctoringEngine = ({
       return true;
     } catch (error) {
       globalModelsLoading = false;
-      console.error('[ProctoringEngine] Error loading models:', error);
-      setError(`Failed to load AI models: ${error.message}. Please check your internet connection or refresh the page.`);
+      console.warn('[ProctoringEngine] Model loading failed/timed out, running in Camera-Only mode:', error);
+      // Clean up error state since we fall back to camera-only gracefully
+      setError(null);
       return false;
     }
   }, []);
@@ -377,35 +385,31 @@ const ProctoringEngine = ({
       initializedRef.current = true;
       
       try {
-        // Load models first
-        const modelsLoaded = await loadModels();
-        if (!modelsLoaded) {
-          initializedRef.current = false;
-          return;
-        }
-
-        // Initialize webcam
+        // 1. Initialize webcam first so camera view is visible immediately
         const webcamInitialized = await initializeWebcam();
         if (!webcamInitialized) {
           initializedRef.current = false;
           return;
         }
 
-        // Wait for video to be ready
+        // 2. Wait for video to be ready and play it
         if (videoRef.current) {
-          const handleLoadedMetadata = () => {
+          const handleLoadedMetadata = async () => {
             setIsInitialized(true);
             setError(null);
             setIsWebcamBlocked(false);
             
-            stopDetectionLoop();
-            // Run one check shortly after start, then every CHECK_INTERVAL_MS (2 minutes)
-            runPresenceCheckSequence();
-            detectionIntervalRef.current = setInterval(() => {
+            // 3. Load TensorFlow models in background while video is already rendering
+            const modelsLoaded = await loadModels();
+            if (modelsLoaded) {
+              stopDetectionLoop();
+              // Run presence checks
               runPresenceCheckSequence();
-            }, CHECK_INTERVAL_MS);
-
-            console.log('[ProctoringEngine] Scheduled proctoring checks started (every 2 minutes)');
+              detectionIntervalRef.current = setInterval(() => {
+                runPresenceCheckSequence();
+              }, CHECK_INTERVAL_MS);
+              console.log('[ProctoringEngine] Scheduled proctoring AI checks started');
+            }
           };
 
           if (videoRef.current.readyState >= 2) {

@@ -13,7 +13,7 @@ import timeService from '../services/timeService';
 // ========================================
 // Set to false to disable all proctoring features (camera, face detection, instructions)
 // Set to true to enable proctoring for tests with passkeys
-const ENABLE_PROCTORING = false;
+const ENABLE_PROCTORING = true;
 // ========================================
 
 // Content URLs configuration
@@ -545,7 +545,13 @@ const MCQPage = () => {
                 console.log('Passkey validated successfully');
                 // Show instructions screen instead of starting test directly (only if proctoring is enabled)
                 setShowPasskeyModal(false);
-                if (ENABLE_PROCTORING) {
+                const isTestProctored = selectedTest && (
+                    selectedTest.proctored === true ||
+                    selectedTest.proctored === 1 ||
+                    selectedTest.proctored === "1" ||
+                    selectedTest.proctored === "true"
+                );
+                if (ENABLE_PROCTORING && isTestProctored) {
                     setShowInstructions(true);
                 } else {
                     // Skip instructions and start test directly when proctoring is disabled
