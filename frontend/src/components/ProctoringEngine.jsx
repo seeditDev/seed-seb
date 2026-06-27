@@ -39,12 +39,14 @@ const ProctoringEngine = ({
   const [error, setError] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [isWebcamBlocked, setIsWebcamBlocked] = useState(false);
+  const [modelStatus, setModelStatus] = useState(globalModelsLoaded ? 'active' : 'loading');
 
   // Load models with global caching to prevent repeated loading
   const loadModels = useCallback(async () => {
     // Check if models are already loaded globally
     if (globalModelsLoaded) {
       modelsLoadedRef.current = true;
+      setModelStatus('active');
       console.log('[ProctoringEngine] Using already loaded models');
       return true;
     }
@@ -57,14 +59,17 @@ const ProctoringEngine = ({
         await new Promise(resolve => setTimeout(resolve, 1000));
         if (globalModelsLoaded) {
           modelsLoadedRef.current = true;
+          setModelStatus('active');
           return true;
         }
       }
+      setModelStatus('failed');
       return false;
     }
 
     try {
       globalModelsLoading = true;
+      setModelStatus('loading');
       
       console.log('[ProctoringEngine] Loading COCO-SSD models with 10s timeout (first time only)...');
       
@@ -81,10 +86,13 @@ const ProctoringEngine = ({
       globalModelsLoaded = true;
       modelsLoadedRef.current = true;
       globalModelsLoading = false;
+      setModelStatus('active');
       console.log('[ProctoringEngine] ✓ Models loaded successfully');
       return true;
     } catch (error) {
       globalModelsLoading = false;
+      modelsLoadedRef.current = false;
+      setModelStatus('failed');
       console.warn('[ProctoringEngine] Model loading failed/timed out, running in Camera-Only mode:', error);
       // Clean up error state since we fall back to camera-only gracefully
       setError(null);
@@ -523,7 +531,10 @@ const ProctoringEngine = ({
             />
             {/* Live recording indicator */}
             <div className="camera-label">
-              <span className="camera-rec-dot" /> LIVE
+              <span className="camera-rec-dot" /> LIVE 
+              <span style={{ marginLeft: '4px', fontSize: '9px', opacity: 0.85, fontWeight: '700' }}>
+                | {modelStatus === 'active' ? 'AI ACTIVE' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY'}
+              </span>
             </div>
             {/* Violation count badge overlaid on camera */}
             <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= Math.round(maxViolations * 0.8) ? 'badge-critical' : 'badge-warn'}`}>
