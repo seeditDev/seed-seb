@@ -9,8 +9,8 @@ import timeService from '../services/timeService';
 const DETECTION_INTERVAL_MS = 2000; // no longer used for tight loop, kept for reference
 const CONSECUTIVE_DETECTIONS_REQUIRED = 2; // legacy, not used in new strategy
 const VIOLATION_RESET_WINDOW_MS = 6000; // legacy, not used in new strategy
-const CHECK_INTERVAL_MS = 40000; // 2 minutes between proctor checks
-const SEQUENCE_GAP_MS = 10000; // 10 seconds between the 2 images in a sequence
+const CHECK_INTERVAL_MS = 10000; // 10 seconds between proctor checks
+const SEQUENCE_GAP_MS = 3000; // 3 seconds between the 2 images in a sequence
 const MAX_VIOLATIONS = 5;
 
 // Global model loading state to prevent multiple loads
@@ -272,9 +272,12 @@ const ProctoringEngine = ({
       }
 
       const predictions = await window.cocoSsdModel.detect(video);
-      const personPredictions = predictions.filter(pred => pred.class === 'person' && pred.score > 0.4);
+      console.log('[ProctoringEngine] Raw predictions:', predictions);
       
+      const personPredictions = predictions.filter(pred => pred.class === 'person' && pred.score > 0.4);
       const faceCount = personPredictions.length;
+      console.log('[ProctoringEngine] Person detected count:', faceCount);
+      
       let violationType = null;
 
       if (faceCount === 0) {
