@@ -475,11 +475,13 @@ class MainWindow(QMainWindow):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
 
+        # Setup WebEngine View
+        self.web_view = CustomWebEngineView(self)
+
         # Build emergency and navigation controls bar
         self.setup_nav_bar()
 
-        # Setup WebEngine View
-        self.web_view = CustomWebEngineView(self)
+        # Add web view below the navbar
         self.main_layout.addWidget(self.web_view)
         
         # Initialize communication channel
