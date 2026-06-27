@@ -99,6 +99,10 @@ const CodingAssessmentPage = () => {
     // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
     const [submitPhase, setSubmitPhase] = useState(null);
     const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
+    const [proctoringData, setProctoringData] = useState({
+        violationCount: 0,
+        violations: []
+    });
     const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
 
     // Custom Alert State
@@ -725,11 +729,15 @@ const CodingAssessmentPage = () => {
     const runSampleTestCases = async () => {
         if (!currentQuestion) return;
 
-        setIsRunning(true);
+        // setIsRunning(true);
         setActiveResultTab('results');
         setRunResults(null);
         setStderr('');
         setStdout('');
+
+        // Yield to React so the overlay renders before the backend call starts
+        // await new Promise(r => setTimeout(r, 80));
+        // await new Promise(r => setTimeout(r, 80));
 
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const sampleTests = currentQuestion.sampleTests || [];
@@ -770,7 +778,7 @@ const CodingAssessmentPage = () => {
             setStderr(`Compiler execution failure: ${err.message}`);
         } finally {
             // Keep loader up until backend fully responds (already done above)
-            setIsRunning(false);
+            // setIsRunning(false);
         }
     };
 
@@ -779,7 +787,7 @@ const CodingAssessmentPage = () => {
     const evaluateQuestion = async () => {
         if (!currentQuestion) return;
 
-        setIsEvaluating(true);
+        // setIsEvaluating(true);
         setEvalResults(null);
         setActiveResultTab('results');
 
@@ -834,7 +842,7 @@ const CodingAssessmentPage = () => {
             // if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
 
             // Close the evaluating overlay FIRST
-            setIsEvaluating(false);
+            // setIsEvaluating(false);
 
             // Yield another tick so overlay is gone before alert appears
             // await new Promise(r => setTimeout(r, 60));
@@ -925,11 +933,21 @@ const CodingAssessmentPage = () => {
                 timeStartedISO: new Date(parseInt(storedStartTime, 10)).toISOString(),
                 timeEndedISO: timeService.getNow().toISOString(),
                 autoSubmitted: true,
-                autoSubmitReason: reason === 'timer' ? 'Timer hit 0' : 'Tab switch limit lockout',
-                violationCount: violationCount >= 3 ? 3 : violationCount,
-                totalNoFace: 0,
-                totalMultipleFaces: 0,
-                violations: [{ type: 'tab_switch', count: violationCount, reason: 'Tab switch count exceeded' }],
+                autoSubmitReason: reason === 'timer' 
+                    ? 'Timer hit 0' 
+                    : (reason === 'proctoring_violations' ? 'Proctoring violations exceeded limit' : 'Tab switch limit lockout'),
+                violationCount: reason === 'proctoring_violations' 
+                    ? (proctoringData.violationCount || 5) 
+                    : (violationCount >= 3 ? 3 : violationCount),
+                totalNoFace: reason === 'proctoring_violations' 
+                    ? proctoringData.violations.filter(v => v.type === 'no_face').length 
+                    : 0,
+                totalMultipleFaces: reason === 'proctoring_violations' 
+                    ? proctoringData.violations.filter(v => v.type === 'multiple_faces').length 
+                    : 0,
+                violations: reason === 'proctoring_violations' 
+                    ? proctoringData.violations 
+                    : [{ type: 'tab_switch', count: violationCount, reason: 'Tab switch count exceeded' }],
                 languageUsed: language,
                 executionStats: {
                     scores: finalScores,
@@ -942,7 +960,9 @@ const CodingAssessmentPage = () => {
 
             const noticeMsg = reason === 'timer' 
                 ? 'Your coding assessment was auto-submitted because the duration expired.' 
-                : 'Your coding assessment was auto-submitted due to excessive tab switching violations.';
+                : (reason === 'proctoring_violations'
+                    ? 'Your coding assessment was auto-submitted due to webcam proctoring violations.'
+                    : 'Your coding assessment was auto-submitted due to excessive tab switching violations.');
             
             setAutoSubmitMessage(noticeMsg);
             navigate(CODING_ROUTE_BASE);
@@ -1423,21 +1443,42 @@ const CodingAssessmentPage = () => {
         );
     }
 
+    // Enable proctoring dynamically if the assessment metadata has proctored flag enabled
+    const shouldUseProctoring = Boolean(
+        currentAssessment && (
+            currentAssessment.proctored === true ||
+            currentAssessment.proctored === 1 ||
+            currentAssessment.proctored === "1" ||
+            currentAssessment.proctored === "true"
+        )
+    );
+
     // ==========================================
     // RENDER: WORKSPACE VIEW
     // ==========================================
     return (
         <div className="coding-workspace-page">
-            {currentAssessment && user && (
+            {/* Proctoring Engine - Active only when assessment is running and proctored is enabled */}
+            {shouldUseProctoring && currentAssessment && user && (
                 <ProctoringEngine
                     studentID={user.Email}
-                    testID={currentAssessment.id}
-                    onAutoSubmit={autoSubmitAttempt}
+                    testID={currentAssessment.id || 'unknown'}
+                    onAutoSubmit={() => autoSubmitAttempt('proctoring_violations')}
                     isTestActive={!!currentAssessment && !submissionSuccess}
                     onViolationUpdate={(violationInfo) => {
-                        if (violationInfo?.violationType && typeof violationInfo.violationCount === 'number') {
-                            setViolationCount(violationInfo.violationCount);
-                        }
+                        if (!violationInfo?.violationType) return;
+                        setProctoringData(prev => ({
+                            violationCount: typeof violationInfo.violationCount === 'number'
+                                ? violationInfo.violationCount
+                                : prev.violationCount,
+                            violations: [
+                                ...prev.violations,
+                                {
+                                    type: violationInfo.violationType,
+                                    timestamp: violationInfo.timestamp
+                                }
+                            ]
+                        }));
                     }}
                 />
             )}
@@ -1883,8 +1924,8 @@ const CodingAssessmentPage = () => {
                 </div>
             )}
 
-            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) disabled to show loaders inline in buttons */}
-            {false && (isRunning || isEvaluating) && (
+            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) */}
+            {(isRunning || isEvaluating) && (
                 <div className="compiling-workspace-overlay" style={{ zIndex: 1100 }}>
                     <div className="compiling-loader-container">
                         <div className="compiling-spinner"></div>

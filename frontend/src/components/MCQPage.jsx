@@ -13,7 +13,7 @@ import timeService from '../services/timeService';
 // ========================================
 // Set to false to disable all proctoring features (camera, face detection, instructions)
 // Set to true to enable proctoring for tests with passkeys
-const ENABLE_PROCTORING = true;
+const ENABLE_PROCTORING = false;
 // ========================================
 
 // Content URLs configuration
@@ -2445,8 +2445,15 @@ const MCQPage = () => {
         );
     };
 
-    // Only enable proctoring if ENABLE_PROCTORING flag is true AND test has a passkey
-    const shouldUseProctoring = ENABLE_PROCTORING && Boolean(currentTest && currentTest.testInfo?.passkey);
+    // Enable proctoring dynamically if the assessment metadata has proctored flag enabled
+    const shouldUseProctoring = Boolean(
+        currentTest && (
+            currentTest.testInfo?.proctored === true ||
+            currentTest.testInfo?.proctored === 1 ||
+            currentTest.testInfo?.proctored === "1" ||
+            currentTest.testInfo?.proctored === "true"
+        )
+    );
 
     // Main render
     return (
