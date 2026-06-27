@@ -102,12 +102,12 @@ class CustomWebEnginePage(QWebEnginePage):
         logging.info(f"[JS Console] Line {line} ({source_id}): {message}")
 
     def javaScriptAlert(self, securityOrigin, msg):
-        QMessageBox.information(None, "KITE Assessment Sandbox", msg)
+        QMessageBox.information(None, "SEED-SEB Assessment Portal", msg)
 
     def javaScriptConfirm(self, securityOrigin, msg):
         reply = QMessageBox.question(
             None,
-            "KITE Assessment Sandbox",
+            "SEED-SEB Assessment Portal",
             msg,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
@@ -760,7 +760,7 @@ class MainWindow(QMainWindow):
                 self.activateWindow()
                 
                 if self.focus_loss_count >= 3:
-                    logging.critical("KITE Lockout: Maximum violations reached.")
+                    logging.critical("SEED-SEB Lockout: Maximum violations reached.")
                     QMessageBox.critical(
                         self,
                         "Security Violation Lockout",
@@ -809,7 +809,7 @@ def main():
         QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
     app = QApplication(sys.argv)
-    app.setApplicationName("KITE Sandbox")
+    app.setApplicationName("SEED-SEB")
     
     dev_mode = "--dev" in sys.argv
     
