@@ -1,0 +1,409 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaCheck, FaPlay, FaSignOutAlt, FaUser, FaArrowLeft, FaSearch, FaBookOpen, FaLock, FaKey, FaTimes } from 'react-icons/fa';
+import { db } from '../firebase-config';
+import { collection, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
+import desktopBridge from '../utils/desktopBridge';
+import '../styles/CodingAssessmentHome.css';
+
+// Duplicate local challenges list in case DB seeding is required
+const DEFAULT_CHALLENGES = [
+    {
+        id: 'hello_world',
+        title: '1. Hello, World!',
+        difficulty: 'Easy',
+        description: 'Write a program that outputs exactly "Hello, World!" to the console.',
+        instructions: 'Your code should print "Hello, World!" followed by a new line.',
+        constraints: 'Time Limit: 2.0s',
+        testCases: [{ input: '', expected: 'Hello, World!\n' }],
+        boilerplates: {
+            c: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
+            cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
+            python: `print("Hello, World!")`,
+            java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
+        }
+    }
+];
+
+const CodingAssessmentHome = () => {
+    const [contests, setContests] = useState([]);
+    const [completedAttempts, setCompletedAttempts] = useState({});
+    const [contestAttempts, setContestAttempts] = useState({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState(null);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    const navigate = useNavigate();
+
+    const getContestStatus = (contest) => {
+        const now = new Date();
+        const start = contest.startTime ? new Date(contest.startTime) : null;
+        const end = contest.endTime ? new Date(contest.endTime) : null;
+
+        if (start && now < start) return 'Upcoming';
+        if (end && now > end) return 'Ended';
+        return 'Active';
+    };
+
+    const formatDateTime = (dateTimeStr) => {
+        if (!dateTimeStr) return 'Always Open';
+        const date = new Date(dateTimeStr);
+        return date.toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            setIsLoading(true);
+            try {
+                const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
+                if (authData.Email) {
+                    setUser(authData);
+
+                    // Fetch user's completion records from desktop state
+                    try {
+                        const localState = await desktopBridge.getAssessmentState();
+                        const completedMap = {};
+                        if (localState && localState.completedQuestions) {
+                            Object.keys(localState.completedQuestions).forEach(qid => {
+                                if (localState.completedQuestions[qid].score === 100) {
+                                    completedMap[qid] = true;
+                                }
+                            });
+                        }
+                        setCompletedAttempts(completedMap);
+                    } catch (attemptsErr) {
+                        console.error("Failed to load completed attempts from bridge:", attemptsErr);
+                    }
+
+                    // Fetch user's contest attempts
+                    try {
+                        const cAttemptsMap = {};
+                        const localContests = await desktopBridge.getContests();
+                        localContests.forEach(c => {
+                            const completedInLocal = localStorage.getItem(`contest_completed_${c.id}`) === "true";
+                            if (completedInLocal) {
+                                cAttemptsMap[c.id] = { status: "completed" };
+                            }
+                        });
+                        setContestAttempts(cAttemptsMap);
+                    } catch (cAttemptsErr) {
+                        console.error("Failed to load contest attempts:", cAttemptsErr);
+                    }
+                } else {
+                    navigate('/login');
+                    return;
+                }
+            } catch (err) {
+                console.error("Failed to load student auth details:", err);
+            }
+
+            // Fetch contests list from desktop bridge
+            try {
+                const localContests = await desktopBridge.getContests();
+                const fetched = [...localContests];
+                fetched.sort((a, b) => new Date(a.startTime || 0) - new Date(b.startTime || 0));
+                setContests(fetched);
+            } catch (err) {
+                console.error("Failed to fetch contests:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadDashboardData();
+    }, [navigate]);
+
+    const handleLogout = () => {
+        localStorage.removeItem("auth_data");
+        localStorage.removeItem("role");
+        document.cookie = "user_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = "user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        navigate("/login");
+    };
+
+    const filteredContests = contests.filter(c => {
+        const attempt = contestAttempts[c.id];
+        const isContestAlreadyCompleted = attempt && attempt.status === 'completed';
+        const status = isContestAlreadyCompleted ? 'Completed' : getContestStatus(c);
+
+        const matchesSearch = (c.title || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                              (c.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === 'All' || status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    const totalContestsCount = contests.length;
+    const activeContestsCount = contests.filter(c => getContestStatus(c) === 'Active').length;
+    const completedContestsCount = contests.filter(c => {
+        const questions = c.questions || [];
+        const isSolvedAll = questions.length > 0 && questions.every(qid => completedAttempts[qid]);
+        const isAttemptCompleted = contestAttempts[c.id] && contestAttempts[c.id].status === 'completed';
+        return isSolvedAll || isAttemptCompleted;
+    }).length;
+
+    return (
+        <div className="learn-home-wrapper">
+            {/* Header section matching premium dashboard */}
+            <header className="learn-home-header">
+                <div className="header-left">
+                    <img 
+                        src="https://raw.githubusercontent.com/seeditDev/SEED-Website/f3cee9002410a00df4da7bea636ac9fbc4c312ca/Plugins/SEED_Logo.webp" 
+                        alt="SEED Logo" 
+                        className="learn-logo" 
+                    />
+                    <span className="learn-brand">SEED-IT Coding Assessment</span>
+                    <Link to="/student/dashboard" className="back-dash-btn">
+                        <FaArrowLeft /> Back to Dashboard
+                    </Link>
+                </div>
+                <div className="header-right">
+                    <div className="user-profile-circle">
+                        {user?.Name ? user.Name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : <FaUser />}
+                    </div>
+                    <button className="learn-logout-btn" onClick={handleLogout} aria-label="Logout">
+                        <FaSignOutAlt />
+                    </button>
+                </div>
+            </header>
+
+            {isLoading ? (
+                <div className="learn-loading">
+                    <div className="learn-spinner"></div>
+                    <p>Loading scheduled assessments...</p>
+                </div>
+            ) : (
+                <main className="learn-home-content">
+                    <div className="learn-content-grid">
+                        {/* Contests Table Panel */}
+                        <div className="problems-panel">
+                            <div className="panel-filters-row">
+                                <div className="search-box-wrapper">
+                                    <FaSearch className="search-icon" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search assessments..." 
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="search-input"
+                                    />
+                                </div>
+                                <div className="filter-dropdown-wrapper">
+                                    <select 
+                                        value={statusFilter} 
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                        className="diff-filter-select"
+                                    >
+                                        <option value="All">All Statuses</option>
+                                        <option value="Active">Active</option>
+                                        <option value="Upcoming">Upcoming</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Ended">Ended</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="table-responsive">
+                                <table className="problems-table">
+                                    <thead>
+                                        <tr>
+                                            <th className="col-status" style={{ width: '120px' }}>Status</th>
+                                            <th className="col-title">Assessment Details</th>
+                                            <th className="col-schedule" style={{ width: '260px' }}>Schedule Window</th>
+                                            <th className="col-progress" style={{ width: '120px' }}>Progress</th>
+                                            <th className="col-action" style={{ width: '150px' }}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredContests.length > 0 ? (
+                                            filteredContests.map((c) => {
+                                                const attempt = contestAttempts[c.id];
+                                                const isContestAlreadyCompleted = attempt && attempt.status === 'completed';
+                                                const status = isContestAlreadyCompleted ? 'Completed' : getContestStatus(c);
+                                                
+                                                const questions = c.questions || [];
+                                                const solvedCount = questions.filter(qid => completedAttempts[qid]).length;
+                                                const totalCount = questions.length;
+                                                const hasQuestions = totalCount > 0;
+                                                const progressPct = hasQuestions ? Math.round((solvedCount / totalCount) * 100) : 0;
+
+                                                const handleStartTest = () => {
+                                                    if (isContestAlreadyCompleted) return;
+                                                    if (!hasQuestions) {
+                                                        alert("This contest does not contain any questions yet.");
+                                                        return;
+                                                    }
+                                                    navigate(`/student/assessment/sandbox?contest=${c.id}&challenge=${questions[0]}`);
+                                                };
+
+                                                return (
+                                                    <tr 
+                                                        key={c.id} 
+                                                        className="problem-row" 
+                                                        onClick={(status === 'Active' && !isContestAlreadyCompleted) ? handleStartTest : undefined}
+                                                        style={{ cursor: (status === 'Active' && !isContestAlreadyCompleted) ? 'pointer' : 'default' }}
+                                                    >
+                                                        <td className="col-status">
+                                                            <span className={`contest-badge ${status.toLowerCase()}`}>
+                                                                {status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="col-title">
+                                                            <span className="problem-title-text">
+                                                                {c.title}
+                                                            </span>
+                                                            {c.description && (
+                                                                <div className="contest-description">
+                                                                    {c.description}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="col-schedule">
+                                                            <div className="schedule-time">
+                                                                <strong>Start:</strong> {formatDateTime(c.startTime)}
+                                                            </div>
+                                                            <div className="schedule-time mt-1">
+                                                                <strong>End:</strong> {formatDateTime(c.endTime)}
+                                                            </div>
+                                                        </td>
+                                                        <td className="col-progress">
+                                                            <div className="progress-fraction">
+                                                                {solvedCount} / {totalCount}
+                                                            </div>
+                                                            {hasQuestions && (
+                                                                <div className="progress-bar-container">
+                                                                    <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="col-action" onClick={(e) => e.stopPropagation()}>
+                                                            {isContestAlreadyCompleted ? (
+                                                                <button 
+                                                                    className="solve-btn submitted"
+                                                                    disabled
+                                                                >
+                                                                    Submitted
+                                                                </button>
+                                                            ) : status === 'Active' ? (
+                                                                <button 
+                                                                    className="solve-btn active"
+                                                                    onClick={handleStartTest}
+                                                                >
+                                                                    <FaPlay /> Enter Contest
+                                                                </button>
+                                                            ) : status === 'Upcoming' ? (
+                                                                <button 
+                                                                    className="solve-btn locked"
+                                                                    disabled
+                                                                >
+                                                                    <FaLock /> Locked
+                                                                </button>
+                                                            ) : (
+                                                                <button 
+                                                                    className="solve-btn ended"
+                                                                    disabled
+                                                                >
+                                                                    Ended
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="5" className="no-records-row" style={{ padding: '40px 20px', color: '#718096' }}>
+                                                    No assessments scheduled at this time.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Progress Sidebar Panel */}
+                        <div className="progress-panel">
+                            {(user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 2 || user?.Premium === 'Yes' || !!user?.isPremium) ? (
+                                <div className="premium-status-banner premium">
+                                    <FaKey className="status-banner-icon" />
+                                    <span>SEED-IT Premium Active</span>
+                                </div>
+                            ) : (
+                                <div className="premium-status-banner free">
+                                    <FaLock className="status-banner-icon" />
+                                    <span>Standard Free Account</span>
+                                </div>
+                            )}
+                            <div className="stats-card">
+                                <h3>Assessment Summary</h3>
+                                <div className="stats-breakdown" style={{ marginTop: '15px' }}>
+                                    <div className="breakdown-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <span>Total Contests:</span>
+                                        <strong>{totalContestsCount}</strong>
+                                    </div>
+                                    <div className="breakdown-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <span>Active Contests:</span>
+                                        <strong>{activeContestsCount}</strong>
+                                    </div>
+                                    <div className="breakdown-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>Completed:</span>
+                                        <strong>{completedContestsCount}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="guidance-card">
+                                <h3>🛡️ Proctored Environment</h3>
+                                <p>Assessments enforce strict full-screen mode, disable copying & pasting, and track tab switches. Please close all external tabs and chat applications before starting.</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            )}
+
+            {showUpgradeModal && (
+
+                <div className="premium-modal-overlay" onClick={() => setShowUpgradeModal(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="premium-modal-header">
+                            <h3>
+                                <FaLock className="premium-lock-icon" />
+                                Premium Challenge
+                            </h3>
+                            <button className="premium-close-btn" onClick={() => setShowUpgradeModal(false)}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <div className="premium-modal-body">
+                            <p>This practice challenge is locked for Premium accounts. Upgrade to unlock full access to the entire question library, advanced editorials, and compiler resources.</p>
+                            <div className="premium-benefits">
+                                <div className="benefit-item">🏆 Full access to all coding challenges</div>
+                                <div className="benefit-item">⚡ Unlimited code compilations & submissions</div>
+                                <div className="benefit-item">📖 Detailed solution editorials & optimal templates</div>
+                            </div>
+                            <div className="premium-instructions">
+                                <p>Contact your course instructor or administrator to activate your premium subscription tier.</p>
+                            </div>
+                        </div>
+                        <div className="premium-modal-footer">
+                            <button className="premium-modal-ok-btn" onClick={() => setShowUpgradeModal(false)}>
+                                Understood
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default CodingAssessmentHome;

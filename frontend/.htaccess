@@ -1,0 +1,78 @@
+# Enable CORS and Headers
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Force HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Set correct MIME types
+<IfModule mod_mime.c>
+    AddType application/json .json
+    AddType application/manifest+json .webmanifest
+    AddType application/manifest+json .json
+    AddType application/javascript .js
+    AddType application/x-web-app-manifest+json .webmanifest
+    AddType text/cache-manifest .appcache
+    AddType image/x-icon .ico
+</IfModule>
+
+# Handle specific files
+<IfModule mod_rewrite.c>
+    # Service Worker
+    RewriteCond %{REQUEST_FILENAME} service-worker\.js$
+    RewriteRule .* - [E=SERVICE_WORKER:1]
+    Header set Service-Worker-Allowed "/" env=SERVICE_WORKER
+    Header set Content-Type "application/javascript" env=SERVICE_WORKER
+    Header set Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" env=SERVICE_WORKER
+    Header set Pragma "no-cache" env=SERVICE_WORKER
+    Header set Expires "0" env=SERVICE_WORKER
+
+    # Manifest
+    RewriteCond %{REQUEST_FILENAME} manifest\.json$
+    RewriteRule .* - [E=MANIFEST:1]
+    Header set Content-Type "application/json" env=MANIFEST
+    Header set Cache-Control "no-cache" env=MANIFEST
+
+    # AES.js
+    RewriteCond %{REQUEST_FILENAME} aes\.js$
+    RewriteRule .* - [E=AES:1]
+    Header set Content-Type "application/javascript" env=AES
+</IfModule>
+
+# Enable Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Handle React Router
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-l
+RewriteRule . /index.html [L]
+
+# Set default charset
+AddDefaultCharset utf-8
+
+# Prevent directory listing
+Options -Indexes
+
+# Handle errors
+ErrorDocument 404 /index.html 

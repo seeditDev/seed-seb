@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // MCQ Results Collection Rules
+    // Structure: colleges/{college}/years/{year}/departments/{dept}/students/{email}/mcq_results/{testID}
+    match /colleges/{college}/years/{year}/departments/{dept}/students/{email}/mcq_results/{testID} {
+      
+      // Allow read, create, and update for all users (unauthenticated access)
+      allow read, create, update: if true;
+      
+      // Deny delete
+      allow delete: if false;
+    }
+
+    // Coding Results Collection Rules
+    // Structure: colleges/{college}/years/{year}/departments/{dept}/students/{email}/coding_results/{testID}
+    match /colleges/{college}/years/{year}/departments/{dept}/students/{email}/coding_results/{testID} {
+
+      // Allow read, create, and update for all users (unauthenticated access)
+      allow read, create, update: if true;
+
+      // Deny delete
+      allow delete: if false;
+    }
+
+    // Live Users Tracking Collection Rules
+    // Structure: LiveUsers/{date}/colleges/{college}/years/{year}/users/{email}
+    match /LiveUsers/{date}/colleges/{college}/years/{year}/users/{email} {
+      // Allow read for live count on homepage and dashboard monitoring
+      allow read: if true;
+      
+      // Allow create and update for tracking heartbeat
+      allow create: if true;
+      allow update: if true;
+      
+      // Deny delete
+      allow delete: if false;
+    }
+
+    // Collection Group rule for 'users' (used for live user count on homepage)
+    match /{path=**}/users/{userDoc} {
+      allow read: if true;
+    }
+    
+    // Coding Challenges Collection Rules
+    match /codingChallenges/{challengeId} {
+      allow read, write: if true;
+    }
+
+    // Contests Collection Rules
+    match /contests/{contestId} {
+      allow read, write: if true;
+    }
+
+
+    // Coding Attempts Collection Rules
+    // Structure: users/{email}/codingAttempts/{challengeId}
+    match /users/{email}/codingAttempts/{challengeId} {
+      allow read, write: if true;
+    }
+
+    // Contest Attempts Collection Rules
+    // Structure: users/{email}/contestAttempts/{contestId}
+    match /users/{email}/contestAttempts/{contestId} {
+      allow read, write: if true;
+    }
+
+    // ============================================================
+    // Unified Assessment Results Collection (assessment-centric)
+    // Structure: AssessmentResults/{testID}/colleges/{college}/years/{year}/students/{email}
+    // Used for querying "all results for a given assessment"
+    // ============================================================
+    match /AssessmentResults/{testID}/colleges/{college}/years/{year}/students/{email} {
+      allow read, create, update: if true;
+      allow delete: if false;
+    }
+
+    // Allow all other reads (for backward compatibility)
+    match /{document=**} {
+      allow read: if true;
+      allow write: if false; // Restrict writes to specific paths above
+    }
+  }
+}
+
