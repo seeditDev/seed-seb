@@ -515,10 +515,10 @@ class MainWindow(QMainWindow):
         # Connect URL changed signal to track assessment state
         self.web_view.urlChanged.connect(self.on_url_changed)
 
-        # Internet connectivity monitor timer (every 2 minutes = 120,000 ms)
+        # Internet connectivity monitor timer (every 30 seconds)
         self.conn_monitor_timer = QTimer(self)
         self.conn_monitor_timer.timeout.connect(self.verify_internet_connectivity)
-        self.conn_monitor_timer.start(120000)
+        self.conn_monitor_timer.start(30000)
 
         # Enable Fullscreen
         self.showFullScreen()
@@ -579,7 +579,7 @@ class MainWindow(QMainWindow):
 
         # Back / Forward / Refresh buttons
         back_btn = QPushButton("← Back")
-        back_btn.clicked.connect(self.web_view.back)
+        back_btn.clicked.connect(self.handle_back_clicked)
         forward_btn = QPushButton("Forward →")
         forward_btn.clicked.connect(self.web_view.forward)
         refresh_btn = QPushButton("↻ Refresh")
@@ -779,20 +779,46 @@ class MainWindow(QMainWindow):
         super().changeEvent(event)
 
     def on_url_changed(self, url):
-        """Monitors the active page URL to disable exits and navigation controls during assessments."""
+        """Monitors the active page URL to hide exits and navigation controls during assessments."""
         url_str = url.toString().lower()
         
         # Determine if user is currently inside an active assessment
         is_assessment = any(x in url_str for x in ["/mcq/assessment", "/coding/assessment", "/coding-workspace", "/assessment"])
         self.is_assessment_active = is_assessment
         
-        # Disable exit/navigation buttons on assessment pages
-        self.back_btn.setEnabled(not is_assessment)
-        self.forward_btn.setEnabled(not is_assessment)
-        self.logout_btn.setEnabled(not is_assessment)
-        self.force_close_btn.setEnabled(not is_assessment)
-        
+        # Show/Hide/Rename navigation buttons based on assessment state
+        if is_assessment:
+            self.back_btn.setText("🔙 Back to Portal")
+            self.back_btn.setEnabled(True)
+            self.forward_btn.setVisible(False)
+            self.logout_btn.setVisible(False)
+            self.force_close_btn.setVisible(False)
+        else:
+            self.back_btn.setText("← Back")
+            self.back_btn.setEnabled(True)
+            self.forward_btn.setVisible(True)
+            self.logout_btn.setVisible(True)
+            self.force_close_btn.setVisible(True)
+            
         logging.info(f"URL changed: {url.toString()} (Assessment Active: {is_assessment})")
+
+    def handle_back_clicked(self):
+        """Action handler when the back button is clicked. Warns user during assessments."""
+        if getattr(self, 'is_assessment_active', False):
+            reply = QMessageBox.question(
+                self,
+                "Warning: Submit Assessment",
+                "Going back to the portal will automatically submit your assessment.\nAre you sure you want to proceed?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                logging.info("User confirmed back-to-portal action. Navigating to student dashboard.")
+                self.web_view.page().runJavaScript("if (window.submitAssessmentOnExit) { window.submitAssessmentOnExit(); }")
+                # Redirect to dashboard URL
+                self.web_view.setUrl(QUrl(self.seed_base_url + "/student/dashboard"))
+        else:
+            self.web_view.back()
 
     def verify_internet_connectivity(self):
         """Periodic check for internet connectivity. If lost, opens the custom WiFi configuration dialog."""
@@ -1052,11 +1078,36 @@ def get_available_wifis():
 
 
 def connect_to_wifi(ssid, password):
-    """Generates an XML profile dynamically and attempts connection via netsh"""
+    """Generates an XML profile dynamically (handles WPA2 and Open networks) and connects via netsh."""
     import subprocess
     import tempfile
+    import socket
     try:
-        xml = f"""<?xml version="1.0"?>
+        # Check if network is open (no password)
+        if not password:
+            xml = f"""<?xml version="1.0"?>
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>{ssid}</name>
+    <SSIDConfig>
+        <SSID>
+            <name>{ssid}</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>open</authentication>
+                <encryption>none</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+        </security>
+    </MSM>
+</WLANProfile>
+"""
+        else:
+            xml = f"""<?xml version="1.0"?>
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
     <name>{ssid}</name>
     <SSIDConfig>
@@ -1096,11 +1147,17 @@ def connect_to_wifi(ssid, password):
         # Request connect
         subprocess.run(f'netsh wlan connect name="{ssid}"', shell=True, capture_output=True, text=True)
         
-        # Verify connection status up to 6 seconds
-        for _ in range(6):
-            time.sleep(1)
+        # Verify connection status up to 4 seconds (fast check)
+        for _ in range(8):
+            time.sleep(0.5)
+            # Allow PyQt UI to redraw/process events during connect checks to avoid frozen UI
+            QApplication.processEvents()
             try:
-                requests.get("https://www.google.com", timeout=2)
+                # Fast socket connection check to Cloudflare DNS
+                socket.setdefaulttimeout(0.5)
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect(("1.1.1.1", 53))
+                s.close()
                 return True
             except Exception:
                 pass

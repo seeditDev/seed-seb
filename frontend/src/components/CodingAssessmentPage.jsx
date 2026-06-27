@@ -10,6 +10,7 @@ import desktopBridge from '../utils/desktopBridge';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
+import ProctoringEngine from './ProctoringEngine';
 import '../styles/CodingAssessmentPage.css';
 
 const LOCAL_BASE_URL = '/seed-contents';
@@ -724,15 +725,11 @@ const CodingAssessmentPage = () => {
     const runSampleTestCases = async () => {
         if (!currentQuestion) return;
 
-        // setIsRunning(true);
+        setIsRunning(true);
         setActiveResultTab('results');
         setRunResults(null);
         setStderr('');
         setStdout('');
-
-        // Yield to React so the overlay renders before the backend call starts
-        // await new Promise(r => setTimeout(r, 80));
-        // await new Promise(r => setTimeout(r, 80));
 
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const sampleTests = currentQuestion.sampleTests || [];
@@ -773,7 +770,7 @@ const CodingAssessmentPage = () => {
             setStderr(`Compiler execution failure: ${err.message}`);
         } finally {
             // Keep loader up until backend fully responds (already done above)
-            // setIsRunning(false);
+            setIsRunning(false);
         }
     };
 
@@ -782,7 +779,7 @@ const CodingAssessmentPage = () => {
     const evaluateQuestion = async () => {
         if (!currentQuestion) return;
 
-        // setIsEvaluating(true);
+        setIsEvaluating(true);
         setEvalResults(null);
         setActiveResultTab('results');
 
@@ -837,7 +834,7 @@ const CodingAssessmentPage = () => {
             // if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
 
             // Close the evaluating overlay FIRST
-            // setIsEvaluating(false);
+            setIsEvaluating(false);
 
             // Yield another tick so overlay is gone before alert appears
             // await new Promise(r => setTimeout(r, 60));
@@ -1431,6 +1428,19 @@ const CodingAssessmentPage = () => {
     // ==========================================
     return (
         <div className="coding-workspace-page">
+            {currentAssessment && user && (
+                <ProctoringEngine
+                    studentID={user.Email}
+                    testID={currentAssessment.id}
+                    onAutoSubmit={autoSubmitAttempt}
+                    isTestActive={!!currentAssessment && !submissionSuccess}
+                    onViolationUpdate={(violationInfo) => {
+                        if (violationInfo?.violationType && typeof violationInfo.violationCount === 'number') {
+                            setViolationCount(violationInfo.violationCount);
+                        }
+                    }}
+                />
+            )}
             {/* Top Workspace Header Bar */}
             <header className="workspace-header">
                 <div className="header-left">
@@ -1873,8 +1883,8 @@ const CodingAssessmentPage = () => {
                 </div>
             )}
 
-            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) */}
-            {(isRunning || isEvaluating) && (
+            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) disabled to show loaders inline in buttons */}
+            {false && (isRunning || isEvaluating) && (
                 <div className="compiling-workspace-overlay" style={{ zIndex: 1100 }}>
                     <div className="compiling-loader-container">
                         <div className="compiling-spinner"></div>

@@ -11,7 +11,7 @@ const CONSECUTIVE_DETECTIONS_REQUIRED = 2; // legacy, not used in new strategy
 const VIOLATION_RESET_WINDOW_MS = 6000; // legacy, not used in new strategy
 const CHECK_INTERVAL_MS = 40000; // 2 minutes between proctor checks
 const SEQUENCE_GAP_MS = 10000; // 10 seconds between the 2 images in a sequence
-const MAX_VIOLATIONS = 15;
+const MAX_VIOLATIONS = 5;
 
 // Global model loading state to prevent multiple loads
 let globalModelsLoaded = false;

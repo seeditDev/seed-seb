@@ -13,7 +13,7 @@ import timeService from '../services/timeService';
 // ========================================
 // Set to false to disable all proctoring features (camera, face detection, instructions)
 // Set to true to enable proctoring for tests with passkeys
-const ENABLE_PROCTORING = false;
+const ENABLE_PROCTORING = true;
 // ========================================
 
 // Content URLs configuration
