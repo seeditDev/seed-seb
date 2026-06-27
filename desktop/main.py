@@ -78,7 +78,10 @@ FORBIDDEN_PROCESSES = [
     'Camtasia.exe', 'ShareX.exe', 'Snagit32.exe', 'Snagit64.exe', 'Loom.exe',
     # Virtual Machines / Emulators
     'vmware.exe', 'vmplayer.exe', 'VirtualBox.exe', 'VBoxHeadless.exe',
-    'Bluestacks.exe', 'Nox.exe', 'LDPlayer.exe', 'Genymotion.exe'
+    'Bluestacks.exe', 'Nox.exe', 'LDPlayer.exe', 'Genymotion.exe',
+    # Windows Subsystem for Linux (WSL)
+    'wsl.exe', 'wslhost.exe', 'wslclient.exe', 'wsl-service.exe',
+    'wslservice.exe', 'vmmem', 'vmmemWSL', 'bash.exe', 'sh.exe'
 ]
 
 
@@ -1108,6 +1111,40 @@ def connect_to_wifi(ssid, password):
 
 
 def main():
+    # 1. Block macOS and Linux execution
+    if sys.platform != 'win32':
+        temp_app = QApplication(sys.argv)
+        QMessageBox.critical(
+            None,
+            "Unsupported OS",
+            "SEED-SEB is only supported on native Windows operating systems.\nExecution on macOS, Linux, or Unix-based platforms is strictly blocked.",
+            QMessageBox.StandardButton.Ok
+        )
+        sys.exit(1)
+
+    # 2. Block Windows Subsystem for Linux (WSL) environments
+    is_wsl = False
+    if 'WSL_DISTRO_NAME' in os.environ or 'WSL_INTEROP' in os.environ or 'WSL_UTF8' in os.environ:
+        is_wsl = True
+    else:
+        try:
+            if os.path.exists('/proc/version'):
+                with open('/proc/version', 'r') as f:
+                    if 'microsoft' in f.read().lower():
+                        is_wsl = True
+        except Exception:
+            pass
+
+    if is_wsl:
+        temp_app = QApplication(sys.argv)
+        QMessageBox.critical(
+            None,
+            "WSL Blocked",
+            "SEED-SEB cannot be run inside Windows Subsystem for Linux (WSL).\nPlease run the application natively in Windows.",
+            QMessageBox.StandardButton.Ok
+        )
+        sys.exit(1)
+
     if hasattr(Qt, 'AA_EnableHighDpiScaling'):
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
