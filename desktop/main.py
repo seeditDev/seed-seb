@@ -509,6 +509,14 @@ class MainWindow(QMainWindow):
         # Load content
         self.load_frontend()
         
+        # Connect URL changed signal to track assessment state
+        self.web_view.urlChanged.connect(self.on_url_changed)
+
+        # Internet connectivity monitor timer (every 2 minutes = 120,000 ms)
+        self.conn_monitor_timer = QTimer(self)
+        self.conn_monitor_timer.timeout.connect(self.verify_internet_connectivity)
+        self.conn_monitor_timer.start(120000)
+
         # Enable Fullscreen
         self.showFullScreen()
         logging.info("Main Window initialized in secure fullscreen mode")
@@ -586,6 +594,12 @@ class MainWindow(QMainWindow):
         force_close_btn = QPushButton("☠ Force Close")
         force_close_btn.setObjectName("forceCloseBtn")
         force_close_btn.clicked.connect(self.force_close_application)
+
+        # Store button references as attributes to enable/disable dynamically
+        self.back_btn = back_btn
+        self.forward_btn = forward_btn
+        self.logout_btn = logout_btn
+        self.force_close_btn = force_close_btn
 
         # Add to layout
         nav_layout.addWidget(back_btn)
@@ -761,17 +775,48 @@ class MainWindow(QMainWindow):
                 self.activateWindow()
         super().changeEvent(event)
 
-    def closeEvent(self, event):
-        """Asks for confirmation before quitting the assessment application."""
-        reply = QMessageBox.question(
-            self,
-            "Exit Confirmation",
-            "Are you sure you want to exit the assessment sandbox? Your progress will be saved.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
+    def on_url_changed(self, url):
+        """Monitors the active page URL to disable exits and navigation controls during assessments."""
+        url_str = url.toString().lower()
         
-        if reply == QMessageBox.StandardButton.Yes:
+        # Determine if user is currently inside an active assessment
+        is_assessment = any(x in url_str for x in ["/mcq/assessment", "/coding/assessment", "/coding-workspace", "/assessment"])
+        self.is_assessment_active = is_assessment
+        
+        # Disable exit/navigation buttons on assessment pages
+        self.back_btn.setEnabled(not is_assessment)
+        self.forward_btn.setEnabled(not is_assessment)
+        self.logout_btn.setEnabled(not is_assessment)
+        self.force_close_btn.setEnabled(not is_assessment)
+        
+        logging.info(f"URL changed: {url.toString()} (Assessment Active: {is_assessment})")
+
+    def verify_internet_connectivity(self):
+        """Periodic check for internet connectivity. If lost, opens the custom WiFi configuration dialog."""
+        try:
+            # Quick request to verify connection
+            requests.get("https://www.google.com", timeout=4)
+        except Exception:
+            logging.warning("Internet connection lost during periodic check. Opening WifiSetupDialog.")
+            dialog = WifiSetupDialog(self)
+            dialog.exec()
+
+    def closeEvent(self, event):
+        """Asks for confirmation using custom ExitConfirmDialog, blocking it entirely during assessments."""
+        if getattr(self, 'is_assessment_active', False):
+            logging.warning("Close attempt blocked: Active assessment in progress.")
+            QMessageBox.warning(
+                self,
+                "Exit Blocked",
+                "You cannot exit the SEED-SEB browser during an active assessment.\nPlease complete and submit your assessment first.",
+                QMessageBox.StandardButton.Ok
+            )
+            event.ignore()
+            return
+
+        # Show our custom exit confirmation popup dialog
+        dialog = ExitConfirmDialog(self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             logging.info("Application closed by student choice.")
             self.unblock_win_shortcuts()
             if self.process_terminator:
@@ -784,6 +829,282 @@ class MainWindow(QMainWindow):
         else:
             logging.info("Application close prevented.")
             event.ignore()
+
+
+class ExitConfirmDialog(QDialog):
+    """Custom styled dark-themed exit confirmation popup dialog"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Exit Confirmation")
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setModal(True)
+        self.setFixedSize(400, 200)
+        self.init_ui()
+
+    def init_ui(self):
+        self.setObjectName("exitConfirmDialog")
+        self.setStyleSheet("""
+            QDialog#exitConfirmDialog {
+                background-color: #0f172a;
+                border: 2px solid #334155;
+                border-radius: 12px;
+            }
+            QLabel {
+                color: #f8fafc;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton {
+                border-radius: 6px;
+                padding: 8px 18px;
+                font-weight: 600;
+                font-size: 13px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+        """)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(20)
+
+        title = QLabel("🛡️ Exit SEED-SEB Sandbox")
+        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f8fafc;")
+        layout.addWidget(title)
+
+        desc = QLabel("Are you sure you want to exit the assessment sandbox? Your progress will be saved.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("font-size: 13px; color: #cbd5e1; line-height: 1.4;")
+        layout.addWidget(desc)
+
+        buttons = QHBoxLayout()
+        buttons.setSpacing(12)
+
+        no_btn = QPushButton("Cancel")
+        no_btn.setStyleSheet("""
+            background-color: #334155;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+        """)
+        no_btn.clicked.connect(self.reject)
+
+        yes_btn = QPushButton("Yes, Exit")
+        yes_btn.setStyleSheet("""
+            background-color: #ef4444;
+            color: white;
+            border: none;
+        """)
+        yes_btn.clicked.connect(self.accept)
+
+        buttons.addStretch()
+        buttons.addWidget(no_btn)
+        buttons.addWidget(yes_btn)
+        layout.addLayout(buttons)
+
+
+class WifiSetupDialog(QDialog):
+    """Custom styled Wi-Fi reconnection dialog shown upon connection failure"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Wi-Fi Connection Required")
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setModal(True)
+        self.setFixedSize(450, 340)
+        self.init_ui()
+
+    def init_ui(self):
+        self.setObjectName("wifiSetupDialog")
+        self.setStyleSheet("""
+            QDialog#wifiSetupDialog {
+                background-color: #0f172a;
+                border: 2px solid #f59e0b;
+                border-radius: 12px;
+            }
+            QLabel {
+                color: #f8fafc;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QComboBox, QLineEdit {
+                background-color: #1e293b;
+                color: #f8fafc;
+                border: 1px solid #334155;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-size: 13px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QComboBox:focus, QLineEdit:focus {
+                border-color: #f59e0b;
+            }
+            QPushButton {
+                border-radius: 6px;
+                padding: 8px 18px;
+                font-weight: 600;
+                font-size: 13px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+        """)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(12)
+
+        title = QLabel("📶 Internet Connection Lost")
+        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f59e0b;")
+        layout.addWidget(title)
+
+        desc = QLabel("Your internet connection was lost. Please select a Wi-Fi network below to reconnect and continue your assessment.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("font-size: 13px; color: #cbd5e1; line-height: 1.4;")
+        layout.addWidget(desc)
+
+        # Wi-Fi Select dropdown
+        layout.addWidget(QLabel("Select Wi-Fi Network:"))
+        from PyQt6.QtWidgets import QComboBox, QLineEdit
+        self.wifi_combo = QComboBox()
+        self.refresh_wifis()
+        layout.addWidget(self.wifi_combo)
+
+        # Password input
+        layout.addWidget(QLabel("Wi-Fi Password:"))
+        self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_input.setPlaceholderText("Enter network password")
+        layout.addWidget(self.password_input)
+
+        # Status message label
+        self.status_label = QLabel("")
+        self.status_label.setStyleSheet("color: #fca5a5; font-size: 12px; font-weight: bold;")
+        layout.addWidget(self.status_label)
+
+        # Action buttons
+        buttons = QHBoxLayout()
+        
+        refresh_btn = QPushButton("🔄 Refresh List")
+        refresh_btn.setStyleSheet("""
+            background-color: #334155;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+        """)
+        refresh_btn.clicked.connect(self.refresh_wifis)
+
+        connect_btn = QPushButton("Connect")
+        connect_btn.setStyleSheet("""
+            background-color: #f59e0b;
+            color: #0f172a;
+            border: none;
+        """)
+        connect_btn.clicked.connect(self.attempt_connect)
+
+        buttons.addWidget(refresh_btn)
+        buttons.addStretch()
+        buttons.addWidget(connect_btn)
+        layout.addLayout(buttons)
+
+    def refresh_wifis(self):
+        self.wifi_combo.clear()
+        wifis = get_available_wifis()
+        if wifis:
+            self.wifi_combo.addItems(wifis)
+        else:
+            self.wifi_combo.addItem("No Wi-Fi networks found")
+
+    def attempt_connect(self):
+        ssid = self.wifi_combo.currentText()
+        password = self.password_input.text()
+        
+        if ssid == "No Wi-Fi networks found" or not ssid:
+            self.status_label.setText("Please select a valid Wi-Fi network.")
+            return
+
+        self.status_label.setText("Connecting...")
+        QApplication.processEvents()
+
+        # Connect logic
+        success = connect_to_wifi(ssid, password)
+        if success:
+            self.status_label.setText("✅ Connected successfully!")
+            QApplication.processEvents()
+            time.sleep(1.5)
+            self.accept()
+        else:
+            self.status_label.setText("❌ Connection failed. Check password.")
+
+
+def get_available_wifis():
+    """Shells out to netsh on Windows to list available SSIDs"""
+    import subprocess
+    try:
+        res = subprocess.run("netsh wlan show networks", shell=True, capture_output=True, text=True)
+        networks = []
+        if res.returncode == 0:
+            lines = res.stdout.split("\n")
+            for line in lines:
+                if "SSID" in line and ":" in line:
+                    parts = line.split(":")
+                    if len(parts) > 1:
+                        ssid = parts[1].strip()
+                        if ssid:
+                            networks.append(ssid)
+        return list(set(networks))
+    except Exception as e:
+        logging.error(f"Failed to scan Wi-Fi networks: {e}")
+        return []
+
+
+def connect_to_wifi(ssid, password):
+    """Generates an XML profile dynamically and attempts connection via netsh"""
+    import subprocess
+    import tempfile
+    try:
+        xml = f"""<?xml version="1.0"?>
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>{ssid}</name>
+    <SSIDConfig>
+        <SSID>
+            <name>{ssid}</name>
+        </SSID>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>
+        <security>
+            <authEncryption>
+                <authentication>WPA2PSK</authentication>
+                <encryption>AES</encryption>
+                <useOneX>false</useOneX>
+            </authEncryption>
+            <sharedKey>
+                <keyType>passPhrase</keyType>
+                <protected>false</protected>
+                <keyMaterial>{password}</keyMaterial>
+            </sharedKey>
+        </security>
+    </MSM>
+</WLANProfile>
+"""
+        with tempfile.NamedTemporaryFile(suffix=".xml", delete=False, mode="w", encoding="utf-8") as f:
+            f.write(xml)
+            temp_path = f.name
+
+        # Import profile XML
+        subprocess.run(f'netsh wlan add profile filename="{temp_path}"', shell=True, capture_output=True)
+        try:
+            os.remove(temp_path)
+        except Exception:
+            pass
+
+        # Request connect
+        subprocess.run(f'netsh wlan connect name="{ssid}"', shell=True, capture_output=True, text=True)
+        
+        # Verify connection status up to 6 seconds
+        for _ in range(6):
+            time.sleep(1)
+            try:
+                requests.get("https://www.google.com", timeout=2)
+                return True
+            except Exception:
+                pass
+        return False
+    except Exception as e:
+        logging.error(f"Error connecting to Wi-Fi: {e}")
+        return False
 
 
 def main():
