@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import * as faceapi from 'face-api.js';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import ViolationCounter from './ViolationCounter';
 import '../styles/ProctoringEngine.css';
@@ -71,23 +72,35 @@ const ProctoringEngine = ({
       globalModelsLoading = true;
       setModelStatus('loading');
       
-      console.log('[ProctoringEngine] Loading COCO-SSD models with 10s timeout (first time only)...');
+      console.log('[ProctoringEngine] Loading offline COCO-SSD and Face-API models...');
       
       await tf.ready();
       
-      // Load model with a 10-second timeout race
-      const modelPromise = cocoSsd.load();
+      // Load COCO-SSD model with offline url
+      const cocoPromise = cocoSsd.load({
+        modelUrl: '/models/coco-ssd/model.json'
+      });
+      
+      // Load Face-API models from public folder uri
+      const faceApiPromise = Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api')
+      ]);
+      
+      // 12-second timeout race
+      const loadAllPromise = Promise.all([cocoPromise, faceApiPromise]);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Model load timed out after 10s')), 10000)
+        setTimeout(() => reject(new Error('AI model loading timed out after 12s')), 12000)
       );
       
-      window.cocoSsdModel = await Promise.race([modelPromise, timeoutPromise]);
+      const [cocoModelInstance] = await Promise.race([loadAllPromise, timeoutPromise]);
+      window.cocoSsdModel = cocoModelInstance;
       
       globalModelsLoaded = true;
       modelsLoadedRef.current = true;
       globalModelsLoading = false;
       setModelStatus('active');
-      console.log('[ProctoringEngine] ✓ Models loaded successfully');
+      console.log('[ProctoringEngine] ✓ All models loaded successfully');
       return true;
     } catch (error) {
       globalModelsLoading = false;
@@ -256,9 +269,43 @@ const ProctoringEngine = ({
     }
   }, [cleanupStream, stopDetectionLoop]);
 
+  // Helper to handle and increment violation events
+  const handleViolation = useCallback((type) => {
+    setViolationCount(prev => {
+      const newCount = prev + 1;
+      
+      let msg = 'Malpractice violation detected!';
+      if (type === 'no_face') {
+        msg = 'Face not detected - Please stay in front of the camera';
+      } else if (type === 'multiple_faces') {
+        msg = 'Multiple faces / people detected in camera feed';
+      } else if (type === 'cell_phone') {
+        msg = 'Mobile phone detected in camera feed - Unauthorized device!';
+      } else if (type === 'prohibited_object') {
+        msg = 'Prohibited object (book/material) detected';
+      } else if (type === 'looking_away') {
+        msg = 'Suspicious activity: Student looking away from screen repeatedly';
+      }
+
+      showAlert(msg, 'warning');
+      notifyViolationEvent(type, newCount);
+
+      if (newCount >= maxViolations && onAutoSubmit) {
+        console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
+        showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
+
+        setTimeout(() => {
+          onAutoSubmit({ reason: 'proctoring_violations', violationCount: newCount });
+        }, 2000);
+      }
+
+      return newCount;
+    });
+  }, [maxViolations, onAutoSubmit, notifyViolationEvent, showAlert]);
+
   // Single-frame detection helper (used in scheduled sequences)
   const detectFrame = useCallback(async () => {
-    if (!isTestActive || !modelsLoadedRef.current || !videoRef.current || !streamRef.current || !window.cocoSsdModel) {
+    if (!isTestActive || !videoRef.current || !streamRef.current) {
       return { violationType: null, faceCount: 0 };
     }
     if (detectionInProgressRef.current) {
@@ -279,19 +326,81 @@ const ProctoringEngine = ({
         }
       }
 
-      const predictions = await window.cocoSsdModel.detect(video);
-      console.log('[ProctoringEngine] Raw predictions:', predictions);
-      
-      const personPredictions = predictions.filter(pred => pred.class === 'person' && pred.score > 0.4);
-      const faceCount = personPredictions.length;
-      console.log('[ProctoringEngine] Person detected count:', faceCount);
-      
+      let faceCount = 0;
       let violationType = null;
+      let lookingAway = false;
 
-      if (faceCount === 0) {
-        violationType = 'no_face';
-      } else if (faceCount > 1) {
-        violationType = 'multiple_faces';
+      // 1. Run Face-API detection (Offline Primary Guard)
+      if (window.faceApiLoaded) {
+        try {
+          const faceDetections = await faceapi.detectAllFaces(
+            video, 
+            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
+          ).withFaceLandmarks();
+
+          faceCount = faceDetections.length;
+          console.log('[ProctoringEngine] Face-API detections count:', faceCount);
+
+          if (faceCount === 0) {
+            violationType = 'no_face';
+          } else if (faceCount > 1) {
+            violationType = 'multiple_faces';
+          } else {
+            // Check head pose (Looking Away detection)
+            const landmarks = faceDetections[0].landmarks;
+            const nose = landmarks.getNose();
+            const jawOutline = landmarks.getJawOutline();
+            
+            if (jawOutline && jawOutline.length >= 17 && nose && nose.length >= 7) {
+              const leftEdge = jawOutline[0];
+              const rightEdge = jawOutline[16];
+              const noseTip = nose[6];
+              
+              const distLeft = noseTip.x - leftEdge.x;
+              const distRight = rightEdge.x - noseTip.x;
+              
+              if (distLeft > 0 && distRight > 0) {
+                const ratio = distLeft / distRight;
+                console.log('[ProctoringEngine] Face ratio (nose/jaw):', ratio);
+                if (ratio < 0.35 || ratio > 2.8) {
+                  lookingAway = true;
+                  violationType = 'looking_away';
+                }
+              }
+            }
+          }
+        } catch (faceErr) {
+          console.error('[ProctoringEngine] Face-API runtime error:', faceErr);
+        }
+      }
+
+      // 2. Run COCO-SSD detection (Object Detection Guard)
+      if (window.cocoSsdModel && window.cocoSsdLoaded) {
+        try {
+          const predictions = await window.cocoSsdModel.detect(video);
+          console.log('[ProctoringEngine] COCO-SSD raw predictions:', predictions);
+          
+          const phonePredictions = predictions.filter(pred => pred.class === 'cell phone' && pred.score > 0.4);
+          const bookPredictions = predictions.filter(pred => pred.class === 'book' && pred.score > 0.4);
+          const personPredictions = predictions.filter(pred => pred.class === 'person' && pred.score > 0.4);
+          
+          if (!window.faceApiLoaded) {
+            faceCount = personPredictions.length;
+            if (faceCount === 0) {
+              violationType = 'no_face';
+            } else if (faceCount > 1) {
+              violationType = 'multiple_faces';
+            }
+          }
+
+          if (phonePredictions.length > 0) {
+            violationType = 'cell_phone';
+          } else if (bookPredictions.length > 0 && !violationType) {
+            violationType = 'prohibited_object';
+          }
+        } catch (cocoErr) {
+          console.error('[ProctoringEngine] COCO-SSD runtime error:', cocoErr);
+        }
       }
 
       return { violationType, faceCount };
@@ -303,14 +412,21 @@ const ProctoringEngine = ({
     }
   }, [isTestActive]);
 
-  // Scheduled sequence: every 2 minutes, capture two frames 10s apart and compare
+  // Scheduled sequence: capture two frames and compare
   const runPresenceCheckSequence = useCallback(async () => {
     if (!isTestActive || sequenceInProgressRef.current) return;
-    if (!modelsLoadedRef.current || !videoRef.current || !streamRef.current) return;
+    if (!videoRef.current || !streamRef.current) return;
 
     sequenceInProgressRef.current = true;
     try {
       const first = await detectFrame();
+      
+      // Handle instant critical violations immediately
+      if (first.violationType && (first.violationType === 'cell_phone' || first.violationType === 'multiple_faces' || first.violationType === 'prohibited_object')) {
+        handleViolation(first.violationType);
+        return;
+      }
+
       if (first.violationType) {
         notifyViolationEvent(first.violationType);
       }
@@ -318,36 +434,33 @@ const ProctoringEngine = ({
       await new Promise(resolve => setTimeout(resolve, SEQUENCE_GAP_MS));
 
       const second = await detectFrame();
+      
+      // Handle instant critical violations immediately
+      if (second.violationType && (second.violationType === 'cell_phone' || second.violationType === 'multiple_faces' || second.violationType === 'prohibited_object')) {
+        handleViolation(second.violationType);
+        return;
+      }
+
       if (second.violationType) {
         notifyViolationEvent(second.violationType);
       }
 
       const noFaceFirst = first.violationType === 'no_face';
       const noFaceSecond = second.violationType === 'no_face';
+      const lookingAwayFirst = first.violationType === 'looking_away';
+      const lookingAwaySecond = second.violationType === 'looking_away';
 
       if (noFaceFirst && noFaceSecond) {
-        setViolationCount(prev => {
-          const newCount = prev + 1;
-
-          showAlert('Person not detected in repeated checks - Please stay in front of camera', 'warning');
-          notifyViolationEvent('no_face', newCount);
-
-          if (newCount >= maxViolations && onAutoSubmit) {
-            console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
-            showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
-
-            setTimeout(() => {
-              onAutoSubmit({ reason: 'proctoring_violations', violationCount: newCount });
-            }, 2000);
-          }
-
-          return newCount;
-        });
+        handleViolation('no_face');
+      } else if (lookingAwayFirst && lookingAwaySecond) {
+        handleViolation('looking_away');
       }
+    } catch (err) {
+      console.error('[ProctoringEngine] Error in presence check sequence:', err);
     } finally {
       sequenceInProgressRef.current = false;
     }
-  }, [detectFrame, isTestActive, notifyViolationEvent, onAutoSubmit, showAlert]);
+  }, [detectFrame, isTestActive, notifyViolationEvent, handleViolation]);
 
   // Initialize proctoring system - with duplicate prevention
   useEffect(() => {
@@ -533,7 +646,7 @@ const ProctoringEngine = ({
             <div className="camera-label">
               <span className="camera-rec-dot" /> LIVE 
               <span style={{ marginLeft: '4px', fontSize: '9px', opacity: 0.85, fontWeight: '700' }}>
-                | {modelStatus === 'active' ? 'AI ACTIVE' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY'}
+                | {modelStatus === 'active' ? 'AI ACTIVE' : modelStatus === 'face_only' ? 'AI ACTIVE (FACE ONLY)' : modelStatus === 'objects_only' ? 'AI ACTIVE (OBJECTS)' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY'}
               </span>
             </div>
             {/* Violation count badge overlaid on camera */}
