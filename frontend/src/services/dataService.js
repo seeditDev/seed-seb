@@ -220,26 +220,26 @@ class DataService {
 
     static async getAccessControl() {
         try {
-            // Try to get from cache first
             const cacheKey = 'access_control_data';
-            const cachedData = cacheManager.getLocalCache(cacheKey);
-            if (cachedData) {
-                console.log('[DataService] Returning cached access control data');
-                return cachedData;
-            }
-
-            // If not in cache, fetch from sources
             const urls = {
                 local: API_ENDPOINTS.LOCAL.ACCESS_CONTROL,
                 githubApi: API_ENDPOINTS.GITHUB_API.ACCESS_CONTROL,
                 github: API_ENDPOINTS.GITHUB.ACCESS_CONTROL
             };
 
-            console.log('[DataService] Fetching access control data');
-            const data = await this.fetchWithFallback(urls.local, urls.githubApi, urls.github, cacheKey);
+            console.log('[DataService] Fetching fresh access control data from network...');
+            // Fetch with a temp cache key to bypass immediate cache return
+            const data = await this.fetchWithFallback(urls.local, urls.githubApi, urls.github, 'access_control_data_temp');
+            
+            // Save fresh data to local cache
+            cacheManager.setLocalCache(cacheKey, data);
             return data;
         } catch (error) {
-            console.error('[DataService] Error fetching access control:', error);
+            console.warn('[DataService] Network fetch failed, falling back to cache:', error.message);
+            const cachedData = cacheManager.getLocalCache('access_control_data');
+            if (cachedData) {
+                return cachedData;
+            }
             throw error;
         }
     }
@@ -247,15 +247,7 @@ class DataService {
     static async getUserAccess(email, college) {
         try {
             console.log('[DataService] getUserAccess called with email:', email, 'college:', college);
-            
-            // First check if we have access data in auth_data in localStorage
             const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-            if (authData.access) {
-                console.log('[DataService] Returning access data from auth_data in localStorage');
-                return authData.access;
-            }
-            
-            // Get the year and department from auth data
             const year = authData.Year;
             const department = authData.Department;
             
@@ -264,8 +256,18 @@ class DataService {
                 throw new Error('Year and department information is missing. Please log in again.');
             }
 
-            // Get access control data
-            const accessControl = await this.getAccessControl();
+            let accessControl;
+            try {
+                // Fetch fresh access control rules from network
+                accessControl = await this.getAccessControl();
+            } catch (fetchErr) {
+                console.warn('[DataService] Failed to fetch fresh access control, using cached access info:', fetchErr.message);
+                if (authData.access) {
+                    return authData.access;
+                }
+                throw fetchErr;
+            }
+
             const departmentAccess = accessControl?.access_control?.colleges?.[college]?.[year]?.[department];
             
             if (!departmentAccess) {
