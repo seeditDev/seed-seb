@@ -513,7 +513,14 @@ const ProctoringEngine = ({
               playsInline
               className="mini-camera-video"
             />
-            <div className="camera-label">Camera View</div>
+            {/* Live recording indicator */}
+            <div className="camera-label">
+              <span className="camera-rec-dot" /> LIVE
+            </div>
+            {/* Violation count badge overlaid on camera */}
+            <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= 4 ? 'badge-critical' : 'badge-warn'}`}>
+              ⚠ {violationCount}/{5}
+            </div>
           </div>
         </div>
       </div>

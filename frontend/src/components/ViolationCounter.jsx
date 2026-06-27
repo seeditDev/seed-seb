@@ -2,23 +2,22 @@ import React from 'react';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import '../styles/ViolationCounter.css';
 
-const MAX_VIOLATIONS = 15;
+const MAX_VIOLATIONS = 5;
 
 const ViolationCounter = ({ count = 0 }) => {
   const getSeverityClass = () => {
     if (count === 0) return 'safe';
-    if (count < 3) return 'low';
-    if (count < 6) return 'medium';
-    if (count < MAX_VIOLATIONS - 2) return 'high';
+    if (count < 2) return 'low';
+    if (count < 4) return 'medium';
+    if (count < MAX_VIOLATIONS) return 'high';
     return 'critical';
   };
 
   const getMessage = () => {
     if (count === 0) return 'No violations';
-    if (count < 3) return 'Minor violations detected';
-    if (count < 6) return 'Multiple violations';
-    if (count < MAX_VIOLATIONS - 2) return 'High violation count';
-    if (count < MAX_VIOLATIONS) return 'Critical: Auto-submit imminent';
+    if (count === 1) return 'Violation detected';
+    if (count < 4) return 'Multiple violations';
+    if (count < MAX_VIOLATIONS) return '⚠️ Warning: Auto-submit imminent';
     return 'Exam auto-submitted due to violations';
   };
 
