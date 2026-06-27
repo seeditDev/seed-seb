@@ -750,33 +750,15 @@ class MainWindow(QMainWindow):
         return super().eventFilter(obj, event)
 
     def changeEvent(self, event):
-        """Security monitor for window deactivation (workspace swipe/minimize actions). 3 strikes = lockout."""
+        """Security monitor for window deactivation (workspace swipe/minimize actions). Silently blocks switches by refocusing."""
         if event.type() == QEvent.Type.ActivationChange:
             if not self.isActiveWindow():
-                self.focus_loss_count += 1
-                logging.warning(f"Security Alert: Sandbox deactivated (Violation {self.focus_loss_count}/3)")
+                logging.warning("Security Alert: Sandbox deactivated. Silently blocking and refocusing window...")
                 
                 # Instantly force window back to front fullscreen kiosk mode
                 self.showFullScreen()
                 self.raise_()
                 self.activateWindow()
-                
-                if self.focus_loss_count >= 3:
-                    logging.critical("SEED-SEB Lockout: Maximum violations reached.")
-                    QMessageBox.critical(
-                        self,
-                        "Security Violation Lockout",
-                        "Security Exception: 3 window focus losses or workspace swipe gestures detected.\nThe assessment has been automatically locked and submitted. Contact your administrator.",
-                        QMessageBox.StandardButton.Ok
-                    )
-                    self.force_close_application()
-                else:
-                    QMessageBox.warning(
-                        self,
-                        "Security Warning",
-                        f"Security Warning: Swipe gesture or window change detected! (Violation {self.focus_loss_count}/3).\nLeaving the assessment screen is strictly prohibited.",
-                        QMessageBox.StandardButton.Ok
-                    )
         super().changeEvent(event)
 
     def closeEvent(self, event):
