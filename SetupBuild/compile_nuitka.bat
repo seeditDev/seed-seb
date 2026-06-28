@@ -34,18 +34,38 @@ if exist dist\main.dist (
 
 :: Copy required folder resources into dist\SEED-SEB\ relative to the executable
 
-echo Copying data folder to standalone distribution...
+echo Locating and copying data folder...
+set "DATA_SRC="
 if exist "..\data" (
-    xcopy /E /I /Y "..\data" "dist\SEED-SEB\data"
-) else (
-    echo WARNING: ..\data not found!
+    set "DATA_SRC=..\data"
+) else if exist "..\..\seed-website-desktop-edition\data" (
+    set "DATA_SRC=..\..\seed-website-desktop-edition\data"
+) else if exist "C:\Users\ashok\Downloads\Development Works\SEED-IT Platform Source folder\seed-website-desktop-edition\data" (
+    set "DATA_SRC=C:\Users\ashok\Downloads\Development Works\SEED-IT Platform Source folder\seed-website-desktop-edition\data"
 )
 
-echo Copying resources folder to standalone distribution...
-if exist "..\resources" (
-    xcopy /E /I /Y "..\resources" "dist\SEED-SEB\resources"
+if not "%DATA_SRC%"=="" (
+    echo Copying data from %DATA_SRC% to dist\SEED-SEB\data...
+    xcopy /E /I /Y "%DATA_SRC%" "dist\SEED-SEB\data"
 ) else (
-    echo WARNING: ..\resources not found!
+    echo WARNING: data folder not found anywhere!
+)
+
+echo Locating and copying resources folder...
+set "RESOURCES_SRC="
+if exist "..\resources" (
+    set "RESOURCES_SRC=..\resources"
+) else if exist "..\..\seed-website-desktop-edition\resources" (
+    set "RESOURCES_SRC=..\..\seed-website-desktop-edition\resources"
+) else if exist "C:\Users\ashok\Downloads\Development Works\SEED-IT Platform Source folder\seed-website-desktop-edition\resources" (
+    set "RESOURCES_SRC=C:\Users\ashok\Downloads\Development Works\SEED-IT Platform Source folder\seed-website-desktop-edition\resources"
+)
+
+if not "%RESOURCES_SRC%"=="" (
+    echo Copying resources from %RESOURCES_SRC% to dist\SEED-SEB\resources...
+    xcopy /E /I /Y "%RESOURCES_SRC%" "dist\SEED-SEB\resources"
+) else (
+    echo WARNING: resources folder not found anywhere!
 )
 
 echo.
