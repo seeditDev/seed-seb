@@ -599,6 +599,7 @@ const MCQPage = () => {
         setIsPasskeyValidated(false);
         setPasskey('');
         setSelectedTest(null);
+        clearAllProctorCache();
     };
 
     // Handle test selection
@@ -1802,10 +1803,28 @@ const MCQPage = () => {
 
         return (
             <div className="mcq-test-content">
-                <div className="mcq-test-header-bar">
+                <div className="mcq-test-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div className="mcq-test-info">
                         <h1>{currentTest.name || currentTest.testInfo?.name}</h1>
                     </div>
+                    {ENABLE_PROCTORING && (
+                        <div className="mcq-proctor-stats" style={{ display: 'flex', paddingRight: '20px' }}>
+                            <div className="proctor-stat-pill ai-violation-pill" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
+                                border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600'
+                            }}>
+                                <span>AI Violations: {proctoringData.violationCount} / {currentTest.maxViolations || 5}</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mcq-workspace-layout">

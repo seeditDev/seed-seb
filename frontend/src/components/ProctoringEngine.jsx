@@ -806,9 +806,7 @@ const ProctoringEngine = ({
       {/* Top Section: Violation Counter and Camera Preview - Side by side */}
       <div className="proctoring-top-section">
         <div className="proctoring-top-row">
-          <ViolationCounter count={violationCount} maxViolations={maxViolations} />
-          
-          {/* Mini Camera View - Next to violation counter */}
+          {/* Mini Camera View */}
           <div className="mini-camera-view">
             <video
               ref={videoRef}

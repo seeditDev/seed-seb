@@ -1555,7 +1555,39 @@ const CodingAssessmentPage = () => {
                     )}
                 </div>
                 
-                <div className="header-right">
+                <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {shouldUseProctoring && (
+                        <div className="proctoring-stats-container" style={{ display: 'flex', gap: '10px' }}>
+                            <div className="proctor-stat-pill tab-switch-pill" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                color: violationCount > 0 ? '#ef4444' : '#10b981',
+                                border: violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600'
+                            }}>
+                                <span>Tab Switches: {violationCount} / 5</span>
+                            </div>
+                            <div className="proctor-stat-pill ai-violation-pill" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
+                                border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600'
+                            }}>
+                                <span>AI Violations: {proctoringData.violationCount} / {currentAssessment?.maxViolations || 5}</span>
+                            </div>
+                        </div>
+                    )}
                     <div className="timer-pill">
                         <FaClock />
                         <span className="remaining-timer-span">{formatRemainingTime()}</span>
