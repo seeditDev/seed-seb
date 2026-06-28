@@ -400,15 +400,14 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
             <div className="instructions-right-column">
               {assessment && (
                 <div className="instructions-assessment-card" style={{
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)',
-                  border: '1px solid rgba(99, 102, 241, 0.25)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
                   borderRadius: '16px',
                   padding: '24px',
                   marginBottom: '24px',
-                  boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 8px 24px rgba(79, 70, 229, 0.25)',
                   position: 'relative',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  color: '#ffffff'
                 }}>
                   {/* Subtle background glow decorator */}
                   <div style={{
@@ -417,14 +416,14 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                     right: '-50px',
                     width: '100px',
                     height: '100px',
-                    background: 'rgba(99, 102, 241, 0.15)',
+                    background: 'rgba(255, 255, 255, 0.12)',
                     filter: 'blur(30px)',
                     borderRadius: '50%'
                   }}></div>
                   
                   <span style={{ 
                     fontSize: '0.72rem', 
-                    color: '#a5b4fc', 
+                    color: '#c7d2fe', 
                     fontWeight: '700', 
                     textTransform: 'uppercase', 
                     letterSpacing: '0.15em',
@@ -435,11 +434,11 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                   
                   <h4 style={{
                     margin: '0 0 20px',
-                    fontSize: '1.35rem',
+                    fontSize: '1.45rem',
                     color: '#ffffff',
-                    fontWeight: '700',
+                    fontWeight: '800',
                     lineHeight: '1.3',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
                     paddingBottom: '14px',
                     textAlign: 'left'
                   }}>{assessment.name}</h4>
@@ -453,45 +452,45 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      background: 'rgba(0, 0, 0, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.15)',
                       padding: '12px 8px',
                       borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       textAlign: 'center'
                     }}>
-                      <FaLaptopCode style={{ fontSize: '1.25rem', color: '#6366f1', marginBottom: '6px' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</span>
-                      <span style={{ fontSize: '0.88rem', color: '#f1f5f9', fontWeight: '600', marginTop: '4px', textTransform: 'capitalize' }}>{assessment.type}</span>
+                      <FaLaptopCode style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</span>
+                      <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '700', marginTop: '4px', textTransform: 'capitalize' }}>{assessment.type}</span>
                     </div>
                     
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      background: 'rgba(0, 0, 0, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.15)',
                       padding: '12px 8px',
                       borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       textAlign: 'center'
                     }}>
-                      <FaClock style={{ fontSize: '1.25rem', color: '#a855f7', marginBottom: '6px' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</span>
-                      <span style={{ fontSize: '0.88rem', color: '#f1f5f9', fontWeight: '600', marginTop: '4px' }}>{assessment.duration} Mins</span>
+                      <FaClock style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</span>
+                      <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '700', marginTop: '4px' }}>{assessment.duration} Mins</span>
                     </div>
                     
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      background: 'rgba(0, 0, 0, 0.3)',
+                      background: 'rgba(255, 255, 255, 0.15)',
                       padding: '12px 8px',
                       borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       textAlign: 'center'
                     }}>
-                      <FaClipboardList style={{ fontSize: '1.25rem', color: '#10b981', marginBottom: '6px' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions</span>
-                      <span style={{ fontSize: '0.88rem', color: '#f1f5f9', fontWeight: '600', marginTop: '4px' }}>{assessment.questions || '—'} Qs</span>
+                      <FaClipboardList style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions</span>
+                      <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '700', marginTop: '4px' }}>{assessment.questions || '—'} Qs</span>
                     </div>
                   </div>
                 </div>
