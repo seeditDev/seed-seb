@@ -101,6 +101,14 @@ class ReactHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
 class CustomWebEnginePage(QWebEnginePage):
     """Custom QWebEnginePage to redirect JavaScript console output to Python log file."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.featurePermissionRequested.connect(self.handleFeaturePermissionRequested)
+
+    def handleFeaturePermissionRequested(self, securityOrigin, feature):
+        logging.info(f"Permission requested by origin {securityOrigin.toString()} for feature {feature}")
+        self.setFeaturePermission(securityOrigin, feature, QWebEnginePage.PermissionPolicy.PermissionGrantedByUser)
+
     def javaScriptConsoleMessage(self, level, message, line, source_id):
         logging.info(f"[JS Console] Line {line} ({source_id}): {message}")
 
