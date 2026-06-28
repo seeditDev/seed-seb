@@ -17,7 +17,49 @@ const MAX_VIOLATIONS = 5;
 let globalModelsLoaded = false;
 let globalModelsLoading = false;
 
-// Helper to execute YOLOv8 model inference and post-process on the GPU
+// CPU-based Non-Maximum Suppression (NMS) helper
+const calculateIoU = (box1, box2) => {
+  const [x1_1, y1_1, x2_1, y2_1] = box1;
+  const [x1_2, y1_2, x2_2, y2_2] = box2;
+  
+  const xMin = Math.max(x1_1, x1_2);
+  const yMin = Math.max(y1_1, y1_2);
+  const xMax = Math.min(x2_1, x2_2);
+  const yMax = Math.min(y2_1, y2_2);
+  
+  const intersectionArea = Math.max(0, xMax - xMin) * Math.max(0, yMax - yMin);
+  const area1 = (x2_1 - x1_1) * (y2_1 - y1_1);
+  const area2 = (x2_2 - x1_2) * (y2_2 - y1_2);
+  const unionArea = area1 + area2 - intersectionArea;
+  
+  if (unionArea === 0) return 0;
+  return intersectionArea / unionArea;
+};
+
+const cpuNMS = (candidates, iouThreshold = 0.5) => {
+  // Sort candidates by score descending
+  candidates.sort((a, b) => b.score - a.score);
+  
+  const selected = [];
+  for (const candidate of candidates) {
+    let keep = true;
+    for (const active of selected) {
+      if (candidate.classId === active.classId) {
+        const iou = calculateIoU(candidate.box, active.box);
+        if (iou > iouThreshold) {
+          keep = false;
+          break;
+        }
+      }
+    }
+    if (keep) {
+      selected.push(candidate);
+    }
+  }
+  return selected;
+};
+
+// Helper to execute YOLOv8 model inference and post-process on the GPU with CPU-NMS
 const runYolov8Inference = async (videoElement, model) => {
   let result = { personCount: 0, phoneDetected: false, bookDetected: false };
   
@@ -33,47 +75,72 @@ const runYolov8Inference = async (videoElement, model) => {
     // Reshape and transpose output to shape [8400, 84]
     const transposed = output.reshape([84, 8400]).transpose([1, 0]);
     
+    const boxes = transposed.slice([0, 0], [-1, 4]); // [8400, 4]
     const scores = transposed.slice([0, 4], [-1, 80]); // [8400, 80]
     const maxScores = scores.max(1); // [8400]
     const classIds = scores.argMax(1); // [8400]
-    const mask = maxScores.greater(0.4); // [8400]
+    const mask = maxScores.greater(0.40); // [8400]
     
-    return { maxScores, classIds, mask };
+    return { boxes, maxScores, classIds, mask };
   });
 
   try {
     // 2. Perform async GPU-to-CPU masking
-    const [filteredScores, filteredClasses] = await Promise.all([
+    const [filteredBoxes, filteredScores, filteredClasses] = await Promise.all([
+      tf.booleanMaskAsync(tensors.boxes, tensors.mask),
       tf.booleanMaskAsync(tensors.maxScores, tensors.mask),
       tf.booleanMaskAsync(tensors.classIds, tensors.mask)
     ]);
     
+    const boxesArray = await filteredBoxes.array();
     const scoresArray = await filteredScores.array();
     const classesArray = await filteredClasses.array();
+    
+    const candidates = [];
+    
+    for (let i = 0; i < classesArray.length; i++) {
+      const classId = classesArray[i];
+      if (classId === 0 || classId === 67 || classId === 73) {
+        const [x_center, y_center, w, h] = boxesArray[i];
+        const x1 = x_center - w / 2;
+        const y1 = y_center - h / 2;
+        const x2 = x_center + w / 2;
+        const y2 = y_center + h / 2;
+        
+        candidates.push({
+          box: [x1, y1, x2, y2],
+          score: scoresArray[i],
+          classId
+        });
+      }
+    }
+    
+    // 3. Apply NMS
+    const suppressed = cpuNMS(candidates, 0.45);
     
     let personCount = 0;
     let phoneDetected = false;
     let bookDetected = false;
     
-    for (let i = 0; i < classesArray.length; i++) {
-      const classId = classesArray[i];
-      // COCO labels: 0 = person, 67 = cell phone, 73 = book
-      if (classId === 0) {
+    for (const item of suppressed) {
+      if (item.classId === 0) {
         personCount++;
-      } else if (classId === 67) {
+      } else if (item.classId === 67) {
         phoneDetected = true;
-      } else if (classId === 73) {
+      } else if (item.classId === 73) {
         bookDetected = true;
       }
     }
     
     result = { personCount, phoneDetected, bookDetected };
     
+    filteredBoxes.dispose();
     filteredScores.dispose();
     filteredClasses.dispose();
   } catch (err) {
     console.error('[ProctoringEngine] YOLOv8 post-processing error:', err);
   } finally {
+    tensors.boxes.dispose();
     tensors.maxScores.dispose();
     tensors.classIds.dispose();
     tensors.mask.dispose();
@@ -198,8 +265,9 @@ const ProctoringEngine = ({
 
   // Show alert toast
   const showAlert = useCallback((message, type = 'warning') => {
+    const alertId = `${timeService.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const alert = {
-      id: timeService.now(),
+      id: alertId,
       message,
       type
     };
@@ -208,7 +276,7 @@ const ProctoringEngine = ({
     
     // Auto-remove after 3 seconds
     setTimeout(() => {
-      setAlerts(prev => prev.filter(a => a.id !== alert.id));
+      setAlerts(prev => prev.filter(a => a.id !== alertId));
     }, 3000);
   }, []);
 
