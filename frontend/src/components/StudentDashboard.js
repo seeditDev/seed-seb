@@ -26,6 +26,7 @@ import MCQService from '../services/mcqService';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
+import { checkAndClearProctorCache } from '../utils/proctorCache';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -91,6 +92,7 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    checkAndClearProctorCache();
     const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
     if (authData.Email || authData.email || authData.Name) {
       setUser(authData);

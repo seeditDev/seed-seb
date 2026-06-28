@@ -7,6 +7,7 @@ import MCQService from '../services/mcqService';
 import ProctoringEngine from './ProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import timeService from '../services/timeService';
+import { clearAllProctorCache } from '../utils/proctorCache';
 
 // ========================================
 // PROCTORING CONFIGURATION
@@ -146,12 +147,13 @@ const MCQPage = () => {
         setLastProgressSync(null);
         networkTimeoutTriggeredRef.current = false;
 
-        // Clear proctoring violation data from localStorage
+        // Clear proctoring violation data and photo descriptors from localStorage
         if (user && currentTest) {
             const testID = currentTest.testInfo?.id || currentTest.id || 'unknown';
             const proctorKey = `proctor_violations_${user.Email}_${testID}`;
             localStorage.removeItem(proctorKey);
         }
+        clearAllProctorCache();
 
         // Reset proctoring data state
         setProctoringData({

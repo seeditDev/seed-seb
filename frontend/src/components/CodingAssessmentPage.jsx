@@ -10,6 +10,7 @@ import desktopBridge from '../utils/desktopBridge';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
+import { clearAllProctorCache } from '../utils/proctorCache';
 import ProctoringEngine from './ProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import '../styles/CodingAssessmentPage.css';
@@ -1143,6 +1144,7 @@ const CodingAssessmentPage = () => {
         localStorage.removeItem("codingAssessmentTimer");
         localStorage.removeItem("codingAssessmentData");
         localStorage.removeItem("codingAssessmentCode");
+        clearAllProctorCache();
         
         setCurrentAssessment(null);
         setQuestions([]);

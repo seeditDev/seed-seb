@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync } from 'react-icons/fa';
 import '../styles/ProctoringInstructions.css';
 import * as faceapi from 'face-api.js';
+import { setProctorCacheExpiry } from '../utils/proctorCache';
 
 const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const [cameraStatus, setCameraStatus] = useState('requesting'); // requesting, granted, denied, error
@@ -219,9 +220,14 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
           localStorage.setItem('proctor_reference_photo', dataUrl);
           localStorage.setItem('proctor_reference_descriptor', JSON.stringify(Array.from(detection.descriptor)));
           
+          // Set cache expiration based on assessment duration
+          const duration = assessment?.duration || 60;
+          const testID = assessment?.id || 'unknown';
+          setProctorCacheExpiry(duration, testID);
+          
           setPhotoUrl(dataUrl);
           setPhotoStatus('captured');
-          console.log('[ProctoringInstructions] ✓ Reference face photo captured and descriptor saved');
+          console.log('[ProctoringInstructions] ✓ Reference face photo captured, descriptor saved and cache expiry set');
           return;
         }
       } catch (err) {
@@ -232,7 +238,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     }
     
     setPhotoStatus('failed');
-  }, []);
+  }, [assessment]);
 
   useEffect(() => {
     if (cameraStatus === 'granted') {
