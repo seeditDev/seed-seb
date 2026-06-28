@@ -72,42 +72,63 @@ const ProctoringEngine = ({
       globalModelsLoading = true;
       setModelStatus('loading');
       
-      console.log('[ProctoringEngine] Loading offline COCO-SSD and Face-API models...');
-      
+      console.log('[ProctoringEngine] Loading offline COCO-SSD and Face-API models independently...');
       await tf.ready();
-      
-      // Load COCO-SSD model with offline url
-      const cocoPromise = cocoSsd.load({
-        modelUrl: '/models/coco-ssd/model.json'
-      });
-      
-      // Load Face-API models from public folder uri
-      const faceApiPromise = Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api')
-      ]);
-      
-      // 12-second timeout race
-      const loadAllPromise = Promise.all([cocoPromise, faceApiPromise]);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('AI model loading timed out after 12s')), 12000)
-      );
-      
-      const [cocoModelInstance] = await Promise.race([loadAllPromise, timeoutPromise]);
-      window.cocoSsdModel = cocoModelInstance;
-      
+
+      // 1. Load Face-API models offline (Primary Guard)
+      try {
+        console.log('[ProctoringEngine] Loading Face-API models offline...');
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api')
+        ]);
+        window.faceApiLoaded = true;
+        console.log('[ProctoringEngine] ✓ Face-API loaded successfully');
+      } catch (faceErr) {
+        window.faceApiLoaded = false;
+        console.warn('[ProctoringEngine] Face-API loading failed:', faceErr);
+      }
+
+      // 2. Load COCO-SSD model (Offline first with online fallback)
+      try {
+        console.log('[ProctoringEngine] Loading COCO-SSD offline...');
+        window.cocoSsdModel = await cocoSsd.load({
+          modelUrl: '/models/coco-ssd/model.json'
+        });
+        window.cocoSsdLoaded = true;
+        console.log('[ProctoringEngine] ✓ COCO-SSD loaded offline successfully');
+      } catch (cocoOfflineErr) {
+        console.warn('[ProctoringEngine] COCO-SSD offline load failed, trying online CDN...', cocoOfflineErr.message);
+        try {
+          window.cocoSsdModel = await cocoSsd.load();
+          window.cocoSsdLoaded = true;
+          console.log('[ProctoringEngine] ✓ COCO-SSD loaded online successfully');
+        } catch (cocoOnlineErr) {
+          window.cocoSsdLoaded = false;
+          console.warn('[ProctoringEngine] COCO-SSD online CDN load also failed:', cocoOnlineErr.message);
+        }
+      }
+
       globalModelsLoaded = true;
-      modelsLoadedRef.current = true;
+      modelsLoadedRef.current = window.faceApiLoaded || window.cocoSsdLoaded;
       globalModelsLoading = false;
-      setModelStatus('active');
-      console.log('[ProctoringEngine] ✓ All models loaded successfully');
-      return true;
+
+      const currentStatus = window.cocoSsdLoaded && window.faceApiLoaded 
+        ? 'active' 
+        : window.faceApiLoaded 
+          ? 'face_only' 
+          : window.cocoSsdLoaded 
+            ? 'objects_only' 
+            : 'failed';
+
+      setModelStatus(currentStatus);
+      console.log(`[ProctoringEngine] AI initialization complete. Status: ${currentStatus}`);
+      return modelsLoadedRef.current;
     } catch (error) {
       globalModelsLoading = false;
       modelsLoadedRef.current = false;
       setModelStatus('failed');
-      console.warn('[ProctoringEngine] Model loading failed/timed out, running in Camera-Only mode:', error);
-      // Clean up error state since we fall back to camera-only gracefully
+      console.warn('[ProctoringEngine] Critical model loader error, running in Camera-Only mode:', error);
       setError(null);
       return false;
     }
