@@ -16,18 +16,41 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
   
   // State for reference photo registration
   const [photoStatus, setPhotoStatus] = useState('searching'); // searching, captured, failed
-  const [photoUrl, setPhotoUrl] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState(null);  
+  // Track if we are proceeding to test
+  const isProceedingRef = useRef(false);
 
   useEffect(() => {
     // Request camera access when component mounts
     requestCameraAccess();
 
-    // Cleanup on unmount - but DON'T stop the stream, let ProctoringEngine use it
+    // Cleanup on unmount - stop stream if not proceeding to the test
     return () => {
       if (verificationIntervalRef.current) {
         clearInterval(verificationIntervalRef.current);
       }
-      // Don't stop stream here - it will be reused by ProctoringEngine
+      
+      if (!isProceedingRef.current) {
+        console.log('[ProctoringInstructions] Unmounting guidelines without proceeding. Shutting down camera...');
+        if (streamRef.current) {
+          try {
+            streamRef.current.getTracks().forEach(track => {
+              track.onended = null;
+              track.stop();
+            });
+          } catch (_) {}
+          streamRef.current = null;
+        }
+        if (window.cameraStream) {
+          try {
+            window.cameraStream.getTracks().forEach(track => {
+              track.onended = null;
+              track.stop();
+            });
+          } catch (_) {}
+          window.cameraStream = null;
+        }
+      }
     };
   }, []);
 
@@ -260,6 +283,7 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
   const handleContinue = () => {
     if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured') {
       console.log('[ProctoringInstructions] Continuing to test');
+      isProceedingRef.current = true;
       // Don't stop the stream here - let ProctoringEngine use it
       onContinue();
     } else {
