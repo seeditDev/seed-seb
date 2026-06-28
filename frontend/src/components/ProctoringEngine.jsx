@@ -657,22 +657,7 @@ const ProctoringEngine = ({
         detectionIntervalRef.current = null;
       }
       
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => {
-          track.stop();
-          console.log('[ProctoringEngine] Stopped camera track');
-        });
-        streamRef.current = null;
-      }
-      
-      // Also stop global stream if it exists
-      if (window.cameraStream && window.cameraStream.active) {
-        window.cameraStream.getTracks().forEach(track => {
-          track.stop();
-          console.log('[ProctoringEngine] Stopped global camera stream');
-        });
-        window.cameraStream = null;
-      }
+      cleanupStream();
       
       if (videoRef.current) {
         videoRef.current.srcObject = null;
@@ -750,7 +735,8 @@ const ProctoringEngine = ({
       
       initializedRef.current = false;
     };
-  }, [cleanupStream, isTestActive, loadModels, initializeWebcam, runPresenceCheckSequence, stopDetectionLoop]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTestActive]);
 
   // Restore/Reset violation count from localStorage on mount or when test ID changes
   useEffect(() => {

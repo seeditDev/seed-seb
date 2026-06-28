@@ -186,10 +186,28 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         console.log(`[ProctoringInstructions] Face capture attempt ${attempt + 1}...`);
         const detection = await faceapi.detectSingleFace(
           video,
-          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
+          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.85 })
         ).withFaceLandmarks().withFaceDescriptor();
         
         if (detection) {
+          const box = detection.detection.box;
+          const videoWidth = video.videoWidth;
+          const videoHeight = video.videoHeight;
+          
+          // Verify margins: Ensure the face box is not touching or overflowing the borders (indicates half-face/cut-off)
+          const borderThresholdX = videoWidth * 0.05; // 5% border margin
+          const borderThresholdY = videoHeight * 0.05;
+          
+          if (
+            box.x < borderThresholdX || 
+            box.y < borderThresholdY || 
+            (box.x + box.width) > (videoWidth - borderThresholdX) || 
+            (box.y + box.height) > (videoHeight - borderThresholdY)
+          ) {
+            console.warn('[ProctoringInstructions] Face is cut off or too close to frame boundaries. Retrying...');
+            continue;
+          }
+
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
