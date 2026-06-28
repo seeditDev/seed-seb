@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as tf from '@tensorflow/tfjs';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import * as faceapi from 'face-api.js';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import ViolationCounter from './ViolationCounter';
@@ -17,6 +16,71 @@ const MAX_VIOLATIONS = 5;
 // Global model loading state to prevent multiple loads
 let globalModelsLoaded = false;
 let globalModelsLoading = false;
+
+// Helper to execute YOLOv8 model inference and post-process on the GPU
+const runYolov8Inference = async (videoElement, model) => {
+  let result = { personCount: 0, phoneDetected: false, bookDetected: false };
+  
+  // 1. Preprocess the image and get predictions from the model
+  const tensors = tf.tidy(() => {
+    const img = tf.browser.fromPixels(videoElement);
+    const resized = tf.image.resizeBilinear(img, [640, 640]);
+    const normalized = resized.div(255.0);
+    const input = normalized.expandDims(0); // Shape [1, 640, 640, 3]
+    
+    const output = model.predict(input); // Output shape: [1, 84, 8400]
+    
+    // Reshape and transpose output to shape [8400, 84]
+    const transposed = output.reshape([84, 8400]).transpose([1, 0]);
+    
+    const scores = transposed.slice([0, 4], [-1, 80]); // [8400, 80]
+    const maxScores = scores.max(1); // [8400]
+    const classIds = scores.argMax(1); // [8400]
+    const mask = maxScores.greater(0.4); // [8400]
+    
+    return { maxScores, classIds, mask };
+  });
+
+  try {
+    // 2. Perform async GPU-to-CPU masking
+    const [filteredScores, filteredClasses] = await Promise.all([
+      tf.booleanMaskAsync(tensors.maxScores, tensors.mask),
+      tf.booleanMaskAsync(tensors.classIds, tensors.mask)
+    ]);
+    
+    const scoresArray = await filteredScores.array();
+    const classesArray = await filteredClasses.array();
+    
+    let personCount = 0;
+    let phoneDetected = false;
+    let bookDetected = false;
+    
+    for (let i = 0; i < classesArray.length; i++) {
+      const classId = classesArray[i];
+      // COCO labels: 0 = person, 67 = cell phone, 73 = book
+      if (classId === 0) {
+        personCount++;
+      } else if (classId === 67) {
+        phoneDetected = true;
+      } else if (classId === 73) {
+        bookDetected = true;
+      }
+    }
+    
+    result = { personCount, phoneDetected, bookDetected };
+    
+    filteredScores.dispose();
+    filteredClasses.dispose();
+  } catch (err) {
+    console.error('[ProctoringEngine] YOLOv8 post-processing error:', err);
+  } finally {
+    tensors.maxScores.dispose();
+    tensors.classIds.dispose();
+    tensors.mask.dispose();
+  }
+  
+  return result;
+};
 
 const ProctoringEngine = ({ 
   studentID, 
@@ -47,7 +111,7 @@ const ProctoringEngine = ({
     // Check if models are already loaded globally
     if (globalModelsLoaded) {
       modelsLoadedRef.current = true;
-      setModelStatus('active');
+      setModelStatus(window.yolov8Loaded && window.faceApiLoaded ? 'active' : window.faceApiLoaded ? 'face_only' : 'camera_only');
       console.log('[ProctoringEngine] Using already loaded models');
       return true;
     }
@@ -60,7 +124,7 @@ const ProctoringEngine = ({
         await new Promise(resolve => setTimeout(resolve, 1000));
         if (globalModelsLoaded) {
           modelsLoadedRef.current = true;
-          setModelStatus('active');
+          setModelStatus(window.yolov8Loaded && window.faceApiLoaded ? 'active' : window.faceApiLoaded ? 'face_only' : 'camera_only');
           return true;
         }
       }
@@ -72,7 +136,7 @@ const ProctoringEngine = ({
       globalModelsLoading = true;
       setModelStatus('loading');
       
-      console.log('[ProctoringEngine] Loading offline COCO-SSD and Face-API models independently...');
+      console.log('[ProctoringEngine] Loading offline YOLOv8 and Face-API models independently...');
       await tf.ready();
 
       // 1. Load Face-API models offline (Primary Guard)
@@ -89,35 +153,33 @@ const ProctoringEngine = ({
         console.warn('[ProctoringEngine] Face-API loading failed:', faceErr);
       }
 
-      // 2. Load COCO-SSD model (Offline first with online fallback)
+      // 2. Load YOLOv8 model (Offline first with online fallback)
       try {
-        console.log('[ProctoringEngine] Loading COCO-SSD offline...');
-        window.cocoSsdModel = await cocoSsd.load({
-          modelUrl: '/models/coco-ssd/model.json'
-        });
-        window.cocoSsdLoaded = true;
-        console.log('[ProctoringEngine] ✓ COCO-SSD loaded offline successfully');
-      } catch (cocoOfflineErr) {
-        console.warn('[ProctoringEngine] COCO-SSD offline load failed, trying online CDN...', cocoOfflineErr.message);
+        console.log('[ProctoringEngine] Loading YOLOv8 offline...');
+        window.yolov8Model = await tf.loadGraphModel('/models/yolov8/model.json');
+        window.yolov8Loaded = true;
+        console.log('[ProctoringEngine] ✓ YOLOv8 loaded offline successfully');
+      } catch (yoloOfflineErr) {
+        console.warn('[ProctoringEngine] YOLOv8 offline load failed, trying online CDN...', yoloOfflineErr.message);
         try {
-          window.cocoSsdModel = await cocoSsd.load();
-          window.cocoSsdLoaded = true;
-          console.log('[ProctoringEngine] ✓ COCO-SSD loaded online successfully');
-        } catch (cocoOnlineErr) {
-          window.cocoSsdLoaded = false;
-          console.warn('[ProctoringEngine] COCO-SSD online CDN load also failed:', cocoOnlineErr.message);
+          window.yolov8Model = await tf.loadGraphModel('https://hyuto.github.io/yolov8-tfjs/yolov8n_web_model/model.json');
+          window.yolov8Loaded = true;
+          console.log('[ProctoringEngine] ✓ YOLOv8 loaded online successfully');
+        } catch (yoloOnlineErr) {
+          window.yolov8Loaded = false;
+          console.warn('[ProctoringEngine] YOLOv8 online CDN load also failed:', yoloOnlineErr.message);
         }
       }
 
       globalModelsLoaded = true;
-      modelsLoadedRef.current = window.faceApiLoaded || window.cocoSsdLoaded;
+      modelsLoadedRef.current = window.faceApiLoaded || window.yolov8Loaded;
       globalModelsLoading = false;
 
-      const currentStatus = window.cocoSsdLoaded && window.faceApiLoaded 
+      const currentStatus = window.yolov8Loaded && window.faceApiLoaded 
         ? 'active' 
         : window.faceApiLoaded 
           ? 'face_only' 
-          : window.cocoSsdLoaded 
+          : window.yolov8Loaded 
             ? 'objects_only' 
             : 'failed';
 
@@ -395,18 +457,14 @@ const ProctoringEngine = ({
         }
       }
 
-      // 2. Run COCO-SSD detection (Object Detection Guard)
-      if (window.cocoSsdModel && window.cocoSsdLoaded) {
+      // 2. Run YOLOv8 detection (Object Detection Guard)
+      if (window.yolov8Model && window.yolov8Loaded) {
         try {
-          const predictions = await window.cocoSsdModel.detect(video);
-          console.log('[ProctoringEngine] COCO-SSD raw predictions:', predictions);
-          
-          const phonePredictions = predictions.filter(pred => pred.class === 'cell phone' && pred.score > 0.4);
-          const bookPredictions = predictions.filter(pred => pred.class === 'book' && pred.score > 0.4);
-          const personPredictions = predictions.filter(pred => pred.class === 'person' && pred.score > 0.4);
+          const yoloResult = await runYolov8Inference(video, window.yolov8Model);
+          console.log('[ProctoringEngine] YOLOv8 detection result:', yoloResult);
           
           if (!window.faceApiLoaded) {
-            faceCount = personPredictions.length;
+            faceCount = yoloResult.personCount;
             if (faceCount === 0) {
               violationType = 'no_face';
             } else if (faceCount > 1) {
@@ -414,13 +472,13 @@ const ProctoringEngine = ({
             }
           }
 
-          if (phonePredictions.length > 0) {
+          if (yoloResult.phoneDetected) {
             violationType = 'cell_phone';
-          } else if (bookPredictions.length > 0 && !violationType) {
+          } else if (yoloResult.bookDetected && !violationType) {
             violationType = 'prohibited_object';
           }
-        } catch (cocoErr) {
-          console.error('[ProctoringEngine] COCO-SSD runtime error:', cocoErr);
+        } catch (yoloErr) {
+          console.error('[ProctoringEngine] YOLOv8 runtime error:', yoloErr);
         }
       }
 
