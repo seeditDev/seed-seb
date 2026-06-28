@@ -20,10 +20,25 @@ class RuntimeManager:
 
     def get_app_root(self):
         """Get the base path of the application."""
-        if getattr(sys, 'frozen', False):
-            # If running as bundle, return the executable directory
-            return os.path.dirname(sys.executable)
-        # Otherwise, return parent of the desktop directory
+        # 1. If running as a frozen/compiled bundle (PyInstaller or Nuitka standalone)
+        # sys.executable is the compiled SEED-SEB.exe file.
+        exe_name = os.path.basename(sys.executable).lower()
+        if getattr(sys, 'frozen', False) or exe_name not in ("python.exe", "pythonw.exe"):
+            exec_dir = os.path.dirname(os.path.abspath(sys.executable))
+            if os.path.exists(os.path.join(exec_dir, "resources")):
+                return exec_dir
+            parent_dir = os.path.dirname(exec_dir)
+            if os.path.exists(os.path.join(parent_dir, "resources")):
+                return parent_dir
+            return exec_dir
+
+        # 2. Otherwise (during development), return parent of the desktop/app_source directory
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        if os.path.basename(file_dir) == "desktop":
+            return os.path.dirname(file_dir)
+        elif os.path.basename(file_dir) == "app_source":
+            return os.path.dirname(os.path.dirname(file_dir))
+            
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     def resolve_paths(self):
