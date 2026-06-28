@@ -211,7 +211,8 @@ const ProctoringEngine = ({
         console.log('[ProctoringEngine] Loading Face-API models offline...');
         await Promise.all([
           faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api')
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
         ]);
         window.faceApiLoaded = true;
         console.log('[ProctoringEngine] ✓ Face-API loaded successfully');
@@ -282,15 +283,28 @@ const ProctoringEngine = ({
 
   const cleanupStream = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.onended = null;
-        track.stop();
-      });
+      try {
+        streamRef.current.getTracks().forEach(track => {
+          track.onended = null;
+          track.stop();
+          console.log('[ProctoringEngine] Stopped streamRef track:', track.label);
+        });
+      } catch (err) {
+        console.error('[ProctoringEngine] Error stopping streamRef track:', err);
+      }
       streamRef.current = null;
     }
 
-    if (window.cameraStream && window.cameraStream.active) {
-      window.cameraStream.getTracks().forEach(track => track.stop());
+    if (window.cameraStream) {
+      try {
+        window.cameraStream.getTracks().forEach(track => {
+          track.onended = null;
+          track.stop();
+          console.log('[ProctoringEngine] Explicitly stopped window.cameraStream track:', track.label);
+        });
+      } catch (err) {
+        console.error('[ProctoringEngine] Error stopping window.cameraStream track:', err);
+      }
       window.cameraStream = null;
     }
   }, []);
@@ -436,6 +450,8 @@ const ProctoringEngine = ({
         msg = 'Prohibited object (book/material) detected';
       } else if (type === 'looking_away') {
         msg = 'Suspicious activity: Student looking away from screen repeatedly';
+      } else if (type === 'face_mismatch') {
+        msg = 'Face verification failed: Different person detected in camera view!';
       }
 
       // Defer side effects to prevent updating other React components during this state transition
@@ -490,7 +506,7 @@ const ProctoringEngine = ({
           const faceDetections = await faceapi.detectAllFaces(
             video, 
             new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
-          ).withFaceLandmarks();
+          ).withFaceLandmarks().withFaceDescriptors();
 
           faceCount = faceDetections.length;
           console.log('[ProctoringEngine] Face-API detections count:', faceCount);
@@ -500,25 +516,42 @@ const ProctoringEngine = ({
           } else if (faceCount > 1) {
             violationType = 'multiple_faces';
           } else {
+            // Identity Face Verification matching check
+            const savedDescriptorStr = localStorage.getItem('proctor_reference_descriptor');
+            if (savedDescriptorStr && faceDetections[0].descriptor) {
+              try {
+                const referenceDescriptor = new Float32Array(JSON.parse(savedDescriptorStr));
+                const distance = faceapi.euclideanDistance(referenceDescriptor, faceDetections[0].descriptor);
+                console.log('[ProctoringEngine] Face verification distance:', distance);
+                if (distance > 0.6) {
+                  violationType = 'face_mismatch';
+                }
+              } catch (err) {
+                console.error('[ProctoringEngine] Error parsing reference descriptor:', err);
+              }
+            }
+
             // Check head pose (Looking Away detection)
-            const landmarks = faceDetections[0].landmarks;
-            const nose = landmarks.getNose();
-            const jawOutline = landmarks.getJawOutline();
-            
-            if (jawOutline && jawOutline.length >= 17 && nose && nose.length >= 7) {
-              const leftEdge = jawOutline[0];
-              const rightEdge = jawOutline[16];
-              const noseTip = nose[6];
+            if (!violationType) {
+              const landmarks = faceDetections[0].landmarks;
+              const nose = landmarks.getNose();
+              const jawOutline = landmarks.getJawOutline();
               
-              const distLeft = noseTip.x - leftEdge.x;
-              const distRight = rightEdge.x - noseTip.x;
-              
-              if (distLeft > 0 && distRight > 0) {
-                const ratio = distLeft / distRight;
-                console.log('[ProctoringEngine] Face ratio (nose/jaw):', ratio);
-                if (ratio < 0.35 || ratio > 2.8) {
-                  lookingAway = true;
-                  violationType = 'looking_away';
+              if (jawOutline && jawOutline.length >= 17 && nose && nose.length >= 7) {
+                const leftEdge = jawOutline[0];
+                const rightEdge = jawOutline[16];
+                const noseTip = nose[6];
+                
+                const distLeft = noseTip.x - leftEdge.x;
+                const distRight = rightEdge.x - noseTip.x;
+                
+                if (distLeft > 0 && distRight > 0) {
+                  const ratio = distLeft / distRight;
+                  console.log('[ProctoringEngine] Face ratio (nose/jaw):', ratio);
+                  if (ratio < 0.35 || ratio > 2.8) {
+                    lookingAway = true;
+                    violationType = 'looking_away';
+                  }
                 }
               }
             }
@@ -718,7 +751,7 @@ const ProctoringEngine = ({
     };
   }, [cleanupStream, isTestActive, loadModels, initializeWebcam, runPresenceCheckSequence, stopDetectionLoop]);
 
-  // Restore violation count from localStorage on mount
+  // Restore/Reset violation count from localStorage on mount or when test ID changes
   useEffect(() => {
     if (studentID && testID) {
       const key = `proctor_violations_${studentID}_${testID}`;
@@ -729,8 +762,13 @@ const ProctoringEngine = ({
           setViolationCount(count);
         } catch (error) {
           console.error('[ProctoringEngine] Error restoring violation count:', error);
+          setViolationCount(0);
         }
+      } else {
+        setViolationCount(0);
       }
+    } else {
+      setViolationCount(0);
     }
   }, [studentID, testID]);
 

@@ -11,6 +11,7 @@ import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
 import ProctoringEngine from './ProctoringEngine';
+import ProctoringInstructions from './ProctoringInstructions';
 import '../styles/CodingAssessmentPage.css';
 
 const LOCAL_BASE_URL = '/seed-contents';
@@ -65,6 +66,7 @@ const CodingAssessmentPage = () => {
     const [passkey, setPasskey] = useState('');
     const [passkeyError, setPasskeyError] = useState('');
     const [isValidatingPasskey, setIsValidatingPasskey] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(false);
 
     // Active workspace states
     const [currentAssessment, setCurrentAssessment] = useState(null);
@@ -483,7 +485,19 @@ const CodingAssessmentPage = () => {
         if (assessment.passkey) {
             setShowPasskeyModal(true);
         } else {
-            await startAssessment(assessment);
+            // If no passkey but proctored, show camera instructions first
+            const isProctored = assessment && (
+                assessment.proctored === true ||
+                assessment.proctored === 1 ||
+                assessment.proctored === "1" ||
+                assessment.proctored === "true"
+            );
+            if (isProctored) {
+                setSelectedAssessment(assessment);
+                setShowInstructions(true);
+            } else {
+                await startAssessment(assessment);
+            }
         }
     };
 
@@ -493,10 +507,33 @@ const CodingAssessmentPage = () => {
             setPasskeyError("Please enter the passkey");
             return;
         }
+        
+        console.log('[CodingAssessmentPage] Validating passkey for:', selectedAssessment?.name);
+        console.log('[CodingAssessmentPage] Selected Assessment Object:', selectedAssessment);
+        
         if (passkey.trim() === selectedAssessment.passkey) {
+            console.log('[CodingAssessmentPage] Passkey matched successfully!');
             setShowPasskeyModal(false);
-            await startAssessment(selectedAssessment);
+            
+            // If the assessment is proctored, show camera/guidelines instructions first
+            const isProctored = selectedAssessment && (
+                selectedAssessment.proctored === true ||
+                selectedAssessment.proctored === 1 ||
+                selectedAssessment.proctored === "1" ||
+                selectedAssessment.proctored === "true"
+            );
+            
+            console.log('[CodingAssessmentPage] Proctoring check result (isProctored):', isProctored);
+            
+            if (isProctored) {
+                console.log('[CodingAssessmentPage] Showing proctoring guidelines instructions modal...');
+                setShowInstructions(true);
+            } else {
+                console.log('[CodingAssessmentPage] Proctoring disabled. Launching test workspace directly...');
+                await startAssessment(selectedAssessment);
+            }
         } else {
+            console.warn('[CodingAssessmentPage] Passkey validation failed. Incorrect passkey entered.');
             setPasskeyError("Incorrect passkey. Please try again.");
             setPasskey('');
         }
@@ -1276,6 +1313,17 @@ const CodingAssessmentPage = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Proctoring Instructions Modal - shown for proctored assessments after passkey */}
+                {showInstructions && (
+                    <ProctoringInstructions
+                        onContinue={() => {
+                            setShowInstructions(false);
+                            startAssessment(selectedAssessment);
+                        }}
+                        onCancel={() => setShowInstructions(false)}
+                    />
+                )}
 
                 {/* Passkey validation modal */}
                 {showPasskeyModal && (

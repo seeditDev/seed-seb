@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync } from 'react-icons/fa';
 import '../styles/ProctoringInstructions.css';
+import * as faceapi from 'face-api.js';
 
 const ProctoringInstructions = ({ onContinue, onCancel }) => {
   const [cameraStatus, setCameraStatus] = useState('requesting'); // requesting, granted, denied, error
@@ -12,6 +13,10 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
   const contentRef = useRef(null);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isAcknowledged, setIsAcknowledged] = useState(false);
+  
+  // State for reference photo registration
+  const [photoStatus, setPhotoStatus] = useState('searching'); // searching, captured, failed
+  const [photoUrl, setPhotoUrl] = useState(null);
 
   useEffect(() => {
     // Request camera access when component mounts
@@ -170,8 +175,90 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
 
  
 
+  const loadFaceApiForPhoto = async () => {
+    try {
+      if (!window.faceApiLoaded) {
+        console.log('[ProctoringInstructions] Loading faceapi models...');
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
+        ]);
+        window.faceApiLoaded = true;
+      }
+      return true;
+    } catch (err) {
+      console.error('[ProctoringInstructions] Error loading faceapi models:', err);
+      return false;
+    }
+  };
+
+  const captureReferencePhoto = useCallback(async () => {
+    if (!videoRef.current || !streamRef.current) {
+      console.warn('[ProctoringInstructions] Cannot capture photo, video or stream is null');
+      return;
+    }
+    
+    setPhotoStatus('searching');
+    setPhotoUrl(null);
+    const modelsReady = await loadFaceApiForPhoto();
+    if (!modelsReady) {
+      setPhotoStatus('failed');
+      return;
+    }
+    
+    const video = videoRef.current;
+    
+    // Attempt to capture a face for up to 15 seconds (15 attempts, 1s apart)
+    for (let attempt = 0; attempt < 15; attempt++) {
+      if (!streamRef.current || !streamRef.current.active) return;
+      
+      try {
+        console.log(`[ProctoringInstructions] Face capture attempt ${attempt + 1}...`);
+        const detection = await faceapi.detectSingleFace(
+          video,
+          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
+        ).withFaceLandmarks().withFaceDescriptor();
+        
+        if (detection) {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          
+          localStorage.setItem('proctor_reference_photo', dataUrl);
+          localStorage.setItem('proctor_reference_descriptor', JSON.stringify(Array.from(detection.descriptor)));
+          
+          setPhotoUrl(dataUrl);
+          setPhotoStatus('captured');
+          console.log('[ProctoringInstructions] ✓ Reference face photo captured and descriptor saved');
+          return;
+        }
+      } catch (err) {
+        console.error('[ProctoringInstructions] Error during face capture attempt:', err);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    setPhotoStatus('failed');
+  }, []);
+
+  useEffect(() => {
+    if (cameraStatus === 'granted') {
+      // Delay slightly to allow video track to start playing
+      const timer = setTimeout(() => {
+        captureReferencePhoto();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [cameraStatus, captureReferencePhoto]);
+
   const handleContinue = () => {
-    if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged) {
+    if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured') {
       console.log('[ProctoringInstructions] Continuing to test');
       // Don't stop the stream here - let ProctoringEngine use it
       onContinue();
@@ -180,7 +267,8 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
         canContinue,
         hasStream: !!streamRef.current,
         hasScrolledToBottom,
-        isAcknowledged
+        isAcknowledged,
+        photoStatus
       });
     }
   };
@@ -242,9 +330,43 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
               )}
               
               {cameraStatus === 'granted' && (
-                <div className="camera-status-success">
-                  <FaCheckCircle className="success-icon" />
-                  <span>Camera access granted ✓</span>
+                <div className="camera-preview-wrapper">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="instructions-video-preview"
+                  />
+                  <div className="photo-capture-overlay">
+                    {photoStatus === 'searching' && (
+                      <div className="photo-scan-status scan-searching">
+                        <FaSpinner className="spinner-icon pulse" />
+                        <span>Scanning face for verification photo...</span>
+                      </div>
+                    )}
+                    {photoStatus === 'captured' && (
+                      <div className="photo-scan-status scan-captured">
+                        <FaCheckCircle className="scan-success-icon" />
+                        <span>✓ Identity Verified & Registered!</span>
+                      </div>
+                    )}
+                    {photoStatus === 'failed' && (
+                      <div className="photo-scan-status scan-failed">
+                        <FaExclamationTriangle className="scan-failed-icon" />
+                        <span>Face not detected. Keep your face centered.</span>
+                        <button className="scan-retry-btn" onClick={captureReferencePhoto}>
+                          <FaSync /> Retry Photo
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {photoUrl && (
+                    <div className="photo-thumbnail">
+                      <img src={photoUrl} alt="Registered Identity" />
+                      <span className="thumbnail-label">ID REGISTERED</span>
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -328,11 +450,11 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
             Cancel
           </button>
           <button 
-            className={`instructions-btn continue-btn ${(!canContinue || !hasScrolledToBottom || !isAcknowledged) ? 'disabled' : ''}`}
+            className={`instructions-btn continue-btn ${(!canContinue || !hasScrolledToBottom || !isAcknowledged || photoStatus !== 'captured') ? 'disabled' : ''}`}
             onClick={handleContinue}
-            disabled={!canContinue || !hasScrolledToBottom || !isAcknowledged}
+            disabled={!canContinue || !hasScrolledToBottom || !isAcknowledged || photoStatus !== 'captured'}
           >
-            {canContinue && hasScrolledToBottom && isAcknowledged
+            {canContinue && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured'
               ? 'I Understand, Continue to Test' 
               : cameraStatus === 'requesting' 
                 ? 'Waiting for Camera...' 
@@ -340,7 +462,11 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
                   ? 'Scroll & Accept to Continue'
                   : !isAcknowledged
                     ? 'Please Accept Guidelines'
-                    : 'Please Allow Camera Access First'}
+                    : photoStatus === 'searching'
+                      ? 'Registering Face Photo...'
+                      : photoStatus === 'failed'
+                        ? 'Face Not Detected (Retry)'
+                        : 'Please Allow Camera Access First'}
           </button>
         </div>
       </div>
