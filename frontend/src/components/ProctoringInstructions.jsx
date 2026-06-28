@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync, FaClock, FaLaptopCode, FaClipboardList } from 'react-icons/fa';
 import '../styles/ProctoringInstructions.css';
 import * as faceapi from 'face-api.js';
 import { setProctorCacheExpiry } from '../utils/proctorCache';
@@ -400,55 +400,98 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
             <div className="instructions-right-column">
               {assessment && (
                 <div className="instructions-assessment-card" style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  marginBottom: '20px'
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)',
+                  border: '1px solid rgba(99, 102, 241, 0.25)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  marginBottom: '24px',
+                  boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                  backdropFilter: 'blur(8px)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
+                  {/* Subtle background glow decorator */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-50px',
+                    right: '-50px',
+                    width: '100px',
+                    height: '100px',
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    filter: 'blur(30px)',
+                    borderRadius: '50%'
+                  }}></div>
+                  
+                  <span style={{ 
+                    fontSize: '0.72rem', 
+                    color: '#a5b4fc', 
+                    fontWeight: '700', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.15em',
+                    display: 'block',
+                    marginBottom: '8px',
+                    textAlign: 'left'
+                  }}>Selected Assessment</span>
+                  
                   <h4 style={{
-                    margin: '0 0 16px',
-                    fontSize: '1.25rem',
-                    color: '#6366f1',
-                    fontWeight: '600'
+                    margin: '0 0 20px',
+                    fontSize: '1.35rem',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    lineHeight: '1.3',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                    paddingBottom: '14px',
+                    textAlign: 'left'
                   }}>{assessment.name}</h4>
                   
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '12px'
+                    gap: '14px'
                   }}>
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
-                      background: 'rgba(0,0,0,0.15)',
-                      padding: '10px 14px',
-                      borderRadius: '8px'
+                      alignItems: 'center',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      padding: '12px 8px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      textAlign: 'center'
                     }}>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</span>
-                      <span style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: '500', marginTop: '4px', textTransform: 'capitalize' }}>{assessment.type}</span>
+                      <FaLaptopCode style={{ fontSize: '1.25rem', color: '#6366f1', marginBottom: '6px' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</span>
+                      <span style={{ fontSize: '0.88rem', color: '#f1f5f9', fontWeight: '600', marginTop: '4px', textTransform: 'capitalize' }}>{assessment.type}</span>
                     </div>
                     
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
-                      background: 'rgba(0,0,0,0.15)',
-                      padding: '10px 14px',
-                      borderRadius: '8px'
+                      alignItems: 'center',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      padding: '12px 8px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      textAlign: 'center'
                     }}>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</span>
-                      <span style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: '500', marginTop: '4px' }}>{assessment.duration} Min</span>
+                      <FaClock style={{ fontSize: '1.25rem', color: '#a855f7', marginBottom: '6px' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</span>
+                      <span style={{ fontSize: '0.88rem', color: '#f1f5f9', fontWeight: '600', marginTop: '4px' }}>{assessment.duration} Mins</span>
                     </div>
                     
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
-                      background: 'rgba(0,0,0,0.15)',
-                      padding: '10px 14px',
-                      borderRadius: '8px'
+                      alignItems: 'center',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      padding: '12px 8px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      textAlign: 'center'
                     }}>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions</span>
-                      <span style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: '500', marginTop: '4px' }}>{assessment.questions || '—'} Qs</span>
+                      <FaClipboardList style={{ fontSize: '1.25rem', color: '#10b981', marginBottom: '6px' }} />
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions</span>
+                      <span style={{ fontSize: '0.88rem', color: '#f1f5f9', fontWeight: '600', marginTop: '4px' }}>{assessment.questions || '—'} Qs</span>
                     </div>
                   </div>
                 </div>
