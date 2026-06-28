@@ -4,6 +4,12 @@ echo SEED-SEB Native C++ Compilation using Nuitka
 echo ===================================================
 echo.
 
+:: Sync latest source files from desktop folder
+echo Syncing latest source files from desktop folder...
+if exist "..\desktop" (
+    xcopy /E /I /Y "..\desktop" "app_source"
+)
+
 :: Clean old build outputs
 if exist dist rmdir /s /q dist
 if exist main.build rmdir /s /q main.build
