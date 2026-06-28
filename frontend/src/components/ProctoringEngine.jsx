@@ -9,8 +9,8 @@ import timeService from '../services/timeService';
 const DETECTION_INTERVAL_MS = 2000; // no longer used for tight loop, kept for reference
 const CONSECUTIVE_DETECTIONS_REQUIRED = 2; // legacy, not used in new strategy
 const VIOLATION_RESET_WINDOW_MS = 6000; // legacy, not used in new strategy
-const CHECK_INTERVAL_MS = 10000; // 10 seconds between proctor checks
-const SEQUENCE_GAP_MS = 3000; // 3 seconds between the 2 images in a sequence
+const CHECK_INTERVAL_MS = 4000; // 4 seconds between proctor checks
+const SEQUENCE_GAP_MS = 1500; // 1.5 seconds between the 2 images in a sequence
 const MAX_VIOLATIONS = 5;
 
 // Global model loading state to prevent multiple loads
@@ -438,17 +438,20 @@ const ProctoringEngine = ({
         msg = 'Suspicious activity: Student looking away from screen repeatedly';
       }
 
-      showAlert(msg, 'warning');
-      notifyViolationEvent(type, newCount);
+      // Defer side effects to prevent updating other React components during this state transition
+      setTimeout(() => {
+        showAlert(msg, 'warning');
+        notifyViolationEvent(type, newCount);
 
-      if (newCount >= maxViolations && onAutoSubmit) {
-        console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
-        showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
+        if (newCount >= maxViolations && onAutoSubmit) {
+          console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
+          showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
 
-        setTimeout(() => {
-          onAutoSubmit({ reason: 'proctoring_violations', violationCount: newCount });
-        }, 2000);
-      }
+          setTimeout(() => {
+            onAutoSubmit({ reason: 'proctoring_violations', violationCount: newCount });
+          }, 2000);
+        }
+      }, 0);
 
       return newCount;
     });
