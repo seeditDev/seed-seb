@@ -73,20 +73,6 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
     }
   };
 
-  const checkCameraWorking = () => {
-    if (!streamRef.current) {
-      return false;
-    }
-    try {
-      const streamActive = streamRef.current.active;
-      const videoTracks = streamRef.current.getVideoTracks();
-      const trackLive = videoTracks.length > 0 && videoTracks[0].readyState === 'live';
-      return streamActive && trackLive;
-    } catch (_) {
-      return false;
-    }
-  };
-
   const requestCameraAccess = async () => {
     try {
       setCameraStatus('requesting');
@@ -104,83 +90,13 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
         audio: false
       });
 
-      console.log('[ProctoringInstructions] Camera access granted, setting up video...');
+      console.log('[ProctoringInstructions] Camera access granted.');
 
       // Store stream globally so ProctoringEngine can reuse it
       window.cameraStream = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.muted = true;
-        streamRef.current = stream;
-        
-        const video = videoRef.current;
-        
-        video.play().catch(() => {});
-        
-        // Set up event handler for when video is ready
-        const handleVideoReady = () => {
-          console.log('[ProctoringInstructions] Video event fired, readyState:', video.readyState);
-          
-          // Ensure video is playing
-          video.play().then(() => {
-            console.log('[ProctoringInstructions] Video play() successful');
-            
-            // Start checking if camera is working
-            let checkCount = 0;
-            const maxChecks = 20; // Check for up to 4 seconds (20 * 200ms)
-            
-            verificationIntervalRef.current = setInterval(() => {
-              checkCount++;
-              const isWorking = checkCameraWorking();
-              
-              if (isWorking) {
-                clearInterval(verificationIntervalRef.current);
-                setCameraStatus('granted');
-                setCanContinue(true);
-              } else if (checkCount >= maxChecks) {
-                console.warn('[ProctoringInstructions] Camera verification timeout');
-                clearInterval(verificationIntervalRef.current);
-                setCameraStatus('denied');
-                setCameraError('Camera preview is not working. Please check your camera and try again.');
-                setCanContinue(false);
-              }
-            }, 200); // Check every 200ms
-            
-            // Also check immediately
-            setTimeout(() => {
-              const isWorking = checkCameraWorking();
-              if (isWorking) {
-                clearInterval(verificationIntervalRef.current);
-                setCameraStatus('granted');
-                setCanContinue(true);
-              }
-            }, 100);
-          }).catch(error => {
-            console.error('[ProctoringInstructions] Error playing video:', error);
-            setCameraStatus('denied');
-            setCameraError('Failed to start camera preview. Please try again.');
-            setCanContinue(false);
-          });
-        };
-
-        // Set up multiple event listeners
-        video.addEventListener('loadedmetadata', handleVideoReady, { once: true });
-        video.addEventListener('loadeddata', handleVideoReady, { once: true });
-        video.addEventListener('canplay', handleVideoReady, { once: true });
-        
-        // If video is already ready, trigger immediately
-        if (video.readyState >= 2) {
-          console.log('[ProctoringInstructions] Video already ready, triggering immediately');
-          handleVideoReady();
-        }
-      } else {
-        // Video ref not available, but stream is good
-        streamRef.current = stream;
-        setCameraStatus('granted');
-        setCanContinue(true);
-      }
+      streamRef.current = stream;
+      setCameraStatus('granted');
+      setCanContinue(true);
     } catch (error) {
       console.error('[ProctoringInstructions] Camera access error:', error);
       setCameraStatus('denied');
@@ -216,25 +132,55 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
     }
   };
 
-  const captureReferencePhoto = useCallback(async () => {
-    if (!videoRef.current || !streamRef.current) {
-      console.warn('[ProctoringInstructions] Cannot capture photo, video or stream is null');
-      return;
+  // Bind stream to video element when videoRef becomes available after permission is granted
+  useEffect(() => {
+    if (cameraStatus === 'granted' && streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      
+      if (video.srcObject !== streamRef.current) {
+        console.log('[ProctoringInstructions] Binding stream to video preview element...');
+        video.srcObject = streamRef.current;
+        video.setAttribute('playsinline', 'true');
+        video.muted = true;
+        
+        video.play().then(() => {
+          console.log('[ProctoringInstructions] Video preview play() successful');
+        }).catch(error => {
+          console.error('[ProctoringInstructions] Video preview play() failed:', error);
+        });
+      }
     }
-    
+  }, [cameraStatus]);
+
+  const captureReferencePhoto = useCallback(async () => {
     setPhotoStatus('searching');
     setPhotoUrl(null);
+    
     const modelsReady = await loadFaceApiForPhoto();
     if (!modelsReady) {
       setPhotoStatus('failed');
       return;
     }
     
-    const video = videoRef.current;
-    
-    // Attempt to capture a face for up to 15 seconds (15 attempts, 1s apart)
-    for (let attempt = 0; attempt < 15; attempt++) {
-      if (!streamRef.current || !streamRef.current.active) return;
+    // Attempt to capture a face for up to 30 attempts (30 seconds)
+    for (let attempt = 0; attempt < 30; attempt++) {
+      if (!streamRef.current || !streamRef.current.active) {
+        console.warn('[ProctoringInstructions] Stream is no longer active.');
+        return;
+      }
+      
+      const video = videoRef.current;
+      if (!video) {
+        console.log('[ProctoringInstructions] Video element not yet mounted, waiting...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        console.log('[ProctoringInstructions] Video dimensions are 0 (not playing yet), waiting...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
       
       try {
         console.log(`[ProctoringInstructions] Face capture attempt ${attempt + 1}...`);
@@ -245,8 +191,8 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
         
         if (detection) {
           const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth || 640;
-          canvas.height = video.videoHeight || 480;
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           
@@ -272,10 +218,10 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
 
   useEffect(() => {
     if (cameraStatus === 'granted') {
-      // Delay slightly to allow video track to start playing
+      // Delay slightly to allow video track to start playing and srcObject to bind
       const timer = setTimeout(() => {
         captureReferencePhoto();
-      }, 500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [cameraStatus, captureReferencePhoto]);
