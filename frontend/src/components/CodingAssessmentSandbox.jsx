@@ -248,11 +248,11 @@ const CodingAssessmentSandbox = () => {
             if (document.hidden) {
                 setTabSwitches(prev => {
                     const newCount = prev + 1;
-                    if (newCount >= 3) {
+                    if (newCount >= 5) {
                         setIsLockedOut(true);
                         triggerAutoSubmit(code, language, selectedChallenge?.id, contestParam);
                     } else {
-                        setProctorWarning(`Warning: You have switched tabs. Tab switch count: ${newCount}/3. Assessment will automatically submit and lock on the 3rd switch.`);
+                        setProctorWarning(`Tab Switch: ${newCount}/5`);
                     }
                     return newCount;
                 });
@@ -643,7 +643,7 @@ const CodingAssessmentSandbox = () => {
                     <div className="proctor-lockout-card">
                         <FaLock className="lockout-icon" style={{ fontSize: '3rem', color: '#ff4d4f', marginBottom: '15px' }} />
                         <h2 style={{ color: '#ff4d4f' }}>Assessment Locked</h2>
-                        <p style={{ margin: '15px 0' }}>You have exceeded the maximum allowed tab switches (3). Your assessment has been automatically submitted and locked.</p>
+                        <p style={{ margin: '15px 0' }}>You have exceeded the maximum allowed tab switches (5). Your assessment has been automatically submitted and locked.</p>
                         <button className="action-btn" style={{ background: '#333', color: '#fff', padding: '10px 20px' }} onClick={() => navigate('/student/assessment')}>
                             Return to Dashboard
                         </button>
@@ -772,7 +772,7 @@ const CodingAssessmentSandbox = () => {
                             marginLeft: '15px'
                         }}>
                             <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: tabSwitches > 0 ? '#ef4444' : '#10b981', marginRight: '4px', animation: 'pulseLock 1.5s infinite' }}></span>
-                            PROCTOR ACTIVE | TAB SWITCHES: {tabSwitches} / 3
+                            PROCTOR ACTIVE | TAB SWITCHES: {tabSwitches} / 5
                         </div>
                     )}
                 </div>

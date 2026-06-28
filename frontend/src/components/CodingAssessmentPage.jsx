@@ -695,12 +695,12 @@ const CodingAssessmentPage = () => {
             if (document.hidden) {
                 setViolationCount(prev => {
                     const newCount = prev + 1;
-                    if (newCount >= 3) {
+                    if (newCount >= 5) {
                         setIsLockedOut(true);
                         autoSubmitAttempt("navigation");
                         return newCount;
                     }
-                    setProctorWarning(`Proctor Alert: Tab switch detected. Violation: ${newCount}/3. Worspace will lock and automatically submit on the 3rd violation.`);
+                    setProctorWarning(`Tab Switch: ${newCount}/5`);
                     return newCount;
                 });
             }
@@ -1324,7 +1324,10 @@ const CodingAssessmentPage = () => {
                             setShowInstructions(false);
                             startAssessment(selectedAssessment);
                         }}
-                        onCancel={() => setShowInstructions(false)}
+                        onCancel={() => {
+                            setShowInstructions(false);
+                            clearAllProctorCache();
+                        }}
                     />
                 )}
 
