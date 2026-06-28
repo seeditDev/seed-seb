@@ -1548,11 +1548,6 @@ const CodingAssessmentPage = () => {
                     <span className="assessment-title-label">
                         {currentAssessment?.name || "SEED-IT Assessment"}
                     </span>
-                    {proctorWarning && (
-                        <div className="proctor-warning-text animate-pulse">
-                            <FaExclamationTriangle /> {proctorWarning}
-                        </div>
-                    )}
                 </div>
                 
                 <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>

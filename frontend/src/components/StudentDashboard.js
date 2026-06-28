@@ -87,6 +87,7 @@ const StudentDashboard = () => {
     internet: 'pending'
   });
   const [preflightDone, setPreflightDone] = useState(false);
+  const [chargerConfirmed, setChargerConfirmed] = useState(false);
   // ─────────────────────────────────────────────────────────────────
   
   const navigate = useNavigate();
@@ -325,6 +326,7 @@ const StudentDashboard = () => {
     setPreflightResults({ internet: 'pending' });
     setPreflightDone(false);
     setEligibilityError(null);
+    setChargerConfirmed(false);
     clearAllProctorCache();
   };
 
@@ -409,6 +411,7 @@ const StudentDashboard = () => {
     setSelectedAssessment(assessment);
     setPreflightResults({ internet: 'pending' });
     setPreflightDone(false);
+    setChargerConfirmed(false);
     setLaunchStep('preflight');
 
     // Hold 'pending' state visibly for 2 seconds so the animation is noticeable
@@ -773,13 +776,46 @@ const StudentDashboard = () => {
                 </span>
               </div>
 
+              {/* Charger confirmation manual checklist row */}
+              <div className="lw-preflight-row" style={{ 
+                padding: '16px', 
+                borderRadius: '10px', 
+                marginTop: '15px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span className="lw-preflight-icon" style={{ fontSize: '1.4rem' }}>🔌</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <span className="lw-preflight-label" style={{ fontSize: '1.05rem', fontWeight: '600', color: '#f8fafc' }}>Power Source Connection</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Connect charger to prevent system shutdown during test</span>
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={chargerConfirmed}
+                    onChange={(e) => setChargerConfirmed(e.target.checked)}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </label>
+              </div>
+
               {/* Result messages */}
               {preflightDone && preflightResults.internet === 'fail' && (
                 <div className="lw-error-row" style={{ marginTop: '16px', padding: '12px' }}>
                   <FaExclamationTriangle style={{ marginRight: '8px' }} /> No internet connection detected. Please connect and try again.
                 </div>
               )}
-              {preflightDone && preflightResults.internet === 'pass' && (
+              {preflightDone && preflightResults.internet === 'pass' && !chargerConfirmed && (
+                <div className="lw-warning-row" style={{ marginTop: '16px', padding: '12px', background: 'rgba(234, 179, 8, 0.1)', borderLeft: '4px solid #eab308', borderRadius: '4px', display: 'flex', alignItems: 'center', color: '#facc15' }}>
+                  <FaExclamationTriangle style={{ marginRight: '8px' }} /> Please confirm you have connected your charger to enable Proceed.
+                </div>
+              )}
+              {preflightDone && preflightResults.internet === 'pass' && chargerConfirmed && (
                 <div className="lw-info-row" style={{ marginTop: '16px', padding: '12px' }}>
                   <FaCheckCircle style={{ color: '#10b981', marginRight: '8px' }} /> All checks passed. You may proceed.
                 </div>
@@ -789,7 +825,7 @@ const StudentDashboard = () => {
               <button className="lw-btn-secondary" onClick={cancelWizard} style={{ padding: '12px 24px' }}>Cancel</button>
               <button
                 className="lw-btn-primary"
-                disabled={!preflightDone || preflightResults.internet === 'fail'}
+                disabled={!preflightDone || preflightResults.internet === 'fail' || !chargerConfirmed}
                 onClick={handlePreflightProceed}
                 style={{ padding: '12px 28px' }}
               >

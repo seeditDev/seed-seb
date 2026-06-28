@@ -176,10 +176,10 @@ const ProctoringEngine = ({
 
   // Load models with global caching to prevent repeated loading
   const loadModels = useCallback(async () => {
-    // Check if models are already loaded globally
-    if (globalModelsLoaded) {
+    // Check if models are already loaded globally and both succeeded
+    if (globalModelsLoaded && window.faceApiLoaded && window.yolov8Loaded) {
       modelsLoadedRef.current = true;
-      setModelStatus(window.yolov8Loaded && window.faceApiLoaded ? 'active' : window.faceApiLoaded ? 'face_only' : 'camera_only');
+      setModelStatus('active');
       console.log('[ProctoringEngine] Using already loaded models');
       return true;
     }
