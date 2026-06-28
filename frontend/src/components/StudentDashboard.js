@@ -157,7 +157,8 @@ const StudentDashboard = () => {
             slug: derivedSlug,
             type: 'mcq',
             proctored: module.proctored,
-            maxViolations: module.maxViolations
+            maxViolations: module.maxViolations,
+            display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999)
           };
         });
 
@@ -198,11 +199,45 @@ const StudentDashboard = () => {
             type: 'coding',
             languages: module.languages || ["c", "cpp", "java", "python"],
             proctored: module.proctored,
-            maxViolations: module.maxViolations
+            maxViolations: module.maxViolations,
+            display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999)
           };
         });
 
       const combined = [...mcqList, ...codingList];
+      
+      // Sort combined array based on availability status, display order, and date/time
+      combined.sort((a, b) => {
+        const statusPriority = { "Active": 0, "Upcoming": 1, "Expired": 2 };
+        const statusA = getScheduleStatus(a.schedule).status;
+        const statusB = getScheduleStatus(b.schedule).status;
+        
+        const priorityA = statusPriority[statusA] ?? 99;
+        const priorityB = statusPriority[statusB] ?? 99;
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+        
+        // Secondary sort: display_order (ascending)
+        const orderA = typeof a.display_order === 'number' ? a.display_order : 9999;
+        const orderB = typeof b.display_order === 'number' ? b.display_order : 9999;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        
+        // Tertiary sort: startDate (ascending)
+        const dateA = a.schedule?.startDate || '';
+        const dateB = b.schedule?.startDate || '';
+        if (dateA !== dateB) {
+          return dateA.localeCompare(dateB);
+        }
+        
+        // Quaternary sort: startTime (ascending)
+        const timeA = a.schedule?.startTime || '';
+        const timeB = b.schedule?.startTime || '';
+        return timeA.localeCompare(timeB);
+      });
+
       setAssessments(combined);
       setFilteredAssessments(combined);
     } catch (err) {

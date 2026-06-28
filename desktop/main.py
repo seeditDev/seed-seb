@@ -647,10 +647,17 @@ class MainWindow(QMainWindow):
         """Quit immediately without triggering confirmations"""
         logging.info("Force close button clicked. Quitting immediately.")
         self.unblock_win_shortcuts()
-        if self.local_server:
-            self.local_server.shutdown()
-        QApplication.instance().quit()
-        sys.exit(0)
+        try:
+            if hasattr(self, 'process_terminator') and self.process_terminator:
+                self.process_terminator.stop()
+        except:
+            pass
+        try:
+            if self.local_server:
+                self.local_server.shutdown()
+        except:
+            pass
+        os._exit(0)
 
     def inject_webchannel_script(self):
         """Injects qwebchannel.js into the pages automatically."""
@@ -830,13 +837,20 @@ class MainWindow(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             logging.info("Application closed by student choice.")
             self.unblock_win_shortcuts()
-            if self.process_terminator:
-                self.process_terminator.stop()
+            try:
+                if hasattr(self, 'process_terminator') and self.process_terminator:
+                    self.process_terminator.stop()
+            except:
+                pass
             if self.local_server:
-                self.local_server.shutdown()
-                self.local_server.server_close()
+                try:
+                    self.local_server.shutdown()
+                    self.local_server.server_close()
+                except:
+                    pass
                 logging.info("Local HTTP Server shut down.")
             event.accept()
+            os._exit(0)
         else:
             logging.info("Application close prevented.")
             event.ignore()
