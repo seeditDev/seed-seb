@@ -12,7 +12,7 @@ if exist SEED-SEB.build rmdir /s /q SEED-SEB.build
 if exist SEED-SEB.dist rmdir /s /q SEED-SEB.dist
 
 echo Starting compilation of main.py (this might take several minutes)...
-python -m nuitka --standalone --windows-console-disabled --windows-uac-admin --enable-plugin=pyqt6 --windows-icon-from-ico=app_source\SEED_Logo.ico --output-dir=dist --output-filename=SEED-SEB app_source\main.py
+python -m nuitka --standalone --disable-console --windows-uac-admin --enable-plugin=pyqt6 --windows-icon-from-ico=app_source\SEED_Logo.ico --output-dir=dist --output-filename=SEED-SEB app_source\main.py
 
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Nuitka compilation failed.
