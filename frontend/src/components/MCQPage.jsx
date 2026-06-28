@@ -1781,6 +1781,7 @@ const MCQPage = () => {
                 {/* Proctoring Instructions Modal - Only shown when ENABLE_PROCTORING is true */}
                 {ENABLE_PROCTORING && showInstructions && (
                     <ProctoringInstructions
+                        assessment={currentTest}
                         onContinue={handleContinueFromInstructions}
                         onCancel={handleCancelFromInstructions}
                     />

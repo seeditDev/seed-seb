@@ -1317,6 +1317,7 @@ const CodingAssessmentPage = () => {
                 {/* Proctoring Instructions Modal - shown for proctored assessments after passkey */}
                 {showInstructions && (
                     <ProctoringInstructions
+                        assessment={selectedAssessment}
                         onContinue={() => {
                             setShowInstructions(false);
                             startAssessment(selectedAssessment);

@@ -804,6 +804,7 @@ const StudentDashboard = () => {
         selectedAssessment.proctored === "1" ||
         selectedAssessment.proctored === "true") ? (
           <ProctoringInstructions
+            assessment={selectedAssessment}
             onContinue={handleAgreeAndLaunch}
             onCancel={cancelWizard}
           />

@@ -3,7 +3,7 @@ import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinne
 import '../styles/ProctoringInstructions.css';
 import * as faceapi from 'face-api.js';
 
-const ProctoringInstructions = ({ onContinue, onCancel }) => {
+const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const [cameraStatus, setCameraStatus] = useState('requesting'); // requesting, granted, denied, error
   const [cameraError, setCameraError] = useState(null);
   const videoRef = useRef(null);
@@ -374,6 +374,62 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
             </div>
 
             <div className="instructions-right-column">
+              {assessment && (
+                <div className="instructions-assessment-card" style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px'
+                }}>
+                  <h4 style={{
+                    margin: '0 0 16px',
+                    fontSize: '1.25rem',
+                    color: '#6366f1',
+                    fontWeight: '600'
+                  }}>{assessment.name}</h4>
+                  
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      background: 'rgba(0,0,0,0.15)',
+                      padding: '10px 14px',
+                      borderRadius: '8px'
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</span>
+                      <span style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: '500', marginTop: '4px', textTransform: 'capitalize' }}>{assessment.type}</span>
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      background: 'rgba(0,0,0,0.15)',
+                      padding: '10px 14px',
+                      borderRadius: '8px'
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</span>
+                      <span style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: '500', marginTop: '4px' }}>{assessment.duration} Min</span>
+                    </div>
+                    
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      background: 'rgba(0,0,0,0.15)',
+                      padding: '10px 14px',
+                      borderRadius: '8px'
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions</span>
+                      <span style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: '500', marginTop: '4px' }}>{assessment.questions || '—'} Qs</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="instructions-section">
                 <h3>
                   <FaCheckCircle className="section-icon check-icon" />
