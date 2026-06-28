@@ -314,116 +314,140 @@ const ProctoringInstructions = ({ onContinue, onCancel }) => {
             <FaExclamationTriangle className="hint-icon" />
             <span>Scroll through the entire instructions and confirm acceptance to continue.</span>
           </div>
-          {/* Camera Preview Section */}
-          <div className="camera-preview-section">
-            <h3>
-              <FaCamera className="section-icon" />
-              Camera Access & Verification
-            </h3>
-            <div className="camera-preview-container">
-              {cameraStatus === 'requesting' && (
-                <div className="camera-status-message">
-                  <FaSpinner className="spinner-icon" />
-                  <p>Requesting camera access...</p>
-                  <p className="camera-status-hint">Please allow camera access when prompted</p>
-                </div>
-              )}
-              
-              {cameraStatus === 'granted' && (
-                <div className="camera-preview-wrapper">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    className="instructions-video-preview"
-                  />
-                  <div className="photo-capture-overlay">
-                    {photoStatus === 'searching' && (
-                      <div className="photo-scan-status scan-searching">
-                        <FaSpinner className="spinner-icon pulse" />
-                        <span>Scanning face for verification photo...</span>
+
+          <div className="instructions-grid-layout">
+            <div className="instructions-left-column">
+              {/* Camera Preview Section */}
+              <div className="camera-preview-section">
+                <h3>
+                  <FaCamera className="section-icon" />
+                  Camera Access & Verification
+                </h3>
+                <div className="camera-preview-container">
+                  {cameraStatus === 'requesting' && (
+                    <div className="camera-status-message">
+                      <FaSpinner className="spinner-icon" />
+                      <p>Requesting camera access...</p>
+                      <p className="camera-status-hint">Please allow camera access when prompted</p>
+                    </div>
+                  )}
+                  
+                  {cameraStatus === 'granted' && (
+                    <div className="camera-preview-wrapper">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className="instructions-video-preview"
+                      />
+                      <div className="photo-capture-overlay">
+                        {photoStatus === 'searching' && (
+                          <div className="photo-scan-status scan-searching">
+                            <FaSpinner className="spinner-icon pulse" />
+                            <span>Scanning face for verification photo...</span>
+                          </div>
+                        )}
+                        {photoStatus === 'captured' && (
+                          <div className="photo-scan-status scan-captured">
+                            <FaCheckCircle className="scan-success-icon" />
+                            <span>✓ Identity Verified & Registered!</span>
+                          </div>
+                        )}
+                        {photoStatus === 'failed' && (
+                          <div className="photo-scan-status scan-failed">
+                            <FaExclamationTriangle className="scan-failed-icon" />
+                            <span>Face not detected. Keep your face centered.</span>
+                            <button className="scan-retry-btn" onClick={captureReferencePhoto}>
+                              <FaSync /> Retry Photo
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {photoStatus === 'captured' && (
-                      <div className="photo-scan-status scan-captured">
-                        <FaCheckCircle className="scan-success-icon" />
-                        <span>✓ Identity Verified & Registered!</span>
-                      </div>
-                    )}
-                    {photoStatus === 'failed' && (
-                      <div className="photo-scan-status scan-failed">
-                        <FaExclamationTriangle className="scan-failed-icon" />
-                        <span>Face not detected. Keep your face centered.</span>
-                        <button className="scan-retry-btn" onClick={captureReferencePhoto}>
-                          <FaSync /> Retry Photo
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  {photoUrl && (
-                    <div className="photo-thumbnail">
-                      <img src={photoUrl} alt="Registered Identity" />
-                      <span className="thumbnail-label">ID REGISTERED</span>
+                      {photoUrl && (
+                        <div className="photo-thumbnail">
+                          <img src={photoUrl} alt="Registered Identity" />
+                          <span className="thumbnail-label">ID REGISTERED</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {cameraStatus === 'denied' && (
+                    <div className="camera-status-error">
+                      <FaExclamationTriangle className="error-icon" />
+                      <p>{cameraError || 'Camera access is required'}</p>
+                      <button className="retry-camera-btn" onClick={handleRetry}>
+                        Retry Camera Access
+                      </button>
                     </div>
                   )}
                 </div>
-              )}
-              
-              {cameraStatus === 'denied' && (
-                <div className="camera-status-error">
-                  <FaExclamationTriangle className="error-icon" />
-                  <p>{cameraError || 'Camera access is required'}</p>
-                  <button className="retry-camera-btn" onClick={handleRetry}>
-                    Retry Camera Access
-                  </button>
-                </div>
-              )}
+              </div>
+
+              {/* Validation Checklist UI */}
+              <div className="camera-verification-checklist">
+                <h4>Verification Steps</h4>
+                <ul>
+                  <li className={cameraStatus === 'granted' ? 'passed' : 'pending'}>
+                    <span className="badge-bullet"></span>
+                    <span className="badge-text">Webcam Access Permission</span>
+                    <span className="badge-status">{cameraStatus === 'granted' ? '✓ Passed' : '○ Pending'}</span>
+                  </li>
+                  <li className={photoStatus === 'captured' ? 'passed' : 'pending'}>
+                    <span className="badge-bullet"></span>
+                    <span className="badge-text">Offline Face Registration</span>
+                    <span className="badge-status">{photoStatus === 'captured' ? '✓ Registered' : photoStatus === 'searching' ? '⚡ Scanning...' : '○ Pending'}</span>
+                  </li>
+                </ul>
+              </div>
             </div>
-          </div>
 
-          <div className="instructions-section">
-            <h3>
-              <FaCheckCircle className="section-icon check-icon" />
-              What You MUST Do:
-            </h3>
-            <ul className="instructions-list do-list">
-              <li>Keep yourself clearly visible in front of the camera at all times</li>
-              <li>Ensure good lighting so you are clearly visible</li>
-              <li>Stay in front of the camera throughout the entire test</li>
-              <li>Make sure only you are visible in the camera view</li>
-              <li>Keep your eyes on the screen</li>
-              <li>Ensure a stable internet connection</li>
-            </ul>
-          </div>
+            <div className="instructions-right-column">
+              <div className="instructions-section">
+                <h3>
+                  <FaCheckCircle className="section-icon check-icon" />
+                  What You MUST Do:
+                </h3>
+                <ul className="instructions-list do-list">
+                  <li>Keep yourself clearly visible in front of the camera at all times</li>
+                  <li>Ensure good lighting so you are clearly visible</li>
+                  <li>Stay in front of the camera throughout the entire test</li>
+                  <li>Make sure only you are visible in the camera view</li>
+                  <li>Keep your eyes on the screen</li>
+                  <li>Ensure a stable internet connection</li>
+                </ul>
+              </div>
 
-          <div className="instructions-section">
-            <h3>
-              <FaTimesCircle className="section-icon dont-icon" />
-              What You MUST NOT Do:
-            </h3>
-            <ul className="instructions-list dont-list">
-              <li>Do not leave your seat or move away from the camera</li>
-              <li>Do not allow anyone else to appear in the camera view</li>
-              <li>Do not cover yourself or turn away from the camera</li>
-              <li>Do not use mobile phones or other devices during the test</li>
-              <li>Do not switch tabs or minimize the browser window</li>
-              <li>Do not communicate with anyone during the test</li>
-            </ul>
-          </div>
+              <div className="instructions-section">
+                <h3>
+                  <FaTimesCircle className="section-icon dont-icon" />
+                  What You MUST NOT Do:
+                </h3>
+                <ul className="instructions-list dont-list">
+                  <li>Do not leave your seat or move away from the camera</li>
+                  <li>Do not allow anyone else to appear in the camera view</li>
+                  <li>Do not cover yourself or turn away from the camera</li>
+                  <li>Do not use mobile phones or other devices during the test</li>
+                  <li>Do not switch tabs or minimize the browser window</li>
+                  <li>Do not communicate with anyone during the test</li>
+                </ul>
+              </div>
 
-          <div className="instructions-section warning-section">
-            <h3>
-              <FaExclamationTriangle className="section-icon warning-icon" />
-              Important Notes:
-            </h3>
-            <ul className="instructions-list warning-list">
-              <li>Camera access is mandatory - the test cannot proceed without it</li>
-              <li>Violations are tracked automatically (no person detected, multiple people detected)</li>
-              <li>After 15 violations, your test will be automatically submitted</li>
-              <li>A mini camera view will be displayed during the test</li>
-              <li>Your test session is being monitored for integrity</li>
-            </ul>
+              <div className="instructions-section warning-section">
+                <h3>
+                  <FaExclamationTriangle className="section-icon warning-icon" />
+                  Important Notes:
+                </h3>
+                <ul className="instructions-list warning-list">
+                  <li>Camera access is mandatory - the test cannot proceed without it</li>
+                  <li>Violations are tracked automatically (no person detected, multiple people detected)</li>
+                  <li>After 15 violations, your test will be automatically submitted</li>
+                  <li>A mini camera view will be displayed during the test</li>
+                  <li>Your test session is being monitored for integrity</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 

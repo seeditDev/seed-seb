@@ -704,10 +704,10 @@ const StudentDashboard = () => {
       {/* Step 1: Verifying identity overlay */}
       {launchStep === 'verifying' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '360px', textAlign: 'center' }}>
-            <div className="lw-spinner"></div>
-            <h3 className="lw-title" style={{ marginTop: '16px' }}>Verifying Identity</h3>
-            <p className="lw-subtitle">Checking your previous attempt records. Please wait...</p>
+          <div className="lw-card" style={{ maxWidth: '460px', padding: '40px 30px', textAlign: 'center' }}>
+            <div className="lw-spinner" style={{ width: '56px', height: '56px', borderWidth: '4px' }}></div>
+            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center', fontSize: '1.4rem' }}>Verifying Identity</h3>
+            <p className="lw-subtitle" style={{ fontSize: '0.95rem', marginTop: '8px' }}>Checking your previous attempt records. Please wait...</p>
           </div>
         </div>
       )}
@@ -715,13 +715,13 @@ const StudentDashboard = () => {
       {/* Step 2: Passkey Entry */}
       {launchStep === 'passkey' && selectedAssessment && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '440px' }}>
-            <div className="lw-card-header">
+          <div className="lw-card" style={{ maxWidth: '540px' }}>
+            <div className="lw-card-header" style={{ padding: '30px 30px 20px' }}>
               <div className="lw-step-badge">Step 2 of 4</div>
-              <h3 className="lw-title"><FaLock style={{ marginRight: '8px', color: '#6366f1' }}/>Access Passkey Required</h3>
-              <p className="lw-subtitle">This assessment is passkey-protected. Enter the passkey provided by your instructor.</p>
+              <h3 className="lw-title" style={{ fontSize: '1.35rem', gap: '10px' }}><FaLock style={{ color: '#6366f1' }}/>Access Passkey Required</h3>
+              <p className="lw-subtitle" style={{ fontSize: '0.92rem', marginTop: '6px' }}>This assessment is passkey-protected. Enter the passkey provided by your instructor.</p>
             </div>
-            <div className="lw-card-body">
+            <div className="lw-card-body" style={{ padding: '24px 30px' }}>
               <input
                 type="password"
                 ref={passkeyInputRef}
@@ -730,16 +730,17 @@ const StudentDashboard = () => {
                 onChange={e => setPasskeyInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleValidatePasskey()}
                 className="lw-input"
+                style={{ padding: '14px 18px', fontSize: '1.05rem', borderRadius: '10px' }}
               />
               {passkeyError && (
-                <div className="lw-error-row">
-                  <FaExclamationTriangle />{passkeyError}
+                <div className="lw-error-row" style={{ marginTop: '16px', padding: '12px' }}>
+                  <FaExclamationTriangle style={{ marginRight: '8px' }} />{passkeyError}
                 </div>
               )}
             </div>
-            <div className="lw-card-footer">
-              <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
-              <button className="lw-btn-primary" onClick={handleValidatePasskey}>
+            <div className="lw-card-footer" style={{ padding: '20px 30px 24px' }}>
+              <button className="lw-btn-secondary" onClick={cancelWizard} style={{ padding: '12px 24px' }}>Cancel</button>
+              <button className="lw-btn-primary" onClick={handleValidatePasskey} style={{ padding: '12px 28px' }}>
                 <FaCheck style={{ marginRight: '6px' }}/>Unlock & Continue
               </button>
             </div>
@@ -750,18 +751,18 @@ const StudentDashboard = () => {
       {/* Step 3: Pre-flight system check — internet only */}
       {launchStep === 'preflight' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '460px' }}>
-            <div className="lw-card-header">
+          <div className="lw-card" style={{ maxWidth: '560px' }}>
+            <div className="lw-card-header" style={{ padding: '30px 30px 20px' }}>
               <div className="lw-step-badge">Step 3 of 4</div>
-              <h3 className="lw-title">System Pre-flight Check</h3>
-              <p className="lw-subtitle">Verifying your system meets all requirements for a monitored assessment.</p>
+              <h3 className="lw-title" style={{ fontSize: '1.35rem' }}>System Pre-flight Check</h3>
+              <p className="lw-subtitle" style={{ fontSize: '0.92rem', marginTop: '6px' }}>Verifying your system meets all requirements for a monitored assessment.</p>
             </div>
-            <div className="lw-card-body">
+            <div className="lw-card-body" style={{ padding: '24px 30px' }}>
               {/* Internet connectivity row */}
-              <div className="lw-preflight-row">
-                <span className="lw-preflight-icon">🌐</span>
-                <span className="lw-preflight-label">Internet Connectivity</span>
-                <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`}>
+              <div className="lw-preflight-row" style={{ padding: '16px', borderRadius: '10px' }}>
+                <span className="lw-preflight-icon" style={{ fontSize: '1.4rem' }}>🌐</span>
+                <span className="lw-preflight-label" style={{ fontSize: '1rem', fontWeight: '600' }}>Internet Connectivity</span>
+                <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`} style={{ fontSize: '0.95rem' }}>
                   {preflightResults.internet === 'pending' && <span className="lw-mini-spinner"></span>}
                   {preflightResults.internet === 'pass'    && <FaCheck />}
                   {preflightResults.internet === 'fail'    && <FaTimes />}
@@ -771,22 +772,23 @@ const StudentDashboard = () => {
 
               {/* Result messages */}
               {preflightDone && preflightResults.internet === 'fail' && (
-                <div className="lw-error-row" style={{ marginTop: '12px' }}>
-                  <FaExclamationTriangle /> No internet connection detected. Please connect and try again.
+                <div className="lw-error-row" style={{ marginTop: '16px', padding: '12px' }}>
+                  <FaExclamationTriangle style={{ marginRight: '8px' }} /> No internet connection detected. Please connect and try again.
                 </div>
               )}
               {preflightDone && preflightResults.internet === 'pass' && (
-                <div className="lw-info-row">
-                  <FaCheckCircle style={{ color: '#10b981' }} /> All checks passed. You may proceed.
+                <div className="lw-info-row" style={{ marginTop: '16px', padding: '12px' }}>
+                  <FaCheckCircle style={{ color: '#10b981', marginRight: '8px' }} /> All checks passed. You may proceed.
                 </div>
               )}
             </div>
-            <div className="lw-card-footer">
-              <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
+            <div className="lw-card-footer" style={{ padding: '20px 30px 24px' }}>
+              <button className="lw-btn-secondary" onClick={cancelWizard} style={{ padding: '12px 24px' }}>Cancel</button>
               <button
                 className="lw-btn-primary"
                 disabled={!preflightDone || preflightResults.internet === 'fail'}
                 onClick={handlePreflightProceed}
+                style={{ padding: '12px 28px' }}
               >
                 <FaCheck style={{ marginRight: '6px' }}/>Proceed
               </button>
@@ -807,36 +809,36 @@ const StudentDashboard = () => {
           />
         ) : (
           <div className="lw-overlay" style={{ zIndex: 1200 }}>
-            <div className="lw-card" style={{ maxWidth: '540px' }}>
-              <div className="lw-card-header">
+            <div className="lw-card" style={{ maxWidth: '640px' }}>
+              <div className="lw-card-header" style={{ padding: '30px 30px 20px' }}>
                 <div className="lw-step-badge">Step 4 of 4</div>
-                <h3 className="lw-title">Test Details & Instructions</h3>
+                <h3 className="lw-title" style={{ fontSize: '1.35rem' }}>Test Details & Instructions</h3>
               </div>
-              <div className="lw-card-body">
+              <div className="lw-card-body" style={{ padding: '24px 30px' }}>
                 {/* Test meta-info */}
-                <div className="lw-info-grid">
-                  <div className="lw-info-cell">
+                <div className="lw-info-grid" style={{ gap: '16px', marginBottom: '24px' }}>
+                  <div className="lw-info-cell" style={{ padding: '14px' }}>
                     <span className="lw-info-label">Assessment</span>
-                    <span className="lw-info-value">{selectedAssessment.name}</span>
+                    <span className="lw-info-value" style={{ fontSize: '1.05rem' }}>{selectedAssessment.name}</span>
                   </div>
-                  <div className="lw-info-cell">
+                  <div className="lw-info-cell" style={{ padding: '14px' }}>
                     <span className="lw-info-label">Type</span>
-                    <span className="lw-info-value" style={{ textTransform: 'capitalize' }}>{selectedAssessment.type}</span>
+                    <span className="lw-info-value" style={{ textTransform: 'capitalize', fontSize: '1.05rem' }}>{selectedAssessment.type}</span>
                   </div>
-                  <div className="lw-info-cell">
+                  <div className="lw-info-cell" style={{ padding: '14px' }}>
                     <span className="lw-info-label">Duration</span>
-                    <span className="lw-info-value">{selectedAssessment.duration} minutes</span>
+                    <span className="lw-info-value" style={{ fontSize: '1.05rem' }}>{selectedAssessment.duration} minutes</span>
                   </div>
-                  <div className="lw-info-cell">
+                  <div className="lw-info-cell" style={{ padding: '14px' }}>
                     <span className="lw-info-label">Questions</span>
-                    <span className="lw-info-value">{selectedAssessment.questions || '—'}</span>
+                    <span className="lw-info-value" style={{ fontSize: '1.05rem' }}>{selectedAssessment.questions || '—'}</span>
                   </div>
                 </div>
 
                 {/* Malpractice Warning Box */}
-                <div className="lw-malpractice-box">
-                  <p className="lw-malpractice-title">⚠️ Proctoring System Active</p>
-                  <ul className="lw-malpractice-list">
+                <div className="lw-malpractice-box" style={{ padding: '20px', borderRadius: '10px' }}>
+                  <p className="lw-malpractice-title" style={{ fontSize: '1.05rem', marginBottom: '12px' }}>⚠️ Proctoring System Active</p>
+                  <ul className="lw-malpractice-list" style={{ gap: '8px' }}>
                     <li>Do not switch tabs or leave this window during the test.</li>
                     <li>3 tab-switch violations will auto-lock and submit your assessment.</li>
                     <li>Do not use any external assistance, websites, or AI tools.</li>
@@ -844,9 +846,9 @@ const StudentDashboard = () => {
                   </ul>
                 </div>
               </div>
-              <div className="lw-card-footer">
-                <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
-                <button className="lw-btn-success" onClick={handleAgreeAndLaunch}>
+              <div className="lw-card-footer" style={{ padding: '20px 30px 24px' }}>
+                <button className="lw-btn-secondary" onClick={cancelWizard} style={{ padding: '12px 24px' }}>Cancel</button>
+                <button className="lw-btn-success" onClick={handleAgreeAndLaunch} style={{ padding: '12px 28px' }}>
                   <FaCheckCircle style={{ marginRight: '6px' }}/>I Agree & Start Assessment
                 </button>
               </div>
@@ -858,10 +860,10 @@ const StudentDashboard = () => {
       {/* Step 5: Launching overlay */}
       {launchStep === 'launching' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '360px', textAlign: 'center' }}>
-            <div className="lw-spinner"></div>
-            <h3 className="lw-title" style={{ marginTop: '16px' }}>Setting Up Workspace</h3>
-            <p className="lw-subtitle">Loading questions and preparing your secure test environment...</p>
+          <div className="lw-card" style={{ maxWidth: '460px', padding: '40px 30px', textAlign: 'center' }}>
+            <div className="lw-spinner" style={{ width: '56px', height: '56px', borderWidth: '4px' }}></div>
+            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center', fontSize: '1.4rem' }}>Setting Up Workspace</h3>
+            <p className="lw-subtitle" style={{ fontSize: '0.95rem', marginTop: '8px' }}>Loading questions and preparing your secure test environment...</p>
           </div>
         </div>
       )}
