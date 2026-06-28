@@ -26,7 +26,7 @@ import MCQService from '../services/mcqService';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
-import { checkAndClearProctorCache } from '../utils/proctorCache';
+import { checkAndClearProctorCache, clearAllProctorCache } from '../utils/proctorCache';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -325,6 +325,7 @@ const StudentDashboard = () => {
     setPreflightResults({ internet: 'pending' });
     setPreflightDone(false);
     setEligibilityError(null);
+    clearAllProctorCache();
   };
 
   // STEP 1 — Click Start button
