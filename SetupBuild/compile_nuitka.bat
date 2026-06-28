@@ -27,12 +27,6 @@ if exist dist\main.dist (
 )
 
 :: Copy required folder resources into dist\SEED-SEB\ relative to the executable
-echo Copying frontend build folder to standalone distribution...
-if exist "..\frontend\build" (
-    xcopy /E /I /Y "..\frontend\build" "dist\SEED-SEB\frontend\build"
-) else (
-    echo WARNING: ..\frontend\build not found!
-)
 
 echo Copying data folder to standalone distribution...
 if exist "..\data" (
