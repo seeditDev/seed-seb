@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as faceapi from 'face-api.js';
 import * as tf from '@tensorflow/tfjs';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
+import ViolationCounter from './ViolationCounter';
 import '../styles/ProctoringEngine.css';
 import timeService from '../services/timeService';
 
@@ -811,6 +812,7 @@ const ProctoringEngine = ({
       {/* Top Section: Violation Counter and Camera Preview - Side by side */}
       <div className="proctoring-top-section">
         <div className="proctoring-top-row">
+          <ViolationCounter count={violationCount} />
           {/* Mini Camera View */}
           <div className="mini-camera-view">
             <video
