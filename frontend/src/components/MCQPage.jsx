@@ -2498,18 +2498,23 @@ const MCQPage = () => {
                     maxViolations={Number(currentTest.testInfo?.maxViolations) || 5}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
-                        setProctoringData(prev => ({
-                            violationCount: typeof violationInfo.violationCount === 'number'
-                                ? violationInfo.violationCount
-                                : prev.violationCount,
-                            violations: [
-                                ...prev.violations,
-                                {
-                                    type: violationInfo.violationType,
-                                    timestamp: violationInfo.timestamp
-                                }
-                            ]
-                        }));
+                        setProctoringData(prev => {
+                            const isRealViolation = ['no_face', 'multiple_faces', 'tab_switch'].includes(violationInfo.violationType);
+                            return {
+                                violationCount: typeof violationInfo.violationCount === 'number'
+                                    ? violationInfo.violationCount
+                                    : prev.violationCount,
+                                violations: isRealViolation
+                                    ? [
+                                        ...prev.violations,
+                                        {
+                                            type: violationInfo.violationType,
+                                            timestamp: violationInfo.timestamp
+                                        }
+                                    ]
+                                    : prev.violations
+                            };
+                        });
                     }}
                 />
             )}

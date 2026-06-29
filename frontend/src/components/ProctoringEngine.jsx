@@ -1,162 +1,28 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as faceapi from 'face-api.js';
+import * as tf from '@tensorflow/tfjs';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import ViolationCounter from './ViolationCounter';
 import '../styles/ProctoringEngine.css';
 import timeService from '../services/timeService';
 
-const tf = faceapi.tf;
-
 const DETECTION_INTERVAL_MS = 2000; // no longer used for tight loop, kept for reference
 const CONSECUTIVE_DETECTIONS_REQUIRED = 2; // legacy, not used in new strategy
 const VIOLATION_RESET_WINDOW_MS = 6000; // legacy, not used in new strategy
-const CHECK_INTERVAL_MS = 4000; // 4 seconds between proctor checks
-const SEQUENCE_GAP_MS = 1500; // 1.5 seconds between the 2 images in a sequence
-const MAX_VIOLATIONS = 5;
+const CHECK_INTERVAL_MS = 40000; // 2 minutes between proctor checks
+const SEQUENCE_GAP_MS = 10000; // 10 seconds between the 2 images in a sequence
+const MAX_VIOLATIONS = 15;
 
 // Global model loading state to prevent multiple loads
 let globalModelsLoaded = false;
 let globalModelsLoading = false;
-
-// CPU-based Non-Maximum Suppression (NMS) helper
-const calculateIoU = (box1, box2) => {
-  const [x1_1, y1_1, x2_1, y2_1] = box1;
-  const [x1_2, y1_2, x2_2, y2_2] = box2;
-  
-  const xMin = Math.max(x1_1, x1_2);
-  const yMin = Math.max(y1_1, y1_2);
-  const xMax = Math.min(x2_1, x2_2);
-  const yMax = Math.min(y2_1, y2_2);
-  
-  const intersectionArea = Math.max(0, xMax - xMin) * Math.max(0, yMax - yMin);
-  const area1 = (x2_1 - x1_1) * (y2_1 - y1_1);
-  const area2 = (x2_2 - x1_2) * (y2_2 - y1_2);
-  const unionArea = area1 + area2 - intersectionArea;
-  
-  if (unionArea === 0) return 0;
-  return intersectionArea / unionArea;
-};
-
-const cpuNMS = (candidates, iouThreshold = 0.5) => {
-  // Sort candidates by score descending
-  candidates.sort((a, b) => b.score - a.score);
-  
-  const selected = [];
-  for (const candidate of candidates) {
-    let keep = true;
-    for (const active of selected) {
-      if (candidate.classId === active.classId) {
-        const iou = calculateIoU(candidate.box, active.box);
-        if (iou > iouThreshold) {
-          keep = false;
-          break;
-        }
-      }
-    }
-    if (keep) {
-      selected.push(candidate);
-    }
-  }
-  return selected;
-};
-
-// Helper to execute YOLOv8 model inference and post-process on the GPU with CPU-NMS
-const runYolov8Inference = async (videoElement, model) => {
-  let result = { personCount: 0, phoneDetected: false, bookDetected: false };
-  
-  // 1. Preprocess the image and get predictions from the model
-  const tensors = tf.tidy(() => {
-    const img = tf.browser.fromPixels(videoElement);
-    const resized = tf.image.resizeBilinear(img, [640, 640]);
-    const normalized = resized.div(255.0);
-    const input = normalized.expandDims(0); // Shape [1, 640, 640, 3]
-    
-    const output = model.predict(input); // Output shape: [1, 84, 8400]
-    
-    // Reshape and transpose output to shape [8400, 84]
-    const transposed = output.reshape([84, 8400]).transpose([1, 0]);
-    
-    const boxes = transposed.slice([0, 0], [-1, 4]); // [8400, 4]
-    const scores = transposed.slice([0, 4], [-1, 80]); // [8400, 80]
-    const maxScores = scores.max(1); // [8400]
-    const classIds = scores.argMax(1); // [8400]
-    const mask = maxScores.greater(0.40); // [8400]
-    
-    return { boxes, maxScores, classIds, mask };
-  });
-
-  try {
-    // 2. Perform async GPU-to-CPU masking
-    const [filteredBoxes, filteredScores, filteredClasses] = await Promise.all([
-      tf.booleanMaskAsync(tensors.boxes, tensors.mask),
-      tf.booleanMaskAsync(tensors.maxScores, tensors.mask),
-      tf.booleanMaskAsync(tensors.classIds, tensors.mask)
-    ]);
-    
-    const boxesArray = await filteredBoxes.array();
-    const scoresArray = await filteredScores.array();
-    const classesArray = await filteredClasses.array();
-    
-    const candidates = [];
-    
-    for (let i = 0; i < classesArray.length; i++) {
-      const classId = classesArray[i];
-      if (classId === 0 || classId === 67 || classId === 73) {
-        const [x_center, y_center, w, h] = boxesArray[i];
-        const x1 = x_center - w / 2;
-        const y1 = y_center - h / 2;
-        const x2 = x_center + w / 2;
-        const y2 = y_center + h / 2;
-        
-        candidates.push({
-          box: [x1, y1, x2, y2],
-          score: scoresArray[i],
-          classId
-        });
-      }
-    }
-    
-    // 3. Apply NMS
-    const suppressed = cpuNMS(candidates, 0.45);
-    
-    let personCount = 0;
-    let phoneDetected = false;
-    let bookDetected = false;
-    
-    for (const item of suppressed) {
-      if (item.classId === 0) {
-        personCount++;
-      } else if (item.classId === 67) {
-        phoneDetected = true;
-      } else if (item.classId === 73) {
-        bookDetected = true;
-      }
-    }
-    
-    result = { personCount, phoneDetected, bookDetected };
-    
-    filteredBoxes.dispose();
-    filteredScores.dispose();
-    filteredClasses.dispose();
-  } catch (err) {
-    console.error('[ProctoringEngine] YOLOv8 post-processing error:', err);
-  } finally {
-    tensors.boxes.dispose();
-    tensors.maxScores.dispose();
-    tensors.classIds.dispose();
-    tensors.mask.dispose();
-  }
-  
-  return result;
-};
 
 const ProctoringEngine = ({ 
   studentID, 
   testID, 
   onAutoSubmit,
   isTestActive = true,
-  onViolationUpdate,
-  maxViolations = 5
+  onViolationUpdate
 }) => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -172,14 +38,12 @@ const ProctoringEngine = ({
   const [error, setError] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [isWebcamBlocked, setIsWebcamBlocked] = useState(false);
-  const [modelStatus, setModelStatus] = useState(globalModelsLoaded ? 'active' : 'loading');
 
   // Load models with global caching to prevent repeated loading
   const loadModels = useCallback(async () => {
-    // Check if models are already loaded globally and both succeeded
-    if (globalModelsLoaded && window.faceApiLoaded && window.yolov8Loaded) {
+    // Check if models are already loaded globally
+    if (globalModelsLoaded) {
       modelsLoadedRef.current = true;
-      setModelStatus('active');
       console.log('[ProctoringEngine] Using already loaded models');
       return true;
     }
@@ -192,84 +56,37 @@ const ProctoringEngine = ({
         await new Promise(resolve => setTimeout(resolve, 1000));
         if (globalModelsLoaded) {
           modelsLoadedRef.current = true;
-          setModelStatus(window.yolov8Loaded && window.faceApiLoaded ? 'active' : window.faceApiLoaded ? 'face_only' : 'camera_only');
           return true;
         }
       }
-      setModelStatus('failed');
       return false;
     }
 
     try {
       globalModelsLoading = true;
-      setModelStatus('loading');
       
-      console.log('[ProctoringEngine] Loading offline YOLOv8 and Face-API models independently...');
+      console.log('[ProctoringEngine] Loading COCO-SSD models (first time only)...');
+      
       await tf.ready();
-
-      // 1. Load Face-API models offline (Primary Guard)
-      try {
-        console.log('[ProctoringEngine] Loading Face-API models offline...');
-        await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
-        ]);
-        window.faceApiLoaded = true;
-        console.log('[ProctoringEngine] ✓ Face-API loaded successfully');
-      } catch (faceErr) {
-        window.faceApiLoaded = false;
-        console.warn('[ProctoringEngine] Face-API loading failed:', faceErr);
-      }
-
-      // 2. Load YOLOv8 model (Offline first with online fallback)
-      try {
-        console.log('[ProctoringEngine] Loading YOLOv8 offline...');
-        window.yolov8Model = await tf.loadGraphModel('/models/yolov8/model.json');
-        window.yolov8Loaded = true;
-        console.log('[ProctoringEngine] ✓ YOLOv8 loaded offline successfully');
-      } catch (yoloOfflineErr) {
-        console.warn('[ProctoringEngine] YOLOv8 offline load failed, trying online CDN...', yoloOfflineErr.message);
-        try {
-          window.yolov8Model = await tf.loadGraphModel('https://hyuto.github.io/yolov8-tfjs/yolov8n_web_model/model.json');
-          window.yolov8Loaded = true;
-          console.log('[ProctoringEngine] ✓ YOLOv8 loaded online successfully');
-        } catch (yoloOnlineErr) {
-          window.yolov8Loaded = false;
-          console.warn('[ProctoringEngine] YOLOv8 online CDN load also failed:', yoloOnlineErr.message);
-        }
-      }
-
+      window.cocoSsdModel = await cocoSsd.load();
+      
       globalModelsLoaded = true;
-      modelsLoadedRef.current = window.faceApiLoaded || window.yolov8Loaded;
+      modelsLoadedRef.current = true;
       globalModelsLoading = false;
-
-      const currentStatus = window.yolov8Loaded && window.faceApiLoaded 
-        ? 'active' 
-        : window.faceApiLoaded 
-          ? 'face_only' 
-          : window.yolov8Loaded 
-            ? 'objects_only' 
-            : 'failed';
-
-      setModelStatus(currentStatus);
-      console.log(`[ProctoringEngine] AI initialization complete. Status: ${currentStatus}`);
-      return modelsLoadedRef.current;
+      console.log('[ProctoringEngine] ✓ Models loaded successfully');
+      return true;
     } catch (error) {
       globalModelsLoading = false;
-      modelsLoadedRef.current = false;
-      setModelStatus('failed');
-      console.warn('[ProctoringEngine] Critical model loader error, running in Camera-Only mode:', error);
-      setError(null);
+      console.error('[ProctoringEngine] Error loading models:', error);
+      setError(`Failed to load AI models: ${error.message}. Please check your internet connection or refresh the page.`);
       return false;
     }
   }, []);
 
   // Show alert toast
   const showAlert = useCallback((message, type = 'warning') => {
-    const alertId = `${timeService.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const alert = {
-      id: alertId,
+      id: timeService.now(),
       message,
       type
     };
@@ -278,34 +95,21 @@ const ProctoringEngine = ({
     
     // Auto-remove after 3 seconds
     setTimeout(() => {
-      setAlerts(prev => prev.filter(a => a.id !== alertId));
+      setAlerts(prev => prev.filter(a => a.id !== alert.id));
     }, 3000);
   }, []);
 
   const cleanupStream = useCallback(() => {
     if (streamRef.current) {
-      try {
-        streamRef.current.getTracks().forEach(track => {
-          track.onended = null;
-          track.stop();
-          console.log('[ProctoringEngine] Stopped streamRef track:', track.label);
-        });
-      } catch (err) {
-        console.error('[ProctoringEngine] Error stopping streamRef track:', err);
-      }
+      streamRef.current.getTracks().forEach(track => {
+        track.onended = null;
+        track.stop();
+      });
       streamRef.current = null;
     }
 
-    if (window.cameraStream) {
-      try {
-        window.cameraStream.getTracks().forEach(track => {
-          track.onended = null;
-          track.stop();
-          console.log('[ProctoringEngine] Explicitly stopped window.cameraStream track:', track.label);
-        });
-      } catch (err) {
-        console.error('[ProctoringEngine] Error stopping window.cameraStream track:', err);
-      }
+    if (window.cameraStream && window.cameraStream.active) {
+      window.cameraStream.getTracks().forEach(track => track.stop());
       window.cameraStream = null;
     }
   }, []);
@@ -435,48 +239,9 @@ const ProctoringEngine = ({
     }
   }, [cleanupStream, stopDetectionLoop]);
 
-  // Helper to handle and increment violation events
-  const handleViolation = useCallback((type) => {
-    setViolationCount(prev => {
-      const newCount = prev + 1;
-      
-      let msg = 'Malpractice violation detected!';
-      if (type === 'no_face') {
-        msg = 'Face not detected - Please stay in front of the camera';
-      } else if (type === 'multiple_faces') {
-        msg = 'Multiple faces / people detected in camera feed';
-      } else if (type === 'cell_phone') {
-        msg = 'Mobile phone detected in camera feed - Unauthorized device!';
-      } else if (type === 'prohibited_object') {
-        msg = 'Prohibited object (book/material) detected';
-      } else if (type === 'looking_away') {
-        msg = 'Suspicious activity: Student looking away from screen repeatedly';
-      } else if (type === 'face_mismatch') {
-        msg = 'Face verification failed: Different person detected in camera view!';
-      }
-
-      // Defer side effects to prevent updating other React components during this state transition
-      setTimeout(() => {
-        showAlert(msg, 'warning');
-        notifyViolationEvent(type, newCount);
-
-        if (newCount >= maxViolations && onAutoSubmit) {
-          console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
-          showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
-
-          setTimeout(() => {
-            onAutoSubmit({ reason: 'proctoring_violations', violationCount: newCount });
-          }, 2000);
-        }
-      }, 0);
-
-      return newCount;
-    });
-  }, [maxViolations, onAutoSubmit, notifyViolationEvent, showAlert]);
-
   // Single-frame detection helper (used in scheduled sequences)
   const detectFrame = useCallback(async () => {
-    if (!isTestActive || !videoRef.current || !streamRef.current) {
+    if (!isTestActive || !modelsLoadedRef.current || !videoRef.current || !streamRef.current || !window.cocoSsdModel) {
       return { violationType: null, faceCount: 0 };
     }
     if (detectionInProgressRef.current) {
@@ -497,94 +262,16 @@ const ProctoringEngine = ({
         }
       }
 
-      let faceCount = 0;
+      const predictions = await window.cocoSsdModel.detect(video);
+      const personPredictions = predictions.filter(pred => pred.class === 'person' && pred.score > 0.4);
+      
+      const faceCount = personPredictions.length;
       let violationType = null;
-      let lookingAway = false;
 
-      // 1. Run Face-API detection (Offline Primary Guard)
-      if (window.faceApiLoaded) {
-        try {
-          const faceDetections = await faceapi.detectAllFaces(
-            video, 
-            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
-          ).withFaceLandmarks().withFaceDescriptors();
-
-          faceCount = faceDetections.length;
-          console.log('[ProctoringEngine] Face-API detections count:', faceCount);
-
-          if (faceCount === 0) {
-            violationType = 'no_face';
-          } else if (faceCount > 1) {
-            violationType = 'multiple_faces';
-          } else {
-            // Identity Face Verification matching check
-            const savedDescriptorStr = localStorage.getItem('proctor_reference_descriptor');
-            if (savedDescriptorStr && faceDetections[0].descriptor) {
-              try {
-                const referenceDescriptor = new Float32Array(JSON.parse(savedDescriptorStr));
-                const distance = faceapi.euclideanDistance(referenceDescriptor, faceDetections[0].descriptor);
-                console.log('[ProctoringEngine] Face verification distance:', distance);
-                if (distance > 0.6) {
-                  violationType = 'face_mismatch';
-                }
-              } catch (err) {
-                console.error('[ProctoringEngine] Error parsing reference descriptor:', err);
-              }
-            }
-
-            // Check head pose (Looking Away detection)
-            if (!violationType) {
-              const landmarks = faceDetections[0].landmarks;
-              const nose = landmarks.getNose();
-              const jawOutline = landmarks.getJawOutline();
-              
-              if (jawOutline && jawOutline.length >= 17 && nose && nose.length >= 7) {
-                const leftEdge = jawOutline[0];
-                const rightEdge = jawOutline[16];
-                const noseTip = nose[6];
-                
-                const distLeft = noseTip.x - leftEdge.x;
-                const distRight = rightEdge.x - noseTip.x;
-                
-                if (distLeft > 0 && distRight > 0) {
-                  const ratio = distLeft / distRight;
-                  console.log('[ProctoringEngine] Face ratio (nose/jaw):', ratio);
-                  if (ratio < 0.35 || ratio > 2.8) {
-                    lookingAway = true;
-                    violationType = 'looking_away';
-                  }
-                }
-              }
-            }
-          }
-        } catch (faceErr) {
-          console.error('[ProctoringEngine] Face-API runtime error:', faceErr);
-        }
-      }
-
-      // 2. Run YOLOv8 detection (Object Detection Guard)
-      if (window.yolov8Model && window.yolov8Loaded) {
-        try {
-          const yoloResult = await runYolov8Inference(video, window.yolov8Model);
-          console.log('[ProctoringEngine] YOLOv8 detection result:', yoloResult);
-          
-          if (!window.faceApiLoaded) {
-            faceCount = yoloResult.personCount;
-            if (faceCount === 0) {
-              violationType = 'no_face';
-            } else if (faceCount > 1) {
-              violationType = 'multiple_faces';
-            }
-          }
-
-          if (yoloResult.phoneDetected) {
-            violationType = 'cell_phone';
-          } else if (yoloResult.bookDetected && !violationType) {
-            violationType = 'prohibited_object';
-          }
-        } catch (yoloErr) {
-          console.error('[ProctoringEngine] YOLOv8 runtime error:', yoloErr);
-        }
+      if (faceCount === 0) {
+        violationType = 'no_face';
+      } else if (faceCount > 1) {
+        violationType = 'multiple_faces';
       }
 
       return { violationType, faceCount };
@@ -596,55 +283,54 @@ const ProctoringEngine = ({
     }
   }, [isTestActive]);
 
-  // Scheduled sequence: capture two frames and compare
+  // Scheduled sequence: every 2 minutes, capture two frames 10s apart and compare
+  const handleViolation = useCallback((type, message) => {
+    setViolationCount(prev => {
+      const newCount = prev + 1;
+      
+      // Execute side effects asynchronously on the next tick so the state update is clean
+      setTimeout(() => {
+        showAlert(message, 'warning');
+        notifyViolationEvent(type, newCount);
+        
+        if (newCount >= MAX_VIOLATIONS && onAutoSubmit) {
+          console.log(`[ProctoringEngine] Violation count reached limit (${newCount}). Auto-submitting exam...`);
+          showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
+          setTimeout(() => {
+            onAutoSubmit({ reason: 'proctoring_violations', violationCount: newCount });
+          }, 2000);
+        }
+      }, 0);
+      
+      return newCount;
+    });
+  }, [showAlert, notifyViolationEvent, onAutoSubmit]);
+
+  // Scheduled sequence: every 2 minutes, capture two frames 10s apart and compare
   const runPresenceCheckSequence = useCallback(async () => {
     if (!isTestActive || sequenceInProgressRef.current) return;
-    if (!videoRef.current || !streamRef.current) return;
+    if (!modelsLoadedRef.current || !videoRef.current || !streamRef.current) return;
 
     sequenceInProgressRef.current = true;
     try {
       const first = await detectFrame();
-      
-      // Handle instant critical violations immediately
-      if (first.violationType && (first.violationType === 'cell_phone' || first.violationType === 'multiple_faces' || first.violationType === 'prohibited_object')) {
-        handleViolation(first.violationType);
-        return;
-      }
-
-      if (first.violationType) {
-        notifyViolationEvent(first.violationType);
-      }
-
       await new Promise(resolve => setTimeout(resolve, SEQUENCE_GAP_MS));
-
       const second = await detectFrame();
-      
-      // Handle instant critical violations immediately
-      if (second.violationType && (second.violationType === 'cell_phone' || second.violationType === 'multiple_faces' || second.violationType === 'prohibited_object')) {
-        handleViolation(second.violationType);
-        return;
-      }
-
-      if (second.violationType) {
-        notifyViolationEvent(second.violationType);
-      }
 
       const noFaceFirst = first.violationType === 'no_face';
       const noFaceSecond = second.violationType === 'no_face';
-      const lookingAwayFirst = first.violationType === 'looking_away';
-      const lookingAwaySecond = second.violationType === 'looking_away';
+      const multipleFirst = first.violationType === 'multiple_faces';
+      const multipleSecond = second.violationType === 'multiple_faces';
 
       if (noFaceFirst && noFaceSecond) {
-        handleViolation('no_face');
-      } else if (lookingAwayFirst && lookingAwaySecond) {
-        handleViolation('looking_away');
+        handleViolation('no_face', 'Person not detected in repeated checks - Please stay in front of camera');
+      } else if (multipleFirst && multipleSecond) {
+        handleViolation('multiple_faces', 'Multiple people detected in front of camera - Please maintain a secure exam environment');
       }
-    } catch (err) {
-      console.error('[ProctoringEngine] Error in presence check sequence:', err);
     } finally {
       sequenceInProgressRef.current = false;
     }
-  }, [detectFrame, isTestActive, notifyViolationEvent, handleViolation]);
+  }, [detectFrame, isTestActive, handleViolation]);
 
   // Initialize proctoring system - with duplicate prevention
   useEffect(() => {
@@ -657,7 +343,22 @@ const ProctoringEngine = ({
         detectionIntervalRef.current = null;
       }
       
-      cleanupStream();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+          console.log('[ProctoringEngine] Stopped camera track');
+        });
+        streamRef.current = null;
+      }
+      
+      // Also stop global stream if it exists
+      if (window.cameraStream && window.cameraStream.active) {
+        window.cameraStream.getTracks().forEach(track => {
+          track.stop();
+          console.log('[ProctoringEngine] Stopped global camera stream');
+        });
+        window.cameraStream = null;
+      }
       
       if (videoRef.current) {
         videoRef.current.srcObject = null;
@@ -678,31 +379,35 @@ const ProctoringEngine = ({
       initializedRef.current = true;
       
       try {
-        // 1. Initialize webcam first so camera view is visible immediately
+        // Load models first
+        const modelsLoaded = await loadModels();
+        if (!modelsLoaded) {
+          initializedRef.current = false;
+          return;
+        }
+
+        // Initialize webcam
         const webcamInitialized = await initializeWebcam();
         if (!webcamInitialized) {
           initializedRef.current = false;
           return;
         }
 
-        // 2. Wait for video to be ready and play it
+        // Wait for video to be ready
         if (videoRef.current) {
-          const handleLoadedMetadata = async () => {
+          const handleLoadedMetadata = () => {
             setIsInitialized(true);
             setError(null);
             setIsWebcamBlocked(false);
             
-            // 3. Load TensorFlow models in background while video is already rendering
-            const modelsLoaded = await loadModels();
-            if (modelsLoaded) {
-              stopDetectionLoop();
-              // Run presence checks
+            stopDetectionLoop();
+            // Run one check shortly after start, then every CHECK_INTERVAL_MS (2 minutes)
+            runPresenceCheckSequence();
+            detectionIntervalRef.current = setInterval(() => {
               runPresenceCheckSequence();
-              detectionIntervalRef.current = setInterval(() => {
-                runPresenceCheckSequence();
-              }, CHECK_INTERVAL_MS);
-              console.log('[ProctoringEngine] Scheduled proctoring AI checks started');
-            }
+            }, CHECK_INTERVAL_MS);
+
+            console.log('[ProctoringEngine] Scheduled proctoring checks started (every 2 minutes)');
           };
 
           if (videoRef.current.readyState >= 2) {
@@ -735,10 +440,9 @@ const ProctoringEngine = ({
       
       initializedRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTestActive]);
+  }, [cleanupStream, isTestActive, loadModels, initializeWebcam, runPresenceCheckSequence, stopDetectionLoop]);
 
-  // Restore/Reset violation count from localStorage on mount or when test ID changes
+  // Restore violation count from localStorage on mount
   useEffect(() => {
     if (studentID && testID) {
       const key = `proctor_violations_${studentID}_${testID}`;
@@ -747,17 +451,20 @@ const ProctoringEngine = ({
         try {
           const count = parseInt(saved, 10) || 0;
           setViolationCount(count);
+          // Sync with parent immediately so the header box matches
+          if (onViolationUpdate) {
+            onViolationUpdate({
+              violationCount: count,
+              violationType: 'init_sync',
+              timestamp: new Date().toISOString()
+            });
+          }
         } catch (error) {
           console.error('[ProctoringEngine] Error restoring violation count:', error);
-          setViolationCount(0);
         }
-      } else {
-        setViolationCount(0);
       }
-    } else {
-      setViolationCount(0);
     }
-  }, [studentID, testID]);
+  }, [studentID, testID, onViolationUpdate]);
 
   // Save violation count to localStorage
   useEffect(() => {
@@ -806,7 +513,9 @@ const ProctoringEngine = ({
       {/* Top Section: Violation Counter and Camera Preview - Side by side */}
       <div className="proctoring-top-section">
         <div className="proctoring-top-row">
-          {/* Mini Camera View */}
+          <ViolationCounter count={violationCount} />
+          
+          {/* Mini Camera View - Next to violation counter */}
           <div className="mini-camera-view">
             <video
               ref={videoRef}
@@ -815,17 +524,7 @@ const ProctoringEngine = ({
               playsInline
               className="mini-camera-video"
             />
-            {/* Live recording indicator */}
-            <div className="camera-label">
-              <span className="camera-rec-dot" /> LIVE 
-              <span style={{ marginLeft: '4px', fontSize: '9px', opacity: 0.85, fontWeight: '700' }}>
-                | {modelStatus === 'active' ? 'AI ACTIVE' : modelStatus === 'face_only' ? 'AI ACTIVE (FACE ONLY)' : modelStatus === 'objects_only' ? 'AI ACTIVE (OBJECTS)' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY'}
-              </span>
-            </div>
-            {/* Violation count badge overlaid on camera */}
-            <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= Math.round(maxViolations * 0.8) ? 'badge-critical' : 'badge-warn'}`}>
-              ⚠ {violationCount}/{maxViolations}
-            </div>
+            <div className="camera-label">Camera View</div>
           </div>
         </div>
       </div>

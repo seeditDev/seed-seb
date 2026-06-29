@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { APP_VERSION } from "../App";
-import { 
-  FaBars, 
-  FaUser, 
-  FaSignOutAlt, 
-  FaLaptopCode, 
-  FaQuestionCircle, 
+import {
+  FaBars,
+  FaUser,
+  FaSignOutAlt,
+  FaLaptopCode,
+  FaQuestionCircle,
   FaClipboardList,
   FaClock,
   FaCalendarAlt,
@@ -26,7 +26,6 @@ import MCQService from '../services/mcqService';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
-import { checkAndClearProctorCache, clearAllProctorCache } from '../utils/proctorCache';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -44,13 +43,13 @@ const _0xd3 = 'dG56bWZDUUZK';
 const _0xe4 = 'UU9KTjJBZDhocEZO';
 
 const slugify = (value = '') => {
-    if (!value) return 'test';
-    return value
-        .toString()
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '') || 'test';
+  if (!value) return 'test';
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'test';
 };
 
 const StudentDashboard = () => {
@@ -58,19 +57,19 @@ const StudentDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(null);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
-  
+
   // Assessments List State
   const [assessments, setAssessments] = useState([]);
   const [filteredAssessments, setFilteredAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState("All");
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
-  
+
   // ─── Launch Wizard State ──────────────────────────────────────────
   // launchStep: null | 'verifying' | 'passkey' | 'preflight' | 'instructions' | 'launching'
   const [launchStep, setLaunchStep] = useState(null);
@@ -89,11 +88,10 @@ const StudentDashboard = () => {
   const [preflightDone, setPreflightDone] = useState(false);
   const [chargerConfirmed, setChargerConfirmed] = useState(false);
   // ─────────────────────────────────────────────────────────────────
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAndClearProctorCache();
     const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
     if (authData.Email || authData.email || authData.Name) {
       setUser(authData);
@@ -109,7 +107,7 @@ const StudentDashboard = () => {
     try {
       // 1. Fetch access control configurations
       const accessControlData = await DataService.getAccessControl();
-      
+
       const departmentAccess = accessControlData?.access_control?.colleges?.[userData.College]?.[userData.Year]?.[userData.Department];
       if (!departmentAccess) {
         setAssessments([]);
@@ -131,7 +129,7 @@ const StudentDashboard = () => {
         })
         .map(([key, module]) => {
           const derivedSlug = module.slug || slugify(module.id || module.name || key);
-          
+
           let finalUrl = module.url || '';
           if (!finalUrl.endsWith('.json')) {
             if (module.slug) {
@@ -172,7 +170,7 @@ const StudentDashboard = () => {
         })
         .map(([key, module]) => {
           const derivedSlug = module.slug || slugify(module.id || module.name || key);
-          
+
           let finalUrl = module.url || '';
           if (!finalUrl.endsWith('.json')) {
             if (module.slug) {
@@ -205,7 +203,7 @@ const StudentDashboard = () => {
         });
 
       const combined = [...mcqList, ...codingList];
-      
+
       // Sort combined array based on availability status, display order, and date/time
       combined.sort((a, b) => {
         const statusPriority = { "Active": 0, "Upcoming": 1, "Expired": 2 };
@@ -284,8 +282,8 @@ const StudentDashboard = () => {
 
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
-      filtered = filtered.filter(a => 
-        a.name.toLowerCase().includes(q) || 
+      filtered = filtered.filter(a =>
+        a.name.toLowerCase().includes(q) ||
         a.id.toLowerCase().includes(q)
       );
     }
@@ -362,7 +360,6 @@ const StudentDashboard = () => {
     setPreflightDone(false);
     setEligibilityError(null);
     setChargerConfirmed(false);
-    clearAllProctorCache();
   };
 
   // STEP 1 — Click Start button
@@ -545,7 +542,7 @@ const StudentDashboard = () => {
       localStorage.removeItem("auth_data");
       localStorage.removeItem("role");
       localStorage.removeItem("portal_links");
-      
+
       setTimeout(() => {
         localStorage.clear();
       }, 100);
@@ -578,15 +575,15 @@ const StudentDashboard = () => {
         <div className="dashboard-filters-bar">
           <div className="search-box-wrapper">
             <FaSearch className="search-icon" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search by assessment name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
           </div>
-          
+
           <div className="filter-dropdowns">
             <div className="filter-item">
               <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="diff-filter-select">
@@ -745,10 +742,10 @@ const StudentDashboard = () => {
       {/* Step 1: Verifying identity overlay */}
       {launchStep === 'verifying' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '460px', padding: '40px 30px', textAlign: 'center' }}>
-            <div className="lw-spinner" style={{ width: '56px', height: '56px', borderWidth: '4px' }}></div>
-            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center', fontSize: '1.4rem' }}>Verifying Identity</h3>
-            <p className="lw-subtitle" style={{ fontSize: '0.95rem', marginTop: '8px' }}>Checking your previous attempt records. Please wait...</p>
+          <div className="lw-card" style={{ maxWidth: '360px', textAlign: 'center' }}>
+            <div className="lw-spinner"></div>
+            <h3 className="lw-title" style={{ marginTop: '16px' }}>Verifying Identity</h3>
+            <p className="lw-subtitle">Checking your previous attempt records. Please wait...</p>
           </div>
         </div>
       )}
@@ -756,13 +753,13 @@ const StudentDashboard = () => {
       {/* Step 2: Passkey Entry */}
       {launchStep === 'passkey' && selectedAssessment && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '540px' }}>
-            <div className="lw-card-header" style={{ padding: '30px 30px 20px' }}>
+          <div className="lw-card" style={{ maxWidth: '440px' }}>
+            <div className="lw-card-header">
               <div className="lw-step-badge">Step 2 of 4</div>
-              <h3 className="lw-title" style={{ fontSize: '1.35rem', gap: '10px' }}><FaLock style={{ color: '#6366f1' }}/>Access Passkey Required</h3>
-              <p className="lw-subtitle" style={{ fontSize: '0.92rem', marginTop: '6px' }}>This assessment is passkey-protected. Enter the passkey provided by your instructor.</p>
+              <h3 className="lw-title"><FaLock style={{ marginRight: '8px', color: '#6366f1' }} />Access Passkey Required</h3>
+              <p className="lw-subtitle">This assessment is passkey-protected. Enter the passkey provided by your instructor.</p>
             </div>
-            <div className="lw-card-body" style={{ padding: '24px 30px' }}>
+            <div className="lw-card-body">
               <input
                 type="password"
                 ref={passkeyInputRef}
@@ -771,42 +768,41 @@ const StudentDashboard = () => {
                 onChange={e => setPasskeyInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleValidatePasskey()}
                 className="lw-input"
-                style={{ padding: '14px 18px', fontSize: '1.05rem', borderRadius: '10px' }}
               />
               {passkeyError && (
-                <div className="lw-error-row" style={{ marginTop: '16px', padding: '12px' }}>
-                  <FaExclamationTriangle style={{ marginRight: '8px' }} />{passkeyError}
+                <div className="lw-error-row">
+                  <FaExclamationTriangle />{passkeyError}
                 </div>
               )}
             </div>
-            <div className="lw-card-footer" style={{ padding: '20px 30px 24px' }}>
-              <button className="lw-btn-secondary" onClick={cancelWizard} style={{ padding: '12px 24px' }}>Cancel</button>
-              <button className="lw-btn-primary" onClick={handleValidatePasskey} style={{ padding: '12px 28px' }}>
-                <FaCheck style={{ marginRight: '6px' }}/>Unlock & Continue
+            <div className="lw-card-footer">
+              <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
+              <button className="lw-btn-primary" onClick={handleValidatePasskey}>
+                <FaCheck style={{ marginRight: '6px' }} />Unlock & Continue
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Step 3: Pre-flight system check — internet only */}
+      {/* Step 3: Pre-flight system check — internet and charger */}
       {launchStep === 'preflight' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '560px' }}>
-            <div className="lw-card-header" style={{ padding: '30px 30px 20px' }}>
+          <div className="lw-card" style={{ maxWidth: '460px' }}>
+            <div className="lw-card-header">
               <div className="lw-step-badge">Step 3 of 4</div>
-              <h3 className="lw-title" style={{ fontSize: '1.35rem' }}>System Pre-flight Check</h3>
-              <p className="lw-subtitle" style={{ fontSize: '0.92rem', marginTop: '6px' }}>Verifying your system meets all requirements for a monitored assessment.</p>
+              <h3 className="lw-title">System Pre-flight Check</h3>
+              <p className="lw-subtitle">Verifying your system meets all requirements for a monitored assessment.</p>
             </div>
-            <div className="lw-card-body" style={{ padding: '24px 30px' }}>
+            <div className="lw-card-body">
               {/* Internet connectivity row */}
-              <div className="lw-preflight-row" style={{ padding: '16px', borderRadius: '10px' }}>
-                <span className="lw-preflight-icon" style={{ fontSize: '1.4rem' }}>🌐</span>
-                <span className="lw-preflight-label" style={{ fontSize: '1rem', fontWeight: '600' }}>Internet Connectivity</span>
-                <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`} style={{ fontSize: '0.95rem' }}>
+              <div className="lw-preflight-row">
+                <span className="lw-preflight-icon">🌐</span>
+                <span className="lw-preflight-label">Internet Connectivity</span>
+                <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`}>
                   {preflightResults.internet === 'pending' && <span className="lw-mini-spinner"></span>}
-                  {preflightResults.internet === 'pass'    && <FaCheck />}
-                  {preflightResults.internet === 'fail'    && <FaTimes />}
+                  {preflightResults.internet === 'pass' && <FaCheck />}
+                  {preflightResults.internet === 'fail' && <FaTimes />}
                   &nbsp;{preflightResults.internet === 'pending' ? 'Checking...' : preflightResults.internet === 'pass' ? 'Ready' : 'No Connection'}
                 </span>
               </div>
@@ -856,15 +852,14 @@ const StudentDashboard = () => {
                 </div>
               )}
             </div>
-            <div className="lw-card-footer" style={{ padding: '20px 30px 24px' }}>
-              <button className="lw-btn-secondary" onClick={cancelWizard} style={{ padding: '12px 24px' }}>Cancel</button>
+            <div className="lw-card-footer">
+              <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
               <button
                 className="lw-btn-primary"
                 disabled={!preflightDone || preflightResults.internet === 'fail' || !chargerConfirmed}
                 onClick={handlePreflightProceed}
-                style={{ padding: '12px 28px' }}
               >
-                <FaCheck style={{ marginRight: '6px' }}/>Proceed
+                <FaCheck style={{ marginRight: '6px' }} />Proceed
               </button>
             </div>
           </div>
@@ -884,36 +879,36 @@ const StudentDashboard = () => {
           />
         ) : (
           <div className="lw-overlay" style={{ zIndex: 1200 }}>
-            <div className="lw-card" style={{ maxWidth: '640px' }}>
-              <div className="lw-card-header" style={{ padding: '30px 30px 20px' }}>
+            <div className="lw-card" style={{ maxWidth: '540px' }}>
+              <div className="lw-card-header">
                 <div className="lw-step-badge">Step 4 of 4</div>
-                <h3 className="lw-title" style={{ fontSize: '1.35rem' }}>Test Details & Instructions</h3>
+                <h3 className="lw-title">Test Details & Instructions</h3>
               </div>
-              <div className="lw-card-body" style={{ padding: '24px 30px' }}>
+              <div className="lw-card-body">
                 {/* Test meta-info */}
-                <div className="lw-info-grid" style={{ gap: '16px', marginBottom: '24px' }}>
-                  <div className="lw-info-cell" style={{ padding: '14px' }}>
+                <div className="lw-info-grid">
+                  <div className="lw-info-cell">
                     <span className="lw-info-label">Assessment</span>
-                    <span className="lw-info-value" style={{ fontSize: '1.05rem' }}>{selectedAssessment.name}</span>
+                    <span className="lw-info-value">{selectedAssessment.name}</span>
                   </div>
-                  <div className="lw-info-cell" style={{ padding: '14px' }}>
+                  <div className="lw-info-cell">
                     <span className="lw-info-label">Type</span>
-                    <span className="lw-info-value" style={{ textTransform: 'capitalize', fontSize: '1.05rem' }}>{selectedAssessment.type}</span>
+                    <span className="lw-info-value" style={{ textTransform: 'capitalize' }}>{selectedAssessment.type}</span>
                   </div>
-                  <div className="lw-info-cell" style={{ padding: '14px' }}>
+                  <div className="lw-info-cell">
                     <span className="lw-info-label">Duration</span>
-                    <span className="lw-info-value" style={{ fontSize: '1.05rem' }}>{selectedAssessment.duration} minutes</span>
+                    <span className="lw-info-value">{selectedAssessment.duration} minutes</span>
                   </div>
-                  <div className="lw-info-cell" style={{ padding: '14px' }}>
+                  <div className="lw-info-cell">
                     <span className="lw-info-label">Questions</span>
-                    <span className="lw-info-value" style={{ fontSize: '1.05rem' }}>{selectedAssessment.questions || '—'}</span>
+                    <span className="lw-info-value">{selectedAssessment.questions || '—'}</span>
                   </div>
                 </div>
 
                 {/* Malpractice Warning Box */}
-                <div className="lw-malpractice-box" style={{ padding: '20px', borderRadius: '10px' }}>
-                  <p className="lw-malpractice-title" style={{ fontSize: '1.05rem', marginBottom: '12px' }}>⚠️ Proctoring System Active</p>
-                  <ul className="lw-malpractice-list" style={{ gap: '8px' }}>
+                <div className="lw-malpractice-box">
+                  <p className="lw-malpractice-title">⚠️ Proctoring System Active</p>
+                  <ul className="lw-malpractice-list">
                     <li>Do not switch tabs or leave this window during the test.</li>
                     <li>3 tab-switch violations will auto-lock and submit your assessment.</li>
                     <li>Do not use any external assistance, websites, or AI tools.</li>
@@ -921,10 +916,10 @@ const StudentDashboard = () => {
                   </ul>
                 </div>
               </div>
-              <div className="lw-card-footer" style={{ padding: '20px 30px 24px' }}>
-                <button className="lw-btn-secondary" onClick={cancelWizard} style={{ padding: '12px 24px' }}>Cancel</button>
-                <button className="lw-btn-success" onClick={handleAgreeAndLaunch} style={{ padding: '12px 28px' }}>
-                  <FaCheckCircle style={{ marginRight: '6px' }}/>I Agree & Start Assessment
+              <div className="lw-card-footer">
+                <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
+                <button className="lw-btn-success" onClick={handleAgreeAndLaunch}>
+                  <FaCheckCircle style={{ marginRight: '6px' }} />I Agree & Start Assessment
                 </button>
               </div>
             </div>
@@ -935,10 +930,10 @@ const StudentDashboard = () => {
       {/* Step 5: Launching overlay */}
       {launchStep === 'launching' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '460px', padding: '40px 30px', textAlign: 'center' }}>
-            <div className="lw-spinner" style={{ width: '56px', height: '56px', borderWidth: '4px' }}></div>
-            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center', fontSize: '1.4rem' }}>Setting Up Workspace</h3>
-            <p className="lw-subtitle" style={{ fontSize: '0.95rem', marginTop: '8px' }}>Loading questions and preparing your secure test environment...</p>
+          <div className="lw-card" style={{ maxWidth: '360px', textAlign: 'center' }}>
+            <div className="lw-spinner"></div>
+            <h3 className="lw-title" style={{ marginTop: '16px' }}>Setting Up Workspace</h3>
+            <p className="lw-subtitle">Loading questions and preparing your secure test environment...</p>
           </div>
         </div>
       )}
@@ -949,7 +944,7 @@ const StudentDashboard = () => {
           <div className="lw-card" style={{ maxWidth: '440px' }}>
             <div className="lw-card-header" style={{ borderBottom: '1px solid rgba(239,68,68,0.3)' }}>
               <h3 className="lw-title" style={{ color: '#ef4444' }}>
-                <FaExclamationTriangle style={{ marginRight: '8px' }}/>{eligibilityError.title}
+                <FaExclamationTriangle style={{ marginRight: '8px' }} />{eligibilityError.title}
               </h3>
             </div>
             <div className="lw-card-body">
@@ -974,7 +969,7 @@ const StudentDashboard = () => {
           <button className="sidebar-toggle" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle Sidebar">
             <FaBars />
           </button>
-          <span className="brand-title">SEED-IT Student Shell</span>
+          <span className="brand-title">SEED SEB Dashboard</span>
         </div>
         <div className="header-profile">
           <FaUser className="user-icon" />
@@ -987,15 +982,15 @@ const StudentDashboard = () => {
         {/* Sidebar Navigation */}
         <aside className="dashboard-sidebar">
           <nav className="sidebar-menu">
-            <button 
-              className={`menu-item ${activeTab === "assessments" ? "active" : ""}`} 
+            <button
+              className={`menu-item ${activeTab === "assessments" ? "active" : ""}`}
               onClick={() => setActiveTab("assessments")}
             >
               <FaClipboardList />
               <span className="menu-text">Assessments</span>
             </button>
-            <button 
-              className={`menu-item ${activeTab === "profile" ? "active" : ""}`} 
+            <button
+              className={`menu-item ${activeTab === "profile" ? "active" : ""}`}
               onClick={() => setActiveTab("profile")}
             >
               <FaUser />

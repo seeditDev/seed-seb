@@ -1,18 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Cookies from 'js-cookie';
-import HomePage from "./components/HomePage";
 import Login from "./components/Login";
 import StudentDashboard from "./components/StudentDashboard";
-import StaffDashboard from "./components/StaffDashboard";
-import Registration from "./components/Registration";
-import ChallengeSubmission from "./components/ChallengeSubmission";
 import MCQPage from "./components/MCQPage";
-import CodingSandbox from "./components/CodingSandbox";
-import LearnAndCodeHome from "./components/LearnAndCodeHome";
-import CodingAssessmentSandbox from "./components/CodingAssessmentSandbox";
-import CodingAssessmentHome from "./components/CodingAssessmentHome";
-import AdminQuestionBank from "./components/AdminQuestionBank";
 import CodingAssessmentPage from "./components/CodingAssessmentPage";
 import cacheManager from './utils/cacheManager';
 import TrackingService from './services/trackingService';
@@ -21,8 +12,6 @@ import timeService from './services/timeService';
 import desktopBridge from './utils/desktopBridge';
 
 import "./styles/Login.css";  // Import global styles
-import "./styles/HomePage.css"; 
-import "./styles/PDFViewer.css";
 
 // Get version from package.json
 export const APP_VERSION = '1.0.1';
@@ -98,22 +87,6 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-
-// Guarded route: allow /trainer only for SEED-IT college
-const TrainerRoute = ({ children }) => {
-  try {
-    const raw = localStorage.getItem("auth_data");
-    if (!raw) return <Navigate to="/login" replace />;
-    const data = JSON.parse(raw);
-    const college = String(data?.College || '').trim().toUpperCase();
-    if (college === 'SEED-IT') {
-      return children;
-    }
-    return <Navigate to="/student/dashboard" replace />;
-  } catch (_) {
-    return <Navigate to="/login" replace />;
-  }
-};
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -269,17 +242,12 @@ const App = () => {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/home" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Registration />} />
-          <Route path="/trainer" element={<TrainerRoute><ChallengeSubmission /></TrainerRoute>} />
           <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/student/mcq" element={<MCQPage />} />
           <Route path="/student/mcq/:testSlug" element={<MCQPage />} />
-          <Route path="/student/sandbox" element={<CodingSandbox />} />
-          <Route path="/student/learn" element={<LearnAndCodeHome />} />
           <Route path="/student/coding" element={<CodingAssessmentPage />} />
           <Route path="/student/coding/:assessmentSlug" element={<CodingAssessmentPage />} />
-          <Route path="/admin" element={<AdminQuestionBank />} />
-          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
     </ErrorBoundary>
