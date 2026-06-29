@@ -10,6 +10,9 @@ import desktopBridge from '../utils/desktopBridge';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
+import { clearAllProctorCache } from '../utils/proctorCache';
+import ProctoringEngine from './ProctoringEngine';
+import ProctoringInstructions from './ProctoringInstructions';
 import '../styles/CodingAssessmentPage.css';
 
 const LOCAL_BASE_URL = '/seed-contents';
@@ -64,6 +67,7 @@ const CodingAssessmentPage = () => {
     const [passkey, setPasskey] = useState('');
     const [passkeyError, setPasskeyError] = useState('');
     const [isValidatingPasskey, setIsValidatingPasskey] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(false);
 
     // Active workspace states
     const [currentAssessment, setCurrentAssessment] = useState(null);
@@ -99,6 +103,10 @@ const CodingAssessmentPage = () => {
     // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
     const [submitPhase, setSubmitPhase] = useState(null);
     const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
+    const [proctoringData, setProctoringData] = useState({
+        violationCount: 0,
+        violations: []
+    });
     const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
 
     // Custom Alert State
@@ -333,7 +341,9 @@ const CodingAssessmentPage = () => {
                         questions: module.questions || 0,
                         duration: module.duration_minutes || 60,
                         slug: module.slug || slugify(module.id || module.name || key),
-                        languages: module.languages || ["c", "cpp", "java", "python"]
+                        languages: module.languages || ["c", "cpp", "java", "python"],
+                        proctored: module.proctored,
+                        maxViolations: module.maxViolations
                     };
                 });
 
@@ -477,7 +487,19 @@ const CodingAssessmentPage = () => {
         if (assessment.passkey) {
             setShowPasskeyModal(true);
         } else {
-            await startAssessment(assessment);
+            // If no passkey but proctored, show camera instructions first
+            const isProctored = assessment && (
+                assessment.proctored === true ||
+                assessment.proctored === 1 ||
+                assessment.proctored === "1" ||
+                assessment.proctored === "true"
+            );
+            if (isProctored) {
+                setSelectedAssessment(assessment);
+                setShowInstructions(true);
+            } else {
+                await startAssessment(assessment);
+            }
         }
     };
 
@@ -487,10 +509,33 @@ const CodingAssessmentPage = () => {
             setPasskeyError("Please enter the passkey");
             return;
         }
+        
+        console.log('[CodingAssessmentPage] Validating passkey for:', selectedAssessment?.name);
+        console.log('[CodingAssessmentPage] Selected Assessment Object:', selectedAssessment);
+        
         if (passkey.trim() === selectedAssessment.passkey) {
+            console.log('[CodingAssessmentPage] Passkey matched successfully!');
             setShowPasskeyModal(false);
-            await startAssessment(selectedAssessment);
+            
+            // If the assessment is proctored, show camera/guidelines instructions first
+            const isProctored = selectedAssessment && (
+                selectedAssessment.proctored === true ||
+                selectedAssessment.proctored === 1 ||
+                selectedAssessment.proctored === "1" ||
+                selectedAssessment.proctored === "true"
+            );
+            
+            console.log('[CodingAssessmentPage] Proctoring check result (isProctored):', isProctored);
+            
+            if (isProctored) {
+                console.log('[CodingAssessmentPage] Showing proctoring guidelines instructions modal...');
+                setShowInstructions(true);
+            } else {
+                console.log('[CodingAssessmentPage] Proctoring disabled. Launching test workspace directly...');
+                await startAssessment(selectedAssessment);
+            }
         } else {
+            console.warn('[CodingAssessmentPage] Passkey validation failed. Incorrect passkey entered.');
             setPasskeyError("Incorrect passkey. Please try again.");
             setPasskey('');
         }
@@ -651,12 +696,12 @@ const CodingAssessmentPage = () => {
             if (document.hidden) {
                 setViolationCount(prev => {
                     const newCount = prev + 1;
-                    if (newCount >= 3) {
+                    if (newCount >= 5) {
                         setIsLockedOut(true);
                         autoSubmitAttempt("navigation");
                         return newCount;
                     }
-                    setProctorWarning(`Proctor Alert: Tab switch detected. Violation: ${newCount}/3. Worspace will lock and automatically submit on the 3rd violation.`);
+                    setProctorWarning(`Tab Switch: ${newCount}/5`);
                     return newCount;
                 });
             }
@@ -732,7 +777,8 @@ const CodingAssessmentPage = () => {
         setStdout('');
 
         // Yield to React so the overlay renders before the backend call starts
-        await new Promise(r => setTimeout(r, 80));
+        // await new Promise(r => setTimeout(r, 80));
+        // await new Promise(r => setTimeout(r, 80));
 
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const sampleTests = currentQuestion.sampleTests || [];
@@ -744,8 +790,7 @@ const CodingAssessmentPage = () => {
                 const tc = sampleTests[i];
 
                 // Run process on python sandbox backend
-                const resRaw = await desktopBridge.runDirectSandbox(language, code, tc.input);
-                const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
+                const res = await desktopBridge.runDirectSandbox(language, code, tc.input);
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                 const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
@@ -805,7 +850,7 @@ const CodingAssessmentPage = () => {
         setActiveResultTab('results');
 
         // Yield a tick so the overlay renders before backend starts
-        await new Promise(r => setTimeout(r, 80));
+        // await new Promise(r => setTimeout(r, 80));
 
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const hiddenTests = currentQuestion.hiddenTests || currentQuestion.sampleTests || [];
@@ -818,8 +863,7 @@ const CodingAssessmentPage = () => {
         try {
             for (let i = 0; i < hiddenTests.length; i++) {
                 const tc = hiddenTests[i];
-                const resRaw = await desktopBridge.runDirectSandbox(language, code, tc.input);
-                const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
+                const res = await desktopBridge.runDirectSandbox(language, code, tc.input);
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                 const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
@@ -851,15 +895,15 @@ const CodingAssessmentPage = () => {
             evalError = err.message;
         } finally {
             // Enforce minimum 5-second evaluating display
-            const elapsed = Date.now() - startTimestamp;
-            const remaining = Math.max(0, 5000 - elapsed);
-            if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
+            // const elapsed = Date.now() - startTimestamp;
+            // const remaining = Math.max(0, 5000 - elapsed);
+            // if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
 
             // Close the evaluating overlay FIRST
             setIsEvaluating(false);
 
             // Yield another tick so overlay is gone before alert appears
-            await new Promise(r => setTimeout(r, 60));
+            // await new Promise(r => setTimeout(r, 60));
 
             // NOW show the result (after overlay is closed)
             if (evalError) {
@@ -947,11 +991,21 @@ const CodingAssessmentPage = () => {
                 timeStartedISO: new Date(parseInt(storedStartTime, 10)).toISOString(),
                 timeEndedISO: timeService.getNow().toISOString(),
                 autoSubmitted: true,
-                autoSubmitReason: reason === 'timer' ? 'Timer hit 0' : 'Tab switch limit lockout',
-                violationCount: violationCount >= 3 ? 3 : violationCount,
-                totalNoFace: 0,
-                totalMultipleFaces: 0,
-                violations: [{ type: 'tab_switch', count: violationCount, reason: 'Tab switch count exceeded' }],
+                autoSubmitReason: reason === 'timer' 
+                    ? 'Timer hit 0' 
+                    : (reason === 'proctoring_violations' ? 'Proctoring violations exceeded limit' : 'Tab switch limit lockout'),
+                violationCount: reason === 'proctoring_violations' 
+                    ? (proctoringData.violationCount || 5) 
+                    : (violationCount >= 3 ? 3 : violationCount),
+                totalNoFace: reason === 'proctoring_violations' 
+                    ? proctoringData.violations.filter(v => v.type === 'no_face').length 
+                    : 0,
+                totalMultipleFaces: reason === 'proctoring_violations' 
+                    ? proctoringData.violations.filter(v => v.type === 'multiple_faces').length 
+                    : 0,
+                violations: reason === 'proctoring_violations' 
+                    ? proctoringData.violations 
+                    : [{ type: 'tab_switch', count: violationCount, reason: 'Tab switch count exceeded' }],
                 languageUsed: language,
                 executionStats: {
                     scores: finalScores,
@@ -964,7 +1018,9 @@ const CodingAssessmentPage = () => {
 
             const noticeMsg = reason === 'timer' 
                 ? 'Your coding assessment was auto-submitted because the duration expired.' 
-                : 'Your coding assessment was auto-submitted due to excessive tab switching violations.';
+                : (reason === 'proctoring_violations'
+                    ? 'Your coding assessment was auto-submitted due to webcam proctoring violations.'
+                    : 'Your coding assessment was auto-submitted due to excessive tab switching violations.');
             
             setAutoSubmitMessage(noticeMsg);
             navigate(CODING_ROUTE_BASE);
@@ -1004,8 +1060,7 @@ const CodingAssessmentPage = () => {
                     let passes = 0;
                     for (const tc of hidden) {
                         try {
-                            const resRaw = await desktopBridge.runDirectSandbox(language, code, tc.input);
-                            const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
+                            const res = await desktopBridge.runDirectSandbox(language, code, tc.input);
                             const exit = res.exit_code !== undefined ? res.exit_code : 0;
                             const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
                             const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
@@ -1107,6 +1162,7 @@ const CodingAssessmentPage = () => {
         localStorage.removeItem("codingAssessmentTimer");
         localStorage.removeItem("codingAssessmentData");
         localStorage.removeItem("codingAssessmentCode");
+        clearAllProctorCache();
         
         setCurrentAssessment(null);
         setQuestions([]);
@@ -1278,6 +1334,21 @@ const CodingAssessmentPage = () => {
                     )}
                 </div>
 
+                {/* Proctoring Instructions Modal - shown for proctored assessments after passkey */}
+                {showInstructions && (
+                    <ProctoringInstructions
+                        assessment={selectedAssessment}
+                        onContinue={() => {
+                            setShowInstructions(false);
+                            startAssessment(selectedAssessment);
+                        }}
+                        onCancel={() => {
+                            setShowInstructions(false);
+                            clearAllProctorCache();
+                        }}
+                    />
+                )}
+
                 {/* Passkey validation modal */}
                 {showPasskeyModal && (
                     <div className="passkey-modal-overlay">
@@ -1446,11 +1517,46 @@ const CodingAssessmentPage = () => {
         );
     }
 
+    // Enable proctoring dynamically if the assessment metadata has proctored flag enabled
+    const shouldUseProctoring = Boolean(
+        currentAssessment && (
+            currentAssessment.proctored === true ||
+            currentAssessment.proctored === 1 ||
+            currentAssessment.proctored === "1" ||
+            currentAssessment.proctored === "true"
+        )
+    );
+
     // ==========================================
     // RENDER: WORKSPACE VIEW
     // ==========================================
     return (
         <div className="coding-workspace-page">
+            {/* Proctoring Engine - Active only when assessment is running and proctored is enabled */}
+            {shouldUseProctoring && currentAssessment && user && (
+                <ProctoringEngine
+                    studentID={user.Email}
+                    testID={currentAssessment.id || 'unknown'}
+                    onAutoSubmit={() => autoSubmitAttempt('proctoring_violations')}
+                    isTestActive={!!currentAssessment && !submissionSuccess}
+                    maxViolations={Number(currentAssessment.maxViolations) || 5}
+                    onViolationUpdate={(violationInfo) => {
+                        if (!violationInfo?.violationType) return;
+                        setProctoringData(prev => ({
+                            violationCount: typeof violationInfo.violationCount === 'number'
+                                ? violationInfo.violationCount
+                                : prev.violationCount,
+                            violations: [
+                                ...prev.violations,
+                                {
+                                    type: violationInfo.violationType,
+                                    timestamp: violationInfo.timestamp
+                                }
+                            ]
+                        }));
+                    }}
+                />
+            )}
             {/* Top Workspace Header Bar */}
             <header className="workspace-header">
                 <div className="header-left">
@@ -1460,14 +1566,41 @@ const CodingAssessmentPage = () => {
                     <span className="assessment-title-label">
                         {currentAssessment?.name || "SEED-IT Assessment"}
                     </span>
-                    {proctorWarning && (
-                        <div className="proctor-warning-text animate-pulse">
-                            <FaExclamationTriangle /> {proctorWarning}
-                        </div>
-                    )}
                 </div>
                 
-                <div className="header-right">
+                <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {shouldUseProctoring && (
+                        <div className="proctoring-stats-container" style={{ display: 'flex', gap: '10px' }}>
+                            <div className="proctor-stat-pill tab-switch-pill" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                color: violationCount > 0 ? '#ef4444' : '#10b981',
+                                border: violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600'
+                            }}>
+                                <span>Tab Switches: {violationCount} / 5</span>
+                            </div>
+                            <div className="proctor-stat-pill ai-violation-pill" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
+                                border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600'
+                            }}>
+                                <span>AI Violations: {proctoringData.violationCount} / {currentAssessment?.maxViolations || 5}</span>
+                            </div>
+                        </div>
+                    )}
                     <div className="timer-pill">
                         <FaClock />
                         <span className="remaining-timer-span">{formatRemainingTime()}</span>
@@ -1683,15 +1816,12 @@ const CodingAssessmentPage = () => {
                             </div>
                             <div className="tab-body-scroll">
                                 {activeResultTab === 'input' && (
-                                    <div className="custom-input-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                        <textarea
-                                            className="custom-stdin-input"
-                                            placeholder="Type standard input (stdin) values here..."
-                                            value={customInput}
-                                            onChange={(e) => setCustomInput(e.target.value)}
-                                            style={{ flex: 1, minHeight: '80px' }}
-                                        />
-                                    </div>
+                                    <textarea
+                                        className="custom-stdin-input"
+                                        placeholder="Type standard input (stdin) values here..."
+                                        value={customInput}
+                                        onChange={(e) => setCustomInput(e.target.value)}
+                                    />
                                 )}
 
                                 {activeResultTab === 'output' && (
@@ -1731,7 +1861,7 @@ const CodingAssessmentPage = () => {
                                                     <tbody>
                                                         {runResults.map(r => (
                                                             <tr key={r.index}>
-                                                                <td>{r.index === 'Custom' ? 'Custom Input' : 'Case ' + r.index}</td>
+                                                                <td>Case {r.index}</td>
                                                                 <td className={r.passed ? 'pass-cell' : 'fail-cell'}>
                                                                     {r.passed ? 'PASSED' : 'FAILED'}
                                                                 </td>
@@ -1905,7 +2035,8 @@ const CodingAssessmentPage = () => {
                 </div>
             )}
 
-            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) */}
+            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) - Commented out to run inline inside buttons */}
+            {/*
             {(isRunning || isEvaluating) && (
                 <div className="compiling-workspace-overlay" style={{ zIndex: 1100 }}>
                     <div className="compiling-loader-container">
@@ -1919,6 +2050,7 @@ const CodingAssessmentPage = () => {
                     </div>
                 </div>
             )}
+            */}
 
             {/* Custom Alert Modal */}
             {alertConfig && (
