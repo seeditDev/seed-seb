@@ -1,11 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as faceapi from 'face-api.js';
+import * as tf from '@tensorflow/tfjs';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
-import ViolationCounter from './ViolationCounter';
 import '../styles/ProctoringEngine.css';
 import timeService from '../services/timeService';
-
-const tf = faceapi.tf;
 
 const DETECTION_INTERVAL_MS = 2000; // no longer used for tight loop, kept for reference
 const CONSECUTIVE_DETECTIONS_REQUIRED = 2; // legacy, not used in new strategy
