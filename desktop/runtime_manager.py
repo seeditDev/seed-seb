@@ -19,9 +19,7 @@ class RuntimeManager:
         self.resolve_paths()
 
     def get_app_root(self):
-        """Get the base path of the application."""
-        # 1. If running as a frozen/compiled bundle (PyInstaller or Nuitka standalone)
-        # sys.executable is the compiled SEED-SEB.exe file.
+        """Get the base path of the application dynamically based on execution context."""
         exe_name = os.path.basename(sys.executable).lower()
         if getattr(sys, 'frozen', False) or exe_name not in ("python.exe", "pythonw.exe"):
             exec_dir = os.path.dirname(os.path.abspath(sys.executable))
@@ -32,7 +30,7 @@ class RuntimeManager:
                 return parent_dir
             return exec_dir
 
-        # 2. Otherwise (during development), return parent of the desktop/app_source directory
+        # Otherwise (during development), return parent of the desktop/app_source directory
         file_dir = os.path.dirname(os.path.abspath(__file__))
         if os.path.basename(file_dir) == "desktop":
             return os.path.dirname(file_dir)
@@ -62,6 +60,31 @@ class RuntimeManager:
         for lang, path in self.binaries.items():
             status = "EXISTS" if os.path.exists(path) else "NOT FOUND (Must pack in resources/runtimes)"
             print(f"  {lang}: {path} ({status})")
+
+    def verify_resources(self):
+        """Verifies that all packaged local compilers are present in production/frozen mode."""
+        exe_name = os.path.basename(sys.executable).lower()
+        is_frozen = getattr(sys, 'frozen', False) or exe_name not in ("python.exe", "pythonw.exe")
+        
+        if not is_frozen:
+            return True
+            
+        required_binaries = [
+            self.binaries.get("gcc"),
+            self.binaries.get("javac"),
+            self.binaries.get("python")
+        ]
+        
+        missing = []
+        for path in required_binaries:
+            if not path or not os.path.exists(path):
+                missing.append(str(path))
+                
+        if missing:
+            print(f"[RuntimeManager] ERROR: Missing compiled resources: {missing}")
+            return False
+            
+        return True
 
     def get_binary_path(self, binary_name):
         return self.binaries.get(binary_name, binary_name)

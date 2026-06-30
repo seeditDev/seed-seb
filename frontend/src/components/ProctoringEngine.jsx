@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as faceapi from 'face-api.js';
 import * as tf from '@tensorflow/tfjs';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
-import ViolationCounter from './ViolationCounter';
 import '../styles/ProctoringEngine.css';
 import timeService from '../services/timeService';
 
@@ -162,6 +161,27 @@ const ProctoringEngine = ({
   const detectionIntervalRef = useRef(null);
   const modelsLoadedRef = useRef(false);
   const initializedRef = useRef(false);
+
+  const onViolationUpdateRef = useRef(onViolationUpdate);
+  const onAutoSubmitRef = useRef(onAutoSubmit);
+  const maxViolationsRef = useRef(maxViolations);
+  const violationCountRef = useRef(0);
+
+  useEffect(() => {
+    onViolationUpdateRef.current = onViolationUpdate;
+  }, [onViolationUpdate]);
+
+  useEffect(() => {
+    onAutoSubmitRef.current = onAutoSubmit;
+  }, [onAutoSubmit]);
+
+  useEffect(() => {
+    maxViolationsRef.current = maxViolations;
+  }, [maxViolations]);
+
+  useEffect(() => {
+    violationCountRef.current = violationCount;
+  }, [violationCount]);
   const retryCountRef = useRef(0);
   const detectionInProgressRef = useRef(false);
   const sequenceInProgressRef = useRef(false);
@@ -318,16 +338,16 @@ const ProctoringEngine = ({
 
   const notifyViolationEvent = useCallback(
     (violationType, countOverride) => {
-      if (!violationType || !onViolationUpdate) return;
+      if (!violationType || !onViolationUpdateRef.current) return;
       const payloadCount =
-        typeof countOverride === 'number' ? countOverride : violationCount;
-      onViolationUpdate({
+        typeof countOverride === 'number' ? countOverride : violationCountRef.current;
+      onViolationUpdateRef.current({
         violationCount: payloadCount,
         violationType,
         timestamp: timeService.getNow().toISOString()
       });
     },
-    [onViolationUpdate, violationCount]
+    []
   );
 
   // Initialize webcam - with duplicate prevention and reuse existing stream
@@ -459,19 +479,21 @@ const ProctoringEngine = ({
         showAlert(msg, 'warning');
         notifyViolationEvent(type, newCount);
 
-        if (newCount >= maxViolations && onAutoSubmit) {
+        if (newCount >= maxViolationsRef.current && onAutoSubmitRef.current) {
           console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
           showAlert('Maximum violations reached. Exam will be auto-submitted.', 'error');
 
           setTimeout(() => {
-            onAutoSubmit({ reason: 'proctoring_violations', violationCount: newCount });
+            if (onAutoSubmitRef.current) {
+              onAutoSubmitRef.current({ reason: 'proctoring_violations', violationCount: newCount });
+            }
           }, 2000);
         }
       }, 0);
 
       return newCount;
     });
-  }, [maxViolations, onAutoSubmit, notifyViolationEvent, showAlert]);
+  }, [notifyViolationEvent, showAlert]);
 
   // Single-frame detection helper (used in scheduled sequences)
   const detectFrame = useCallback(async () => {
@@ -812,7 +834,6 @@ const ProctoringEngine = ({
       {/* Top Section: Violation Counter and Camera Preview - Side by side */}
       <div className="proctoring-top-section">
         <div className="proctoring-top-row">
-          <ViolationCounter count={violationCount} />
           {/* Mini Camera View */}
           <div className="mini-camera-view">
             <video

@@ -15,6 +15,7 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={commonpf}\{#MyAppName}
+DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=LICENSE.txt
@@ -33,9 +34,6 @@ DisableProgramGroupPage=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-
 [Files]
 ; Include all files from the compiled dist directory
 Source: "dist\SEED-SEB\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -43,28 +41,73 @@ Source: "dist\SEED-SEB\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 
 [Run]
 ; Hide the installation folder (System + Hidden attribute)
 Filename: "attrib"; Parameters: "+h +s ""{app}"""; Flags: runhidden
 
-; 1. Disable inheritance and copy active permissions to start custom hardening
-Filename: "icacls"; Parameters: """{app}"" /inheritance:d"; Flags: runhidden
-
-; 2. Explicitly remove any existing Users or Authenticated Users inheritance
-Filename: "icacls"; Parameters: """{app}"" /remove *S-1-5-32-545"; Flags: runhidden
-Filename: "icacls"; Parameters: """{app}"" /remove *S-1-5-11"; Flags: runhidden
-
-; 3. Grant Administrators and SYSTEM full control (recursively inherited)
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-32-544:(OI)(CI)F"; Flags: runhidden
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-18:(OI)(CI)F"; Flags: runhidden
-
-; 4. Grant standard Users ONLY inherit-only Read/Execute permission on subfolders and files inside
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-32-545:(OI)(CI)(IO)RX"; Flags: runhidden
-
-; 5. Grant Users ONLY Execute, Read Control, and Synchronize (NO Read Data / List Directory) on the parent app folder itself
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-32-545:(Rc,S,X)"; Flags: runhidden
+; Grant Everyone full control recursively on resources and data subfolders so standard user runs can read/write data
+Filename: "icacls"; Parameters: """{app}\resources"" /grant *S-1-1-0:(OI)(CI)F"; Flags: runhidden
+Filename: "icacls"; Parameters: """{app}\data"" /grant *S-1-1-0:(OI)(CI)F"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+
+[Code]
+var
+  PercentLabel: TNewStaticText;
+
+function GetUninstallString(): String;
+var
+  sUnInstPath: String;
+  sUnInstallString: String;
+begin
+  sUnInstPath := ExpandConstant('Software\Microsoft\Windows\CurrentVersion\Uninstall\{#emit SetupSetting("AppId")}_is1');
+  sUnInstallString := '';
+  if not RegQueryStringValue(HKLM, sUnInstPath, 'UninstallString', sUnInstallString) then
+    RegQueryStringValue(HKCU, sUnInstPath, 'UninstallString', sUnInstallString);
+  Result := sUnInstallString;
+end;
+
+function UnInstallOldVersion(): Integer;
+var
+  sUnInstallString: String;
+  iResultCode: Integer;
+begin
+  Result := 0; 
+  sUnInstallString := GetUninstallString();
+  if sUnInstallString <> '' then begin
+    sUnInstallString := RemoveQuotes(sUnInstallString);
+    if Exec(sUnInstallString, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_HIDE, ewWaitUntilTerminated, iResultCode) then
+      Result := 3
+    else
+      Result := 2;
+  end else
+    Result := 1;
+end;
+
+procedure InitializeWizard();
+begin
+  // First, uninstall any previous version of SEED silently
+  UnInstallOldVersion();
+
+  // Hide the default filename label so users don't see which individual files are being extracted
+  WizardForm.FilenameLabel.Visible := False;
+
+  // Create a label to show the percentage
+  PercentLabel := TNewStaticText.Create(WizardForm);
+  PercentLabel.Parent := WizardForm.ProgressGauge.Parent;
+  PercentLabel.Left := WizardForm.ProgressGauge.Left + WizardForm.ProgressGauge.Width - ScaleX(35);
+  PercentLabel.Top := WizardForm.ProgressGauge.Top + WizardForm.ProgressGauge.Height + ScaleY(8);
+  PercentLabel.Width := ScaleX(40);
+  PercentLabel.Caption := '0%';
+end;
+
+procedure CurInstallProgressChanged(CurProgress, MaxProgress: Integer);
+begin
+  if MaxProgress > 0 then
+  begin
+    PercentLabel.Caption := IntToStr((CurProgress * 100) div MaxProgress) + '%';
+  end;
+end;
