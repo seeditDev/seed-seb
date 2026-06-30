@@ -24,12 +24,11 @@ from bridge import DesktopBridge
 from runtime_manager import runtime_manager
 
 # Configure logging
-log_dir = os.path.join(runtime_manager.app_root, "data", "student")
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "app.log")
+# log_dir = os.path.join(runtime_manager.app_root, "data", "student")
+# os.makedirs(log_dir, exist_ok=True)
+# log_file = os.path.join(log_dir, "app.log")
 
 logging.basicConfig(
-    filename=log_file,
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
@@ -461,9 +460,8 @@ class ProcessTerminationThread(QThread):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, dev_mode=False):
+    def __init__(self):
         super().__init__()
-        self.dev_mode = dev_mode
         self.setWindowTitle("SEED-IT Secure Assessment Portal")
         
         # Configure windowless fullscreen view
@@ -597,20 +595,15 @@ class MainWindow(QMainWindow):
         logo_label = QLabel("🛡️ SEED-IT Secure Portal")
         logo_label.setStyleSheet("color: white; font-weight: bold; font-size: 14px; margin-right: 15px;")
 
-        # Logout & Force Quit Buttons
+        # Logout Button (Force Close behavior)
         logout_btn = QPushButton("🚪 Logout")
         logout_btn.setObjectName("logoutBtn")
-        logout_btn.clicked.connect(self.close)
-
-        force_close_btn = QPushButton("☠ Force Close")
-        force_close_btn.setObjectName("forceCloseBtn")
-        force_close_btn.clicked.connect(self.force_close_application)
+        logout_btn.clicked.connect(self.force_close_application)
 
         # Store button references as attributes to enable/disable dynamically
         self.back_btn = back_btn
         self.forward_btn = forward_btn
         self.logout_btn = logout_btn
-        self.force_close_btn = force_close_btn
 
         # Add to layout
         nav_layout.addWidget(back_btn)
@@ -619,7 +612,6 @@ class MainWindow(QMainWindow):
         nav_layout.addStretch(1)
         nav_layout.addWidget(logo_label)
         nav_layout.addWidget(logout_btn)
-        nav_layout.addWidget(force_close_btn)
 
         self.main_layout.addWidget(nav_bar)
 
@@ -685,34 +677,29 @@ class MainWindow(QMainWindow):
 
     def load_frontend(self):
         """Loads React app from load-balanced Netlify sites, or falls back to local build/server."""
-        if self.dev_mode:
-            dev_url = "http://localhost:3000"
-            logging.info(f"Loading dev server URL: {dev_url}")
-            self.web_view.load(QUrl(dev_url))
-        else:
-            # List of 4 Netlify domains for load balancing
-            netlify_urls = [
-                "https://seed-seb-1.netlify.app",
-                "https://seed-seb-2.netlify.app",
-                "https://seed-seb-3.netlify.app",
-                "https://seed-seb-4.netlify.app"
-            ]
-            
-            # Select randomly
-            selected_url = random.choice(netlify_urls)
-            logging.info(f"Load-balanced selection: {selected_url}")
-            
-            # Locate build/index.html directory for offline fallback if needed
-            build_dir = os.path.join(runtime_manager.app_root, "frontend", "build")
-            if not os.path.exists(os.path.join(build_dir, "index.html")):
-                build_dir = os.path.join(runtime_manager.app_root, "build")
-            
-            logging.info(f"Loading React app from remote: {selected_url}")
-            self.web_view.load(QUrl(selected_url))
+        # List of 4 Netlify domains for load balancing
+        netlify_urls = [
+            "https://seed-seb-1.netlify.app",
+            "https://seed-seb-2.netlify.app",
+            "https://seed-seb-3.netlify.app",
+            "https://seed-seb-4.netlify.app"
+        ]
+        
+        # Select randomly
+        selected_url = random.choice(netlify_urls)
+        logging.info(f"Load-balanced selection: {selected_url}")
+        
+        # Locate build/index.html directory for offline fallback if needed
+        build_dir = os.path.join(runtime_manager.app_root, "frontend", "build")
+        if not os.path.exists(os.path.join(build_dir, "index.html")):
+            build_dir = os.path.join(runtime_manager.app_root, "build")
+        
+        logging.info(f"Loading React app from remote: {selected_url}")
+        self.web_view.load(QUrl(selected_url))
 
     def handle_load_finished(self, ok):
         """Callback triggered when page loading finishes. Handles fallback to offline local server on network errors."""
-        if not ok and not self.is_loading_fallback and not self.dev_mode:
+        if not ok and not self.is_loading_fallback:
             logging.warning("Remote Netlify URL failed to load. Attempting offline fallback to local server...")
             self.is_loading_fallback = True
             
@@ -791,6 +778,13 @@ class MainWindow(QMainWindow):
                 self.showFullScreen()
                 self.raise_()
                 self.activateWindow()
+                try:
+                    import ctypes
+                    hwnd = int(self.winId())
+                    # Force OS focus/desktop switch back to this window
+                    ctypes.windll.user32.SetForegroundWindow(hwnd)
+                except Exception as e:
+                    logging.error(f"Failed SetForegroundWindow: {e}")
         super().changeEvent(event)
 
     def on_url_changed(self, url):
@@ -813,7 +807,6 @@ class MainWindow(QMainWindow):
         self.back_btn.setVisible(not is_assessment)
         self.forward_btn.setVisible(not is_assessment)
         self.logout_btn.setVisible(not is_assessment)
-        self.force_close_btn.setVisible(not is_assessment)
         
         logging.info(f"URL changed: {url.toString()} (Assessment Active: {is_assessment})")
 
@@ -1172,6 +1165,30 @@ def connect_to_wifi(ssid, password):
 
 
 def main():
+    # Enforce single instance using a Win32 Mutex check
+    import ctypes
+    mutex = ctypes.windll.kernel32.CreateMutexW(None, True, "Local\\SEED_SEB_SingleInstance_Mutex")
+    if ctypes.windll.kernel32.GetLastError() == 183: # ERROR_ALREADY_EXISTS
+        temp_app = QApplication(sys.argv)
+        QMessageBox.critical(
+            None,
+            "Already Running",
+            "An instance of SEED-SEB is already running. Please close it first.",
+            QMessageBox.StandardButton.Ok
+        )
+        sys.exit(1)
+
+    # 0. Verify compiler resources first
+    if not runtime_manager.verify_resources():
+        temp_app = QApplication(sys.argv)
+        QMessageBox.critical(
+            None,
+            "Application Corrupted",
+            "Required resource runtimes (Python, Java, or C++ compilers) are missing or corrupted.\n\nPlease reinstall the application to resolve this issue.",
+            QMessageBox.StandardButton.Ok
+        )
+        sys.exit(1)
+
     # 1. Block macOS and Linux execution
     if sys.platform != 'win32':
         temp_app = QApplication(sys.argv)
@@ -1214,7 +1231,15 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("SEED-SEB")
     
-    dev_mode = "--dev" in sys.argv
+    # Clean up temp_workspace directory on startup to remove orphaned folders from previous crashes
+    try:
+        import shutil
+        workspace_dir = os.path.join(runtime_manager.app_root, "data", "temp_workspace")
+        if os.path.exists(workspace_dir):
+            shutil.rmtree(workspace_dir, ignore_errors=True)
+            os.makedirs(workspace_dir, exist_ok=True)
+    except Exception as e:
+        pass
     
     # 🔹 Show Pre-Launch System Check Dialog first
     prelaunch = PreLaunchDialog()
@@ -1224,7 +1249,7 @@ def main():
         sys.exit(0)
 
     # Initialize Main Window
-    window = MainWindow(dev_mode=dev_mode)
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
 
