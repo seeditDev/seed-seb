@@ -16,8 +16,10 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const [isAcknowledged, setIsAcknowledged] = useState(false);
   
   // State for reference photo registration
-  const [photoStatus, setPhotoStatus] = useState('searching'); // searching, captured, failed
+  const [photoStatus, setPhotoStatus] = useState('pending'); // pending, captured, failed
   const [photoUrl, setPhotoUrl] = useState(null);  
+  const [captureError, setCaptureError] = useState('');
+  const [isCapturing, setIsCapturing] = useState(false);
   // Track if we are proceeding to test
   const isProceedingRef = useRef(false);
 
@@ -154,101 +156,114 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   }, [cameraStatus]);
 
   const captureReferencePhoto = useCallback(async () => {
-    setPhotoStatus('searching');
-    setPhotoUrl(null);
+    setCaptureError('');
+    setIsCapturing(true);
     
     const modelsReady = await loadFaceApiForPhoto();
     if (!modelsReady) {
-      setPhotoStatus('failed');
+      setCaptureError("AI face-detection models failed to load. Please check your connection.");
+      setIsCapturing(false);
       return;
     }
     
-    // Attempt to capture a face for up to 30 attempts (30 seconds)
-    for (let attempt = 0; attempt < 30; attempt++) {
-      if (!streamRef.current || !streamRef.current.active) {
-        console.warn('[ProctoringInstructions] Stream is no longer active.');
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+      setCaptureError("Camera stream is not ready yet. Please wait.");
+      setIsCapturing(false);
+      return;
+    }
+    
+    try {
+      console.log('[ProctoringInstructions] Executing manual face capture...');
+      const detection = await faceapi.detectSingleFace(
+        video,
+        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.75 })
+      ).withFaceLandmarks().withFaceDescriptor();
+      
+      if (!detection) {
+        setCaptureError("No face detected in the frame. Please look directly at the camera and try again.");
+        setPhotoStatus('failed');
+        setIsCapturing(false);
         return;
       }
       
-      const video = videoRef.current;
-      if (!video) {
-        console.log('[ProctoringInstructions] Video element not yet mounted, waiting...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
+      const box = detection.detection.box;
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
       
-      if (video.videoWidth === 0 || video.videoHeight === 0) {
-        console.log('[ProctoringInstructions] Video dimensions are 0 (not playing yet), waiting...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
+      // 1. Verify margins (Face too close to edges)
+      const borderThresholdX = videoWidth * 0.05;
+      const borderThresholdY = videoHeight * 0.05;
+      if (
+        box.x < borderThresholdX || 
+        box.y < borderThresholdY || 
+        (box.x + box.width) > (videoWidth - borderThresholdX) || 
+        (box.y + box.height) > (videoHeight - borderThresholdY)
+      ) {
+        setCaptureError("Face is too close to boundaries. Please center your face inside the guide.");
+        setPhotoStatus('failed');
+        setIsCapturing(false);
+        return;
       }
-      
-      try {
-        console.log(`[ProctoringInstructions] Face capture attempt ${attempt + 1}...`);
-        const detection = await faceapi.detectSingleFace(
-          video,
-          new faceapi.SsdMobilenetv1Options({ minConfidence: 0.85 })
-        ).withFaceLandmarks().withFaceDescriptor();
-        
-        if (detection) {
-          const box = detection.detection.box;
-          const videoWidth = video.videoWidth;
-          const videoHeight = video.videoHeight;
-          
-          // Verify margins: Ensure the face box is not touching or overflowing the borders (indicates half-face/cut-off)
-          const borderThresholdX = videoWidth * 0.05; // 5% border margin
-          const borderThresholdY = videoHeight * 0.05;
-          
-          if (
-            box.x < borderThresholdX || 
-            box.y < borderThresholdY || 
-            (box.x + box.width) > (videoWidth - borderThresholdX) || 
-            (box.y + box.height) > (videoHeight - borderThresholdY)
-          ) {
-            console.warn('[ProctoringInstructions] Face is cut off or too close to frame boundaries. Retrying...');
-            continue;
-          }
 
-          const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          
-          localStorage.setItem('proctor_reference_photo', dataUrl);
-          localStorage.setItem('proctor_reference_descriptor', JSON.stringify(Array.from(detection.descriptor)));
-          
-          // Set cache expiration based on assessment duration
-          const duration = assessment?.duration || 60;
-          const testID = assessment?.id || 'unknown';
-          setProctorCacheExpiry(duration, testID);
-          
-          setPhotoUrl(dataUrl);
-          setPhotoStatus('captured');
-          console.log('[ProctoringInstructions] ✓ Reference face photo captured, descriptor saved and cache expiry set');
+      // 2. Verify pose/symmetry (Looking straight check)
+      const landmarks = detection.landmarks;
+      const leftEye = landmarks.getLeftEye()[0];
+      const rightEye = landmarks.getRightEye()[3];
+      const nose = landmarks.getNose()[0];
+      
+      const distLeft = Math.abs(nose.x - leftEye.x);
+      const distRight = Math.abs(rightEye.x - nose.x);
+      
+      if (distLeft > 0 && distRight > 0) {
+        const ratio = distLeft / distRight;
+        console.log('[ProctoringInstructions] Manual capture symmetry ratio:', ratio);
+        if (ratio < 0.55 || ratio > 1.8) {
+          setCaptureError("Please look straight at the camera. Side-facing photos are rejected.");
+          setPhotoStatus('failed');
+          setIsCapturing(false);
           return;
         }
-      } catch (err) {
-        console.error('[ProctoringInstructions] Error during face capture attempt:', err);
       }
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Draw image to canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      
+      localStorage.setItem('proctor_reference_photo', dataUrl);
+      localStorage.setItem('proctor_reference_descriptor', JSON.stringify(Array.from(detection.descriptor)));
+      
+      const duration = assessment?.duration || 60;
+      const testID = assessment?.id || 'unknown';
+      setProctorCacheExpiry(duration, testID);
+      
+      setPhotoUrl(dataUrl);
+      setPhotoStatus('captured');
+      setCaptureError('');
+      console.log('[ProctoringInstructions] ✓ Reference photo manually captured and validated!');
+    } catch (err) {
+      console.error('[ProctoringInstructions] Error during manual face capture:', err);
+      setCaptureError("An error occurred during verification. Please try again.");
+      setPhotoStatus('failed');
+    } finally {
+      setIsCapturing(false);
     }
-    
-    setPhotoStatus('failed');
   }, [assessment]);
 
   useEffect(() => {
-    if (cameraStatus === 'granted') {
-      // Delay slightly to allow video track to start playing and srcObject to bind
-      const timer = setTimeout(() => {
-        captureReferencePhoto();
-      }, 1000);
-      return () => clearTimeout(timer);
+    // Pre-load photo from cache if present
+    const existingPhoto = localStorage.getItem('proctor_reference_photo');
+    const existingDescriptor = localStorage.getItem('proctor_reference_descriptor');
+    if (existingPhoto && existingDescriptor) {
+      setPhotoUrl(existingPhoto);
+      setPhotoStatus('captured');
     }
-  }, [cameraStatus, captureReferencePhoto]);
+  }, []);
 
   const handleContinue = () => {
     if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured') {
@@ -325,45 +340,84 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                       <p className="camera-status-hint">Please allow camera access when prompted</p>
                     </div>
                   )}
-                  
-                  {cameraStatus === 'granted' && (
-                    <div className="camera-preview-wrapper">
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        muted
-                        playsInline
-                        className="instructions-video-preview"
-                      />
-                      <div className="photo-capture-overlay">
-                        {photoStatus === 'searching' && (
-                          <div className="photo-scan-status scan-searching">
-                            <FaSpinner className="spinner-icon pulse" />
-                            <span>Scanning face for verification photo...</span>
+                                    {cameraStatus === 'granted' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <div className="camera-preview-wrapper">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          muted
+                          playsInline
+                          className="instructions-video-preview"
+                        />
+                        
+                        {/* Live face guide oval */}
+                        {photoStatus !== 'captured' && (
+                          <div className="face-guide-oval">
+                            <div className="guide-text">Position face inside oval</div>
                           </div>
                         )}
-                        {photoStatus === 'captured' && (
-                          <div className="photo-scan-status scan-captured">
-                            <FaCheckCircle className="scan-success-icon" />
-                            <span>✓ Identity Verified & Registered!</span>
-                          </div>
-                        )}
-                        {photoStatus === 'failed' && (
-                          <div className="photo-scan-status scan-failed">
-                            <FaExclamationTriangle className="scan-failed-icon" />
-                            <span>Face not detected. Keep your face centered.</span>
-                            <button className="scan-retry-btn" onClick={captureReferencePhoto}>
-                              <FaSync /> Retry Photo
-                            </button>
+
+                        <div className="photo-capture-overlay">
+                          {photoStatus === 'captured' && (
+                            <div className="photo-scan-status scan-captured">
+                              <FaCheckCircle className="scan-success-icon" />
+                              <span>✓ Identity Verified & Registered!</span>
+                            </div>
+                          )}
+                        </div>
+                        {photoUrl && (
+                          <div className="photo-thumbnail">
+                            <img src={photoUrl} alt="Registered Identity" />
+                            <span className="thumbnail-label">ID REGISTERED</span>
                           </div>
                         )}
                       </div>
-                      {photoUrl && (
-                        <div className="photo-thumbnail">
-                          <img src={photoUrl} alt="Registered Identity" />
-                          <span className="thumbnail-label">ID REGISTERED</span>
-                        </div>
-                      )}
+
+                      {/* Manual Capture Button Panel */}
+                      <div className="camera-controls-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {captureError && (
+                          <div className="lw-error-row" style={{ marginTop: '0', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.88rem', fontWeight: '600' }}>
+                            <FaExclamationTriangle /> {captureError}
+                          </div>
+                        )}
+
+                        {photoStatus !== 'captured' ? (
+                          <button 
+                            className="lw-btn-primary" 
+                            style={{ width: '100%', justifyContent: 'center', gap: '8px', padding: '12px' }}
+                            onClick={captureReferencePhoto}
+                            disabled={isCapturing}
+                          >
+                            {isCapturing ? (
+                              <>
+                                <FaSpinner className="spinner-icon pulse" />
+                                <span>Verifying face quality...</span>
+                              </>
+                            ) : (
+                              <>
+                                <FaCamera />
+                                <span>Capture Registration Photo</span>
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <button 
+                            className="lw-btn-secondary" 
+                            style={{ width: '100%', justifyContent: 'center', gap: '8px', padding: '12px', background: 'rgba(51, 65, 85, 0.65)', border: '1px solid rgba(100, 116, 139, 0.35)', color: '#cbd5e1' }}
+                            onClick={() => {
+                              setPhotoStatus('pending');
+                              setPhotoUrl(null);
+                              setCaptureError('');
+                              localStorage.removeItem('proctor_reference_photo');
+                              localStorage.removeItem('proctor_reference_descriptor');
+                            }}
+                          >
+                            <FaSync />
+                            <span>Recapture Photo</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                   
@@ -378,7 +432,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                   )}
                 </div>
               </div>
-
+ 
               {/* Validation Checklist UI */}
               <div className="camera-verification-checklist">
                 <h4>Verification Steps</h4>
@@ -391,7 +445,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                   <li className={photoStatus === 'captured' ? 'passed' : 'pending'}>
                     <span className="badge-bullet"></span>
                     <span className="badge-text">Offline Face Registration</span>
-                    <span className="badge-status">{photoStatus === 'captured' ? '✓ Registered' : photoStatus === 'searching' ? '⚡ Scanning...' : '○ Pending'}</span>
+                    <span className="badge-status">{photoStatus === 'captured' ? '✓ Registered' : isCapturing ? '⚡ Verifying...' : '○ Pending'}</span>
                   </li>
                 </ul>
               </div>
