@@ -80,6 +80,11 @@ const cpuNMS = (candidates, iouThreshold = 0.5) => {
 const runYolov8Inference = async (videoElement, model) => {
   let result = { personCount: 0, phoneDetected: false, bookDetected: false };
   
+  // Helper to verify if object is a tf.Tensor without using instanceof (obfuscation safe)
+  const isTensor = (obj) => {
+    return obj && typeof obj.reshape === 'function' && typeof obj.dispose === 'function';
+  };
+
   // 1. Preprocess the image and get predictions from the model
   const tensors = tf.tidy(() => {
     const img = tf.browser.fromPixels(videoElement);
@@ -87,20 +92,28 @@ const runYolov8Inference = async (videoElement, model) => {
     const normalized = resized.div(255.0);
     const input = normalized.expandDims(0); // Shape [1, 640, 640, 3]
     
-    const output = model.predict(input);
+    // Fallback between execute and predict to prevent function errors on compiled graph models
+    let output;
+    if (typeof model.execute === 'function') {
+      output = model.execute(input);
+    } else if (typeof model.predict === 'function') {
+      output = model.predict(input);
+    } else {
+      throw new Error("Model has no execute or predict methods");
+    }
     
     // Safely unpack output if it's an array or dictionary
     let outputTensor = output;
     if (Array.isArray(output)) {
       outputTensor = output[0];
-    } else if (output && !(output instanceof tf.Tensor)) {
+    } else if (output && !isTensor(output)) {
       const keys = Object.keys(output);
       if (keys.length > 0) {
         outputTensor = output[keys[0]];
       }
     }
     
-    if (!outputTensor || !(outputTensor instanceof tf.Tensor)) {
+    if (!outputTensor || !isTensor(outputTensor)) {
       throw new Error("Failed to retrieve a valid tensor output from YOLOv8 model");
     }
     

@@ -1,5 +1,11 @@
 import os
 import sys
+
+# Ensure the directory containing this script is in sys.path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir not in sys.path:
+    sys.path.insert(0, script_dir)
+
 import logging
 import http.server
 import socketserver
@@ -23,16 +29,30 @@ from PyQt6.QtWebChannel import QWebChannel
 from bridge import DesktopBridge
 from runtime_manager import runtime_manager
 
-# Configure logging
-# log_dir = os.path.join(runtime_manager.app_root, "data", "student")
-# os.makedirs(log_dir, exist_ok=True)
-# log_file = os.path.join(log_dir, "app.log")
+# Configure logging to both file and console
+log_dir = os.path.join(runtime_manager.app_root, "data", "student")
+try:
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "app.log")
+    
+    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    console_handler = logging.StreamHandler(sys.stdout)
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[file_handler, console_handler]
+    )
+except Exception as e:
+    # Fallback to basic console logging if directory creation/write fails
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    logging.warning(f"Failed to initialize file logging: {e}")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
 logging.info("Application starting up...")
 
 # App version
