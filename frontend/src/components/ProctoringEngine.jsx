@@ -69,10 +69,49 @@ const runYolov8Inference = async (videoElement, model) => {
     const normalized = resized.div(255.0);
     const input = normalized.expandDims(0); // Shape [1, 640, 640, 3]
     
-    const output = model.predict(input); // Output shape: [1, 84, 8400]
+    const output = model.predict(input);
     
-    // Reshape and transpose output to shape [8400, 84]
-    const transposed = output.reshape([84, 8400]).transpose([1, 0]);
+    // Safely unpack output if it's an array or dictionary
+    let outputTensor = output;
+    if (Array.isArray(output)) {
+      outputTensor = output[0];
+    } else if (output && !(output instanceof tf.Tensor)) {
+      const keys = Object.keys(output);
+      if (keys.length > 0) {
+        outputTensor = output[keys[0]];
+      }
+    }
+    
+    if (!outputTensor || !(outputTensor instanceof tf.Tensor)) {
+      throw new Error("Failed to retrieve a valid tensor output from YOLOv8 model");
+    }
+    
+    const shape = outputTensor.shape;
+    let transposed;
+    
+    if (shape.length === 3) {
+      const [, d1, d2] = shape;
+      if (d1 === 84 && d2 === 8400) {
+        // Format [1, 84, 8400]
+        transposed = outputTensor.reshape([84, 8400]).transpose([1, 0]);
+      } else if (d1 === 8400 && d2 === 84) {
+        // Format [1, 8400, 84] (Already transposed)
+        transposed = outputTensor.reshape([8400, 84]);
+      } else {
+        transposed = outputTensor.reshape([d1, d2]);
+        if (d1 < d2) {
+          transposed = transposed.transpose([1, 0]);
+        }
+      }
+    } else if (shape.length === 2) {
+      const [d1, d2] = shape;
+      transposed = outputTensor;
+      if (d1 === 84 && d2 === 8400) {
+        transposed = transposed.transpose([1, 0]);
+      }
+    } else {
+      throw new Error(`Unexpected output tensor shape: ${shape}`);
+    }
     
     const boxes = transposed.slice([0, 0], [-1, 4]); // [8400, 4]
     const scores = transposed.slice([0, 4], [-1, 80]); // [8400, 80]
@@ -153,8 +192,9 @@ const ProctoringEngine = ({
   testID, 
   onAutoSubmit,
   isTestActive = true,
+  maxViolations = 5,
   onViolationUpdate,
-  maxViolations = 5
+  isProctorActive = true
 }) => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -208,21 +248,20 @@ const ProctoringEngine = ({
       console.log('[ProctoringEngine] Models are being loaded, waiting...');
       // Wait up to 30 seconds for models to load
       for (let i = 0; i < 30; i++) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(r => setTimeout(r, 1000));
         if (globalModelsLoaded) {
           modelsLoadedRef.current = true;
           setModelStatus(window.yolov8Loaded && window.faceApiLoaded ? 'active' : window.faceApiLoaded ? 'face_only' : 'camera_only');
-          return true;
+          return modelsLoadedRef.current;
         }
       }
       setModelStatus('failed');
       return false;
     }
 
+    globalModelsLoading = true;
+    setModelStatus('loading');
     try {
-      globalModelsLoading = true;
-      setModelStatus('loading');
-      
       console.log('[ProctoringEngine] Loading offline YOLOv8 and Face-API models independently...');
       await tf.ready();
 
@@ -230,9 +269,9 @@ const ProctoringEngine = ({
       try {
         console.log('[ProctoringEngine] Loading Face-API models offline...');
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
+          faceapi.nets.ssdMobilenetv1.loadFromUri('./models/face-api'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('./models/face-api'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('./models/face-api')
         ]);
         window.faceApiLoaded = true;
         console.log('[ProctoringEngine] ✓ Face-API loaded successfully');
@@ -244,7 +283,7 @@ const ProctoringEngine = ({
       // 2. Load YOLOv8 model (Offline first with online fallback)
       try {
         console.log('[ProctoringEngine] Loading YOLOv8 offline...');
-        window.yolov8Model = await tf.loadGraphModel('/models/yolov8/model.json');
+        window.yolov8Model = await tf.loadGraphModel('./models/yolov8/model.json');
         window.yolov8Loaded = true;
         console.log('[ProctoringEngine] ✓ YOLOv8 loaded offline successfully');
       } catch (yoloOfflineErr) {
