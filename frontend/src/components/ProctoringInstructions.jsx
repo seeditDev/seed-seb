@@ -4,6 +4,24 @@ import '../styles/ProctoringInstructions.css';
 import * as faceapi from 'face-api.js';
 import { setProctorCacheExpiry } from '../utils/proctorCache';
 
+// Helper to resolve models directory path under both file:// and http/https protocols
+const getModelsPath = (subPath) => {
+  if (window.location.protocol === 'file:') {
+    const path = window.location.pathname;
+    const buildIndex = path.indexOf('/build/');
+    if (buildIndex !== -1) {
+      const basePath = path.substring(0, buildIndex + 7); // includes "/build/"
+      return `file://${basePath}${subPath}`;
+    }
+    const lastSlash = path.lastIndexOf('/');
+    if (lastSlash !== -1) {
+      const basePath = path.substring(0, lastSlash + 1);
+      return `file://${basePath}${subPath}`;
+    }
+  }
+  return `/${subPath}`;
+};
+
 const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const [cameraStatus, setCameraStatus] = useState('requesting'); // requesting, granted, denied, error
   const [cameraError, setCameraError] = useState(null);
@@ -41,8 +59,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
               track.onended = null;
               track.stop();
             });
-          } catch (_) {}
-          streamRef.current = null;
+          } catch (e) {
+            console.warn('[ProctoringInstructions] Error stopping stream on unmount:', e);
+          }
         }
         if (window.cameraStream) {
           try {
@@ -122,9 +141,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       if (!window.faceApiLoaded) {
         console.log('[ProctoringInstructions] Loading faceapi models...');
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/face-api'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face-api'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models/face-api')
+          faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
+          faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
+          faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
         ]);
         window.faceApiLoaded = true;
       }

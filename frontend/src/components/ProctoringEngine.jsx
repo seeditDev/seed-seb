@@ -5,6 +5,24 @@ import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import '../styles/ProctoringEngine.css';
 import timeService from '../services/timeService';
 
+// Helper to resolve models directory path under both file:// and http/https protocols
+const getModelsPath = (subPath) => {
+  if (window.location.protocol === 'file:') {
+    const path = window.location.pathname;
+    const buildIndex = path.indexOf('/build/');
+    if (buildIndex !== -1) {
+      const basePath = path.substring(0, buildIndex + 7); // includes "/build/"
+      return `file://${basePath}${subPath}`;
+    }
+    const lastSlash = path.lastIndexOf('/');
+    if (lastSlash !== -1) {
+      const basePath = path.substring(0, lastSlash + 1);
+      return `file://${basePath}${subPath}`;
+    }
+  }
+  return `/${subPath}`;
+};
+
 const DETECTION_INTERVAL_MS = 2000; // no longer used for tight loop, kept for reference
 const CONSECUTIVE_DETECTIONS_REQUIRED = 2; // legacy, not used in new strategy
 const VIOLATION_RESET_WINDOW_MS = 6000; // legacy, not used in new strategy
@@ -269,9 +287,9 @@ const ProctoringEngine = ({
       try {
         console.log('[ProctoringEngine] Loading Face-API models offline...');
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri('./models/face-api'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('./models/face-api'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('./models/face-api')
+          faceapi.nets.ssdMobilenetv1.loadFromUri(getModelsPath('models/face-api')),
+          faceapi.nets.faceLandmark68Net.loadFromUri(getModelsPath('models/face-api')),
+          faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
         ]);
         window.faceApiLoaded = true;
         console.log('[ProctoringEngine] ✓ Face-API loaded successfully');
@@ -283,7 +301,7 @@ const ProctoringEngine = ({
       // 2. Load YOLOv8 model (Offline first with online fallback)
       try {
         console.log('[ProctoringEngine] Loading YOLOv8 offline...');
-        window.yolov8Model = await tf.loadGraphModel('./models/yolov8/model.json');
+        window.yolov8Model = await tf.loadGraphModel(getModelsPath('models/yolov8/model.json'));
         window.yolov8Loaded = true;
         console.log('[ProctoringEngine] ✓ YOLOv8 loaded offline successfully');
       } catch (yoloOfflineErr) {
