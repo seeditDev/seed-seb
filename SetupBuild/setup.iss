@@ -47,26 +47,7 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 ; Hide the installation folder (System + Hidden attribute)
 Filename: "attrib"; Parameters: "+h +s ""{app}"""; Flags: runhidden
 
-; Explicitly block standard Users from opening/listing the main application directory
-; 1. Disable inheritance and copy active permissions to start custom hardening
-Filename: "icacls"; Parameters: """{app}"" /inheritance:d"; Flags: runhidden
-
-; 2. Explicitly remove standard Users and Authenticated Users list permissions from the main folder
-Filename: "icacls"; Parameters: """{app}"" /remove *S-1-5-32-545"; Flags: runhidden
-Filename: "icacls"; Parameters: """{app}"" /remove *S-1-5-11"; Flags: runhidden
-
-; 3. Grant Administrators and SYSTEM full control recursively
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-32-544:(OI)(CI)F"; Flags: runhidden
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-18:(OI)(CI)F"; Flags: runhidden
-
-; 4. Grant standard Users ONLY inherit-only Read/Execute permission on subfolders and files inside so the app can read files
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-32-545:(OI)(CI)(IO)RX"; Flags: runhidden
-
-; 5. Grant Users ONLY Traverse / Execute File, Read Control, and Synchronize (NO Read Data / List Directory) on the parent app folder itself
-; This denies opening or listing the folder in Explorer, but permits starting SEED-SEB.exe and loading DLLs!
-Filename: "icacls"; Parameters: """{app}"" /grant *S-1-5-32-545:(Rc,S,X)"; Flags: runhidden
-
-; 6. Grant Everyone full control recursively on resources and data subfolders so standard user runs can read/write data
+; Grant Everyone full control recursively on resources and data subfolders so standard user runs can read/write data
 Filename: "icacls"; Parameters: """{app}\resources"" /grant *S-1-1-0:(OI)(CI)F"; Flags: runhidden
 Filename: "icacls"; Parameters: """{app}\data"" /grant *S-1-1-0:(OI)(CI)F"; Flags: runhidden
 
