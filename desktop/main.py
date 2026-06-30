@@ -1266,7 +1266,7 @@ def main():
     result = prelaunch.exec()
     if result != QDialog.DialogCode.Accepted or not prelaunch.checks_passed:
         logging.info("Prelaunch system checks failed or cancelled. Exiting.")
-        sys.exit(0)
+        os._exit(0)
 
     # Initialize Main Window
     window = MainWindow()

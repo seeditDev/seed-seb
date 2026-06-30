@@ -21,21 +21,27 @@ class RuntimeManager:
     def get_app_root(self):
         """Get the base path of the application dynamically based on execution context."""
         exe_name = os.path.basename(sys.executable).lower()
-        if getattr(sys, 'frozen', False) or exe_name not in ("python.exe", "pythonw.exe"):
+        is_frozen = getattr(sys, 'frozen', False) or exe_name not in ("python.exe", "pythonw.exe", "python3.exe", "python311.exe", "python314.exe")
+        
+        if is_frozen:
             exec_dir = os.path.dirname(os.path.abspath(sys.executable))
             if os.path.exists(os.path.join(exec_dir, "resources")):
                 return exec_dir
+            file_dir = os.path.dirname(os.path.abspath(__file__))
+            if os.path.exists(os.path.join(file_dir, "resources")):
+                return file_dir
             parent_dir = os.path.dirname(exec_dir)
             if os.path.exists(os.path.join(parent_dir, "resources")):
                 return parent_dir
+            file_parent = os.path.dirname(file_dir)
+            if os.path.exists(os.path.join(file_parent, "resources")):
+                return file_parent
             return exec_dir
 
         # Otherwise (during development), return parent of the desktop/app_source directory
         file_dir = os.path.dirname(os.path.abspath(__file__))
-        if os.path.basename(file_dir) == "desktop":
+        if os.path.basename(file_dir) in ("desktop", "app_source"):
             return os.path.dirname(file_dir)
-        elif os.path.basename(file_dir) == "app_source":
-            return os.path.dirname(os.path.dirname(file_dir))
             
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
