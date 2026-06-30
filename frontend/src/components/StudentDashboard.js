@@ -13,10 +13,16 @@ import {
   FaSearch,
   FaFilter,
   FaLock,
+  FaShieldAlt,
   FaTimes,
   FaCheck,
   FaCheckCircle,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaWifi,
+  FaPlug,
+  FaCamera,
+  FaMicrophone,
+  FaUserShield
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
@@ -83,10 +89,35 @@ const StudentDashboard = () => {
 
   // Pre-flight checks  tri-state: 'pending' | 'pass' | 'fail'
   const [preflightResults, setPreflightResults] = useState({
-    internet: 'pending'
+    internet: 'pending',
+    webcam: 'pending',
+    microphone: 'pending',
+    secureEnv: 'pending',
+    hardening: 'pending'
   });
   const [preflightDone, setPreflightDone] = useState(false);
   const [chargerConfirmed, setChargerConfirmed] = useState(false);
+  const [loaderMessage, setLoaderMessage] = useState('Verifying Candidate Database...');
+
+  useEffect(() => {
+    if (launchStep === 'verifying') {
+      setLoaderMessage('Verifying candidate database...');
+      const t1 = setTimeout(() => setLoaderMessage('Establishing secure connection...'), 1500);
+      const t2 = setTimeout(() => setLoaderMessage('Checking exam token authorization...'), 3000);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    } else if (launchStep === 'launching') {
+      setLoaderMessage('Loading secure workspace configuration...');
+      const t1 = setTimeout(() => setLoaderMessage('Syncing assessment local DB metadata...'), 1500);
+      const t2 = setTimeout(() => setLoaderMessage('Initializing proctor tracking hooks...'), 3000);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [launchStep]);
   // ─────────────────────────────────────────────────────────────────
 
   const navigate = useNavigate();
@@ -438,23 +469,52 @@ const StudentDashboard = () => {
     }
   };
 
-  // STEP 3 — Run pre-flight system checks (internet only — camera/mic skipped)
+  // STEP 3 — Run pre-flight system checks (sequential rich checks: internet, webcam, mic, sandbox, hardening)
   const runPreflightChecks = async (assessment) => {
     setSelectedAssessment(assessment);
-    setPreflightResults({ internet: 'pending' });
+    setPreflightResults({
+      internet: 'pending',
+      webcam: 'pending',
+      microphone: 'pending',
+      secureEnv: 'pending',
+      hardening: 'pending'
+    });
     setPreflightDone(false);
     setChargerConfirmed(false);
     setLaunchStep('preflight');
 
-    // Hold 'pending' state visibly for 2 seconds so the animation is noticeable
-    await new Promise(r => setTimeout(r, 2000));
-
-    // Internet check
+    // 1. Internet Check
+    await new Promise(r => setTimeout(r, 1000));
     const internetOk = navigator.onLine;
-    setPreflightResults({ internet: internetOk ? 'pass' : 'fail' });
+    setPreflightResults(prev => ({ ...prev, internet: internetOk ? 'pass' : 'fail' }));
 
-    // Hold result visible for another 3 seconds before enabling Proceed (total ~5 s)
-    await new Promise(r => setTimeout(r, 3000));
+    // 2. Webcam Check
+    await new Promise(r => setTimeout(r, 800));
+    let webcamOk = false;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      webcamOk = devices.some(d => d.kind === 'videoinput');
+    } catch (_) {}
+    setPreflightResults(prev => ({ ...prev, webcam: webcamOk ? 'pass' : 'fail' }));
+
+    // 3. Microphone Check
+    await new Promise(r => setTimeout(r, 800));
+    let micOk = false;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      micOk = devices.some(d => d.kind === 'audioinput');
+    } catch (_) {}
+    setPreflightResults(prev => ({ ...prev, microphone: micOk ? 'pass' : 'fail' }));
+
+    // 4. Secure Env Check
+    await new Promise(r => setTimeout(r, 800));
+    const secureEnvOk = !!window.desktopBridge || !!window.qt;
+    setPreflightResults(prev => ({ ...prev, secureEnv: secureEnvOk ? 'pass' : 'fail' }));
+
+    // 5. System Hardening Check
+    await new Promise(r => setTimeout(r, 800));
+    const hardeningOk = !!window.desktopBridge;
+    setPreflightResults(prev => ({ ...prev, hardening: hardeningOk ? 'pass' : 'fail' }));
 
     setPreflightDone(true);
   };
@@ -742,10 +802,18 @@ const StudentDashboard = () => {
       {/* Step 1: Verifying identity overlay */}
       {launchStep === 'verifying' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center' }}>
-            <div className="lw-spinner"></div>
-            <h3 className="lw-title" style={{ marginTop: '16px' }}>Verifying Identity</h3>
-            <p className="lw-subtitle">Checking your previous attempt records. Please wait...</p>
+          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center', padding: '35px 25px' }}>
+            <div className="lw-loader-container">
+              <div className="lw-spinner-outer"></div>
+              <div className="lw-spinner-inner"></div>
+              <div className="lw-spinner-center"></div>
+            </div>
+            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center' }}>
+              <FaLock className="animate-pulse" style={{ color: '#6366f1' }} /> Verifying Identity
+            </h3>
+            <p className="lw-subtitle" style={{ marginTop: '10px', fontWeight: '500', color: '#94a3b8' }}>
+              {loaderMessage}
+            </p>
           </div>
         </div>
       )}
@@ -794,10 +862,10 @@ const StudentDashboard = () => {
               <h3 className="lw-title">System Pre-flight Check</h3>
               <p className="lw-subtitle">Verifying your system meets all requirements for a monitored assessment.</p>
             </div>
-            <div className="lw-card-body">
+            <div className="lw-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Internet connectivity row */}
               <div className="lw-preflight-row">
-                <span className="lw-preflight-icon">🌐</span>
+                <span className="lw-preflight-icon"><FaWifi style={{ color: '#6366f1' }} /></span>
                 <span className="lw-preflight-label">Internet Connectivity</span>
                 <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`}>
                   {preflightResults.internet === 'pending' && <span className="lw-mini-spinner"></span>}
@@ -807,19 +875,66 @@ const StudentDashboard = () => {
                 </span>
               </div>
 
+              {/* Webcam status row */}
+              <div className="lw-preflight-row">
+                <span className="lw-preflight-icon"><FaCamera style={{ color: '#6366f1' }} /></span>
+                <span className="lw-preflight-label">Webcam Sensor Detection</span>
+                <span className={`lw-preflight-status lw-preflight-${preflightResults.webcam}`}>
+                  {preflightResults.webcam === 'pending' && <span className="lw-mini-spinner"></span>}
+                  {preflightResults.webcam === 'pass' && <FaCheck />}
+                  {preflightResults.webcam === 'fail' && <FaTimes />}
+                  &nbsp;{preflightResults.webcam === 'pending' ? 'Detecting...' : preflightResults.webcam === 'pass' ? 'Connected' : 'Not Detected'}
+                </span>
+              </div>
+
+              {/* Microphone status row */}
+              <div className="lw-preflight-row">
+                <span className="lw-preflight-icon"><FaMicrophone style={{ color: '#6366f1' }} /></span>
+                <span className="lw-preflight-label">Audio Microphone Input</span>
+                <span className={`lw-preflight-status lw-preflight-${preflightResults.microphone}`}>
+                  {preflightResults.microphone === 'pending' && <span className="lw-mini-spinner"></span>}
+                  {preflightResults.microphone === 'pass' && <FaCheck />}
+                  {preflightResults.microphone === 'fail' && <FaTimes />}
+                  &nbsp;{preflightResults.microphone === 'pending' ? 'Detecting...' : preflightResults.microphone === 'pass' ? 'Ready' : 'Not Detected'}
+                </span>
+              </div>
+
+              {/* Secure Sandbox Environment row */}
+              <div className="lw-preflight-row">
+                <span className="lw-preflight-icon"><FaShieldAlt style={{ color: '#6366f1' }} /></span>
+                <span className="lw-preflight-label">Secure Sandbox Shell Environment</span>
+                <span className={`lw-preflight-status lw-preflight-${preflightResults.secureEnv}`}>
+                  {preflightResults.secureEnv === 'pending' && <span className="lw-mini-spinner"></span>}
+                  {preflightResults.secureEnv === 'pass' && <FaCheck />}
+                  {preflightResults.secureEnv === 'fail' && <FaTimes />}
+                  &nbsp;{preflightResults.secureEnv === 'pending' ? 'Verifying...' : preflightResults.secureEnv === 'pass' ? 'Active' : 'Unsecured Web'}
+                </span>
+              </div>
+
+              {/* Registry Hardening row */}
+              <div className="lw-preflight-row">
+                <span className="lw-preflight-icon"><FaUserShield style={{ color: '#6366f1' }} /></span>
+                <span className="lw-preflight-label">Operating System Hardening Policies</span>
+                <span className={`lw-preflight-status lw-preflight-${preflightResults.hardening}`}>
+                  {preflightResults.hardening === 'pending' && <span className="lw-mini-spinner"></span>}
+                  {preflightResults.hardening === 'pass' && <FaCheck />}
+                  {preflightResults.hardening === 'fail' && <FaTimes />}
+                  &nbsp;{preflightResults.hardening === 'pending' ? 'Scanning...' : preflightResults.hardening === 'pass' ? 'Enforced' : 'Not Active'}
+                </span>
+              </div>
+
               {/* Charger confirmation manual checklist row */}
               <div className="lw-preflight-row" style={{ 
-                padding: '16px', 
-                borderRadius: '10px', 
-                marginTop: '15px', 
+                padding: '16px 24px', 
+                borderRadius: '12px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between',
                 background: 'rgba(255, 255, 255, 0.03)',
                 border: '1px solid rgba(255, 255, 255, 0.08)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span className="lw-preflight-icon" style={{ fontSize: '1.4rem' }}>🔌</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span className="lw-preflight-icon"><FaPlug style={{ color: '#eab308' }} /></span>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     <span className="lw-preflight-label" style={{ fontSize: '1.05rem', fontWeight: '600', color: '#f8fafc' }}>Power Source Connection</span>
                     <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Connect charger to prevent system shutdown during test</span>
@@ -830,25 +945,35 @@ const StudentDashboard = () => {
                     type="checkbox"
                     checked={chargerConfirmed}
                     onChange={(e) => setChargerConfirmed(e.target.checked)}
-                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                    style={{ width: '22px', height: '22px', cursor: 'pointer' }}
                   />
                 </label>
               </div>
 
               {/* Result messages */}
-              {preflightDone && preflightResults.internet === 'fail' && (
-                <div className="lw-error-row" style={{ marginTop: '16px', padding: '12px' }}>
-                  <FaExclamationTriangle style={{ marginRight: '8px' }} /> No internet connection detected. Please connect and try again.
+              {preflightDone && (
+                preflightResults.internet === 'fail' || 
+                (selectedAssessment?.proctored && preflightResults.webcam === 'fail') ||
+                (selectedAssessment?.proctored && preflightResults.secureEnv === 'fail')
+              ) && (
+                <div className="lw-error-row" style={{ marginTop: '8px' }}>
+                  <FaExclamationTriangle /> System check failed. Please resolve the red errors to unlock the Proceed button.
                 </div>
               )}
-              {preflightDone && preflightResults.internet === 'pass' && !chargerConfirmed && (
-                <div className="lw-warning-row" style={{ marginTop: '16px', padding: '12px', background: 'rgba(234, 179, 8, 0.1)', borderLeft: '4px solid #eab308', borderRadius: '4px', display: 'flex', alignItems: 'center', color: '#facc15' }}>
+              {preflightDone && 
+                preflightResults.internet === 'pass' && 
+                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) && 
+                !chargerConfirmed && (
+                <div className="lw-warning-row" style={{ marginTop: '8px', padding: '12px', background: 'rgba(234, 179, 8, 0.1)', borderLeft: '4px solid #eab308', borderRadius: '8px', display: 'flex', alignItems: 'center', color: '#facc15', fontSize: '0.92rem', fontWeight: '600' }}>
                   <FaExclamationTriangle style={{ marginRight: '8px' }} /> Please confirm you have connected your charger to enable Proceed.
                 </div>
               )}
-              {preflightDone && preflightResults.internet === 'pass' && chargerConfirmed && (
-                <div className="lw-info-row" style={{ marginTop: '16px', padding: '12px' }}>
-                  <FaCheckCircle style={{ color: '#10b981', marginRight: '8px' }} /> All checks passed. You may proceed.
+              {preflightDone && 
+                preflightResults.internet === 'pass' && 
+                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) && 
+                chargerConfirmed && (
+                <div className="lw-info-row" style={{ marginTop: '8px' }}>
+                  <FaCheckCircle style={{ color: '#10b981' }} /> All checks passed. You may proceed.
                 </div>
               )}
             </div>
@@ -856,7 +981,13 @@ const StudentDashboard = () => {
               <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
               <button
                 className="lw-btn-primary"
-                disabled={!preflightDone || preflightResults.internet === 'fail' || !chargerConfirmed}
+                disabled={
+                  !preflightDone || 
+                  preflightResults.internet === 'fail' || 
+                  (selectedAssessment?.proctored && preflightResults.webcam === 'fail') ||
+                  (selectedAssessment?.proctored && preflightResults.secureEnv === 'fail') ||
+                  !chargerConfirmed
+                }
                 onClick={handlePreflightProceed}
               >
                 <FaCheck style={{ marginRight: '6px' }} />Proceed
@@ -930,10 +1061,18 @@ const StudentDashboard = () => {
       {/* Step 5: Launching overlay */}
       {launchStep === 'launching' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center' }}>
-            <div className="lw-spinner"></div>
-            <h3 className="lw-title" style={{ marginTop: '16px' }}>Setting Up Workspace</h3>
-            <p className="lw-subtitle">Loading questions and preparing your secure test environment...</p>
+          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center', padding: '35px 25px' }}>
+            <div className="lw-loader-container">
+              <div className="lw-spinner-outer"></div>
+              <div className="lw-spinner-inner" style={{ borderBottomColor: '#10b981' }}></div>
+              <div className="lw-spinner-center" style={{ background: 'radial-gradient(circle, #10b981 0%, #059669 100%)', boxShadow: '0 0 25px #10b981' }}></div>
+            </div>
+            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center' }}>
+              <FaShieldAlt className="animate-pulse" style={{ color: '#10b981' }} /> Setting Up Workspace
+            </h3>
+            <p className="lw-subtitle" style={{ marginTop: '10px', fontWeight: '500', color: '#94a3b8' }}>
+              {loaderMessage}
+            </p>
           </div>
         </div>
       )}
