@@ -742,7 +742,7 @@ const StudentDashboard = () => {
       {/* Step 1: Verifying identity overlay */}
       {launchStep === 'verifying' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '360px', textAlign: 'center' }}>
+          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center' }}>
             <div className="lw-spinner"></div>
             <h3 className="lw-title" style={{ marginTop: '16px' }}>Verifying Identity</h3>
             <p className="lw-subtitle">Checking your previous attempt records. Please wait...</p>
@@ -753,7 +753,7 @@ const StudentDashboard = () => {
       {/* Step 2: Passkey Entry */}
       {launchStep === 'passkey' && selectedAssessment && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '440px' }}>
+          <div className="lw-card" style={{ maxWidth: '620px' }}>
             <div className="lw-card-header">
               <div className="lw-step-badge">Step 2 of 4</div>
               <h3 className="lw-title"><FaLock style={{ marginRight: '8px', color: '#6366f1' }} />Access Passkey Required</h3>
@@ -788,7 +788,7 @@ const StudentDashboard = () => {
       {/* Step 3: Pre-flight system check — internet and charger */}
       {launchStep === 'preflight' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '460px' }}>
+          <div className="lw-card" style={{ maxWidth: '640px' }}>
             <div className="lw-card-header">
               <div className="lw-step-badge">Step 3 of 4</div>
               <h3 className="lw-title">System Pre-flight Check</h3>
@@ -879,7 +879,7 @@ const StudentDashboard = () => {
           />
         ) : (
           <div className="lw-overlay" style={{ zIndex: 1200 }}>
-            <div className="lw-card" style={{ maxWidth: '540px' }}>
+            <div className="lw-card" style={{ maxWidth: '740px' }}>
               <div className="lw-card-header">
                 <div className="lw-step-badge">Step 4 of 4</div>
                 <h3 className="lw-title">Test Details & Instructions</h3>
@@ -930,7 +930,7 @@ const StudentDashboard = () => {
       {/* Step 5: Launching overlay */}
       {launchStep === 'launching' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '360px', textAlign: 'center' }}>
+          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center' }}>
             <div className="lw-spinner"></div>
             <h3 className="lw-title" style={{ marginTop: '16px' }}>Setting Up Workspace</h3>
             <p className="lw-subtitle">Loading questions and preparing your secure test environment...</p>
