@@ -161,6 +161,16 @@ const ProctoringEngine = ({
   const detectionIntervalRef = useRef(null);
   const modelsLoadedRef = useRef(false);
   const initializedRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const detectionInProgressRef = useRef(false);
+  const sequenceInProgressRef = useRef(false);
+
+  const [violationCount, setViolationCount] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [error, setError] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [isWebcamBlocked, setIsWebcamBlocked] = useState(false);
+  const [modelStatus, setModelStatus] = useState(globalModelsLoaded ? 'active' : 'loading');
 
   const onViolationUpdateRef = useRef(onViolationUpdate);
   const onAutoSubmitRef = useRef(onAutoSubmit);
@@ -182,16 +192,6 @@ const ProctoringEngine = ({
   useEffect(() => {
     violationCountRef.current = violationCount;
   }, [violationCount]);
-  const retryCountRef = useRef(0);
-  const detectionInProgressRef = useRef(false);
-  const sequenceInProgressRef = useRef(false);
-  
-  const [violationCount, setViolationCount] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [error, setError] = useState(null);
-  const [alerts, setAlerts] = useState([]);
-  const [isWebcamBlocked, setIsWebcamBlocked] = useState(false);
-  const [modelStatus, setModelStatus] = useState(globalModelsLoaded ? 'active' : 'loading');
 
   // Load models with global caching to prevent repeated loading
   const loadModels = useCallback(async () => {
