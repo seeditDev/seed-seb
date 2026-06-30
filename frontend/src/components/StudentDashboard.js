@@ -856,98 +856,91 @@ const StudentDashboard = () => {
       {/* Step 3: Pre-flight system check — internet and charger */}
       {launchStep === 'preflight' && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '640px' }}>
+          <div className="lw-card" style={{ maxWidth: '780px' }}>
             <div className="lw-card-header">
               <div className="lw-step-badge">Step 3 of 4</div>
               <h3 className="lw-title">System Pre-flight Check</h3>
               <p className="lw-subtitle">Verifying your system meets all requirements for a monitored assessment.</p>
             </div>
-            <div className="lw-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Internet connectivity row */}
-              <div className="lw-preflight-row">
-                <span className="lw-preflight-icon"><FaWifi style={{ color: '#6366f1' }} /></span>
-                <span className="lw-preflight-label">Internet Connectivity</span>
-                <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`}>
-                  {preflightResults.internet === 'pending' && <span className="lw-mini-spinner"></span>}
-                  {preflightResults.internet === 'pass' && <FaCheck />}
-                  {preflightResults.internet === 'fail' && <FaTimes />}
-                  &nbsp;{preflightResults.internet === 'pending' ? 'Checking...' : preflightResults.internet === 'pass' ? 'Ready' : 'No Connection'}
-                </span>
-              </div>
-
-              {/* Webcam status row */}
-              <div className="lw-preflight-row">
-                <span className="lw-preflight-icon"><FaCamera style={{ color: '#6366f1' }} /></span>
-                <span className="lw-preflight-label">Webcam Sensor Detection</span>
-                <span className={`lw-preflight-status lw-preflight-${preflightResults.webcam}`}>
-                  {preflightResults.webcam === 'pending' && <span className="lw-mini-spinner"></span>}
-                  {preflightResults.webcam === 'pass' && <FaCheck />}
-                  {preflightResults.webcam === 'fail' && <FaTimes />}
-                  &nbsp;{preflightResults.webcam === 'pending' ? 'Detecting...' : preflightResults.webcam === 'pass' ? 'Connected' : 'Not Detected'}
-                </span>
-              </div>
-
-              {/* Microphone status row */}
-              <div className="lw-preflight-row">
-                <span className="lw-preflight-icon"><FaMicrophone style={{ color: '#6366f1' }} /></span>
-                <span className="lw-preflight-label">Audio Microphone Input</span>
-                <span className={`lw-preflight-status lw-preflight-${preflightResults.microphone}`}>
-                  {preflightResults.microphone === 'pending' && <span className="lw-mini-spinner"></span>}
-                  {preflightResults.microphone === 'pass' && <FaCheck />}
-                  {preflightResults.microphone === 'fail' && <FaTimes />}
-                  &nbsp;{preflightResults.microphone === 'pending' ? 'Detecting...' : preflightResults.microphone === 'pass' ? 'Ready' : 'Not Detected'}
-                </span>
-              </div>
-
-              {/* Secure Sandbox Environment row */}
-              <div className="lw-preflight-row">
-                <span className="lw-preflight-icon"><FaShieldAlt style={{ color: '#6366f1' }} /></span>
-                <span className="lw-preflight-label">Secure Sandbox Shell Environment</span>
-                <span className={`lw-preflight-status lw-preflight-${preflightResults.secureEnv}`}>
-                  {preflightResults.secureEnv === 'pending' && <span className="lw-mini-spinner"></span>}
-                  {preflightResults.secureEnv === 'pass' && <FaCheck />}
-                  {preflightResults.secureEnv === 'fail' && <FaTimes />}
-                  &nbsp;{preflightResults.secureEnv === 'pending' ? 'Verifying...' : preflightResults.secureEnv === 'pass' ? 'Active' : 'Unsecured Web'}
-                </span>
-              </div>
-
-              {/* Registry Hardening row */}
-              <div className="lw-preflight-row">
-                <span className="lw-preflight-icon"><FaUserShield style={{ color: '#6366f1' }} /></span>
-                <span className="lw-preflight-label">Operating System Hardening Policies</span>
-                <span className={`lw-preflight-status lw-preflight-${preflightResults.hardening}`}>
-                  {preflightResults.hardening === 'pending' && <span className="lw-mini-spinner"></span>}
-                  {preflightResults.hardening === 'pass' && <FaCheck />}
-                  {preflightResults.hardening === 'fail' && <FaTimes />}
-                  &nbsp;{preflightResults.hardening === 'pending' ? 'Scanning...' : preflightResults.hardening === 'pass' ? 'Enforced' : 'Not Active'}
-                </span>
-              </div>
-
-              {/* Charger confirmation manual checklist row */}
-              <div className="lw-preflight-row" style={{ 
-                padding: '16px 24px', 
-                borderRadius: '12px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <span className="lw-preflight-icon"><FaPlug style={{ color: '#eab308' }} /></span>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span className="lw-preflight-label" style={{ fontSize: '1.05rem', fontWeight: '600', color: '#f8fafc' }}>Power Source Connection</span>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Connect charger to prevent system shutdown during test</span>
-                  </div>
+            <div className="lw-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="lw-preflight-grid">
+                {/* Internet connectivity row */}
+                <div className="lw-preflight-row">
+                  <span className="lw-preflight-icon"><FaWifi style={{ color: '#6366f1' }} /></span>
+                  <span className="lw-preflight-label">Internet Connectivity</span>
+                  <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`}>
+                    {preflightResults.internet === 'pending' && <span className="lw-mini-spinner"></span>}
+                    {preflightResults.internet === 'pass' && <FaCheck />}
+                    {preflightResults.internet === 'fail' && <FaTimes />}
+                    &nbsp;{preflightResults.internet === 'pending' ? 'Checking...' : preflightResults.internet === 'pass' ? 'Ready' : 'No Connection'}
+                  </span>
                 </div>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+
+                {/* Webcam status row */}
+                <div className="lw-preflight-row">
+                  <span className="lw-preflight-icon"><FaCamera style={{ color: '#6366f1' }} /></span>
+                  <span className="lw-preflight-label">Webcam Detection</span>
+                  <span className={`lw-preflight-status lw-preflight-${preflightResults.webcam}`}>
+                    {preflightResults.webcam === 'pending' && <span className="lw-mini-spinner"></span>}
+                    {preflightResults.webcam === 'pass' && <FaCheck />}
+                    {preflightResults.webcam === 'fail' && <FaTimes />}
+                    &nbsp;{preflightResults.webcam === 'pending' ? 'Detecting...' : preflightResults.webcam === 'pass' ? 'Connected' : 'Not Found'}
+                  </span>
+                </div>
+
+                {/* Microphone status row */}
+                <div className="lw-preflight-row">
+                  <span className="lw-preflight-icon"><FaMicrophone style={{ color: '#6366f1' }} /></span>
+                  <span className="lw-preflight-label">Microphone Detection</span>
+                  <span className={`lw-preflight-status lw-preflight-${preflightResults.microphone}`}>
+                    {preflightResults.microphone === 'pending' && <span className="lw-mini-spinner"></span>}
+                    {preflightResults.microphone === 'pass' && <FaCheck />}
+                    {preflightResults.microphone === 'fail' && <FaTimes />}
+                    &nbsp;{preflightResults.microphone === 'pending' ? 'Detecting...' : preflightResults.microphone === 'pass' ? 'Ready' : 'Not Found'}
+                  </span>
+                </div>
+
+                {/* Secure Sandbox Environment row */}
+                <div className="lw-preflight-row">
+                  <span className="lw-preflight-icon"><FaShieldAlt style={{ color: '#6366f1' }} /></span>
+                  <span className="lw-preflight-label">Sandbox Shell</span>
+                  <span className={`lw-preflight-status lw-preflight-${preflightResults.secureEnv}`}>
+                    {preflightResults.secureEnv === 'pending' && <span className="lw-mini-spinner"></span>}
+                    {preflightResults.secureEnv === 'pass' && <FaCheck />}
+                    {preflightResults.secureEnv === 'fail' && <FaTimes />}
+                    &nbsp;{preflightResults.secureEnv === 'pending' ? 'Verifying...' : preflightResults.secureEnv === 'pass' ? 'Active' : 'Unsecured'}
+                  </span>
+                </div>
+
+                {/* Registry Hardening row */}
+                <div className="lw-preflight-row">
+                  <span className="lw-preflight-icon"><FaUserShield style={{ color: '#6366f1' }} /></span>
+                  <span className="lw-preflight-label">OS Hardening Policies</span>
+                  <span className={`lw-preflight-status lw-preflight-${preflightResults.hardening}`}>
+                    {preflightResults.hardening === 'pending' && <span className="lw-mini-spinner"></span>}
+                    {preflightResults.hardening === 'pass' && <FaCheck />}
+                    {preflightResults.hardening === 'fail' && <FaTimes />}
+                    &nbsp;{preflightResults.hardening === 'pending' ? 'Scanning...' : preflightResults.hardening === 'pass' ? 'Enforced' : 'Not Active'}
+                  </span>
+                </div>
+
+                {/* Charger confirmation manual checklist row */}
+                <div className="lw-preflight-row" style={{ 
+                  justifyContent: 'space-between',
+                  background: 'rgba(234, 179, 8, 0.04)',
+                  border: '1px solid rgba(234, 179, 8, 0.15)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span className="lw-preflight-icon"><FaPlug style={{ color: '#eab308' }} /></span>
+                    <span className="lw-preflight-label" style={{ color: '#facc15' }}>Power Charger Connected</span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={chargerConfirmed}
                     onChange={(e) => setChargerConfirmed(e.target.checked)}
-                    style={{ width: '22px', height: '22px', cursor: 'pointer' }}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer', margin: 0 }}
                   />
-                </label>
+                </div>
               </div>
 
               {/* Result messages */}
