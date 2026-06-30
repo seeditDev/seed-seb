@@ -49,6 +49,20 @@ class RuntimeManager:
         """Set paths strictly to the portable runtimes inside resources/runtimes.
         No fallbacks to system PATH or host python are allowed, even in development."""
         
+        # Sibling / Parent fallback check during local development
+        if not os.path.exists(self.runtimes_dir):
+            parent_runtimes = os.path.join(os.path.dirname(self.app_root), "runtimes")
+            grandparent_runtimes = os.path.join(os.path.dirname(os.path.dirname(self.app_root)), "runtimes")
+            file_dir = os.path.dirname(os.path.abspath(__file__))
+            file_parent_runtimes = os.path.join(os.path.dirname(file_dir), "runtimes")
+            
+            if os.path.exists(parent_runtimes):
+                self.runtimes_dir = parent_runtimes
+            elif os.path.exists(grandparent_runtimes):
+                self.runtimes_dir = grandparent_runtimes
+            elif os.path.exists(file_parent_runtimes):
+                self.runtimes_dir = file_parent_runtimes
+
         # C/C++ (MinGW)
         mingw_bin = os.path.join(self.runtimes_dir, "mingw64", "bin")
         self.binaries["gcc"] = os.path.join(mingw_bin, "gcc.exe")
