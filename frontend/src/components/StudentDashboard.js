@@ -32,6 +32,7 @@ import MCQService from '../services/mcqService';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
+import PracticeHome from './PracticeHome';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -150,88 +151,91 @@ const StudentDashboard = () => {
       const allowedModuleIds = departmentAccess.allowed_modules || [];
       const isPremiumUser = userData?.Premium === true || userData?.Premium === 'true' || userData?.Premium === 1 || userData?.Premium === 'Yes' || !!userData?.isPremium;
 
-      // 2. Parse MCQ Modules
-      const mcqModules = accessControlData?.courses?.mcqs?.modules || {};
-      const mcqList = Object.entries(mcqModules)
-        .filter(([key, module]) => {
-          const isPremiumModule = !!module.isPremium;
-          const premiumAccess = !isPremiumModule || isPremiumUser;
-          return allowedModuleIds.includes(module.id) && premiumAccess;
-        })
-        .map(([key, module]) => {
-          const derivedSlug = module.slug || slugify(module.id || module.name || key);
-
-          let finalUrl = module.url || '';
-          if (!finalUrl.endsWith('.json')) {
-            if (module.slug) {
-              finalUrl = `/mcq/${module.slug}.json`;
-            } else if (finalUrl.startsWith('/student/mcq/')) {
-              const slugFromUrl = finalUrl.split('/').filter(Boolean).pop();
-              finalUrl = `/mcq/${slugFromUrl}.json`;
-            } else {
-              finalUrl = `/mcq/${slugify(module.name || key)}.json`;
+      // Helper to compile modules from direct course.modules and nested course.subcourses[subId].modules
+      const extractAllModules = (course) => {
+        if (!course) return {};
+        const modules = {};
+        if (course.modules) {
+          Object.assign(modules, course.modules);
+        }
+        if (course.subcourses) {
+          Object.values(course.subcourses).forEach(sub => {
+            if (sub.modules) {
+              Object.assign(modules, sub.modules);
             }
-          }
+          });
+        }
+        return modules;
+      };
 
-          return {
-            key,
-            id: module.id,
-            name: module.name,
-            url: finalUrl,
-            passkey: module.passkey,
-            schedule: module.schedule,
-            difficulty: module.difficulty || 'Medium',
-            questions: module.questions || 0,
-            duration: module.duration_minutes || 60,
-            slug: derivedSlug,
-            type: 'mcq',
-            proctored: module.proctored,
-            maxViolations: module.maxViolations,
-            display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999)
-          };
-        });
+      // 2. Parse MCQ and Coding Modules from all assessment-flagged courses
+      const mcqList = [];
+      const codingList = [];
 
-      // 3. Parse Coding Modules
-      const codingModules = accessControlData?.courses?.assessments?.modules || {};
-      const codingList = Object.entries(codingModules)
-        .filter(([key, module]) => {
-          const isPremiumModule = !!module.isPremium;
-          const premiumAccess = !isPremiumModule || isPremiumUser;
-          return allowedModuleIds.includes(module.id) && premiumAccess;
-        })
-        .map(([key, module]) => {
-          const derivedSlug = module.slug || slugify(module.id || module.name || key);
+      Object.entries(accessControlData?.courses || {}).forEach(([courseId, course]) => {
+        const isAssessment = !!course.isAssessment || courseId === 'assessments' || courseId === 'mcqs';
+        if (!isAssessment) return; // skip practice courses
 
-          let finalUrl = module.url || '';
-          if (!finalUrl.endsWith('.json')) {
-            if (module.slug) {
-              finalUrl = `/coding/${module.slug}.json`;
-            } else if (finalUrl.startsWith('/student/coding/')) {
-              const slugFromUrl = finalUrl.split('/').filter(Boolean).pop();
-              finalUrl = `/coding/${slugFromUrl}.json`;
-            } else {
-              finalUrl = `/coding/${slugify(module.name || key)}.json`;
+        const courseModules = extractAllModules(course);
+        Object.entries(courseModules)
+          .filter(([key, module]) => {
+            const isPremiumModule = !!module.isPremium;
+            const premiumAccess = !isPremiumModule || isPremiumUser;
+            return allowedModuleIds.includes(module.id) && premiumAccess;
+          })
+          .forEach(([key, module]) => {
+            const derivedSlug = module.slug || slugify(module.id || module.name || key);
+
+            // Determine if it's MCQ or Coding. If module.type is 'mcq' or 'coding', use that.
+            // Fallback to courseId or prefix checking (e.g. prefix is 'MA' -> mcq, 'CA' -> coding)
+            let type = module.type;
+            if (!type) {
+              if (courseId === 'mcqs' || module.id?.startsWith('MA') || module.url?.includes('mcqs/')) {
+                type = 'mcq';
+              } else {
+                type = 'coding';
+              }
             }
-          }
 
-          return {
-            key,
-            id: module.id,
-            name: module.name,
-            url: finalUrl,
-            passkey: module.passkey,
-            schedule: module.schedule,
-            difficulty: module.difficulty || 'Medium',
-            questions: module.questions || 0,
-            duration: module.duration_minutes || 60,
-            slug: derivedSlug,
-            type: 'coding',
-            languages: module.languages || ["c", "cpp", "java", "python"],
-            proctored: module.proctored,
-            maxViolations: module.maxViolations,
-            display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999)
-          };
-        });
+            let finalUrl = module.url || '';
+            if (finalUrl && !finalUrl.endsWith('.json')) {
+              if (module.slug) {
+                finalUrl = `/${type}/${module.slug}.json`;
+              } else if (finalUrl.startsWith(`/student/${type}/`)) {
+                const slugFromUrl = finalUrl.split('/').filter(Boolean).pop();
+                finalUrl = `/${type}/${slugFromUrl}.json`;
+              } else {
+                finalUrl = `/${type}/${slugify(module.name || key)}.json`;
+              }
+            }
+
+            const item = {
+              key,
+              id: module.id,
+              name: module.name,
+              url: finalUrl,
+              passkey: module.passkey,
+              schedule: module.schedule,
+              difficulty: module.difficulty || 'Medium',
+              questions: module.questions || 0,
+              duration: module.duration_minutes || 60,
+              slug: derivedSlug,
+              type,
+              isMultiSection: !!module.isMultiSection,
+              sections: module.sections || [],
+              proctored: module.proctored,
+              maxViolations: module.maxViolations,
+              display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999)
+            };
+
+            if (type === 'coding') {
+              item.languages = module.languages || ["c", "cpp", "java", "python"];
+              codingList.push(item);
+            } else {
+              mcqList.push(item);
+            }
+          });
+      });
 
       const combined = [...mcqList, ...codingList];
 
@@ -539,7 +543,11 @@ const StudentDashboard = () => {
 
       const testData = await fetchJSONFile(assessment.url);
 
-      if (assessment.type === 'mcq') {
+      if (assessment.isMultiSection) {
+        localStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
+        setLaunchStep(null);
+        navigate(`/student/assessment/multisection/${assessment.slug}`);
+      } else if (assessment.type === 'mcq') {
         const testInfo = {
           ...testData,
           name: testData.name || assessment.name,
@@ -1122,6 +1130,13 @@ const StudentDashboard = () => {
               <span className="menu-text">Assessments</span>
             </button>
             <button
+              className={`menu-item ${activeTab === "practice" ? "active" : ""}`}
+              onClick={() => setActiveTab("practice")}
+            >
+              <FaLaptopCode />
+              <span className="menu-text">Practice</span>
+            </button>
+            <button
               className={`menu-item ${activeTab === "profile" ? "active" : ""}`}
               onClick={() => setActiveTab("profile")}
             >
@@ -1135,9 +1150,8 @@ const StudentDashboard = () => {
           </nav>
         </aside>
 
-        {/* Main Content Area */}
         <main className="dashboard-main">
-          {activeTab === "assessments" ? renderAssessments() : renderProfile()}
+          {activeTab === "assessments" ? renderAssessments() : activeTab === "practice" ? <PracticeHome /> : renderProfile()}
         </main>
       </div>
 

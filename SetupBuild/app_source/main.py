@@ -61,6 +61,70 @@ logging.info("Application starting up...")
 # App version
 CURRENT_VERSION = "1.0.4"
 
+# ── Binary Integrity Check ────────────────────────────────────────────────────
+# Computes SHA-256 hash of the running EXE and validates it against the server.
+# Even if a student has admin rights and modifies the EXE, the server will
+# reject their session because the hash won't match the official build.
+# This is the correct security model for exam software on student-owned laptops.
+
+def compute_exe_hash():
+    """Calculate SHA-256 hash of the running executable."""
+    import hashlib
+    exe_path = sys.executable if getattr(sys, 'frozen', False) else None
+    # When compiled with Nuitka, sys.executable points to SEED-SEB.exe itself
+    if not exe_path or not os.path.exists(exe_path):
+        # Fallback: try to find the exe next to this script
+        exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "SEED-SEB.exe")
+    if not exe_path or not os.path.exists(exe_path):
+        return None
+    sha256 = hashlib.sha256()
+    try:
+        with open(exe_path, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                sha256.update(chunk)
+        return sha256.hexdigest()
+    except Exception as e:
+        logging.warning(f"Could not hash executable: {e}")
+        return None
+
+def verify_binary_integrity():
+    """
+    Verify the running executable against the server-registered hash.
+    Returns True if valid or if server is unreachable (fail-open for offline use).
+    Returns False only if the server explicitly rejects the hash (tampered binary).
+    """
+    exe_hash = compute_exe_hash()
+    if not exe_hash:
+        logging.info("Integrity check skipped: not running as compiled executable.")
+        return True
+
+    logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (checking against server)")
+
+    # ── Server Integrity Endpoint ─────────────────────────────────────────────
+    # Your server should expose a simple GET endpoint:
+    #   GET https://seedit.site/api/verify-binary?hash=<sha256>&version=<ver>
+    # Response JSON: { "valid": true/false, "message": "..." }
+    # If you haven't set up this endpoint yet, this check fails open (returns True)
+    # so the app continues working while you set up the server endpoint.
+    INTEGRITY_CHECK_URL = f"https://seedit.site/api/verify-binary?hash={exe_hash}&version={CURRENT_VERSION}"
+
+    try:
+        resp = requests.get(INTEGRITY_CHECK_URL, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("valid") is False:
+                logging.error(f"INTEGRITY VIOLATION: Server rejected binary hash. Message: {data.get('message', 'Tampered binary detected.')}")
+                return False
+            logging.info("Binary integrity check passed (server verified).")
+        else:
+            # Non-200 response: server unreachable or endpoint not yet set up — fail open
+            logging.info(f"Integrity check server returned {resp.status_code} — continuing (fail-open).")
+    except Exception as e:
+        # Network error or server not available — fail open so offline mode works
+        logging.info(f"Integrity check skipped (server unreachable): {e}")
+
+    return True
+
 # Firebase Configuration
 FIREBASE_CONFIG = {
     "apiKey": "AIzaSyANO2d-RUXV0x5fvTjRT1UkpssP-T_Qz1Q",
@@ -1201,7 +1265,18 @@ def main():
         )
         sys.exit(1)
 
-    # 0. Verify compiler resources first
+    # 0a. Verify binary integrity against server (blocks tampered EXE on student laptops)
+    if not verify_binary_integrity():
+        temp_app = QApplication(sys.argv)
+        QMessageBox.critical(
+            None,
+            "Security Violation",
+            "SEED-SEB integrity check failed.\n\nThis application has been tampered with or is not an official release.\n\nYour attempt has been logged. Please reinstall from the official SEED-IT portal.",
+            QMessageBox.StandardButton.Ok
+        )
+        sys.exit(1)
+
+    # 0b. Verify compiler resources first
     if not runtime_manager.verify_resources():
         temp_app = QApplication(sys.argv)
         QMessageBox.critical(

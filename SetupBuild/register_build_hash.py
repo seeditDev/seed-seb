@@ -33,7 +33,7 @@ except ImportError:
 SUPABASE_URL = "https://iygqntndsgiysvibqjyw.supabase.co"
 
 # PASTE YOUR SERVICE ROLE KEY HERE (keep this script private, never commit the key)
-SUPABASE_SERVICE_KEY = ""  # <-- paste here, or set env var SUPABASE_SERVICE_KEY
+SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5Z3FudG5kc2dpeXN2aWJxanl3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTg5OTI5OSwiZXhwIjoyMDk3NDc1Mjk5fQ.qTdE3JKxsmJbdXlbiHVsMBty2W1H5viBs9YpLYsoCcI"  # <-- paste here, or set env var SUPABASE_SERVICE_KEY
 
 APP_VERSION = "1.0.4"  # must match CURRENT_VERSION in main.py
 

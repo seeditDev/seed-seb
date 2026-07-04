@@ -40,6 +40,61 @@ const slugify = (value = '') => {
         .replace(/^-+|-+$/g, '') || 'coding-test';
 };
 
+const normalizeQuestion = (q) => {
+    if (!q) return q;
+    const id = q.questionId || q.id || '';
+    const title = q.title || '';
+    const description = q.content?.problemStatement || q.description || '';
+    const constraints = Array.isArray(q.content?.constraints) 
+        ? q.content.constraints.join('\n') 
+        : (q.constraints || '');
+
+    // Normalize boilerplates
+    const boilerplates = q.boilerplates || {};
+    if (q.solution?.code) {
+        const code = q.solution.code;
+        if (code.C) boilerplates.c = code.C;
+        if (code['C++']) boilerplates.cpp = code['C++'];
+        if (code.Java) boilerplates.java = code.Java;
+        if (code.Python3) boilerplates.python = code.Python3;
+        if (code.JavaScript) boilerplates.javascript = code.JavaScript;
+    }
+
+    // Normalize sample test cases
+    const sampleTestCases = q.content?.sampleTestCases || [];
+
+    // Normalize hidden test cases
+    let hidden = [];
+    if (q.testCases?.hidden) {
+        hidden = q.testCases.hidden.map(tc => ({
+            id: tc.id || tc.label,
+            input: tc.input,
+            expected: tc.expectedOutput || tc.expected
+        }));
+    } else if (Array.isArray(q.testCases)) {
+        hidden = q.testCases.map(tc => ({
+            id: tc.id || '',
+            input: tc.input,
+            expected: tc.expected
+        }));
+    }
+
+    return {
+        ...q,
+        id,
+        title,
+        description,
+        constraints,
+        boilerplates,
+        sampleTestCases,
+        hiddenTests: hidden,
+        testCases: {
+            ...q.testCases,
+            hidden: hidden
+        }
+    };
+};
+
 const CODING_ROUTE_BASE = '/student/coding';
 const AUTO_SUBMIT_NOTICE_KEY = 'codingAutoSubmitNotice';
 
@@ -300,7 +355,24 @@ const CodingAssessmentPage = () => {
             }
 
             const allowedModuleIds = departmentAccess.allowed_modules || [];
-            const codingModules = accessControlData.courses.assessments.modules || {};
+
+            const extractAllModules = (course) => {
+                if (!course) return {};
+                const modules = {};
+                if (course.modules) {
+                    Object.assign(modules, course.modules);
+                }
+                if (course.subcourses) {
+                    Object.values(course.subcourses).forEach(sub => {
+                        if (sub.modules) {
+                            Object.assign(modules, sub.modules);
+                        }
+                    });
+                }
+                return modules;
+            };
+
+            const codingModules = extractAllModules(accessControlData?.courses?.assessments);
 
             const accessible = Object.entries(codingModules)
                 .filter(([key, module]) => {
@@ -580,7 +652,7 @@ const CodingAssessmentPage = () => {
             // 4. Initialize states
             const now = timeService.now();
             const durationSec = (data.duration || assessment.duration || 60) * 60;
-            const parsedQuestions = data.questions || [];
+            const parsedQuestions = (data.questions || []).map(normalizeQuestion);
 
             setCurrentAssessment(assessment);
             setQuestions(parsedQuestions);
@@ -645,8 +717,10 @@ const CodingAssessmentPage = () => {
                 return;
             }
 
+            const normalizedQuestions = (questions || []).map(normalizeQuestion);
+
             setCurrentAssessment(assessment);
-            setQuestions(questions);
+            setQuestions(normalizedQuestions);
             setStartTime(startTimeMs);
             setTestDuration(durationSec);
             setRemainingTime(remaining);

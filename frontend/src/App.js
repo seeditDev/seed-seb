@@ -8,6 +8,8 @@ import CodingAssessmentPage from "./components/CodingAssessmentPage";
 import cacheManager from './utils/cacheManager';
 import TrackingService from './services/trackingService';
 import timeService from './services/timeService';
+import PracticeSandbox from "./components/PracticeSandbox";
+import MultiSectionAssessment from "./components/MultiSectionAssessment";
 
 import desktopBridge from './utils/desktopBridge';
 
@@ -247,6 +249,8 @@ const App = () => {
           <Route path="/student/mcq/:testSlug" element={<MCQPage />} />
           <Route path="/student/coding" element={<CodingAssessmentPage />} />
           <Route path="/student/coding/:assessmentSlug" element={<CodingAssessmentPage />} />
+          <Route path="/student/practice/solve/:questionId" element={<PracticeSandbox />} />
+          <Route path="/student/assessment/multisection/:assessmentSlug" element={<MultiSectionAssessment />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>

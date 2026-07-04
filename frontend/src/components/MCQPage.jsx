@@ -289,8 +289,25 @@ const MCQPage = () => {
                 return;
             }
 
+            // Helper to compile modules from direct course.modules and nested course.subcourses[subId].modules
+            const extractAllModules = (course) => {
+                if (!course) return {};
+                const modules = {};
+                if (course.modules) {
+                    Object.assign(modules, course.modules);
+                }
+                if (course.subcourses) {
+                    Object.values(course.subcourses).forEach(sub => {
+                        if (sub.modules) {
+                            Object.assign(modules, sub.modules);
+                        }
+                    });
+                }
+                return modules;
+            };
+
             // Get MCQ modules from access control
-            const mcqModules = accessControlData.courses.mcqs.modules || {};
+            const mcqModules = extractAllModules(accessControlData?.courses?.mcqs);
             const allowedModuleIds = departmentAccess.allowed_modules || [];
 
             // Filter tests that user has access to
