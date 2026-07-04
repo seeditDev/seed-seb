@@ -61,21 +61,27 @@ const normalizeQuestion = (q) => {
     }
 
     // Normalize sample test cases
-    const sampleTestCases = q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || [];
+    const sampleTestCases = (q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []).map(tc => ({
+        ...tc,
+        input: tc.input || '',
+        expected: tc.expected || tc.output || tc.expectedOutput || tc.expected_output || ''
+    }));
 
     // Normalize hidden test cases
     let hidden = [];
     if (q.testCases?.hidden) {
         hidden = q.testCases.hidden.map(tc => ({
-            id: tc.id || tc.label,
-            input: tc.input,
-            expected: tc.expectedOutput || tc.expected
+            ...tc,
+            id: tc.id || tc.label || '',
+            input: tc.input || '',
+            expected: tc.expectedOutput || tc.expected || tc.output || tc.expected_output || ''
         }));
     } else if (Array.isArray(q.testCases)) {
         hidden = q.testCases.map(tc => ({
+            ...tc,
             id: tc.id || '',
-            input: tc.input,
-            expected: tc.expected
+            input: tc.input || '',
+            expected: tc.expected || tc.output || tc.expectedOutput || tc.expected_output || ''
         }));
     }
 
