@@ -22,7 +22,8 @@ import {
   FaPlug,
   FaCamera,
   FaMicrophone,
-  FaUserShield
+  FaUserShield,
+  FaCog
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
@@ -71,6 +72,9 @@ const StudentDashboard = () => {
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return localStorage.getItem('portal_theme') || 'dark';
+  });
 
   // Assessments List State
   const [assessments, setAssessments] = useState([]);
@@ -1239,6 +1243,114 @@ const StudentDashboard = () => {
     );
   };
 
+  const renderSettings = () => {
+    const themes = [
+      {
+        id: 'dark',
+        name: 'Midnight Space (Dark)',
+        desc: 'Futuristic slate theme with indigo highlights (default).',
+        preview: ['#090d16', '#111827', '#6366f1']
+      },
+      {
+        id: 'light',
+        name: 'Classic Ice (Light)',
+        desc: 'Sleek, high-contrast light mode for daytime coding.',
+        preview: ['#f3f4f6', '#ffffff', '#4f46e5']
+      },
+      {
+        id: 'crimson',
+        name: 'Crimson Cyber (Red/Black)',
+        desc: 'Pitch-black cyberpunk dashboard with blood-red accents.',
+        preview: ['#0c0808', '#180f0f', '#ef4444']
+      },
+      {
+        id: 'emerald',
+        name: 'Emerald Matrix (Green/Black)',
+        desc: 'Retro-terminal dark design with vibrant emerald highlights.',
+        preview: ['#022c22', '#064e3b', '#10b981']
+      }
+    ];
+
+    const handleThemeChange = (themeId) => {
+      localStorage.setItem('portal_theme', themeId);
+      document.documentElement.setAttribute('data-theme', themeId);
+      setCurrentTheme(themeId);
+    };
+
+    return (
+      <div className="settings-tab-content">
+        <div className="dashboard-welcome">
+          <h1>Portal Settings</h1>
+          <p>Personalise your student workspace theme and interface appearance.</p>
+        </div>
+
+        <div className="settings-section-card" style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '16px',
+          padding: '28px',
+          marginTop: '24px',
+          boxShadow: '0 4px 20px var(--shadow-color)'
+        }}>
+          <h3 style={{ color: 'var(--text-main)', marginBottom: '8px', fontSize: '18px', fontWeight: 600 }}>Workspace Color Mode</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+            Choose a visual style that matches your environment. Themes apply globally to the login screen, sandboxes, and exams.
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '20px'
+          }}>
+            {themes.map(t => {
+              const active = currentTheme === t.id;
+              return (
+                <div 
+                  key={t.id} 
+                  onClick={() => handleThemeChange(t.id)}
+                  style={{
+                    background: active ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+                    border: `2px solid ${active ? 'var(--accent-coding)' : 'var(--border-color)'}`,
+                    borderRadius: '14px',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  className={`theme-card-option ${active ? 'active' : ''}`}
+                >
+                  {/* Theme Preview Bubbles */}
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
+                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[0], border: '1px solid rgba(255,255,255,0.08)' }} title="Primary BG" />
+                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[1], border: '1px solid rgba(255,255,255,0.08)' }} title="Secondary BG" />
+                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[2], border: '1px solid rgba(255,255,255,0.08)' }} title="Accent Color" />
+                  </div>
+
+                  <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>{t.name}</h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0, lineHeight: '1.4' }}>{t.desc}</p>
+                  
+                  {active && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      fontSize: '12px',
+                      color: 'var(--accent-coding)',
+                      fontWeight: 600
+                    }}>
+                      Active
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`}>
       {/* ═══════════════════════════════════════════════════════════
@@ -1581,6 +1693,13 @@ const StudentDashboard = () => {
               <FaUser />
               <span className="menu-text">Profile</span>
             </button>
+            <button
+              className={`menu-item ${activeTab === "settings" ? "active" : ""}`}
+              onClick={() => setActiveTab("settings")}
+            >
+              <FaCog />
+              <span className="menu-text">Settings</span>
+            </button>
             <button className="menu-item logout-btn" onClick={handleLogout}>
               <FaSignOutAlt />
               <span className="menu-text">Logout</span>
@@ -1589,7 +1708,7 @@ const StudentDashboard = () => {
         </aside>
 
         <main className="dashboard-main">
-          {activeTab === "assessments" ? renderAssessments() : activeTab === "practice" ? <PracticeHome /> : renderProfile()}
+          {activeTab === "assessments" ? renderAssessments() : activeTab === "practice" ? <PracticeHome /> : activeTab === "settings" ? renderSettings() : renderProfile()}
         </main>
       </div>
 

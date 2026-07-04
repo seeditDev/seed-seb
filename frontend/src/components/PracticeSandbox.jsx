@@ -673,7 +673,7 @@ const PracticeSandbox = () => {
             <Editor
               height="100%"
               language={MONACO_LANG_MAP[language] || 'cpp'}
-              theme="vs-dark"
+              theme={localStorage.getItem('portal_theme') === 'light' ? 'light' : 'vs-dark'}
               value={code}
               onChange={val => setCode(val || '')}
               options={{

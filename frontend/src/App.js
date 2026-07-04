@@ -137,6 +137,11 @@ const App = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const activeTheme = localStorage.getItem('portal_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', activeTheme);
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     let timeoutId = null;
 
