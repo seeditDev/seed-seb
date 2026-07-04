@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { APP_VERSION } from "../App";
 import {
   FaBars,
@@ -60,7 +60,10 @@ const slugify = (value = '') => {
 };
 
 const StudentDashboard = () => {
-  const [activeTab, setActiveTab] = useState("assessments"); // "assessments" or "profile"
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    return location.state?.tab || "assessments";
+  }); // "assessments" or "profile"
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(null);
   const [progressData, setProgressData] = useState(null);
@@ -291,6 +294,35 @@ const StudentDashboard = () => {
         const timeB = b.schedule?.startTime || '';
         return timeA.localeCompare(timeB);
       });
+
+      // Check attempt status for each assessment in parallel to determine completion
+      const statusPromises = combined.map(async (item) => {
+        try {
+          if (item.type === 'mcq') {
+            const check = await MCQService.checkExistingAttempt(
+              userData.Email || userData.email,
+              item.id,
+              userData.College,
+              userData.Year,
+              userData.Department
+            );
+            item.completed = !!check?.completed;
+          } else {
+            const check = await CodingAssessmentService.checkExistingAttempt(
+              userData.Email || userData.email,
+              item.id,
+              userData.College,
+              userData.Year,
+              userData.Department
+            );
+            item.completed = !!check?.completed;
+          }
+        } catch (e) {
+          console.warn("Failed to check status for assessment:", item.id, e);
+          item.completed = false;
+        }
+      });
+      await Promise.all(statusPromises);
 
       setAssessments(combined);
       setFilteredAssessments(combined);
@@ -775,6 +807,11 @@ const StudentDashboard = () => {
                     <span className={`type-badge badge-${a.type}`}>
                       {a.type === 'mcq' ? <FaQuestionCircle /> : <FaLaptopCode />} {a.type.toUpperCase()}
                     </span>
+                    {a.completed && (
+                      <span className="difficulty-badge diff-easy" style={{ background: '#0e4429', color: '#39d353', border: '1px solid rgba(57, 211, 83, 0.2)' }}>
+                        ✓ Completed
+                      </span>
+                    )}
                     <span className={`difficulty-badge diff-${a.difficulty.toLowerCase()}`}>
                       {a.difficulty}
                     </span>
@@ -798,7 +835,11 @@ const StudentDashboard = () => {
                   </div>
 
                   <div className="assessment-card-actions">
-                    {isExpired ? (
+                    {a.completed ? (
+                      <button className="start-btn" disabled style={{ background: '#0e4429', color: '#39d353', cursor: 'not-allowed', border: '1px solid rgba(57, 211, 83, 0.3)', width: '100%' }}>
+                        ✓ Assessment Submitted
+                      </button>
+                    ) : isExpired ? (
                       <span className="expired-badge-label">Expired</span>
                     ) : isUpcoming ? (
                       <button className="start-btn disabled" disabled>

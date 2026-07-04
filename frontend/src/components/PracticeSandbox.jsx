@@ -426,6 +426,7 @@ const PracticeSandbox = () => {
     <div className="psb-root">
       {/* Header */}
       <div className="psb-header">
+        <button className="psb-back-btn" onClick={() => navigate('/student/dashboard', { state: { tab: 'practice' } })}>🏠 Home</button>
         <button className="psb-back-btn" onClick={() => navigate(-1)}>← Back</button>
         
         {/* Toggle Sidebar Button */}
