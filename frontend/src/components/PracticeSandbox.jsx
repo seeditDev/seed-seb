@@ -209,7 +209,6 @@ const PracticeSandbox = () => {
       const qRaw = await fetchQuestion(questionId);
       const qData = normalizeQuestion(qRaw);
       setQuestion(qData);
-      setShowSidebar(false);
 
       if (qData.scoring?.defaultScoringType) {
         setScoringType(qData.scoring.defaultScoringType);
@@ -549,7 +548,7 @@ const PracticeSandbox = () => {
         </div>
 
         {/* Left Side - Description */}
-        <div className="psb-problem-panel" style={{ width: `${leftWidth}%` }}>
+        <div className="psb-problem-panel" style={{ width: `${leftWidth}%` }} onClick={() => setShowSidebar(false)}>
           <div className="psb-problem-tabs">
             <div className={`psb-problem-tab ${activeLeftTab === 'description' ? 'active' : ''}`} onClick={() => setActiveLeftTab('description')}>
               Problem Description
@@ -657,7 +656,7 @@ const PracticeSandbox = () => {
         <div className="psb-resizer-h" onMouseDown={startHorizontalDrag} />
 
         {/* Right Side - Monaco Editor + Outputs */}
-        <div className="psb-editor-panel" ref={rightPanelRef} style={{ width: `${100 - leftWidth}%` }}>
+        <div className="psb-editor-panel" ref={rightPanelRef} style={{ width: `${100 - leftWidth}%` }} onClick={() => setShowSidebar(false)}>
           <div className="psb-editor-toolbar" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="psb-run-btn" onClick={handleRunCode} disabled={isRunning || isSubmitting}>
               {isRunning ? <div className="psb-spinner" /> : <FaPlay />} Run Code
