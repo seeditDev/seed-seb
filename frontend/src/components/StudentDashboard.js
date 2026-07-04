@@ -830,7 +830,14 @@ const StudentDashboard = () => {
 
     setLoadingProfileProgress(true);
     try {
-      const { getFullProgress } = await import('../services/codingProgressService');
+      const { syncProgressWithFirebase, getFullProgress } = await import('../services/codingProgressService');
+      if (navigator.onLine) {
+        const syncRes = await syncProgressWithFirebase(email);
+        if (syncRes.success) {
+          setProgressData(syncRes.progress);
+          return;
+        }
+      }
       const progress = await getFullProgress(email);
       setProgressData(progress);
     } catch (err) {

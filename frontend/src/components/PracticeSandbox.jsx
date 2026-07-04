@@ -4,7 +4,7 @@ import Editor from '@monaco-editor/react';
 import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch } from 'react-icons/fa';
 import desktopBridge from '../utils/desktopBridge';
 import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBankService';
-import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress } from '../services/codingProgressService';
+import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase } from '../services/codingProgressService';
 import '../styles/PracticeSandbox.css';
 
 const FREE_BOILERPLATES = {
@@ -173,6 +173,13 @@ const PracticeSandbox = () => {
     const loadSidebarData = async () => {
       try {
         const email = authData?.Email || authData?.email || '';
+        if (email && navigator.onLine) {
+          try {
+            await syncProgressWithFirebase(email);
+          } catch (e) {
+            console.warn('Sandbox sidebar sync failed:', e);
+          }
+        }
         const [indexQs, progress] = await Promise.all([
           fetchQuestionsIndex().catch(() => []),
           getFullProgress(email).catch(() => ({ solvedProblems: [], problemDetails: {} })),

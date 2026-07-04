@@ -26,17 +26,18 @@ const COLLECTION = 'codingProgress';
 
 // Helper: Get local progress structure
 const getLocalProgress = (uid) => {
-  if (!uid) return { solvedProblems: [], problemDetails: {} };
+  if (!uid) return { solvedProblems: [], problemDetails: {}, activity: {} };
   try {
     const raw = localStorage.getItem(`practice_progress_${uid}`);
-    if (!raw) return { solvedProblems: [], problemDetails: {} };
+    if (!raw) return { solvedProblems: [], problemDetails: {}, activity: {} };
     const parsed = JSON.parse(raw);
     return {
       solvedProblems: Array.isArray(parsed.solvedProblems) ? parsed.solvedProblems : [],
-      problemDetails: parsed.problemDetails || {}
+      problemDetails: parsed.problemDetails || {},
+      activity: parsed.activity || {}
     };
   } catch (_) {
-    return { solvedProblems: [], problemDetails: {} };
+    return { solvedProblems: [], problemDetails: {}, activity: {} };
   }
 };
 
