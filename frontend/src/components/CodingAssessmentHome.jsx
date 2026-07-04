@@ -1,29 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaCheck, FaPlay, FaSignOutAlt, FaUser, FaArrowLeft, FaSearch, FaBookOpen, FaLock, FaKey, FaTimes } from 'react-icons/fa';
-import { db } from '../firebase-config';
-import { collection, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
-import desktopBridge from '../utils/desktopBridge';
+import DataService from '../services/dataService';
 import '../styles/CodingAssessmentHome.css';
-
-// Duplicate local challenges list in case DB seeding is required
-const DEFAULT_CHALLENGES = [
-    {
-        id: 'hello_world',
-        title: '1. Hello, World!',
-        difficulty: 'Easy',
-        description: 'Write a program that outputs exactly "Hello, World!" to the console.',
-        instructions: 'Your code should print "Hello, World!" followed by a new line.',
-        constraints: 'Time Limit: 2.0s',
-        testCases: [{ input: '', expected: 'Hello, World!\n' }],
-        boilerplates: {
-            c: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
-            cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
-            python: `print("Hello, World!")`,
-            java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
-        }
-    }
-];
 
 const CodingAssessmentHome = () => {
     const [contests, setContests] = useState([]);
@@ -65,55 +44,73 @@ const CodingAssessmentHome = () => {
             setIsLoading(true);
             try {
                 const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-                if (authData.Email) {
-                    setUser(authData);
-
-                    // Fetch user's completion records from desktop state
-                    try {
-                        const localState = await desktopBridge.getAssessmentState();
-                        const completedMap = {};
-                        if (localState && localState.completedQuestions) {
-                            Object.keys(localState.completedQuestions).forEach(qid => {
-                                if (localState.completedQuestions[qid].score === 100) {
-                                    completedMap[qid] = true;
-                                }
-                            });
-                        }
-                        setCompletedAttempts(completedMap);
-                    } catch (attemptsErr) {
-                        console.error("Failed to load completed attempts from bridge:", attemptsErr);
-                    }
-
-                    // Fetch user's contest attempts
-                    try {
-                        const cAttemptsMap = {};
-                        const localContests = await desktopBridge.getContests();
-                        localContests.forEach(c => {
-                            const completedInLocal = localStorage.getItem(`contest_completed_${c.id}`) === "true";
-                            if (completedInLocal) {
-                                cAttemptsMap[c.id] = { status: "completed" };
-                            }
-                        });
-                        setContestAttempts(cAttemptsMap);
-                    } catch (cAttemptsErr) {
-                        console.error("Failed to load contest attempts:", cAttemptsErr);
-                    }
-                } else {
+                if (!authData.Email) {
                     navigate('/login');
                     return;
                 }
-            } catch (err) {
-                console.error("Failed to load student auth details:", err);
-            }
+                setUser(authData);
 
-            // Fetch contests list from desktop bridge
-            try {
-                const localContests = await desktopBridge.getContests();
-                const fetched = [...localContests];
-                fetched.sort((a, b) => new Date(a.startTime || 0) - new Date(b.startTime || 0));
-                setContests(fetched);
+                // Load completion status from localStorage
+                const cAttemptsMap = {};
+                const storedKeys = Object.keys(localStorage).filter(k => k.startsWith('contest_completed_'));
+                storedKeys.forEach(k => {
+                    const contestId = k.replace('contest_completed_', '');
+                    if (localStorage.getItem(k) === 'true') {
+                        cAttemptsMap[contestId] = { status: 'completed' };
+                    }
+                });
+                setContestAttempts(cAttemptsMap);
+
+                // Load assessments from access_control.json
+                const accessControl = await DataService.getAccessControl();
+                const allowedModuleIds = accessControl?.access_control?.colleges?.[authData.College]?.[authData.Year]?.[authData.Department]?.allowed_modules || [];
+
+                // Extract assessment tests from courses.assessments subcourses
+                const assessmentsData = accessControl?.courses?.assessments;
+                const testsList = [];
+
+                if (assessmentsData?.subcourses) {
+                    Object.entries(assessmentsData.subcourses).forEach(([seriesKey, series]) => {
+                        if (series.modules) {
+                            Object.entries(series.modules).forEach(([modKey, mod]) => {
+                                // Only show modules the student is allowed to access
+                                if (!allowedModuleIds.includes(mod.id)) return;
+
+                                // Build start/end times from schedule if available
+                                let startTime = null;
+                                let endTime = null;
+                                if (mod.schedule?.type !== 'none' && mod.schedule?.startDate) {
+                                    startTime = `${mod.schedule.startDate}T${mod.schedule.startTime || '00:00'}`;
+                                }
+                                if (mod.schedule?.endDate) {
+                                    endTime = `${mod.schedule.endDate}T${mod.schedule.endTime || '23:59'}`;
+                                }
+
+                                testsList.push({
+                                    id: mod.id || modKey,
+                                    title: mod.name || modKey,
+                                    description: mod.description || `${series.title} · ${mod.type?.toUpperCase() || 'CODING'}`,
+                                    startTime,
+                                    endTime,
+                                    questions: mod.questionIds || [],
+                                    questionIds: mod.questionIds || [],
+                                    url: mod.url || null,
+                                    type: mod.type || 'coding',
+                                    duration_minutes: mod.duration_minutes || null,
+                                    passkey: mod.passkey || null,
+                                    isPremium: mod.isPremium || false,
+                                    seriesTitle: series.title,
+                                    seriesKey,
+                                });
+                            });
+                        }
+                    });
+                }
+
+                testsList.sort((a, b) => new Date(a.startTime || 0) - new Date(b.startTime || 0));
+                setContests(testsList);
             } catch (err) {
-                console.error("Failed to fetch contests:", err);
+                console.error("Failed to load assessment data:", err);
             } finally {
                 setIsLoading(false);
             }

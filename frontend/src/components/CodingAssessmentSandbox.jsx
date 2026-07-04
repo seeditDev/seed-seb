@@ -191,11 +191,10 @@ const CodingAssessmentSandbox = () => {
         setShowSubmitConfirm(false);
         if (!user?.Email || !contestParam) return;
         try {
-            // Save current code answer locally
+            // Save current code answer to localStorage
             if (selectedChallenge) {
-                try {
-                    await desktopBridge.saveAnswer(selectedChallenge.id, code);
-                } catch (e) {}
+                const savedKey = `code_${selectedChallenge.id}_${language}`;
+                localStorage.setItem(savedKey, code);
             }
 
             // Set contest attempt status as completed locally
@@ -327,20 +326,14 @@ const CodingAssessmentSandbox = () => {
                 if (authData.Email) {
                     setUser(authData);
 
-                    // Fetch user attempts from local assessment state
+                    // Load completed questions from local storage (assessment progress)
                     try {
-                        const localState = await desktopBridge.getAssessmentState();
                         const completedMap = {};
-                        if (localState && localState.completedQuestions) {
-                            Object.keys(localState.completedQuestions).forEach(qid => {
-                                if (localState.completedQuestions[qid].score === 100) {
-                                    completedMap[qid] = true;
-                                }
-                            });
-                        }
+                        const keys = Object.keys(localStorage).filter(k => k.startsWith('q_completed_'));
+                        keys.forEach(k => { completedMap[k.replace('q_completed_', '')] = true; });
                         setCompletedChallenges(completedMap);
                     } catch (attemptsErr) {
-                        console.error("Failed to load completed attempts from bridge:", attemptsErr);
+                        console.error("Failed to load completed attempts:", attemptsErr);
                     }
 
                     // Check if contest is already completed
@@ -361,44 +354,99 @@ const CodingAssessmentSandbox = () => {
                     return;
                 }
             } catch (err) {
-                console.error("Failed to load user attempts from local state:", err);
+                console.error("Failed to load user auth:", err);
             }
 
-            // Fetch challenges list from desktop bridge
+            // Load questions from access_control.json based on questionIds
             try {
-                let fetchedList = [];
-                try {
-                    fetchedList = await desktopBridge.getChallenges();
-                } catch (bridgeErr) {
-                    console.error("Failed to load challenges from bridge:", bridgeErr);
-                    fetchedList = [...DEFAULT_CHALLENGES];
-                }
-                
-                fetchedList.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+                const { fetchQuestion: fetchQ, fetchQuestionsIndex } = await import('../services/codingQuestionBankService');
+                const DataService = (await import('../services/dataService')).default;
 
-                // If inside a contest, filter questions
+                let questionIds = [];
+
                 if (contestParam) {
+                    // Find the contest in access_control to get its questionIds
                     try {
-                        const contests = await desktopBridge.getContests();
-                        const activeContest = contests.find(c => c.id === contestParam);
-                        if (activeContest) {
-                            const contestQuestions = activeContest.questions || [];
-                            fetchedList = fetchedList.filter(ch => contestQuestions.includes(ch.id));
+                        const accessControl = await DataService.getAccessControl();
+                        const assessmentsData = accessControl?.courses?.assessments;
+                        let found = false;
+                        if (assessmentsData?.subcourses) {
+                            for (const [, series] of Object.entries(assessmentsData.subcourses)) {
+                                if (series.modules) {
+                                    for (const [modKey, mod] of Object.entries(series.modules)) {
+                                        const modId = mod.id || modKey;
+                                        if (modId === contestParam) {
+                                            questionIds = mod.questionIds || [];
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (found) break;
+                            }
                         }
-                    } catch (cErr) {
-                        console.error("Failed to load contest questions:", cErr);
+                    } catch (acErr) {
+                        console.error("Failed to load access control:", acErr);
                     }
+                } else if (challengeParam) {
+                    // Single challenge mode - just that one question
+                    questionIds = [challengeParam];
+                } else {
+                    // Free mode / no contest — load all questions from index
+                    try {
+                        const { fetchQuestionsIndex } = await import('../services/codingQuestionBankService');
+                        const index = await fetchQuestionsIndex().catch(() => []);
+                        questionIds = index.map(q => q.questionId || q.id).filter(Boolean);
+                    } catch (e) {}
                 }
 
+                // Fetch each question
+                let fetchedList = [];
+                if (questionIds.length > 0) {
+                    const results = await Promise.all(
+                        questionIds.map(qid => fetchQ(qid).catch(e => {
+                            console.warn(`Failed to load question ${qid}:`, e);
+                            return null;
+                        }))
+                    );
+                    fetchedList = results.filter(Boolean).map(q => ({
+                        id: q.questionId || q.id,
+                        title: q.title,
+                        difficulty: q.metadata?.difficulty || q.difficulty || 'Medium',
+                        description: q.content?.problemStatement || q.description || '',
+                        instructions: q.content?.inputFormat || q.instructions || '',
+                        constraints: Array.isArray(q.content?.constraints) ? q.content.constraints.join('\n') : (q.constraints || ''),
+                        isPremium: q.metadata?.isPremium || false,
+                        testCases: (q.content?.sampleTestCases || []).map(tc => ({
+                            input: tc.input,
+                            expected: tc.expected || tc.expectedOutput
+                        })),
+                        boilerplates: (() => {
+                            const bp = q.boilerplates || {};
+                            if (q.solution?.code) {
+                                const c = q.solution.code;
+                                if (c.C) bp.c = c.C;
+                                if (c['C++']) bp.cpp = c['C++'];
+                                if (c.Java) bp.java = c.Java;
+                                if (c.Python3) { bp.python = c.Python3; bp.python3 = c.Python3; }
+                                if (c.JavaScript) bp.javascript = c.JavaScript;
+                            }
+                            return bp;
+                        })(),
+                        _raw: q,
+                    }));
+                }
+
+                fetchedList.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
                 setChallenges(fetchedList);
             } catch (err) {
-                console.error("Failed to load challenges. Using local backup:", err);
-                setChallenges(DEFAULT_CHALLENGES);
+                console.error("Failed to load challenges:", err);
+                setChallenges([...DEFAULT_CHALLENGES]);
             }
         };
 
         loadInitialData();
-    }, [navigate, contestParam]);
+    }, [navigate, contestParam, challengeParam]);
 
     // 3. Keep selectedChallenge in sync with URL challenge parameter
     useEffect(() => {
@@ -431,19 +479,18 @@ const CodingAssessmentSandbox = () => {
     useEffect(() => {
         const loadSavedAnswer = async () => {
             if (!selectedChallenge) return;
-            let loadedCode = "";
-            try {
-                loadedCode = await desktopBridge.loadAnswer(selectedChallenge.id);
-            } catch (e) {
-                console.error("Error loading answer:", e);
-            }
-            if (loadedCode) {
-                setCode(loadedCode);
+            // Try loading from localStorage first
+            const savedKey = `code_${selectedChallenge.id}_${language}`;
+            const savedCode = localStorage.getItem(savedKey);
+            if (savedCode) {
+                setCode(savedCode);
             } else {
                 if (mode === 'free') {
                     setCode(FREE_BOILERPLATES[language] || '');
                 } else if (selectedChallenge?.boilerplates?.[language]) {
                     setCode(selectedChallenge.boilerplates[language]);
+                } else {
+                    setCode(FREE_BOILERPLATES[language] || '');
                 }
             }
         };
@@ -457,14 +504,15 @@ const CodingAssessmentSandbox = () => {
         setActiveTab('input');
     }, [selectedChallenge, language, mode]);
 
-    // 5. Periodic autosave every 30 seconds
+    // 5. Autosave code to localStorage every 30 seconds
     useEffect(() => {
         if (!selectedChallenge || !code) return;
         const interval = setInterval(() => {
-            desktopBridge.saveAnswer(selectedChallenge.id, code);
+            const savedKey = `code_${selectedChallenge.id}_${language}`;
+            localStorage.setItem(savedKey, code);
         }, 30000);
         return () => clearInterval(interval);
-    }, [selectedChallenge, code]);
+    }, [selectedChallenge, code, language]);
 
     const handleResetCode = () => {
         if (window.confirm("Are you sure you want to reset your code to the default template?")) {
@@ -485,6 +533,21 @@ const CodingAssessmentSandbox = () => {
         setStdout('Running tests against sample cases...');
         setStderr('');
         setExitCode(null);
+
+        // Save code to localStorage
+        if (selectedChallenge) {
+            localStorage.setItem(`code_${selectedChallenge.id}_${language}`, code);
+        }
+
+        if (!isRunningInPyQt()) {
+            // Not in desktop app — show a helpful message
+            setIsRunning(false);
+            setActiveTab('output');
+            setStdout('');
+            setStderr('⚠️ Code execution requires the SEED-IT Desktop App (PyQt environment). Your code is saved and can be submitted from within the desktop app.');
+            setExitCode(1);
+            return;
+        }
 
         try {
             let results = [];
@@ -522,11 +585,23 @@ const CodingAssessmentSandbox = () => {
         setActiveTab('results');
         setTestResults([]);
 
-        try {
-            // Save answer before submission
-            await desktopBridge.saveAnswer(selectedChallenge.id, code);
+        // Save answer to localStorage before submission
+        const savedKey = `code_${selectedChallenge.id}_${language}`;
+        localStorage.setItem(savedKey, code);
 
-            // Execute submission against hidden test cases
+        if (!isRunningInPyQt()) {
+            setIsTesting(false);
+            setCustomNotice({
+                title: "Desktop App Required",
+                message: "Code submission and test evaluation require the SEED-IT Desktop App. Your code has been saved locally. Please open the desktop application to run and submit tests.",
+                type: "warning"
+            });
+            return;
+        }
+
+        try {
+            // Execute submission against hidden test cases via desktopBridge
+            await desktopBridge.saveAnswer(selectedChallenge.id, code);
             const result = await desktopBridge.submitCode(language, code, selectedChallenge.id);
             
             if (result.error) {
@@ -551,6 +626,7 @@ const CodingAssessmentSandbox = () => {
 
             // Update local React progress mappings
             if (result.score === 100) {
+                localStorage.setItem(`q_completed_${selectedChallenge.id}`, 'true');
                 setCompletedChallenges(prev => ({
                     ...prev,
                     [selectedChallenge.id]: true
