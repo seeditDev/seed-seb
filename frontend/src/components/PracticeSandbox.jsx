@@ -209,6 +209,7 @@ const PracticeSandbox = () => {
       const qRaw = await fetchQuestion(questionId);
       const qData = normalizeQuestion(qRaw);
       setQuestion(qData);
+      setShowSidebar(false);
 
       if (qData.scoring?.defaultScoringType) {
         setScoringType(qData.scoring.defaultScoringType);
@@ -225,9 +226,8 @@ const PracticeSandbox = () => {
       if (progress && progress.submittedCode) {
         setCode(progress.submittedCode);
       } else {
-        // Fallback to question boilerplate or free boilerplate
-        const qBoilerplate = qData.boilerplates?.[defaultLang];
-        setCode(qBoilerplate || FREE_BOILERPLATES[defaultLang] || '');
+        // Fallback to free standard boilerplate template
+        setCode(FREE_BOILERPLATES[defaultLang] || '');
       }
     } catch (err) {
       setError('Could not load question: ' + err.message);
@@ -239,8 +239,7 @@ const PracticeSandbox = () => {
   // Switch template
   useEffect(() => {
     if (!question) return;
-    const template = question.boilerplates?.[language];
-    setCode(template || FREE_BOILERPLATES[language] || '');
+    setCode(FREE_BOILERPLATES[language] || '');
     setStdout('');
     setStderr('');
     setExitCode(null);
@@ -250,8 +249,7 @@ const PracticeSandbox = () => {
 
   const handleResetCode = () => {
     if (window.confirm('Reset code to default template?')) {
-      const template = question.boilerplates?.[language];
-      setCode(template || FREE_BOILERPLATES[language] || '');
+      setCode(FREE_BOILERPLATES[language] || '');
     }
   };
 
@@ -614,20 +612,41 @@ const PracticeSandbox = () => {
               </>
             ) : (
               <>
-                <h3 style={{ marginBottom: '12px' }}>Editorial Solutions</h3>
-                {question.solution?.approach ? (
-                  <>
-                    <div className="psb-section-label">Approach</div>
-                    <div className="psb-problem-text">{question.solution.approach}</div>
-                    <div className="psb-section-label">Complexity</div>
-                    <div className="psb-problem-text">
-                      Time Complexity: <code>{question.solution.timeComplexity || 'O(N)'}</code>
-                      <br />
-                      Space Complexity: <code>{question.solution.spaceComplexity || 'O(1)'}</code>
-                    </div>
-                  </>
+                <h3 style={{ marginBottom: '12px' }}>Editorial Solution</h3>
+                {solvedIds.includes(question.questionId) ? (
+                  question.solution?.approach ? (
+                    <>
+                      <div className="psb-section-label">Approach</div>
+                      <div className="psb-problem-text">{question.solution.approach}</div>
+                      <div className="psb-section-label">Complexity</div>
+                      <div className="psb-problem-text">
+                        Time Complexity: <code>{question.solution.timeComplexity || 'O(N)'}</code>
+                        <br />
+                        Space Complexity: <code>{question.solution.spaceComplexity || 'O(1)'}</code>
+                      </div>
+                    </>
+                  ) : (
+                    <p style={{ color: 'var(--ps-text-dim)' }}>Editorial solution details not supplied for this question.</p>
+                  )
                 ) : (
-                  <p style={{ color: 'var(--ps-text-dim)' }}>Editorial solution details not supplied for this question.</p>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    background: 'rgba(255,255,255,0.02)',
+                    borderRadius: '12px',
+                    border: '1px dashed rgba(255,255,255,0.08)',
+                    marginTop: '20px'
+                  }}>
+                    <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔒</div>
+                    <h4 style={{ color: 'white', marginBottom: '8px' }}>Editorial Solution Locked</h4>
+                    <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', maxWidth: '300px', margin: '0 auto' }}>
+                      You need to successfully solve this problem and pass all test cases to unlock the editorial approach and complexity analysis.
+                    </p>
+                  </div>
                 )}
               </>
             )}

@@ -30,6 +30,31 @@ const _0xc2 = 'd1ZEdEpsR1dY';
 const _0xd3 = 'dG56bWZDUUZK';
 const _0xe4 = 'UU9KTjJBZDhocEZO';
 
+const FREE_BOILERPLATES = {
+  c: `#include <stdio.h>
+
+int main() {
+    // Write your code here
+    return 0;
+}`,
+  cpp: `#include <iostream>
+using namespace std;
+
+int main() {
+    // Write your code here
+    return 0;
+}`,
+  java: `import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        // Write your code here
+    }
+}`,
+  python: `# Write your code here
+`
+};
+
 const slugify = (value = '') => {
     if (!value) return 'coding-test';
     return value
@@ -769,7 +794,7 @@ const CodingAssessmentPage = () => {
             const availableLanguages = ["cpp", "c", "python", "java"];
             parsedQuestions.forEach(q => {
                 availableLanguages.forEach(lang => {
-                    initialCodeMap[`${q.id}_${lang}`] = q.boilerplates?.[lang] || "";
+                    initialCodeMap[`${q.id}_${lang}`] = FREE_BOILERPLATES[lang] || "";
                 });
             });
             setCodeMap(initialCodeMap);
@@ -911,7 +936,7 @@ const CodingAssessmentPage = () => {
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
-        const boilerplate = currentQuestion.boilerplates?.[language] || "";
+        const boilerplate = FREE_BOILERPLATES[language] || "";
         handleCodeChange(boilerplate);
     };
 
@@ -1940,7 +1965,7 @@ const CodingAssessmentPage = () => {
                                             setLanguage(newLang);
                                             const codeKey = `${currentQuestion.id}_${newLang}`;
                                             if (!codeMap[codeKey]) {
-                                                const boilerplate = currentQuestion.boilerplates?.[newLang] || "";
+                                                const boilerplate = FREE_BOILERPLATES[newLang] || "";
                                                 setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
                                             }
                                         }}

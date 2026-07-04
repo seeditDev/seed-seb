@@ -269,32 +269,23 @@ const PracticeHome = () => {
 
   return (
     <div className="ph-root">
-      {/* Top Bar */}
-      <div className="ph-topbar">
-        <div className="ph-topbar-logo">⚡ SEED-IT Coding Practice</div>
-        <div className="ph-topbar-nav">
+      {/* Sub navigation bar */}
+      <div className="ph-topbar" style={{ background: 'transparent', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', padding: '12px 0px', marginBottom: '20px', position: 'static' }}>
+        <div className="ph-topbar-nav" style={{ width: '100%', justifyContent: 'flex-start' }}>
           <button 
             className={`ph-topbar-btn ${activeTab === 'paths' && !selectedModule ? 'active' : ''}`}
             onClick={() => { setSelectedModule(null); setActiveTab('paths'); }}
+            style={{ borderRadius: '8px' }}
           >
             📂 Structured Paths
           </button>
           <button 
             className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
             onClick={() => { setSelectedModule(null); setActiveTab('bank'); }}
+            style={{ borderRadius: '8px' }}
           >
             🎯 Problems
           </button>
-          {/* Comment out sync button to avoid manual triggers, since updates write dynamically on submit */}
-          {/* <button 
-            className="ph-topbar-btn" 
-            onClick={handleSync}
-            disabled={syncing}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <FaSync className={syncing ? 'spin' : ''} /> Sync
-          </button> */}
-          <button className="ph-topbar-btn" onClick={() => navigate('/student/dashboard')}>← Portal Dashboard</button>
         </div>
       </div>
 
