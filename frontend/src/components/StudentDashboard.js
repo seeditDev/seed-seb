@@ -66,6 +66,7 @@ const StudentDashboard = () => {
   const [progressData, setProgressData] = useState(null);
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
 
   // Assessments List State
@@ -136,6 +137,8 @@ const StudentDashboard = () => {
     }
   }, [navigate]);
 
+  // Commented out automatic loading to save Firestore read quota
+  /*
   useEffect(() => {
     if (activeTab === "profile" && user) {
       const email = user.Email || user.email;
@@ -148,6 +151,7 @@ const StudentDashboard = () => {
       }
     }
   }, [activeTab, user]);
+  */
 
   const loadAssessments = async (userData) => {
     setLoading(true);
@@ -819,8 +823,114 @@ const StudentDashboard = () => {
     );
   };
 
+  const loadProfileProgress = async () => {
+    if (!user) return;
+    const email = user.Email || user.email;
+    if (!email) return;
+
+    setLoadingProfileProgress(true);
+    try {
+      const { getFullProgress } = await import('../services/codingProgressService');
+      const progress = await getFullProgress(email);
+      setProgressData(progress);
+    } catch (err) {
+      console.warn("Failed to load user progress:", err);
+    } finally {
+      setLoadingProfileProgress(false);
+    }
+  };
+
   const renderProfile = () => {
     const isPremium = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium;
+
+    // Check if progressData is loaded, if not show loading/placeholder card
+    if (!progressData) {
+      return (
+        <div className="profile-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div className="dashboard-welcome">
+            <h1>Student Profile & Utilisation</h1>
+            <p>Manage your academic registration info and review your daily practice dashboard.</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+            
+            {/* Card 1: Registration Details */}
+            <div className="premium-profile-card">
+              <div className="profile-avatar-row">
+                <div className="profile-avatar-large">
+                  {name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                </div>
+                <div className="profile-meta-title">
+                  <h2>{name}</h2>
+                  <span className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}>
+                    {isPremium ? '★ Premium Edition' : 'Standard Edition'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="profile-details-table-grid" style={{ marginTop: '20px' }}>
+                <div className="profile-detail-grid-item">
+                  <span className="grid-item-label">Roll Number</span>
+                  <span className="grid-item-value">{rollNumber}</span>
+                </div>
+                <div className="profile-detail-grid-item">
+                  <span className="grid-item-label">College</span>
+                  <span className="grid-item-value">{college}</span>
+                </div>
+                <div className="profile-detail-grid-item">
+                  <span className="grid-item-label">Department</span>
+                  <span className="grid-item-value">{dept}</span>
+                </div>
+                <div className="profile-detail-grid-item">
+                  <span className="grid-item-label">Graduation Year</span>
+                  <span className="grid-item-value">{year}</span>
+                </div>
+                <div className="profile-detail-grid-item" style={{ gridColumn: 'span 2' }}>
+                  <span className="grid-item-label">Registered Email Address</span>
+                  <span className="grid-item-value">{email}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Placeholder Load Dashboard */}
+            <div className="premium-profile-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', textAlign: 'center', gap: '16px' }}>
+              <div style={{ fontSize: '48px' }}>📊</div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Practice Utilisation Dashboard & Heatmap</h3>
+              <p style={{ color: 'var(--ps-text-dim)', maxWidth: '400px', fontSize: '13px', lineHeight: '1.6' }}>
+                Track your active hours, streaks, and solved problems over the last 6 months in a calendar heatmap.
+              </p>
+              <button
+                onClick={loadProfileProgress}
+                disabled={loadingProfileProgress}
+                className="solve-btn active"
+                style={{
+                  padding: '12px 28px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                {loadingProfileProgress ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '1rem', height: '1rem' }}></span>
+                    Loading...
+                  </>
+                ) : 'Load Utilisation Heatmap'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      );
+    }
 
     // Heatmap date generation helper
     const getHeatmapDates = () => {

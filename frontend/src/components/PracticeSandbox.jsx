@@ -44,7 +44,7 @@ const normalizeQuestion = (q) => {
   }
 
   // Normalize sample test cases
-  const sampleTestCases = q.content?.sampleTestCases || [];
+  const sampleTestCases = q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || [];
 
   // Normalize hidden test cases
   let hidden = [];
@@ -70,6 +70,7 @@ const normalizeQuestion = (q) => {
     constraints,
     boilerplates,
     sampleTestCases,
+    sampleTests: sampleTestCases,
     hiddenTests: hidden,
     testCases: {
       ...q.testCases,
@@ -634,19 +635,6 @@ const PracticeSandbox = () => {
             <button className="psb-reset-btn" onClick={handleResetCode}>
               <FaUndo /> Reset
             </button>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--ps-text-dim)', cursor: 'pointer', userSelect: 'none', marginLeft: 'auto', marginRight: '10px' }}>
-              <input 
-                type="checkbox" 
-                checked={useCustomInput} 
-                onChange={(e) => {
-                  setUseCustomInput(e.target.checked);
-                  if (e.target.checked) {
-                    setActiveConsoleTab('input');
-                  }
-                }}
-              />
-              <span>Run custom testcase</span>
-            </label>
           </div>
 
           <div className="psb-editor-wrap" style={{ height: `${editorHeight}%` }}>
@@ -672,7 +660,7 @@ const PracticeSandbox = () => {
 
           {/* Console / Outputs */}
           <div className="psb-results" style={{ height: `${100 - editorHeight}%`, maxHeight: 'none' }}>
-            <div className="psb-results-header">
+            <div className="psb-results-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <span className={`psb-problem-tab ${activeConsoleTab === 'input' ? 'active' : ''}`} onClick={() => setActiveConsoleTab('input')}>
                   Custom Input
@@ -684,6 +672,19 @@ const PracticeSandbox = () => {
                   Submit Results ({submitResults.length})
                 </span>
               </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--ps-text-dim)', cursor: 'pointer', userSelect: 'none', marginRight: '10px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={useCustomInput} 
+                  onChange={(e) => {
+                    setUseCustomInput(e.target.checked);
+                    if (e.target.checked) {
+                      setActiveConsoleTab('input');
+                    }
+                  }}
+                />
+                <span>Run custom testcase</span>
+              </label>
             </div>
 
             <div style={{ padding: '12px', height: 'calc(100% - 40px)', overflowY: 'auto' }}>

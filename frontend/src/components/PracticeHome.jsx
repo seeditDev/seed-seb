@@ -285,14 +285,15 @@ const PracticeHome = () => {
           >
             🎯 Problems
           </button>
-          <button 
+          {/* Comment out sync button to avoid manual triggers, since updates write dynamically on submit */}
+          {/* <button 
             className="ph-topbar-btn" 
             onClick={handleSync}
             disabled={syncing}
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <FaSync className={syncing ? 'spin' : ''} /> Sync
-          </button>
+          </button> */}
           <button className="ph-topbar-btn" onClick={() => navigate('/student/dashboard')}>← Portal Dashboard</button>
         </div>
       </div>

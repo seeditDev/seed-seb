@@ -61,7 +61,7 @@ const normalizeQuestion = (q) => {
     }
 
     // Normalize sample test cases
-    const sampleTestCases = q.content?.sampleTestCases || [];
+    const sampleTestCases = q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || [];
 
     // Normalize hidden test cases
     let hidden = [];
@@ -87,6 +87,7 @@ const normalizeQuestion = (q) => {
         constraints,
         boilerplates,
         sampleTestCases,
+        sampleTests: sampleTestCases,
         hiddenTests: hidden,
         testCases: {
             ...q.testCases,
@@ -950,6 +951,7 @@ const CodingAssessmentPage = () => {
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const sampleTests = currentQuestion.sampleTests || [];
         const startTimestamp = Date.now();
+        const bridgeLang = language === 'python3' ? 'python' : language;
 
         try {
             const results = [];
@@ -957,7 +959,7 @@ const CodingAssessmentPage = () => {
                 const tc = sampleTests[i];
 
                 // Run process on python sandbox backend
-                const res = await desktopBridge.runDirectSandbox(language, code, tc.input);
+                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                 const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
@@ -976,7 +978,7 @@ const CodingAssessmentPage = () => {
 
             // Run Custom Input if checked
             if (useCustomInput) {
-                const resRaw = await desktopBridge.runDirectSandbox(language, code, customInput);
+                const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, code, customInput);
                 const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                 const passed = !res.error && (exit === 0 || exit === null);
@@ -1022,6 +1024,7 @@ const CodingAssessmentPage = () => {
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
         const hiddenTests = currentQuestion.hiddenTests || currentQuestion.sampleTests || [];
         const startTimestamp = Date.now();
+        const bridgeLang = language === 'python3' ? 'python' : language;
 
         let passedCount = 0;
         let results = [];
@@ -1030,7 +1033,7 @@ const CodingAssessmentPage = () => {
         try {
             for (let i = 0; i < hiddenTests.length; i++) {
                 const tc = hiddenTests[i];
-                const res = await desktopBridge.runDirectSandbox(language, code, tc.input);
+                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                 const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
@@ -1224,10 +1227,11 @@ const CodingAssessmentPage = () => {
                     // Evaluate unevaluated questions now
                     const code = codeMap[`${q.id}_${language}`] || "";
                     const hidden = q.hiddenTests || q.sampleTests || [];
+                    const bridgeLang = language === 'python3' ? 'python' : language;
                     let passes = 0;
                     for (const tc of hidden) {
                         try {
-                            const res = await desktopBridge.runDirectSandbox(language, code, tc.input);
+                            const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
                             const exit = res.exit_code !== undefined ? res.exit_code : 0;
                             const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
                             const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
