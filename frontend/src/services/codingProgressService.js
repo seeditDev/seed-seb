@@ -92,8 +92,17 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
   };
 
   local.problemDetails[questionId] = detail;
+  
+  // Track activity solved count
   if (!local.solvedProblems.includes(questionId)) {
     local.solvedProblems.push(questionId);
+    
+    if (!local.activity) local.activity = {};
+    const today = new Date().toISOString().split('T')[0];
+    if (!local.activity[today]) {
+      local.activity[today] = { hours: 0, problemsSolved: 0 };
+    }
+    local.activity[today].problemsSolved += 1;
   }
 
   saveLocalProgress(uid, local);
@@ -187,9 +196,25 @@ export const syncProgressWithFirebase = async (uid) => {
       }
     }
 
+    // Merge activity maps
+    const localActivity = local.activity || {};
+    const remoteActivity = remote.activity || {};
+    const mergedActivity = { ...remoteActivity, ...localActivity };
+    
+    const activityDates = new Set([...Object.keys(localActivity), ...Object.keys(remoteActivity)]);
+    for (const date of activityDates) {
+      const lAct = localActivity[date] || { hours: 0, problemsSolved: 0 };
+      const rAct = remoteActivity[date] || { hours: 0, problemsSolved: 0 };
+      mergedActivity[date] = {
+        hours: Math.max(lAct.hours || 0, rAct.hours || 0),
+        problemsSolved: Math.max(lAct.problemsSolved || 0, rAct.problemsSolved || 0)
+      };
+    }
+
     const mergedProgress = {
       solvedProblems: mergedSolved,
       problemDetails: mergedDetails,
+      activity: mergedActivity,
       updatedAt: new Date().toISOString()
     };
 
@@ -216,6 +241,41 @@ export const getQuestionDisplayStatus = (questionId, solvedIds = [], problemDeta
   return 'UNSOLVED';
 };
 
+/**
+ * Log portal usage time (in minutes) for today.
+ */
+export const logPortalActivityTime = async (uid, minutes = 1) => {
+  if (!uid) return { success: false };
+  
+  const local = getLocalProgress(uid);
+  if (!local.activity) {
+    local.activity = {};
+  }
+  
+  const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+  if (!local.activity[today]) {
+    local.activity[today] = {
+      hours: 0,
+      problemsSolved: 0
+    };
+  }
+  
+  local.activity[today].hours = parseFloat((local.activity[today].hours + (minutes / 60)).toFixed(3));
+  
+  saveLocalProgress(uid, local);
+  
+  // Fire-and-forget sync
+  if (navigator.onLine) {
+    try {
+      const docRef = doc(db, COLLECTION, uid);
+      await setDoc(docRef, local, { merge: true });
+    } catch (e) {
+      console.warn('[CodingProgressService] Background sync failed:', e.message);
+    }
+  }
+  return { success: true };
+};
+
 export default {
   getSolvedQuestionIds,
   getFullProgress,
@@ -224,4 +284,5 @@ export default {
   markQuestionAttempted,
   syncProgressWithFirebase,
   getQuestionDisplayStatus,
+  logPortalActivityTime,
 };

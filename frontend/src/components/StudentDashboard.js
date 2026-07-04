@@ -63,6 +63,9 @@ const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState("assessments"); // "assessments" or "profile"
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(null);
+  const [progressData, setProgressData] = useState(null);
+  const [hoveredDay, setHoveredDay] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
 
   // Assessments List State
@@ -132,6 +135,19 @@ const StudentDashboard = () => {
       navigate("/login");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (activeTab === "profile" && user) {
+      const email = user.Email || user.email;
+      if (email) {
+        import('../services/codingProgressService').then(({ getFullProgress }) => {
+          getFullProgress(email).then(progress => {
+            setProgressData(progress);
+          });
+        });
+      }
+    }
+  }, [activeTab, user]);
 
   const loadAssessments = async (userData) => {
     setLoading(true);
@@ -217,7 +233,6 @@ const StudentDashboard = () => {
               passkey: module.passkey,
               schedule: module.schedule,
               difficulty: module.difficulty || 'Medium',
-              questions: module.questions || 0,
               duration: module.duration_minutes || 60,
               slug: derivedSlug,
               type,
@@ -225,7 +240,9 @@ const StudentDashboard = () => {
               sections: module.sections || [],
               proctored: module.proctored,
               maxViolations: module.maxViolations,
-              display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999)
+              display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999),
+              questionIds: module.questionIds || (Array.isArray(module.questions) ? module.questions : []),
+              questions: Array.isArray(module.questions) ? module.questions.length : (typeof module.questions === 'number' ? module.questions : (module.questionIds?.length || 0))
             };
 
             if (type === 'coding') {
@@ -564,16 +581,67 @@ const StudentDashboard = () => {
         localStorage.setItem('mcqTestDuration', durationSec.toString());
         localStorage.setItem('mcqTestData', JSON.stringify({ test: assessment, testData }));
         localStorage.setItem('mcqActiveTestSlug', assessment.slug);
+        localStorage.setItem('mcqTestNewLaunch', 'true');
         setLaunchStep(null);
         navigate(`/student/mcq/${assessment.slug}`);
       } else {
+        // Collect questionIds from all sources
+        let questionIds = [];
+        const collectIds = (src) => {
+          if (!src) return;
+          if (Array.isArray(src)) {
+            src.forEach(item => {
+              if (typeof item === 'string') {
+                questionIds.push(item);
+              } else if (item && (item.id || item.questionId)) {
+                questionIds.push(item.id || item.questionId);
+              }
+            });
+          }
+        };
+
+        collectIds(assessment.questionIds);
+        collectIds(assessment.questions);
+        collectIds(testData.questionIds);
+        collectIds(testData.questions);
+
+        questionIds = [...new Set(questionIds)].filter(Boolean);
+
+        let resolvedQuestions = [];
+        if (questionIds.length > 0) {
+          try {
+            const { fetchQuestionsForContest } = await import('../services/codingQuestionBankService');
+            resolvedQuestions = await fetchQuestionsForContest(questionIds);
+          } catch (resErr) {
+            console.error("Failed to resolve assessment questions from bank:", resErr);
+          }
+        }
+
+        // Fallback to inline questions if bank resolving returned nothing
+        if (resolvedQuestions.length === 0) {
+          const inline = [];
+          const addInline = (src) => {
+            if (Array.isArray(src)) {
+              src.forEach(item => {
+                if (item && typeof item === 'object' && (item.id || item.questionId)) {
+                  inline.push(item);
+                }
+              });
+            }
+          };
+          addInline(assessment.questions);
+          addInline(testData.questions);
+          resolvedQuestions = inline;
+        }
+
         await CodingAssessmentService.createInitialAttempt(user, assessment);
         localStorage.setItem("codingAssessmentStartTime", now.toString());
         localStorage.setItem("codingAssessmentTimer", durationSec.toString());
         localStorage.setItem("codingAssessmentData", JSON.stringify({
           assessment,
-          questions: testData.questions || []
+          questions: resolvedQuestions
         }));
+        localStorage.setItem("codingAssessmentNewLaunch", "true");
         setLaunchStep(null);
         navigate(`/student/coding/${assessment.slug}`);
       }
@@ -754,49 +822,261 @@ const StudentDashboard = () => {
   const renderProfile = () => {
     const isPremium = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium;
 
+    // Heatmap date generation helper
+    const getHeatmapDates = () => {
+      const dates = [];
+      const today = new Date();
+      const startDate = new Date();
+      startDate.setDate(today.getDate() - 182); // 26 weeks
+      const startDay = startDate.getDay();
+      startDate.setDate(startDate.getDate() - startDay); // Shift to nearest Sunday
+
+      const current = new Date(startDate);
+      // Run up to today
+      while (current <= today) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    };
+
+    const dates = getHeatmapDates();
+    const weeks = [];
+    for (let i = 0; i < dates.length; i += 7) {
+      weeks.push(dates.slice(i, i + 7));
+    }
+
+    // Statistics computation
+    let totalHours = 0;
+    let totalProblemsSolved = progressData?.solvedProblems?.length || 0;
+    if (progressData?.activity) {
+      Object.values(progressData.activity).forEach(act => {
+        totalHours += act.hours || 0;
+      });
+    }
+
+    const getStreakCount = () => {
+      if (!progressData?.activity) return 0;
+      let streak = 0;
+      const checkDate = new Date();
+      while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        const dayInfo = progressData.activity[dateStr];
+        if (dayInfo && (dayInfo.hours > 0 || dayInfo.problemsSolved > 0)) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    };
+    const activeStreak = getStreakCount();
+
+    // Map month headers above the weeks
+    const monthHeaders = [];
+    let lastMonth = -1;
+    weeks.forEach((wk, wkIdx) => {
+      const firstDay = wk[0];
+      const m = firstDay.getMonth();
+      if (m !== lastMonth) {
+        monthHeaders.push({ label: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m], index: wkIdx });
+        lastMonth = m;
+      }
+    });
+
     return (
-      <div className="profile-tab-content">
+      <div className="profile-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div className="dashboard-welcome">
-          <h1>Student Profile</h1>
-          <p>Your academic registration info mapped within SEED-IT.</p>
+          <h1>Student Profile & Utilisation</h1>
+          <p>Manage your academic registration info and review your daily practice dashboard.</p>
         </div>
 
-        <div className="premium-profile-card">
-          <div className="profile-avatar-row">
-            <div className="profile-avatar-large">
-              {name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+        {/* Info Grid row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+          
+          {/* Card 1: Registration Details */}
+          <div className="premium-profile-card" style={{ height: '100%' }}>
+            <div className="profile-avatar-row">
+              <div className="profile-avatar-large">
+                {name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+              </div>
+              <div className="profile-meta-title">
+                <h2>{name}</h2>
+                <span className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}>
+                  {isPremium ? '★ Premium Edition' : 'Standard Edition'}
+                </span>
+              </div>
             </div>
-            <div className="profile-meta-title">
-              <h2>{name}</h2>
-              <span className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}>
-                {isPremium ? '★ Premium Edition' : 'Standard Edition'}
-              </span>
+
+            <div className="profile-details-table-grid" style={{ marginTop: '20px' }}>
+              <div className="profile-detail-grid-item">
+                <span className="grid-item-label">Roll Number</span>
+                <span className="grid-item-value">{rollNumber}</span>
+              </div>
+              <div className="profile-detail-grid-item">
+                <span className="grid-item-label">College</span>
+                <span className="grid-item-value">{college}</span>
+              </div>
+              <div className="profile-detail-grid-item">
+                <span className="grid-item-label">Department</span>
+                <span className="grid-item-value">{dept}</span>
+              </div>
+              <div className="profile-detail-grid-item">
+                <span className="grid-item-label">Graduation Year</span>
+                <span className="grid-item-value">{year}</span>
+              </div>
+              <div className="profile-detail-grid-item" style={{ gridColumn: 'span 2' }}>
+                <span className="grid-item-label">Registered Email Address</span>
+                <span className="grid-item-value">{email}</span>
+              </div>
             </div>
           </div>
 
-          <div className="profile-details-table-grid">
-            <div className="profile-detail-grid-item">
-              <span className="grid-item-label">Roll Number</span>
-              <span className="grid-item-value">{rollNumber}</span>
+          {/* Card 2: Practice Statistics & Heatmap */}
+          <div className="premium-profile-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            
+            {/* Row of stats */}
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ps-success)' }}>{totalProblemsSolved}</div>
+                <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Problems Solved</div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#38bdf8' }}>{totalHours.toFixed(1)} hrs</div>
+                <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Time Spent Active</div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fb923c' }}>{activeStreak} Days</div>
+                <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Active Streak</div>
+              </div>
             </div>
-            <div className="profile-detail-grid-item">
-              <span className="grid-item-label">College</span>
-              <span className="grid-item-value">{college}</span>
+
+            {/* Heatmap Grid Wrapper */}
+            <div style={{ flex: 1, position: 'relative' }}>
+              <h4 style={{ fontSize: '15px', color: 'var(--ps-text-dim)', marginBottom: '14px', fontWeight: '600' }}>Practice portal activity tracker (last 6 months)</h4>
+              
+              {/* Heatmap layout */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                
+                {/* Y-axis: days of week */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '9px', color: '#475569', marginTop: '16px', width: '22px' }}>
+                  <span>Sun</span>
+                  <span style={{ visibility: 'hidden' }}>Mon</span>
+                  <span>Tue</span>
+                  <span style={{ visibility: 'hidden' }}>Wed</span>
+                  <span>Thu</span>
+                  <span style={{ visibility: 'hidden' }}>Fri</span>
+                  <span>Sat</span>
+                </div>
+
+                {/* X-axis: weeks columns */}
+                <div style={{ flex: 1, overflowX: 'auto' }}>
+                  
+                  {/* Month headers Row */}
+                  <div style={{ position: 'relative', height: '14px', marginBottom: '4px', fontSize: '10px', color: '#475569' }}>
+                    {monthHeaders.map(hdr => (
+                      <span key={hdr.index} style={{
+                        position: 'absolute',
+                        left: `${hdr.index * 14}px`,
+                        whiteSpace: 'nowrap'
+                      }}>{hdr.label}</span>
+                    ))}
+                  </div>
+
+                  {/* Grid of Weeks */}
+                  <div style={{ display: 'flex', gap: '2px' }}>
+                    {weeks.map((wk, wkIdx) => (
+                      <div key={wkIdx} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {wk.map((day, dIdx) => {
+                          const dateStr = day.toISOString().split('T')[0];
+                          const dayInfo = progressData?.activity?.[dateStr] || { hours: 0, problemsSolved: 0 };
+                          const solved = dayInfo.problemsSolved || 0;
+
+                          // Color selector
+                          let color = 'rgba(255, 255, 255, 0.04)'; // 0 solves
+                          if (solved === 1) color = '#0e4429';
+                          if (solved === 2) color = '#006d32';
+                          if (solved === 3) color = '#26a641';
+                          if (solved >= 4) color = '#39d353';
+
+                          return (
+                            <div
+                              key={dIdx}
+                              style={{
+                                width: '12px',
+                                height: '12px',
+                                background: color,
+                                borderRadius: '2px',
+                                transition: 'all 0.1s'
+                              }}
+                              onMouseEnter={(e) => {
+                                const rect = e.target.getBoundingClientRect();
+                                setTooltipPos({
+                                  x: rect.left + window.scrollX + 6,
+                                  y: rect.top + window.scrollY - 8
+                                });
+                                setHoveredDay({
+                                  dateStr: day.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                                  dayInfo
+                                });
+                              }}
+                              onMouseLeave={() => setHoveredDay(null)}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Heatmap Legend */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#475569', marginTop: '12px' }}>
+                <span>Less</span>
+                <div style={{ width: '10px', height: '10px', background: 'rgba(255,255,255,0.04)', borderRadius: '2px' }}></div>
+                <div style={{ width: '10px', height: '10px', background: '#0e4429', borderRadius: '2px' }}></div>
+                <div style={{ width: '10px', height: '10px', background: '#006d32', borderRadius: '2px' }}></div>
+                <div style={{ width: '10px', height: '10px', background: '#26a641', borderRadius: '2px' }}></div>
+                <div style={{ width: '10px', height: '10px', background: '#39d353', borderRadius: '2px' }}></div>
+                <span>More</span>
+              </div>
+
             </div>
-            <div className="profile-detail-grid-item">
-              <span className="grid-item-label">Department</span>
-              <span className="grid-item-value">{dept}</span>
-            </div>
-            <div className="profile-detail-grid-item">
-              <span className="grid-item-label">Graduation Year</span>
-              <span className="grid-item-value">{year}</span>
-            </div>
-            <div className="profile-detail-grid-item" style={{ gridColumn: 'span 2' }}>
-              <span className="grid-item-label">Registered Email Address</span>
-              <span className="grid-item-value">{email}</span>
+
+          </div>
+
+        </div>
+
+        {/* Absolute Floating Tooltip Card */}
+        {hoveredDay && (
+          <div style={{
+            position: 'absolute',
+            left: `${tooltipPos.x}px`,
+            top: `${tooltipPos.y}px`,
+            background: '#1e293b',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            pointerEvents: 'none',
+            zIndex: 1000,
+            transform: 'translate(-50%, -100%)',
+            whiteSpace: 'nowrap'
+          }}>
+            <strong>{hoveredDay.dateStr}</strong>
+            <div style={{ color: '#94a3b8', marginTop: '4px' }}>
+              • Solved: {hoveredDay.dayInfo.problemsSolved} problems
+              <br />
+              • Portal Time: {hoveredDay.dayInfo.hours.toFixed(2)} hours
             </div>
           </div>
-        </div>
+        )}
+
       </div>
     );
   };

@@ -107,6 +107,7 @@ const MCQPage = () => {
     const [submissionStep, setSubmissionStep] = useState(''); // 'validating', 'generating', 'submitted'
     const [testAlreadyCompleted, setTestAlreadyCompleted] = useState(false);
     const [completedTestInfo, setCompletedTestInfo] = useState(null);
+    const [startCountdown, setStartCountdown] = useState(null); // null or number (seconds)
     const [showNetworkPopup, setShowNetworkPopup] = useState(false);
     const [networkTimer, setNetworkTimer] = useState(30);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -249,6 +250,27 @@ const MCQPage = () => {
 
         loadData();
     }, [navigate]);
+
+    // Start countdown timer effect
+    useEffect(() => {
+        if (startCountdown === null) return;
+
+        if (startCountdown <= 0) {
+            // Countdown finished! Start the actual test timer
+            const now = timeService.now();
+            setStartTime(now);
+            localStorage.setItem('mcqTestStartTime', now.toString());
+            setStartCountdown(null);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setStartCountdown(prev => prev - 1);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [startCountdown]);
+
 
     // Keep route in sync with active test slug
     useEffect(() => {
@@ -728,7 +750,8 @@ const MCQPage = () => {
             setAnswers({});
             const now = timeService.now();
             const nowISO = timeService.getNow().toISOString();
-            setStartTime(now);
+            setStartCountdown(10);
+            setStartTime(now + 10000);
             setTestStartTimeISO(nowISO);
             setElapsedTime(0);
 
@@ -1037,32 +1060,16 @@ const MCQPage = () => {
     }, [autoSubmitStoredAttempt, syncProgress]);
 
     useEffect(() => {
-        // const hasPending = sessionStorage.getItem('mcqTestData');
         const hasPending = localStorage.getItem('mcqTestData');
         if (!currentTest && user && hasPending) {
-            // const graceDeadlineRaw = sessionStorage.getItem('mcqReloadGraceDeadline');
-            const graceDeadlineRaw = localStorage.getItem('mcqReloadGraceDeadline');
-            const graceDeadline = graceDeadlineRaw ? parseInt(graceDeadlineRaw, 10) : 0;
-            const now = timeService.now();
-            if (graceDeadline && now <= graceDeadline) {
-                restoreTestState();
-            } else if (graceDeadline && now > graceDeadline) {
-                /* // Commented out to allow reconnection without grace period expiry
-                autoSubmitStoredAttempt({
-                    reason: 'grace-expired',
-                    noticeMessage: 'Your MCQ attempt was auto-submitted because the reload grace period expired.'
-                });
-                */
-                restoreTestState(); // Always try to restore within time window
-            } else {
-                /* // Commented out to allow reconnection without offline pending trigger
-                autoSubmitStoredAttempt({
-                    reason: 'offline-pending',
-                    noticeMessage: 'Your MCQ attempt was auto-submitted after reconnecting late.'
-                });
-                */
-                restoreTestState(); // Always try to restore within time window
+            const isNewLaunch = localStorage.getItem("mcqTestNewLaunch") === "true";
+            if (isNewLaunch) {
+                localStorage.removeItem("mcqTestNewLaunch");
+                const now = timeService.now();
+                localStorage.setItem("mcqTestStartTime", (now + 10000).toString());
+                setStartCountdown(10);
             }
+            restoreTestState();
         }
     }, [user, currentTest, autoSubmitStoredAttempt, restoreTestState]);
 
@@ -2503,6 +2510,51 @@ const MCQPage = () => {
     );
 
     // Main render
+    if (startCountdown !== null) {
+        return (
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'radial-gradient(circle at center, #0f172a, #020617)',
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 99999,
+                fontFamily: "'Inter', sans-serif"
+            }}>
+                <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
+                    <div className="learn-spinner" style={{ width: '60px', height: '60px', borderTopColor: '#10b981', margin: '0 auto 24px' }}></div>
+                    <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: '#10b981', letterSpacing: '-0.02em' }}>
+                        Preparing Secure Environment...
+                    </h2>
+                    <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
+                        Setting up MCQ environment, proctoring controls, and loading questions.
+                    </p>
+                    <div style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '16px',
+                        padding: '24px 32px',
+                        display: 'inline-block',
+                        boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
+                    }}>
+                        <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '8px', fontWeight: '700' }}>
+                            Assessment Starts In
+                        </div>
+                        <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'white', fontFamily: 'monospace', lineHeight: '1' }}>
+                            {startCountdown}s
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="mcq-page">
             {/* Proctoring Engine - Active only when test is running */}

@@ -92,6 +92,7 @@ const PracticeSandbox = () => {
   const [language, setLanguage] = useState('cpp');
   const [code, setCode] = useState('');
   const [customInput, setCustomInput] = useState('');
+  const [useCustomInput, setUseCustomInput] = useState(false);
   const [activeLeftTab, setActiveLeftTab] = useState('description'); // 'description', 'solution'
   const [activeConsoleTab, setActiveConsoleTab] = useState('input'); // 'input', 'output', 'results'
 
@@ -103,6 +104,7 @@ const PracticeSandbox = () => {
   const [exitCode, setExitCode] = useState(null);
   const [submitResults, setSubmitResults] = useState([]);
   const [submitScore, setSubmitScore] = useState(null);
+  const [sampleResults, setSampleResults] = useState([]);
   const [scoringType, setScoringType] = useState('PARTIAL_SCORE');
 
   // Collapsible list sidebar states
@@ -239,20 +241,56 @@ const PracticeSandbox = () => {
     }
   };
 
-  // Compile and run custom input
+  // Compile and run custom input or sample cases
   const handleRunCode = async () => {
     setIsRunning(true);
     setActiveConsoleTab('output');
     setStdout('Running execution...');
     setStderr('');
     setExitCode(null);
+    setSampleResults([]);
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
-      const result = await desktopBridge.runDirectSandbox(bridgeLang, code, customInput);
-      setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? 'Execution completed with no output.' : ''));
-      setStderr(result.stderr || result.error || '');
-      setExitCode(result.exit_code === undefined ? null : result.exit_code);
+
+      // If user selected useCustomInput, run only customInput
+      if (useCustomInput || !question.sampleTestCases || question.sampleTestCases.length === 0) {
+        const result = await desktopBridge.runDirectSandbox(bridgeLang, code, customInput);
+        setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? 'Execution completed with no output.' : ''));
+        setStderr(result.stderr || result.error || '');
+        setExitCode(result.exit_code === undefined ? null : result.exit_code);
+      } else {
+        // Run against all sample test cases
+        const results = [];
+        const samples = question.sampleTestCases || [];
+        for (let i = 0; i < samples.length; i++) {
+          const tc = samples[i];
+          const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+          
+          const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
+          const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
+          const isPassed = actualClean === expectedClean && res.exit_code === 0;
+
+          results.push({
+            index: i + 1,
+            input: tc.input,
+            expected: expectedClean,
+            actual: res.stdout || '',
+            stderr: res.stderr || res.error || '',
+            passed: isPassed,
+            exitCode: res.exit_code
+          });
+        }
+        setSampleResults(results);
+        
+        // Populate exitCode, stdout, stderr with last sample case for fallback
+        const last = results[results.length - 1];
+        if (last) {
+          setStdout(last.actual);
+          setStderr(last.stderr);
+          setExitCode(last.exitCode);
+        }
+      }
     } catch (err) {
       setStderr(`Execution Failed: ${err.message}`);
     } finally {
@@ -287,7 +325,7 @@ const PracticeSandbox = () => {
         const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
         
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
-        const expectedClean = (tc.expectedOutput || '').replace(/\r\n/g, '\n').trim();
+        const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
         const isPassed = actualClean === expectedClean && res.exit_code === 0;
 
         if (isPassed) {
@@ -586,7 +624,7 @@ const PracticeSandbox = () => {
 
         {/* Right Side - Monaco Editor + Outputs */}
         <div className="psb-editor-panel" ref={rightPanelRef} style={{ width: `${100 - leftWidth}%` }}>
-          <div className="psb-editor-toolbar">
+          <div className="psb-editor-toolbar" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button className="psb-run-btn" onClick={handleRunCode} disabled={isRunning || isSubmitting}>
               {isRunning ? <div className="psb-spinner" /> : <FaPlay />} Run Code
             </button>
@@ -596,6 +634,19 @@ const PracticeSandbox = () => {
             <button className="psb-reset-btn" onClick={handleResetCode}>
               <FaUndo /> Reset
             </button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--ps-text-dim)', cursor: 'pointer', userSelect: 'none', marginLeft: 'auto', marginRight: '10px' }}>
+              <input 
+                type="checkbox" 
+                checked={useCustomInput} 
+                onChange={(e) => {
+                  setUseCustomInput(e.target.checked);
+                  if (e.target.checked) {
+                    setActiveConsoleTab('input');
+                  }
+                }}
+              />
+              <span>Run custom testcase</span>
+            </label>
           </div>
 
           <div className="psb-editor-wrap" style={{ height: `${editorHeight}%` }}>
@@ -662,6 +713,55 @@ const PracticeSandbox = () => {
                 <div style={{ background: '#0a0a14', padding: '12px', borderRadius: '8px', minHeight: '80px', overflowY: 'auto' }}>
                   {isRunning ? (
                     <div style={{ color: 'var(--ps-text-dim)' }}>Executing sandbox environment...</div>
+                  ) : sampleResults && sampleResults.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {sampleResults.map((res) => (
+                        <div key={res.index} style={{
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          background: 'rgba(255,255,255,0.01)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <strong style={{ fontSize: '14px' }}>Sample Case {res.index}</strong>
+                            <span style={{
+                              color: res.passed ? 'var(--ps-success)' : 'var(--ps-error)',
+                              fontWeight: 'bold',
+                              fontSize: '13px'
+                            }}>
+                              {res.passed ? 'Passed' : 'Failed'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px' }}>
+                            <div>
+                              <div style={{ color: 'var(--ps-text-dim)', marginBottom: '4px' }}>Input:</div>
+                              <pre style={{ background: '#05050a', padding: '6px', borderRadius: '4px', margin: 0, fontFamily: 'var(--ps-mono)' }}>{res.input || '(empty)'}</pre>
+                            </div>
+                            <div>
+                              <div style={{ color: 'var(--ps-text-dim)', marginBottom: '4px' }}>Expected Output:</div>
+                              <pre style={{ background: '#05050a', padding: '6px', borderRadius: '4px', margin: 0, fontFamily: 'var(--ps-mono)' }}>{res.expected}</pre>
+                            </div>
+                          </div>
+                          <div style={{ marginTop: '8px', fontSize: '12px' }}>
+                            <div style={{ color: 'var(--ps-text-dim)', marginBottom: '4px' }}>Actual Output:</div>
+                            <pre style={{
+                              background: '#05050a',
+                              padding: '6px',
+                              borderRadius: '4px',
+                              margin: 0,
+                              fontFamily: 'var(--ps-mono)',
+                              color: res.passed ? '#e2e8f0' : 'var(--ps-error)'
+                            }}>{res.actual || '(no output)'}</pre>
+                          </div>
+                          {res.stderr && (
+                            <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--ps-error)' }}>
+                              <strong>Error:</strong>
+                              <pre style={{ whiteSpace: 'pre-wrap', background: '#05050a', padding: '6px', borderRadius: '4px', marginTop: '4px', fontFamily: 'var(--ps-mono)' }}>{res.stderr}</pre>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   ) : stderr ? (
                     <div style={{ color: 'var(--ps-error)' }}>
                       <strong>Compile / Runtime Error:</strong>

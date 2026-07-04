@@ -163,6 +163,7 @@ const CodingAssessmentPage = () => {
         violations: []
     });
     const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
+    const [startCountdown, setStartCountdown] = useState(null); // null or number (seconds)
 
     // Custom Alert State
     const [alertConfig, setAlertConfig] = useState(null);
@@ -318,7 +319,16 @@ const CodingAssessmentPage = () => {
                 // Check if there is an active test session to restore
                 const pendingData = localStorage.getItem("codingAssessmentData");
                 if (pendingData && assessmentSlug) {
-                    restoreAssessmentState();
+                    const isNewLaunch = localStorage.getItem("codingAssessmentNewLaunch") === "true";
+                    if (isNewLaunch) {
+                        localStorage.removeItem("codingAssessmentNewLaunch");
+                        const now = timeService.now();
+                        localStorage.setItem("codingAssessmentStartTime", (now + 10000).toString());
+                        setStartCountdown(10);
+                        restoreAssessmentState();
+                    } else {
+                        restoreAssessmentState();
+                    }
                 }
             } catch (err) {
                 console.error("Error initializing coding assessment list:", err);
@@ -337,6 +347,25 @@ const CodingAssessmentPage = () => {
             localStorage.removeItem(AUTO_SUBMIT_NOTICE_KEY);
         }
     }, [navigate, assessmentSlug]);
+
+    // Start countdown timer effect
+    useEffect(() => {
+        if (startCountdown === null) return;
+
+        if (startCountdown <= 0) {
+            // Countdown finished! Start the actual test timer
+            setStartTime(timeService.now());
+            setStartCountdown(null);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setStartCountdown(prev => prev - 1);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [startCountdown]);
+
 
     // Fetch and filter coding assessments based on allowed modules
     const loadAvailableAssessments = async (accessControlData, userData) => {
@@ -410,12 +439,13 @@ const CodingAssessmentPage = () => {
                         passkey: module.passkey,
                         schedule: module.schedule,
                         difficulty: module.difficulty || 'Medium',
-                        questions: module.questions || 0,
                         duration: module.duration_minutes || 60,
                         slug: module.slug || slugify(module.id || module.name || key),
                         languages: module.languages || ["c", "cpp", "java", "python"],
                         proctored: module.proctored,
-                        maxViolations: module.maxViolations
+                        maxViolations: module.maxViolations,
+                        questionIds: module.questionIds || (Array.isArray(module.questions) ? module.questions : []),
+                        questions: Array.isArray(module.questions) ? module.questions.length : (typeof module.questions === 'number' ? module.questions : (module.questionIds?.length || 0))
                     };
                 });
 
@@ -639,7 +669,66 @@ const CodingAssessmentPage = () => {
             }
 
             // 2. Fetch assessment question set JSON
-            const data = await fetchAssessmentJSON(assessment.url);
+            let data = {};
+            try {
+                if (assessment.url) {
+                    data = await fetchAssessmentJSON(assessment.url);
+                }
+            } catch (err) {
+                console.warn("Failed to fetch assessment JSON file, using access_control data:", err.message);
+            }
+
+            // Collect questionIds from all sources
+            let questionIds = [];
+            const collectIds = (src) => {
+                if (!src) return;
+                if (Array.isArray(src)) {
+                    src.forEach(item => {
+                        if (typeof item === 'string') {
+                            questionIds.push(item);
+                        } else if (item && (item.id || item.questionId)) {
+                            questionIds.push(item.id || item.questionId);
+                        }
+                    });
+                }
+            };
+
+            collectIds(assessment.questionIds);
+            collectIds(assessment.questions);
+            collectIds(data.questionIds);
+            collectIds(data.questions);
+
+            questionIds = [...new Set(questionIds)].filter(Boolean);
+
+            let resolvedQuestions = [];
+            if (questionIds.length > 0) {
+                try {
+                    const { fetchQuestionsForContest } = await import('../services/codingQuestionBankService');
+                    resolvedQuestions = await fetchQuestionsForContest(questionIds);
+                } catch (resErr) {
+                    console.error("Failed to resolve assessment questions from bank:", resErr);
+                }
+            }
+
+            // Fallback to inline questions if bank resolving returned nothing
+            if (resolvedQuestions.length === 0) {
+                const inline = [];
+                const addInline = (src) => {
+                    if (Array.isArray(src)) {
+                        src.forEach(item => {
+                            if (item && typeof item === 'object' && (item.id || item.questionId)) {
+                                inline.push(item);
+                            }
+                        });
+                    }
+                };
+                addInline(assessment.questions);
+                addInline(data.questions);
+                resolvedQuestions = inline;
+            }
+
+            // Set resolved questions on data object for further processing
+            data.questions = resolvedQuestions;
             
             // 3. Register initial attempt in Firestore (awaited so duplicate-submission errors block the test)
             const initResult = await CodingAssessmentService.createInitialAttempt(user, assessment);
@@ -657,7 +746,11 @@ const CodingAssessmentPage = () => {
             setCurrentAssessment(assessment);
             setQuestions(parsedQuestions);
             setActiveQuestionIndex(0);
-            setStartTime(now);
+            
+            // Set start countdown to 10 seconds and offset startTime
+            setStartCountdown(10);
+            setStartTime(now + 10000);
+            
             setTestDuration(durationSec);
             setRemainingTime(durationSec);
             setViolationCount(0);
@@ -1283,6 +1376,54 @@ const CodingAssessmentPage = () => {
 
     // Active state selectors
     const currentQuestion = questions[activeQuestionIndex];
+
+    // ==========================================
+    // RENDER: FULLSCREEN COUNTDOWN SCREEN
+    // ==========================================
+    if (startCountdown !== null) {
+        return (
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'radial-gradient(circle at center, #0f172a, #020617)',
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 99999,
+                fontFamily: "'Inter', sans-serif"
+            }}>
+                <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
+                    <div className="learn-spinner" style={{ width: '60px', height: '60px', borderTopColor: '#10b981', margin: '0 auto 24px' }}></div>
+                    <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: '#10b981', letterSpacing: '-0.02em' }}>
+                        Preparing Secure Environment...
+                    </h2>
+                    <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
+                        Setting up coding workspace, proctoring engine, and loading assessment questions.
+                    </p>
+                    <div style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '16px',
+                        padding: '24px 32px',
+                        display: 'inline-block',
+                        boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
+                    }}>
+                        <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '8px', fontWeight: '700' }}>
+                            Assessment Starts In
+                        </div>
+                        <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'white', fontFamily: 'monospace', lineHeight: '1' }}>
+                            {startCountdown}s
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     // ==========================================
     // RENDER: LIST VIEW

@@ -10,6 +10,7 @@ import TrackingService from './services/trackingService';
 import timeService from './services/timeService';
 import PracticeSandbox from "./components/PracticeSandbox";
 import MultiSectionAssessment from "./components/MultiSectionAssessment";
+import { logPortalActivityTime } from './services/codingProgressService';
 
 import desktopBridge from './utils/desktopBridge';
 
@@ -89,6 +90,46 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+const PortalActivityTracker = () => {
+  const { useLocation } = require('react-router-dom');
+  const location = useLocation();
+
+  useEffect(() => {
+    const authRaw = localStorage.getItem("auth_data");
+    if (!authRaw) return;
+    let authUser;
+    try {
+      authUser = JSON.parse(authRaw);
+    } catch (_) {
+      return;
+    }
+    const email = authUser?.Email || authUser?.email;
+    if (!email) return;
+
+    const path = location.pathname;
+    const isAssessment = 
+      (path.startsWith('/student/coding/') && path !== '/student/coding') ||
+      path.startsWith('/student/assessment/multisection/') ||
+      (path.startsWith('/student/mcq/') && path !== '/student/mcq');
+
+    if (isAssessment) {
+      return;
+    }
+
+    logPortalActivityTime(email, 1).catch(err => console.warn('Activity tracking failed:', err));
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        logPortalActivityTime(email, 1).catch(err => console.warn('Activity tracking failed:', err));
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [location.pathname]);
+
+  return null;
+};
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -240,6 +281,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <PortalActivityTracker />
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/home" element={<Navigate to="/login" replace />} />

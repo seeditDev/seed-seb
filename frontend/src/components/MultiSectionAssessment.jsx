@@ -69,6 +69,8 @@ const MultiSectionAssessment = () => {
   const [secStarted, setSecStarted] = useState(false);
   const [secTimer, setSecTimer] = useState(0); // remaining seconds for current section
   const [secCompleted, setSecCompleted] = useState({}); // { [secId]: boolean }
+  const [sectionCountdown, setSectionCountdown] = useState(null); // null or number (seconds)
+  const [countdownSecIdx, setCountdownSecIdx] = useState(-1);
 
   // Question Answer states
   const [sectionData, setSectionData] = useState({}); // { [secId]: testJSON }
@@ -159,12 +161,30 @@ const MultiSectionAssessment = () => {
     return () => clearInterval(timerRef.current);
   }, [secStarted, currentSecIdx, secTimer]);
 
+  // Section Countdown Timer Effect
+  useEffect(() => {
+    if (sectionCountdown === null) return;
+    if (sectionCountdown <= 0) {
+      // Start the section now!
+      const idx = countdownSecIdx;
+      setCurrentSecIdx(idx);
+      setSecStarted(true);
+      setCurrentQIdx(0);
+      const section = assessment.sections[idx];
+      setSecTimer((section.duration_minutes || 30) * 60);
+      setSectionCountdown(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSectionCountdown(prev => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [sectionCountdown, countdownSecIdx]);
+
+
   const handleStartSection = (idx) => {
-    setCurrentSecIdx(idx);
-    setSecStarted(true);
-    setCurrentQIdx(0);
-    const section = assessment.sections[idx];
-    setSecTimer((section.duration_minutes || 30) * 60);
+    setCountdownSecIdx(idx);
+    setSectionCountdown(10);
   };
 
   const autoSubmitSection = () => {
@@ -175,7 +195,7 @@ const MultiSectionAssessment = () => {
     // Find next uncompleted section
     const nextIdx = currentSecIdx + 1;
     if (nextIdx < assessment.sections.length) {
-      setCurrentSecIdx(nextIdx);
+      handleStartSection(nextIdx);
     } else {
       // Completed all sections! Submit final exam
       handleSubmitAssessment();
@@ -212,6 +232,54 @@ const MultiSectionAssessment = () => {
   const activeSection = currentSecIdx >= 0 ? assessment.sections[currentSecIdx] : null;
   const activeSecData = activeSection ? sectionData[activeSection.sectionId] : null;
   const questionsList = activeSecData?.questions || [];
+
+  if (sectionCountdown !== null) {
+    const targetSection = assessment?.sections[countdownSecIdx];
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'radial-gradient(circle at center, #0f172a, #020617)',
+        color: 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
+          <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: '#10b981', margin: '0 auto 24px' }}></div>
+          <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: '#10b981', letterSpacing: '-0.02em' }}>
+            Preparing Section Workspace...
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
+            Entering Section: <strong style={{ color: 'white' }}>{targetSection?.name}</strong>.
+            <br />
+            Loading test cases and preparing sandbox environments.
+          </p>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
+            padding: '24px 32px',
+            display: 'inline-block',
+            boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '8px', fontWeight: '700' }}>
+              Section Starts In
+            </div>
+            <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'white', fontFamily: 'monospace', lineHeight: '1' }}>
+              {sectionCountdown}s
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="msa-root">
