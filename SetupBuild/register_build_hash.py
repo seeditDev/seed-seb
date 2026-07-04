@@ -8,12 +8,19 @@ the integrity check on student laptops.
 Usage:
     python register_build_hash.py
 
-Requirements:
-    pip install requests
+Setup (one-time):
+    1. Create a file called  SetupBuild/.env  (it is already in .gitignore)
+    2. Add this line to it:
+           SUPABASE_SERVICE_KEY=your_service_role_key_here
+    3. Get the key from:
+       https://supabase.com/dashboard/project/iygqntndsgiysvibqjyw/settings/api
+       -> Project API keys -> service_role (secret)
 
-You will need your Supabase SERVICE ROLE key (not the anon key).
-Get it from: https://supabase.com/dashboard/project/iygqntndsgiysvibqjyw/settings/api
-             -> Project API keys -> service_role (secret)
+Alternatively set it as an OS environment variable before running:
+    set SUPABASE_SERVICE_KEY=your_key   (Windows CMD)
+
+Requirements:
+    pip install requests python-dotenv
 """
 
 import hashlib
@@ -28,12 +35,27 @@ except ImportError:
     os.system(f"{sys.executable} -m pip install requests")
     import requests
 
+# Load .env file from the same directory as this script (SetupBuild/.env)
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    os.system(f"{sys.executable} -m pip install python-dotenv")
+    from dotenv import load_dotenv
+
+_env_file = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(_env_file):
+    load_dotenv(_env_file)
+    print(f"[info] Loaded secrets from {_env_file}")
+else:
+    print(f"[info] No .env file found at {_env_file} — using OS environment variables.")
+
 # ── Configuration ─────────────────────────────────────────────────────────────
 
 SUPABASE_URL = "https://iygqntndsgiysvibqjyw.supabase.co"
 
-# PASTE YOUR SERVICE ROLE KEY HERE (keep this script private, never commit the key)
-SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5Z3FudG5kc2dpeXN2aWJxanl3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTg5OTI5OSwiZXhwIjoyMDk3NDc1Mjk5fQ.qTdE3JKxsmJbdXlbiHVsMBty2W1H5viBs9YpLYsoCcI"  # <-- paste here, or set env var SUPABASE_SERVICE_KEY
+# Key is loaded from SetupBuild/.env or the OS environment variable SUPABASE_SERVICE_KEY
+# Do NOT hardcode the key here — it will be committed to git.
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 
 APP_VERSION = "1.0.4"  # must match CURRENT_VERSION in main.py
 
