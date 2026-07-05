@@ -35,6 +35,63 @@ const slugify = (value = '') => {
     .replace(/^-+|-+$/g, '') || 'test';
 };
 
+const STRUCTURED_SHEETS = [
+  {
+    id: 'a2z',
+    title: "Striver's A2Z DSA Sheet",
+    tag: "DSA Sheets",
+    desc: "Master Data Structures & Algorithms step-by-step from basics to advanced topics.",
+    borderColor: "#E76A40",
+    buttonType: "track",
+    categories: ['Arrays', 'Strings', 'Sorting', 'Searching', 'Recursion', 'Linked List', 'Stack', 'Queue', 'Greedy', 'Trees', 'Graphs', 'Dynamic Programming', 'Bit Manipulation']
+  },
+  {
+    id: 'sde',
+    title: "Striver's SDE Sheet",
+    tag: "Interview Prep",
+    desc: "Curated list of top coding interview questions frequently asked in product-based companies.",
+    borderColor: "#E5A48B",
+    buttonType: "track",
+    categories: ['Arrays', 'Strings', 'Linked List', 'Trees', 'Graphs', 'Dynamic Programming']
+  },
+  {
+    id: 'blind75',
+    title: "Blind 75 Sheet",
+    tag: "LeetCode Prep",
+    desc: "The 75 most essential LeetCode questions to prepare for coding interviews efficiently.",
+    borderColor: "#A99CE3",
+    buttonType: "track",
+    categories: ['Arrays', 'Strings', 'Linked List', 'Trees', 'Graphs', 'Dynamic Programming', 'Stack']
+  },
+  {
+    id: 'sysdesign',
+    title: "System Design Roadmap",
+    tag: "System Design",
+    desc: "Complete roadmap to master High-Level (HLD) and Low-Level Design (LLD) with video tutorials.",
+    borderColor: "#8FD0B3",
+    buttonType: "link",
+    link: "https://takeuforward.org/system-design/complete-system-design-roadmap-with-videos-for-sdes/"
+  },
+  {
+    id: 'cp',
+    title: "Competitive Programming Track",
+    tag: "Competitive Programming",
+    desc: "Level up your Competitive Programming logic with curated sheets and Codeforces contests.",
+    borderColor: "#ef4444",
+    buttonType: "link",
+    link: "https://takeuforward.org/interview-experience/strivers-cp-sheet/"
+  },
+  {
+    id: 'cs-core',
+    title: "Core CS Subjects Sheet",
+    tag: "Core CS",
+    desc: "Prepare for Core CSE interview questions on Operating Systems, DBMS, and Computer Networks.",
+    borderColor: "#06b6d4",
+    buttonType: "link",
+    link: "https://takeuforward.org/operating-system/most-asked-operating-system-interview-questions"
+  }
+];
+
 const PracticeHome = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('paths'); // 'paths' or 'bank'
@@ -63,6 +120,10 @@ const PracticeHome = () => {
   const [selectedModule, setSelectedModule] = useState(null);
   const [contestQuestions, setContestQuestions] = useState([]);
   const [contestLoading, setContestLoading] = useState(false);
+
+  // Structured learning sheets states
+  const [selectedSheet, setSelectedSheet] = useState(null);
+  const [expandedTopics, setExpandedTopics] = useState({});
 
   useEffect(() => {
     const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
@@ -197,6 +258,346 @@ const PracticeHome = () => {
     }
   };
 
+  const handleSheetCardClick = (sheet) => {
+    if (sheet.buttonType === 'link') {
+      window.open(sheet.link, '_blank');
+    } else {
+      setSelectedSheet(sheet.id);
+      setExpandedTopics({});
+    }
+  };
+
+  const renderSheetsTab = () => {
+    if (selectedSheet) {
+      const sheet = STRUCTURED_SHEETS.find(s => s.id === selectedSheet);
+      if (!sheet) return null;
+
+      const sheetTopics = sheet.topics || [];
+      
+      let totalSheetQuestions = 0;
+      let solvedSheetQuestions = 0;
+
+      const topicsData = sheetTopics.map(topic => {
+        let qs = questions.filter(q => q.category === topic.category);
+        if (sheet.id === 'blind75') qs = qs.slice(0, 8);
+        else if (sheet.id === 'sde') qs = qs.slice(0, 15);
+        else if (sheet.id === 'sysdesign') qs = qs.slice(0, 12);
+        else if (sheet.id === 'cs-core') qs = qs.slice(0, 15);
+        else if (sheet.id === 'cp') qs = qs.slice(0, 20);
+        else qs = qs.slice(0, 35); // a2z
+
+        const solvedCount = qs.filter(q => solvedIds.includes(q.questionId)).length;
+        totalSheetQuestions += qs.length;
+        solvedSheetQuestions += solvedCount;
+
+        return { topicName: topic.name, category: topic.category, questions: qs, solvedCount };
+      });
+
+      const completionPct = totalSheetQuestions > 0 ? Math.round((solvedSheetQuestions / totalSheetQuestions) * 100) : 0;
+
+      return (
+        <div className="ps-sheet-detail" style={{ maxWidth: '1000px', margin: '20px auto', padding: '0 20px' }}>
+          <button 
+            onClick={() => setSelectedSheet(null)}
+            className="ph-topbar-btn"
+            style={{ 
+              borderRadius: '8px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              marginBottom: '20px', 
+              background: 'rgba(255,255,255,0.04)', 
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'var(--ph-text)'
+            }}
+          >
+            <FaChevronLeft /> Back to Sheets
+          </button>
+
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '2fr 1fr', 
+            gap: '24px', 
+            background: 'var(--ph-surface)', 
+            border: '1px solid var(--ph-border)', 
+            borderRadius: '16px', 
+            padding: '24px',
+            marginBottom: '30px'
+          }}>
+            <div>
+              <span style={{ 
+                background: `${sheet.borderColor}15`, 
+                color: sheet.borderColor, 
+                fontSize: '11px', 
+                fontWeight: 'bold', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.05em',
+                padding: '4px 10px',
+                borderRadius: '4px',
+                display: 'inline-block',
+                marginBottom: '10px'
+              }}>{sheet.tag}</span>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{sheet.title}</h2>
+              <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>{sheet.desc}</p>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
+              <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
+                  <circle 
+                    cx="50" 
+                    cy="50" 
+                    r="40" 
+                    stroke={sheet.borderColor} 
+                    strokeWidth="8" 
+                    fill="transparent" 
+                    strokeDasharray={251.2}
+                    strokeDashoffset={251.2 - (251.2 * completionPct) / 100}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                  />
+                </svg>
+                <div style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: 'var(--ph-text)' }}>
+                  {completionPct}%
+                </div>
+              </div>
+              <div style={{ color: 'var(--ph-text-dim)', fontSize: '12px', marginTop: '10px', fontWeight: '600' }}>
+                {solvedSheetQuestions}/{totalSheetQuestions} Solved
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '40px' }}>
+            {topicsData.map((topic, index) => {
+              const isOpen = !!expandedTopics[topic.topicName];
+              const pct = topic.questions.length > 0 ? Math.round((topic.solvedCount / topic.questions.length) * 100) : 0;
+              
+              return (
+                <div 
+                  key={topic.topicName} 
+                  style={{ 
+                    background: 'var(--ph-surface)', 
+                    border: '1px solid var(--ph-border)', 
+                    borderRadius: '12px', 
+                    overflow: 'hidden' 
+                  }}
+                >
+                  <div 
+                    onClick={() => setExpandedTopics(prev => ({ ...prev, [topic.topicName]: !prev[topic.topicName] }))}
+                    style={{ 
+                      padding: '16px 20px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.01)',
+                      borderBottom: isOpen ? '1px solid var(--ph-border)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '18px', color: sheet.borderColor }}>
+                        {isOpen ? '📂' : '📁'}
+                      </span>
+                      <strong style={{ fontSize: '15px', color: 'var(--ph-text)' }}>
+                        {topic.topicName}
+                      </strong>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: sheet.borderColor, borderRadius: '3px' }} />
+                        </div>
+                        <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', minWidth: '45px', textAlign: 'right' }}>
+                          {topic.solvedCount}/{topic.questions.length}
+                        </span>
+                      </div>
+                      <span style={{ color: 'var(--ph-text-dim)' }}>
+                        {isOpen ? <FaAngleDown /> : <FaAngleRight />}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isOpen && (
+                    <div style={{ padding: '0px' }}>
+                      <table className="ph-problems-table" style={{ margin: 0, border: 'none', background: 'transparent' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(0,0,0,0.12)' }}>
+                            <th className="ph-col-status" style={{ width: '40px', paddingLeft: '20px' }}>Status</th>
+                            <th className="ph-col-num" style={{ width: '50px' }}>#</th>
+                            <th className="ph-col-title">Question</th>
+                            <th className="ph-col-diff" style={{ width: '100px' }}>Difficulty</th>
+                            <th className="ph-col-score" style={{ width: '100px', textAlign: 'right', paddingRight: '20px' }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {topic.questions.map((q, idx) => {
+                            const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, !!q.isPremium, user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || !!user?.isPremium);
+                            
+                            let statusIcon = STATUS_ICONS.UNSOLVED;
+                            if (status === 'SOLVED') statusIcon = STATUS_ICONS.SOLVED;
+                            else if (status === 'ATTEMPTED') statusIcon = STATUS_ICONS.ATTEMPTED;
+                            else if (status === 'LOCKED') statusIcon = STATUS_ICONS.LOCKED;
+
+                            const diffClass = q.difficulty?.toLowerCase() || 'easy';
+
+                            return (
+                              <tr 
+                                key={q.questionId}
+                                className={`ph-problem-row ${status === 'LOCKED' ? 'locked' : ''}`}
+                                style={{ background: 'rgba(255,255,255,0.005)' }}
+                              >
+                                <td className="ph-col-status" style={{ paddingLeft: '20px', fontSize: '14px' }}>
+                                  <span className="ph-status-icon">{statusIcon}</span>
+                                </td>
+                                <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{idx + 1}</td>
+                                <td className="ph-col-title">
+                                  <span className="ph-problem-title-text" style={{ fontWeight: '500' }}>{q.title}</span>
+                                  {q.isPremium && <span className="ph-premium-badge" style={{ marginLeft: '6px' }}>⭐</span>}
+                                </td>
+                                <td className="ph-col-diff">
+                                  <span className={`ph-diff-tag ${diffClass}`}>{q.difficulty || 'Easy'}</span>
+                                </td>
+                                <td className="ph-col-score" style={{ textAlign: 'right', paddingRight: '20px' }}>
+                                  <button
+                                    onClick={() => {
+                                      if (status === 'LOCKED') {
+                                        setShowPremiumModal(true);
+                                      } else {
+                                        navigate(`/student/practice/solve/${q.questionId}`);
+                                      }
+                                    }}
+                                    style={{
+                                      background: status === 'SOLVED' ? 'rgba(74,222,128,0.1)' : 'var(--ph-primary-light)',
+                                      border: '1px solid rgba(124,107,255,0.3)',
+                                      borderRadius: '6px',
+                                      color: status === 'SOLVED' ? '#4ade80' : 'var(--ph-primary)',
+                                      fontSize: '11px',
+                                      fontWeight: 'bold',
+                                      padding: '4px 12px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    {status === 'SOLVED' ? 'Re-Solve' : 'Solve'}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="ph-section" style={{ maxWidth: '1000px', margin: '30px auto', padding: '0 20px' }}>
+        <div className="ph-hero" style={{ padding: '20px 0' }}>
+          <div className="ph-hero-tag"><span>🔥</span> Structured Sheets</div>
+          <h1 className="ph-hero-title">Structured <span>Learning Paths</span></h1>
+          <p className="ph-hero-sub">Master DSA, system design, and competitive coding with curated worksheets.</p>
+        </div>
+
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+          gap: '20px', 
+          marginTop: '10px' 
+        }}>
+          {STRUCTURED_SHEETS.map(sheet => {
+            let totalQs = 0;
+            let solvedQs = 0;
+            if (sheet.topics) {
+              sheet.topics.forEach(topic => {
+                let qs = questions.filter(q => q.category === topic.category);
+                if (sheet.id === 'blind75') qs = qs.slice(0, 8);
+                else if (sheet.id === 'sde') qs = qs.slice(0, 15);
+                else if (sheet.id === 'sysdesign') qs = qs.slice(0, 12);
+                else if (sheet.id === 'cs-core') qs = qs.slice(0, 15);
+                else if (sheet.id === 'cp') qs = qs.slice(0, 20);
+                else qs = qs.slice(0, 35); // a2z
+
+                totalQs += qs.length;
+                solvedQs += qs.filter(q => solvedIds.includes(q.questionId)).length;
+              });
+            }
+
+            return (
+              <div 
+                key={sheet.id}
+                onClick={() => handleSheetCardClick(sheet)}
+                className="q-list-row-hover"
+                style={{
+                  background: 'var(--ph-surface)',
+                  border: '1px solid var(--ph-border)',
+                  borderLeft: `4px solid ${sheet.borderColor}`,
+                  borderRadius: '12px',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '14px',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  position: 'relative'
+                }}
+              >
+                <div>
+                  <span style={{ 
+                    fontSize: '10px', 
+                    fontWeight: 'bold', 
+                    color: sheet.borderColor, 
+                    background: `${sheet.borderColor}15`, 
+                    padding: '3px 8px', 
+                    borderRadius: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>{sheet.tag}</span>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '10px 0 6px 0' }}>{sheet.title}</h3>
+                  <p style={{ fontSize: '13px', color: 'var(--ph-text-dim)', margin: 0, lineHeight: '1.5' }}>{sheet.desc}</p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--ph-border)', paddingTop: '12px', marginTop: '6px' }}>
+                  {sheet.buttonType === 'track' ? (
+                    <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', fontWeight: '600' }}>
+                      📈 {solvedQs}/{totalQs} Solved
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', fontWeight: '600' }}>
+                      🌐 External Tutorial
+                    </span>
+                  )}
+                  
+                  <button
+                    style={{
+                      background: sheet.buttonType === 'link' ? 'rgba(255,255,255,0.03)' : `${sheet.borderColor}15`,
+                      border: `1px solid ${sheet.buttonType === 'link' ? 'var(--ph-border)' : `${sheet.borderColor}30`}`,
+                      color: sheet.buttonType === 'link' ? 'var(--ph-text)' : sheet.borderColor,
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {sheet.buttonType === 'link' ? 'Open Link ↗' : 'Start Sheet ›'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const isPremiumUser = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium;
 
   const handleQuestionClick = (q, status) => {
@@ -274,17 +675,24 @@ const PracticeHome = () => {
         <div className="ph-topbar-nav" style={{ width: '100%', justifyContent: 'flex-start' }}>
           <button 
             className={`ph-topbar-btn ${activeTab === 'paths' && !selectedModule ? 'active' : ''}`}
-            onClick={() => { setSelectedModule(null); setActiveTab('paths'); }}
+            onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('paths'); }}
             style={{ borderRadius: '8px' }}
           >
-            📂 Structured Paths
+            📂 College Curriculum
+          </button>
+          <button 
+            className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
+            onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('sheets'); }}
+            style={{ borderRadius: '8px' }}
+          >
+            🔥 Structured Sheets
           </button>
           <button 
             className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
-            onClick={() => { setSelectedModule(null); setActiveTab('bank'); }}
+            onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('bank'); }}
             style={{ borderRadius: '8px' }}
           >
-            🎯 Problems
+            🎯 Practice Bank
           </button>
         </div>
       </div>
@@ -389,6 +797,8 @@ const PracticeHome = () => {
             </div>
           )}
         </div>
+      ) : activeTab === 'sheets' ? (
+        renderSheetsTab()
       ) : activeTab === 'paths' ? (
         // ─── STRUCTURED LEARNING PATHS VIEW ───
         <div className="ph-section" style={{ maxWidth: '1000px', margin: '30px auto' }}>
