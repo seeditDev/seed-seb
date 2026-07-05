@@ -1992,7 +1992,7 @@ const CodingAssessmentPage = () => {
                                     language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : language)}
                                     value={codeMap[`${currentQuestion.id}_${language}`] || ""}
                                     onChange={handleCodeChange}
-                                    theme={localStorage.getItem('portal_theme') === 'light' ? 'light' : 'vs-dark'}
+                                    theme={['light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
                                     options={{
                                         fontSize: 14,
                                         fontFamily: "'JetBrains Mono', Courier, monospace",

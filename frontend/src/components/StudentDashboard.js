@@ -1268,6 +1268,12 @@ const StudentDashboard = () => {
         name: 'Emerald Matrix (Green/Black)',
         desc: 'Retro-terminal dark design with vibrant emerald highlights.',
         preview: ['#022c22', '#064e3b', '#10b981']
+      },
+      {
+        id: 'red-light',
+        name: 'Crimson Frost (Red/White)',
+        desc: 'Clean, high-contrast light theme with rich red accents.',
+        preview: ['#fdfafb', '#ffffff', '#dc2626']
       }
     ];
 
