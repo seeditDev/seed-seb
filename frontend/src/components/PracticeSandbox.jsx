@@ -743,20 +743,20 @@ const PracticeSandbox = () => {
               )}
 
               {activeConsoleTab === 'output' && (
-                <div style={{ background: '#0a0a14', padding: '12px', borderRadius: '8px', minHeight: '80px', overflowY: 'auto' }}>
+                <div style={{ background: 'var(--ps-bg)', padding: '12px', borderRadius: '8px', minHeight: '80px', overflowY: 'auto' }}>
                   {isRunning ? (
                     <div style={{ color: 'var(--ps-text-dim)' }}>Executing sandbox environment...</div>
                   ) : sampleResults && sampleResults.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       {sampleResults.map((res) => (
                         <div key={res.index} style={{
-                          border: '1px solid rgba(255,255,255,0.08)',
+                          border: '1px solid var(--ps-border)',
                           borderRadius: '8px',
                           padding: '12px',
-                          background: 'rgba(255,255,255,0.01)'
+                          background: 'var(--ps-panel)'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <strong style={{ fontSize: '14px' }}>Sample Case {res.index}</strong>
+                            <strong style={{ fontSize: '14px', color: 'var(--ps-text)' }}>Sample Case {res.index}</strong>
                             <span style={{
                               color: res.passed ? 'var(--ps-success)' : 'var(--ps-error)',
                               fontWeight: 'bold',
@@ -768,28 +768,28 @@ const PracticeSandbox = () => {
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px' }}>
                             <div>
                               <div style={{ color: 'var(--ps-text-dim)', marginBottom: '4px' }}>Input:</div>
-                              <pre style={{ background: '#05050a', padding: '6px', borderRadius: '4px', margin: 0, fontFamily: 'var(--ps-mono)' }}>{res.input || '(empty)'}</pre>
+                              <pre style={{ background: 'var(--ps-card)', color: 'var(--ps-text)', padding: '6px', borderRadius: '4px', margin: 0, fontFamily: 'var(--ps-mono)' }}>{res.input || '(empty)'}</pre>
                             </div>
                             <div>
                               <div style={{ color: 'var(--ps-text-dim)', marginBottom: '4px' }}>Expected Output:</div>
-                              <pre style={{ background: '#05050a', padding: '6px', borderRadius: '4px', margin: 0, fontFamily: 'var(--ps-mono)' }}>{res.expected}</pre>
+                              <pre style={{ background: 'var(--ps-card)', color: 'var(--ps-text)', padding: '6px', borderRadius: '4px', margin: 0, fontFamily: 'var(--ps-mono)' }}>{res.expected}</pre>
                             </div>
                           </div>
                           <div style={{ marginTop: '8px', fontSize: '12px' }}>
                             <div style={{ color: 'var(--ps-text-dim)', marginBottom: '4px' }}>Actual Output:</div>
                             <pre style={{
-                              background: '#05050a',
+                              background: 'var(--ps-card)',
                               padding: '6px',
                               borderRadius: '4px',
                               margin: 0,
                               fontFamily: 'var(--ps-mono)',
-                              color: res.passed ? '#e2e8f0' : 'var(--ps-error)'
+                              color: res.passed ? 'var(--ps-text)' : 'var(--ps-error)'
                             }}>{res.actual || '(no output)'}</pre>
                           </div>
                           {res.stderr && (
                             <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--ps-error)' }}>
                               <strong>Error:</strong>
-                              <pre style={{ whiteSpace: 'pre-wrap', background: '#05050a', padding: '6px', borderRadius: '4px', marginTop: '4px', fontFamily: 'var(--ps-mono)' }}>{res.stderr}</pre>
+                              <pre style={{ whiteSpace: 'pre-wrap', background: 'var(--ps-card)', color: 'var(--ps-error)', padding: '6px', borderRadius: '4px', marginTop: '4px', fontFamily: 'var(--ps-mono)' }}>{res.stderr}</pre>
                             </div>
                           )}
                         </div>
@@ -803,7 +803,7 @@ const PracticeSandbox = () => {
                   ) : stdout ? (
                     <div>
                       <div style={{ color: 'var(--ps-success)', fontWeight: 'bold' }}>Exit Code: {exitCode}</div>
-                      <pre style={{ whiteSpace: 'pre-wrap', marginTop: '6px', fontFamily: 'var(--ps-mono)', color: '#e2e8f0' }}>{stdout}</pre>
+                      <pre style={{ whiteSpace: 'pre-wrap', marginTop: '6px', fontFamily: 'var(--ps-mono)', color: 'var(--ps-text)' }}>{stdout}</pre>
                     </div>
                   ) : (
                     <div style={{ color: 'var(--ps-text-dim)' }}>Click "Run Code" to compile standard inputs.</div>
