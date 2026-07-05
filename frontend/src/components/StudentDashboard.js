@@ -144,8 +144,7 @@ const StudentDashboard = () => {
     }
   }, [navigate]);
 
-  // Commented out automatic loading to save Firestore read quota
-  /*
+  // Automatically load free local storage progress on tab visit to ensure instant updates
   useEffect(() => {
     if (activeTab === "profile" && user) {
       const email = user.Email || user.email;
@@ -158,7 +157,6 @@ const StudentDashboard = () => {
       }
     }
   }, [activeTab, user]);
-  */
 
   const loadAssessments = async (userData) => {
     setLoading(true);
@@ -1116,7 +1114,29 @@ const StudentDashboard = () => {
 
             {/* Heatmap Grid Wrapper */}
             <div style={{ flex: 1, position: 'relative' }}>
-              <h4 style={{ fontSize: '15px', color: 'var(--ps-text-dim)', marginBottom: '14px', fontWeight: '600' }}>Practice portal activity tracker (last 6 months)</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <h4 style={{ fontSize: '15px', color: 'var(--ps-text-dim)', margin: 0, fontWeight: '600' }}>Practice portal activity tracker (last 6 months)</h4>
+                <button
+                  onClick={loadProfileProgress}
+                  disabled={loadingProfileProgress}
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    borderRadius: '6px',
+                    color: 'var(--ps-success)',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    padding: '4px 10px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {loadingProfileProgress ? 'Syncing...' : '🔄 Sync with Cloud'}
+                </button>
+              </div>
               
               {/* Heatmap layout */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
