@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchQuestionsIndex } from '../services/codingQuestionBankService';
-import { getSolvedQuestionIds, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus } from '../services/codingProgressService';
+import { getSolvedQuestionIds, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, saveSheetProgress } from '../services/codingProgressService';
 import DataService from '../services/dataService';
 import { 
   FaSearch, FaSync, FaLock, FaCheckCircle, FaExclamationTriangle, 
   FaHourglassHalf, FaFolder, FaFolderOpen, FaFileAlt, FaBookOpen, 
-  FaAngleRight, FaAngleDown, FaListUl, FaChevronLeft 
+  FaAngleRight, FaAngleDown, FaListUl, FaChevronLeft, FaYoutube
 } from 'react-icons/fa';
 import '../styles/PracticeHome.css';
-import { A2Z_SHEET_DATA } from '../config/a2zSheetData';
+import { CATEGORIZED_SHEETS } from '../config/sheetsData';
 
 const CATEGORIES = [
   'Arrays', 'Strings', 'Sorting', 'Searching', 'Recursion',
@@ -36,62 +36,7 @@ const slugify = (value = '') => {
     .replace(/^-+|-+$/g, '') || 'test';
 };
 
-const STRUCTURED_SHEETS = [
-  {
-    id: 'a2z',
-    title: "Striver's A2Z DSA Sheet",
-    tag: "DSA Sheets",
-    desc: "Master Data Structures & Algorithms step-by-step from basics to advanced topics.",
-    borderColor: "#E76A40",
-    buttonType: "track",
-    categories: ['Arrays', 'Strings', 'Sorting', 'Searching', 'Recursion', 'Linked List', 'Stack', 'Queue', 'Greedy', 'Trees', 'Graphs', 'Dynamic Programming', 'Bit Manipulation']
-  },
-  {
-    id: 'sde',
-    title: "Striver's SDE Sheet",
-    tag: "Interview Prep",
-    desc: "Curated list of top coding interview questions frequently asked in product-based companies.",
-    borderColor: "#E5A48B",
-    buttonType: "track",
-    categories: ['Arrays', 'Strings', 'Linked List', 'Trees', 'Graphs', 'Dynamic Programming']
-  },
-  {
-    id: 'blind75',
-    title: "Blind 75 Sheet",
-    tag: "LeetCode Prep",
-    desc: "The 75 most essential LeetCode questions to prepare for coding interviews efficiently.",
-    borderColor: "#A99CE3",
-    buttonType: "track",
-    categories: ['Arrays', 'Strings', 'Linked List', 'Trees', 'Graphs', 'Dynamic Programming', 'Stack']
-  },
-  {
-    id: 'sysdesign',
-    title: "System Design Roadmap",
-    tag: "System Design",
-    desc: "Complete roadmap to master High-Level (HLD) and Low-Level Design (LLD) with video tutorials.",
-    borderColor: "#8FD0B3",
-    buttonType: "link",
-    link: "https://takeuforward.org/system-design/complete-system-design-roadmap-with-videos-for-sdes/"
-  },
-  {
-    id: 'cp',
-    title: "Competitive Programming Track",
-    tag: "Competitive Programming",
-    desc: "Level up your Competitive Programming logic with curated sheets and Codeforces contests.",
-    borderColor: "#ef4444",
-    buttonType: "link",
-    link: "https://takeuforward.org/interview-experience/strivers-cp-sheet/"
-  },
-  {
-    id: 'cs-core',
-    title: "Core CS Subjects Sheet",
-    tag: "Core CS",
-    desc: "Prepare for Core CSE interview questions on Operating Systems, DBMS, and Computer Networks.",
-    borderColor: "#06b6d4",
-    buttonType: "link",
-    link: "https://takeuforward.org/operating-system/most-asked-operating-system-interview-questions"
-  }
-];
+// Structured sheets are configured inside sheetsData.js
 
 const PracticeHome = () => {
   const navigate = useNavigate();
@@ -125,6 +70,168 @@ const PracticeHome = () => {
   // Structured learning sheets states
   const [selectedSheet, setSelectedSheet] = useState(null);
   const [expandedTopics, setExpandedTopics] = useState({});
+  const [sheetSolvedDicts, setSheetSolvedDicts] = useState({});
+  const [activeArticle, setActiveArticle] = useState(null);
+  const [activeArticleMeta, setActiveArticleMeta] = useState(null); // { problemId, sheetId }
+  const [articleLoading, setArticleLoading] = useState(false);
+
+  useEffect(() => {
+    const initialDicts = {};
+    Object.values(CATEGORIZED_SHEETS).flat().forEach(sheet => {
+      const key = sheet.id === 'a2z' ? 'seed_it_a2z_solved' : `seed_it_sheet_solved_${sheet.id}`;
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          initialDicts[sheet.id] = JSON.parse(saved);
+        } catch (e) {}
+      } else {
+        initialDicts[sheet.id] = {};
+      }
+    });
+    setSheetSolvedDicts(initialDicts);
+  }, []);
+
+  const toggleProblemSolved = async (sheetId, problemId) => {
+    const isNewSolved = !(sheetSolvedDicts[sheetId] || {})[problemId];
+
+    setSheetSolvedDicts(prev => {
+      const sheetDict = prev[sheetId] || {};
+      const updatedSheetDict = { ...sheetDict, [problemId]: isNewSolved };
+      return { ...prev, [sheetId]: updatedSheetDict };
+    });
+
+    const email = user?.Email || user?.email || '';
+    if (email) {
+      await saveSheetProgress(email, sheetId, problemId, isNewSolved);
+    } else {
+      const key = sheetId === 'a2z' ? 'seed_it_a2z_solved' : `seed_it_sheet_solved_${sheetId}`;
+      const saved = localStorage.getItem(key);
+      let dict = {};
+      if (saved) {
+        try { dict = JSON.parse(saved); } catch (e) {}
+      }
+      dict[problemId] = isNewSolved;
+      localStorage.setItem(key, JSON.stringify(dict));
+    }
+  };
+
+  const getSheetSolvedCount = (sheet) => {
+    const dict = sheetSolvedDicts[sheet.id] || {};
+    let count = 0;
+    if (sheet.id === 'a2z') {
+      sheet.sections.forEach(sec => {
+        sec.subcategories.forEach(sub => {
+          sub.problems.forEach(p => {
+            if (dict[p.id]) count++;
+          });
+        });
+      });
+    } else {
+      (sheet.sections || []).forEach(sec => {
+        (sec.problems || []).forEach(p => {
+          if (dict[p.id]) count++;
+        });
+      });
+    }
+    return count;
+  };
+
+  const getSheetTotalProblems = (sheet) => {
+    let count = 0;
+    if (sheet.id === 'a2z') {
+      sheet.sections.forEach(sec => {
+        sec.subcategories.forEach(sub => {
+          count += sub.problems.length;
+        });
+      });
+    } else {
+      (sheet.sections || []).forEach(sec => {
+        count += (sec.problems || []).length;
+      });
+    }
+    return count;
+  };
+
+  const openArticle = async (articleUrl, problemName, problemId, sheetId) => {
+    if (!articleUrl) return;
+    setActiveArticleMeta({ problemId, sheetId });
+    setArticleLoading(true);
+    let slug = articleUrl.replace(/\/$/, '').split('/').pop();
+    try {
+      const response = await fetch(`/articles/${slug}.json`);
+      if (!response.ok) {
+        throw new Error('Not found');
+      }
+      const data = await response.json();
+      setActiveArticle({
+        ...data,
+        url: articleUrl
+      });
+    } catch (err) {
+      setActiveArticle({
+        title: problemName,
+        url: articleUrl,
+        isExternal: true
+      });
+    } finally {
+      setArticleLoading(false);
+    }
+  };
+
+  const handleScroll = (e) => {
+    const target = e.target;
+    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
+      if (activeArticleMeta) {
+        const { problemId, sheetId } = activeArticleMeta;
+        const isAlreadySolved = !!(sheetSolvedDicts[sheetId] || {})[problemId] || solvedIds.includes(problemId);
+        if (!isAlreadySolved) {
+          toggleProblemSolved(sheetId, problemId);
+        }
+      }
+    }
+  };
+
+  const handleArticleContainerClick = (e) => {
+    const tabBtn = e.target.closest('.code-tab');
+    if (tabBtn) {
+      const lang = tabBtn.getAttribute('data-lang');
+      const parentTabsContainer = tabBtn.closest('.code-tabs');
+      if (parentTabsContainer) {
+        parentTabsContainer.querySelectorAll('.code-tab').forEach(btn => {
+          btn.classList.remove('dsa_article_code_active');
+        });
+        tabBtn.classList.add('dsa_article_code_active');
+
+        const codeSection = tabBtn.closest('.code-section') || tabBtn.closest('details') || tabBtn.closest('.common-drops');
+        if (codeSection) {
+          codeSection.querySelectorAll('.code-block').forEach(block => {
+            if (block.getAttribute('data-lang') === lang) {
+              block.classList.add('dsa_article_code_active');
+            } else {
+              block.classList.remove('dsa_article_code_active');
+            }
+          });
+        }
+      }
+      return;
+    }
+
+    const copyBtn = e.target.closest('.copy-btn');
+    if (copyBtn) {
+      const codeSection = copyBtn.closest('.code-section') || copyBtn.closest('details');
+      if (codeSection) {
+        const activeBlock = codeSection.querySelector('.code-block.dsa_article_code_active pre code') || codeSection.querySelector('.code-block.dsa_article_code_active pre');
+        if (activeBlock) {
+          navigator.clipboard.writeText(activeBlock.innerText || activeBlock.textContent || '');
+          const originalHTML = copyBtn.innerHTML;
+          copyBtn.innerHTML = '<span style="font-size: 11px; color: var(--ph-success); font-weight: 700; padding: 2px 4px;">Copied!</span>';
+          setTimeout(() => {
+            copyBtn.innerHTML = originalHTML;
+          }, 1500);
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
@@ -152,6 +259,9 @@ const PracticeHome = () => {
       setQuestions(indexQs);
       setSolvedIds(progress.solvedProblems || []);
       setProblemDetails(progress.problemDetails || {});
+      if (progress.sheetSolvedDicts) {
+        setSheetSolvedDicts(prev => ({ ...prev, ...progress.sheetSolvedDicts }));
+      }
 
       if (accessControl && authData) {
         const departmentAccess = accessControl?.access_control?.colleges?.[authData.College]?.[authData.Year]?.[authData.Department];
@@ -270,92 +380,91 @@ const PracticeHome = () => {
 
   const renderSheetsTab = () => {
     if (selectedSheet) {
-      const sheet = STRUCTURED_SHEETS.find(s => s.id === selectedSheet);
+      const sheet = Object.values(CATEGORIZED_SHEETS).flat().find(s => s.id === selectedSheet);
       if (!sheet) return null;
 
-      if (selectedSheet === 'a2z') {
-        let totalSheetQuestions = 0;
-        A2Z_SHEET_DATA.forEach(sec => {
-          sec.subcategories.forEach(sub => {
-            totalSheetQuestions += sub.problems.length;
-          });
-        });
+      const totalSheetQuestions = getSheetTotalProblems(sheet);
+      const solvedCount = getSheetSolvedCount(sheet);
+      const percentage = totalSheetQuestions > 0 ? Math.round((solvedCount / totalSheetQuestions) * 100) : 0;
+      const dashOffset = 251.2 - (251.2 * (solvedCount / totalSheetQuestions || 0));
 
-        return (
-          <div className="ps-sheet-detail" style={{ maxWidth: '1000px', margin: '20px auto', padding: '0 20px' }}>
-            <button 
-              onClick={() => setSelectedSheet(null)}
-              className="ph-topbar-btn"
-              style={{ 
-                borderRadius: '8px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '6px', 
-                marginBottom: '20px', 
-                background: 'rgba(255,255,255,0.04)', 
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'var(--ph-text)'
-              }}
-            >
-              <FaChevronLeft /> Back to Sheets
-            </button>
+      return (
+        <div className="ph-section ps-sheet-detail" style={{ margin: '20px auto' }}>
+          <button 
+            onClick={() => setSelectedSheet(null)}
+            className="ph-topbar-btn"
+            style={{ 
+              borderRadius: '8px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              marginBottom: '20px', 
+              background: 'rgba(255,255,255,0.04)', 
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'var(--ph-text)'
+            }}
+          >
+            <FaChevronLeft /> Back to Sheets
+          </button>
 
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '2fr 1fr', 
-              gap: '24px', 
-              background: 'var(--ph-surface)', 
-              border: '1px solid var(--ph-border)', 
-              borderRadius: '16px', 
-              padding: '24px',
-              marginBottom: '30px'
-            }}>
-              <div>
-                <span style={{ 
-                  background: `${sheet.borderColor}15`, 
-                  color: sheet.borderColor, 
-                  fontSize: '11px', 
-                  fontWeight: 'bold', 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.05em',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  display: 'inline-block',
-                  marginBottom: '10px'
-                }}>{sheet.tag}</span>
-                <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{sheet.title}</h2>
-                <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>{sheet.desc}</p>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '2fr 1fr', 
+            gap: '24px', 
+            background: 'var(--ph-surface)', 
+            border: '1px solid var(--ph-border)', 
+            borderRadius: '16px', 
+            padding: '24px',
+            marginBottom: '30px'
+          }}>
+            <div>
+              <span style={{ 
+                background: `${sheet.borderColor}15`, 
+                color: sheet.borderColor, 
+                fontSize: '11px', 
+                fontWeight: 'bold', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.05em',
+                padding: '4px 10px',
+                borderRadius: '4px',
+                display: 'inline-block',
+                marginBottom: '10px'
+              }}>{sheet.tag}</span>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{sheet.title}</h2>
+              <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>{sheet.desc}</p>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
+              <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
+                  <circle 
+                    cx="50" 
+                    cy="50" 
+                    r="40" 
+                    stroke={sheet.borderColor} 
+                    strokeWidth="8" 
+                    fill="transparent" 
+                    strokeDasharray={251.2}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                  />
+                </svg>
+                <div style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: 'var(--ph-text)' }}>
+                  {percentage}%
+                </div>
               </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
-                <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
-                    <circle 
-                      cx="50" 
-                      cy="50" 
-                      r="40" 
-                      stroke={sheet.borderColor} 
-                      strokeWidth="8" 
-                      fill="transparent" 
-                      strokeDasharray={251.2}
-                      strokeDashoffset={251.2}
-                      strokeLinecap="round"
-                      style={{ transition: 'stroke-dashoffset 0.3s ease' }}
-                    />
-                  </svg>
-                  <div style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: 'var(--ph-text)' }}>
-                    0%
-                  </div>
-                </div>
-                <div style={{ color: 'var(--ph-text-dim)', fontSize: '12px', marginTop: '10px', fontWeight: '600' }}>
-                  0/{totalSheetQuestions} Solved
-                </div>
+              <div style={{ color: 'var(--ph-text-dim)', fontSize: '12px', marginTop: '10px', fontWeight: '600' }}>
+                {solvedCount}/{totalSheetQuestions} Solved
               </div>
             </div>
+          </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '40px' }}>
-              {A2Z_SHEET_DATA.map((section, secIdx) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '40px' }}>
+            {sheet.id === 'a2z' ? (
+              // ─── A2Z SHEET NESTED STRUCTURE (Sections -> Subcategories -> Problems) ───
+              sheet.sections.map((section, secIdx) => (
                 <div key={section.title} style={{ marginBottom: '10px' }}>
                   <h3 style={{ 
                     fontSize: '18px', 
@@ -426,43 +535,130 @@ const PracticeHome = () => {
                                     <th className="ph-col-num" style={{ width: '50px' }}>#</th>
                                     <th className="ph-col-title">Question</th>
                                     <th className="ph-col-diff" style={{ width: '100px' }}>Difficulty</th>
-                                    <th className="ph-col-score" style={{ width: '100px', textAlign: 'right', paddingRight: '20px' }}>Action</th>
+                                    <th className="ph-col-score" style={{ width: '160px', textAlign: 'right', paddingRight: '20px' }}>Action</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {sub.problems.map((p, pIdx) => {
                                     const diffClass = p.difficulty?.toLowerCase() || 'easy';
+                                    const isSolved = !!(sheetSolvedDicts['a2z'] || {})[p.id] || solvedIds.includes(p.id);
                                     return (
                                       <tr 
                                         key={p.id || pIdx}
-                                        className="ph-problem-row"
+                                        className={`ph-problem-row ${isSolved ? 'solved' : ''}`}
                                         style={{ background: 'rgba(255,255,255,0.005)' }}
                                       >
-                                        <td className="ph-col-status" style={{ paddingLeft: '20px', fontSize: '14px' }}>
-                                          <span className="ph-status-icon">{STATUS_ICONS.UNSOLVED}</span>
+                                        <td 
+                                          className="ph-col-status" 
+                                          style={{ paddingLeft: '20px', fontSize: '14px', cursor: 'pointer' }}
+                                          onClick={() => toggleProblemSolved('a2z', p.id)}
+                                        >
+                                          <span className="ph-status-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                            {isSolved ? (
+                                              <FaCheckCircle style={{ color: 'var(--ph-success)' }} />
+                                            ) : (
+                                              <span style={{ 
+                                                width: '14px', 
+                                                height: '14px', 
+                                                borderRadius: '50%', 
+                                                border: '2px solid var(--ph-text-dim)', 
+                                                display: 'inline-block',
+                                                opacity: 0.6
+                                              }} />
+                                            )}
+                                          </span>
                                         </td>
                                         <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{pIdx + 1}</td>
                                         <td className="ph-col-title">
-                                          <span className="ph-problem-title-text" style={{ fontWeight: '500' }}>{p.name}</span>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span 
+                                              className="ph-problem-title-text" 
+                                              style={{ fontWeight: '500', cursor: p.article ? 'pointer' : 'default', color: 'var(--ph-text)' }}
+                                              onClick={() => p.article && openArticle(p.article, p.name, p.id, 'a2z')}
+                                            >
+                                              {p.name}
+                                            </span>
+                                            {p.article && (
+                                              <button
+                                                onClick={() => openArticle(p.article, p.name, p.id, 'a2z')}
+                                                style={{
+                                                  background: 'none',
+                                                  border: 'none',
+                                                  color: 'var(--ph-primary)',
+                                                  cursor: 'pointer',
+                                                  padding: '2px',
+                                                  fontSize: '13px',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  opacity: 0.8,
+                                                  transition: 'opacity 0.2s'
+                                                }}
+                                                title="Read Tutorial"
+                                                className="ph-article-btn"
+                                              >
+                                                <FaBookOpen />
+                                              </button>
+                                            )}
+                                            {p.youtube && (
+                                              <a
+                                                href={p.youtube}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{
+                                                  color: '#ef4444',
+                                                  fontSize: '14px',
+                                                  display: 'inline-flex',
+                                                  alignItems: 'center',
+                                                  opacity: 0.8,
+                                                  transition: 'opacity 0.2s'
+                                                }}
+                                                title="Watch Video Solution"
+                                              >
+                                                <FaYoutube />
+                                              </a>
+                                            )}
+                                          </div>
                                         </td>
                                         <td className="ph-col-diff">
                                           <span className={`ph-diff-tag ${diffClass}`}>{p.difficulty || 'Easy'}</span>
                                         </td>
                                         <td className="ph-col-score" style={{ textAlign: 'right', paddingRight: '20px' }}>
-                                          <button
-                                            style={{
-                                              background: 'var(--ph-primary-light)',
-                                              border: '1px solid rgba(124,107,255,0.3)',
-                                              borderRadius: '6px',
-                                              color: 'var(--ph-primary)',
-                                              fontSize: '11px',
-                                              fontWeight: 'bold',
-                                              padding: '4px 12px',
-                                              cursor: 'pointer'
-                                            }}
-                                          >
-                                            Solve
-                                          </button>
+                                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                            {p.id && (
+                                              <button
+                                                onClick={() => navigate(`/student/practice/solve/${p.id}`, { state: { scoringType: 'PARTIAL_SCORE' } })}
+                                                style={{
+                                                  background: 'var(--ph-primary)',
+                                                  border: '1px solid rgba(124,107,255,0.4)',
+                                                  borderRadius: '6px',
+                                                  color: 'white',
+                                                  fontSize: '11px',
+                                                  fontWeight: 'bold',
+                                                  padding: '4px 12px',
+                                                  cursor: 'pointer',
+                                                  transition: 'all 0.2s'
+                                                }}
+                                              >
+                                                Code
+                                              </button>
+                                            )}
+                                            <button
+                                              onClick={() => toggleProblemSolved('a2z', p.id)}
+                                              style={{
+                                                background: isSolved ? 'rgba(74,222,128,0.1)' : 'var(--ph-primary-light)',
+                                                border: isSolved ? '1px solid rgba(74,222,128,0.3)' : '1px solid rgba(124,107,255,0.3)',
+                                                borderRadius: '6px',
+                                                color: isSolved ? 'var(--ph-success)' : 'var(--ph-primary)',
+                                                fontSize: '11px',
+                                                fontWeight: 'bold',
+                                                padding: '4px 12px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                              }}
+                                            >
+                                              {isSolved ? 'Solved' : 'Solve'}
+                                            </button>
+                                          </div>
                                         </td>
                                       </tr>
                                     );
@@ -476,340 +672,294 @@ const PracticeHome = () => {
                     })}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        );
-      }
+              ))
+            ) : (
+              // ─── NON-A2Z SHEET FLAT STRUCTURE (Sections -> Problems) ───
+              sheet.sections.map((section, secIdx) => {
+                const accordionKey = `${sheet.id}-${section.title}`;
+                const isOpen = !!expandedTopics[accordionKey];
+                const solvedSecCount = section.problems.filter(p => (sheetSolvedDicts[sheet.id] || {})[p.id]).length;
+                const pct = section.problems.length > 0 ? Math.round((solvedSecCount / section.problems.length) * 100) : 0;
 
-      const sheetTopics = sheet.topics || [];
-      
-      let totalSheetQuestions = 0;
-      let solvedSheetQuestions = 0;
-
-      const topicsData = sheetTopics.map(topic => {
-        let qs = questions.filter(q => q.category === topic.category);
-        if (sheet.id === 'blind75') qs = qs.slice(0, 8);
-        else if (sheet.id === 'sde') qs = qs.slice(0, 15);
-        else if (sheet.id === 'sysdesign') qs = qs.slice(0, 12);
-        else if (sheet.id === 'cs-core') qs = qs.slice(0, 15);
-        else if (sheet.id === 'cp') qs = qs.slice(0, 20);
-        else qs = qs.slice(0, 35); // a2z
-
-        const solvedCount = qs.filter(q => solvedIds.includes(q.questionId)).length;
-        totalSheetQuestions += qs.length;
-        solvedSheetQuestions += solvedCount;
-
-        return { topicName: topic.name, category: topic.category, questions: qs, solvedCount };
-      });
-
-      const completionPct = totalSheetQuestions > 0 ? Math.round((solvedSheetQuestions / totalSheetQuestions) * 100) : 0;
-
-      return (
-        <div className="ps-sheet-detail" style={{ maxWidth: '1000px', margin: '20px auto', padding: '0 20px' }}>
-          <button 
-            onClick={() => setSelectedSheet(null)}
-            className="ph-topbar-btn"
-            style={{ 
-              borderRadius: '8px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px', 
-              marginBottom: '20px', 
-              background: 'rgba(255,255,255,0.04)', 
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'var(--ph-text)'
-            }}
-          >
-            <FaChevronLeft /> Back to Sheets
-          </button>
-
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '2fr 1fr', 
-            gap: '24px', 
-            background: 'var(--ph-surface)', 
-            border: '1px solid var(--ph-border)', 
-            borderRadius: '16px', 
-            padding: '24px',
-            marginBottom: '30px'
-          }}>
-            <div>
-              <span style={{ 
-                background: `${sheet.borderColor}15`, 
-                color: sheet.borderColor, 
-                fontSize: '11px', 
-                fontWeight: 'bold', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.05em',
-                padding: '4px 10px',
-                borderRadius: '4px',
-                display: 'inline-block',
-                marginBottom: '10px'
-              }}>{sheet.tag}</span>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{sheet.title}</h2>
-              <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>{sheet.desc}</p>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
-              <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="40" 
-                    stroke={sheet.borderColor} 
-                    strokeWidth="8" 
-                    fill="transparent" 
-                    strokeDasharray={251.2}
-                    strokeDashoffset={251.2 - (251.2 * completionPct) / 100}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.3s ease' }}
-                  />
-                </svg>
-                <div style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: 'var(--ph-text)' }}>
-                  {completionPct}%
-                </div>
-              </div>
-              <div style={{ color: 'var(--ph-text-dim)', fontSize: '12px', marginTop: '10px', fontWeight: '600' }}>
-                {solvedSheetQuestions}/{totalSheetQuestions} Solved
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '40px' }}>
-            {topicsData.map((topic, index) => {
-              const isOpen = !!expandedTopics[topic.topicName];
-              const pct = topic.questions.length > 0 ? Math.round((topic.solvedCount / topic.questions.length) * 100) : 0;
-              
-              return (
-                <div 
-                  key={topic.topicName} 
-                  style={{ 
-                    background: 'var(--ph-surface)', 
-                    border: '1px solid var(--ph-border)', 
-                    borderRadius: '12px', 
-                    overflow: 'hidden' 
-                  }}
-                >
+                return (
                   <div 
-                    onClick={() => setExpandedTopics(prev => ({ ...prev, [topic.topicName]: !prev[topic.topicName] }))}
+                    key={section.title} 
                     style={{ 
-                      padding: '16px 20px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between', 
-                      cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.01)',
-                      borderBottom: isOpen ? '1px solid var(--ph-border)' : 'none'
+                      background: 'var(--ph-surface)', 
+                      border: '1px solid var(--ph-border)', 
+                      borderRadius: '12px', 
+                      overflow: 'hidden' 
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '18px', color: sheet.borderColor }}>
-                        {isOpen ? '📂' : '📁'}
-                      </span>
-                      <strong style={{ fontSize: '15px', color: 'var(--ph-text)' }}>
-                        {topic.topicName}
-                      </strong>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                          <div style={{ width: `${pct}%`, height: '100%', background: sheet.borderColor, borderRadius: '3px' }} />
+                    <div 
+                      onClick={() => setExpandedTopics(prev => ({ ...prev, [accordionKey]: !prev[accordionKey] }))}
+                      style={{ 
+                        padding: '16px 20px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        cursor: 'pointer',
+                        background: 'rgba(255,255,255,0.01)',
+                        borderBottom: isOpen ? '1px solid var(--ph-border)' : 'none'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '18px', color: sheet.borderColor }}>
+                          {isOpen ? '📂' : '📁'}
+                        </span>
+                        <strong style={{ fontSize: '15px', color: 'var(--ph-text)' }}>
+                          Step {secIdx + 1}: {section.title}
+                        </strong>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', background: sheet.borderColor, borderRadius: '3px' }} />
+                          </div>
+                          <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', minWidth: '45px', textAlign: 'right' }}>
+                            {solvedSecCount}/{section.problems.length}
+                          </span>
                         </div>
-                        <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', minWidth: '45px', textAlign: 'right' }}>
-                          {topic.solvedCount}/{topic.questions.length}
+                        <span style={{ color: 'var(--ph-text-dim)' }}>
+                          {isOpen ? <FaAngleDown /> : <FaAngleRight />}
                         </span>
                       </div>
-                      <span style={{ color: 'var(--ph-text-dim)' }}>
-                        {isOpen ? <FaAngleDown /> : <FaAngleRight />}
-                      </span>
                     </div>
-                  </div>
 
-                  {isOpen && (
-                    <div style={{ padding: '0px' }}>
-                      <table className="ph-problems-table" style={{ margin: 0, border: 'none', background: 'transparent' }}>
-                        <thead>
-                          <tr style={{ background: 'rgba(0,0,0,0.12)' }}>
-                            <th className="ph-col-status" style={{ width: '40px', paddingLeft: '20px' }}>Status</th>
-                            <th className="ph-col-num" style={{ width: '50px' }}>#</th>
-                            <th className="ph-col-title">Question</th>
-                            <th className="ph-col-diff" style={{ width: '100px' }}>Difficulty</th>
-                            <th className="ph-col-score" style={{ width: '100px', textAlign: 'right', paddingRight: '20px' }}>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {topic.questions.map((q, idx) => {
-                            const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, !!q.isPremium, user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || !!user?.isPremium);
-                            
-                            let statusIcon = STATUS_ICONS.UNSOLVED;
-                            if (status === 'SOLVED') statusIcon = STATUS_ICONS.SOLVED;
-                            else if (status === 'ATTEMPTED') statusIcon = STATUS_ICONS.ATTEMPTED;
-                            else if (status === 'LOCKED') statusIcon = STATUS_ICONS.LOCKED;
+                    {isOpen && (
+                      <div style={{ padding: '0px' }}>
+                        <table className="ph-problems-table" style={{ margin: 0, border: 'none', background: 'transparent' }}>
+                          <thead>
+                            <tr style={{ background: 'rgba(0,0,0,0.12)' }}>
+                              <th className="ph-col-status" style={{ width: '40px', paddingLeft: '20px' }}>Status</th>
+                              <th className="ph-col-num" style={{ width: '50px' }}>#</th>
+                              <th className="ph-col-title">Question</th>
+                              <th className="ph-col-diff" style={{ width: '100px' }}>Difficulty</th>
+                              <th className="ph-col-score" style={{ width: '160px', textAlign: 'right', paddingRight: '20px' }}>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {section.problems.map((p, pIdx) => {
+                              const isSolved = !!(sheetSolvedDicts[sheet.id] || {})[p.id] || solvedIds.includes(p.id);
+                              const diffClass = p.difficulty?.toLowerCase() || 'easy';
 
-                            const diffClass = q.difficulty?.toLowerCase() || 'easy';
-
-                            return (
-                              <tr 
-                                key={q.questionId}
-                                className={`ph-problem-row ${status === 'LOCKED' ? 'locked' : ''}`}
-                                style={{ background: 'rgba(255,255,255,0.005)' }}
-                              >
-                                <td className="ph-col-status" style={{ paddingLeft: '20px', fontSize: '14px' }}>
-                                  <span className="ph-status-icon">{statusIcon}</span>
-                                </td>
-                                <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{idx + 1}</td>
-                                <td className="ph-col-title">
-                                  <span className="ph-problem-title-text" style={{ fontWeight: '500' }}>{q.title}</span>
-                                  {q.isPremium && <span className="ph-premium-badge" style={{ marginLeft: '6px' }}>⭐</span>}
-                                </td>
-                                <td className="ph-col-diff">
-                                  <span className={`ph-diff-tag ${diffClass}`}>{q.difficulty || 'Easy'}</span>
-                                </td>
-                                <td className="ph-col-score" style={{ textAlign: 'right', paddingRight: '20px' }}>
-                                  <button
-                                    onClick={() => {
-                                      if (status === 'LOCKED') {
-                                        setShowPremiumModal(true);
-                                      } else {
-                                        navigate(`/student/practice/solve/${q.questionId}`);
-                                      }
-                                    }}
-                                    style={{
-                                      background: status === 'SOLVED' ? 'rgba(74,222,128,0.1)' : 'var(--ph-primary-light)',
-                                      border: '1px solid rgba(124,107,255,0.3)',
-                                      borderRadius: '6px',
-                                      color: status === 'SOLVED' ? '#4ade80' : 'var(--ph-primary)',
-                                      fontSize: '11px',
-                                      fontWeight: 'bold',
-                                      padding: '4px 12px',
-                                      cursor: 'pointer'
-                                    }}
+                              return (
+                                <tr 
+                                  key={p.id || pIdx}
+                                  className={`ph-problem-row ${isSolved ? 'solved' : ''}`}
+                                  style={{ background: 'rgba(255,255,255,0.005)' }}
+                                >
+                                  <td 
+                                    className="ph-col-status" 
+                                    style={{ paddingLeft: '20px', fontSize: '14px', cursor: 'pointer' }}
+                                    onClick={() => toggleProblemSolved(sheet.id, p.id)}
                                   >
-                                    {status === 'SOLVED' ? 'Re-Solve' : 'Solve'}
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                                    <span className="ph-status-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                      {isSolved ? (
+                                        <FaCheckCircle style={{ color: 'var(--ph-success)' }} />
+                                      ) : (
+                                        <span style={{ 
+                                          width: '14px', 
+                                          height: '14px', 
+                                          borderRadius: '50%', 
+                                          border: '2px solid var(--ph-text-dim)', 
+                                          display: 'inline-block',
+                                          opacity: 0.6
+                                        }} />
+                                      )}
+                                    </span>
+                                  </td>
+                                  <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{pIdx + 1}</td>
+                                  <td className="ph-col-title">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                      <span 
+                                        className="ph-problem-title-text" 
+                                        style={{ fontWeight: '500', cursor: p.article ? 'pointer' : 'default', color: 'var(--ph-text)' }}
+                                        onClick={() => p.article && openArticle(p.article, p.name, p.id, sheet.id)}
+                                      >
+                                        {p.name}
+                                      </span>
+                                      {p.article && (
+                                        <button
+                                          onClick={() => openArticle(p.article, p.name, p.id, sheet.id)}
+                                          style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--ph-primary)',
+                                            cursor: 'pointer',
+                                            padding: '2px',
+                                            fontSize: '13px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            opacity: 0.8,
+                                            transition: 'opacity 0.2s'
+                                          }}
+                                          title="Read Tutorial"
+                                          className="ph-article-btn"
+                                        >
+                                          <FaBookOpen />
+                                        </button>
+                                      )}
+                                      {p.youtube && (
+                                        <a
+                                          href={p.youtube}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          style={{
+                                            color: '#ef4444',
+                                            fontSize: '14px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            opacity: 0.8,
+                                            transition: 'opacity 0.2s'
+                                          }}
+                                          title="Watch Video Solution"
+                                        >
+                                          <FaYoutube />
+                                        </a>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="ph-col-diff">
+                                    <span className={`ph-diff-tag ${diffClass}`}>{p.difficulty || 'Easy'}</span>
+                                  </td>
+                                  <td className="ph-col-score" style={{ textAlign: 'right', paddingRight: '20px' }}>
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                      {p.id && (
+                                        <button
+                                          onClick={() => navigate(`/student/practice/solve/${p.id}`, { state: { scoringType: 'PARTIAL_SCORE' } })}
+                                          style={{
+                                            background: 'var(--ph-primary)',
+                                            border: '1px solid rgba(124,107,255,0.4)',
+                                            borderRadius: '6px',
+                                            color: 'white',
+                                            fontSize: '11px',
+                                            fontWeight: 'bold',
+                                            padding: '4px 12px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                          }}
+                                        >
+                                          Code
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => toggleProblemSolved(sheet.id, p.id)}
+                                        style={{
+                                          background: isSolved ? 'rgba(74,222,128,0.1)' : 'var(--ph-primary-light)',
+                                          border: isSolved ? '1px solid rgba(74,222,128,0.3)' : '1px solid rgba(124,107,255,0.3)',
+                                          borderRadius: '6px',
+                                          color: isSolved ? 'var(--ph-success)' : 'var(--ph-primary)',
+                                          fontSize: '11px',
+                                          fontWeight: 'bold',
+                                          padding: '4px 12px',
+                                          cursor: 'pointer',
+                                          transition: 'all 0.2s'
+                                        }}
+                                      >
+                                        {isSolved ? 'Solved' : 'Solve'}
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       );
     }
 
     return (
-      <div className="ph-section" style={{ maxWidth: '1000px', margin: '30px auto', padding: '0 20px' }}>
+      <div className="ph-section" style={{ margin: '30px auto' }}>
         <div className="ph-hero" style={{ padding: '20px 0' }}>
           <div className="ph-hero-tag"><span>🔥</span> Structured Sheets</div>
           <h1 className="ph-hero-title">Structured <span>Learning Paths</span></h1>
           <p className="ph-hero-sub">Master DSA, system design, and competitive coding with curated worksheets.</p>
         </div>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-          gap: '20px', 
-          marginTop: '10px' 
-        }}>
-          {STRUCTURED_SHEETS.map(sheet => {
-            let totalQs = 0;
-            let solvedQs = 0;
-            if (sheet.id === 'a2z') {
-              A2Z_SHEET_DATA.forEach(sec => {
-                sec.subcategories.forEach(sub => {
-                  totalQs += sub.problems.length;
-                });
-              });
-              solvedQs = 0;
-            } else if (sheet.topics) {
-              sheet.topics.forEach(topic => {
-                let qs = questions.filter(q => q.category === topic.category);
-                if (sheet.id === 'blind75') qs = qs.slice(0, 8);
-                else if (sheet.id === 'sde') qs = qs.slice(0, 15);
-                else if (sheet.id === 'sysdesign') qs = qs.slice(0, 12);
-                else if (sheet.id === 'cs-core') qs = qs.slice(0, 15);
-                else if (sheet.id === 'cp') qs = qs.slice(0, 20);
-                else qs = qs.slice(0, 35);
+        <div className="ps-categories-container" style={{ marginTop: '20px' }}>
+          {Object.entries(CATEGORIZED_SHEETS).map(([categoryName, sheets]) => (
+            <div key={categoryName} className="ps-category-group">
+              <h2 className="ps-category-header">
+                {categoryName === "DSA Sheets" && <span>🔥</span>}
+                {categoryName === "Core Cs Subjects" && <span>💻</span>}
+                {categoryName === "System Design" && <span>⚙️</span>}
+                {categoryName === "DSA Playlist" && <span>📚</span>}
+                {categoryName === "Competitive Programming" && <span>🏆</span>}
+                {categoryName}
+              </h2>
+              
+              <div className="ps-cards-grid">
+                {sheets.map(sheet => {
+                  const totalQs = getSheetTotalProblems(sheet);
+                  const solvedQs = getSheetSolvedCount(sheet);
+                  const style = { 
+                    '--theme-border-color': sheet.borderColor, 
+                    '--theme-border-color-15': `${sheet.borderColor}15`, 
+                    '--theme-border-color-25': `${sheet.borderColor}25`, 
+                    '--theme-border-color-30': `${sheet.borderColor}30`, 
+                    '--theme-border-color-50': `${sheet.borderColor}50` 
+                  };
 
-                totalQs += qs.length;
-                solvedQs += qs.filter(q => solvedIds.includes(q.questionId)).length;
-              });
-            }
+                  return (
+                    <div 
+                      key={sheet.id}
+                      className="ps-sheet-card"
+                      style={style}
+                    >
+                      <div>
+                        <h3 className="ps-card-title">{sheet.title}</h3>
+                        <p className="ps-card-desc">{sheet.desc}</p>
+                      </div>
 
-            return (
-              <div 
-                key={sheet.id}
-                onClick={() => handleSheetCardClick(sheet)}
-                className="q-list-row-hover"
-                style={{
-                  background: 'var(--ph-surface)',
-                  border: '1px solid var(--ph-border)',
-                  borderLeft: `4px solid ${sheet.borderColor}`,
-                  borderRadius: '12px',
-                  padding: '20px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '14px',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  position: 'relative'
-                }}
-              >
-                <div>
-                  <span style={{ 
-                    fontSize: '10px', 
-                    fontWeight: 'bold', 
-                    color: sheet.borderColor, 
-                    background: `${sheet.borderColor}15`, 
-                    padding: '3px 8px', 
-                    borderRadius: '4px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
-                  }}>{sheet.tag}</span>
-                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '10px 0 6px 0' }}>{sheet.title}</h3>
-                  <p style={{ fontSize: '13px', color: 'var(--ph-text-dim)', margin: 0, lineHeight: '1.5' }}>{sheet.desc}</p>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--ph-border)', paddingTop: '12px', marginTop: '6px' }}>
-                  {sheet.buttonType === 'track' ? (
-                    <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', fontWeight: '600' }}>
-                      📈 {solvedQs}/{totalQs} Solved
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', fontWeight: '600' }}>
-                      🌐 External Tutorial
-                    </span>
-                  )}
-                  
-                  <button
-                    style={{
-                      background: sheet.buttonType === 'link' ? 'rgba(255,255,255,0.03)' : `${sheet.borderColor}15`,
-                      border: `1px solid ${sheet.buttonType === 'link' ? 'var(--ph-border)' : `${sheet.borderColor}30`}`,
-                      color: sheet.buttonType === 'link' ? 'var(--ph-text)' : sheet.borderColor,
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      padding: '5px 12px',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {sheet.buttonType === 'link' ? 'Open Link ↗' : 'Start Sheet ›'}
-                  </button>
-                </div>
+                      <div className="ps-card-footer">
+                        <span className="ps-card-stats">
+                          📊 {solvedQs}/{totalQs} Solved
+                        </span>
+                        
+                        <div className="ps-card-actions">
+                          {sheet.id === 'a2z' || sheet.id === 'blind75' || sheet.id === 'sde' || sheet.id === 'striver79' ? (
+                            <>
+                              <button
+                                onClick={() => handleSheetCardClick(sheet)}
+                                className="ps-action-btn"
+                                style={{ padding: '6px 10px' }}
+                              >
+                                Sheet
+                              </button>
+                              <button
+                                onClick={() => handleSheetCardClick(sheet)}
+                                className="ps-action-btn primary"
+                                style={{ padding: '6px 10px' }}
+                              >
+                                Track
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => handleSheetCardClick(sheet)}
+                              className="ps-action-btn primary"
+                            >
+                              Start Learning
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -889,28 +1039,30 @@ const PracticeHome = () => {
     <div className="ph-root">
       {/* Sub navigation bar */}
       <div className="ph-topbar" style={{ background: 'transparent', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', padding: '12px 0px', marginBottom: '20px', position: 'static' }}>
-        <div className="ph-topbar-nav" style={{ width: '100%', justifyContent: 'flex-start' }}>
-          <button 
-            className={`ph-topbar-btn ${activeTab === 'paths' && !selectedModule ? 'active' : ''}`}
-            onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('paths'); }}
-            style={{ borderRadius: '8px' }}
-          >
-            📂 College Curriculum
-          </button>
-          <button 
-            className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
-            onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('sheets'); }}
-            style={{ borderRadius: '8px' }}
-          >
-            🔥 Structured Sheets
-          </button>
-          <button 
-            className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
-            onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('bank'); }}
-            style={{ borderRadius: '8px' }}
-          >
-            🎯 Practice Bank
-          </button>
+        <div className="ph-section" style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', padding: '0 32px' }}>
+          <div className="ph-topbar-nav" style={{ gap: '8px' }}>
+            <button 
+              className={`ph-topbar-btn ${activeTab === 'paths' && !selectedModule ? 'active' : ''}`}
+              onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('paths'); }}
+              style={{ borderRadius: '8px' }}
+            >
+              📂 College Curriculum
+            </button>
+            <button 
+              className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
+              onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('sheets'); }}
+              style={{ borderRadius: '8px' }}
+            >
+              🔥 Structured Sheets
+            </button>
+            <button 
+              className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
+              onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('bank'); }}
+              style={{ borderRadius: '8px' }}
+            >
+              🎯 Practice Bank
+            </button>
+          </div>
         </div>
       </div>
 
@@ -931,7 +1083,7 @@ const PracticeHome = () => {
       {/* Main Panel Content */}
       {selectedModule ? (
         // ─── CONTEST QUESTION LIST VIEW ───
-        <div className="ph-section" style={{ maxWidth: '1000px', margin: '30px auto' }}>
+        <div className="ph-section" style={{ margin: '30px auto' }}>
           <button 
             onClick={() => setSelectedModule(null)}
             style={{
@@ -1018,7 +1170,7 @@ const PracticeHome = () => {
         renderSheetsTab()
       ) : activeTab === 'paths' ? (
         // ─── STRUCTURED LEARNING PATHS VIEW ───
-        <div className="ph-section" style={{ maxWidth: '1000px', margin: '30px auto' }}>
+        <div className="ph-section" style={{ margin: '30px auto' }}>
           <div className="ph-hero" style={{ padding: '20px 0' }}>
             <div className="ph-hero-tag"><span>📂</span> Learning Paths</div>
             <h1 className="ph-hero-title">Continuous <span>Curriculum</span></h1>
@@ -1354,6 +1506,94 @@ const PracticeHome = () => {
             <button className="pcont-modal-btn secondary" onClick={() => setShowPremiumModal(false)}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+      {/* Article Reader Modal */}
+      {activeArticle && (
+        <div className="ph-modal-overlay" onClick={() => setActiveArticle(null)}>
+          <div className="ph-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="ph-article-header">
+              <div className="ph-article-title-container">
+                <h2 className="ph-article-title">{activeArticle.title}</h2>
+                <span className="ph-article-subtitle">SEED-IT Learning Platform • Course Tutorial</span>
+              </div>
+              <button className="ph-article-close" onClick={() => setActiveArticle(null)} title="Close Tutorial">
+                ✕
+              </button>
+            </div>
+            
+            <div className="ph-article-scroll" onScroll={handleScroll}>
+              {activeArticle.isExternal ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>🌐</div>
+                  <h3 style={{ border: 'none', margin: '0 0 16px 0', fontSize: '20px' }}>External Tutorial Link</h3>
+                  <p style={{ color: 'var(--ph-text-dim)', marginBottom: '24px', maxWidth: '500px', margin: '0 auto 24px' }}>
+                    This tutorial is hosted on an external source website ({new URL(activeArticle.url).hostname}). Click the button below to view it.
+                  </p>
+                  <a 
+                    href={activeArticle.url}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="ph-topbar-btn active"
+                    style={{ 
+                      textDecoration: 'none', 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      padding: '10px 24px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Open Tutorial Website
+                  </a>
+                </div>
+              ) : (
+                <>
+                  {activeArticle.video && (() => {
+                    let videoId = '';
+                    const url = activeArticle.video;
+                    if (url.includes('youtu.be/')) {
+                      videoId = url.split('youtu.be/')[1]?.split('?')[0];
+                    } else if (url.includes('watch?v=')) {
+                      videoId = url.split('watch?v=')[1]?.split('&')[0];
+                    } else if (url.includes('youtube.com/embed/')) {
+                      videoId = url.split('youtube.com/embed/')[1]?.split('?')[0];
+                    }
+                    if (videoId) {
+                      return (
+                        <div className="ph-article-video-container">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${videoId}`}
+                            title="YouTube Video Solution"
+                            allowFullScreen
+                          />
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  <div 
+                    className="ph-article-content"
+                    onClick={handleArticleContainerClick}
+                    dangerouslySetInnerHTML={{ __html: activeArticle.content }}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Article Loading Overlay */}
+      {articleLoading && (
+        <div className="ph-modal-overlay">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <div className="ph-spinner" style={{ width: '40px', height: '40px', borderWidth: '4px' }} />
+            <p style={{ color: 'white', fontWeight: 600 }}>Loading local tutorial...</p>
           </div>
         </div>
       )}

@@ -26,18 +26,19 @@ const COLLECTION = 'codingProgress';
 
 // Helper: Get local progress structure
 const getLocalProgress = (uid) => {
-  if (!uid) return { solvedProblems: [], problemDetails: {}, activity: {} };
+  if (!uid) return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
   try {
     const raw = localStorage.getItem(`practice_progress_${uid}`);
-    if (!raw) return { solvedProblems: [], problemDetails: {}, activity: {} };
+    if (!raw) return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
     const parsed = JSON.parse(raw);
     return {
       solvedProblems: Array.isArray(parsed.solvedProblems) ? parsed.solvedProblems : [],
       problemDetails: parsed.problemDetails || {},
-      activity: parsed.activity || {}
+      activity: parsed.activity || {},
+      sheetSolvedDicts: parsed.sheetSolvedDicts || {}
     };
   } catch (_) {
-    return { solvedProblems: [], problemDetails: {}, activity: {} };
+    return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
   }
 };
 
@@ -201,7 +202,6 @@ export const syncProgressWithFirebase = async (uid) => {
     const localActivity = local.activity || {};
     const remoteActivity = remote.activity || {};
     const mergedActivity = { ...remoteActivity, ...localActivity };
-    
     const activityDates = new Set([...Object.keys(localActivity), ...Object.keys(remoteActivity)]);
     for (const date of activityDates) {
       const lAct = localActivity[date] || { hours: 0, problemsSolved: 0 };
@@ -212,10 +212,20 @@ export const syncProgressWithFirebase = async (uid) => {
       };
     }
 
+    // Merge sheetSolvedDicts
+    const localSheets = local.sheetSolvedDicts || {};
+    const remoteSheets = remote.sheetSolvedDicts || {};
+    const mergedSheets = { ...remoteSheets, ...localSheets };
+    const allSheetKeys = new Set([...Object.keys(localSheets), ...Object.keys(remoteSheets)]);
+    for (const sheetId of allSheetKeys) {
+      mergedSheets[sheetId] = { ...(remoteSheets[sheetId] || {}), ...(localSheets[sheetId] || {}) };
+    }
+
     const mergedProgress = {
       solvedProblems: mergedSolved,
       problemDetails: mergedDetails,
       activity: mergedActivity,
+      sheetSolvedDicts: mergedSheets,
       updatedAt: new Date().toISOString()
     };
 
@@ -277,6 +287,35 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
   return { success: true };
 };
 
+/**
+ * Mark a sheet problem solved/unsolved and sync.
+ */
+export const saveSheetProgress = async (uid, sheetId, problemId, isSolved) => {
+  if (!uid || !sheetId || !problemId) return { success: false };
+  const local = getLocalProgress(uid);
+  if (!local.sheetSolvedDicts) local.sheetSolvedDicts = {};
+  if (!local.sheetSolvedDicts[sheetId]) local.sheetSolvedDicts[sheetId] = {};
+  
+  if (isSolved) {
+    local.sheetSolvedDicts[sheetId][problemId] = true;
+  } else {
+    delete local.sheetSolvedDicts[sheetId][problemId];
+  }
+
+  saveLocalProgress(uid, local);
+
+  // Fire-and-forget sync
+  if (navigator.onLine) {
+    try {
+      const docRef = doc(db, COLLECTION, uid);
+      await setDoc(docRef, local, { merge: true });
+    } catch (e) {
+      console.warn('[CodingProgressService] Background sync failed:', e.message);
+    }
+  }
+  return { success: true };
+};
+
 export default {
   getSolvedQuestionIds,
   getFullProgress,
@@ -286,4 +325,5 @@ export default {
   syncProgressWithFirebase,
   getQuestionDisplayStatus,
   logPortalActivityTime,
+  saveSheetProgress,
 };
