@@ -39,6 +39,23 @@ const Login = () => {
   }, [currentTheme]);
 
   useEffect(() => {
+    const themes = ['dark', 'light', 'crimson', 'emerald', 'red-light'];
+    let currentIndex = themes.indexOf(currentTheme);
+    if (currentIndex === -1) currentIndex = 0;
+
+    const timer = setInterval(() => {
+      currentIndex = (currentIndex + 1) % themes.length;
+      setCurrentTheme(themes[currentIndex]);
+    }, 4000);
+
+    return () => {
+      clearInterval(timer);
+      const savedTheme = localStorage.getItem('portal_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    };
+  }, []);
+
+  useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("rememberedUser"));
     if (savedUser) {
       setUsername(savedUser.username);
@@ -285,41 +302,6 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      {/* Floating Theme Switcher */}
-      <div className="login-theme-switcher">
-        <span>Theme:</span>
-        <div 
-          className={`theme-bubble ${currentTheme === 'dark' ? 'active' : ''}`} 
-          style={{ backgroundColor: '#090d16' }}
-          onClick={() => { localStorage.setItem('portal_theme', 'dark'); setCurrentTheme('dark'); }}
-          title="Midnight Space"
-        />
-        <div 
-          className={`theme-bubble ${currentTheme === 'light' ? 'active' : ''}`} 
-          style={{ backgroundColor: '#ffffff', border: '1px solid #d1d5db' }}
-          onClick={() => { localStorage.setItem('portal_theme', 'light'); setCurrentTheme('light'); }}
-          title="Classic Ice"
-        />
-        <div 
-          className={`theme-bubble ${currentTheme === 'crimson' ? 'active' : ''}`} 
-          style={{ backgroundColor: '#0c0808', border: '1px solid #ef4444' }}
-          onClick={() => { localStorage.setItem('portal_theme', 'crimson'); setCurrentTheme('crimson'); }}
-          title="Crimson Cyber"
-        />
-        <div 
-          className={`theme-bubble ${currentTheme === 'emerald' ? 'active' : ''}`} 
-          style={{ backgroundColor: '#022c22', border: '1px solid #10b981' }}
-          onClick={() => { localStorage.setItem('portal_theme', 'emerald'); setCurrentTheme('emerald'); }}
-          title="Emerald Matrix"
-        />
-        <div 
-          className={`theme-bubble ${currentTheme === 'red-light' ? 'active' : ''}`} 
-          style={{ backgroundColor: '#ffffff', border: '1px solid #dc2626' }}
-          onClick={() => { localStorage.setItem('portal_theme', 'red-light'); setCurrentTheme('red-light'); }}
-          title="Crimson Frost (Red/White)"
-        />
-      </div>
-
       {/* Perspective Grid Background Layer */}
       <div className="perspective-grid"></div>
 
