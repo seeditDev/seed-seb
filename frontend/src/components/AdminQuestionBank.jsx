@@ -446,7 +446,7 @@ const AdminQuestionBank = () => {
                             <div className="user-lookup-form">
                                 <input 
                                     type="email" 
-                                    placeholder="Enter student email (e.g. temp@kgkite.ac.in)" 
+                                    placeholder="Enter student email (e.g. student@seedit.in)" 
                                     value={userEmail}
                                     onChange={(e) => setUserEmail(e.target.value)}
                                     className="user-email-input"

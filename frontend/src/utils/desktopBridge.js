@@ -114,7 +114,7 @@ const desktopBridge = {
             console.warn("[DesktopBridge] Local compiler backend not connected. Run code is disabled in web fallback.");
             return { 
                 stdout: "", 
-                stderr: "Compilers are only available inside the KITE Desktop application.", 
+                stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
                 output: "",
                 exit_code: -1, 
                 error: "Desktop App Environment Required" 
@@ -225,7 +225,7 @@ const desktopBridge = {
             console.warn("[DesktopBridge] Local compiler backend not connected. Sandbox execution is disabled in web fallback.");
             return { 
                 stdout: "", 
-                stderr: "Compilers are only available inside the KITE Desktop application.", 
+                stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
                 output: "",
                 exit_code: -1, 
                 error: "Desktop App Environment Required" 

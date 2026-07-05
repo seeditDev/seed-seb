@@ -26,7 +26,7 @@ export const TOKEN_PARTS = {
 
 export const COLLEGES = {
 
-    'KITE': 'KGiSL Institute of Technology (KITE)',
+    'KITE': 'KGiSL Institute of Technology (SEED-IT)',
     'KGCAS': 'KGiSL College of Arts and Science (KGCAS)',
     'KGIIM': 'KGiSL Institute of Information Management (KGiSL-IIM)',
     'KIT': 'Kalaignar Karunanidhi Institute of Technology (KIT)',
