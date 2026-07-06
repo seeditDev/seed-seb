@@ -118,15 +118,33 @@ const MultiSectionAssessment = () => {
           if (!fetchUrl.endsWith('.json')) {
             fetchUrl = sec.type === 'mcq' ? `/seed-contents/mcq/${slugify(sec.name)}.json` : `/seed-contents/coding/${slugify(sec.name)}.json`;
           }
+
+          // Resolve finalUrl/fetchUrl through raw GitHub or local fallback
+          let cleanPath = fetchUrl;
+          if (cleanPath.startsWith('/seed-contents/')) {
+            cleanPath = cleanPath.substring('/seed-contents/'.length);
+          } else if (cleanPath.startsWith('/')) {
+            cleanPath = cleanPath.substring(1);
+          }
+
+          const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
+          const LOCAL_BASE_URL = '/seed-contents';
+
+          const githubUrl = `${GITHUB_RAW_BASE}/${cleanPath}`;
+          const localUrl = `${LOCAL_BASE_URL}/${cleanPath}`;
+
           try {
-            const res = await fetch(fetchUrl);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.questions && sec.type === 'coding') {
-                data.questions = data.questions.map(normalizeQuestion);
-              }
-              loadedData[sec.sectionId] = data;
+            let res = await fetch(githubUrl, { cache: 'no-store' });
+            if (!res.ok) {
+              // Fallback to local
+              res = await fetch(localUrl);
+              if (!res.ok) throw new Error('Local fetch failed');
             }
+            const data = await res.json();
+            if (data.questions && sec.type === 'coding') {
+              data.questions = data.questions.map(normalizeQuestion);
+            }
+            loadedData[sec.sectionId] = data;
           } catch (e) {
             console.error(`Failed to load section ${sec.name}:`, e);
           }

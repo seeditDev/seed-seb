@@ -995,13 +995,36 @@ const PracticeHome = () => {
         let finalUrl = mod.url || '';
         // If it starts with standard relative, map it to local or fetch from URL
         if (!finalUrl.endsWith('.json')) {
-          finalUrl = `/seed-contents/coding/${mod.slug}.json`;
+          finalUrl = `coding/${mod.slug}.json`;
         }
         
-        // Fetch contest details
-        const response = await fetch(finalUrl);
-        if (!response.ok) throw new Error('Contest URL not found');
-        const data = await response.json();
+        // Clean and prepare the path relative to the seed-contents repository root
+        let cleanPath = finalUrl;
+        if (cleanPath.startsWith('/seed-contents/')) {
+          cleanPath = cleanPath.substring('/seed-contents/'.length);
+        } else if (cleanPath.startsWith('/')) {
+          cleanPath = cleanPath.substring(1);
+        }
+
+        const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
+        const LOCAL_BASE = '/seed-contents';
+
+        const githubUrl = `${GITHUB_RAW_BASE}/${cleanPath}`;
+        const localUrl = `${LOCAL_BASE}/${cleanPath}`;
+
+        let data = null;
+        try {
+          // 1. Try raw GitHub CDN first
+          const response = await fetch(githubUrl, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          data = await response.json();
+        } catch (githubErr) {
+          console.warn('[PracticeHome] GitHub raw fetch failed, trying local fallback:', githubErr.message);
+          // 2. Try local desktop path fallback
+          const localResponse = await fetch(localUrl);
+          if (!localResponse.ok) throw new Error(`Local fetch failed: HTTP ${localResponse.status}`);
+          data = await localResponse.json();
+        }
         
         // Mapped questions array from the contest file
         setContestQuestions(data.questions || []);
