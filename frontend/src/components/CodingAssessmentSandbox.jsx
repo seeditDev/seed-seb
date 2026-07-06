@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import { FaPlay, FaCheck, FaTimes, FaUndo, FaList, FaBookOpen, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight, FaLightbulb, FaUser, FaLock } from 'react-icons/fa';
+import { FaPlay, FaCheck, FaTimes, FaUndo, FaList, FaBookOpen, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight, FaLightbulb, FaUser, FaLock, FaClock } from 'react-icons/fa';
 import { db } from '../firebase-config';
 import { collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from 'firebase/firestore';
 import desktopBridge from '../utils/desktopBridge';
@@ -122,7 +122,7 @@ const FREE_BOILERPLATES = {
     java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
 };
 
-const CodingAssessmentSandbox = () => {
+const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {} }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -130,7 +130,7 @@ const CodingAssessmentSandbox = () => {
     const searchParams = new URLSearchParams(location.search);
     const challengeParam = searchParams.get('challenge');
     const contestParam = searchParams.get('contest');
-    const mode = (challengeParam || contestParam) ? "challenges" : "free";
+    const mode = isEmbedded ? "challenges" : ((challengeParam || contestParam) ? "challenges" : "free");
 
 
     const [challenges, setChallenges] = useState([]);
@@ -144,6 +144,9 @@ const CodingAssessmentSandbox = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerSearch, setDrawerSearch] = useState('');
     const [user, setUser] = useState(null);
+    const [qTimerRemaining, setQTimerRemaining] = useState(0);
+    const [lockedChallenges, setLockedChallenges] = useState([]);
+    const [timeSpentPerQ, setTimeSpentPerQ] = useState({});
 
     const [isRunning, setIsRunning] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
@@ -189,6 +192,33 @@ const CodingAssessmentSandbox = () => {
 
     const handleManualSubmit = async () => {
         setShowSubmitConfirm(false);
+        if (isEmbedded) {
+            try {
+                if (selectedChallenge) {
+                    await desktopBridge.saveAnswer(selectedChallenge.id, code).catch(() => {});
+                }
+            } catch (_) {}
+            
+            const allAnswers = {};
+            challenges.forEach(ch => {
+                const savedKey = `code_${ch.id}_${language}`;
+                const savedCode = localStorage.getItem(savedKey);
+                if (savedCode) {
+                    allAnswers[ch.id] = savedCode;
+                } else if (ch.id === selectedChallenge?.id) {
+                    allAnswers[ch.id] = code;
+                }
+            });
+
+            if (onSectionSubmit) {
+                onSectionSubmit({
+                    answers: allAnswers,
+                    timeSpentPerQ: timeSpentPerQ,
+                    completed: completedChallenges
+                });
+            }
+            return;
+        }
         if (!user?.Email || !contestParam) return;
         try {
             // Save current code answer to localStorage
@@ -320,6 +350,18 @@ const CodingAssessmentSandbox = () => {
 
     // 1. Initial authentication and loading attempts from local state / bridge
     useEffect(() => {
+        if (isEmbedded) {
+            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
+            setUser(authData);
+            setHasStarted(true);
+            setIsFullscreenExited(false);
+            if (testData && testData.questions) {
+                setChallenges(testData.questions);
+                setSelectedChallenge(testData.questions[0] || null);
+            }
+            return;
+        }
+
         const loadInitialData = async () => {
             try {
                 const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
@@ -446,10 +488,11 @@ const CodingAssessmentSandbox = () => {
         };
 
         loadInitialData();
-    }, [navigate, contestParam, challengeParam]);
+    }, [navigate, contestParam, challengeParam, isEmbedded, testData]);
 
     // 3. Keep selectedChallenge in sync with URL challenge parameter
     useEffect(() => {
+        if (isEmbedded) return;
         if (challenges.length > 0 && challengeParam) {
             const found = challenges.find(ch => ch.id === challengeParam);
             if (found) {
@@ -473,7 +516,7 @@ const CodingAssessmentSandbox = () => {
         } else {
             setSelectedChallenge(null);
         }
-    }, [challenges, challengeParam, user, navigate]);
+    }, [challenges, challengeParam, user, navigate, isEmbedded]);
 
     // 4. Sync boilerplate code when selected challenge or language changes (recovers progress if available)
     useEffect(() => {
@@ -503,6 +546,65 @@ const CodingAssessmentSandbox = () => {
         setTestResults([]);
         setActiveTab('input');
     }, [selectedChallenge, language, mode]);
+
+    // Section Global Timer Synchronizer
+    useEffect(() => {
+        if (isEmbedded) {
+            if (secTimer <= 0) {
+                handleManualSubmit();
+            }
+        }
+    }, [secTimer, isEmbedded]);
+
+    // Question Timer Auto-Reset on challenge change
+    useEffect(() => {
+        if (isEmbedded && settings.questionTimers && settings.questionTimers.length > 0 && selectedChallenge) {
+            const activeTimer = settings.questionTimers[currentChallengeIndex] || 0;
+            setQTimerRemaining(activeTimer);
+        }
+    }, [selectedChallenge, currentChallengeIndex, isEmbedded, settings.questionTimers]);
+
+    // Question Timer Countdown Loop
+    useEffect(() => {
+        if (isEmbedded && settings.questionTimers && settings.questionTimers.length > 0 && selectedChallenge && !isLockedOut) {
+            const activeTimer = settings.questionTimers[currentChallengeIndex] || 0;
+            if (activeTimer > 0) {
+                const timer = setInterval(() => {
+                    setQTimerRemaining(prev => {
+                        if (prev <= 1) {
+                            // Lock the current question!
+                            setLockedChallenges(l => [...l, selectedChallenge.id]);
+                            // Move to next challenge or submit if last
+                            if (currentChallengeIndex + 1 < challenges.length) {
+                                setSelectedChallenge(challenges[currentChallengeIndex + 1]);
+                            } else {
+                                handleManualSubmit();
+                            }
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+                return () => clearInterval(timer);
+            }
+        }
+    }, [isEmbedded, selectedChallenge, currentChallengeIndex, challenges, isLockedOut, settings.questionTimers]);
+
+    // Track active question elapsed seconds
+    useEffect(() => {
+        let qTimer;
+        if (selectedChallenge && !isLockedOut) {
+            qTimer = setInterval(() => {
+                setTimeSpentPerQ(prev => ({
+                    ...prev,
+                    [selectedChallenge.id]: (prev[selectedChallenge.id] || 0) + 1
+                }));
+            }, 1000);
+        }
+        return () => {
+            if (qTimer) clearInterval(qTimer);
+        };
+    }, [selectedChallenge, isLockedOut]);
 
     // 5. Autosave code to localStorage every 30 seconds
     useEffect(() => {
@@ -653,6 +755,15 @@ const CodingAssessmentSandbox = () => {
     const currentChallengeIndex = challenges.findIndex(ch => ch.id === selectedChallenge?.id);
 
     const handlePrevChallenge = () => {
+        if (isEmbedded && (settings.forwardOnly || (settings.questionTimers && settings.questionTimers.length > 0))) {
+            return; // Lock backward navigation
+        }
+        if (isEmbedded) {
+            if (currentChallengeIndex > 0) {
+                setSelectedChallenge(challenges[currentChallengeIndex - 1]);
+            }
+            return;
+        }
         if (currentChallengeIndex > 0) {
             const prev = challenges[currentChallengeIndex - 1];
             navigate(`/student/assessment/sandbox?challenge=${prev.id}${contestParam ? `&contest=${contestParam}` : ''}`);
@@ -660,6 +771,12 @@ const CodingAssessmentSandbox = () => {
     };
 
     const handleNextChallenge = () => {
+        if (isEmbedded) {
+            if (currentChallengeIndex < challenges.length - 1 && currentChallengeIndex !== -1) {
+                setSelectedChallenge(challenges[currentChallengeIndex + 1]);
+            }
+            return;
+        }
         if (currentChallengeIndex < challenges.length - 1 && currentChallengeIndex !== -1) {
             const next = challenges[currentChallengeIndex + 1];
             navigate(`/student/assessment/sandbox?challenge=${next.id}${contestParam ? `&contest=${contestParam}` : ''}`);
@@ -793,7 +910,15 @@ const CodingAssessmentSandbox = () => {
             <header className="sandbox-workspace-header">
                 <div className="header-left">
                     <button 
-                        onClick={() => navigate(mode === 'free' ? '/student/dashboard' : '/student/assessment')} 
+                        onClick={() => {
+                            if (isEmbedded) {
+                                if (window.confirm("Exit assessment? Your current section progress is saved.")) {
+                                    navigate('/student/dashboard');
+                                }
+                            } else {
+                                navigate(mode === 'free' ? '/student/dashboard' : '/student/assessment');
+                            }
+                        }} 
                         className="nav-back-btn" 
                         title="Back"
                     >
@@ -813,7 +938,7 @@ const CodingAssessmentSandbox = () => {
                             <div className="challenge-nav-buttons">
                                 <button 
                                     onClick={handlePrevChallenge} 
-                                    disabled={currentChallengeIndex <= 0}
+                                    disabled={currentChallengeIndex <= 0 || (isEmbedded && settings.questionTimers && settings.questionTimers.length > 0)}
                                     className="nav-arrow-btn"
                                     title="Previous Challenge"
                                 >
@@ -832,6 +957,25 @@ const CodingAssessmentSandbox = () => {
                     )}
 
                     {mode === 'free' && <span className="header-mode-title">Code Editor Sandbox</span>}
+
+                    {isEmbedded && (
+                        <div className="msa-timer-box" style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            marginLeft: '15px',
+                            color: '#10b981'
+                        }}>
+                            <FaClock />
+                            <span>Time Remaining: {Math.floor(secTimer / 60)}:{(secTimer % 60).toString().padStart(2, '0')}</span>
+                        </div>
+                    )}
 
                     {contestParam && (
                         <div style={{
@@ -857,7 +1001,7 @@ const CodingAssessmentSandbox = () => {
                     <button 
                         className="header-run-btn" 
                         onClick={handleRunCode} 
-                        disabled={isRunning || isTesting}
+                        disabled={isRunning || isTesting || (isEmbedded && selectedChallenge && lockedChallenges.includes(selectedChallenge.id))}
                     >
                         <FaPlay /> Run
                     </button>
@@ -865,7 +1009,7 @@ const CodingAssessmentSandbox = () => {
                         <button 
                             className="header-submit-btn" 
                             onClick={handleTestCode} 
-                            disabled={isRunning || isTesting}
+                            disabled={isRunning || isTesting || (isEmbedded && selectedChallenge && lockedChallenges.includes(selectedChallenge.id))}
                         >
                             <FaCheck /> Submit
                         </button>
@@ -878,6 +1022,20 @@ const CodingAssessmentSandbox = () => {
                             disabled={isRunning || isTesting}
                         >
                             Submit Assessment
+                        </button>
+                    )}
+                    {isEmbedded && !settings.timerRestrictedSubmit && (
+                        <button 
+                            className="header-submit-btn" 
+                            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', marginLeft: '12px', border: 'none' }}
+                            onClick={() => {
+                                if (window.confirm("Are you sure you want to submit this section? You will not be able to return to it.")) {
+                                    handleManualSubmit();
+                                }
+                            }}
+                            disabled={isRunning || isTesting}
+                        >
+                            Submit Section
                         </button>
                     )}
                 </div>
@@ -918,6 +1076,14 @@ const CodingAssessmentSandbox = () => {
                                         key={ch.id}
                                         className={`drawer-challenge-item ${selectedChallenge?.id === ch.id ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
                                         onClick={() => {
+                                            if (isEmbedded) {
+                                                if (settings.forwardOnly || (settings.questionTimers && settings.questionTimers.length > 0)) {
+                                                    return; // Lock jumping around
+                                                }
+                                                setIsDrawerOpen(false);
+                                                setSelectedChallenge(ch);
+                                                return;
+                                            }
                                             if (isLocked) {
                                                 setCustomNotice({
                                                     title: "Premium Feature",
@@ -988,7 +1154,34 @@ const CodingAssessmentSandbox = () => {
                                                 {selectedChallenge.difficulty}
                                             </span>
                                             <span className="constraint-badge">{selectedChallenge.constraints}</span>
+                                            {isEmbedded && settings.questionTimers && settings.questionTimers.length > 0 && (
+                                                <span className="constraint-badge" style={{ 
+                                                    background: qTimerRemaining <= 60 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                                                    color: qTimerRemaining <= 60 ? '#ef4444' : '#6366f1',
+                                                    border: qTimerRemaining <= 60 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    ⏳ Locks in: {Math.floor(qTimerRemaining / 60)}:{(qTimerRemaining % 60).toString().padStart(2, '0')}
+                                                </span>
+                                            )}
                                         </div>
+                                        {isEmbedded && lockedChallenges.includes(selectedChallenge.id) && (
+                                            <div style={{
+                                                background: 'rgba(239, 68, 68, 0.12)',
+                                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                                borderRadius: '8px',
+                                                padding: '12px 16px',
+                                                color: '#ef4444',
+                                                marginBottom: '15px',
+                                                fontWeight: '600',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}>
+                                                <FaLock />
+                                                <span>This question's timer has expired. Your sandbox is locked. You can no longer edit or compile code for this question.</span>
+                                            </div>
+                                        )}
                                         <div className="prob-section">
                                             <p>{selectedChallenge.description}</p>
                                         </div>
@@ -1092,6 +1285,7 @@ const CodingAssessmentSandbox = () => {
                                 value={code}
                                 onChange={(value) => setCode(value || '')}
                                 options={{
+                                    readOnly: isEmbedded && selectedChallenge && lockedChallenges.includes(selectedChallenge.id),
                                     fontSize: 14,
                                     fontFamily: "'JetBrains Mono', 'Consolas', monospace",
                                     minimap: { enabled: false },
@@ -1131,7 +1325,7 @@ const CodingAssessmentSandbox = () => {
                                     <button
                                         className="action-btn run-btn"
                                         onClick={handleRunCode}
-                                        disabled={isRunning || isTesting}
+                                        disabled={isRunning || isTesting || (isEmbedded && selectedChallenge && lockedChallenges.includes(selectedChallenge.id))}
                                     >
                                         <FaPlay /> {isRunning ? "Running..." : "Run"}
                                     </button>
@@ -1139,7 +1333,7 @@ const CodingAssessmentSandbox = () => {
                                         <button
                                             className="action-btn test-btn"
                                             onClick={handleTestCode}
-                                            disabled={isRunning || isTesting}
+                                            disabled={isRunning || isTesting || (isEmbedded && selectedChallenge && lockedChallenges.includes(selectedChallenge.id))}
                                         >
                                             <FaCheck /> {isTesting ? "Testing..." : "Submit Tests"}
                                         </button>

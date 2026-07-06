@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaClock, FaCheckCircle, FaExclamationTriangle, FaLock, FaBookOpen, FaCode, FaChevronRight } from 'react-icons/fa';
 import '../styles/MultiSectionAssessment.css';
+import MCQPage from './MCQPage';
+import CodingAssessmentSandbox from './CodingAssessmentSandbox';
+import { db } from '../firebase-config';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '../supabaseClient';
 
 const normalizeQuestion = (q) => {
   if (!q) return q;
@@ -74,6 +79,8 @@ const MultiSectionAssessment = () => {
 
   // Question Answer states
   const [sectionData, setSectionData] = useState({}); // { [secId]: testJSON }
+  const [examResults, setExamResults] = useState({}); 
+  const [examFinished, setExamFinished] = useState(false);
   const [mcqAnswers, setMcqAnswers] = useState({}); // { [secId]: { [questionIdx]: selectedOptionIdx } }
   const [codingSolutions, setCodingSolutions] = useState({}); // { [secId]: { [questionIdx]: codeString } }
   const [selectedLanguage, setSelectedLanguage] = useState('python');
@@ -205,8 +212,21 @@ const MultiSectionAssessment = () => {
     setSectionCountdown(10);
   };
 
-  const autoSubmitSection = () => {
+  const autoSubmitSection = (sectionResults) => {
     const activeSection = assessment.sections[currentSecIdx];
+    
+    const updatedResults = {
+      ...examResults,
+      [activeSection.sectionId]: {
+        sectionName: activeSection.name,
+        type: activeSection.type,
+        data: sectionResults || {}
+      }
+    };
+
+    // Save results for this section
+    setExamResults(updatedResults);
+
     setSecCompleted(prev => ({ ...prev, [activeSection.sectionId]: true }));
     setSecStarted(false);
     
@@ -215,8 +235,70 @@ const MultiSectionAssessment = () => {
     if (nextIdx < assessment.sections.length) {
       handleStartSection(nextIdx);
     } else {
-      // Completed all sections! Submit final exam
-      handleSubmitAssessment();
+      // Completed all sections!
+      if (user && user.Email) {
+        const college = user.College || 'KGKITE';
+        const year = user.Year || '2026';
+        
+        const attemptData = {
+          email: user.Email,
+          rollNumber: user["Roll Number"] || '',
+          name: user.Name || '',
+          college: college,
+          year: year,
+          department: user.Department || '',
+          testID: assessment.id,
+          testName: assessment.name,
+          assessmentId: assessment.id,
+          assessmentName: assessment.name,
+          submittedAt: serverTimestamp(),
+          submittedAtISO: new Date().toISOString(),
+          type: 'multisection',
+          sections: updatedResults
+        };
+
+        // 1. Save to unified AssessmentResults collection
+        const assessmentDocPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+        setDoc(doc(db, assessmentDocPath), attemptData, { merge: true })
+          .then(() => console.log("Saved multisection results to AssessmentResults:", assessmentDocPath))
+          .catch(e => console.error("Failed to write AssessmentResults:", e));
+
+        // 2. Save to user attempts history
+        setDoc(doc(db, "users", user.Email, "multiSectionAttempts", assessment.id), attemptData, { merge: true })
+          .catch(e => console.error("Failed to write student-centric attempt:", e));
+
+        // 3. Compute totals and upsert summary row into Supabase mcq_results so it renders in staff/admin lists
+        const totalScore = Object.values(updatedResults).reduce((acc, sec) => acc + (sec.data?.score || 0), 0);
+        const totalQ = Object.values(updatedResults).reduce((acc, sec) => acc + (sec.data?.totalQuestions || 0), 0);
+        const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
+
+        supabase
+          .from('mcq_results')
+          .upsert({
+            roll_number: user["Roll Number"] || '',
+            name: user.Name || '',
+            email: user.Email,
+            college: college,
+            year: year,
+            department: user.Department || '',
+            test_id: assessment.id,
+            test_name: assessment.name,
+            score: totalScore,
+            total_questions: totalQ,
+            correct_answers: totalScore,
+            incorrect_answers: totalQ - totalScore,
+            percentage: pct,
+            submitted_at: new Date().toISOString(),
+            violation_count: 0,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'email,test_id'
+          })
+          .then(() => console.log("Saved summary row to Supabase mcq_results"))
+          .catch(supErr => console.warn("Failed to write summary to Supabase:", supErr));
+      }
+      setExamFinished(true);
+      localStorage.removeItem("multisectionAssessmentData");
     }
   };
 
@@ -224,12 +306,6 @@ const MultiSectionAssessment = () => {
     if (window.confirm("Are you sure you want to submit this section? You will not be able to return to it.")) {
       autoSubmitSection();
     }
-  };
-
-  const handleSubmitAssessment = () => {
-    alert("Congratulations! You have completed all sections of the assessment. Your answers have been successfully submitted.");
-    localStorage.removeItem("multisectionAssessmentData");
-    navigate('/student/dashboard');
   };
 
   const formatTime = (secs) => {
@@ -297,6 +373,149 @@ const MultiSectionAssessment = () => {
         </div>
       </div>
     );
+  }
+
+  if (examFinished) {
+    return (
+      <div className="msa-finished-container" style={{
+        maxWidth: '850px',
+        margin: '60px auto',
+        padding: '30px',
+        background: '#1e293b',
+        borderRadius: '12px',
+        color: '#f8fafc',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '35px' }}>
+          <FaCheckCircle style={{ color: '#10b981', fontSize: '4.5rem', marginBottom: '15px' }} />
+          <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'white', marginBottom: '10px' }}>Assessment Completed!</h1>
+          <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>
+            Congratulations <strong>{user?.Name}</strong>, your answers have been successfully recorded and submitted.
+          </p>
+        </div>
+
+        <div style={{ background: '#0f172a', borderRadius: '8px', padding: '20px', marginBottom: '30px' }}>
+          <h3 style={{ borderBottom: '1px solid #334155', paddingBottom: '10px', marginBottom: '15px', color: '#38bdf8' }}>
+            Summary of Time Spent per Question
+          </h3>
+          {assessment.sections.map((sec, sIdx) => {
+            const secRes = examResults[sec.sectionId] || {};
+            const qList = sectionData[sec.sectionId]?.questions || [];
+            
+            return (
+              <div key={sec.sectionId} style={{ marginBottom: '25px' }}>
+                <h4 style={{ color: '#e2e8f0', marginBottom: '8px', fontSize: '1.05rem' }}>
+                  {sIdx + 1}. {sec.name} ({sec.type.toUpperCase()})
+                </h4>
+                
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #1e293b', color: '#64748b' }}>
+                      <th style={{ padding: '8px 12px' }}>Question No.</th>
+                      <th style={{ padding: '8px 12px' }}>Question Title / Text</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right' }}>Time Spent</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {qList.map((q, qIdx) => {
+                      const qId = q.questionId || q.id || qIdx.toString();
+                      const spent = sec.type === 'mcq'
+                        ? (secRes.data?.timeSpentPerQ?.[qIdx] || 0)
+                        : (secRes.data?.timeSpentPerQ?.[qId] || 0);
+
+                      const formatSecs = (val) => {
+                        const m = Math.floor(val / 60);
+                        const s = val % 60;
+                        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+                      };
+
+                      return (
+                        <tr key={qIdx} style={{ borderBottom: '1px solid #1e293b' }}>
+                          <td style={{ padding: '10px 12px', color: '#94a3b8' }}>Q{qIdx + 1}</td>
+                          <td style={{ padding: '10px 12px', color: '#cbd5e1', maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {q.title || q.question || 'Coding Challenge'}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600', color: '#10b981' }}>
+                            {formatSecs(spent)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ textAlign: 'center' }}>
+          <button 
+            onClick={() => navigate('/student/dashboard')}
+            style={{
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 30px',
+              fontSize: '1rem',
+              fontWeight: '700',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)',
+              transition: 'transform 0.2s'
+            }}
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (secStarted && activeSection) {
+    if (activeSection.type === 'mcq') {
+      return (
+        <MCQPage 
+          isEmbedded={true}
+          testData={activeSecData}
+          secTimer={secTimer}
+          onSectionSubmit={autoSubmitSection}
+          settings={{
+            timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
+            questionTimer: activeSection.questionTimer || 0,
+            forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0)
+          }}
+        />
+      );
+    } else {
+      const codingQTimers = (() => {
+        const qCount = questionsList.length;
+        if (activeSection.questionTimerList) {
+          const parts = activeSection.questionTimerList.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+          if (parts.length > 0) {
+            return Array.from({ length: qCount }, (_, idx) => parts[idx] !== undefined ? parts[idx] : parts[parts.length - 1]);
+          }
+        }
+        if (activeSection.questionTimer) {
+          return Array(qCount).fill(activeSection.questionTimer);
+        }
+        return [];
+      })();
+
+      return (
+        <CodingAssessmentSandbox 
+          isEmbedded={true}
+          testData={activeSecData}
+          secTimer={secTimer}
+          onSectionSubmit={autoSubmitSection}
+          settings={{
+            timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
+            questionTimers: codingQTimers,
+            forwardOnly: !!activeSection.forwardOnly || (codingQTimers.length > 0)
+          }}
+        />
+      );
+    }
   }
 
   return (
@@ -383,7 +602,7 @@ const MultiSectionAssessment = () => {
                 Proceed to First Section <FaChevronRight />
               </button>
             </div>
-          ) : !secStarted ? (
+          ) : (
             // Section Completed Transition
             <div className="msa-intro-card">
               <h2>Section Submitted Successfully</h2>
@@ -394,115 +613,6 @@ const MultiSectionAssessment = () => {
               >
                 Start Next Section <FaChevronRight />
               </button>
-            </div>
-          ) : (
-            // Active Section Workspace
-            <div className="msa-active-workspace">
-              {/* Top Navigation for Questions inside Section */}
-              <div className="msa-questions-nav">
-                {questionsList.map((q, qIdx) => (
-                  <button
-                    key={qIdx}
-                    className={`msa-q-btn ${qIdx === currentQIdx ? 'active' : ''}`}
-                    onClick={() => setCurrentQIdx(qIdx)}
-                  >
-                    Q{qIdx + 1}
-                  </button>
-                ))}
-                <button 
-                  className="msa-section-submit-btn"
-                  onClick={handleManualSubmitSection}
-                >
-                  Submit Section
-                </button>
-              </div>
-
-              {/* Render Question Editor */}
-              {questionsList.length > 0 ? (
-                <div className="msa-question-box">
-                  {activeSection.type === 'mcq' ? (
-                    // ── MCQ EDITOR ──
-                    <div className="msa-mcq-container">
-                      <div className="msa-question-desc">
-                        <h4>Question {currentQIdx + 1}</h4>
-                        <p>{questionsList[currentQIdx]?.question || questionsList[currentQIdx]?.description}</p>
-                      </div>
-                      <div className="msa-options-list">
-                        {(questionsList[currentQIdx]?.options || []).map((opt, optIdx) => {
-                          const isSelected = mcqAnswers[activeSection.sectionId]?.[currentQIdx] === optIdx;
-                          return (
-                            <div 
-                              key={optIdx}
-                              className={`msa-option-card ${isSelected ? 'selected' : ''}`}
-                              onClick={() => {
-                                setMcqAnswers(prev => ({
-                                  ...prev,
-                                  [activeSection.sectionId]: {
-                                    ...(prev[activeSection.sectionId] || {}),
-                                    [currentQIdx]: optIdx
-                                  }
-                                }));
-                              }}
-                            >
-                              <span className="msa-option-prefix">{String.fromCharCode(65 + optIdx)}</span>
-                              <span className="msa-option-text">{opt}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    // ── CODING SANDBOX EDITOR ──
-                    <div className="msa-coding-container">
-                      <div className="msa-code-left">
-                        <h4>Problem Description</h4>
-                        <div className="msa-problem-description">
-                          <p><strong>{questionsList[currentQIdx]?.title}</strong></p>
-                          <p>{questionsList[currentQIdx]?.description}</p>
-                          {questionsList[currentQIdx]?.constraints && (
-                            <pre className="msa-constraints">
-                              {questionsList[currentQIdx]?.constraints}
-                            </pre>
-                          )}
-                        </div>
-                      </div>
-                      <div className="msa-code-right">
-                        <div className="msa-editor-header">
-                          <select 
-                            value={selectedLanguage}
-                            onChange={e => setSelectedLanguage(e.target.value)}
-                          >
-                            <option value="python">Python</option>
-                            <option value="cpp">C++</option>
-                            <option value="java">Java</option>
-                            <option value="c">C</option>
-                          </select>
-                        </div>
-                        <textarea
-                          className="msa-textarea-editor"
-                          value={codingSolutions[activeSection.sectionId]?.[currentQIdx] ?? getInitialCode()}
-                          onChange={e => {
-                            const val = e.target.value;
-                            setCodingSolutions(prev => ({
-                              ...prev,
-                              [activeSection.sectionId]: {
-                                ...(prev[activeSection.sectionId] || {}),
-                                [currentQIdx]: val
-                              }
-                            }));
-                          }}
-                          placeholder="# Write your program here..."
-                        />
-                        <div className="msa-editor-footer">
-                          <button className="msa-run-btn">Run Code</button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div style={{ color: '#94a3b8', padding: '20px' }}>Loading section question assets...</div>
-              )}
             </div>
           )}
         </main>

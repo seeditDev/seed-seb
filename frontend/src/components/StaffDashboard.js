@@ -29,6 +29,8 @@ import 'jspdf-autotable';
 import MCQService from "../services/mcqService";
 import TrackingService from "../services/trackingService";
 import timeService from "../services/timeService";
+import { db } from "../firebase-config";
+import { doc, getDoc } from "firebase/firestore";
 
 // Register ChartJS components
 ChartJS.register(
@@ -431,6 +433,284 @@ const StaffDashboard = () => {
     // Save PDF
     const fileName = generateFileName('pdf');
     doc.save(fileName);
+  };
+
+  const handleGenerateStudentPDF = async (row) => {
+    try {
+      const email = row['Email'];
+      const testID = row['Test ID'];
+      const college = row['College'];
+      const year = row['Year'];
+      
+      if (!email || !testID || !college || !year) {
+        alert("Cannot pull report: missing student or test metadata keys.");
+        return;
+      }
+      
+      // Show loading indicator
+      alert(`🔄 Fetching full attempt details for ${row['Name'] || email}...`);
+      
+      const docPath = `AssessmentResults/${testID}/colleges/${college}/years/${year}/students/${email}`;
+      const docSnap = await getDoc(doc(db, docPath));
+      
+      if (!docSnap.exists()) {
+        alert("No detailed attempt record found in Firestore for this test.");
+        return;
+      }
+      
+      const attemptData = docSnap.data();
+      const docPDF = new jsPDF('portrait');
+      
+      // Page styling & layout
+      docPDF.setFillColor(15, 23, 42); // slate-900 background header
+      docPDF.rect(0, 0, 210, 45, 'F');
+      
+      // Title block
+      docPDF.setFontSize(22);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.setTextColor(255, 255, 255);
+      docPDF.text("SEED-IT PLATFORM REPORT", 14, 20);
+      
+      docPDF.setFontSize(10);
+      docPDF.setFont("helvetica", "normal");
+      docPDF.setTextColor(148, 163, 184); // slate-400
+      docPDF.text(`Unified Candidate Assessment Transcript`, 14, 28);
+      docPDF.text(`Generated on: ${new Date().toLocaleString()}`, 14, 34);
+      
+      // Candidate Profile Section
+      docPDF.setFontSize(14);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.setTextColor(30, 41, 59); // slate-800
+      docPDF.text("Candidate Profile", 14, 58);
+      
+      docPDF.setDrawColor(226, 232, 240); // slate-200 line separator
+      docPDF.line(14, 62, 196, 62);
+      
+      // Candidate Info columns
+      docPDF.setFontSize(10);
+      docPDF.setFont("helvetica", "normal");
+      docPDF.setTextColor(71, 85, 105); // slate-600
+      
+      docPDF.text(`Name:`, 14, 70);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.text(`${attemptData.name || row['Name'] || 'N/A'}`, 45, 70);
+      
+      docPDF.setFont("helvetica", "normal");
+      docPDF.text(`Roll Number:`, 14, 76);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.text(`${attemptData.rollNumber || row['Roll Number'] || 'N/A'}`, 45, 76);
+      
+      docPDF.setFont("helvetica", "normal");
+      docPDF.text(`Email:`, 14, 82);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.text(`${attemptData.email || email}`, 45, 82);
+      
+      docPDF.setFont("helvetica", "normal");
+      docPDF.text(`College:`, 110, 70);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.text(`${attemptData.college || college}`, 140, 70);
+      
+      docPDF.setFont("helvetica", "normal");
+      docPDF.text(`Year / Dept:`, 110, 76);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.text(`${attemptData.year || year} / ${attemptData.department || row['Department'] || 'N/A'}`, 140, 76);
+
+      docPDF.setFont("helvetica", "normal");
+      docPDF.text(`Assessment ID:`, 110, 82);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.text(`${attemptData.testID || testID}`, 140, 82);
+      
+      // Assessment Metrics Summary Card
+      docPDF.setFillColor(248, 250, 252); // slate-50 background
+      docPDF.rect(14, 90, 182, 28, 'F');
+      docPDF.setDrawColor(226, 232, 240);
+      docPDF.rect(14, 90, 182, 28, 'S');
+      
+      // Stats inside Card
+      const scoreNum = attemptData.score !== undefined ? attemptData.score : row['Score'];
+      const totalQNum = attemptData.totalQuestions !== undefined ? attemptData.totalQuestions : row['Total Questions'];
+      const correctNum = attemptData.correctAnswers !== undefined ? attemptData.correctAnswers : scoreNum;
+      const rawPct = attemptData.percentage !== undefined ? attemptData.percentage : (row['Percentage'] ? row['Percentage'] * 100 : 0);
+      const finalPct = rawPct <= 1 ? rawPct * 100 : rawPct;
+      
+      docPDF.setFontSize(9);
+      docPDF.setFont("helvetica", "normal");
+      docPDF.setTextColor(100, 116, 139); // slate-500
+      docPDF.text("Score", 20, 97);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.setFontSize(14);
+      docPDF.setTextColor(30, 41, 59);
+      docPDF.text(`${scoreNum} / ${totalQNum}`, 20, 107);
+      
+      docPDF.setFontSize(9);
+      docPDF.setFont("helvetica", "normal");
+      docPDF.setTextColor(100, 116, 139);
+      docPDF.text("Percentage", 70, 97);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.setFontSize(14);
+      docPDF.setTextColor(finalPct >= 75 ? 16, 185, 129 : finalPct >= 40 ? 59, 130, 246 : 239, 68, 68); // green / blue / red
+      docPDF.text(`${finalPct.toFixed(1)}%`, 70, 107);
+      
+      docPDF.setFontSize(9);
+      docPDF.setFont("helvetica", "normal");
+      docPDF.setTextColor(100, 116, 139);
+      docPDF.text("Proctor Violations", 120, 97);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.setFontSize(14);
+      const viols = attemptData.violationCount !== undefined ? attemptData.violationCount : (row['Violation Count'] || 0);
+      docPDF.setTextColor(viols > 0 ? 245, 158, 11 : 16, 185, 129); // amber / green
+      docPDF.text(`${viols} Violations`, 120, 107);
+
+      docPDF.setFontSize(9);
+      docPDF.setFont("helvetica", "normal");
+      docPDF.setTextColor(100, 116, 139);
+      docPDF.text("Submit Mode", 165, 97);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.setFontSize(11);
+      docPDF.setTextColor(71, 85, 105);
+      const isAuto = attemptData.autoSubmitted ? "Auto" : "Manual";
+      docPDF.text(isAuto, 165, 107);
+      
+      // Question-by-Question breakdown table
+      docPDF.setFontSize(14);
+      docPDF.setFont("helvetica", "bold");
+      docPDF.setTextColor(30, 41, 59);
+      docPDF.text("Section Breakdown & Timing Summary", 14, 132);
+      docPDF.setDrawColor(226, 232, 240);
+      docPDF.line(14, 136, 196, 136);
+
+      let currentY = 142;
+
+      // Helper function to format duration in seconds
+      const formatSecs = (val) => {
+        const m = Math.floor(val / 60);
+        const s = val % 60;
+        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+      };
+
+      if (attemptData.type === 'multisection' && attemptData.sections) {
+        // Multi-section report printing
+        Object.entries(attemptData.sections).forEach(([secId, sec], sIdx) => {
+          docPDF.setFontSize(11);
+          docPDF.setFont("helvetica", "bold");
+          docPDF.setTextColor(3, 105, 161); // deep sky-400
+          docPDF.text(`${sIdx + 1}. ${sec.sectionName || secId} (${sec.type.toUpperCase()})`, 14, currentY);
+          currentY += 6;
+
+          const rows = [];
+          const headers = ["Q No.", "Question", "Selected Answer / Status", "Time Taken"];
+
+          if (sec.type === 'mcq') {
+            const answersMap = sec.data?.answers || {};
+            const qList = sec.data?.questions || [];
+            
+            qList.forEach((q, qIdx) => {
+              const selectedIdx = answersMap[qIdx];
+              const selectedText = selectedIdx !== undefined ? (q.options?.[selectedIdx] || `Option ${selectedIdx + 1}`) : "Not Attempted";
+              const correctStr = (selectedText === q.correctAnswer) ? "Correct" : `Incorrect`;
+              const spentVal = sec.data?.timeSpentPerQ?.[qIdx] || 0;
+              rows.push([
+                `Q${qIdx + 1}`,
+                q.question || 'MCQ Option Question',
+                correctStr,
+                formatSecs(spentVal)
+              ]);
+            });
+          } else {
+            // Coding section questions
+            const completedMap = sec.data?.completed || {};
+            const answersMap = sec.data?.answers || {};
+            
+            // Try to resolve challenges
+            const challengesList = Object.keys(completedMap);
+            challengesList.forEach((chId, cIdx) => {
+              const hasCode = answersMap[chId] ? "Submitted" : "No Submission";
+              const spentVal = sec.data?.timeSpentPerQ?.[chId] || 0;
+              rows.push([
+                `Q${cIdx + 1}`,
+                `Challenge ID: ${chId}`,
+                hasCode,
+                formatSecs(spentVal)
+              ]);
+            });
+          }
+
+          docPDF.autoTable({
+            head: [headers],
+            body: rows,
+            startY: currentY,
+            styles: { fontSize: 8.5 },
+            theme: 'striped',
+            margin: { left: 14, right: 14 }
+          });
+
+          currentY = docPDF.lastAutoTable.finalY + 12;
+
+          // Check page break
+          if (currentY > 250) {
+            docPDF.addPage();
+            currentY = 20;
+          }
+        });
+      } else {
+        // Single MCQ test detailed report
+        const answersMap = attemptData.answers || {};
+        const questionsList = attemptData.questions || [];
+        
+        const rows = [];
+        const headers = ["Q No.", "Question text", "Student choice", "Outcome", "Time spent"];
+
+        if (questionsList.length > 0) {
+          questionsList.forEach((q, qIdx) => {
+            const choiceIdx = answersMap[qIdx];
+            const choiceText = choiceIdx !== undefined ? (q.options?.[choiceIdx] || `Option ${choiceIdx + 1}`) : "Unanswered";
+            const outcome = (choiceText === q.correctAnswer) ? "Correct" : `Incorrect`;
+            const duration = attemptData.timeSpentPerQ?.[qIdx] || 0;
+            rows.push([
+              `Q${qIdx + 1}`,
+              q.question || '',
+              choiceText,
+              outcome,
+              formatSecs(duration)
+            ]);
+          });
+
+          docPDF.autoTable({
+            head: [headers],
+            body: rows,
+            startY: currentY,
+            styles: { fontSize: 8.5 },
+            margin: { left: 14, right: 14 }
+          });
+          currentY = docPDF.lastAutoTable.finalY + 12;
+        } else {
+          // Fallback if no questions are inline
+          docPDF.setFontSize(10);
+          docPDF.setFont("helvetica", "normal");
+          docPDF.setTextColor(100, 116, 139);
+          docPDF.text("No structured question list stored in attempt data. Loading from generic records.", 14, currentY);
+          currentY += 8;
+        }
+      }
+
+      // Add signatures or footer stamps
+      if (currentY > 240) {
+        docPDF.addPage();
+        currentY = 20;
+      }
+
+      docPDF.setFontSize(9);
+      docPDF.setFont("helvetica", "normal");
+      docPDF.setTextColor(148, 163, 184);
+      docPDF.text("SEED-IT Platform - Generated by Staff Administrator Portal. All rights reserved.", 14, 280);
+
+      // Save the generated document
+      docPDF.save(`Report_${row['Roll Number'] || email}_${testID}.pdf`);
+      
+    } catch (pdfErr) {
+      console.error("PDF generation failed:", pdfErr);
+      alert(`❌ PDF Generation failed: ${pdfErr.message}`);
+    }
   };
 
   // Helper: prepare export data using dynamic columns
@@ -1428,6 +1708,7 @@ const StaffDashboard = () => {
                 <th>Time Taken</th>
                 <th>Submitted At</th>
                 <th>Auto</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -1446,11 +1727,28 @@ const StaffDashboard = () => {
                     <td>{result['Time Taken']}</td>
                     <td>{result['Submitted At'] ? new Date(result['Submitted At']).toLocaleString() : "N/A"}</td>
                     <td>{result['Auto Submitted'] === 'Yes' ? 'Yes' : 'No'}</td>
+                    <td>
+                      <button 
+                        onClick={() => handleGenerateStudentPDF(result)}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '0.75rem',
+                          backgroundColor: '#4f46e5',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Pull Report
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="11" style={{ textAlign: 'center', padding: '2rem' }}>No MCQ results found for the selected criteria.</td>
+                  <td colSpan="12" style={{ textAlign: 'center', padding: '2rem' }}>No MCQ results found for the selected criteria.</td>
                 </tr>
               )}
             </tbody>

@@ -62,7 +62,7 @@ const getAutoSubmitReasonLabel = (reason) => {
     return AUTO_SUBMIT_REASON_LABELS[reason] || AUTO_SUBMIT_REASON_LABELS.default;
 };
 
-const MCQPage = () => {
+const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {} }) => {
     const navigate = useNavigate();
     const { testSlug } = useParams();
     const location = useLocation();
@@ -88,6 +88,9 @@ const MCQPage = () => {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [remainingTime, setRemainingTime] = useState(0);
     const [testDuration, setTestDuration] = useState(0); // in seconds
+    const [qTimerRemaining, setQTimerRemaining] = useState(0);
+    const [lockedQuestions, setLockedQuestions] = useState([]);
+    const [timeSpentPerQ, setTimeSpentPerQ] = useState({});
     const [passkey, setPasskey] = useState('');
     const [isPasskeyValidated, setIsPasskeyValidated] = useState(false);
     const [isValidatingPasskey, setIsValidatingPasskey] = useState(false);
@@ -197,6 +200,22 @@ const MCQPage = () => {
 
     // Load user data and access control
     useEffect(() => {
+        if (isEmbedded) {
+            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
+            setUser(authData);
+            if (testData) {
+                setCurrentTest({
+                    ...testData,
+                    testInfo: testData,
+                    questions: testData.questions || []
+                });
+                setRemainingTime(secTimer);
+                setTestDuration(secTimer);
+                setIsPasskeyValidated(true);
+            }
+            return;
+        }
+
         const loadData = async () => {
             try {
                 const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
@@ -869,6 +888,9 @@ const MCQPage = () => {
 
     // Handle option selection
     const handleSelectOption = (option) => {
+        if (isEmbedded && lockedQuestions.includes(questionIndex)) {
+            return;
+        }
         setAnswers({
             ...answers,
             [questionIndex]: option
@@ -877,6 +899,9 @@ const MCQPage = () => {
 
     // Handle navigation
     const handleNavigateQuestion = (direction) => {
+        if (isEmbedded && (settings.forwardOnly || settings.questionTimer > 0) && direction === 'prev') {
+            return;
+        }
         if (direction === 'prev' && questionIndex > 0) {
             setQuestionIndex(questionIndex - 1);
         } else if (direction === 'next' && questionIndex < currentTest?.questions?.length - 1) {
@@ -1075,6 +1100,21 @@ const MCQPage = () => {
 
     // Handle test submission
     const handleSubmit = () => {
+        if (isEmbedded) {
+            const correctAnswers = calculateScore();
+            const totalQuestions = currentTest.questions.length;
+            const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+            if (onSectionSubmit) {
+                onSectionSubmit({
+                    answers: answers,
+                    timeSpentPerQ: timeSpentPerQ,
+                    score: correctAnswers,
+                    totalQuestions: totalQuestions,
+                    percentage: percentage
+                });
+            }
+            return;
+        }
         if (!showReviewAnswers && !showConfirmSubmit) {
             setShowConfirmSubmit(true);
             return;
@@ -1162,6 +1202,7 @@ const MCQPage = () => {
                 timeEndedISO: timeService.getNow().toISOString(),
                 submittedAtISO: timeService.getNow().toISOString(),
                 answers: answers,
+                timeSpentPerQ: timeSpentPerQ,
                 autoSubmitted: currentTest.autoSubmitted || false,
                 autoSubmitReason: '',
                 // Include proctoring data
@@ -1223,10 +1264,22 @@ const MCQPage = () => {
     const handleAutoSubmit = useCallback(async ({ reason = 'timer', skipResultView = false, noticeMessage, misbehaviorCount: proctorMisbehaviorCount } = {}) => {
         if (currentTest && !currentTest.submitted && user) {
             const correctAnswers = calculateScore();
-            const timeTaken = startTime ? Math.round((timeService.now() - startTime) / 1000) : 0;
             const totalQuestions = currentTest.questions.length;
-            const incorrectAnswers = totalQuestions - correctAnswers;
             const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+            if (isEmbedded) {
+                if (onSectionSubmit) {
+                    onSectionSubmit({
+                        answers: answers,
+                        timeSpentPerQ: timeSpentPerQ,
+                        score: correctAnswers,
+                        totalQuestions: totalQuestions,
+                        percentage: percentage
+                    });
+                }
+                return;
+            }
+            const timeTaken = startTime ? Math.round((timeService.now() - startTime) / 1000) : 0;
+            const incorrectAnswers = totalQuestions - correctAnswers;
             const reasonLabel = getAutoSubmitReasonLabel(reason);
 
             // Calculate proctoring violation stats
@@ -1262,6 +1315,7 @@ const MCQPage = () => {
                 timeEndedISO: timeService.getNow().toISOString(),
                 submittedAtISO: timeService.getNow().toISOString(),
                 answers: answers,
+                timeSpentPerQ: timeSpentPerQ,
                 autoSubmitted: true,
                 autoSubmitReason: reasonLabel,
                 // Include proctoring data
@@ -1347,6 +1401,62 @@ const MCQPage = () => {
             if (timer) clearInterval(timer);
         };
     }, [currentTest, testDuration, handleAutoSubmit]);
+
+    // Synchronize section remainingTime in embedded mode
+    useEffect(() => {
+        if (isEmbedded) {
+            setRemainingTime(secTimer);
+            if (secTimer <= 0) {
+                handleAutoSubmit({ reason: 'timer' });
+            }
+        }
+    }, [secTimer, isEmbedded, handleAutoSubmit]);
+
+    // Reset question-level timer on questionIndex change
+    useEffect(() => {
+        if (isEmbedded && settings.questionTimer > 0 && currentTest) {
+            setQTimerRemaining(settings.questionTimer);
+        }
+    }, [questionIndex, isEmbedded, settings.questionTimer, currentTest]);
+
+    // Question-level lock timer loop
+    useEffect(() => {
+        if (isEmbedded && settings.questionTimer > 0 && currentTest && !currentTest.submitted) {
+            const timer = setInterval(() => {
+                setQTimerRemaining(prev => {
+                    if (prev <= 1) {
+                        // Lock current question!
+                        setLockedQuestions(l => [...l, questionIndex]);
+                        // Move to next question, or auto-submit if it's the last question
+                        if (questionIndex + 1 < currentTest.questions.length) {
+                            setQuestionIndex(questionIndex + 1);
+                        } else {
+                            handleAutoSubmit({ reason: 'timer' });
+                        }
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [isEmbedded, settings.questionTimer, questionIndex, currentTest, handleAutoSubmit]);
+
+    // Track active question elapsed seconds
+    useEffect(() => {
+        let qTimer;
+        if (currentTest && !currentTest.submitted && questionIndex !== undefined) {
+            qTimer = setInterval(() => {
+                setTimeSpentPerQ(prev => ({
+                    ...prev,
+                    [questionIndex]: (prev[questionIndex] || 0) + 1
+                }));
+            }, 1000);
+        }
+        return () => {
+            if (qTimer) clearInterval(qTimer);
+        };
+    }, [currentTest, questionIndex]);
 
     useEffect(() => {
         if (currentTest && !currentTest.submitted) {
@@ -1914,25 +2024,59 @@ const MCQPage = () => {
                             /* Test Questions Area */
                             <>
                                 <div className="mcq-question-container">
-                                    <div className="mcq-question-header">
+                                    <div className="mcq-question-header" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                         <span className="mcq-question-number">Question {questionIndex + 1} of {totalQs}</span>
+                                        {isEmbedded && settings.questionTimer > 0 && (
+                                            <span style={{
+                                                fontSize: '0.8rem',
+                                                background: qTimerRemaining <= 10 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                                                color: qTimerRemaining <= 10 ? '#ef4444' : '#6366f1',
+                                                border: qTimerRemaining <= 10 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)',
+                                                padding: '3px 8px',
+                                                borderRadius: '12px',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                ⏳ Locks in: {qTimerRemaining}s
+                                            </span>
+                                        )}
                                         <button
                                             className={`mcq-bookmark-button ${bookmarkedQuestions.includes(questionIndex) ? 'bookmarked' : ''}`}
                                             onClick={() => toggleBookmark(questionIndex)}
+                                            style={{ marginLeft: 'auto' }}
                                         >
                                             <FaBookmark />
                                         </button>
                                     </div>
+                                    {isEmbedded && lockedQuestions.includes(questionIndex) && (
+                                        <div style={{
+                                            background: 'rgba(239, 68, 68, 0.12)',
+                                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                                            borderRadius: '8px',
+                                            padding: '12px 16px',
+                                            color: '#ef4444',
+                                            marginBottom: '15px',
+                                            fontWeight: '600',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <FaLock />
+                                            <span>This question is locked because its timer expired. You can no longer modify your answer.</span>
+                                        </div>
+                                    )}
                                     <div className="mcq-question-text">{renderTextWithCode(currentTest.questions[questionIndex].question)}</div>
                                     <div className="mcq-options">
                                         {currentTest.questions[questionIndex].options.map((option, optionIndex) => {
                                             const letter = String.fromCharCode(65 + optionIndex);
                                             const isSelected = answers[questionIndex] === optionIndex;
+                                            const isLocked = isEmbedded && lockedQuestions.includes(questionIndex);
                                             return (
                                                 <button
                                                     key={optionIndex}
                                                     className={`mcq-option ${isSelected ? 'selected' : ''}`}
                                                     onClick={() => handleSelectOption(optionIndex)}
+                                                    disabled={isLocked}
+                                                    style={isLocked ? { cursor: 'not-allowed', opacity: 0.8 } : {}}
                                                 >
                                                     <span className="mcq-option-letter">{letter}</span>
                                                     <span className="mcq-option-text">{option}</span>
@@ -2016,6 +2160,9 @@ const MCQPage = () => {
                                             key={index}
                                             className={itemClass}
                                             onClick={() => {
+                                                if (isEmbedded && (settings.forwardOnly || settings.questionTimer > 0)) {
+                                                    return; // Lock jumping around
+                                                }
                                                 setQuestionIndex(index);
                                                 setShowReviewAnswers(false);
                                             }}
@@ -2028,13 +2175,15 @@ const MCQPage = () => {
                         </div>
 
                         {/* Sidebar Submit Action */}
-                        <button
-                            className="mcq-sidebar-submit-btn"
-                            onClick={handleSubmit}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? 'Submitting...' : 'Finish Test'}
-                        </button>
+                        {!(isEmbedded && settings.timerRestrictedSubmit) && (
+                            <button
+                                className="mcq-sidebar-submit-btn"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Submitting...' : (isEmbedded ? 'Submit Section' : 'Finish Test')}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
