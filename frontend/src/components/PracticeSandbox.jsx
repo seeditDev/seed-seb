@@ -229,7 +229,11 @@ const PracticeSandbox = () => {
         setCode(FREE_BOILERPLATES[defaultLang] || '');
       }
     } catch (err) {
-      setError('Could not load question: ' + err.message);
+      if (err.message?.includes('404') || err.message?.includes('not found')) {
+        setError('This question is not yet configured or is temporarily unavailable in the sandbox.');
+      } else {
+        setError('Could not load question: ' + err.message);
+      }
     } finally {
       setLoading(false);
     }

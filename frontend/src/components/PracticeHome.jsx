@@ -624,7 +624,7 @@ const PracticeHome = () => {
                                         </td>
                                         <td className="ph-col-score" style={{ textAlign: 'right', paddingRight: '20px' }}>
                                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                            {p.id && (
+                                            {p.id && String(p.id).startsWith('Q') && (
                                               <button
                                                 onClick={() => navigate(`/student/practice/solve/${p.id}`, { state: { scoringType: 'PARTIAL_SCORE' } })}
                                                 style={{
@@ -826,7 +826,7 @@ const PracticeHome = () => {
                                   </td>
                                   <td className="ph-col-score" style={{ textAlign: 'right', paddingRight: '20px' }}>
                                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                      {p.id && (
+                                      {p.id && String(p.id).startsWith('Q') && (
                                         <button
                                           onClick={() => navigate(`/student/practice/solve/${p.id}`, { state: { scoringType: 'PARTIAL_SCORE' } })}
                                           style={{
