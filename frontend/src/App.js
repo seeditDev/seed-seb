@@ -146,7 +146,7 @@ const App = () => {
     const ua = navigator.userAgent || '';
     const hostname = window.location.hostname;
     const isDev = hostname === 'localhost' || hostname === '127.0.0.1';
-    const isUAOk = ua.includes('SEEDSEB');
+    const isUAOk = ua.includes('SEEDSEB') || !!window.qt || !!window.desktopBackend;
     setIsDesktopApp(isUAOk || isDev);
   }, []);
 
