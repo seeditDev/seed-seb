@@ -301,7 +301,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         };
 
         loadData();
-    }, [navigate]);
+    }, [navigate, isEmbedded, testData, secTimer]);
 
     // Start countdown timer effect
     useEffect(() => {

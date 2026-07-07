@@ -89,41 +89,74 @@ def compute_exe_hash():
 
 def verify_binary_integrity():
     """
-    Verify the running executable against the server-registered hash.
-    Returns True if valid or if server is unreachable (fail-open for offline use).
-    Returns False only if the server explicitly rejects the hash (tampered binary).
+    Verify the running executable against the Supabase-registered hash.
+
+    Logic:
+    - Compute SHA-256 of the running EXE.
+    - Query Supabase app_build_hashes table for a row with this hash
+      AND is_active = true AND version = CURRENT_VERSION.
+    - If the row EXISTS  → valid build, allow launch.
+    - If the row is MISSING → hash was revoked or never registered → BLOCK.
+    - If Supabase is UNREACHABLE (network error) → fail-open (offline grace).
+    - If not running as a compiled exe (no sys.executable path) → skip check.
     """
     exe_hash = compute_exe_hash()
     if not exe_hash:
         logging.info("Integrity check skipped: not running as compiled executable.")
         return True
 
-    logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (checking against server)")
+    logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (validating against Supabase)")
 
-    # ── Server Integrity Endpoint ─────────────────────────────────────────────
-    # Your server should expose a simple GET endpoint:
-    #   GET https://seedit.site/api/verify-binary?hash=<sha256>&version=<ver>
-    # Response JSON: { "valid": true/false, "message": "..." }
-    # If you haven't set up this endpoint yet, this check fails open (returns True)
-    # so the app continues working while you set up the server endpoint.
-    INTEGRITY_CHECK_URL = f"https://seedit.site/api/verify-binary?hash={exe_hash}&version={CURRENT_VERSION}"
+    # ── Supabase direct REST query ────────────────────────────────────────────
+    SUPABASE_URL     = "https://iygqntndsgiysvibqjyw.supabase.co"
+    SUPABASE_ANON_KEY = "sb_publishable_t3I55wzxcJI5owngYx0A4w_oCLVZvq7"
+
+    url = f"{SUPABASE_URL}/rest/v1/app_build_hashes"
+    headers = {
+        "apikey":        SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+        "Accept":        "application/json",
+    }
+    params = {
+        "sha256_hash": f"eq.{exe_hash.lower()}",
+        "version":     f"eq.{CURRENT_VERSION}",
+        "is_active":   "eq.true",
+        "select":      "id,sha256_hash,version,is_active",
+        "limit":       "1",
+    }
 
     try:
-        resp = requests.get(INTEGRITY_CHECK_URL, timeout=5)
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get("valid") is False:
-                logging.error(f"INTEGRITY VIOLATION: Server rejected binary hash. Message: {data.get('message', 'Tampered binary detected.')}")
-                return False
-            logging.info("Binary integrity check passed (server verified).")
-        else:
-            # Non-200 response: server unreachable or endpoint not yet set up — fail open
-            logging.info(f"Integrity check server returned {resp.status_code} — continuing (fail-open).")
-    except Exception as e:
-        # Network error or server not available — fail open so offline mode works
-        logging.info(f"Integrity check skipped (server unreachable): {e}")
+        resp = requests.get(url, headers=headers, params=params, timeout=8)
 
-    return True
+        if resp.status_code == 200:
+            rows = resp.json()
+            if rows:
+                # Hash found and active — legitimate build
+                logging.info("Binary integrity check PASSED (hash verified in Supabase).")
+                return True
+            else:
+                # Hash not found or revoked — tampered / outdated binary
+                logging.error(
+                    f"INTEGRITY VIOLATION: Hash {exe_hash[:16]}... not found in Supabase "
+                    f"(revoked or unregistered binary). Version={CURRENT_VERSION}"
+                )
+                return False
+
+        else:
+            # Supabase responded with an unexpected status — fail open to avoid
+            # blocking students during a Supabase outage.
+            logging.warning(
+                f"Integrity check: Supabase returned HTTP {resp.status_code} — "
+                f"failing open to preserve availability."
+            )
+            return True
+
+    except Exception as e:
+        # Network unreachable — fail open so offline / poor-connectivity students
+        # are not locked out. Revoked builds will be blocked on next online check.
+        logging.info(f"Integrity check skipped (Supabase unreachable): {e}")
+        return True
+
 
 # Firebase Configuration
 FIREBASE_CONFIG = {
@@ -167,7 +200,15 @@ FORBIDDEN_PROCESSES = [
     'Bluestacks.exe', 'Nox.exe', 'LDPlayer.exe', 'Genymotion.exe',
     # Windows Subsystem for Linux (WSL)
     'wsl.exe', 'wslhost.exe', 'wslclient.exe', 'wsl-service.exe',
-    'wslservice.exe', 'vmmem', 'vmmemWSL', 'bash.exe', 'sh.exe'
+    'wslservice.exe', 'vmmem', 'vmmemWSL', 'bash.exe', 'sh.exe',
+    # Debuggers / Reverse Engineering / LLMs
+    'x64dbg.exe', 'x32dbg.exe', 'ollydbg.exe', 'windbg.exe', 'ida64.exe', 'ida.exe',
+    'ghidra.exe', 'radare2.exe', 'cutter.exe', 'dnspy.exe', 'procmon.exe',
+    'procexp.exe', 'wireshark.exe', 'fiddler.exe', 'burpsuite.exe',
+    'python.exe', 'python3.exe', 'pythonw.exe',
+    # Terminals / Command Prompts (attacker-accessible)
+    'cmd.exe', 'powershell.exe', 'pwsh.exe', 'WindowsTerminal.exe', 'wt.exe',
+    'conhost.exe', 'mintty.exe', 'putty.exe', 'kitty.exe', 'SecureCRT.exe'
 ]
 
 
@@ -185,6 +226,104 @@ class ReactHTTPHandler(http.server.SimpleHTTPRequestHandler):
         logging.info("[LocalServer] " + (format % args))
 
 
+class StyledJSDialog(QDialog):
+    """Dark-themed branded dialog for JavaScript alert() and confirm() calls.
+    Replaces the plain native QMessageBox with a styled SEED-IT popup."""
+    def __init__(self, title="SEED-IT", message="", confirm_mode=False, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setModal(True)
+        self.setFixedSize(440, 220)
+        self._build_ui(title, message, confirm_mode)
+
+    def _build_ui(self, title, message, confirm_mode):
+        self.setObjectName("styledJSDialog")
+        self.setStyleSheet("""
+            QDialog#styledJSDialog {
+                background-color: #0f172a;
+                border: 1px solid #334155;
+                border-radius: 14px;
+            }
+            QLabel#titleLabel {
+                color: #f8fafc;
+                font-size: 15px;
+                font-weight: 700;
+                background: transparent;
+                border: none;
+            }
+            QLabel#msgLabel {
+                color: #94a3b8;
+                font-size: 13px;
+                background: transparent;
+                border: none;
+            }
+            QPushButton {
+                border-radius: 7px;
+                padding: 8px 22px;
+                font-size: 13px;
+                font-weight: 600;
+                border: none;
+            }
+            QPushButton#okBtn {
+                background-color: #6366f1;
+                color: white;
+            }
+            QPushButton#okBtn:hover { background-color: #4f46e5; }
+            QPushButton#yesBtn {
+                background-color: #10b981;
+                color: white;
+            }
+            QPushButton#yesBtn:hover { background-color: #059669; }
+            QPushButton#noBtn {
+                background-color: #334155;
+                color: #cbd5e1;
+            }
+            QPushButton#noBtn:hover { background-color: #475569; }
+        """)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(28, 24, 28, 22)
+        layout.setSpacing(14)
+
+        # Icon + Title row
+        title_row = QHBoxLayout()
+        icon = QLabel("🛡️")
+        icon.setStyleSheet("font-size: 20px; background: transparent; border: none;")
+        title_lbl = QLabel(title)
+        title_lbl.setObjectName("titleLabel")
+        title_row.addWidget(icon)
+        title_row.addWidget(title_lbl)
+        title_row.addStretch()
+        layout.addLayout(title_row)
+
+        # Message
+        msg_lbl = QLabel(message)
+        msg_lbl.setObjectName("msgLabel")
+        msg_lbl.setWordWrap(True)
+        layout.addWidget(msg_lbl)
+
+        layout.addStretch()
+
+        # Buttons
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        if confirm_mode:
+            no_btn = QPushButton("✕  No")
+            no_btn.setObjectName("noBtn")
+            no_btn.clicked.connect(self.reject)
+            yes_btn = QPushButton("✓  Yes")
+            yes_btn.setObjectName("yesBtn")
+            yes_btn.clicked.connect(self.accept)
+            btn_row.addWidget(no_btn)
+            btn_row.addWidget(yes_btn)
+        else:
+            ok_btn = QPushButton("OK")
+            ok_btn.setObjectName("okBtn")
+            ok_btn.clicked.connect(self.accept)
+            btn_row.addWidget(ok_btn)
+        layout.addLayout(btn_row)
+
+
 class CustomWebEnginePage(QWebEnginePage):
     """Custom QWebEnginePage to redirect JavaScript console output to Python log file."""
     def __init__(self, *args, **kwargs):
@@ -199,17 +338,14 @@ class CustomWebEnginePage(QWebEnginePage):
         logging.info(f"[JS Console] Line {line} ({source_id}): {message}")
 
     def javaScriptAlert(self, securityOrigin, msg):
-        QMessageBox.information(None, "SEED-SEB Assessment Portal", msg)
+        """Replace native alert() popup with styled SEED-IT dialog."""
+        dlg = StyledJSDialog(title="SEED-IT Notice", message=msg, confirm_mode=False)
+        dlg.exec()
 
     def javaScriptConfirm(self, securityOrigin, msg):
-        reply = QMessageBox.question(
-            None,
-            "SEED-SEB Assessment Portal",
-            msg,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
-        return reply == QMessageBox.StandardButton.Yes
+        """Replace native confirm() popup with styled SEED-IT dialog."""
+        dlg = StyledJSDialog(title="SEED-IT Confirmation", message=msg, confirm_mode=True)
+        return dlg.exec() == QDialog.DialogCode.Accepted
 
 
 class CustomWebEngineView(QWebEngineView):
@@ -239,6 +375,8 @@ class PreLaunchDialog(QDialog):
         self.version_check_passed = False
         self.camera_check_passed = False
         self.internet_check_passed = False
+        self.mic_check_passed = False        # warning-only (non-blocking)
+        self.debugger_check_passed = True    # must pass — blocks launch if debugger found
         
         self.drag_position = None
         self.init_ui()
@@ -319,15 +457,23 @@ class PreLaunchDialog(QDialog):
         self.camera_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.camera_label)
         
+        self.mic_label = QLabel("⏳ Checking microphone access...")
+        self.mic_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        status_layout.addWidget(self.mic_label)
+        
         self.internet_label = QLabel("⏳ Verifying internet connection...")
         self.internet_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.internet_label)
+        
+        self.debugger_label = QLabel("⏳ Scanning for unauthorized processes...")
+        self.debugger_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        status_layout.addWidget(self.debugger_label)
         
         layout.addWidget(status_container)
         
         # Progress bar
         self.progress_bar = QProgressBar()
-        self.progress_bar.setMaximum(3)
+        self.progress_bar.setMaximum(5)
         self.progress_bar.setValue(0)
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setStyleSheet("""
@@ -421,6 +567,8 @@ class PreLaunchDialog(QDialog):
     def perform_checks(self):
         self.check_internet()
         self.check_camera()
+        self.check_microphone()
+        self.check_debuggers()
         if self.internet_check_passed:
             self.check_version()
         else:
@@ -464,6 +612,79 @@ class PreLaunchDialog(QDialog):
             self.camera_label.setText("❌ <b>Camera Access:</b> Permission denied or error")
             self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
 
+    def check_microphone(self):
+        """Check if a microphone is accessible. Warning-only — does not block launch."""
+        mic_found = False
+        try:
+            # Try pyaudio first
+            import pyaudio
+            pa = pyaudio.PyAudio()
+            for i in range(pa.get_device_count()):
+                info = pa.get_device_info_by_index(i)
+                if info.get('maxInputChannels', 0) > 0:
+                    mic_found = True
+                    break
+            pa.terminate()
+        except ImportError:
+            # Fallback: check via Windows waveIn API
+            try:
+                import ctypes
+                num_devs = ctypes.windll.winmm.waveInGetNumDevs()
+                mic_found = num_devs > 0
+            except Exception:
+                mic_found = False
+        except Exception:
+            mic_found = False
+
+        self.mic_check_passed = True  # always non-blocking
+        if mic_found:
+            self.mic_label.setText("✅ <b>Microphone:</b> Detected & Ready")
+            self.mic_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        else:
+            self.mic_label.setText("⚠️ <b>Microphone:</b> Not detected (audio proctoring may be limited)")
+            self.mic_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
+
+    def check_debuggers(self):
+        """Scan for debuggers attached to this process and kill any FORBIDDEN_PROCESSES already running."""
+        threats_found = []
+
+        # 1. IsDebuggerPresent — block if debugger is attached to this very process
+        try:
+            import ctypes
+            if ctypes.windll.kernel32.IsDebuggerPresent():
+                threats_found.append('Debugger attached to process')
+                logging.critical('[Security] Debugger detected via IsDebuggerPresent!')
+        except Exception:
+            pass
+
+        # 2. Kill any FORBIDDEN_PROCESSES already running before launch
+        killed = []
+        for proc in psutil.process_iter(attrs=['pid', 'name']):
+            try:
+                name = proc.info.get('name', '')
+                if name and name.lower() in [p.lower() for p in FORBIDDEN_PROCESSES]:
+                    psutil.Process(proc.info['pid']).terminate()
+                    killed.append(name)
+                    logging.warning(f'[Security] Pre-launch terminated: {name}')
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        if threats_found or killed:
+            self.debugger_check_passed = False
+            detail = ', '.join(threats_found + killed)
+            self.debugger_label.setText(f"🛡️ <b>Security Scan:</b> Blocked & cleaned ({detail[:60]})")
+            self.debugger_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            if threats_found:
+                # Debugger on the process itself — hard block
+                self.debugger_check_passed = False
+                self.show_error('Debugger detected. Please close all debugging tools and restart.')
+        else:
+            self.debugger_check_passed = True
+            self.debugger_label.setText("✅ <b>Security Scan:</b> No threats detected")
+            self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
+
     def check_version(self):
         try:
             url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_CONFIG['projectId']}/databases/(default)/documents/version_seedit"
@@ -504,11 +725,12 @@ class PreLaunchDialog(QDialog):
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def update_launch_button(self):
-        # Allow launch if internet and version pass (camera is warning only)
-        if self.internet_check_passed and self.version_check_passed:
+        # Allow launch if internet and version pass, and no debugger detected
+        # Camera and mic are warning-only (non-blocking)
+        if self.internet_check_passed and self.version_check_passed and self.debugger_check_passed:
             self.checks_passed = True
             self.launch_button.setEnabled(True)
-            self.launch_button.setText("🚀 Launch Application")
+            self.launch_button.setText("\U0001f680 Launch Application")
         else:
             self.checks_passed = False
             self.launch_button.setEnabled(False)
@@ -517,7 +739,9 @@ class PreLaunchDialog(QDialog):
                 failed.append("Internet")
             if not self.version_check_passed:
                 failed.append("Version")
-            self.launch_button.setText(f"❌ Cannot Launch ({', '.join(failed)} required)")
+            if not self.debugger_check_passed:
+                failed.append("Security")
+            self.launch_button.setText(f"\u274c Cannot Launch ({', '.join(failed)} required)")
 
     def show_error(self, message):
         self.error_label.setText(f"⚠️ {message}")
@@ -612,6 +836,14 @@ class MainWindow(QMainWindow):
         self.conn_monitor_timer = QTimer(self)
         self.conn_monitor_timer.timeout.connect(self.verify_internet_connectivity)
         self.conn_monitor_timer.start(30000)
+
+        # Disable Windows three-finger swipe / virtual desktop gestures via registry
+        self.disable_swipe_gestures()
+
+        # Virtual desktop enforcement: poll every 500ms and forcibly reclaim focus
+        self.vd_guard_timer = QTimer(self)
+        self.vd_guard_timer.timeout.connect(self._enforce_foreground)
+        self.vd_guard_timer.start(500)
 
         # Enable Fullscreen
         self.showFullScreen()
@@ -878,13 +1110,19 @@ class MainWindow(QMainWindow):
         """Monitors the active page URL to hide exits and navigation controls during active assessments."""
         url_str = url.toString().lower()
         
-        # Determine if user is currently inside an active assessment (slug page e.g. /student/mcq/python-basics)
+        # Determine if user is currently inside an active assessment
+        # Covers: /student/mcq/<slug>, /student/coding/<slug>, /student/multisection
         import urllib.parse
         try:
             parsed = urllib.parse.urlparse(url_str)
             path = parsed.path.rstrip('/')
             parts = path.split('/')
-            is_assessment = len(parts) >= 4 and parts[1] == "student" and parts[2] in ["mcq", "coding"]
+            # MCQ/Coding have slug: /student/mcq/test-name (4+ parts)
+            # MultiSection is just: /student/multisection (3 parts)
+            is_assessment = (
+                (len(parts) >= 4 and parts[1] == "student" and parts[2] in ["mcq", "coding"])
+                or (len(parts) >= 3 and parts[1] == "student" and parts[2] == "multisection")
+            )
         except Exception:
             is_assessment = False
 
@@ -896,6 +1134,44 @@ class MainWindow(QMainWindow):
         self.logout_btn.setVisible(not is_assessment)
         
         logging.info(f"URL changed: {url.toString()} (Assessment Active: {is_assessment})")
+
+    def disable_swipe_gestures(self):
+        """Disable Windows three-finger swipe and virtual desktop gesture via registry at runtime."""
+        try:
+            import winreg
+            # Disable touchpad three-finger and four-finger gestures (Windows 10/11)
+            keys_to_disable = [
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerSlideEnabled", 0),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerSlideEnabled", 0),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerTapEnabled", 0),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerTapEnabled", 0),
+            ]
+            for reg_path, name, val in keys_to_disable:
+                try:
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_SET_VALUE)
+                    winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, val)
+                    winreg.CloseKey(key)
+                except Exception:
+                    pass  # Key may not exist on all systems
+            logging.info("[Security] Three-finger swipe gestures disabled via registry.")
+        except Exception as e:
+            logging.warning(f"[Security] Could not disable swipe gestures: {e}")
+
+    def _enforce_foreground(self):
+        """Poll every 500ms: if our window is not the foreground window, immediately reclaim it.
+        This prevents virtual desktop switches and second desktop creation from taking effect."""
+        try:
+            import ctypes
+            hwnd = int(self.winId())
+            fg = ctypes.windll.user32.GetForegroundWindow()
+            if fg != hwnd:
+                self.showFullScreen()
+                self.raise_()
+                self.activateWindow()
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+                logging.warning("[Security] Foreground window stolen — reclaiming focus.")
+        except Exception:
+            pass
 
     def verify_internet_connectivity(self):
         """Periodic check for internet connectivity. If lost, opens the custom WiFi configuration dialog."""
@@ -911,12 +1187,12 @@ class MainWindow(QMainWindow):
         """Asks for confirmation using custom ExitConfirmDialog, blocking it entirely during assessments."""
         if getattr(self, 'is_assessment_active', False):
             logging.warning("Close attempt blocked: Active assessment in progress.")
-            QMessageBox.warning(
-                self,
-                "Exit Blocked",
-                "You cannot exit the SEED-SEB browser during an active assessment.\nPlease complete and submit your assessment first.",
-                QMessageBox.StandardButton.Ok
+            dlg = StyledJSDialog(
+                title="Exit Blocked",
+                message="You cannot exit the SEED-SEB browser during an active assessment.\nPlease complete and submit your assessment first.",
+                confirm_mode=False
             )
+            dlg.exec()
             event.ignore()
             return
 
@@ -925,7 +1201,10 @@ class MainWindow(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             logging.info("Application closed by student choice.")
             self.unblock_win_shortcuts()
+            self._restore_swipe_gestures()  # re-enable touchpad gestures for normal use
             try:
+                if hasattr(self, 'vd_guard_timer'):
+                    self.vd_guard_timer.stop()
                 if hasattr(self, 'process_terminator') and self.process_terminator:
                     self.process_terminator.stop()
             except:
@@ -942,6 +1221,28 @@ class MainWindow(QMainWindow):
         else:
             logging.info("Application close prevented.")
             event.ignore()
+
+    def _restore_swipe_gestures(self):
+        """Restore three-finger and four-finger touchpad gestures after the app exits cleanly."""
+        try:
+            import winreg
+            keys_to_restore = [
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerSlideEnabled", 1),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerSlideEnabled",  1),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerTapEnabled",   1),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerTapEnabled",    1),
+            ]
+            for reg_path, name, val in keys_to_restore:
+                try:
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_SET_VALUE)
+                    winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, val)
+                    winreg.CloseKey(key)
+                except Exception:
+                    pass
+            logging.info("[Security] Touchpad gestures restored on exit.")
+        except Exception as e:
+            logging.warning(f"[Security] Could not restore swipe gestures: {e}")
+
 
 
 class ExitConfirmDialog(QDialog):
