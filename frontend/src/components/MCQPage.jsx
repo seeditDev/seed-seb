@@ -124,6 +124,13 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     const [lastProgressSync, setLastProgressSync] = useState(sessionStorage.getItem('mcqLastProgressSync') || null);
     const progressSyncInFlight = useRef(false);
     const activeProgressTestRef = useRef(null);
+
+    // Always keep a ref to the latest onSectionSubmit callback so handleAutoSubmit
+    // doesn't capture a stale version even after autoSubmitSection gets a new reference.
+    const onSectionSubmitRef = useRef(onSectionSubmit);
+    useEffect(() => {
+        onSectionSubmitRef.current = onSectionSubmit;
+    }, [onSectionSubmit]);
     const setAutoSubmitMessage = useCallback((message) => {
         sessionStorage.setItem(AUTO_SUBMIT_NOTICE_KEY, message);
         setAutoSubmitNotice(message);
@@ -1269,8 +1276,8 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             const totalQuestions = currentTest.questions.length;
             const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
             if (isEmbedded) {
-                if (onSectionSubmit) {
-                    onSectionSubmit({
+                if (onSectionSubmitRef.current) {
+                    onSectionSubmitRef.current({
                         answers: answers,
                         timeSpentPerQ: timeSpentPerQ,
                         score: correctAnswers,
@@ -1378,7 +1385,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 }));
             }
         }
-    }, [currentTest, calculateScore, startTime, user, answers, testStartTimeISO, clearTestSessionStorage, navigate, setAutoSubmitMessage]);
+    }, [currentTest, calculateScore, startTime, user, answers, testStartTimeISO, clearTestSessionStorage, navigate, setAutoSubmitMessage, isEmbedded, timeSpentPerQ]);
 
     // Timer effect - countdown timer
     useEffect(() => {

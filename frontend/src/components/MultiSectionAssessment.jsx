@@ -90,6 +90,9 @@ const MultiSectionAssessment = () => {
   const [violationCount, setViolationCount] = useState(0);
   const timerRef = useRef(null);
 
+  // Flag set when section timer hits 0 — avoids calling autoSubmitSection inside a state updater
+  const [sectionTimedOut, setSectionTimedOut] = useState(false);
+
   useEffect(() => {
     const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
     const assessmentData = JSON.parse(localStorage.getItem('multisectionAssessmentData') || 'null');
@@ -169,14 +172,17 @@ const MultiSectionAssessment = () => {
     return val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   };
 
-  // Timer loop
+  // Timer loop — IMPORTANT: do NOT call autoSubmitSection() inside the state updater.
+  // Doing so causes React to throw ("Cannot update a component while rendering a different component"),
+  // which triggers the ErrorBoundary's "Something went wrong" screen.
+  // Instead we set a sectionTimedOut flag and handle it in a separate effect.
   useEffect(() => {
     if (secStarted && secTimer > 0) {
       timerRef.current = setInterval(() => {
         setSecTimer(prev => {
           if (prev <= 1) {
             clearInterval(timerRef.current);
-            autoSubmitSection();
+            setSectionTimedOut(true); // signal without side-effect
             return 0;
           }
           return prev - 1;
@@ -185,6 +191,14 @@ const MultiSectionAssessment = () => {
     }
     return () => clearInterval(timerRef.current);
   }, [secStarted, currentSecIdx, secTimer]);
+
+  // Handle section timer expiry safely (outside state updater)
+  useEffect(() => {
+    if (sectionTimedOut) {
+      setSectionTimedOut(false);
+      autoSubmitSection();
+    }
+  }, [sectionTimedOut, autoSubmitSection]);
 
   // Section Countdown Timer Effect
   useEffect(() => {
@@ -448,8 +462,12 @@ const MultiSectionAssessment = () => {
       return [];
     })();
 
+    // IMPORTANT: key={activeSection.sectionId} forces React to UNMOUNT + REMOUNT the
+    // embedded component each time the section changes. Without this, React reuses the
+    // same instance and the old section's answers/state bleeds into the next section.
     const sectionElement = activeSection.type === 'mcq' ? (
       <MCQPage 
+        key={`section-${activeSection.sectionId}`}
         isEmbedded={true}
         testData={activeSecData}
         secTimer={secTimer}
@@ -463,6 +481,7 @@ const MultiSectionAssessment = () => {
       />
     ) : (
       <CodingAssessmentSandbox 
+        key={`section-${activeSection.sectionId}`}
         isEmbedded={true}
         testData={activeSecData}
         secTimer={secTimer}
