@@ -93,6 +93,10 @@ const MultiSectionAssessment = () => {
   // Flag set when section timer hits 0 — avoids calling autoSubmitSection inside a state updater
   const [sectionTimedOut, setSectionTimedOut] = useState(false);
 
+  // Holds partial progress restored from localStorage during crash recovery.
+  // Set in the initial effect, consumed in a separate effect once `assessment` is loaded.
+  const [restoredProgress, setRestoredProgress] = useState(null);
+
   useEffect(() => {
     const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
     const assessmentData = JSON.parse(localStorage.getItem('multisectionAssessmentData') || 'null');
@@ -104,8 +108,37 @@ const MultiSectionAssessment = () => {
     
     setUser(authData);
     setAssessment(assessmentData);
+
+    // Crash recovery: check for a partial progress snapshot from a previous session
+    const progressKey = `msaProgress_${assessmentData.id}`;
+    const saved = JSON.parse(localStorage.getItem(progressKey) || 'null');
+    if (saved && saved.email === authData.Email) {
+      console.log('[MSA] Restoring partial progress from crash recovery:', saved);
+      setExamResults(saved.examResults || {});
+      setSecCompleted(saved.completedSections || {});
+      // Store so the assessment-ready effect below can resume from next section
+      setRestoredProgress(saved);
+    }
+
     loadAllSections(assessmentData);
   }, []);
+
+  // Resume from next uncompleted section after a crash/reload.
+  // Runs once assessment and handleStartSection are both ready.
+  // We split this into a separate effect because `assessment` is set async (via setState)
+  // so we can't call handleStartSection in the initial effect above.
+  useEffect(() => {
+    if (!assessment || !restoredProgress) return;
+    const nextIdx = (restoredProgress.lastSectionIdx ?? -1) + 1;
+    console.log(`[MSA] Crash recovery: resuming from section index ${nextIdx}`);
+    if (nextIdx < assessment.sections.length) {
+      handleStartSection(nextIdx);
+    } else {
+      // All sections were already completed — show the finished screen
+      setExamFinished(true);
+    }
+    setRestoredProgress(null); // consume so this effect doesn't re-fire
+  }, [assessment, restoredProgress, handleStartSection]);
 
   const getInitialCode = () => {
     const activeSection = assessment.sections[currentSecIdx];
@@ -254,6 +287,47 @@ const MultiSectionAssessment = () => {
     // Find next uncompleted section
     const nextIdx = currentSecIdx + 1;
     if (nextIdx < assessment.sections.length) {
+      // ── Persist partial progress so a crash/shutdown doesn't lose this section ──
+      // 1. Save a localStorage snapshot for instant local recovery
+      const progressKey = `msaProgress_${assessment.id}`;
+      const progressSnapshot = {
+        assessmentId: assessment.id,
+        email: user?.Email || '',
+        // Derive from updatedResults keys — guaranteed up-to-date in this call
+        completedSections: Object.fromEntries(Object.keys(updatedResults).map(id => [id, true])),
+        examResults: updatedResults,
+        lastSectionIdx: currentSecIdx,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(progressKey, JSON.stringify(progressSnapshot));
+
+      // 2. Write partial result to Firestore immediately (merge so it accumulates section by section)
+      if (user?.Email) {
+        const college = user.College || 'KGKITE';
+        const year = user.Year || '2026';
+        const assessmentDocPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+        setDoc(doc(db, assessmentDocPath), {
+          email: user.Email,
+          rollNumber: user['Roll Number'] || '',
+          name: user.Name || '',
+          college, year,
+          department: user.Department || '',
+          testID: assessment.id,
+          testName: assessment.name,
+          assessmentId: assessment.id,
+          assessmentName: assessment.name,
+          type: 'multisection',
+          status: 'partial',
+          sectionsCompleted: currentSecIdx + 1,
+          totalSections: assessment.sections.length,
+          sections: updatedResults,
+          lastUpdatedAt: serverTimestamp(),
+          lastUpdatedAtISO: new Date().toISOString()
+        }, { merge: true })
+          .then(() => console.log(`[MSA] Partial progress saved to Firestore after section ${currentSecIdx + 1}`))
+          .catch(e => console.error('[MSA] Failed to save partial progress to Firestore:', e));
+      }
+
       handleStartSection(nextIdx);
     } else {
       // Completed all sections!
@@ -321,7 +395,9 @@ const MultiSectionAssessment = () => {
           .catch(supErr => console.warn("Failed to write summary to Supabase:", supErr));
       }
       setExamFinished(true);
-      localStorage.removeItem("multisectionAssessmentData");
+      // Clean up both the assessment data and partial progress key
+      localStorage.removeItem('multisectionAssessmentData');
+      localStorage.removeItem(`msaProgress_${assessment.id}`);
     }
   }, [examFinished, currentSecIdx, assessment, examResults, handleStartSection, user]);
 
