@@ -5,21 +5,23 @@
  * Contains its own MCQ section renderer and Coding section renderer.
  * NO dependency on MCQPage.jsx or CodingAssessmentSandbox.jsx.
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import {
-  FaClock, FaCheckCircle, FaLock, FaBookOpen, FaCode, FaChevronRight,
-  FaArrowLeft, FaArrowRight, FaBookmark, FaPlay, FaCheck, FaTimes,
-  FaUndo, FaList, FaSearch, FaChevronLeft, FaLightbulb, FaExclamationTriangle
+  FaClock, FaCheckCircle, FaLock, FaBookOpen, FaCode,
+  FaArrowLeft, FaArrowRight, FaBookmark, FaPlay, FaTimes,
+  FaUndo, FaChevronLeft, FaChevronRight, FaExclamationTriangle
 } from 'react-icons/fa';
 import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
+import '../styles/CodingAssessmentPage.css';
 import { db } from '../firebase-config';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { supabase } from '../supabaseClient';
 import desktopBridge from '../utils/desktopBridge';
+import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 
@@ -43,6 +45,14 @@ const formatSecs = (val) => {
   const m = Math.floor(val / 60);
   const s = val % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
+};
+
+const isTruthy = (val) => {
+  if (val === undefined || val === null) return false;
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'number') return val === 1;
+  const s = String(val).trim().toLowerCase();
+  return s === 'true' || s === '1';
 };
 
 /**
@@ -93,13 +103,73 @@ const FREE_BOILERPLATES = {
 // ─── MCQ Section Renderer ────────────────────────────────────────────────────
 
 const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
-  const questions = sectionData?.questions || [];
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [bookmarked, setBookmarked] = useState([]);
-  const [lockedQuestions, setLockedQuestions] = useState([]);
-  const [qTimerRemaining, setQTimerRemaining] = useState(settings.questionTimer || 0);
-  const [timeSpentPerQ, setTimeSpentPerQ] = useState({});
+  const questions = useMemo(() => sectionData?.questions || [], [sectionData?.questions]);
+  const stateKey = `msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`;
+
+  const [answers, setAnswers] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).answers || {};
+    } catch (_) {}
+    return {};
+  });
+
+  const [questionIndex, setQuestionIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).questionIndex || 0;
+    } catch (_) {}
+    return 0;
+  });
+
+  const [bookmarked, setBookmarked] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).bookmarked || [];
+    } catch (_) {}
+    return [];
+  });
+
+  const [lockedQuestions, setLockedQuestions] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).lockedQuestions || [];
+    } catch (_) {}
+    return [];
+  });
+
+  const [qTimerRemaining, setQTimerRemaining] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.qTimerRemaining !== undefined) return parsed.qTimerRemaining;
+      }
+    } catch (_) {}
+    return settings.questionTimer || 0;
+  });
+
+  const [timeSpentPerQ, setTimeSpentPerQ] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).timeSpentPerQ || {};
+    } catch (_) {}
+    return {};
+  });
+
+  // Save active MCQ section state to localStorage on changes
+  useEffect(() => {
+    const snapshot = {
+      answers,
+      questionIndex,
+      bookmarked,
+      lockedQuestions,
+      qTimerRemaining,
+      timeSpentPerQ
+    };
+    localStorage.setItem(stateKey, JSON.stringify(snapshot));
+  }, [answers, questionIndex, bookmarked, lockedQuestions, qTimerRemaining, timeSpentPerQ, stateKey]);
+
   const [showReview, setShowReview] = useState(false);
   const [proctoringData, setProctoringData] = useState({ violationCount: 0, violations: [] });
   const [customNotice, setCustomNotice] = useState(null);
@@ -128,12 +198,29 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
     return () => clearInterval(t);
   }, [questionIndex]);
 
+  const isFirstMount = useRef(true);
+
   // Per-question lock timer
   useEffect(() => {
     if (settings.questionTimer > 0) {
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+        // Don't reset if we restored a saved timer for this question index!
+        const key = `msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`;
+        try {
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.questionIndex === questionIndex && parsed.qTimerRemaining !== undefined) {
+              setQTimerRemaining(parsed.qTimerRemaining);
+              return;
+            }
+          }
+        } catch (_) {}
+      }
       setQTimerRemaining(settings.questionTimer);
     }
-  }, [questionIndex, settings.questionTimer]);
+  }, [questionIndex, settings.questionTimer, assessmentId, sectionData]);
 
   useEffect(() => {
     if (settings.questionTimer <= 0) return;
@@ -167,6 +254,10 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
       else if (v.type === 'multiple_faces') acc.totalMultipleFaces++;
       return acc;
     }, { totalNoFace: 0, totalMultipleFaces: 0 });
+    
+    // Clean up active MCQ state from localStorage
+    localStorage.removeItem(stateKey);
+
     if (onSubmitRef.current) {
       onSubmitRef.current({
         answers,
@@ -180,7 +271,7 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
         violations: proctoringData.violations || []
       });
     }
-  }, [answers, timeSpentPerQ, questions, proctoringData]);
+  }, [answers, timeSpentPerQ, questions, proctoringData, stateKey]);
 
   const handleSelectOption = (optIdx) => {
     if (lockedQuestions.includes(questionIndex)) return;
@@ -189,7 +280,12 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
 
   const navQuestion = (dir) => {
     if (dir === 'prev' && questionIndex > 0 && !settings.forwardOnly) setQuestionIndex(q => q - 1);
-    if (dir === 'next' && questionIndex < questions.length - 1) setQuestionIndex(q => q + 1);
+    if (dir === 'next' && questionIndex < questions.length - 1) {
+      if (settings.questionTimer > 0) {
+        setLockedQuestions(l => [...l, questionIndex]);
+      }
+      setQuestionIndex(q => q + 1);
+    }
   };
 
   const renderTextWithCode = (text) => {
@@ -497,51 +593,154 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
 // ─── Coding Section Renderer ──────────────────────────────────────────────────
 
 const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
-  const challenges = sectionData?.questions || [];
-  // Read current user once for proctoring
+  const challenges = useMemo(() => sectionData?.questions || [], [sectionData?.questions]);
   const codingUser = (() => { try { return JSON.parse(localStorage.getItem('auth_data') || '{}'); } catch { return {}; } })();
-  const [selectedChallenge, setSelectedChallenge] = useState(challenges[0] || null);
+  
+  const codingStateKey = `msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`;
+
+  const [selectedChallenge, setSelectedChallenge] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.selectedChallengeId) {
+          const found = challenges.find(ch => ch.id === parsed.selectedChallengeId);
+          if (found) return found;
+        }
+      }
+    } catch (_) {}
+    return challenges[0] || null;
+  });
+
   const [language, setLanguage] = useState('cpp');
-  const [code, setCode] = useState('');
   const [customInput, setCustomInput] = useState('');
-  const [activeTab, setActiveTab] = useState('input');
-  const [activeLeftTab, setActiveLeftTab] = useState('description');
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerSearch, setDrawerSearch] = useState('');
+  const [useCustomInput, setUseCustomInput] = useState(false);
+  const [activeResultTab, setActiveResultTab] = useState('input'); // 'input', 'output', 'results'
   const [isRunning, setIsRunning] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  
   const [stdout, setStdout] = useState('');
   const [stderr, setStderr] = useState('');
-  const [exitCode, setExitCode] = useState(null);
-  const [testResults, setTestResults] = useState([]);
-  const [completedChallenges, setCompletedChallenges] = useState({});
-  const [lockedChallenges, setLockedChallenges] = useState([]);
-  const [qTimerRemaining, setQTimerRemaining] = useState(0);
-  const [timeSpentPerQ, setTimeSpentPerQ] = useState({});
+  const [runResults, setRunResults] = useState(null); // Results for sample test runs
+  const [evalResults, setEvalResults] = useState(null); // Results for hidden test runs
+  
+  const [completedChallenges, setCompletedChallenges] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).completedChallenges || {};
+    } catch (_) {}
+    return {};
+  });
+
+  const [lockedChallenges, setLockedChallenges] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).lockedChallenges || [];
+    } catch (_) {}
+    return [];
+  });
+
+  const [qTimerRemaining, setQTimerRemaining] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.qTimerRemaining !== undefined) return parsed.qTimerRemaining;
+      }
+    } catch (_) {}
+    return 0;
+  });
+
+  const [timeSpentPerQ, setTimeSpentPerQ] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).timeSpentPerQ || {};
+    } catch (_) {}
+    return {};
+  });
+
   const [customNotice, setCustomNotice] = useState(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  
+  const [visitedChallenges, setVisitedChallenges] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).visitedChallenges || (challenges[0] ? { [challenges[0].id]: true } : {});
+    } catch (_) {}
+    return challenges[0] ? { [challenges[0].id]: true } : {};
+  });
+
+  const [bookmarkedChallenges, setBookmarkedChallenges] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).bookmarkedChallenges || {};
+    } catch (_) {}
+    return {};
+  });
+
+  const [questionScores, setQuestionScores] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_active_coding_state_${assessmentId}_${sectionData?.id || 'section'}`);
+      if (saved) return JSON.parse(saved).questionScores || {};
+    } catch (_) {}
+    return {};
+  });
+
+  // Save active Coding section state to localStorage on changes
+  useEffect(() => {
+    const snapshot = {
+      selectedChallengeId: selectedChallenge?.id || '',
+      completedChallenges,
+      lockedChallenges,
+      qTimerRemaining,
+      timeSpentPerQ,
+      visitedChallenges,
+      bookmarkedChallenges,
+      questionScores
+    };
+    localStorage.setItem(codingStateKey, JSON.stringify(snapshot));
+  }, [selectedChallenge, completedChallenges, lockedChallenges, qTimerRemaining, timeSpentPerQ, visitedChallenges, bookmarkedChallenges, questionScores, codingStateKey]);
+
+  // Persistent code map across question switching
+  const [codeMap, setCodeMap] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`msa_codemap_${assessmentId}_${sectionData?.id || 'section'}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (_) {
+      return {};
+    }
+  });
 
   const onSubmitRef = useRef(onSectionSubmit);
   useEffect(() => { onSubmitRef.current = onSectionSubmit; }, [onSectionSubmit]);
 
   const currentChallengeIndex = challenges.findIndex(ch => ch.id === selectedChallenge?.id);
 
-  // Sync boilerplate when challenge or language changes
+  // Synchronize dynamic code state when language or selected question changes
   useEffect(() => {
     if (!selectedChallenge) return;
-    const savedKey = `code_${selectedChallenge.id}_${language}`;
-    const saved = localStorage.getItem(savedKey);
-    if (saved) {
-      setCode(saved);
-    } else {
-      setCode(selectedChallenge.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
+    const key = `${selectedChallenge.id}_${language}`;
+    if (!codeMap[key]) {
+      const boilerplate = selectedChallenge.boilerplates?.[language] || FREE_BOILERPLATES[language] || '';
+      setCodeMap(prev => {
+        const next = { ...prev, [key]: boilerplate };
+        try {
+          localStorage.setItem(`msa_codemap_${assessmentId}_${sectionData?.id || 'section'}`, JSON.stringify(next));
+        } catch (_) {}
+        return next;
+      });
     }
+  }, [selectedChallenge, language, codeMap, assessmentId, sectionData]);
+
+  // Sync tab data when switching active question
+  useEffect(() => {
+    if (!selectedChallenge) return;
     setStdout('');
     setStderr('');
-    setExitCode(null);
-    setTestResults([]);
-    setActiveTab('input');
-  }, [selectedChallenge, language]);
+    setRunResults(null);
+    setEvalResults(null);
+    setActiveResultTab('input');
+  }, [selectedChallenge]);
 
   // Auto-submit when section timer expires
   useEffect(() => {
@@ -551,12 +750,27 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secTimer]);
 
+  const isFirstCodingMount = useRef(true);
+
   // Per-question lock timer
   useEffect(() => {
     if (!settings.questionTimers || settings.questionTimers.length === 0 || !selectedChallenge) return;
+    if (isFirstCodingMount.current) {
+      isFirstCodingMount.current = false;
+      try {
+        const saved = localStorage.getItem(codingStateKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.selectedChallengeId === selectedChallenge.id && parsed.qTimerRemaining !== undefined) {
+            setQTimerRemaining(parsed.qTimerRemaining);
+            return;
+          }
+        }
+      } catch (_) {}
+    }
     const activeTimer = settings.questionTimers[currentChallengeIndex] || 0;
     setQTimerRemaining(activeTimer);
-  }, [selectedChallenge, currentChallengeIndex, settings.questionTimers]);
+  }, [selectedChallenge, currentChallengeIndex, settings.questionTimers, codingStateKey]);
 
   useEffect(() => {
     if (!settings.questionTimers || settings.questionTimers.length === 0 || !selectedChallenge) return;
@@ -568,6 +782,7 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
           setLockedChallenges(l => [...l, selectedChallenge.id]);
           if (currentChallengeIndex + 1 < challenges.length) {
             setSelectedChallenge(challenges[currentChallengeIndex + 1]);
+            setVisitedChallenges(v => ({ ...v, [challenges[currentChallengeIndex + 1].id]: true }));
           } else {
             doSectionSubmit();
           }
@@ -589,105 +804,272 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
     return () => clearInterval(t);
   }, [selectedChallenge]);
 
-  // Autosave code every 30s
-  useEffect(() => {
-    if (!selectedChallenge || !code) return;
-    const t = setInterval(() => {
-      localStorage.setItem(`code_${selectedChallenge.id}_${language}`, code);
-    }, 30000);
-    return () => clearInterval(t);
-  }, [selectedChallenge, code, language]);
+  const handleCodeChange = (value) => {
+    if (!selectedChallenge) return;
+    const key = `${selectedChallenge.id}_${language}`;
+    const next = {
+      ...codeMap,
+      [key]: value
+    };
+    setCodeMap(next);
+    try {
+      localStorage.setItem(`msa_codemap_${assessmentId}_${sectionData?.id || 'section'}`, JSON.stringify(next));
+    } catch (_) {}
+  };
 
   const doSectionSubmit = useCallback(() => {
     const allAnswers = {};
     challenges.forEach(ch => {
-      const savedKey = `code_${ch.id}_${language}`;
-      const saved = localStorage.getItem(savedKey);
-      if (saved) allAnswers[ch.id] = saved;
-      else if (ch.id === selectedChallenge?.id) allAnswers[ch.id] = code;
+      const key = `${ch.id}_${language}`;
+      allAnswers[ch.id] = codeMap[key] || ch.boilerplates?.[language] || FREE_BOILERPLATES[language] || '';
     });
+
+    const totalMax = challenges.reduce((acc, q) => acc + (q.weight || 20), 0);
+    const totalEarned = challenges.reduce((acc, q) => acc + (questionScores[q.id]?.score || 0), 0);
+    const percentage = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
+
+    // Clean up active Coding state from localStorage
+    localStorage.removeItem(codingStateKey);
+
     if (onSubmitRef.current) {
       onSubmitRef.current({
         answers: allAnswers,
         timeSpentPerQ,
-        completed: completedChallenges
+        completed: completedChallenges,
+        questionScores,
+        score: totalEarned,
+        totalQuestions: challenges.length,
+        percentage
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [challenges, language, code, selectedChallenge, timeSpentPerQ, completedChallenges]);
+  }, [challenges, language, codeMap, questionScores, timeSpentPerQ, completedChallenges, codingStateKey]);
 
+  // Resizable split panels states & mouse drag hooks
+  const [leftPaneWidth, setLeftPaneWidth] = useState(42); // percentage
+  const [outputPaneHeight, setOutputPaneHeight] = useState(220); // pixels
+  const isDraggingVertRef = useRef(false);
+  const isDraggingHorizRef = useRef(false);
+  const workspaceBodyRef = useRef(null);
+  const rightPaneRef = useRef(null);
+
+  const startVertDrag = useCallback((e) => {
+    e.preventDefault();
+    isDraggingVertRef.current = true;
+    const startX = e.clientX;
+    const startWidth = leftPaneWidth;
+    const body = workspaceBodyRef.current;
+    const totalW = body ? body.getBoundingClientRect().width : window.innerWidth;
+
+    const onMove = (mv) => {
+      if (!isDraggingVertRef.current) return;
+      const delta = mv.clientX - startX;
+      const newPct = Math.min(65, Math.max(25, startWidth + (delta / totalW) * 100));
+      setLeftPaneWidth(newPct);
+    };
+    const onUp = () => {
+      isDraggingVertRef.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [leftPaneWidth]);
+
+  const startHorizDrag = useCallback((e) => {
+    e.preventDefault();
+    isDraggingHorizRef.current = true;
+    const startY = e.clientY;
+    const startH = outputPaneHeight;
+    const rp = rightPaneRef.current;
+    const totalH = rp ? rp.getBoundingClientRect().height : 500;
+
+    const onMove = (mv) => {
+      if (!isDraggingHorizRef.current) return;
+      const delta = startY - mv.clientY;
+      const newH = Math.min(totalH * 0.6, Math.max(80, startH + delta));
+      setOutputPaneHeight(Math.round(newH));
+    };
+    const onUp = () => {
+      isDraggingHorizRef.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [outputPaneHeight]);
+
+  // Compile & execute standard test cases
   const handleRunCode = async () => {
     if (!selectedChallenge) return;
     setIsRunning(true);
-    setActiveTab('results');
-    setTestResults([]);
-    setStdout('Running tests against sample cases...');
-    setStderr('');
-    setExitCode(null);
-    if (selectedChallenge) localStorage.setItem(`code_${selectedChallenge.id}_${language}`, code);
+    setRunResults(null);
+    setActiveResultTab('results');
+    setStdout("Compiling and executing sample test cases...");
+    setStderr("");
+
+    const codeText = codeMap[`${selectedChallenge.id}_${language}`] || "";
+    const sampleTests = selectedChallenge.sampleTests || selectedChallenge.sampleTestCases || [];
+    const bridgeLang = language === 'python3' ? 'python' : language;
 
     if (!isRunningInPyQt()) {
       setIsRunning(false);
-      setActiveTab('output');
-      setStdout('');
-      setStderr('⚠️ Code execution requires the SEED-IT Desktop App. Your code is saved and can be submitted from within the desktop app.');
-      setExitCode(1);
+      setStdout("");
+      setStderr("⚠️ Code execution requires the SEED-IT Desktop App. Your code has been saved.");
+      setRunResults([]);
       return;
     }
+
+    let results = [];
     try {
-      const stdinPayload = JSON.stringify({ questionId: selectedChallenge.id, stdin: customInput });
-      const results = await desktopBridge.runCode(language, code, stdinPayload);
-      setTestResults(results.map(r => ({
-        index: r.caseNumber, input: r.input, expected: r.expected,
-        actual: r.actual, passed: r.passed, stderr: r.stderr || r.error || ''
-      })));
+      for (let i = 0; i < sampleTests.length; i++) {
+        const tc = sampleTests[i];
+        const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, codeText, tc.input);
+        const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
+        const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
+        const passed = res.stdout !== undefined &&
+            res.stdout.replace(/\r\n/g, "\n").trim() === (tc.expected || "").replace(/\r\n/g, "\n").trim() &&
+            !res.error && (exit === 0 || exit === null);
+
+        results.push({
+          index: i + 1,
+          input: tc.input,
+          expected: tc.expected || "",
+          actual: res.stdout || "",
+          stderr: res.stderr || res.error || "",
+          passed: passed
+        });
+      }
+
+      // Run Custom Input if checked
+      if (useCustomInput) {
+        const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, codeText, customInput);
+        const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
+        const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
+        const passed = !res.error && (exit === 0 || exit === null);
+        results.push({
+          index: 'Custom',
+          input: customInput,
+          expected: 'N/A (Custom Run)',
+          actual: res.stdout || "",
+          stderr: res.stderr || res.error || "",
+          passed: passed
+        });
+      }
+
+      setRunResults(results);
+
+      // Set stdout/stderr of the last case for output display tab fallback
+      const lastCase = results[results.length - 1];
+      if (lastCase) {
+        setStdout(lastCase.actual);
+        setStderr(lastCase.stderr);
+      }
     } catch (err) {
-      setStderr(`Execution Failed: ${err.message}`);
+      console.error("Local sandbox execute error:", err);
+      setStderr(`Compiler execution failure: ${err.message}`);
     } finally {
       setIsRunning(false);
     }
   };
 
+  // Evaluate code against hidden test cases
   const handleTestCode = async () => {
     if (!selectedChallenge) return;
     setIsTesting(true);
-    setActiveTab('results');
-    setTestResults([]);
-    const savedKey = `code_${selectedChallenge.id}_${language}`;
-    localStorage.setItem(savedKey, code);
+    setEvalResults(null);
+    setActiveResultTab('results');
+
+    const codeText = codeMap[`${selectedChallenge.id}_${language}`] || "";
+    const hiddenTests = selectedChallenge.hiddenTests || selectedChallenge.sampleTestCases || selectedChallenge.sampleTests || [];
+    const bridgeLang = language === 'python3' ? 'python' : language;
+
+    let passedCount = 0;
+    let results = [];
+    let evalError = null;
 
     if (!isRunningInPyQt()) {
       setIsTesting(false);
-      setCustomNotice({ title: 'Desktop App Required', message: 'Code submission requires the SEED-IT Desktop App. Your code has been saved locally.', type: 'warning' });
+      setCustomNotice({
+        title: 'Desktop App Required',
+        message: 'Code evaluation requires the SEED-IT Desktop App. Your code has been saved locally.',
+        type: 'warning'
+      });
       return;
     }
+
     try {
-      await desktopBridge.saveAnswer(selectedChallenge.id, code);
-      const result = await desktopBridge.submitCode(language, code, selectedChallenge.id);
-      if (result.error) { setStderr(result.error); return; }
-      setTestResults(result.testCases.map(tc => ({
-        index: tc.caseNumber, input: 'Hidden Test Case', expected: 'Hidden Expected Output',
-        actual: tc.passed ? 'Match' : 'Mismatch/Error', passed: tc.passed, stderr: tc.error || ''
-      })));
-      if (result.score === 100) {
-        localStorage.setItem(`q_completed_${selectedChallenge.id}`, 'true');
+      for (let i = 0; i < hiddenTests.length; i++) {
+        const tc = hiddenTests[i];
+        const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, codeText, tc.input);
+        const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
+
+        const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
+        const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
+        const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
+        const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
+
+        if (passed) passedCount++;
+        results.push({ index: i + 1, passed, error: res.error || res.stderr || "" });
+      }
+
+      const total = hiddenTests.length;
+      const score = total > 0 ? Math.round((passedCount / total) * 100) : 0;
+      const earnedWeight = total > 0 ? (passedCount / total) * (selectedChallenge.weight || 20) : 0;
+
+      const newScores = {
+        ...questionScores,
+        [selectedChallenge.id]: {
+          score: earnedWeight,
+          percentage: score,
+          passed: passedCount,
+          total: total,
+          submitted: true
+        }
+      };
+      setQuestionScores(newScores);
+      setEvalResults(results);
+
+      if (score === 100) {
         setCompletedChallenges(prev => ({ ...prev, [selectedChallenge.id]: true }));
       }
-      setCustomNotice({
-        title: 'Evaluation Score',
-        message: `Score: ${result.score}% (${result.passed}/${result.total} passed). Answer saved.`,
-        type: result.score === 100 ? 'success' : 'warning'
-      });
     } catch (err) {
-      setCustomNotice({ title: 'Evaluation Failed', message: `Execution failed: ${err.message}`, type: 'error' });
+      console.error("Submit question evaluation failed:", err);
+      evalError = err.message;
     } finally {
       setIsTesting(false);
+      if (evalError) {
+        setCustomNotice({ title: 'Evaluation Failed', message: `Evaluation failed: ${evalError}`, type: 'error' });
+      } else {
+        const total = hiddenTests.length;
+        const score = total > 0 ? Math.round((passedCount / total) * 100) : 0;
+        setCustomNotice({
+          title: 'Question Submitted ✅',
+          message: `Hidden Tests Passed: ${passedCount}/${total} \u00a0\u00a0 Score: ${score}%`,
+          type: score === 100 ? 'success' : 'warning'
+        });
+      }
     }
   };
 
   const handleResetCode = () => {
-    // Silent reset — no confirmation popup needed
-    setCode(selectedChallenge?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
+    const b = selectedChallenge?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '';
+    handleCodeChange(b);
+  };
+
+  const toggleBookmark = (qId) => {
+    setBookmarkedChallenges(prev => ({ ...prev, [qId]: !prev[qId] }));
+  };
+
+  const getGridBubbleClass = (q) => {
+    const score = questionScores[q.id];
+    const isBookmarked = bookmarkedChallenges[q.id];
+    const isVisited = visitedChallenges[q.id];
+
+    if (score && score.submitted && score.percentage === 100) return 'grid-bubble-green';
+    if (isBookmarked) return 'grid-bubble-blue';
+    if (isVisited && (!score || !score.submitted)) return 'grid-bubble-red';
+    return 'grid-bubble-gray';
   };
 
   const monacoLanguage = language === 'cpp' ? 'cpp' : language === 'c' ? 'c' : language === 'java' ? 'java' : 'python';
@@ -695,42 +1077,49 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
 
   const handlePrev = () => {
     if (settings.forwardOnly || (settings.questionTimers && settings.questionTimers.length > 0)) return;
-    if (currentChallengeIndex > 0) setSelectedChallenge(challenges[currentChallengeIndex - 1]);
-  };
-  const handleNext = () => {
-    if (currentChallengeIndex < challenges.length - 1 && currentChallengeIndex !== -1) {
-      setSelectedChallenge(challenges[currentChallengeIndex + 1]);
+    if (currentChallengeIndex > 0) {
+      setSelectedChallenge(challenges[currentChallengeIndex - 1]);
+      setVisitedChallenges(v => ({ ...v, [challenges[currentChallengeIndex - 1].id]: true }));
     }
   };
 
+  const handleNext = () => {
+    if (currentChallengeIndex < challenges.length - 1 && currentChallengeIndex !== -1) {
+      if (settings.questionTimers && settings.questionTimers.length > 0 && selectedChallenge) {
+        setLockedChallenges(l => [...l, selectedChallenge.id]);
+      }
+      setSelectedChallenge(challenges[currentChallengeIndex + 1]);
+      setVisitedChallenges(v => ({ ...v, [challenges[currentChallengeIndex + 1].id]: true }));
+    }
+  };
+
+  const formatRemainingTime = () => {
+    const mins = Math.floor(secTimer / 60);
+    const secs = secTimer % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  if (challenges.length === 0) {
+    return (
+      <div className="msa-loading">
+        <div className="msa-spinner" />
+        <p>Loading coding challenges...</p>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="sandbox-fullscreen-container"
+      className="coding-workspace-page"
       onCopy={e => { e.preventDefault(); setCustomNotice({ title: 'Action Blocked', message: 'Copying is disabled.', type: 'error' }); }}
       onPaste={e => { e.preventDefault(); setCustomNotice({ title: 'Action Blocked', message: 'Pasting is disabled.', type: 'error' }); }}
       onCut={e => { e.preventDefault(); setCustomNotice({ title: 'Action Blocked', message: 'Cutting is disabled.', type: 'error' }); }}
     >
-      {/* Submit confirm overlay */}
-      {showSubmitConfirm && (
-        <div className="proctor-start-overlay" style={{ zIndex: 10005 }}>
-          <div className="proctor-start-card" style={{ border: '1.5px solid #ef4444' }}>
-            <h2>Submit Section?</h2>
-            <p style={{ color: '#d1d5db', lineHeight: '1.6', margin: '15px 0' }}>
-              Are you sure you want to submit this coding section? You cannot go back.
-            </p>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '25px' }}>
-              <button className="action-btn" style={{ background: '#333', color: '#ccc', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => setShowSubmitConfirm(false)}>Cancel</button>
-              <button className="action-btn run-btn" style={{ background: '#ef4444', color: '#fff', padding: '10px 25px', border: 'none', borderRadius: '4px', cursor: 'pointer' }} onClick={() => { setShowSubmitConfirm(false); doSectionSubmit(); }}>Confirm &amp; Submit</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Audio Proctoring Engine — noise bar fixed bottom-right */}
       {settings.audioProctored && codingUser?.Email && (
         <AudioProctoringEngine
           studentID={codingUser.Email}
-          testID={assessmentId || sectionData?.id || sectionData?.name || 'coding-section'}
+          testID={assessmentId || sectionData?.id || 'coding-section'}
           isTestActive={true}
           maxViolations={settings.maxAudioViolations || 3}
           onViolationUpdate={(info) => {
@@ -738,267 +1127,367 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
           }}
         />
       )}
-
-      {/* Header */}
-      <header className="sandbox-workspace-header">
-        <div className="header-left">
-          <img src="https://raw.githubusercontent.com/seeditDev/SEED-Website/f3cee9002410a00df4da7bea636ac9fbc4c312ca/Plugins/SEED_Logo.webp" alt="SEED Logo" className="header-logo" />
-          {assessmentName && (
-            <span style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: '4px', marginRight: '4px' }}>
-              {assessmentName} ›
-            </span>
-          )}
-          <button className="problem-list-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
-            <FaList /> Problem List
-          </button>
-          <div className="challenge-nav-buttons">
-            <button onClick={handlePrev} disabled={currentChallengeIndex <= 0 || (settings.questionTimers && settings.questionTimers.length > 0)} className="nav-arrow-btn" title="Previous Challenge"><FaChevronLeft /></button>
-            <button onClick={handleNext} disabled={currentChallengeIndex >= challenges.length - 1 || currentChallengeIndex === -1} className="nav-arrow-btn" title="Next Challenge"><FaChevronRight /></button>
-          </div>
-          <div className="msa-timer-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: secTimer <= 60 ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.08)', border: secTimer <= 60 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600', marginLeft: '15px', color: secTimer <= 60 ? '#ef4444' : '#10b981' }}>
-            <FaClock />
-            <span>Time: {formatTime(secTimer)}</span>
+      {/* Submit confirm overlay */}
+      {showSubmitConfirm && (
+        <div className="passkey-modal-overlay" style={{ zIndex: 10050 }}>
+          <div className="passkey-modal" style={{ maxWidth: '520px', width: '90%' }}>
+            <div className="passkey-modal-header" style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', borderBottom: '1px solid #334155' }}>
+              <h3 style={{ color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FaExclamationTriangle style={{ color: '#f59e0b' }} /> Submit Section?
+              </h3>
+              <button onClick={() => setShowSubmitConfirm(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.1rem' }}><FaTimes /></button>
+            </div>
+            <div className="passkey-modal-body" style={{ padding: '20px', background: '#0f172a' }}>
+              <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '10px', padding: '12px 16px', marginBottom: '18px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <FaLock style={{ color: '#ef4444', marginTop: '2px', flexShrink: 0 }} />
+                <div>
+                  <p style={{ margin: 0, color: '#fca5a5', fontWeight: '700', fontSize: '0.9rem' }}>⚠️ Cannot Re-Attempt Section</p>
+                  <p style={{ margin: '4px 0 0', color: '#fda4af', fontSize: '0.82rem', lineHeight: '1.4' }}>
+                    Once submitted, this coding section is locked. You will proceed to the next section and cannot return.
+                  </p>
+                </div>
+              </div>
+              <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '12px' }}>Question status overview:</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                {challenges.map((q, idx) => {
+                  const qs = questionScores[q.id];
+                  const submitted = qs?.submitted;
+                  const passed = qs?.passed || 0;
+                  const total = qs?.total || (q.hiddenTests?.length || q.sampleTests?.length || 0);
+                  const pct = qs?.percentage || 0;
+                  return (
+                    <div key={q.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: submitted ? 'rgba(16,185,129,0.08)' : 'rgba(100,116,139,0.08)', border: `1px solid ${submitted ? 'rgba(16,185,129,0.25)' : 'rgba(100,116,139,0.2)'}`, borderRadius: '8px', padding: '9px 14px' }}>
+                      <span style={{ color: '#cbd5e1', fontSize: '0.88rem', fontWeight: '600' }}>Q{idx + 1}: {q.title || 'Challenge'}</span>
+                      {submitted ? (
+                        <span style={{ background: pct === 100 ? 'rgba(16,185,129,0.2)' : pct > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.2)', color: pct === 100 ? '#10b981' : pct > 0 ? '#f59e0b' : '#ef4444', border: `1px solid ${pct === 100 ? '#10b981' : pct > 0 ? '#f59e0b' : '#ef4444'}`, borderRadius: '20px', padding: '2px 10px', fontSize: '0.78rem', fontWeight: '700' }}>{passed}/{total} passed</span>
+                      ) : (
+                        <span style={{ color: '#64748b', fontSize: '0.78rem', fontStyle: 'italic' }}>Not evaluated</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="passkey-modal-footer" style={{ background: '#0f172a', borderTop: '1px solid #1e293b', justifyContent: 'space-between', display: 'flex', padding: '14px 20px' }}>
+              <button className="cancel-btn" onClick={() => setShowSubmitConfirm(false)}>Cancel</button>
+              <button className="confirm-btn" style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#fff', padding: '10px 24px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }} onClick={() => { setShowSubmitConfirm(false); doSectionSubmit(); }}>Confirm &amp; Submit</button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="header-center-actions">
-          <button className="header-run-btn" onClick={handleRunCode} disabled={isRunning || isTesting || isChLocked}>
-            <FaPlay /> Run
+      {/* Header bar */}
+      <header className="workspace-header">
+        <div className="header-left">
+          <button className="exit-workspace-btn" onClick={() => setShowSubmitConfirm(true)}>
+            <FaArrowLeft /> Submit Section
           </button>
-          <button className="header-submit-btn" onClick={handleTestCode} disabled={isRunning || isTesting || isChLocked}>
-            <FaCheck /> Submit
-          </button>
+          <span className="assessment-title-label">
+            {assessmentName && <span>{assessmentName} › </span>}{sectionData?.name || 'Coding Workspace'}
+          </span>
+        </div>
+
+        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div className="timer-pill">
+            <FaClock />
+            <span className="remaining-timer-span">{formatRemainingTime()}</span>
+          </div>
           {!settings.timerRestrictedSubmit && (
-            <button
-              className="header-submit-btn"
-              style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', marginLeft: '12px', border: 'none' }}
-              onClick={() => setShowSubmitConfirm(true)}
-              disabled={isRunning || isTesting}
-            >
+            <button className="submit-assessment-btn" onClick={() => setShowSubmitConfirm(true)}>
               Submit Section
             </button>
           )}
         </div>
-
-        <div className="header-right">
-          <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-            {currentChallengeIndex + 1} / {challenges.length}
-          </span>
-        </div>
       </header>
 
-      {/* Problem list drawer */}
-      <div className={`sandbox-drawer-overlay ${isDrawerOpen ? 'open' : ''}`} onClick={() => setIsDrawerOpen(false)}>
-        <div className="sandbox-drawer-content" onClick={e => e.stopPropagation()}>
-          <div className="drawer-header">
-            <h3>Problem List</h3>
-            <button className="close-drawer-btn" onClick={() => setIsDrawerOpen(false)}><FaTimes /></button>
-          </div>
-          <div className="drawer-search-wrapper">
-            <FaSearch className="search-icon" />
-            <input type="text" placeholder="Search questions..." value={drawerSearch} onChange={e => setDrawerSearch(e.target.value)} className="drawer-search-input" />
-          </div>
-          <div className="drawer-challenges-list">
-            {challenges.filter(ch => ch.title.toLowerCase().includes(drawerSearch.toLowerCase())).map(ch => (
-              <button
-                key={ch.id}
-                className={`drawer-challenge-item ${selectedChallenge?.id === ch.id ? 'active' : ''}`}
-                onClick={() => {
-                  if (settings.forwardOnly || (settings.questionTimers && settings.questionTimers.length > 0)) return;
-                  setIsDrawerOpen(false);
-                  setSelectedChallenge(ch);
-                }}
-              >
-                <div className="ch-title-row">
-                  <span>{ch.title}</span>
-                  {completedChallenges[ch.id] && <FaCheck className="drawer-completed-icon" />}
-                </div>
-                <span className={`drawer-diff ${ch.difficulty?.toLowerCase() || ''}`}>{ch.difficulty}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Workspace Column Split */}
+      {selectedChallenge ? (
+        <div className="workspace-body" ref={workspaceBodyRef}>
 
-      {/* Main layout */}
-      <div className="sandbox-wrapper">
-        <div className="sandbox-layout">
-          {/* Left — problem panel */}
-          {selectedChallenge && (
-            <div className="problem-panel">
-              <div className="problem-tabs-header">
-                {['description', 'editorial', 'solutions', 'submissions'].map(tab => (
-                  <button key={tab} className={`tab-link ${activeLeftTab === tab ? 'active' : ''}`} onClick={() => setActiveLeftTab(tab)}>
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          {/* LEFT COLUMN */}
+          <div className="workspace-left-pane" style={{ width: `${leftPaneWidth}%` }}>
+            {/* Question nav grid */}
+            <div className="left-pane-card question-nav-card">
+              <div className="card-header-label">Question Navigation</div>
+              <div className="question-grid">
+                {challenges.map((q, idx) => (
+                  <button
+                    key={q.id}
+                    onClick={() => {
+                      if (settings.forwardOnly || (settings.questionTimers && settings.questionTimers.length > 0)) return;
+                      setSelectedChallenge(q);
+                      setVisitedChallenges(prev => ({ ...prev, [q.id]: true }));
+                    }}
+                    className={`grid-bubble ${q.id === selectedChallenge.id ? 'grid-bubble-active' : ''} ${getGridBubbleClass(q)}`}
+                    style={(settings.forwardOnly || (settings.questionTimers && settings.questionTimers.length > 0)) ? { cursor: 'not-allowed' } : {}}
+                  >
+                    Q{idx + 1}
                   </button>
                 ))}
               </div>
-              <div className="problem-tab-content">
-                {activeLeftTab === 'description' && (
-                  <div className="problem-content">
-                    <h2 className="prob-title">{selectedChallenge.title}</h2>
-                    <div className="prob-meta">
-                      <span className={`diff-badge ${selectedChallenge.difficulty?.toLowerCase() || ''}`}>{selectedChallenge.difficulty}</span>
-                      {selectedChallenge.constraints && <span className="constraint-badge">{selectedChallenge.constraints}</span>}
-                      {settings.questionTimers && settings.questionTimers.length > 0 && (
-                        <span className="constraint-badge" style={{ background: qTimerRemaining <= 60 ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.15)', color: qTimerRemaining <= 60 ? '#ef4444' : '#6366f1', border: qTimerRemaining <= 60 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(99,102,241,0.3)', fontWeight: 'bold' }}>
-                          ⏳ Locks in: {Math.floor(qTimerRemaining / 60)}:{(qTimerRemaining % 60).toString().padStart(2, '0')}
-                        </span>
+            </div>
+
+            {/* Problem statement scroll panel */}
+            <div className="left-pane-card problem-statement-card">
+              <div className="card-header-flex">
+                <div className="card-header-label" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {selectedChallenge.title}
+                  <div className="challenge-nav-buttons" style={{ display: 'inline-flex', gap: '4px', marginLeft: '8px' }}>
+                    <button onClick={handlePrev} disabled={currentChallengeIndex <= 0 || (settings.questionTimers && settings.questionTimers.length > 0)} className="nav-arrow-btn" style={{ padding: '2px 8px', fontSize: '0.75rem', height: '24px', display: 'flex', alignItems: 'center' }} title="Previous Challenge"><FaChevronLeft /></button>
+                    <button onClick={handleNext} disabled={currentChallengeIndex >= challenges.length - 1 || currentChallengeIndex === -1} className="nav-arrow-btn" style={{ padding: '2px 8px', fontSize: '0.75rem', height: '24px', display: 'flex', alignItems: 'center' }} title="Next Challenge"><FaChevronRight /></button>
+                  </div>
+                </div>
+                <div className="header-tags-row">
+                  {settings.questionTimers && settings.questionTimers.length > 0 && (
+                    <span className="difficulty-badge" style={{ background: qTimerRemaining <= 60 ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.15)', color: qTimerRemaining <= 60 ? '#ef4444' : '#6366f1', border: qTimerRemaining <= 60 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(99,102,241,0.3)', fontWeight: 'bold' }}>
+                      ⏳ Locks in: {Math.floor(qTimerRemaining / 60)}:{(qTimerRemaining % 60).toString().padStart(2, '0')}
+                    </span>
+                  )}
+                  <span className={`difficulty-badge diff-${selectedChallenge.difficulty?.toLowerCase() || 'medium'}`}>
+                    {selectedChallenge.difficulty}
+                  </span>
+                  <button
+                    onClick={() => toggleBookmark(selectedChallenge.id)}
+                    className={`bookmark-btn ${bookmarkedChallenges[selectedChallenge.id] ? 'bookmarked' : ''}`}
+                    title="Bookmark challenge"
+                  >
+                    <FaBookmark />
+                  </button>
+                </div>
+              </div>
+              <div className="problem-content-scroll">
+                <div className="problem-statement-text">
+                  {isChLocked && (
+                    <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#ef4444', marginBottom: '15px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FaLock /><span>This question's timer has expired. The workspace is locked.</span>
+                    </div>
+                  )}
+
+                  <p>{selectedChallenge.description}</p>
+
+                  {selectedChallenge.instructions && (
+                    <>
+                      <h4>Input Format &amp; Instructions</h4>
+                      <p>{selectedChallenge.instructions}</p>
+                    </>
+                  )}
+
+                  {selectedChallenge.constraints && (
+                    <>
+                      <h4>Constraints</h4>
+                      <pre className="constraints-block">{selectedChallenge.constraints}</pre>
+                    </>
+                  )}
+
+                  {selectedChallenge.sampleTestCases && selectedChallenge.sampleTestCases.map((st, i) => (
+                    <div key={i} className="example-io-block">
+                      <h4>Sample Test Case {i + 1}</h4>
+                      <div className="io-row">
+                        <div className="io-col">
+                          <strong>Input:</strong>
+                          <pre>{st.input || "No Input"}</pre>
+                        </div>
+                        <div className="io-col">
+                          <strong>Expected Output:</strong>
+                          <pre>{st.expected}</pre>
+                        </div>
+                      </div>
+                      {st.explanation && (
+                        <div className="io-explanation">
+                          <strong>Explanation:</strong>
+                          <p>{st.explanation}</p>
+                        </div>
                       )}
                     </div>
-                    {isChLocked && (
-                      <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '12px 16px', color: '#ef4444', marginBottom: '15px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FaLock /><span>This question's timer has expired. The sandbox is locked.</span>
-                      </div>
-                    )}
-                    <div className="prob-section"><p>{selectedChallenge.description}</p></div>
-                    {selectedChallenge.instructions && <div className="prob-section"><h4>Instructions</h4><p className="instructions-txt">{selectedChallenge.instructions}</p></div>}
-                    {selectedChallenge.testCases && selectedChallenge.testCases.length > 0 && (
-                      <div className="prob-section">
-                        <h4>Example Test Case</h4>
-                        <div className="example-block">
-                          <strong>Input:</strong><pre>{selectedChallenge.testCases[0].input || '(None)'}</pre>
-                          <strong>Expected Output:</strong><pre>{selectedChallenge.testCases[0].expected}</pre>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {activeLeftTab === 'editorial' && (
-                  <div className="editorial-content">
-                    <h3>Editorial / Solution Analysis</h3>
-                    <div className="editorial-lock-card"><p>Complete the challenge to unlock editorial solutions.</p><div className="lock-icon-box">🔒</div></div>
-                  </div>
-                )}
-                {activeLeftTab === 'solutions' && (
-                  <div className="solutions-content">
-                    <h3>Community Solutions</h3>
-                    <p>Solve the problem to access community patterns.</p>
-                  </div>
-                )}
-                {activeLeftTab === 'submissions' && (
-                  <div className="submissions-content">
-                    <h3>My Submissions</h3>
-                    {completedChallenges[selectedChallenge.id] ? (
-                      <div className="submission-history-item success">
-                        <div className="sh-header"><span className="status">Accepted</span><span className="lang">Language: {language.toUpperCase()}</span></div>
-                        <p>You have successfully solved this challenge!</p>
-                      </div>
-                    ) : (
-                      <p className="no-submissions-txt">No accepted submissions found.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Right — editor + console */}
-          <div className="editor-console-panel">
-            <div className="sandbox-network-tip">
-              <FaLightbulb className="tip-icon" />
-              <span><strong>Tip:</strong> If compiling inside campus Wi-Fi, connect to a <strong>mobile hotspot</strong> to bypass shared IP limits.</span>
-            </div>
-            <div className="editor-toolbar">
-              <div className="toolbar-left">
-                <select value={language} onChange={e => setLanguage(e.target.value)} className="toolbar-select">
-                  <option value="cpp">C++ (GCC 10.2)</option>
-                  <option value="c">C (GCC 10.2)</option>
-                  <option value="python">Python 3.10</option>
-                  <option value="java">Java 15</option>
-                </select>
-              </div>
-              <div className="toolbar-right">
-                <button className="toolbar-btn reset" onClick={handleResetCode}><FaUndo /> Reset</button>
-              </div>
-            </div>
-
-            <div className="monaco-editor-container">
-              <Editor
-                height="100%"
-                language={monacoLanguage}
-                theme="vs-dark"
-                value={code}
-                onChange={v => setCode(v || '')}
-                options={{
-                  readOnly: isChLocked,
-                  fontSize: 14,
-                  fontFamily: "'JetBrains Mono','Consolas',monospace",
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  tabSize: 4
-                }}
-              />
-            </div>
-
-            <div className="console-panel">
-              <div className="console-tabs-row">
-                <div className="console-tabs">
-                  <button className={`tab-btn ${activeTab === 'input' ? 'active' : ''}`} onClick={() => setActiveTab('input')}>Custom Input</button>
-                  <button className={`tab-btn ${activeTab === 'output' ? 'active' : ''}`} onClick={() => setActiveTab('output')}>Console Output</button>
-                  {selectedChallenge && (
-                    <button className={`tab-btn ${activeTab === 'results' ? 'active' : ''}`} onClick={() => setActiveTab('results')}>
-                      Test Cases ({selectedChallenge.testCases?.length || 0})
-                    </button>
-                  )}
+                  ))}
                 </div>
-                <div className="console-actions">
-                  <button className="action-btn run-btn" onClick={handleRunCode} disabled={isRunning || isTesting || isChLocked}>
-                    <FaPlay /> {isRunning ? 'Running...' : 'Run'}
-                  </button>
-                  <button className="action-btn test-btn" onClick={handleTestCode} disabled={isRunning || isTesting || isChLocked}>
-                    <FaCheck /> {isTesting ? 'Testing...' : 'Submit Tests'}
+              </div>
+            </div>
+          </div>
+
+          {/* VERTICAL DIVIDER */}
+          <div className="pane-divider-vertical" onMouseDown={startVertDrag} title="Drag to resize columns" />
+
+          {/* RIGHT COLUMN */}
+          <div className="workspace-right-pane" ref={rightPaneRef} style={{ width: `${100 - leftPaneWidth}%` }}>
+            {/* Editor container */}
+            <div className="editor-container-card" style={{ flex: 1, minHeight: 0 }}>
+              <div className="editor-toolbar">
+                <div className="toolbar-left">
+                  <select
+                    value={language}
+                    onChange={e => setLanguage(e.target.value)}
+                    className="language-selector"
+                  >
+                    <option value="cpp">C++ (GCC G++)</option>
+                    <option value="c">C (GCC GCC)</option>
+                    <option value="python">Python 3 (Python)</option>
+                    <option value="java">Java (OpenJDK javac)</option>
+                  </select>
+                </div>
+                <div className="toolbar-right">
+                  <button className="editor-control-btn reset-btn" onClick={handleResetCode} disabled={isChLocked}>
+                    <FaUndo /> Reset Boilerplate
                   </button>
                 </div>
               </div>
 
-              <div className="console-tab-content">
-                {activeTab === 'input' && (
-                  <textarea className="console-textarea stdin" placeholder="Enter custom stdin..." value={customInput} onChange={e => setCustomInput(e.target.value)} />
-                )}
-                {activeTab === 'output' && (
-                  <div className="console-output-box">
+              <div className="monaco-wrapper">
+                <Editor
+                  key={`${selectedChallenge.id}_${language}`}
+                  height="100%"
+                  language={monacoLanguage}
+                  value={codeMap[`${selectedChallenge.id}_${language}`] || ""}
+                  onChange={handleCodeChange}
+                  theme={['light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
+                  options={{
+                    readOnly: isChLocked,
+                    fontSize: 14,
+                    fontFamily: "'JetBrains Mono', Courier, monospace",
+                    minimap: { enabled: false },
+                    scrollbar: { vertical: 'visible', horizontal: 'visible' },
+                    automaticLayout: true,
+                    cursorBlinking: 'smooth',
+                    wordWrap: 'on'
+                  }}
+                />
+              </div>
+
+              <div className="editor-footer-actions">
+                <div className="footer-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button
+                    className="run-btn"
+                    onClick={handleRunCode}
+                    disabled={isRunning || isTesting || isChLocked}
+                  >
                     {isRunning ? (
-                      <div className="console-loader"><div className="mini-spinner" /><span>Executing...</span></div>
-                    ) : stderr ? (
-                      <div className="execution-error"><h4>Runtime/Compilation Error:</h4><pre>{stderr}</pre></div>
-                    ) : stdout ? (
-                      <div className="execution-success"><h4>Exit Code: {exitCode}</h4><pre>{stdout}</pre></div>
+                      <><div className="button-spinner"></div> Compiling...</>
                     ) : (
-                      <p className="no-output-text">Click "Run" to view output.</p>
+                      <><FaPlay /> Run Code</>
+                    )}
+                  </button>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#94a3b8', userSelect: 'none', margin: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={useCustomInput}
+                      onChange={e => setUseCustomInput(e.target.checked)}
+                      style={{ cursor: 'pointer', width: '15px', height: '15px', margin: 0 }}
+                    />
+                    Run along with sample test cases
+                  </label>
+                </div>
+                <div className="footer-right">
+                  <button
+                    className="solve-question-btn"
+                    onClick={handleTestCode}
+                    disabled={isRunning || isTesting || isChLocked}
+                  >
+                    {isTesting ? (
+                      <><div className="button-spinner"></div> Evaluating...</>
+                    ) : (
+                      <>Submit Question</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* HORIZONTAL DIVIDER */}
+            <div className="pane-divider-horizontal" onMouseDown={startHorizDrag} title="Drag to resize output pane" />
+
+            {/* Console Output Card */}
+            <div className="console-output-card" style={{ height: `${outputPaneHeight}px`, flexShrink: 0 }}>
+              <div className="tabs-header">
+                <button className={`tab-btn ${activeResultTab === 'input' ? 'active' : ''}`} onClick={() => setActiveResultTab('input')}>Custom Input</button>
+                <button className={`tab-btn ${activeResultTab === 'output' ? 'active' : ''}`} onClick={() => setActiveResultTab('output')}>Stdout Logs</button>
+                <button className={`tab-btn ${activeResultTab === 'results' ? 'active' : ''}`} onClick={() => setActiveResultTab('results')}>Test Results</button>
+              </div>
+              <div className="tab-body-scroll">
+                {activeResultTab === 'input' && (
+                  <textarea
+                    className="custom-stdin-input"
+                    placeholder="Type standard input (stdin) values here..."
+                    value={customInput}
+                    onChange={e => setCustomInput(e.target.value)}
+                  />
+                )}
+
+                {activeResultTab === 'output' && (
+                  <div className="compiler-output-display">
+                    {stderr && (
+                      <pre className="output-stderr-pre">
+                        <strong>Stderr / Errors:</strong><br />
+                        {stderr}
+                      </pre>
+                    )}
+                    {stdout && (
+                      <pre className="output-stdout-pre">
+                        <strong>Stdout:</strong><br />
+                        {stdout}
+                      </pre>
+                    )}
+                    {!stdout && !stderr && (
+                      <span className="no-output-hint">Click 'Run Code' to compile and execute program.</span>
                     )}
                   </div>
                 )}
-                {activeTab === 'results' && (
-                  <div className="test-results-container">
-                    {isTesting ? (
-                      <div className="console-loader"><div className="mini-spinner" /><span>Running test cases...</span></div>
-                    ) : testResults.length === 0 ? (
-                      <p className="no-output-text">Click "Submit Tests" to check validity.</p>
-                    ) : (
-                      <div className="test-cases-list">
-                        <div className="test-overall-status">
-                          {testResults.every(r => r.passed)
-                            ? <span className="status-label all-passed"><FaCheck /> All Test Cases Passed!</span>
-                            : <span className="status-label failed"><FaTimes /> Some Test Cases Failed</span>
-                          }
-                        </div>
-                        {testResults.map(tr => (
-                          <div key={tr.index} className={`test-case-card ${tr.passed ? 'passed' : 'failed'}`}>
-                            <div className="test-case-header">
-                              <h4>Test Case {tr.index}</h4>
-                              <span className={`status-badge ${tr.passed ? 'passed' : 'failed'}`}>{tr.passed ? 'Passed' : 'Failed'}</span>
-                            </div>
-                            <div className="test-case-details">
-                              <div className="tc-detail-col"><strong>Input:</strong><pre>{tr.input || '(None)'}</pre></div>
-                              <div className="tc-detail-col"><strong>Expected:</strong><pre>{tr.expected}</pre></div>
-                              <div className="tc-detail-col"><strong>Actual:</strong><pre>{tr.actual || '(No output)'}</pre></div>
-                            </div>
-                            {tr.stderr && <div className="tc-error-box"><strong>Stderr:</strong><pre>{tr.stderr}</pre></div>}
-                          </div>
-                        ))}
+
+                {activeResultTab === 'results' && (
+                  <div className="test-results-list" style={{ padding: '12px' }}>
+                    {isRunning && (
+                      <div className="console-loader"><div className="mini-spinner" /><span>Compiling &amp; Executing Sample Cases...</span></div>
+                    )}
+                    {isTesting && (
+                      <div className="console-loader"><div className="mini-spinner" /><span>Evaluating Hidden Test Cases...</span></div>
+                    )}
+                    
+                    {!isRunning && !isTesting && runResults && (
+                      <div className="results-group">
+                        <h4 style={{ color: '#38bdf8', marginBottom: '8px', fontSize: '0.9rem' }}>Sample Test Cases Execution Logs:</h4>
+                        <table className="results-table">
+                          <thead>
+                            <tr>
+                              <th>Case</th>
+                              <th>Status</th>
+                              <th>Actual</th>
+                              <th>Expected</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {runResults.map(r => (
+                              <tr key={r.index}>
+                                <td>Case {r.index}</td>
+                                <td className={r.passed ? 'pass-cell' : 'fail-cell'}>
+                                  {r.passed ? 'PASSED' : 'FAILED'}
+                                </td>
+                                <td><pre className="inline-io">{r.actual || '[Empty]'}</pre></td>
+                                <td><pre className="inline-io">{r.expected}</pre></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
+                    )}
+
+                    {!isRunning && !isTesting && evalResults && (
+                      <div className="results-group">
+                        <h4 style={{ color: '#38bdf8', marginBottom: '8px', fontSize: '0.9rem' }}>Hidden Test Cases Evaluation Result:</h4>
+                        <div className="hidden-cases-badges">
+                          {evalResults.map(r => (
+                            <span
+                              key={r.index}
+                              className={`hidden-badge ${r.passed ? 'badge-pass' : 'badge-fail'}`}
+                              title={r.error ? r.error : 'Passed Case'}
+                            >
+                              Case {r.index}: {r.passed ? 'PASS' : 'FAIL'}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {!isRunning && !isTesting && !runResults && !evalResults && (
+                      <span className="no-output-hint">Run Code or Submit to view verified test cases.</span>
                     )}
                   </div>
                 )}
@@ -1006,24 +1495,35 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="workspace-loading-fallback">
+          <div className="learn-spinner"></div>
+          <p>Loading Workspace Questions...</p>
+        </div>
+      )}
 
-      {/* Custom notice overlay */}
+      {/* Custom Notice Overlay */}
       {customNotice && (
-        <div className="proctor-start-overlay" style={{ zIndex: 10010 }}>
-          <div className="proctor-start-card" style={{
-            border: customNotice.type === 'error' ? '1.5px solid #ef4444' : customNotice.type === 'success' ? '1.5px solid #10b981' : '1.5px solid #f59e0b',
-            boxShadow: customNotice.type === 'error' ? '0 0 15px rgba(239,68,68,0.3)' : customNotice.type === 'success' ? '0 0 15px rgba(16,185,129,0.3)' : '0 0 15px rgba(245,158,11,0.3)'
-          }}>
-            <h2 style={{ color: customNotice.type === 'error' ? '#ef4444' : customNotice.type === 'success' ? '#10b981' : '#f59e0b' }}>{customNotice.title}</h2>
-            <p style={{ margin: '15px 0', color: '#d1d5db', lineHeight: '1.6' }}>{customNotice.message}</p>
-            <button
-              className="action-btn"
-              style={{ background: customNotice.type === 'error' ? '#ef4444' : customNotice.type === 'success' ? '#10b981' : '#f59e0b', color: '#fff', padding: '10px 25px', marginTop: '15px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-              onClick={() => { const fn = customNotice.onConfirm; setCustomNotice(null); if (fn) fn(); }}
-            >
-              Understood
-            </button>
+        <div className="passkey-modal-overlay" style={{ zIndex: 10080 }}>
+          <div className="passkey-modal" style={{ maxWidth: '400px' }}>
+            <div className="passkey-modal-header" style={{ backgroundColor: customNotice.type === 'error' ? '#fee2e2' : '#f0fdf4' }}>
+              <h3 style={{ color: customNotice.type === 'error' ? '#991b1b' : '#166534', margin: 0 }}>
+                {customNotice.title}
+              </h3>
+              <button onClick={() => setCustomNotice(null)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.1rem', color: '#94a3b8' }}><FaTimes /></button>
+            </div>
+            <div className="passkey-modal-body">
+              <p style={{ margin: 0, color: '#334155', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                {customNotice.message}
+              </p>
+            </div>
+            <div className="passkey-modal-footer" style={{ backgroundColor: customNotice.type === 'error' ? '#fee2e2' : '#f0fdf4', justifyContent: 'flex-end', display: 'flex' }}>
+              <button
+                className="confirm-btn"
+                style={{ backgroundColor: customNotice.type === 'error' ? '#ef4444' : '#10b981', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
+                onClick={() => { const cb = customNotice.onConfirm; setCustomNotice(null); if (cb) cb(); }}
+              >OK</button>
+            </div>
           </div>
         </div>
       )}
@@ -1111,16 +1611,40 @@ const MultiSectionAssessment = () => {
   // ── Resume after crash
   useEffect(() => {
     if (!assessment || !restoredProgress) return;
-    const nextIdx = (restoredProgress.lastSectionIdx ?? -1) + 1;
-    const sectionsCount = (assessment.sections || []).length;
-    if (nextIdx < sectionsCount) {
-      handleStartSection(nextIdx);
+    if (restoredProgress.currentSecIdx !== undefined && restoredProgress.currentSecIdx >= 0) {
+      console.log('[MSA] Resuming active section index:', restoredProgress.currentSecIdx);
+      setCurrentSecIdx(restoredProgress.currentSecIdx);
+      setSecStarted(restoredProgress.secStarted || false);
+      setSecTimer(restoredProgress.secTimer || 0);
     } else {
-      setExamFinished(true);
+      const nextIdx = (restoredProgress.lastSectionIdx ?? -1) + 1;
+      const sectionsCount = (assessment.sections || []).length;
+      if (nextIdx < sectionsCount) {
+        handleStartSection(nextIdx);
+      } else {
+        setExamFinished(true);
+      }
     }
     setRestoredProgress(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assessment, restoredProgress]);
+
+  // ── Continuous progress save to localStorage
+  useEffect(() => {
+    if (!assessment || currentSecIdx < 0 || !secStarted) return;
+    const progressKey = `msaProgress_${assessment.id}`;
+    const snapshot = {
+      assessmentId: assessment.id,
+      email: user?.Email || '',
+      completedSections: secCompleted,
+      examResults,
+      currentSecIdx,
+      secStarted,
+      secTimer,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(progressKey, JSON.stringify(snapshot));
+  }, [assessment, user, secCompleted, examResults, currentSecIdx, secStarted, secTimer]);
 
   // ── Fetch all section JSON files
   const loadAllSections = async (exam) => {
@@ -1149,8 +1673,27 @@ const MultiSectionAssessment = () => {
               if (!res.ok) throw new Error('Local fetch also failed');
             }
             const data = await res.json();
-            if (data.questions && sec.type === 'coding') {
-              data.questions = data.questions.map(normalizeQuestion);
+            if (sec.type === 'coding') {
+              let ids = [];
+              if (Array.isArray(data.questionIds)) {
+                ids = data.questionIds;
+              } else if (Array.isArray(data.questions)) {
+                ids = data.questions.map(q => typeof q === 'string' ? q : (q.id || q.questionId));
+              }
+
+              if (ids.length > 0) {
+                try {
+                  const resolved = await fetchQuestionsForContest(ids);
+                  data.questions = resolved.map(normalizeQuestion);
+                } catch (resErr) {
+                  console.error('[MSA] Failed to resolve questions from bank:', resErr);
+                  data.questions = [];
+                }
+              } else if (Array.isArray(data.questions)) {
+                data.questions = data.questions.map(normalizeQuestion);
+              } else {
+                data.questions = [];
+              }
             }
             loaded[sec.sectionId] = data;
           } catch (e) {
@@ -1180,6 +1723,7 @@ const MultiSectionAssessment = () => {
       }, 1000);
     }
     return () => clearInterval(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secStarted, currentSecIdx]);
 
   // ── Handle timer expiry (outside the state updater)
@@ -1399,25 +1943,23 @@ const MultiSectionAssessment = () => {
       if (activeSection.questionTimer) return Array(qCount).fill(activeSection.questionTimer);
       return [];
     })();
-
     const sectionSettings = activeSection.type === 'mcq'
       ? {
-          timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
+          timerRestrictedSubmit: isTruthy(activeSection.timerRestrictedSubmit),
           questionTimer: activeSection.questionTimer || 0,
-          forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0),
-          proctored: !!assessment.proctored || !!activeSection.proctored,
-          audioProctored: !!assessment.audioProctored || !!activeSection.audioProctored,
+          forwardOnly: isTruthy(activeSection.forwardOnly) || (activeSection.questionTimer > 0),
+          proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
+          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
           maxViolations: Number(assessment.maxViolations) || 7,
           maxAudioViolations: Number(assessment.maxAudioViolations) || 3
         }
       : {
-          timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
+          timerRestrictedSubmit: isTruthy(activeSection.timerRestrictedSubmit),
           questionTimers: codingQTimers,
-          forwardOnly: !!activeSection.forwardOnly || (codingQTimers.length > 0),
-          audioProctored: !!assessment.audioProctored || !!activeSection.audioProctored,
+          forwardOnly: isTruthy(activeSection.forwardOnly) || (codingQTimers.length > 0),
+          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
           maxAudioViolations: Number(assessment.maxAudioViolations) || 3
         };
-
     const sectionView = activeSection.type === 'mcq'
       ? (
         <MCQSectionView

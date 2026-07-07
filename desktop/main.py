@@ -206,6 +206,11 @@ FORBIDDEN_PROCESSES = [
     'ghidra.exe', 'radare2.exe', 'cutter.exe', 'dnspy.exe', 'procmon.exe',
     'procexp.exe', 'wireshark.exe', 'fiddler.exe', 'burpsuite.exe',
     'python.exe', 'python3.exe', 'pythonw.exe',
+    # Office Suites & PDF Readers (potential malpractice sources)
+    'wps.exe', 'wpp.exe', 'et.exe', 'wpspdf.exe', 'wpscenter.exe', 'wpscloudlaunch.exe',
+    'winword.exe', 'excel.exe', 'powerpnt.exe', 'onenote.exe', 'outlook.exe',
+    'Acrobat.exe', 'AcroRd32.exe', 'FoxitReader.exe', 'FoxitPDFReader.exe',
+    'SumatraPDF.exe', 'NitroPDF.exe', 'soffice.exe', 'soffice.bin', 'pdf24.exe',
     # Terminals / Command Prompts (attacker-accessible)
     'cmd.exe', 'powershell.exe', 'pwsh.exe', 'WindowsTerminal.exe', 'wt.exe',
     'conhost.exe', 'mintty.exe', 'putty.exe', 'kitty.exe', 'SecureCRT.exe'
@@ -516,7 +521,7 @@ class PreLaunchDialog(QDialog):
         """)
         self.close_button.clicked.connect(self.reject)
         
-        self.launch_button = QPushButton("🚀 Launch Application")
+        self.launch_button = QPushButton("Launch Application")
         self.launch_button.setEnabled(False)
         self.launch_button.setStyleSheet("""
             QPushButton {
@@ -1181,7 +1186,7 @@ class MainWindow(QMainWindow):
             # MultiSection is just: /student/multisection (3 parts)
             is_assessment = (
                 (len(parts) >= 4 and parts[1] == "student" and parts[2] in ["mcq", "coding"])
-                or (len(parts) >= 3 and parts[1] == "student" and parts[2] == "multisection")
+                or "multisection" in parts
             )
         except Exception:
             is_assessment = False
