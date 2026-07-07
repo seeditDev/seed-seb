@@ -292,6 +292,8 @@ const MultiSectionAssessment = () => {
         const totalScore = Object.values(updatedResults).reduce((acc, sec) => acc + (sec.data?.score || 0), 0);
         const totalQ = Object.values(updatedResults).reduce((acc, sec) => acc + (sec.data?.totalQuestions || 0), 0);
         const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
+        // Sum violations across all sections — each section tracked independently (fresh proctoring per key remount)
+        const totalViolations = Object.values(updatedResults).reduce((acc, sec) => acc + (sec.data?.violationCount || 0), 0);
 
         supabase
           .from('mcq_results')
@@ -310,7 +312,7 @@ const MultiSectionAssessment = () => {
             incorrect_answers: totalQ - totalScore,
             percentage: pct,
             submitted_at: new Date().toISOString(),
-            violation_count: 0,
+            violation_count: totalViolations,
             updated_at: new Date().toISOString()
           }, {
             onConflict: 'email,test_id'

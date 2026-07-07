@@ -1113,13 +1113,22 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             const correctAnswers = calculateScore();
             const totalQuestions = currentTest.questions.length;
             const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-            if (onSectionSubmit) {
-                onSectionSubmit({
+            const violationStats = (proctoringData.violations || []).reduce((acc, v) => {
+                if (v.type === 'no_face') acc.totalNoFace++;
+                else if (v.type === 'multiple_faces') acc.totalMultipleFaces++;
+                return acc;
+            }, { totalNoFace: 0, totalMultipleFaces: 0 });
+            if (onSectionSubmitRef.current) {
+                onSectionSubmitRef.current({
                     answers: answers,
                     timeSpentPerQ: timeSpentPerQ,
                     score: correctAnswers,
                     totalQuestions: totalQuestions,
-                    percentage: percentage
+                    percentage: percentage,
+                    violationCount: proctoringData.violationCount || 0,
+                    totalNoFace: violationStats.totalNoFace,
+                    totalMultipleFaces: violationStats.totalMultipleFaces,
+                    violations: proctoringData.violations || []
                 });
             }
             return;
@@ -1277,12 +1286,21 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
             if (isEmbedded) {
                 if (onSectionSubmitRef.current) {
+                    const violationStats = (proctoringData.violations || []).reduce((acc, v) => {
+                        if (v.type === 'no_face') acc.totalNoFace++;
+                        else if (v.type === 'multiple_faces') acc.totalMultipleFaces++;
+                        return acc;
+                    }, { totalNoFace: 0, totalMultipleFaces: 0 });
                     onSectionSubmitRef.current({
                         answers: answers,
                         timeSpentPerQ: timeSpentPerQ,
                         score: correctAnswers,
                         totalQuestions: totalQuestions,
-                        percentage: percentage
+                        percentage: percentage,
+                        violationCount: proctoringData.violationCount || 0,
+                        totalNoFace: violationStats.totalNoFace,
+                        totalMultipleFaces: violationStats.totalMultipleFaces,
+                        violations: proctoringData.violations || []
                     });
                 }
                 return;
