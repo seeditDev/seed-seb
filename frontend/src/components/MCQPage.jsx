@@ -293,6 +293,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
     // Keep route in sync with active test slug
     useEffect(() => {
+        if (isEmbedded) return;
         if (currentTest && !currentTest.submitted) {
             const slug = currentTest.slug || currentTest.testInfo?.slug || slugify(currentTest.testInfo?.id || currentTest.id || currentTest.name);
             if (slug && testSlug !== slug) {
@@ -305,7 +306,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 navigate(MCQ_ROUTE_BASE, { replace: true });
             }
         }
-    }, [currentTest, testSlug, navigate]);
+    }, [currentTest, testSlug, navigate, isEmbedded]);
 
     // Load available MCQ tests based on access control
     const loadAvailableTests = async (accessControlData, userData) => {

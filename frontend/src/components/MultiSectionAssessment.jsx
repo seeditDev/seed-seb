@@ -191,12 +191,7 @@ const MultiSectionAssessment = () => {
     if (sectionCountdown === null) return;
     if (sectionCountdown <= 0) {
       // Start the section now!
-      const idx = countdownSecIdx;
-      setCurrentSecIdx(idx);
       setSecStarted(true);
-      setCurrentQIdx(0);
-      const section = assessment.sections[idx];
-      setSecTimer((section.duration_minutes || 30) * 60);
       setSectionCountdown(null);
       return;
     }
@@ -204,12 +199,20 @@ const MultiSectionAssessment = () => {
       setSectionCountdown(prev => prev - 1);
     }, 1000);
     return () => clearTimeout(timer);
-  }, [sectionCountdown, countdownSecIdx]);
+  }, [sectionCountdown]);
 
 
   const handleStartSection = (idx) => {
     setCountdownSecIdx(idx);
     setSectionCountdown(10);
+    setCurrentSecIdx(idx);
+    setCurrentQIdx(0);
+    if (assessment && assessment.sections) {
+      const section = assessment.sections[idx];
+      if (section) {
+        setSecTimer((section.duration_minutes || 30) * 60);
+      }
+    }
   };
 
   const autoSubmitSection = (sectionResults) => {
@@ -327,53 +330,7 @@ const MultiSectionAssessment = () => {
   const activeSecData = activeSection ? sectionData[activeSection.sectionId] : null;
   const questionsList = activeSecData?.questions || [];
 
-  if (sectionCountdown !== null) {
-    const targetSection = assessment?.sections[countdownSecIdx];
-    return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        background: 'radial-gradient(circle at center, #0f172a, #020617)',
-        color: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
-        fontFamily: "'Inter', sans-serif"
-      }}>
-        <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
-          <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: '#10b981', margin: '0 auto 24px' }}></div>
-          <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: '#10b981', letterSpacing: '-0.02em' }}>
-            Preparing Section Workspace...
-          </h2>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
-            Entering Section: <strong style={{ color: 'white' }}>{targetSection?.name}</strong>.
-            <br />
-            Loading test cases and preparing sandbox environments.
-          </p>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '16px',
-            padding: '24px 32px',
-            display: 'inline-block',
-            boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
-          }}>
-            <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '8px', fontWeight: '700' }}>
-              Section Starts In
-            </div>
-            <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'white', fontFamily: 'monospace', lineHeight: '1' }}>
-              {sectionCountdown}s
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   if (examFinished) {
     return (
@@ -472,50 +429,96 @@ const MultiSectionAssessment = () => {
     );
   }
 
-  if (secStarted && activeSection) {
-    if (activeSection.type === 'mcq') {
-      return (
-        <MCQPage 
-          isEmbedded={true}
-          testData={activeSecData}
-          secTimer={secTimer}
-          onSectionSubmit={autoSubmitSection}
-          settings={{
-            timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
-            questionTimer: activeSection.questionTimer || 0,
-            forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0)
-          }}
-        />
-      );
-    } else {
-      const codingQTimers = (() => {
-        const qCount = questionsList.length;
-        if (activeSection.questionTimerList) {
-          const parts = activeSection.questionTimerList.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
-          if (parts.length > 0) {
-            return Array.from({ length: qCount }, (_, idx) => parts[idx] !== undefined ? parts[idx] : parts[parts.length - 1]);
-          }
+  if (activeSection) {
+    const codingQTimers = (() => {
+      const qCount = questionsList.length;
+      if (activeSection.questionTimerList) {
+        const parts = activeSection.questionTimerList.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+        if (parts.length > 0) {
+          return Array.from({ length: qCount }, (_, idx) => parts[idx] !== undefined ? parts[idx] : parts[parts.length - 1]);
         }
-        if (activeSection.questionTimer) {
-          return Array(qCount).fill(activeSection.questionTimer);
-        }
-        return [];
-      })();
+      }
+      if (activeSection.questionTimer) {
+        return Array(qCount).fill(activeSection.questionTimer);
+      }
+      return [];
+    })();
 
-      return (
-        <CodingAssessmentSandbox 
-          isEmbedded={true}
-          testData={activeSecData}
-          secTimer={secTimer}
-          onSectionSubmit={autoSubmitSection}
-          settings={{
-            timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
-            questionTimers: codingQTimers,
-            forwardOnly: !!activeSection.forwardOnly || (codingQTimers.length > 0)
-          }}
-        />
-      );
-    }
+    const sectionElement = activeSection.type === 'mcq' ? (
+      <MCQPage 
+        isEmbedded={true}
+        testData={activeSecData}
+        secTimer={secTimer}
+        onSectionSubmit={autoSubmitSection}
+        settings={{
+          timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
+          questionTimer: activeSection.questionTimer || 0,
+          forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0)
+        }}
+      />
+    ) : (
+      <CodingAssessmentSandbox 
+        isEmbedded={true}
+        testData={activeSecData}
+        secTimer={secTimer}
+        onSectionSubmit={autoSubmitSection}
+        settings={{
+          timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
+          questionTimers: codingQTimers,
+          forwardOnly: !!activeSection.forwardOnly || (codingQTimers.length > 0)
+        }}
+      />
+    );
+
+    return (
+      <>
+        {sectionElement}
+        {sectionCountdown !== null && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'radial-gradient(circle at center, #0f172a, #020617)',
+            color: 'white',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            fontFamily: "'Inter', sans-serif"
+          }}>
+            <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
+              <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: '#10b981', margin: '0 auto 24px' }}></div>
+              <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: '#10b981', letterSpacing: '-0.02em' }}>
+                Preparing Section Workspace...
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
+                Entering Section: <strong style={{ color: 'white' }}>{assessment?.sections[countdownSecIdx]?.name}</strong>.
+                <br />
+                Loading test cases and preparing sandbox environments.
+              </p>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                padding: '24px 32px',
+                display: 'inline-block',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
+              }}>
+                <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '8px', fontWeight: '700' }}>
+                  Section Starts In
+                </div>
+                <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'white', fontFamily: 'monospace', lineHeight: '1' }}>
+                  {sectionCountdown}s
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   return (
