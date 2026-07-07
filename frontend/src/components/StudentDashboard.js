@@ -23,7 +23,8 @@ import {
   FaCamera,
   FaMicrophone,
   FaUserShield,
-  FaCog
+  FaCog,
+  FaUserTie
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
@@ -34,6 +35,7 @@ import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
 import PracticeHome from './PracticeHome';
+import AIInterviewSimulator from './AIInterviewSimulator';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -87,6 +89,135 @@ const StudentDashboard = () => {
   const [filterDifficulty, setFilterDifficulty] = useState("All");
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
+
+  // ─── Welcome Popup State ──────────────────────────────────────────
+  const [welcomeQuote, setWelcomeQuote] = useState("");
+  const [welcomeInput, setWelcomeInput] = useState("");
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomeUpdates, setWelcomeUpdates] = useState(null);
+  const [showUpdatesModal, setShowUpdatesModal] = useState(false);
+  const [isAiInterviewAllowed, setIsAiInterviewAllowed] = useState(false);
+
+  useEffect(() => {
+    const checkAiInterviewAccess = async () => {
+      if (!user) return;
+      const userEmail = (user.Email || user.email || "").trim().toLowerCase();
+      if (!userEmail) return;
+
+      // QA Developer bypass list to help check the tab instantly
+      const QA_DEVELOPERS = ["ashok@gmail.com", "student@seedit.tech", "student@gmail.com", "test@gmail.com"];
+      if (QA_DEVELOPERS.includes(userEmail)) {
+        setIsAiInterviewAllowed(true);
+        return;
+      }
+
+      try {
+        const githubRes = await fetch("https://raw.githubusercontent.com/seeditDev/SEEDDB/main/Premium/ai-interview.json");
+        if (githubRes.ok) {
+          const list = await githubRes.json();
+          if (Array.isArray(list)) {
+            const allowed = list.some(email => String(email).trim().toLowerCase() === userEmail);
+            setIsAiInterviewAllowed(allowed);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch AI Interview access list from GitHub:", err);
+      }
+    };
+
+    checkAiInterviewAccess();
+  }, [user]);
+
+  useEffect(() => {
+    // Check session storage to only prompt once per browser session
+    if (sessionStorage.getItem('welcome_shown')) return;
+
+    const fetchWelcomeQuote = async () => {
+      // 31 default motivational quotes
+      const DEFAULT_QUOTES = [
+        "Believe you can and you're halfway there.",
+        "Act as if what you do makes a difference. It does.",
+        "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+        "Never bend your head. Always hold it high. Look the world straight in the eye.",
+        "What you get by achieving your goals is not as important as what you become by achieving your goals.",
+        "Believe in yourself. You are braver than you think, more talented than you know.",
+        "I can't change the direction of the wind, but I can adjust my sails to always reach my destination.",
+        "No matter what you're going through, there's a light at the end of the tunnel.",
+        "It is our attitude at the beginning of a difficult undertaking which, more than anything else, will determine its successful outcome.",
+        "Life is like riding a bicycle. To keep your balance, you must keep moving.",
+        "Limit your 'always' and your 'nevers.'",
+        "You are never too old to set another goal or to dream a new dream.",
+        "Try to be a rainbow in someone's cloud.",
+        "You do not find a happy life. You make it.",
+        "The most wasted of all days is one without laughter.",
+        "Make each day your masterpiece.",
+        "Write it on your heart that every day is the best day in the year.",
+        "Keep your face always toward the sunshine—and shadows will fall behind you.",
+        "The only limit to our realization of tomorrow will be our doubts of today.",
+        "It always seems impossible until it's done.",
+        "The best way to predict the future is to create it.",
+        "You miss 100% of the shots you don't take.",
+        "In the middle of difficulty lies opportunity.",
+        "Success is walking from failure to failure with no loss of enthusiasm.",
+        "Opportunity does not knock, it presents itself when you beat down the door.",
+        "Don't count the days, make the days count.",
+        "Dream big and dare to fail.",
+        "Keep clean, be useful, and make a friend.",
+        "Action is the foundational key to all success.",
+        "Focus on the journey, not the destination.",
+        "Every moment is a fresh beginning."
+      ];
+
+      const dayOfMonth = new Date().getDate(); // 1 to 31
+      let quoteOfTheDay = DEFAULT_QUOTES[(dayOfMonth - 1) % 31];
+
+      try {
+        const res = await fetch("https://raw.githubusercontent.com/seeditDev/seed-contents/main/welcome.json");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data === 'object' && !Array.isArray(data)) {
+            // Check if structured: { quotes: ..., updates: ... }
+            if (data.quotes) {
+              const qData = data.quotes;
+              if (Array.isArray(qData)) {
+                quoteOfTheDay = qData[(dayOfMonth - 1) % qData.length] || quoteOfTheDay;
+              } else if (typeof qData === 'object') {
+                quoteOfTheDay = qData[dayOfMonth] || qData[String(dayOfMonth)] || Object.values(qData)[0] || quoteOfTheDay;
+              }
+            } else {
+              quoteOfTheDay = data[dayOfMonth] || data[String(dayOfMonth)] || Object.values(data)[0] || quoteOfTheDay;
+            }
+
+            // Save updates if present
+            if (data.updates) {
+              setWelcomeUpdates(data.updates);
+            } else if (data.update) {
+              setWelcomeUpdates(data.update);
+            }
+          } else if (Array.isArray(data)) {
+            quoteOfTheDay = data[(dayOfMonth - 1) % data.length] || quoteOfTheDay;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch welcome.json, using fallback quote.", err);
+      }
+
+      setWelcomeQuote(quoteOfTheDay);
+      setShowWelcomeModal(true);
+    };
+
+    fetchWelcomeQuote();
+  }, []);
+
+  const handleCloseWelcomeModal = () => {
+    if (welcomeInput.trim() === welcomeQuote.trim()) {
+      sessionStorage.setItem('welcome_shown', 'true');
+      setShowWelcomeModal(false);
+      if (welcomeUpdates) {
+        setShowUpdatesModal(true);
+      }
+    }
+  };
 
   // ─── Launch Wizard State ──────────────────────────────────────────
   // launchStep: null | 'verifying' | 'passkey' | 'preflight' | 'instructions' | 'launching'
@@ -270,27 +401,27 @@ const StudentDashboard = () => {
         const statusPriority = { "Active": 0, "Upcoming": 1, "Expired": 2 };
         const statusA = getScheduleStatus(a.schedule).status;
         const statusB = getScheduleStatus(b.schedule).status;
-        
+
         const priorityA = statusPriority[statusA] ?? 99;
         const priorityB = statusPriority[statusB] ?? 99;
         if (priorityA !== priorityB) {
           return priorityA - priorityB;
         }
-        
+
         // Secondary sort: display_order (ascending)
         const orderA = typeof a.display_order === 'number' ? a.display_order : 9999;
         const orderB = typeof b.display_order === 'number' ? b.display_order : 9999;
         if (orderA !== orderB) {
           return orderA - orderB;
         }
-        
+
         // Tertiary sort: startDate (ascending)
         const dateA = a.schedule?.startDate || '';
         const dateB = b.schedule?.startDate || '';
         if (dateA !== dateB) {
           return dateA.localeCompare(dateB);
         }
-        
+
         // Quaternary sort: startTime (ascending)
         const timeA = a.schedule?.startTime || '';
         const timeB = b.schedule?.startTime || '';
@@ -553,7 +684,7 @@ const StudentDashboard = () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       webcamOk = devices.some(d => d.kind === 'videoinput');
-    } catch (_) {}
+    } catch (_) { }
     setPreflightResults(prev => ({ ...prev, webcam: webcamOk ? 'pass' : 'fail' }));
 
     // 3. Microphone Check
@@ -562,7 +693,7 @@ const StudentDashboard = () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       micOk = devices.some(d => d.kind === 'audioinput');
-    } catch (_) {}
+    } catch (_) { }
     setPreflightResults(prev => ({ ...prev, microphone: micOk ? 'pass' : 'fail' }));
 
     // 4. Secure Env Check
@@ -893,6 +1024,91 @@ const StudentDashboard = () => {
   const renderProfile = () => {
     const isPremium = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium;
 
+    const getCompletedCourses = () => {
+      const badges = [];
+      const solvedCount = progressData?.solvedProblems?.length || 0;
+      
+      // 1. Solve milestones
+      if (solvedCount >= 1) {
+        badges.push({
+          id: 'first_steps',
+          title: 'First Steps',
+          desc: 'Solved your first coding problem!',
+          icon: '🚀',
+          color: '#38bdf8'
+        });
+      }
+      if (solvedCount >= 10) {
+        badges.push({
+          id: 'coding_scholar',
+          title: 'Coding Scholar',
+          desc: 'Solved 10+ coding practice problems.',
+          icon: '📚',
+          color: '#a78bfa'
+        });
+      }
+      if (solvedCount >= 30) {
+        badges.push({
+          id: 'dsa_expert',
+          title: 'DSA Expert',
+          desc: 'Solved 30+ coding practice problems.',
+          icon: '🏆',
+          color: '#fb923c'
+        });
+      }
+      if (solvedCount >= 50) {
+        badges.push({
+          id: 'grandmaster',
+          title: 'SEED-IT Grandmaster',
+          desc: 'Solved 50+ coding practice problems.',
+          icon: '👑',
+          color: '#f43f5e'
+        });
+      }
+
+      // 2. Assessment modules completion
+      if (assessments && assessments.length > 0) {
+        const mcqAssessments = assessments.filter(a => a.type === 'mcq');
+        const codingAssessments = assessments.filter(a => a.type === 'coding');
+        
+        const completedMcqs = mcqAssessments.filter(a => a.completed);
+        const completedCodings = codingAssessments.filter(a => a.completed);
+        
+        if (completedMcqs.length > 0 && completedMcqs.length === mcqAssessments.length) {
+          badges.push({
+            id: 'mcq_conqueror',
+            title: 'MCQ Conqueror',
+            desc: 'Completed all mapped MCQ courses.',
+            icon: '📝',
+            color: '#34d399'
+          });
+        }
+        
+        if (completedCodings.length > 0 && completedCodings.length === codingAssessments.length) {
+          badges.push({
+            id: 'assessment_master',
+            title: 'Assessment Master',
+            desc: 'Completed all mapped Coding courses.',
+            icon: '🛡️',
+            color: '#fbbf24'
+          });
+        }
+
+        const totalCompleted = assessments.filter(a => a.completed).length;
+        if (totalCompleted > 0 && totalCompleted === assessments.length) {
+          badges.push({
+            id: 'seed_graduate',
+            title: 'SEED-IT Graduate',
+            desc: 'Completed 100% of all assigned academic courses.',
+            icon: '🎓',
+            color: '#2dd4bf'
+          });
+        }
+      }
+
+      return badges;
+    };
+
     // Check if progressData is loaded, if not show loading/placeholder card
     if (!progressData) {
       return (
@@ -903,7 +1119,7 @@ const StudentDashboard = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
-            
+
             {/* Card 1: Registration Details */}
             <div className="premium-profile-card">
               <div className="profile-avatar-row">
@@ -1054,7 +1270,7 @@ const StudentDashboard = () => {
 
         {/* Info Grid row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
-          
+
           {/* Card 1: Registration Details */}
           <div className="premium-profile-card" style={{ height: '100%' }}>
             <div className="profile-avatar-row">
@@ -1095,7 +1311,7 @@ const StudentDashboard = () => {
 
           {/* Card 2: Practice Statistics & Heatmap */}
           <div className="premium-profile-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
+
             {/* Row of stats */}
             <div style={{ display: 'flex', gap: '15px' }}>
               <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
@@ -1137,10 +1353,10 @@ const StudentDashboard = () => {
                   {loadingProfileProgress ? 'Syncing...' : '🔄 Sync with Cloud'}
                 </button>
               </div>
-              
+
               {/* Heatmap layout */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                
+
                 {/* Y-axis: days of week */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '9px', color: '#475569', marginTop: '16px', width: '22px' }}>
                   <span>Sun</span>
@@ -1154,7 +1370,7 @@ const StudentDashboard = () => {
 
                 {/* X-axis: weeks columns */}
                 <div style={{ flex: 1, overflowX: 'auto' }}>
-                  
+
                   {/* Month headers Row */}
                   <div style={{ position: 'relative', height: '14px', marginBottom: '4px', fontSize: '10px', color: '#475569' }}>
                     {monthHeaders.map(hdr => (
@@ -1189,6 +1405,7 @@ const StudentDashboard = () => {
                                 width: '12px',
                                 height: '12px',
                                 background: color,
+                                border: '1px solid var(--border-color)',
                                 borderRadius: '2px',
                                 transition: 'all 0.1s'
                               }}
@@ -1230,6 +1447,79 @@ const StudentDashboard = () => {
 
           </div>
 
+        </div>
+
+        {/* Achievements & Badges Card */}
+        <div className="premium-profile-card" style={{ padding: '24px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '16px', color: 'var(--ph-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🏆</span> Achievements & Badges
+          </h3>
+          
+          {getCompletedCourses().length === 0 ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '30px 20px',
+              textAlign: 'center',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px dashed var(--border-color)',
+              borderRadius: '12px'
+            }}>
+              <span style={{ fontSize: '32px', marginBottom: '8px' }}>🎖️</span>
+              <h4 style={{ color: 'var(--ph-text)', marginBottom: '4px' }}>No Badges Earned Yet</h4>
+              <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', maxWidth: '400px', margin: '0 auto' }}>
+                Complete your assigned courses, coding assessments, or solve practice problems in the sandbox to unlock special merit badges.
+              </p>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+              gap: '16px'
+            }}>
+              {getCompletedCourses().map(badge => (
+                <div
+                  key={badge.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '14px',
+                    background: 'var(--bg-secondary, rgba(255,255,255,0.03))',
+                    border: `1px solid ${badge.color}`,
+                    borderRadius: '12px',
+                    boxShadow: `0 4px 12px ${badge.color}15`,
+                    transition: 'transform 0.2s'
+                  }}
+                  className="badge-item-hover"
+                >
+                  <div style={{
+                    fontSize: '28px',
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '10px',
+                    background: `${badge.color}15`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {badge.icon}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ph-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {badge.title}
+                    </h4>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)', margin: '4px 0 0', lineHeight: '1.3' }}>
+                      {badge.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Absolute Floating Tooltip Card */}
@@ -1294,6 +1584,12 @@ const StudentDashboard = () => {
         name: 'Crimson Frost (Red/White)',
         desc: 'Clean, high-contrast light theme with rich red accents.',
         preview: ['#fdfafb', '#ffffff', '#dc2626']
+      },
+      {
+        id: 'bw',
+        name: 'Monochrome Minimalist (B&W)',
+        desc: 'High-contrast, clean black & white theme.',
+        preview: ['#ffffff', '#000000', '#000000']
       }
     ];
 
@@ -1331,8 +1627,8 @@ const StudentDashboard = () => {
             {themes.map(t => {
               const active = currentTheme === t.id;
               return (
-                <div 
-                  key={t.id} 
+                <div
+                  key={t.id}
                   onClick={() => handleThemeChange(t.id)}
                   style={{
                     background: active ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
@@ -1355,7 +1651,7 @@ const StudentDashboard = () => {
 
                   <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>{t.name}</h4>
                   <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0, lineHeight: '1.4' }}>{t.desc}</p>
-                  
+
                   {active && (
                     <span style={{
                       position: 'absolute',
@@ -1379,6 +1675,151 @@ const StudentDashboard = () => {
 
   return (
     <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`}>
+      {/* Welcome Quote Verification Popup */}
+      {showWelcomeModal && (
+        <div className="lw-overlay" style={{ zIndex: 1500 }}>
+          <div className="lw-card" style={{ maxWidth: '550px', padding: '30px', margin: '20px' }}>
+            <div className="lw-card-header" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 className="lw-title" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-coding)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>✨</span> Welcome to SEED Portal
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0' }}>
+                Please type the exact quote of the day to close this window and enter the platform.
+              </p>
+            </div>
+            <div className="lw-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{
+                background: 'var(--bg-primary)',
+                border: '1px dashed var(--border-color)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                fontSize: '15px',
+                fontWeight: '600',
+                color: 'var(--text-main)',
+                lineHeight: '1.5',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                msUserSelect: 'none'
+              }}>
+                "{welcomeQuote}"
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600' }}>
+                  Verification Input:
+                </label>
+                <input
+                  type="text"
+                  className="lw-input"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-main)',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Type the exact quote..."
+                  value={welcomeInput}
+                  onChange={e => setWelcomeInput(e.target.value)}
+                  onPaste={e => e.preventDefault()}
+                />
+              </div>
+            </div>
+            <div className="lw-card-footer" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                className="lw-btn-primary"
+                disabled={welcomeInput.trim() !== welcomeQuote.trim()}
+                onClick={handleCloseWelcomeModal}
+                style={{
+                  padding: '10px 24px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  borderRadius: '8px',
+                  cursor: welcomeInput.trim() === welcomeQuote.trim() ? 'pointer' : 'not-allowed',
+                  opacity: welcomeInput.trim() === welcomeQuote.trim() ? 1 : 0.5
+                }}
+              >
+                Proceed to Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Platform Updates & Announcements Follow-up Modal */}
+      {showUpdatesModal && welcomeUpdates && (
+        <div className="lw-overlay" style={{ zIndex: 1500 }}>
+          <div className="lw-card" style={{ maxWidth: '550px', padding: '30px', margin: '20px' }}>
+            <div className="lw-card-header" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <h3 className="lw-title" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-coding)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📢</span> Platform Updates & News
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0' }}>
+                Stay up to date with the latest features, releases, and platform notifications.
+              </p>
+            </div>
+            <div className="lw-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {Array.isArray(welcomeUpdates) ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {welcomeUpdates.map((update, idx) => (
+                    <div key={idx} style={{
+                      display: 'flex',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      background: 'var(--bg-primary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '10px',
+                      alignItems: 'flex-start'
+                    }}>
+                      <span style={{ fontSize: '16px', color: 'var(--accent-coding)', marginTop: '2px' }}>⚡</span>
+                      <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.4', flex: 1 }}>
+                        {update}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  padding: '16px 20px',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  alignItems: 'flex-start'
+                }}>
+                  <span style={{ fontSize: '18px', color: 'var(--accent-coding)', marginTop: '2px' }}>⚡</span>
+                  <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.5', flex: 1 }}>
+                    {welcomeUpdates}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="lw-card-footer" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                className="lw-btn-primary"
+                onClick={() => setShowUpdatesModal(false)}
+                style={{
+                  padding: '10px 24px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                Close & Enter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══════════════════════════════════════════════════════════
           LAUNCH WIZARD MODALS — 5 Steps
       ═══════════════════════════════════════════════════════════ */}
@@ -1509,7 +1950,7 @@ const StudentDashboard = () => {
                 </div>
 
                 {/* Charger confirmation manual checklist row */}
-                <div className="lw-preflight-row" style={{ 
+                <div className="lw-preflight-row" style={{
                   justifyContent: 'space-between',
                   background: 'rgba(234, 179, 8, 0.04)',
                   border: '1px solid rgba(234, 179, 8, 0.15)'
@@ -1529,38 +1970,38 @@ const StudentDashboard = () => {
 
               {/* Result messages */}
               {preflightDone && (
-                preflightResults.internet === 'fail' || 
+                preflightResults.internet === 'fail' ||
                 (selectedAssessment?.proctored && preflightResults.webcam === 'fail') ||
                 (selectedAssessment?.proctored && preflightResults.secureEnv === 'fail')
               ) && (
-                <div className="lw-error-row" style={{ marginTop: '8px' }}>
-                  <FaExclamationTriangle /> System check failed. Please resolve the red errors to unlock the Proceed button.
-                </div>
-              )}
-              {preflightDone && 
-                preflightResults.internet === 'pass' && 
-                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) && 
+                  <div className="lw-error-row" style={{ marginTop: '8px' }}>
+                    <FaExclamationTriangle /> System check failed. Please resolve the red errors to unlock the Proceed button.
+                  </div>
+                )}
+              {preflightDone &&
+                preflightResults.internet === 'pass' &&
+                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) &&
                 !chargerConfirmed && (
-                <div className="lw-warning-row" style={{ marginTop: '8px', padding: '12px', background: 'rgba(234, 179, 8, 0.1)', borderLeft: '4px solid #eab308', borderRadius: '8px', display: 'flex', alignItems: 'center', color: '#facc15', fontSize: '0.92rem', fontWeight: '600' }}>
-                  <FaExclamationTriangle style={{ marginRight: '8px' }} /> Please confirm you have connected your charger to enable Proceed.
-                </div>
-              )}
-              {preflightDone && 
-                preflightResults.internet === 'pass' && 
-                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) && 
+                  <div className="lw-warning-row" style={{ marginTop: '8px', padding: '12px', background: 'rgba(234, 179, 8, 0.1)', borderLeft: '4px solid #eab308', borderRadius: '8px', display: 'flex', alignItems: 'center', color: '#facc15', fontSize: '0.92rem', fontWeight: '600' }}>
+                    <FaExclamationTriangle style={{ marginRight: '8px' }} /> Please confirm you have connected your charger to enable Proceed.
+                  </div>
+                )}
+              {preflightDone &&
+                preflightResults.internet === 'pass' &&
+                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) &&
                 chargerConfirmed && (
-                <div className="lw-info-row" style={{ marginTop: '8px' }}>
-                  <FaCheckCircle style={{ color: '#10b981' }} /> All checks passed. You may proceed.
-                </div>
-              )}
+                  <div className="lw-info-row" style={{ marginTop: '8px' }}>
+                    <FaCheckCircle style={{ color: '#10b981' }} /> All checks passed. You may proceed.
+                  </div>
+                )}
             </div>
             <div className="lw-card-footer">
               <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
               <button
                 className="lw-btn-primary"
                 disabled={
-                  !preflightDone || 
-                  preflightResults.internet === 'fail' || 
+                  !preflightDone ||
+                  preflightResults.internet === 'fail' ||
                   (selectedAssessment?.proctored && preflightResults.webcam === 'fail') ||
                   (selectedAssessment?.proctored && preflightResults.secureEnv === 'fail') ||
                   !chargerConfirmed
@@ -1577,9 +2018,9 @@ const StudentDashboard = () => {
       {/* Step 4: Anti-malpractice instructions */}
       {launchStep === 'instructions' && selectedAssessment && (
         (selectedAssessment.proctored === true ||
-        selectedAssessment.proctored === 1 ||
-        selectedAssessment.proctored === "1" ||
-        selectedAssessment.proctored === "true") ? (
+          selectedAssessment.proctored === 1 ||
+          selectedAssessment.proctored === "1" ||
+          selectedAssessment.proctored === "true") ? (
           <ProctoringInstructions
             assessment={selectedAssessment}
             onContinue={handleAgreeAndLaunch}
@@ -1719,6 +2160,15 @@ const StudentDashboard = () => {
               <FaUser />
               <span className="menu-text">Profile</span>
             </button>
+            {isAiInterviewAllowed && (
+              <button
+                className={`menu-item ${activeTab === "ai-interview" ? "active" : ""}`}
+                onClick={() => setActiveTab("ai-interview")}
+              >
+                <FaUserTie />
+                <span className="menu-text">AI Interview</span>
+              </button>
+            )}
             <button
               className={`menu-item ${activeTab === "settings" ? "active" : ""}`}
               onClick={() => setActiveTab("settings")}
@@ -1734,7 +2184,7 @@ const StudentDashboard = () => {
         </aside>
 
         <main className="dashboard-main">
-          {activeTab === "assessments" ? renderAssessments() : activeTab === "practice" ? <PracticeHome /> : activeTab === "settings" ? renderSettings() : renderProfile()}
+          {activeTab === "assessments" ? renderAssessments() : activeTab === "practice" ? <PracticeHome /> : activeTab === "settings" ? renderSettings() : activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> : renderProfile()}
         </main>
       </div>
 
@@ -1751,7 +2201,7 @@ const StudentDashboard = () => {
 
       {/* Footer */}
       <footer className="dashboard-footer">
-        <p>&copy; {new Date().getFullYear()} SEED Innovating Technologies and Educational Services (SEED-IT). (v{APP_VERSION})</p>
+        <p>&copy; {new Date().getFullYear()} SEED Innovating Technologies and Educatio Services (SEED-IT). (v{APP_VERSION})</p>
       </footer>
     </div>
   );

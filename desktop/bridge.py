@@ -197,3 +197,14 @@ class DesktopBridge(QObject):
                 return f.read()
         except Exception:
             return json.dumps([])
+
+    @pyqtSlot(result=int)
+    def getLocalModelPort(self):
+        """Returns the local Model HTTP server port to the frontend."""
+        try:
+            if self.parent() and hasattr(self.parent(), 'model_server_port'):
+                return self.parent().model_server_port or 0
+        except Exception as e:
+            print(f"[DesktopBridge] Error getting local model port: {e}")
+        return 0
+

@@ -31,7 +31,7 @@ export const CATEGORIZED_SHEETS = {
     },
     { ...blind75, id: 'blind75', title: "Blind 75 Sheet", desc: "Interview Problems with Video Solutions", borderColor: "#E5A48B", buttonType: "track", tag: "DSA Sheets" },
     { ...sde, id: 'sde', title: "SDE Sheet", desc: "Most Frequently Asked Interview Questions", borderColor: "#38bdf8", buttonType: "track", tag: "DSA Sheets" },
-    { ...striver79, id: 'striver79', title: "Striver 79 Sheet", desc: "Last Minute Preparation", borderColor: "#A99CE3", buttonType: "track", tag: "DSA Sheets" }
+    { ...striver79, id: 'striver79', title: "SEED-IT 79 Sheet", desc: "Last Minute Preparation", borderColor: "#A99CE3", buttonType: "track", tag: "DSA Sheets" }
   ],
   "Core Cs Subjects": [
     { ...cn, id: 'cn', title: "CN Sheet", desc: "Most Asked Computer Networks Interview Questions", borderColor: "#06b6d4", buttonType: "track", tag: "Core Cs Subjects" },

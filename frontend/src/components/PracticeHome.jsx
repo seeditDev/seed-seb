@@ -1069,21 +1069,21 @@ const PracticeHome = () => {
               onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('paths'); }}
               style={{ borderRadius: '8px' }}
             >
-              📂 College Curriculum
+              College Curriculum
             </button>
             <button 
               className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
               onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('sheets'); }}
               style={{ borderRadius: '8px' }}
             >
-              🔥 Structured Sheets
+              Structured Sheets
             </button>
             <button 
               className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
               onClick={() => { setSelectedModule(null); setSelectedSheet(null); setActiveTab('bank'); }}
               style={{ borderRadius: '8px' }}
             >
-              🎯 Practice Bank
+              Practice Bank
             </button>
           </div>
         </div>
@@ -1117,7 +1117,7 @@ const PracticeHome = () => {
           >
             <FaChevronLeft /> Back to Learning Paths
           </button>
-          <h2 style={{ fontSize: '24px', color: 'white', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '24px', color: 'var(--ph-text)', marginBottom: '8px' }}>
             {selectedModule.name}
           </h2>
           <p style={{ color: '#94a3b8', fontSize: '15px', marginBottom: '24px' }}>
@@ -1144,7 +1144,7 @@ const PracticeHome = () => {
                     onClick={() => handleQuestionClick({ questionId: q.id, scoringType: q.scoringType }, status)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px',
-                      background: '#1c1e33', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+                      background: 'var(--ph-card)', border: '1px solid var(--ph-border)', borderRadius: '12px',
                       cursor: status === 'LOCKED' ? 'not-allowed' : 'pointer', transition: 'all 0.2s'
                     }}
                     className="q-list-row-hover"
@@ -1161,7 +1161,7 @@ const PracticeHome = () => {
                       {STATUS_ICONS[status] || '○'}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '15px', fontWeight: 600, color: 'white' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ph-text)' }}>
                         {q.title}
                       </div>
                       <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
@@ -1217,7 +1217,7 @@ const PracticeHome = () => {
                 <div 
                   key={course.id} 
                   style={{
-                    background: '#16172b', border: '1px solid rgba(255,255,255,0.06)', 
+                    background: 'var(--ph-surface)', border: '1px solid var(--ph-border)', 
                     borderRadius: '12px', overflow: 'hidden'
                   }}
                 >
@@ -1231,7 +1231,7 @@ const PracticeHome = () => {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{ fontSize: '20px' }}>{expandedCourses[course.id] ? '📂' : '📁'}</span>
-                      <span style={{ fontSize: '17px', fontWeight: 700, color: 'white' }}>{course.title}</span>
+                      <span style={{ fontSize: '17px', fontWeight: 700, color: 'var(--ph-text)' }}>{course.title}</span>
                     </div>
                     {expandedCourses[course.id] ? <FaAngleDown style={{ color: '#94a3b8' }} /> : <FaAngleRight style={{ color: '#94a3b8' }} />}
                   </div>
@@ -1247,7 +1247,7 @@ const PracticeHome = () => {
                                 onClick={() => toggleSubcourseExpand(sub.id)}
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: '8px', 
-                                  cursor: 'pointer', padding: '6px 0', color: '#e2e8f0', fontWeight: 600
+                                  cursor: 'pointer', padding: '6px 0', color: 'var(--ph-text)', fontWeight: 600
                                 }}
                               >
                                 {expandedSubcourses[sub.id] ? <FaAngleDown /> : <FaAngleRight />}
@@ -1262,14 +1262,14 @@ const PracticeHome = () => {
                                       onClick={() => handleModuleClick(mod)}
                                       style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                        padding: '12px 16px', background: '#1c1e33', borderRadius: '8px',
-                                        cursor: 'pointer', transition: '0.2s', border: '1px solid rgba(255,255,255,0.04)'
+                                        padding: '12px 16px', background: 'var(--ph-card)', borderRadius: '8px',
+                                        cursor: 'pointer', transition: '0.2s', border: '1px solid var(--ph-border)'
                                       }}
                                       className="q-list-row-hover"
                                     >
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <FaFileAlt style={{ color: mod.type === 'mcq' ? '#ff6b9d' : '#7c6bff' }} />
-                                        <span style={{ fontSize: '14px', color: '#f1f5f9' }}>{mod.name}</span>
+                                        <span style={{ fontSize: '14px', color: 'var(--ph-text)' }}>{mod.name}</span>
                                       </div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <Chip label={mod.type.toUpperCase()} size="small" style={{ fontSize: '10px' }} />
@@ -1291,14 +1291,14 @@ const PracticeHome = () => {
                               onClick={() => handleModuleClick(mod)}
                               style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '12px 16px', background: '#1c1e33', borderRadius: '8px',
-                                cursor: 'pointer', transition: '0.2s', border: '1px solid rgba(255,255,255,0.04)'
+                                padding: '12px 16px', background: 'var(--ph-card)', borderRadius: '8px',
+                                cursor: 'pointer', transition: '0.2s', border: '1px solid var(--ph-border)'
                               }}
                               className="q-list-row-hover"
                             >
                               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <FaFileAlt style={{ color: mod.type === 'mcq' ? '#ff6b9d' : '#7c6bff' }} />
-                                <span style={{ fontSize: '14px', color: '#f1f5f9' }}>{mod.name}</span>
+                                <span style={{ fontSize: '14px', color: 'var(--ph-text)' }}>{mod.name}</span>
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Chip label={mod.type.toUpperCase()} size="small" style={{ fontSize: '10px' }} />

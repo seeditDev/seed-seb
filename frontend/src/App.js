@@ -17,7 +17,7 @@ import desktopBridge from './utils/desktopBridge';
 import "./styles/Login.css";  // Import global styles
 
 // Get version from package.json
-export const APP_VERSION = '1.0.1';
+export const APP_VERSION = '1.0.4';
 
 // Make cacheManager available globally for the logout process
 window.cacheManager = cacheManager;
@@ -29,7 +29,7 @@ const VERSION_COOKIE_NAME = 'app_version';
 export const compareVersions = (v1, v2) => {
   const parts1 = v1.split('.').map(Number);
   const parts2 = v2.split('.').map(Number);
-  
+
   for (let i = 0; i < 3; i++) {
     if (parts1[i] > parts2[i]) return 1;
     if (parts1[i] < parts2[i]) return -1;
@@ -60,8 +60,8 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ 
-          padding: '20px', 
+        <div style={{
+          padding: '20px',
           textAlign: 'center',
           maxWidth: '600px',
           margin: '0 auto',
@@ -69,8 +69,8 @@ class ErrorBoundary extends React.Component {
         }}>
           <h1>Something went wrong</h1>
           <p>Please try refreshing the page. If the problem persists, please contact support.</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             style={{
               padding: '10px 20px',
               fontSize: '16px',
@@ -108,7 +108,7 @@ const PortalActivityTracker = () => {
     if (!email) return;
 
     const path = location.pathname;
-    const isAssessment = 
+    const isAssessment =
       (path.startsWith('/student/coding/') && path !== '/student/coding') ||
       path.startsWith('/student/assessment/multisection/') ||
       (path.startsWith('/student/mcq/') && path !== '/student/mcq');
@@ -147,9 +147,9 @@ const App = () => {
     const hostname = window.location.hostname;
     const isDev = hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development';
     const isUAOk = ua.includes('SEEDSEB') || ua.includes('QtWebEngine') || ua.includes('QtWebKit') ||
-                   !!window.qt || !!window.desktopBackend || window.pyqtFlag === true ||
-                   typeof window.pyqtAppReady === 'function' ||
-                   (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari'));
+      !!window.qt || !!window.desktopBackend || window.pyqtFlag === true ||
+      typeof window.pyqtAppReady === 'function' ||
+      (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari'));
     setIsDesktopApp(isUAOk || isDev);
   }, []);
 
@@ -181,11 +181,11 @@ const App = () => {
 
         // Version handling - just update the cookie without verification
         const storedVersion = Cookies.get(VERSION_COOKIE_NAME);
-        
+
         if (storedVersion !== APP_VERSION) {
           // Update stored version
           Cookies.set(VERSION_COOKIE_NAME, APP_VERSION, { expires: 365 });
-          
+
           // Clear cache if version changed
           if (storedVersion) {
             const comparison = compareVersions(APP_VERSION, storedVersion);
@@ -240,8 +240,8 @@ const App = () => {
 
   if (error) {
     return (
-      <div style={{ 
-        padding: '20px', 
+      <div style={{
+        padding: '20px',
         textAlign: 'center',
         maxWidth: '600px',
         margin: '0 auto',
@@ -249,8 +249,8 @@ const App = () => {
       }}>
         <h1>Something went wrong</h1>
         <p>{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           style={{
             padding: '10px 20px',
             fontSize: '16px',
@@ -269,23 +269,23 @@ const App = () => {
 
   if (isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100vh',
         flexDirection: 'column',
         backgroundColor: '#f4f6f9'
       }}>
         <div style={{ marginBottom: '20px' }}>
-          <img 
+          <img
             src="https://i.ibb.co/xq80RrBW/SEED-Logo.webp"
             alt="SEED-IT Logo"
             style={{ width: '150px', height: 'auto' }}
           />
         </div>
-        <p style={{ 
-          color: '#666', 
+        <p style={{
+          color: '#666',
           fontSize: '16px',
           fontFamily: 'Arial, sans-serif'
         }}>
@@ -396,9 +396,9 @@ const App = () => {
             flexDirection: 'column',
             gap: '12px'
           }}>
-            <a 
+            <a
               href="https://seedit-portal.vercel.app/download"
-              target="_blank" 
+              target="_blank"
               rel="noopener noreferrer"
               style={{
                 display: 'inline-flex',

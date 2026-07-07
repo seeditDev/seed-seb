@@ -792,6 +792,10 @@ class MainWindow(QMainWindow):
         self.local_server_port = None
         self.is_loading_fallback = False
         
+        # Local model assets server variables
+        self.model_server = None
+        self.model_server_port = 0
+        
         # Setup central widget and main layout (Navbar + Webview)
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
@@ -852,6 +856,52 @@ class MainWindow(QMainWindow):
         # Enable Fullscreen
         self.showFullScreen()
         logging.info("Main Window initialized in secure fullscreen mode")
+
+        # Start local model server
+        self.start_model_server()
+
+    def start_model_server(self):
+        """Starts a background HTTP server serving local model files with CORS headers."""
+        class ModelHTTPHandler(http.server.SimpleHTTPRequestHandler):
+            def end_headers(self):
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+                super().end_headers()
+
+            def do_OPTIONS(self):
+                self.send_response(200, "ok")
+                self.end_headers()
+
+            def translate_path(self, path):
+                # Request path starts with /interviewmodels/
+                model_dir = r"C:\Program Files (x86)\SEED-SEB\resources\interviewmodels"
+                # Fallback path for local testing during development
+                if not os.path.exists(model_dir):
+                    model_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "public", "models")
+                
+                # Make sure the target directory exists
+                os.makedirs(model_dir, exist_ok=True)
+                
+                # Strip prefix if it starts with /interviewmodels/
+                # Note path translation mapping
+                cleaned_path = path
+                if cleaned_path.startswith("/interviewmodels/"):
+                    cleaned_path = cleaned_path[len("/interviewmodels/"):]
+                elif cleaned_path.startswith("/"):
+                    cleaned_path = cleaned_path[1:]
+                    
+                return os.path.join(model_dir, cleaned_path)
+
+        try:
+            self.model_server = socketserver.TCPServer(("127.0.0.1", 0), ModelHTTPHandler)
+            self.model_server_port = self.model_server.socket.getsockname()[1]
+            server_thread = threading.Thread(target=self.model_server.serve_forever)
+            server_thread.daemon = True
+            server_thread.start()
+            logging.info(f"Model HTTP server started on port {self.model_server_port}")
+        except Exception as e:
+            logging.error(f"Failed to start Model HTTP server: {e}")
 
     def setup_nav_bar(self):
         """Create and style a modern navigation toolbar at the top of the browser view"""
@@ -978,6 +1028,12 @@ class MainWindow(QMainWindow):
         try:
             if self.local_server:
                 self.local_server.shutdown()
+        except:
+            pass
+        try:
+            if self.model_server:
+                self.model_server.shutdown()
+                self.model_server.server_close()
         except:
             pass
         os._exit(0)
@@ -1220,6 +1276,13 @@ class MainWindow(QMainWindow):
                 except:
                     pass
                 logging.info("Local HTTP Server shut down.")
+            if self.model_server:
+                try:
+                    self.model_server.shutdown()
+                    self.model_server.server_close()
+                except:
+                    pass
+                logging.info("Model HTTP Server shut down.")
             event.accept()
             os._exit(0)
         else:

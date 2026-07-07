@@ -20,6 +20,8 @@ import { db } from '../firebase-config';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { supabase } from '../supabaseClient';
 import desktopBridge from '../utils/desktopBridge';
+import ProctoringEngine from './ProctoringEngine';
+import AudioProctoringEngine from './AudioProctoringEngine';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -90,7 +92,7 @@ const FREE_BOILERPLATES = {
 
 // ─── MCQ Section Renderer ────────────────────────────────────────────────────
 
-const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit }) => {
+const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const questions = sectionData?.questions || [];
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -99,9 +101,16 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
   const [qTimerRemaining, setQTimerRemaining] = useState(settings.questionTimer || 0);
   const [timeSpentPerQ, setTimeSpentPerQ] = useState({});
   const [showReview, setShowReview] = useState(false);
+  const [proctoringData, setProctoringData] = useState({ violationCount: 0, violations: [] });
+  const [customNotice, setCustomNotice] = useState(null);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   const onSubmitRef = useRef(onSectionSubmit);
   useEffect(() => { onSubmitRef.current = onSectionSubmit; }, [onSectionSubmit]);
+
+  // Get user info for proctoring
+  const user = (() => { try { return JSON.parse(localStorage.getItem('auth_data') || '{}'); } catch { return {}; } })();
+  const testID = assessmentId || sectionData?.id || sectionData?.name || 'mcq-section';
 
   // Auto-submit when section timer expires
   useEffect(() => {
@@ -153,6 +162,11 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
     });
     const total = questions.length;
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const violationStats = (proctoringData.violations || []).reduce((acc, v) => {
+      if (v.type === 'no_face') acc.totalNoFace++;
+      else if (v.type === 'multiple_faces') acc.totalMultipleFaces++;
+      return acc;
+    }, { totalNoFace: 0, totalMultipleFaces: 0 });
     if (onSubmitRef.current) {
       onSubmitRef.current({
         answers,
@@ -160,18 +174,20 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
         score: correct,
         totalQuestions: total,
         percentage: pct,
-        violationCount: 0,
-        violations: []
+        violationCount: proctoringData.violationCount || 0,
+        totalNoFace: violationStats.totalNoFace,
+        totalMultipleFaces: violationStats.totalMultipleFaces,
+        violations: proctoringData.violations || []
       });
     }
-  }, [answers, timeSpentPerQ, questions]);
+  }, [answers, timeSpentPerQ, questions, proctoringData]);
 
   const handleSelectOption = (optIdx) => {
     if (lockedQuestions.includes(questionIndex)) return;
     setAnswers(prev => ({ ...prev, [questionIndex]: optIdx }));
   };
 
-  const navigate = (dir) => {
+  const navQuestion = (dir) => {
     if (dir === 'prev' && questionIndex > 0 && !settings.forwardOnly) setQuestionIndex(q => q - 1);
     if (dir === 'next' && questionIndex < questions.length - 1) setQuestionIndex(q => q + 1);
   };
@@ -204,17 +220,107 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
 
   return (
     <div className="mcq-test-content" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
+
+      {/* Proctoring Engines */}
+      {settings.proctored && user?.Email && (
+        <ProctoringEngine
+          studentID={user.Email}
+          testID={testID}
+          isTestActive={true}
+          maxViolations={settings.maxViolations || 7}
+          onViolationUpdate={(info) => {
+            if (!info?.violationType) return;
+            setProctoringData(prev => {
+              const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
+              return {
+                violationCount: typeof info.violationCount === 'number' ? info.violationCount : prev.violationCount,
+                violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
+              };
+            });
+          }}
+          onAutoSubmit={() => handleSubmit()}
+        />
+      )}
+      {settings.audioProctored && user?.Email && (
+        <AudioProctoringEngine
+          studentID={user.Email}
+          testID={testID}
+          isTestActive={true}
+          maxViolations={settings.maxAudioViolations || 3}
+          onViolationUpdate={(info) => {
+            if (!info?.type) return;
+            setProctoringData(prev => ({
+              ...prev,
+              violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
+            }));
+          }}
+        />
+      )}
+
+      {/* Submit Confirmation Overlay */}
+      {showSubmitConfirm && (
+        <div className="mcq-popup-overlay" style={{ zIndex: 10005 }}>
+          <div className="mcq-popup-content" style={{ border: '1.5px solid #ef4444', boxShadow: '0 0 20px rgba(239,68,68,0.3)' }}>
+            <h3 style={{ color: '#f8fafc', marginBottom: '12px' }}>Submit Section?</h3>
+            <p style={{ color: '#94a3b8', lineHeight: '1.6', marginBottom: '20px' }}>
+              Are you sure you want to submit this section? You cannot go back or change your answers.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                style={{ padding: '10px 20px', borderRadius: '6px', border: '1px solid #334155', background: '#1e293b', color: '#cbd5e1', fontWeight: '600', cursor: 'pointer' }}
+                onClick={() => setShowSubmitConfirm(false)}
+              >Cancel</button>
+              <button
+                style={{ padding: '10px 24px', borderRadius: '6px', border: 'none', background: '#10b981', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
+                onClick={() => { setShowSubmitConfirm(false); handleSubmit(); }}
+              >Submit Section</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Notice Overlay */}
+      {customNotice && (
+        <div className="mcq-popup-overlay" style={{ zIndex: 10010 }}>
+          <div className="mcq-popup-content" style={{
+            border: `1.5px solid ${customNotice.type === 'error' ? '#ef4444' : customNotice.type === 'success' ? '#10b981' : '#f59e0b'}`,
+          }}>
+            <h3 style={{ color: customNotice.type === 'error' ? '#ef4444' : customNotice.type === 'success' ? '#10b981' : '#f59e0b' }}>{customNotice.title}</h3>
+            <p style={{ margin: '12px 0', color: '#94a3b8', lineHeight: '1.6' }}>{customNotice.message}</p>
+            <button
+              style={{ padding: '10px 24px', border: 'none', borderRadius: '6px', background: customNotice.type === 'error' ? '#ef4444' : customNotice.type === 'success' ? '#10b981' : '#f59e0b', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
+              onClick={() => { const fn = customNotice.onConfirm; setCustomNotice(null); if (fn) fn(); }}
+            >Understood</button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mcq-test-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px', background: '#1e293b', borderBottom: '1px solid #334155' }}>
         <div className="mcq-test-info">
+          {assessmentName && <p style={{ color: '#64748b', fontSize: '0.75rem', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '600' }}>{assessmentName}</p>}
           <h1 style={{ fontSize: '1.1rem', color: '#f8fafc', margin: 0 }}>{sectionData?.name || 'MCQ Section'}</h1>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {settings.proctored && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: proctoringData.violationCount > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.12)',
+              color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
+              border: proctoringData.violationCount > 0 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16,185,129,0.3)',
+              padding: '5px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600'
+            }}>
+              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
+              PROCTOR ACTIVE | Violations: {proctoringData.violationCount} / {settings.maxViolations || 7}
+            </div>
+          )}
           <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{attempted} / {total} Answered</span>
           <div style={{
             display: 'flex', alignItems: 'center', gap: '6px',
-            background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)',
-            padding: '5px 12px', borderRadius: '20px', fontSize: '0.85rem', color: '#10b981', fontWeight: '600'
+            background: secTimer <= 60 ? 'rgba(239,68,68,0.15)' : 'rgba(16, 185, 129, 0.12)',
+            border: secTimer <= 60 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+            padding: '5px 12px', borderRadius: '20px', fontSize: '0.85rem',
+            color: secTimer <= 60 ? '#ef4444' : '#10b981', fontWeight: '600'
           }}>
             <FaClock />
             <span>{formatTime(secTimer)}</span>
@@ -222,7 +328,7 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
           {!settings.timerRestrictedSubmit && (
             <button
               style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', padding: '7px 18px', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem' }}
-              onClick={() => { if (window.confirm('Submit this section now? You cannot go back.')) handleSubmit(); }}
+              onClick={() => setShowSubmitConfirm(true)}
             >
               Submit Section
             </button>
@@ -311,14 +417,14 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
               <div className="mcq-navigation" style={{ marginTop: '20px' }}>
                 <button
                   className="mcq-nav-button"
-                  onClick={() => navigate('prev')}
+                  onClick={() => navQuestion('prev')}
                   disabled={questionIndex === 0 || settings.forwardOnly || settings.questionTimer > 0}
                 >
                   <FaArrowLeft /> Previous
                 </button>
                 <button
                   className="mcq-nav-button"
-                  onClick={() => navigate('next')}
+                  onClick={() => navQuestion('next')}
                   disabled={questionIndex === total - 1}
                 >
                   Next <FaArrowRight />
@@ -377,7 +483,7 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
             <button
               className="mcq-sidebar-submit-btn"
               style={{ marginTop: '16px', width: '100%' }}
-              onClick={() => setShowReview(true)}
+              onClick={() => setShowSubmitConfirm(true)}
             >
               Review & Submit
             </button>
@@ -390,8 +496,10 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit 
 
 // ─── Coding Section Renderer ──────────────────────────────────────────────────
 
-const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit }) => {
+const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const challenges = sectionData?.questions || [];
+  // Read current user once for proctoring
+  const codingUser = (() => { try { return JSON.parse(localStorage.getItem('auth_data') || '{}'); } catch { return {}; } })();
   const [selectedChallenge, setSelectedChallenge] = useState(challenges[0] || null);
   const [language, setLanguage] = useState('cpp');
   const [code, setCode] = useState('');
@@ -578,9 +686,8 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
   };
 
   const handleResetCode = () => {
-    if (window.confirm('Reset code to default template?')) {
-      setCode(selectedChallenge?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
-    }
+    // Silent reset — no confirmation popup needed
+    setCode(selectedChallenge?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
   };
 
   const monacoLanguage = language === 'cpp' ? 'cpp' : language === 'c' ? 'c' : language === 'java' ? 'java' : 'python';
@@ -619,10 +726,28 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
         </div>
       )}
 
+      {/* Audio Proctoring Engine — noise bar fixed bottom-right */}
+      {settings.audioProctored && codingUser?.Email && (
+        <AudioProctoringEngine
+          studentID={codingUser.Email}
+          testID={assessmentId || sectionData?.id || sectionData?.name || 'coding-section'}
+          isTestActive={true}
+          maxViolations={settings.maxAudioViolations || 3}
+          onViolationUpdate={(info) => {
+            console.warn('[CodingSection] Audio violation:', info);
+          }}
+        />
+      )}
+
       {/* Header */}
       <header className="sandbox-workspace-header">
         <div className="header-left">
           <img src="https://raw.githubusercontent.com/seeditDev/SEED-Website/f3cee9002410a00df4da7bea636ac9fbc4c312ca/Plugins/SEED_Logo.webp" alt="SEED Logo" className="header-logo" />
+          {assessmentName && (
+            <span style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', marginLeft: '4px', marginRight: '4px' }}>
+              {assessmentName} ›
+            </span>
+          )}
           <button className="problem-list-toggle-btn" onClick={() => setIsDrawerOpen(true)}>
             <FaList /> Problem List
           </button>
@@ -630,7 +755,7 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
             <button onClick={handlePrev} disabled={currentChallengeIndex <= 0 || (settings.questionTimers && settings.questionTimers.length > 0)} className="nav-arrow-btn" title="Previous Challenge"><FaChevronLeft /></button>
             <button onClick={handleNext} disabled={currentChallengeIndex >= challenges.length - 1 || currentChallengeIndex === -1} className="nav-arrow-btn" title="Next Challenge"><FaChevronRight /></button>
           </div>
-          <div className="msa-timer-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600', marginLeft: '15px', color: '#10b981' }}>
+          <div className="msa-timer-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: secTimer <= 60 ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.08)', border: secTimer <= 60 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600', marginLeft: '15px', color: secTimer <= 60 ? '#ef4444' : '#10b981' }}>
             <FaClock />
             <span>Time: {formatTime(secTimer)}</span>
           </div>
@@ -934,12 +1059,19 @@ const MultiSectionAssessment = () => {
   const examFinishedRef = useRef(examFinished);
   useEffect(() => { examFinishedRef.current = examFinished; }, [examFinished]);
 
-  // ── Block back/forward navigation during exam
+  // ── Block back/forward navigation during exam & hide PyQt SEB nav buttons
   useEffect(() => {
     window.history.pushState({ msaActive: true }, '');
     const handler = () => window.history.pushState({ msaActive: true }, '');
     window.addEventListener('popstate', handler);
-    return () => window.removeEventListener('popstate', handler);
+
+    // Hide PyQt SEB navigation controls
+    window.__seedHideNavControls = true;
+
+    return () => {
+      window.removeEventListener('popstate', handler);
+      window.__seedHideNavControls = false;
+    };
   }, []);
 
   // ── Initial load
@@ -1274,12 +1406,16 @@ const MultiSectionAssessment = () => {
           questionTimer: activeSection.questionTimer || 0,
           forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0),
           proctored: !!assessment.proctored || !!activeSection.proctored,
-          audioProctored: !!assessment.audioProctored || !!activeSection.audioProctored
+          audioProctored: !!assessment.audioProctored || !!activeSection.audioProctored,
+          maxViolations: Number(assessment.maxViolations) || 7,
+          maxAudioViolations: Number(assessment.maxAudioViolations) || 3
         }
       : {
           timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
           questionTimers: codingQTimers,
-          forwardOnly: !!activeSection.forwardOnly || (codingQTimers.length > 0)
+          forwardOnly: !!activeSection.forwardOnly || (codingQTimers.length > 0),
+          audioProctored: !!assessment.audioProctored || !!activeSection.audioProctored,
+          maxAudioViolations: Number(assessment.maxAudioViolations) || 3
         };
 
     const sectionView = activeSection.type === 'mcq'
@@ -1290,6 +1426,8 @@ const MultiSectionAssessment = () => {
           secTimer={secTimer}
           settings={sectionSettings}
           onSectionSubmit={autoSubmitSection}
+          assessmentName={assessment.name || ''}
+          assessmentId={assessment.id || ''}
         />
       )
       : (
@@ -1299,6 +1437,8 @@ const MultiSectionAssessment = () => {
           secTimer={secTimer}
           settings={sectionSettings}
           onSectionSubmit={autoSubmitSection}
+          assessmentName={assessment.name || ''}
+          assessmentId={assessment.id || ''}
         />
       );
 
@@ -1309,24 +1449,29 @@ const MultiSectionAssessment = () => {
         {sectionCountdown !== null && (
           <div style={{
             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-            background: 'radial-gradient(circle at center, #0f172a, #020617)',
-            color: 'white', display: 'flex', flexDirection: 'column',
+            background: 'var(--bg-primary)',
+            color: 'var(--text-main)', display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center', zIndex: 99999, fontFamily: "'Inter',sans-serif"
           }}>
             <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
-              <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: '#10b981', margin: '0 auto 24px' }} />
-              <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: '#10b981', letterSpacing: '-0.02em' }}>
+              <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: 'var(--accent-coding)', margin: '0 auto 24px' }} />
+              <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: 'var(--accent-coding)', letterSpacing: '-0.02em' }}>
                 Preparing Section Workspace...
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
-                Entering Section: <strong style={{ color: 'white' }}>{assessment?.sections?.[countdownSecIdx]?.name}</strong>.
+              {assessment?.name && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>
+                  {assessment.name}
+                </p>
+              )}
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
+                Entering Section: <strong style={{ color: 'var(--text-main)' }}>{assessment?.sections?.[countdownSecIdx]?.name}</strong>.
                 <br />Loading questions and preparing environment.
               </p>
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px 32px', display: 'inline-block' }}>
-                <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '8px', fontWeight: '700' }}>
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px 32px', display: 'inline-block' }}>
+                <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700' }}>
                   Section Starts In
                 </div>
-                <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'white', fontFamily: 'monospace', lineHeight: '1' }}>
+                <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'monospace', lineHeight: '1' }}>
                   {sectionCountdown}s
                 </div>
               </div>

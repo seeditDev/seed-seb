@@ -39,7 +39,7 @@ const Login = () => {
   }, [currentTheme]);
 
   useEffect(() => {
-    const themes = ['dark', 'light', 'crimson', 'emerald', 'red-light'];
+    const themes = ['dark', 'light', 'crimson', 'emerald', 'red-light', 'bw'];
     let currentIndex = themes.indexOf(currentTheme);
     if (currentIndex === -1) currentIndex = 0;
 

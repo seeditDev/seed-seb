@@ -650,7 +650,7 @@ const PracticeSandbox = () => {
                     marginTop: '20px'
                   }}>
                     <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔒</div>
-                    <h4 style={{ color: 'white', marginBottom: '8px' }}>Editorial Solution Locked</h4>
+                    <h4 style={{ color: 'var(--ps-text)', marginBottom: '8px' }}>Editorial Solution Locked</h4>
                     <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', maxWidth: '300px', margin: '0 auto' }}>
                       You need to successfully solve this problem and pass all test cases to unlock the editorial approach and complexity analysis.
                     </p>
@@ -682,7 +682,7 @@ const PracticeSandbox = () => {
             <Editor
               height="100%"
               language={MONACO_LANG_MAP[language] || 'cpp'}
-              theme={['light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
+              theme={['light', 'red-light', 'bw'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
               value={code}
               onChange={val => setCode(val || '')}
               options={{
@@ -735,10 +735,10 @@ const PracticeSandbox = () => {
                     width: '100%',
                     height: 'calc(100% - 10px)',
                     minHeight: '80px',
-                    background: '#0a0a14',
+                    background: 'var(--ps-bg)',
                     border: '1px solid var(--ps-border)',
                     borderRadius: '8px',
-                    color: 'white',
+                    color: 'var(--ps-text)',
                     padding: '8px',
                     fontFamily: 'var(--ps-mono)',
                     fontSize: '13px',

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 // AudioProctoringEngine
 // Monitors student microphone using Web Audio API (AudioContext + AnalyserNode).
@@ -139,7 +139,7 @@ const AudioProctoringEngine = ({
   const cfg = statusConfig[micStatus] || statusConfig.idle;
 
   return (
-    <div style={{
+    <div className="audio-proctor-widget" style={{
       position: "fixed", bottom: "14px", right: "14px",
       background: "rgba(15,23,42,0.92)", border: "1px solid " + cfg.color,
       borderRadius: "10px", padding: "6px 12px", display: "flex",
