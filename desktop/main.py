@@ -342,6 +342,8 @@ class PreLaunchDialog(QDialog):
         self.version_check_passed = False
         self.camera_check_passed = False
         self.internet_check_passed = False
+        self.mic_check_passed = False        # warning-only (non-blocking)
+        self.debugger_check_passed = True    # must pass — blocks launch if debugger found
         
         self.drag_position = None
         self.init_ui()
@@ -422,15 +424,23 @@ class PreLaunchDialog(QDialog):
         self.camera_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.camera_label)
         
+        self.mic_label = QLabel("⏳ Checking microphone access...")
+        self.mic_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        status_layout.addWidget(self.mic_label)
+        
         self.internet_label = QLabel("⏳ Verifying internet connection...")
         self.internet_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.internet_label)
+        
+        self.debugger_label = QLabel("⏳ Scanning for unauthorized processes...")
+        self.debugger_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        status_layout.addWidget(self.debugger_label)
         
         layout.addWidget(status_container)
         
         # Progress bar
         self.progress_bar = QProgressBar()
-        self.progress_bar.setMaximum(3)
+        self.progress_bar.setMaximum(5)
         self.progress_bar.setValue(0)
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setStyleSheet("""
@@ -524,6 +534,8 @@ class PreLaunchDialog(QDialog):
     def perform_checks(self):
         self.check_internet()
         self.check_camera()
+        self.check_microphone()
+        self.check_debuggers()
         if self.internet_check_passed:
             self.check_version()
         else:
@@ -567,6 +579,79 @@ class PreLaunchDialog(QDialog):
             self.camera_label.setText("❌ <b>Camera Access:</b> Permission denied or error")
             self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
 
+    def check_microphone(self):
+        """Check if a microphone is accessible. Warning-only — does not block launch."""
+        mic_found = False
+        try:
+            # Try pyaudio first
+            import pyaudio
+            pa = pyaudio.PyAudio()
+            for i in range(pa.get_device_count()):
+                info = pa.get_device_info_by_index(i)
+                if info.get('maxInputChannels', 0) > 0:
+                    mic_found = True
+                    break
+            pa.terminate()
+        except ImportError:
+            # Fallback: check via Windows waveIn API
+            try:
+                import ctypes
+                num_devs = ctypes.windll.winmm.waveInGetNumDevs()
+                mic_found = num_devs > 0
+            except Exception:
+                mic_found = False
+        except Exception:
+            mic_found = False
+
+        self.mic_check_passed = True  # always non-blocking
+        if mic_found:
+            self.mic_label.setText("✅ <b>Microphone:</b> Detected & Ready")
+            self.mic_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        else:
+            self.mic_label.setText("⚠️ <b>Microphone:</b> Not detected (audio proctoring may be limited)")
+            self.mic_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
+
+    def check_debuggers(self):
+        """Scan for debuggers attached to this process and kill any FORBIDDEN_PROCESSES already running."""
+        threats_found = []
+
+        # 1. IsDebuggerPresent — block if debugger is attached to this very process
+        try:
+            import ctypes
+            if ctypes.windll.kernel32.IsDebuggerPresent():
+                threats_found.append('Debugger attached to process')
+                logging.critical('[Security] Debugger detected via IsDebuggerPresent!')
+        except Exception:
+            pass
+
+        # 2. Kill any FORBIDDEN_PROCESSES already running before launch
+        killed = []
+        for proc in psutil.process_iter(attrs=['pid', 'name']):
+            try:
+                name = proc.info.get('name', '')
+                if name and name.lower() in [p.lower() for p in FORBIDDEN_PROCESSES]:
+                    psutil.Process(proc.info['pid']).terminate()
+                    killed.append(name)
+                    logging.warning(f'[Security] Pre-launch terminated: {name}')
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        if threats_found or killed:
+            self.debugger_check_passed = False
+            detail = ', '.join(threats_found + killed)
+            self.debugger_label.setText(f"🛡️ <b>Security Scan:</b> Blocked & cleaned ({detail[:60]})")
+            self.debugger_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            if threats_found:
+                # Debugger on the process itself — hard block
+                self.debugger_check_passed = False
+                self.show_error('Debugger detected. Please close all debugging tools and restart.')
+        else:
+            self.debugger_check_passed = True
+            self.debugger_label.setText("✅ <b>Security Scan:</b> No threats detected")
+            self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
+
     def check_version(self):
         try:
             url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_CONFIG['projectId']}/databases/(default)/documents/version_seedit"
@@ -607,11 +692,12 @@ class PreLaunchDialog(QDialog):
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def update_launch_button(self):
-        # Allow launch if internet and version pass (camera is warning only)
-        if self.internet_check_passed and self.version_check_passed:
+        # Allow launch if internet and version pass, and no debugger detected
+        # Camera and mic are warning-only (non-blocking)
+        if self.internet_check_passed and self.version_check_passed and self.debugger_check_passed:
             self.checks_passed = True
             self.launch_button.setEnabled(True)
-            self.launch_button.setText("🚀 Launch Application")
+            self.launch_button.setText("\U0001f680 Launch Application")
         else:
             self.checks_passed = False
             self.launch_button.setEnabled(False)
@@ -620,7 +706,9 @@ class PreLaunchDialog(QDialog):
                 failed.append("Internet")
             if not self.version_check_passed:
                 failed.append("Version")
-            self.launch_button.setText(f"❌ Cannot Launch ({', '.join(failed)} required)")
+            if not self.debugger_check_passed:
+                failed.append("Security")
+            self.launch_button.setText(f"\u274c Cannot Launch ({', '.join(failed)} required)")
 
     def show_error(self, message):
         self.error_label.setText(f"⚠️ {message}")
@@ -1066,12 +1154,12 @@ class MainWindow(QMainWindow):
         """Asks for confirmation using custom ExitConfirmDialog, blocking it entirely during assessments."""
         if getattr(self, 'is_assessment_active', False):
             logging.warning("Close attempt blocked: Active assessment in progress.")
-            QMessageBox.warning(
-                self,
-                "Exit Blocked",
-                "You cannot exit the SEED-SEB browser during an active assessment.\nPlease complete and submit your assessment first.",
-                QMessageBox.StandardButton.Ok
+            dlg = StyledJSDialog(
+                title="Exit Blocked",
+                message="You cannot exit the SEED-SEB browser during an active assessment.\nPlease complete and submit your assessment first.",
+                confirm_mode=False
             )
+            dlg.exec()
             event.ignore()
             return
 
@@ -1080,7 +1168,10 @@ class MainWindow(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             logging.info("Application closed by student choice.")
             self.unblock_win_shortcuts()
+            self._restore_swipe_gestures()  # re-enable touchpad gestures for normal use
             try:
+                if hasattr(self, 'vd_guard_timer'):
+                    self.vd_guard_timer.stop()
                 if hasattr(self, 'process_terminator') and self.process_terminator:
                     self.process_terminator.stop()
             except:
@@ -1097,6 +1188,28 @@ class MainWindow(QMainWindow):
         else:
             logging.info("Application close prevented.")
             event.ignore()
+
+    def _restore_swipe_gestures(self):
+        """Restore three-finger and four-finger touchpad gestures after the app exits cleanly."""
+        try:
+            import winreg
+            keys_to_restore = [
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerSlideEnabled", 1),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerSlideEnabled",  1),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerTapEnabled",   1),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerTapEnabled",    1),
+            ]
+            for reg_path, name, val in keys_to_restore:
+                try:
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_SET_VALUE)
+                    winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, val)
+                    winreg.CloseKey(key)
+                except Exception:
+                    pass
+            logging.info("[Security] Touchpad gestures restored on exit.")
+        except Exception as e:
+            logging.warning(f"[Security] Could not restore swipe gestures: {e}")
+
 
 
 class ExitConfirmDialog(QDialog):

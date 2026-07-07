@@ -5,6 +5,7 @@ import '../styles/MCQPage.css';
 import DataService from '../services/dataService';
 import MCQService from '../services/mcqService';
 import ProctoringEngine from './ProctoringEngine';
+import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import timeService from '../services/timeService';
 import { clearAllProctorCache } from '../utils/proctorCache';
@@ -2766,6 +2767,18 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         )
     );
 
+    // Enable audio proctoring when the assessment metadata has audioProctored flag
+    const shouldUseAudioProctoring = Boolean(
+        isEmbedded ? settings.audioProctored : (
+            currentTest && (
+                currentTest.testInfo?.audioProctored === true ||
+                currentTest.testInfo?.audioProctored === 1 ||
+                currentTest.testInfo?.audioProctored === "1" ||
+                currentTest.testInfo?.audioProctored === "true"
+            )
+        )
+    );
+
     // Main render
     if (startCountdown !== null) {
         return (
@@ -2841,6 +2854,25 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                     : prev.violations
                             };
                         });
+                    }}
+                />
+            )}
+            {/* Audio Proctoring Engine - active alongside camera when audioProctored is set */}
+            {shouldUseAudioProctoring && currentTest && !currentTest.submitted && user && (
+                <AudioProctoringEngine
+                    studentID={user.Email}
+                    testID={currentTest.testInfo?.id || currentTest.id || 'unknown'}
+                    isTestActive={!!currentTest && !currentTest.submitted}
+                    maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || 3}
+                    onViolationUpdate={(info) => {
+                        if (!info?.type) return;
+                        setProctoringData(prev => ({
+                            ...prev,
+                            violations: [
+                                ...prev.violations,
+                                { type: info.type, timestamp: info.timestamp }
+                            ]
+                        }));
                     }}
                 />
             )}

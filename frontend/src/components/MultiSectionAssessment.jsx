@@ -7,6 +7,7 @@ import CodingAssessmentSandbox from './CodingAssessmentSandbox';
 import { db } from '../firebase-config';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { supabase } from '../supabaseClient';
+import AudioProctoringEngine from './AudioProctoringEngine';
 
 const normalizeQuestion = (q) => {
   if (!q) return q;
@@ -568,7 +569,8 @@ const MultiSectionAssessment = () => {
           timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
           questionTimer: activeSection.questionTimer || 0,
           forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0),
-          proctored: !!assessment.proctored || !!activeSection.proctored
+          proctored: !!assessment.proctored || !!activeSection.proctored,
+          audioProctored: !!assessment.audioProctored || !!activeSection.audioProctored
         }}
       />
     ) : (
@@ -639,6 +641,18 @@ const MultiSectionAssessment = () => {
 
   return (
     <div className="msa-root">
+      {/* Audio Proctoring — runs at MSA level across all sections when enabled */}
+      {(!!assessment.audioProctored) && secStarted && user && (
+        <AudioProctoringEngine
+          studentID={user.Email}
+          testID={assessment.id || 'msa-unknown'}
+          isTestActive={secStarted}
+          maxViolations={Number(assessment.maxAudioViolations) || 3}
+          onViolationUpdate={(info) => {
+            console.warn('[MSA AudioProctor] Violation:', info?.type, info?.timestamp);
+          }}
+        />
+      )}
       {/* Header */}
       <header className="msa-header">
         <div className="msa-header-title">
