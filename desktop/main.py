@@ -89,41 +89,74 @@ def compute_exe_hash():
 
 def verify_binary_integrity():
     """
-    Verify the running executable against the server-registered hash.
-    Returns True if valid or if server is unreachable (fail-open for offline use).
-    Returns False only if the server explicitly rejects the hash (tampered binary).
+    Verify the running executable against the Supabase-registered hash.
+
+    Logic:
+    - Compute SHA-256 of the running EXE.
+    - Query Supabase app_build_hashes table for a row with this hash
+      AND is_active = true AND version = CURRENT_VERSION.
+    - If the row EXISTS  → valid build, allow launch.
+    - If the row is MISSING → hash was revoked or never registered → BLOCK.
+    - If Supabase is UNREACHABLE (network error) → fail-open (offline grace).
+    - If not running as a compiled exe (no sys.executable path) → skip check.
     """
     exe_hash = compute_exe_hash()
     if not exe_hash:
         logging.info("Integrity check skipped: not running as compiled executable.")
         return True
 
-    logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (checking against server)")
+    logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (validating against Supabase)")
 
-    # ── Server Integrity Endpoint ─────────────────────────────────────────────
-    # Your server should expose a simple GET endpoint:
-    #   GET https://seedit.site/api/verify-binary?hash=<sha256>&version=<ver>
-    # Response JSON: { "valid": true/false, "message": "..." }
-    # If you haven't set up this endpoint yet, this check fails open (returns True)
-    # so the app continues working while you set up the server endpoint.
-    INTEGRITY_CHECK_URL = f"https://seedit.site/api/verify-binary?hash={exe_hash}&version={CURRENT_VERSION}"
+    # ── Supabase direct REST query ────────────────────────────────────────────
+    SUPABASE_URL     = "https://iygqntndsgiysvibqjyw.supabase.co"
+    SUPABASE_ANON_KEY = "sb_publishable_t3I55wzxcJI5owngYx0A4w_oCLVZvq7"
+
+    url = f"{SUPABASE_URL}/rest/v1/app_build_hashes"
+    headers = {
+        "apikey":        SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+        "Accept":        "application/json",
+    }
+    params = {
+        "sha256_hash": f"eq.{exe_hash.lower()}",
+        "version":     f"eq.{CURRENT_VERSION}",
+        "is_active":   "eq.true",
+        "select":      "id,sha256_hash,version,is_active",
+        "limit":       "1",
+    }
 
     try:
-        resp = requests.get(INTEGRITY_CHECK_URL, timeout=5)
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get("valid") is False:
-                logging.error(f"INTEGRITY VIOLATION: Server rejected binary hash. Message: {data.get('message', 'Tampered binary detected.')}")
-                return False
-            logging.info("Binary integrity check passed (server verified).")
-        else:
-            # Non-200 response: server unreachable or endpoint not yet set up — fail open
-            logging.info(f"Integrity check server returned {resp.status_code} — continuing (fail-open).")
-    except Exception as e:
-        # Network error or server not available — fail open so offline mode works
-        logging.info(f"Integrity check skipped (server unreachable): {e}")
+        resp = requests.get(url, headers=headers, params=params, timeout=8)
 
-    return True
+        if resp.status_code == 200:
+            rows = resp.json()
+            if rows:
+                # Hash found and active — legitimate build
+                logging.info("Binary integrity check PASSED (hash verified in Supabase).")
+                return True
+            else:
+                # Hash not found or revoked — tampered / outdated binary
+                logging.error(
+                    f"INTEGRITY VIOLATION: Hash {exe_hash[:16]}... not found in Supabase "
+                    f"(revoked or unregistered binary). Version={CURRENT_VERSION}"
+                )
+                return False
+
+        else:
+            # Supabase responded with an unexpected status — fail open to avoid
+            # blocking students during a Supabase outage.
+            logging.warning(
+                f"Integrity check: Supabase returned HTTP {resp.status_code} — "
+                f"failing open to preserve availability."
+            )
+            return True
+
+    except Exception as e:
+        # Network unreachable — fail open so offline / poor-connectivity students
+        # are not locked out. Revoked builds will be blocked on next online check.
+        logging.info(f"Integrity check skipped (Supabase unreachable): {e}")
+        return True
+
 
 # Firebase Configuration
 FIREBASE_CONFIG = {
