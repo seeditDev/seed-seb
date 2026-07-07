@@ -140,6 +140,20 @@ const MultiSectionAssessment = () => {
     setRestoredProgress(null); // consume so this effect doesn't re-fire
   }, [assessment, restoredProgress, handleStartSection]);
 
+  // Block browser back/forward during the assessment (same guard as CodingAssessmentSandbox)
+  useEffect(() => {
+    // Push a dummy history entry so back-button hits it instead of leaving the page
+    window.history.pushState({ msaActive: true }, '');
+
+    const handlePopState = (e) => {
+      // Immediately re-push so the student is never able to go back
+      window.history.pushState({ msaActive: true }, '');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const getInitialCode = () => {
     const activeSection = assessment.sections[currentSecIdx];
     const activeSecData = activeSection ? sectionData[activeSection.sectionId] : null;

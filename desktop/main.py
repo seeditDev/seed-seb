@@ -167,7 +167,15 @@ FORBIDDEN_PROCESSES = [
     'Bluestacks.exe', 'Nox.exe', 'LDPlayer.exe', 'Genymotion.exe',
     # Windows Subsystem for Linux (WSL)
     'wsl.exe', 'wslhost.exe', 'wslclient.exe', 'wsl-service.exe',
-    'wslservice.exe', 'vmmem', 'vmmemWSL', 'bash.exe', 'sh.exe'
+    'wslservice.exe', 'vmmem', 'vmmemWSL', 'bash.exe', 'sh.exe',
+    # Debuggers / Reverse Engineering / LLMs
+    'x64dbg.exe', 'x32dbg.exe', 'ollydbg.exe', 'windbg.exe', 'ida64.exe', 'ida.exe',
+    'ghidra.exe', 'radare2.exe', 'cutter.exe', 'dnspy.exe', 'procmon.exe',
+    'procexp.exe', 'wireshark.exe', 'fiddler.exe', 'burpsuite.exe',
+    'python.exe', 'python3.exe', 'pythonw.exe',
+    # Terminals / Command Prompts (attacker-accessible)
+    'cmd.exe', 'powershell.exe', 'pwsh.exe', 'WindowsTerminal.exe', 'wt.exe',
+    'conhost.exe', 'mintty.exe', 'putty.exe', 'kitty.exe', 'SecureCRT.exe'
 ]
 
 
@@ -185,6 +193,104 @@ class ReactHTTPHandler(http.server.SimpleHTTPRequestHandler):
         logging.info("[LocalServer] " + (format % args))
 
 
+class StyledJSDialog(QDialog):
+    """Dark-themed branded dialog for JavaScript alert() and confirm() calls.
+    Replaces the plain native QMessageBox with a styled SEED-IT popup."""
+    def __init__(self, title="SEED-IT", message="", confirm_mode=False, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setModal(True)
+        self.setFixedSize(440, 220)
+        self._build_ui(title, message, confirm_mode)
+
+    def _build_ui(self, title, message, confirm_mode):
+        self.setObjectName("styledJSDialog")
+        self.setStyleSheet("""
+            QDialog#styledJSDialog {
+                background-color: #0f172a;
+                border: 1px solid #334155;
+                border-radius: 14px;
+            }
+            QLabel#titleLabel {
+                color: #f8fafc;
+                font-size: 15px;
+                font-weight: 700;
+                background: transparent;
+                border: none;
+            }
+            QLabel#msgLabel {
+                color: #94a3b8;
+                font-size: 13px;
+                background: transparent;
+                border: none;
+            }
+            QPushButton {
+                border-radius: 7px;
+                padding: 8px 22px;
+                font-size: 13px;
+                font-weight: 600;
+                border: none;
+            }
+            QPushButton#okBtn {
+                background-color: #6366f1;
+                color: white;
+            }
+            QPushButton#okBtn:hover { background-color: #4f46e5; }
+            QPushButton#yesBtn {
+                background-color: #10b981;
+                color: white;
+            }
+            QPushButton#yesBtn:hover { background-color: #059669; }
+            QPushButton#noBtn {
+                background-color: #334155;
+                color: #cbd5e1;
+            }
+            QPushButton#noBtn:hover { background-color: #475569; }
+        """)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(28, 24, 28, 22)
+        layout.setSpacing(14)
+
+        # Icon + Title row
+        title_row = QHBoxLayout()
+        icon = QLabel("🛡️")
+        icon.setStyleSheet("font-size: 20px; background: transparent; border: none;")
+        title_lbl = QLabel(title)
+        title_lbl.setObjectName("titleLabel")
+        title_row.addWidget(icon)
+        title_row.addWidget(title_lbl)
+        title_row.addStretch()
+        layout.addLayout(title_row)
+
+        # Message
+        msg_lbl = QLabel(message)
+        msg_lbl.setObjectName("msgLabel")
+        msg_lbl.setWordWrap(True)
+        layout.addWidget(msg_lbl)
+
+        layout.addStretch()
+
+        # Buttons
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        if confirm_mode:
+            no_btn = QPushButton("✕  No")
+            no_btn.setObjectName("noBtn")
+            no_btn.clicked.connect(self.reject)
+            yes_btn = QPushButton("✓  Yes")
+            yes_btn.setObjectName("yesBtn")
+            yes_btn.clicked.connect(self.accept)
+            btn_row.addWidget(no_btn)
+            btn_row.addWidget(yes_btn)
+        else:
+            ok_btn = QPushButton("OK")
+            ok_btn.setObjectName("okBtn")
+            ok_btn.clicked.connect(self.accept)
+            btn_row.addWidget(ok_btn)
+        layout.addLayout(btn_row)
+
+
 class CustomWebEnginePage(QWebEnginePage):
     """Custom QWebEnginePage to redirect JavaScript console output to Python log file."""
     def __init__(self, *args, **kwargs):
@@ -199,17 +305,14 @@ class CustomWebEnginePage(QWebEnginePage):
         logging.info(f"[JS Console] Line {line} ({source_id}): {message}")
 
     def javaScriptAlert(self, securityOrigin, msg):
-        QMessageBox.information(None, "SEED-SEB Assessment Portal", msg)
+        """Replace native alert() popup with styled SEED-IT dialog."""
+        dlg = StyledJSDialog(title="SEED-IT Notice", message=msg, confirm_mode=False)
+        dlg.exec()
 
     def javaScriptConfirm(self, securityOrigin, msg):
-        reply = QMessageBox.question(
-            None,
-            "SEED-SEB Assessment Portal",
-            msg,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
-        return reply == QMessageBox.StandardButton.Yes
+        """Replace native confirm() popup with styled SEED-IT dialog."""
+        dlg = StyledJSDialog(title="SEED-IT Confirmation", message=msg, confirm_mode=True)
+        return dlg.exec() == QDialog.DialogCode.Accepted
 
 
 class CustomWebEngineView(QWebEngineView):
@@ -613,6 +716,14 @@ class MainWindow(QMainWindow):
         self.conn_monitor_timer.timeout.connect(self.verify_internet_connectivity)
         self.conn_monitor_timer.start(30000)
 
+        # Disable Windows three-finger swipe / virtual desktop gestures via registry
+        self.disable_swipe_gestures()
+
+        # Virtual desktop enforcement: poll every 500ms and forcibly reclaim focus
+        self.vd_guard_timer = QTimer(self)
+        self.vd_guard_timer.timeout.connect(self._enforce_foreground)
+        self.vd_guard_timer.start(500)
+
         # Enable Fullscreen
         self.showFullScreen()
         logging.info("Main Window initialized in secure fullscreen mode")
@@ -878,13 +989,19 @@ class MainWindow(QMainWindow):
         """Monitors the active page URL to hide exits and navigation controls during active assessments."""
         url_str = url.toString().lower()
         
-        # Determine if user is currently inside an active assessment (slug page e.g. /student/mcq/python-basics)
+        # Determine if user is currently inside an active assessment
+        # Covers: /student/mcq/<slug>, /student/coding/<slug>, /student/multisection
         import urllib.parse
         try:
             parsed = urllib.parse.urlparse(url_str)
             path = parsed.path.rstrip('/')
             parts = path.split('/')
-            is_assessment = len(parts) >= 4 and parts[1] == "student" and parts[2] in ["mcq", "coding"]
+            # MCQ/Coding have slug: /student/mcq/test-name (4+ parts)
+            # MultiSection is just: /student/multisection (3 parts)
+            is_assessment = (
+                (len(parts) >= 4 and parts[1] == "student" and parts[2] in ["mcq", "coding"])
+                or (len(parts) >= 3 and parts[1] == "student" and parts[2] == "multisection")
+            )
         except Exception:
             is_assessment = False
 
@@ -896,6 +1013,44 @@ class MainWindow(QMainWindow):
         self.logout_btn.setVisible(not is_assessment)
         
         logging.info(f"URL changed: {url.toString()} (Assessment Active: {is_assessment})")
+
+    def disable_swipe_gestures(self):
+        """Disable Windows three-finger swipe and virtual desktop gesture via registry at runtime."""
+        try:
+            import winreg
+            # Disable touchpad three-finger and four-finger gestures (Windows 10/11)
+            keys_to_disable = [
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerSlideEnabled", 0),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerSlideEnabled", 0),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "ThreeFingerTapEnabled", 0),
+                (r"SOFTWARE\Microsoft\Windows\CurrentVersion\PrecisionTouchPad", "FourFingerTapEnabled", 0),
+            ]
+            for reg_path, name, val in keys_to_disable:
+                try:
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, winreg.KEY_SET_VALUE)
+                    winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, val)
+                    winreg.CloseKey(key)
+                except Exception:
+                    pass  # Key may not exist on all systems
+            logging.info("[Security] Three-finger swipe gestures disabled via registry.")
+        except Exception as e:
+            logging.warning(f"[Security] Could not disable swipe gestures: {e}")
+
+    def _enforce_foreground(self):
+        """Poll every 500ms: if our window is not the foreground window, immediately reclaim it.
+        This prevents virtual desktop switches and second desktop creation from taking effect."""
+        try:
+            import ctypes
+            hwnd = int(self.winId())
+            fg = ctypes.windll.user32.GetForegroundWindow()
+            if fg != hwnd:
+                self.showFullScreen()
+                self.raise_()
+                self.activateWindow()
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+                logging.warning("[Security] Foreground window stolen — reclaiming focus.")
+        except Exception:
+            pass
 
     def verify_internet_connectivity(self):
         """Periodic check for internet connectivity. If lost, opens the custom WiFi configuration dialog."""

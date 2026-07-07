@@ -118,6 +118,9 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     const activeTestSlugRef = useRef(activeTestSlug);
     const previousPathRef = useRef(location.pathname);
     const networkTimeoutTriggeredRef = useRef(false);
+    // Debounce ref: popup only appears if still offline after NETWORK_POPUP_DELAY ms
+    const networkPopupDebounceRef = useRef(null);
+    const NETWORK_POPUP_DELAY = 4000; // 4 seconds — covers most WiFi auto-reconnects
     const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
     const [viewingSolution, setViewingSolution] = useState(false);
     const [solutionQuestions, setSolutionQuestions] = useState([]);
@@ -193,8 +196,29 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     }, []);
 
     useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
-        const handleOffline = () => setIsOnline(false);
+        // Debounced offline handler: only show popup if still offline after NETWORK_POPUP_DELAY
+        const handleOnline = () => {
+            // Cancel any pending popup debounce — connection came back in time
+            if (networkPopupDebounceRef.current) {
+                clearTimeout(networkPopupDebounceRef.current);
+                networkPopupDebounceRef.current = null;
+            }
+            setIsOnline(true);
+            // If popup is already showing, the auto-dismiss effect handles closing it
+        };
+
+        const handleOffline = () => {
+            setIsOnline(false);
+            // Start debounce: show popup only after NETWORK_POPUP_DELAY if still offline
+            if (networkPopupDebounceRef.current) clearTimeout(networkPopupDebounceRef.current);
+            networkPopupDebounceRef.current = setTimeout(() => {
+                networkPopupDebounceRef.current = null;
+                if (!navigator.onLine) {
+                    setShowNetworkPopup(true);
+                    setNetworkTimer(30);
+                }
+            }, NETWORK_POPUP_DELAY);
+        };
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
@@ -202,6 +226,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
+            if (networkPopupDebounceRef.current) clearTimeout(networkPopupDebounceRef.current);
         };
     }, []);
 
@@ -1008,10 +1033,18 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             localStorage.setItem('mcqLastProgressSync', lastSyncISO);
         } catch (error) {
             console.error('[MCQPage] Progress sync failed:', error);
-            if (error.message?.toLowerCase().includes('network')) {
+            if (error.message?.toLowerCase().includes('network') || !navigator.onLine) {
                 setIsOnline(false);
-                setShowNetworkPopup(true);
-                setNetworkTimer(30);
+                // Debounced: only show popup if still offline after delay
+                if (!networkPopupDebounceRef.current) {
+                    networkPopupDebounceRef.current = setTimeout(() => {
+                        networkPopupDebounceRef.current = null;
+                        if (!navigator.onLine) {
+                            setShowNetworkPopup(true);
+                            setNetworkTimer(30);
+                        }
+                    }, NETWORK_POPUP_DELAY);
+                }
             }
         } finally {
             progressSyncInFlight.current = false;
@@ -1513,20 +1546,24 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
     useEffect(() => {
         if (isOnline && currentTest && !currentTest.submitted) {
+            // Connection restored: cancel any pending debounce + close popup
             networkTimeoutTriggeredRef.current = false;
+            if (networkPopupDebounceRef.current) {
+                clearTimeout(networkPopupDebounceRef.current);
+                networkPopupDebounceRef.current = null;
+            }
             setShowNetworkPopup(false);
             setNetworkTimer(30);
-            // sessionStorage.removeItem('mcqReloadGraceDeadline');
             localStorage.removeItem('mcqReloadGraceDeadline');
             syncProgress('network-reconnect');
         } else if (!isOnline && currentTest && !currentTest.submitted) {
+            // Connection lost: let the debounce timer from the event handler show the popup
+            // (already started in handleOffline — we don't trigger popup directly here)
             networkTimeoutTriggeredRef.current = false;
-            setShowNetworkPopup(true);
         } else if (isOnline && !currentTest) {
             setShowNetworkPopup(false);
             setNetworkTimer(30);
             networkTimeoutTriggeredRef.current = false;
-            // sessionStorage.removeItem('mcqReloadGraceDeadline');
             localStorage.removeItem('mcqReloadGraceDeadline');
         }
     }, [isOnline, currentTest, syncProgress]);
@@ -1566,6 +1603,19 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             setNetworkTimer(30);
         }
     }, [showNetworkPopup]);
+
+    // Auto-dismiss: when connection is restored, close the popup after a short grace period
+    useEffect(() => {
+        if (showNetworkPopup && isOnline) {
+            const dismiss = setTimeout(() => {
+                setShowNetworkPopup(false);
+                setNetworkTimer(30);
+                setError(null);
+                syncProgress('network-reconnect');
+            }, 1500);
+            return () => clearTimeout(dismiss);
+        }
+    }, [showNetworkPopup, isOnline, syncProgress]);
 
     useEffect(() => {
         const previousPath = previousPathRef.current;
@@ -2530,51 +2580,80 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     const renderNetworkPopup = () => {
         if (!showNetworkPopup) return null;
 
+        const restored = isOnline;
+
         return (
-            <div className="mcq-popup-overlay">
-                <div className="mcq-popup-content mcq-network-popup">
-                    <div className="mcq-network-icon">
-                        <FaExclamationTriangle />
+            // Use pointer-events:none on the backdrop so the test content stays interactive (no freeze)
+            <div style={{
+                position: 'fixed', inset: 0,
+                background: 'rgba(2,6,23,0.75)',
+                backdropFilter: 'blur(6px)',
+                zIndex: 99990,
+                pointerEvents: 'none'
+            }}>
+                {/* Popup card — pointer-events re-enabled only here */}
+                <div style={{
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: '#0f172a',
+                    border: `1px solid ${restored ? '#10b981' : '#ef4444'}`,
+                    borderRadius: '18px',
+                    padding: '36px 40px',
+                    width: '420px',
+                    boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
+                    pointerEvents: 'all',
+                    transition: 'border-color 0.4s ease'
+                }}>
+                    {/* Status icon */}
+                    <div style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '16px' }}>
+                        {restored ? '✅' : '📡'}
                     </div>
-                    <h3>Network Connection Lost</h3>
-                    <p>Your internet connection has been lost. Please reconnect within {networkTimer} seconds.</p>
-                    <div className="mcq-network-timer">
-                        <div className="mcq-timer-circle">
-                            <span>{networkTimer}s</span>
-                        </div>
-                    </div>
-                    <p className="mcq-network-warning">
-                        You can reload this page safely. If connection is not restored within 30 seconds, your test will be automatically submitted.
+                    <h3 style={{
+                        color: restored ? '#10b981' : '#f87171',
+                        fontSize: '1.15rem', fontWeight: 800,
+                        textAlign: 'center', margin: '0 0 10px',
+                        transition: 'color 0.4s ease'
+                    }}>
+                        {restored ? 'Connection Restored' : 'Network Connection Lost'}
+                    </h3>
+                    <p style={{ color: '#94a3b8', fontSize: '0.875rem', textAlign: 'center', lineHeight: 1.6, margin: '0 0 24px' }}>
+                        {restored
+                            ? 'Reconnecting you automatically...'
+                            : `Your internet connection has been lost. Please reconnect within ${networkTimer} seconds.`}
                     </p>
-                    <div className="mcq-network-actions">
-                        {isOnline ? (
+                    {!restored && (
+                        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                            <div style={{
+                                display: 'inline-block',
+                                width: '64px', height: '64px',
+                                borderRadius: '50%',
+                                border: '4px solid #334155',
+                                borderTopColor: '#ef4444',
+                                animation: 'mcq-spin 1s linear infinite',
+                                position: 'relative'
+                            }}>
+                                <span style={{
+                                    position: 'absolute', inset: 0,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#f87171', fontWeight: 800, fontSize: '0.9rem'
+                                }}>{networkTimer}s</span>
+                            </div>
+                        </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                        {!restored && (
                             <button
-                                className="mcq-popup-button mcq-primary-button"
-                                onClick={() => {
-                                    setShowNetworkPopup(false);
-                                    setNetworkTimer(30);
-                                    setError(null);
-                                    if (selectedTest && !currentTest) {
-                                        handleTestSelect(selectedTest);
-                                    }
+                                onClick={() => { startReloadGracePeriod(); window.location.reload(); }}
+                                style={{
+                                    padding: '10px 22px', borderRadius: '8px', border: '1px solid #334155',
+                                    background: '#1e293b', color: '#cbd5e1',
+                                    fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer'
                                 }}
                             >
-                                Connection Restored - Continue
+                                ↺ Reload Page
                             </button>
-                        ) : (
-                            <div className="mcq-network-status">
-                                <p>Waiting for connection...</p>
-                            </div>
                         )}
-                        <button
-                            className="mcq-popup-button mcq-secondary-button"
-                            onClick={() => {
-                                startReloadGracePeriod();
-                                window.location.reload();
-                            }}
-                        >
-                            Reload Page
-                        </button>
                     </div>
                 </div>
             </div>

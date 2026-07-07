@@ -116,6 +116,8 @@ const PracticeSandbox = () => {
 
   // Collapsible list sidebar states
   const [showSidebar, setShowSidebar] = useState(false);
+  // Custom reset confirmation modal (replaces native window.confirm)
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [sidebarQuestions, setSidebarQuestions] = useState([]);
   const [solvedIds, setSolvedIds] = useState([]);
   const [problemDetails, setProblemDetails] = useState({});
@@ -251,9 +253,12 @@ const PracticeSandbox = () => {
   }, [language, question]);
 
   const handleResetCode = () => {
-    if (window.confirm('Reset code to default template?')) {
-      setCode(FREE_BOILERPLATES[language] || '');
-    }
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    setCode(FREE_BOILERPLATES[language] || '');
+    setShowResetConfirm(false);
   };
 
   // Compile and run custom input or sample cases
@@ -850,6 +855,54 @@ const PracticeSandbox = () => {
           </div>
         </div>
       </div>
+      {/* ── Custom Reset Confirmation Modal ── */}
+      {showResetConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 99999
+        }}>
+          <div style={{
+            background: '#0f172a',
+            border: '1px solid #334155',
+            borderRadius: '16px',
+            padding: '32px 36px',
+            width: '380px',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.5)'
+          }}>
+            <div style={{ fontSize: '2rem', textAlign: 'center', marginBottom: '12px' }}>🔄</div>
+            <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, textAlign: 'center', margin: '0 0 10px' }}>
+              Reset Code?
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.875rem', textAlign: 'center', lineHeight: 1.6, margin: '0 0 28px' }}>
+              This will discard all your current code and restore the default template for <strong style={{ color: '#e2e8f0' }}>{language}</strong>. This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #334155',
+                  background: '#1e293b', color: '#cbd5e1', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmReset}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white',
+                  fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer'
+                }}
+              >
+                ↺ Reset Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
