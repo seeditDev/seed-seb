@@ -74,8 +74,41 @@ export const aiInterviewService = {
 
   async initLocalModel(onProgress) {
     if (localGenerator) return localGenerator;
+    
+    // Dynamically inject script tag to bypass compile-time Webpack dynamic import blocks
+    const loadTransformersScript = () => {
+      return new Promise((resolve, reject) => {
+        if (window.transformers) {
+          resolve(window.transformers);
+          return;
+        }
+        const existingScript = document.getElementById('transformers-cdn-script');
+        if (existingScript) {
+          existingScript.addEventListener('load', () => resolve(window.transformers));
+          existingScript.addEventListener('error', (err) => reject(err));
+          return;
+        }
+        const script = document.createElement('script');
+        script.id = 'transformers-cdn-script';
+        script.src = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+        script.async = true;
+        script.onload = () => {
+          console.log("[SEED-SEB] Transformers.js UMD bundle loaded successfully from CDN.");
+          resolve(window.transformers);
+        };
+        script.onerror = (err) => {
+          console.error("[SEED-SEB] Failed to load Transformers.js script:", err);
+          reject(err);
+        };
+        document.head.appendChild(script);
+      });
+    };
+
     try {
-      const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+      const transformers = await loadTransformersScript();
+      if (!transformers) throw new Error("Transformers.js global object not found.");
+      
+      const { pipeline, env } = transformers;
       env.allowLocalModels = false; // force fetching web assets
       
       let modelSource = 'Xenova/LaMini-GPT-124M';
