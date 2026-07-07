@@ -357,6 +357,10 @@ class CustomWebEngineView(QWebEngineView):
         self.settings().setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
         self.settings().setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
         self.settings().setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)
+        
+        # Set custom HTTP User-Agent to allow frontend detection
+        profile = self.page().profile()
+        profile.setHttpUserAgent(profile.httpUserAgent() + " SEEDSEB")
 
     def contextMenuEvent(self, event):
         event.accept()

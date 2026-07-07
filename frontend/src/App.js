@@ -135,10 +135,19 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState(null);
+  const [isDesktopApp, setIsDesktopApp] = useState(true);
 
   useEffect(() => {
     const activeTheme = localStorage.getItem('portal_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', activeTheme);
+  }, []);
+
+  useEffect(() => {
+    const ua = navigator.userAgent || '';
+    const hostname = window.location.hostname;
+    const isDev = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isUAOk = ua.includes('SEEDSEB');
+    setIsDesktopApp(isUAOk || isDev);
   }, []);
 
   useEffect(() => {
@@ -279,6 +288,143 @@ const App = () => {
         }}>
           Loading... Please wait
         </p>
+      </div>
+    );
+  }
+
+  if (!isDesktopApp) {
+    return (
+      <div className="lock-screen-container" style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #090d16 0%, #1e1b4b 100%)',
+        color: '#f8fafc',
+        fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+        padding: '24px',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{
+          maxWidth: '560px',
+          width: '100%',
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
+          borderRadius: '24px',
+          padding: '40px',
+          textAlign: 'center',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+        }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            background: 'rgba(99, 102, 241, 0.1)',
+            border: '2px solid rgba(99, 102, 241, 0.2)',
+            marginBottom: '28px',
+            boxShadow: '0 0 20px rgba(99, 102, 241, 0.25)'
+          }}>
+            <span style={{ fontSize: '36px' }}>🛡️</span>
+          </div>
+
+          <h1 style={{
+            fontSize: '26px',
+            fontWeight: '800',
+            lineHeight: '1.3',
+            color: '#ffffff',
+            margin: '0 0 16px 0',
+            letterSpacing: '-0.025em'
+          }}>
+            Install the SEED-SEB.exe to Explore the Platform
+          </h1>
+
+          <p style={{
+            fontSize: '15px',
+            lineHeight: '1.6',
+            color: '#94a3b8',
+            margin: '0 0 32px 0'
+          }}>
+            For security, academic integrity, and automated camera proctoring, this platform is strictly locked down and can only be accessed within the official <strong>SEED-SEB (Secure Exam Browser)</strong> desktop application.
+          </p>
+
+          <div style={{
+            textAlign: 'left',
+            backgroundColor: 'rgba(9, 15, 29, 0.65)',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '32px',
+            border: '1px solid rgba(255, 255, 255, 0.03)'
+          }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: '#818cf8',
+              margin: '0 0 16px 0'
+            }}>
+              How to access:
+            </h3>
+            <ol style={{
+              margin: 0,
+              paddingLeft: '20px',
+              fontSize: '14px',
+              color: '#cbd5e1',
+              lineHeight: '1.8'
+            }}>
+              <li style={{ marginBottom: '8px' }}>
+                Download the official <strong>SEED-SEB-Setup.exe</strong> installer provided by your university/administrator.
+              </li>
+              <li style={{ marginBottom: '8px' }}>
+                Run the installer and complete the setup on your Windows device.
+              </li>
+              <li>
+                Launch <strong>SEED-SEB</strong> from your desktop. It will automatically load the platform inside a secure sandbox environment.
+              </li>
+            </ol>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <a 
+              href="https://seedit-portal.vercel.app/download"
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#6366f1',
+                color: '#ffffff',
+                textDecoration: 'none',
+                padding: '14px 28px',
+                fontSize: '15px',
+                fontWeight: '700',
+                borderRadius: '12px',
+                transition: 'background-color 0.2s',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6366f1'}
+            >
+              📥 Download SEED-SEB Installer
+            </a>
+            <div style={{
+              fontSize: '12px',
+              color: '#64748b',
+              marginTop: '8px'
+            }}>
+              Running version v{APP_VERSION} | Protected by SEED-IT Sandbox Security
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
