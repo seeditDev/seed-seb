@@ -1086,6 +1086,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     }, [autoSubmitStoredAttempt, syncProgress]);
 
     useEffect(() => {
+        if (isEmbedded) return;
         const hasPending = localStorage.getItem('mcqTestData');
         if (!currentTest && user && hasPending) {
             const isNewLaunch = localStorage.getItem("mcqTestNewLaunch") === "true";
@@ -1097,7 +1098,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             }
             restoreTestState();
         }
-    }, [user, currentTest, autoSubmitStoredAttempt, restoreTestState]);
+    }, [user, currentTest, autoSubmitStoredAttempt, restoreTestState, isEmbedded]);
 
     // Handle test submission
     const handleSubmit = () => {
@@ -1382,7 +1383,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     // Timer effect - countdown timer
     useEffect(() => {
         let timer;
-        if (currentTest && !currentTest.submitted && testDuration > 0) {
+        if (currentTest && !currentTest.submitted && testDuration > 0 && !isEmbedded) {
             timer = setInterval(() => {
                 setElapsedTime(prev => {
                     const newElapsed = prev + 1;
@@ -1401,7 +1402,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         return () => {
             if (timer) clearInterval(timer);
         };
-    }, [currentTest, testDuration, handleAutoSubmit]);
+    }, [currentTest, testDuration, handleAutoSubmit, isEmbedded]);
 
     // Synchronize section remainingTime in embedded mode
     useEffect(() => {
@@ -2651,11 +2652,13 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
     // Enable proctoring dynamically if the assessment metadata has proctored flag enabled
     const shouldUseProctoring = Boolean(
-        currentTest && (
-            currentTest.testInfo?.proctored === true ||
-            currentTest.testInfo?.proctored === 1 ||
-            currentTest.testInfo?.proctored === "1" ||
-            currentTest.testInfo?.proctored === "true"
+        isEmbedded ? settings.proctored : (
+            currentTest && (
+                currentTest.testInfo?.proctored === true ||
+                currentTest.testInfo?.proctored === 1 ||
+                currentTest.testInfo?.proctored === "1" ||
+                currentTest.testInfo?.proctored === "true"
+            )
         )
     );
 

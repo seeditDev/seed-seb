@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaClock, FaCheckCircle, FaExclamationTriangle, FaLock, FaBookOpen, FaCode, FaChevronRight } from 'react-icons/fa';
 import '../styles/MultiSectionAssessment.css';
@@ -202,7 +202,7 @@ const MultiSectionAssessment = () => {
   }, [sectionCountdown]);
 
 
-  const handleStartSection = (idx) => {
+  const handleStartSection = useCallback((idx) => {
     setCountdownSecIdx(idx);
     setSectionCountdown(10);
     setCurrentSecIdx(idx);
@@ -213,10 +213,14 @@ const MultiSectionAssessment = () => {
         setSecTimer((section.duration_minutes || 30) * 60);
       }
     }
-  };
+  }, [assessment]);
 
-  const autoSubmitSection = (sectionResults) => {
+  const autoSubmitSection = useCallback((sectionResults) => {
+    if (examFinished) return;
+    if (currentSecIdx < 0 || !assessment?.sections || currentSecIdx >= assessment.sections.length) return;
+
     const activeSection = assessment.sections[currentSecIdx];
+    if (!activeSection) return;
     
     const updatedResults = {
       ...examResults,
@@ -303,7 +307,7 @@ const MultiSectionAssessment = () => {
       setExamFinished(true);
       localStorage.removeItem("multisectionAssessmentData");
     }
-  };
+  }, [examFinished, currentSecIdx, assessment, examResults, handleStartSection, user]);
 
   const handleManualSubmitSection = () => {
     if (window.confirm("Are you sure you want to submit this section? You will not be able to return to it.")) {
@@ -453,7 +457,8 @@ const MultiSectionAssessment = () => {
         settings={{
           timerRestrictedSubmit: !!activeSection.timerRestrictedSubmit,
           questionTimer: activeSection.questionTimer || 0,
-          forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0)
+          forwardOnly: !!activeSection.forwardOnly || (activeSection.questionTimer > 0),
+          proctored: !!assessment.proctored || !!activeSection.proctored
         }}
       />
     ) : (
