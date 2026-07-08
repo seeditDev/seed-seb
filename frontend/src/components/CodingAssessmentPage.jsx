@@ -264,23 +264,43 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Sync embedded questions and assessment settings
     useEffect(() => {
-        if (isEmbedded && testData && testData.questions && questions.length === 0) {
-            const normalized = testData.questions.map(normalizeQuestion);
-            setQuestions(normalized);
-            setCurrentAssessment({
-                id: 'embedded-section',
-                name: 'Coding Section',
-                maxViolations: settings.maxViolations || 5,
-                proctored: settings.proctored || false,
-                audioProctored: settings.audioProctored || false
-            });
-            setActiveQuestionIndex(0);
-            if (normalized.length > 0) {
-                setVisitedQuestions({ [normalized[0].id]: true });
+        if (isEmbedded && testData && testData.questions) {
+            // Set questions on initial load
+            if (questions.length === 0 && testData.questions.length > 0) {
+                const normalized = testData.questions.map(normalizeQuestion);
+                setQuestions(normalized);
+                setActiveQuestionIndex(0);
+                if (normalized.length > 0) {
+                    setVisitedQuestions({ [normalized[0].id]: true });
+                }
+                setLoading(false);
             }
-            setLoading(false);
+
+            // Sync user details if not set
+            if (!user) {
+                const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
+                setUser(authData);
+            }
+
+            // Sync settings to currentAssessment avoiding loops
+            const proctored = settings.proctored || false;
+            const audioProctored = settings.audioProctored || false;
+            const maxViolations = settings.maxViolations || 5;
+
+            if (!currentAssessment ||
+                currentAssessment.proctored !== proctored ||
+                currentAssessment.audioProctored !== audioProctored ||
+                currentAssessment.maxViolations !== maxViolations) {
+                setCurrentAssessment({
+                    id: 'embedded-section',
+                    name: 'Coding Section',
+                    maxViolations,
+                    proctored,
+                    audioProctored
+                });
+            }
         }
-    }, [isEmbedded, testData, settings, questions.length]);
+    }, [isEmbedded, testData, settings, questions.length, user, currentAssessment]);
 
     // Initialize code boilerplates in embedded mode
     useEffect(() => {

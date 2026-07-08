@@ -92,7 +92,7 @@ const normalizeQuestion = (q) => {
 
 // ─── MCQ Section Renderer ────────────────────────────────────────────────────
 
-const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
+const MCQSectionView = ({ sectionData, secTimer, secStarted = false, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const questions = useMemo(() => sectionData?.questions || [], [sectionData?.questions]);
   const stateKey = `msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`;
 
@@ -227,12 +227,12 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
   }, [questionIndex, settings.questionTimer, assessmentId, sectionData]);
 
   useEffect(() => {
-    if (settings.questionTimer <= 0) return;
+    if (settings.questionTimer <= 0 || !secStarted) return;
     const t = setInterval(() => {
       setQTimerRemaining(prev => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(t);
-  }, [settings.questionTimer]);
+  }, [settings.questionTimer, secStarted]);
 
   useEffect(() => {
     if (settings.questionTimer > 0 && qTimerRemaining === 0 && questionTimerStartedRef.current) {
@@ -916,7 +916,7 @@ const MultiSectionAssessment = () => {
           .then(() => console.log('[MSA] Final result saved to Firestore'))
           .catch(e => console.error('[MSA] Firestore final save failed:', e));
 
-        setDoc(doc(db, 'users', user.Email, 'multiSectionAttempts', assessment.id), attemptData, { merge: true })
+        setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
           .catch(e => console.error('[MSA] Student-centric save failed:', e));
 
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
@@ -1107,6 +1107,7 @@ const MultiSectionAssessment = () => {
           key={`mcq-${activeSection.sectionId}`}
           sectionData={activeSecData}
           secTimer={secTimer}
+          secStarted={secStarted}
           settings={sectionSettings}
           onSectionSubmit={autoSubmitSection}
           assessmentName={assessment.name || ''}
