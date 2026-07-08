@@ -172,9 +172,14 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
   const user = (() => { try { return JSON.parse(localStorage.getItem('auth_data') || '{}'); } catch { return {}; } })();
   const testID = assessmentId || sectionData?.id || sectionData?.name || 'mcq-section';
 
+  const hasTimerStartedRef = useRef(false);
+
   // Auto-submit when section timer expires
   useEffect(() => {
-    if (secTimer <= 0) {
+    if (secTimer > 0) {
+      hasTimerStartedRef.current = true;
+    }
+    if (secTimer <= 0 && hasTimerStartedRef.current) {
       handleSubmit();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1028,6 +1033,8 @@ const MultiSectionAssessment = () => {
           timerRestrictedSubmit: isTruthy(activeSection.timerRestrictedSubmit),
           questionTimers: codingQTimers,
           forwardOnly: isTruthy(activeSection.forwardOnly) || (codingQTimers.length > 0),
+          proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
+          maxViolations: Number(assessment.maxViolations) || 7,
           audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
           maxAudioViolations: Number(assessment.maxAudioViolations) || 3
         };

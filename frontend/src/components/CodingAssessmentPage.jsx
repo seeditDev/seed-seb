@@ -12,6 +12,7 @@ import DataService from '../services/dataService';
 import timeService from '../services/timeService';
 import { clearAllProctorCache } from '../utils/proctorCache';
 import ProctoringEngine from './ProctoringEngine';
+import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import '../styles/CodingAssessmentPage.css';
 
@@ -263,7 +264,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Sync embedded questions and assessment settings
     useEffect(() => {
-        if (isEmbedded && testData && testData.questions) {
+        if (isEmbedded && testData && testData.questions && questions.length === 0) {
             const normalized = testData.questions.map(normalizeQuestion);
             setQuestions(normalized);
             setCurrentAssessment({
@@ -279,11 +280,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             }
             setLoading(false);
         }
-    }, [isEmbedded, testData, settings]);
+    }, [isEmbedded, testData, settings, questions.length]);
 
     // Initialize code boilerplates in embedded mode
     useEffect(() => {
-        if (isEmbedded && questions.length > 0) {
+        if (isEmbedded && questions.length > 0 && Object.keys(codeMap).length === 0) {
             const initialCodeMap = {};
             const availableLanguages = ["cpp", "c", "python", "java"];
             questions.forEach(q => {
@@ -293,13 +294,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             });
             setCodeMap(initialCodeMap);
         }
-    }, [isEmbedded, questions]);
+    }, [isEmbedded, questions, codeMap]);
+
+    const hasTimerStartedRef = useRef(false);
 
     // Synchronize section timer in embedded mode
     useEffect(() => {
         if (isEmbedded) {
             setRemainingTime(secTimer);
-            if (secTimer <= 0) {
+            if (secTimer > 0) {
+                hasTimerStartedRef.current = true;
+            }
+            if (secTimer <= 0 && hasTimerStartedRef.current) {
                 handleFinalSubmit();
             }
         }
@@ -1880,7 +1886,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Enable proctoring dynamically if the assessment metadata has proctored flag enabled
     const shouldUseProctoring = Boolean(
-        currentAssessment && !isEmbedded && (
+        currentAssessment && (
             currentAssessment.proctored === true ||
             currentAssessment.proctored === 1 ||
             currentAssessment.proctored === "1" ||
@@ -1914,6 +1920,21 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     timestamp: violationInfo.timestamp
                                 }
                             ]
+                        }));
+                    }}
+                />
+            )}
+            {currentAssessment && currentAssessment.audioProctored && user && (
+                <AudioProctoringEngine
+                    studentID={user.Email}
+                    testID={currentAssessment.id || 'unknown'}
+                    isTestActive={!!currentAssessment && !submissionSuccess}
+                    maxViolations={Number(settings.maxAudioViolations) || 3}
+                    onViolationUpdate={(info) => {
+                        if (!info?.type) return;
+                        setProctoringData(prev => ({
+                            ...prev,
+                            violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
                         }));
                     }}
                 />
