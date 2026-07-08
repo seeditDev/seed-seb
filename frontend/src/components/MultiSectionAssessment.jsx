@@ -279,11 +279,9 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
   };
 
   const navQuestion = (dir) => {
+    if (settings.questionTimer > 0) return;
     if (dir === 'prev' && questionIndex > 0 && !settings.forwardOnly) setQuestionIndex(q => q - 1);
     if (dir === 'next' && questionIndex < questions.length - 1) {
-      if (settings.questionTimer > 0) {
-        setLockedQuestions(l => [...l, questionIndex]);
-      }
       setQuestionIndex(q => q + 1);
     }
   };
@@ -521,7 +519,7 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
                 <button
                   className="mcq-nav-button"
                   onClick={() => navQuestion('next')}
-                  disabled={questionIndex === total - 1}
+                  disabled={questionIndex === total - 1 || settings.questionTimer > 0}
                 >
                   Next <FaArrowRight />
                 </button>

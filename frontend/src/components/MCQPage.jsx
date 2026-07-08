@@ -933,7 +933,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
     // Handle navigation
     const handleNavigateQuestion = (direction) => {
-        if (isEmbedded && (settings.forwardOnly || settings.questionTimer > 0) && direction === 'prev') {
+        if (isEmbedded && (settings.forwardOnly || settings.questionTimer > 0)) {
             return;
         }
         if (direction === 'prev' && questionIndex > 0) {
@@ -2167,14 +2167,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                     <button
                                         className="mcq-nav-button"
                                         onClick={() => handleNavigateQuestion('prev')}
-                                        disabled={questionIndex === 0 || isSubmitting}
+                                        disabled={questionIndex === 0 || isSubmitting || settings.questionTimer > 0}
                                     >
                                         <FaArrowLeft /> Previous
                                     </button>
                                     <button
                                         className="mcq-nav-button"
                                         onClick={() => handleNavigateQuestion('next')}
-                                        disabled={questionIndex === totalQs - 1 || isSubmitting}
+                                        disabled={questionIndex === totalQs - 1 || isSubmitting || settings.questionTimer > 0}
                                     >
                                         Next <FaArrowRight />
                                     </button>
