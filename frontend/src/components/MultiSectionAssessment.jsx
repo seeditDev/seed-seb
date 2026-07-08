@@ -615,6 +615,9 @@ const MultiSectionAssessment = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
+  // coordinator refs
+  const examStartTimeRef = useRef(new Date().toISOString());
+
   // Section coordinator state
   const [currentSecIdx, setCurrentSecIdx] = useState(-1);
   const [secStarted, setSecStarted] = useState(false);
@@ -912,17 +915,65 @@ const MultiSectionAssessment = () => {
         const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
         const totalViolations = Object.values(updatedResults).reduce((a, s) => a + (s.data?.violationCount || 0), 0);
 
+        // Metrics computation
+        const timeStartedISO = examStartTimeRef.current;
+        const timeEndedISO = new Date().toISOString();
+        const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(timeStartedISO).getTime()) / 1000);
+        const timeM = Math.floor(timeTaken / 60);
+        const timeS = timeTaken % 60;
+        const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
+
+        const totalNoFace = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalNoFace || 0), 0);
+        const totalMultipleFaces = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalMultipleFaces || 0), 0);
+        
+        const allViolations = Object.values(updatedResults).reduce((acc, s) => {
+          if (Array.isArray(s.data?.violations)) {
+            return acc.concat(s.data.violations);
+          }
+          return acc;
+        }, []);
+
+        const autoSubmitted = Object.values(updatedResults).some(s => s.data?.autoSubmitted);
+        const autoSubmitReason = Object.values(updatedResults)
+          .map(s => s.data?.autoSubmitReason || '')
+          .filter(Boolean)
+          .join(', ');
+
         supabase.from('mcq_results').upsert({
-          roll_number: user['Roll Number'] || '', name: user.Name || '',
-          email: user.Email, college, year, department: user.Department || '',
-          test_id: assessment.id, test_name: assessment.name,
-          score: totalScore, total_questions: totalQ,
-          correct_answers: totalScore, incorrect_answers: totalQ - totalScore,
-          percentage: pct, submitted_at: new Date().toISOString(),
-          violation_count: totalViolations, updated_at: new Date().toISOString()
+          roll_number: user['Roll Number'] || '',
+          name: user.Name || '',
+          email: user.Email,
+          college,
+          year,
+          department: user.Department || '',
+          test_id: assessment.id,
+          test_name: assessment.name,
+          score: totalScore,
+          total_questions: totalQ,
+          correct_answers: totalScore,
+          incorrect_answers: totalQ - totalScore,
+          percentage: pct,
+          time_taken: timeTaken,
+          time_taken_formatted: timeTakenFormatted,
+          time_started: timeStartedISO,
+          time_ended: timeEndedISO,
+          submitted_at: timeEndedISO,
+          auto_submitted: autoSubmitted,
+          auto_submit_reason: autoSubmitReason,
+          violation_count: totalViolations,
+          total_no_face: totalNoFace,
+          total_multiple_faces: totalMultipleFaces,
+          violations: allViolations,
+          updated_at: timeEndedISO
         }, { onConflict: 'email,test_id' }).then(
-          () => console.log('[MSA] Supabase save succeeded'),
-          e => console.warn('[MSA] Supabase save failed:', e)
+          ({ data, error }) => {
+            if (error) {
+              console.warn('[MSA] Supabase save failed:', error.message || error);
+            } else {
+              console.log('[MSA] Supabase save succeeded:', data);
+            }
+          },
+          e => console.warn('[MSA] Supabase save failed (transport):', e)
         );
       }
 
