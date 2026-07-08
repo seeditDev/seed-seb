@@ -131,7 +131,7 @@ const normalizeQuestion = (q) => {
 const CODING_ROUTE_BASE = '/student/coding';
 const AUTO_SUBMIT_NOTICE_KEY = 'codingAutoSubmitNotice';
 
-const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {} }) => {
+const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {}, parentProctoringData = null, parentSettings = null }) => {
     const navigate = useNavigate();
     const { assessmentSlug } = useParams();
 
@@ -188,6 +188,37 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [violationCount, setViolationCount] = useState(0);
     const [proctorWarning, setProctorWarning] = useState(null);
     const [isLockedOut, setIsLockedOut] = useState(false);
+
+    const [timeSpentPerQ, setTimeSpentPerQ] = useState(() => {
+        try {
+            const saved = localStorage.getItem("codingTimeSpentPerQ");
+            if (saved) return JSON.parse(saved) || {};
+        } catch (_) {}
+        return {};
+    });
+
+    useEffect(() => {
+        localStorage.setItem("codingTimeSpentPerQ", JSON.stringify(timeSpentPerQ));
+    }, [timeSpentPerQ]);
+
+    useEffect(() => {
+        let qTimer;
+        // Increment time spent on the active question only when test is active/running
+        const isExamActive = !submissionSuccess && questions.length > 0 && activeQuestionIndex !== undefined;
+        if (isExamActive) {
+            const activeQ = questions[activeQuestionIndex];
+            const qId = activeQ?.questionId || activeQ?.id || activeQuestionIndex.toString();
+            qTimer = setInterval(() => {
+                setTimeSpentPerQ(prev => ({
+                    ...prev,
+                    [qId]: (prev[qId] || 0) + 1
+                }));
+            }, 1000);
+        }
+        return () => {
+            if (qTimer) clearInterval(qTimer);
+        };
+    }, [submissionSuccess, questions, activeQuestionIndex]);
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
@@ -195,6 +226,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
     const [proctoringData, setProctoringData] = useState({
         violationCount: 0,
+        audioViolationCount: 0,
         violations: []
     });
     const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
@@ -251,7 +283,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             if (onSectionSubmit) {
                 onSectionSubmit({
                     answers: allAnswers,
-                    timeSpentPerQ: {},
+                    timeSpentPerQ: timeSpentPerQ,
                     completed: finalScores,
                     autoSubmitted: reason ? true : false,
                     tabViolation: reason === 'navigation' ? true : false
@@ -1008,37 +1040,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         return () => clearInterval(interval);
     }, [startTime, currentAssessment, testDuration, isLockedOut, getElapsedSeconds]);
 
-    // Proctoring tab switch hooks
+    // Proctoring tab switch hooks (Tab switch not needed - bypassed)
     useEffect(() => {
-        if (!startTime || !currentAssessment || isLockedOut) return;
-
-        const handleVisibility = () => {
-            if (document.hidden) {
-                setViolationCount(prev => {
-                    const newCount = prev + 1;
-                    if (newCount >= 5) {
-                        setIsLockedOut(true);
-                        autoSubmitAttempt("navigation");
-                        return newCount;
-                    }
-                    setProctorWarning(`Tab Switch: ${newCount}/5`);
-                    return newCount;
-                });
-            }
-        };
-
-        const handleBlur = () => {
-            // Trigger proctor log (warn but don't count twice for visibiliy)
-            console.warn("Proctor warning: window focus lost");
-        };
-
-        document.addEventListener("visibilitychange", handleVisibility);
-        window.addEventListener("blur", handleBlur);
-
-        return () => {
-            document.removeEventListener("visibilitychange", handleVisibility);
-            window.removeEventListener("blur", handleBlur);
-        };
+        // Tab switch monitoring disabled per requirements
     }, [startTime, currentAssessment, isLockedOut]);
 
     // Handle code editor change and save locally
@@ -1906,12 +1910,33 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Enable proctoring dynamically if the assessment metadata has proctored flag enabled
     const shouldUseProctoring = Boolean(
-        currentAssessment && (
+        (currentAssessment && (
             currentAssessment.proctored === true ||
             currentAssessment.proctored === 1 ||
             currentAssessment.proctored === "1" ||
             currentAssessment.proctored === "true"
-        )
+        )) ||
+        (isEmbedded && parentSettings && (
+            parentSettings.proctored === true ||
+            parentSettings.proctored === 1 ||
+            parentSettings.proctored === "1" ||
+            parentSettings.proctored === "true"
+        ))
+    );
+
+    const shouldUseAudioProctoring = Boolean(
+        (currentAssessment && (
+            currentAssessment.audioProctored === true ||
+            currentAssessment.audioProctored === 1 ||
+            currentAssessment.audioProctored === "1" ||
+            currentAssessment.audioProctored === "true"
+        )) ||
+        (isEmbedded && parentSettings && (
+            parentSettings.audioProctored === true ||
+            parentSettings.audioProctored === 1 ||
+            parentSettings.audioProctored === "1" ||
+            parentSettings.audioProctored === "true"
+        ))
     );
 
     // ==========================================
@@ -1927,9 +1952,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     onAutoSubmit={() => autoSubmitAttempt('proctoring_violations')}
                     isTestActive={!!currentAssessment && !submissionSuccess}
                     maxViolations={Number(currentAssessment.maxViolations) || 5}
+                    onReady={() => {
+                        console.log('[CodingAssessmentPage] Camera proctoring ready');
+                    }}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
                         setProctoringData(prev => ({
+                            ...prev,
                             violationCount: typeof violationInfo.violationCount === 'number'
                                 ? violationInfo.violationCount
                                 : prev.violationCount,
@@ -1950,12 +1979,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     testID={currentAssessment.id || 'unknown'}
                     isTestActive={!!currentAssessment && !submissionSuccess}
                     maxViolations={Number(settings.maxAudioViolations) || 3}
+                    onReady={() => {
+                        console.log('[CodingAssessmentPage] Audio proctoring ready');
+                    }}
                     onViolationUpdate={(info) => {
                         if (!info?.type) return;
-                        setProctoringData(prev => ({
-                            ...prev,
-                            violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
-                        }));
+                        setProctoringData(prev => {
+                            const nextAudioCount = (prev.audioViolationCount || 0) + 1;
+                            const maxLimit = Number(settings.maxAudioViolations) || 3;
+                            if (nextAudioCount >= maxLimit) {
+                                setTimeout(() => {
+                                    setIsLockedOut(true);
+                                    autoSubmitAttempt("proctoring_violations");
+                                }, 1000);
+                            }
+                            return {
+                                ...prev,
+                                audioViolationCount: nextAudioCount,
+                                violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
+                            };
+                        });
                     }}
                 />
             )}
@@ -1973,36 +2016,40 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 </div>
                 
                 <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    {shouldUseProctoring && (
+                    {(shouldUseProctoring || shouldUseAudioProctoring) && (
                         <div className="proctoring-stats-container" style={{ display: 'flex', gap: '10px' }}>
-                            <div className="proctor-stat-pill tab-switch-pill" style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                background: violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
-                                color: violationCount > 0 ? '#ef4444' : '#10b981',
-                                border: violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                padding: '6px 12px',
-                                borderRadius: '20px',
-                                fontSize: '0.85rem',
-                                fontWeight: '600'
-                            }}>
-                                <span>Tab Switches: {violationCount} / 5</span>
-                            </div>
-                            <div className="proctor-stat-pill ai-violation-pill" style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
-                                color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
-                                border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                padding: '6px 12px',
-                                borderRadius: '20px',
-                                fontSize: '0.85rem',
-                                fontWeight: '600'
-                            }}>
-                                <span>AI Violations: {proctoringData.violationCount} / {currentAssessment?.maxViolations || 5}</span>
-                            </div>
+                            {shouldUseAudioProctoring && (
+                                <div className="proctor-stat-pill audio-violation-pill" style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                    color: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? '#ef4444' : '#10b981',
+                                    border: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600'
+                                }}>
+                                    <span>🎤 Audio Proctor | Violations: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount} / {Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 3}</span>
+                                </div>
+                            )}
+                            {shouldUseProctoring && (
+                                <div className="proctor-stat-pill ai-violation-pill" style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                    color: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? '#ef4444' : '#10b981',
+                                    border: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600'
+                                }}>
+                                    <span>📷 Camera Proctor | Violations: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount} / {currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}</span>
+                                </div>
+                            )}
                         </div>
                     )}
                     <div className="timer-pill">

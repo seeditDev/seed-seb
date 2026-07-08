@@ -17,6 +17,7 @@ const AudioProctoringEngine = ({
   isProctorActive = true,
   maxViolations   = 3,
   onViolationUpdate,
+  onReady,
 }) => {
   const [violationCount, setViolationCount] = useState(0);
   const [micStatus,      setMicStatus]      = useState("idle"); // idle|active|denied|disconnected|noise
@@ -30,8 +31,10 @@ const AudioProctoringEngine = ({
   const violationCountRef = useRef(0);
   const onViolationRef    = useRef(onViolationUpdate);
   const isInitializedRef  = useRef(false);
+  const onReadyRef        = useRef(onReady);
 
   useEffect(() => { onViolationRef.current = onViolationUpdate; }, [onViolationUpdate]);
+  useEffect(() => { onReadyRef.current = onReady; }, [onReady]);
 
   const getRMS = useCallback(() => {
     if (!analyserRef.current) return 0;
@@ -99,6 +102,9 @@ const AudioProctoringEngine = ({
       isInitializedRef.current = true;
       setMicStatus("active");
       startSampling();
+      if (onReadyRef.current) {
+        onReadyRef.current();
+      }
     } catch (err) {
       console.error("[AudioProctor] Mic init failed:", err);
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {

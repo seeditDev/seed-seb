@@ -722,7 +722,7 @@ const StudentDashboard = () => {
 
     // 4. Secure Env Check
     await new Promise(r => setTimeout(r, 800));
-    const secureEnvOk = true; // Bypassed for browser verification
+    const secureEnvOk = false; // Bypassed for browser verification
     setPreflightResults(prev => ({ ...prev, secureEnv: secureEnvOk ? 'pass' : 'fail' }));
 
     // 5. System Hardening Check
@@ -754,7 +754,7 @@ const StudentDashboard = () => {
       const testData = await fetchJSONFile(assessment.url);
 
       if (assessment.isMultiSection) {
-        localStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
+        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
         setLaunchStep(null);
         navigate(`/student/assessment/multisection/${assessment.slug}`);
       } else if (assessment.type === 'mcq') {
@@ -2005,6 +2005,7 @@ const StudentDashboard = () => {
               {preflightDone &&
                 preflightResults.internet === 'pass' &&
                 (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) &&
+
                 !chargerConfirmed && (
                   <div className="lw-warning-row" style={{ marginTop: '8px', padding: '12px', background: 'rgba(234, 179, 8, 0.1)', borderLeft: '4px solid #eab308', borderRadius: '8px', display: 'flex', alignItems: 'center', color: '#facc15', fontSize: '0.92rem', fontWeight: '600' }}>
                     <FaExclamationTriangle style={{ marginRight: '8px' }} /> Please confirm you have connected your charger to enable Proceed.
@@ -2027,6 +2028,7 @@ const StudentDashboard = () => {
                   !preflightDone ||
                   preflightResults.internet === 'fail' ||
                   (selectedAssessment?.proctored && preflightResults.webcam === 'fail') ||
+                  (selectedAssessment?.proctored && preflightResults.secureEnv === 'fail') ||
                   !chargerConfirmed
                 }
                 onClick={handlePreflightProceed}

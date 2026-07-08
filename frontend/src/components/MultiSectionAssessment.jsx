@@ -169,6 +169,22 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
 
 
 
+  // Track active question elapsed seconds
+  useEffect(() => {
+    let qTimer;
+    if (secStarted && questionIndex !== undefined) {
+      qTimer = setInterval(() => {
+        setTimeSpentPerQ(prev => ({
+          ...prev,
+          [questionIndex]: (prev[questionIndex] || 0) + 1
+        }));
+      }, 1000);
+    }
+    return () => {
+      if (qTimer) clearInterval(qTimer);
+    };
+  }, [secStarted, questionIndex]);
+
   const hasTimerStartedRef = useRef(false);
 
   // Auto-submit when section timer expires
@@ -359,16 +375,28 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
           <h1 style={{ fontSize: '1.1rem', color: '#f8fafc', margin: 0 }}>{sectionData?.name || 'MCQ Section'}</h1>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {settings.audioProctored && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: (proctoringData?.audioViolationCount || 0) > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.12)',
+              color: (proctoringData?.audioViolationCount || 0) > 0 ? '#ef4444' : '#10b981',
+              border: (proctoringData?.audioViolationCount || 0) > 0 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16,185,129,0.3)',
+              padding: '5px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600'
+            }}>
+              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: (proctoringData?.audioViolationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
+              🎤 AUDIO PROCTOR | Violations: {proctoringData?.audioViolationCount || 0} / {settings.maxAudioViolations || 3}
+            </div>
+          )}
           {settings.proctored && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              background: proctoringData.violationCount > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.12)',
-              color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
-              border: proctoringData.violationCount > 0 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16,185,129,0.3)',
+              background: (proctoringData?.violationCount || 0) > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.12)',
+              color: (proctoringData?.violationCount || 0) > 0 ? '#ef4444' : '#10b981',
+              border: (proctoringData?.violationCount || 0) > 0 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16,185,129,0.3)',
               padding: '5px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600'
             }}>
-              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
-              PROCTOR ACTIVE | Violations: {proctoringData.violationCount} / {settings.maxViolations || 7}
+              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: (proctoringData?.violationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
+              📷 CAMERA PROCTOR | Violations: {proctoringData?.violationCount || 0} / {settings.maxViolations || 7}
             </div>
           )}
           <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{attempted} / {total} Answered</span>
@@ -555,7 +583,7 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
 // ─── Coding Section Renderer ──────────────────────────────────────────────────
 // Uses the real CodingAssessmentPage in embedded mode for full feature parity.
 
-const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
+const CodingSectionView = ({ sectionData, secTimer, settings = {}, proctoringData, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const testData = {
     questions: sectionData?.questions || []
   };
@@ -573,6 +601,8 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
       secTimer={secTimer}
       onSectionSubmit={onSectionSubmit}
       settings={embeddedSettings}
+      parentProctoringData={proctoringData}
+      parentSettings={settings}
     />
   );
 };
@@ -601,8 +631,11 @@ const MultiSectionAssessment = () => {
   const [sectionData, setSectionData] = useState({});
   const [examResults, setExamResults] = useState({});
   const [examFinished, setExamFinished] = useState(false);
+  const [isVisualProctorReady, setIsVisualProctorReady] = useState(false);
+  const [isAudioProctorReady, setIsAudioProctorReady] = useState(false);
   const [proctoringData, setProctoringData] = useState({
     violationCount: 0,
+    audioViolationCount: 0,
     violations: []
   });
 
@@ -654,7 +687,7 @@ const MultiSectionAssessment = () => {
     let assessmentData = null;
     try {
       authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      assessmentData = JSON.parse(localStorage.getItem('multisectionAssessmentData') || 'null');
+      assessmentData = JSON.parse(sessionStorage.getItem('multisectionAssessmentData') || 'null');
     } catch (e) {
       console.error('[MSA] Failed to parse localStorage:', e);
     }
@@ -833,18 +866,38 @@ const MultiSectionAssessment = () => {
   useEffect(() => {
     if (sectionCountdown === null) return;
     if (sectionCountdown <= 0) {
-      setSecStarted(true);
-      setSectionCountdown(null);
+      const activeSec = assessment?.sections?.[countdownSecIdx];
+      const qList = activeSec ? sectionData[activeSec.sectionId]?.questions : null;
+      const questionsLoaded = Array.isArray(qList) && qList.length > 0;
+
+      const visualReady = !shouldUseProctoring || isVisualProctorReady;
+      const audioReady = !shouldUseAudioProctoring || isAudioProctorReady;
+
+      if (questionsLoaded && visualReady && audioReady) {
+        setSecStarted(true);
+        setSectionCountdown(null);
+      }
       return;
     }
     const t = setTimeout(() => setSectionCountdown(prev => prev - 1), 1000);
     return () => clearTimeout(t);
-  }, [sectionCountdown]);
+  }, [
+    sectionCountdown,
+    countdownSecIdx,
+    sectionData,
+    shouldUseProctoring,
+    isVisualProctorReady,
+    shouldUseAudioProctoring,
+    isAudioProctorReady,
+    assessment
+  ]);
 
   const handleStartSection = useCallback((idx) => {
     setCountdownSecIdx(idx);
     setSectionCountdown(10);
     setCurrentSecIdx(idx);
+    setIsVisualProctorReady(false);
+    setIsAudioProctorReady(false);
     if (assessment && assessment.sections) {
       const section = assessment.sections[idx];
       if (section) setSecTimer((section.duration_minutes || 30) * 60);
@@ -939,8 +992,24 @@ const MultiSectionAssessment = () => {
     }
 
     setExamFinished(true);
-    localStorage.removeItem('multisectionAssessmentData');
+    sessionStorage.removeItem('multisectionAssessmentData');
     localStorage.removeItem(`msaProgress_${assessment.id}`);
+
+    // Clear MCQ, Coding, and proctoring temporary workspace details
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith(`msa_active_mcq_state_${assessment.id}`) ||
+        key.startsWith(`codingAssessmentCode`) ||
+        key.startsWith(`codingTimeSpentPerQ`) ||
+        key.startsWith(`proctor_violations_`) ||
+        key.startsWith(`proctor_events_`)
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
   }, [assessment, user, examResults, proctoringData]);
 
   const autoSubmitSection = useCallback((sectionResults) => {
@@ -1080,8 +1149,24 @@ const MultiSectionAssessment = () => {
       }
 
       setExamFinished(true);
-      localStorage.removeItem('multisectionAssessmentData');
+      sessionStorage.removeItem('multisectionAssessmentData');
       localStorage.removeItem(`msaProgress_${assessment.id}`);
+
+      // Clear MCQ, Coding, and proctoring temporary workspace details
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.startsWith(`msa_active_mcq_state_${assessment.id}`) ||
+          key.startsWith(`codingAssessmentCode`) ||
+          key.startsWith(`codingTimeSpentPerQ`) ||
+          key.startsWith(`proctor_violations_`) ||
+          key.startsWith(`proctor_events_`)
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
     }
   }, [assessment, currentSecIdx, examResults, handleStartSection, user]);
 
@@ -1214,6 +1299,7 @@ const MultiSectionAssessment = () => {
           sectionData={activeSecData}
           secTimer={secTimer}
           settings={sectionSettings}
+          proctoringData={proctoringData}
           onSectionSubmit={autoSubmitSection}
           assessmentName={assessment.name || ''}
           assessmentId={assessment.id || ''}
@@ -1228,11 +1314,16 @@ const MultiSectionAssessment = () => {
             testID={assessment.id}
             isTestActive={currentSecIdx >= 0 && !examFinished}
             maxViolations={maxViolations}
+            onReady={() => {
+              console.log('[MSA] Camera Proctoring is ready');
+              setIsVisualProctorReady(true);
+            }}
             onViolationUpdate={(info) => {
               if (!info?.violationType) return;
               setProctoringData(prev => {
                 const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
                 return {
+                  ...prev,
                   violationCount: typeof info.violationCount === 'number' ? info.violationCount : prev.violationCount,
                   violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
                 };
@@ -1249,49 +1340,105 @@ const MultiSectionAssessment = () => {
             testID={assessment.id}
             isTestActive={currentSecIdx >= 0 && !examFinished}
             maxViolations={maxAudioViolations}
+            onReady={() => {
+              console.log('[MSA] Audio Proctoring is ready');
+              setIsAudioProctorReady(true);
+            }}
             onViolationUpdate={(info) => {
               if (!info?.type) return;
-              setProctoringData(prev => ({
-                ...prev,
-                violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
-              }));
+              setProctoringData(prev => {
+                const nextAudioCount = (prev.audioViolationCount || 0) + 1;
+                if (nextAudioCount >= maxAudioViolations) {
+                  setTimeout(() => {
+                    autoSubmitEntireExam('proctoring_violations');
+                  }, 1000);
+                }
+                return {
+                  ...prev,
+                  audioViolationCount: nextAudioCount,
+                  violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
+                };
+              });
             }}
           />
         )}
         {sectionView}
         {/* Pre-section countdown overlay */}
-        {sectionCountdown !== null && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-            background: 'var(--bg-primary)',
-            color: 'var(--text-main)', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', zIndex: 99999, fontFamily: "'Inter',sans-serif"
-          }}>
-            <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
-              <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: 'var(--accent-coding)', margin: '0 auto 24px' }} />
-              <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: 'var(--accent-coding)', letterSpacing: '-0.02em' }}>
-                Preparing Section Workspace...
-              </h2>
-              {assessment?.name && (
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>
-                  {assessment.name}
+        {sectionCountdown !== null && (() => {
+          const activeSec = assessment?.sections?.[countdownSecIdx];
+          const qList = activeSec ? sectionData[activeSec.sectionId]?.questions : null;
+          const questionsLoaded = Array.isArray(qList) && qList.length > 0;
+          return (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+              background: 'var(--bg-primary)',
+              color: 'var(--text-main)', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', zIndex: 99999, fontFamily: "'Inter',sans-serif"
+            }}>
+              <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
+                <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: 'var(--accent-coding)', margin: '0 auto 24px' }} />
+                <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: 'var(--accent-coding)', letterSpacing: '-0.02em' }}>
+                  Preparing Section Workspace...
+                </h2>
+                {assessment?.name && (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>
+                    {assessment.name}
+                  </p>
+                )}
+                <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '24px', lineHeight: '1.6' }}>
+                  Entering Section: <strong style={{ color: 'var(--text-main)' }}>{assessment?.sections?.[countdownSecIdx]?.name}</strong>.
+                  <br />Loading questions and preparing environment.
                 </p>
-              )}
-              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
-                Entering Section: <strong style={{ color: 'var(--text-main)' }}>{assessment?.sections?.[countdownSecIdx]?.name}</strong>.
-                <br />Loading questions and preparing environment.
-              </p>
-              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px 32px', display: 'inline-block' }}>
-                <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700' }}>
-                  Section Starts In
+
+                {/* Status indicators */}
+                <div style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  marginBottom: '24px',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  fontSize: '0.9rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Section Questions:</span>
+                    <span style={{ fontWeight: '600', color: questionsLoaded ? '#10b981' : '#f59e0b' }}>
+                      {questionsLoaded ? 'Loaded ✓' : 'Fetching questions...'}
+                    </span>
+                  </div>
+                  {shouldUseProctoring && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Camera Proctoring:</span>
+                      <span style={{ fontWeight: '600', color: isVisualProctorReady ? '#10b981' : '#f59e0b' }}>
+                        {isVisualProctorReady ? 'Ready ✓' : 'Initializing AI & models...'}
+                      </span>
+                    </div>
+                  )}
+                  {shouldUseAudioProctoring && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Microphone Proctoring:</span>
+                      <span style={{ fontWeight: '600', color: isAudioProctorReady ? '#10b981' : '#f59e0b' }}>
+                        {isAudioProctorReady ? 'Ready ✓' : 'Requesting mic permission...'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'monospace', lineHeight: '1' }}>
-                  {sectionCountdown}s
+
+                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px 32px', display: 'inline-block' }}>
+                  <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700' }}>
+                    {sectionCountdown <= 0 ? 'Waiting for resources...' : 'Section Starts In'}
+                  </div>
+                  <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'monospace', lineHeight: '1' }}>
+                    {sectionCountdown > 0 ? `${sectionCountdown}s` : '0s'}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </>
     );
   }

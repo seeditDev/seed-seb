@@ -225,7 +225,8 @@ const ProctoringEngine = ({
   isTestActive = true,
   maxViolations = 5,
   onViolationUpdate,
-  isProctorActive = true
+  isProctorActive = true,
+  onReady
 }) => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -247,6 +248,11 @@ const ProctoringEngine = ({
   const onAutoSubmitRef = useRef(onAutoSubmit);
   const maxViolationsRef = useRef(maxViolations);
   const violationCountRef = useRef(0);
+  const onReadyRef = useRef(onReady);
+
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
 
   useEffect(() => {
     onViolationUpdateRef.current = onViolationUpdate;
@@ -609,7 +615,7 @@ const ProctoringEngine = ({
             violationType = 'multiple_faces';
           } else {
             // Identity Face Verification matching check
-            const savedDescriptorStr = localStorage.getItem('proctor_reference_descriptor');
+            const savedDescriptorStr = localStorage.getItem('proctor_reference_descriptor_' + testID);
             if (savedDescriptorStr && faceDetections[0].descriptor) {
               try {
                 const referenceDescriptor = new Float32Array(JSON.parse(savedDescriptorStr));
@@ -794,6 +800,9 @@ const ProctoringEngine = ({
                 runPresenceCheckSequence();
               }, CHECK_INTERVAL_MS);
               console.log('[ProctoringEngine] Scheduled proctoring AI checks started');
+              if (onReadyRef.current) {
+                onReadyRef.current();
+              }
             }
           };
 

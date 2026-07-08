@@ -3,11 +3,14 @@
  * Handles local storage caching, auto-expiration, and cleanup of proctoring-related session data.
  */
 
-const CACHE_KEYS = {
-  PHOTO: 'proctor_reference_photo',
-  DESCRIPTOR: 'proctor_reference_descriptor',
-  EXPIRY: 'proctor_cache_expiry',
-  ACTIVE_TEST: 'proctor_active_test_id'
+export const getProctorCacheKeys = (testID) => {
+  const suffix = testID ? `_${testID}` : '';
+  return {
+    PHOTO: `proctor_reference_photo${suffix}`,
+    DESCRIPTOR: `proctor_reference_descriptor${suffix}`,
+    EXPIRY: `proctor_cache_expiry${suffix}`,
+    ACTIVE_TEST: `proctor_active_test_id${suffix}`
+  };
 };
 
 /**
@@ -18,37 +21,58 @@ const CACHE_KEYS = {
 export const setProctorCacheExpiry = (durationMinutes, testID) => {
   if (!durationMinutes || isNaN(durationMinutes)) durationMinutes = 60;
   
-  // Expiry time is the duration of the test + a 15-minute grace period to prevent premature clearing
   const expiryTime = Date.now() + (durationMinutes + 15) * 60 * 1000;
-  
   console.log(`[ProctorCache] Setting session expiry to: ${new Date(expiryTime).toLocaleTimeString()} for test: ${testID}`);
-  localStorage.setItem(CACHE_KEYS.EXPIRY, expiryTime.toString());
+  
+  const keys = getProctorCacheKeys(testID);
+  localStorage.setItem(keys.EXPIRY, expiryTime.toString());
   if (testID) {
-    localStorage.setItem(CACHE_KEYS.ACTIVE_TEST, testID.toString());
+    localStorage.setItem(keys.ACTIVE_TEST, testID.toString());
   }
 };
 
 /**
  * Wipes all proctoring session data from local storage
+ * @param {string} [testID] - Optional test ID to wipe. If omitted, wipes all proctoring cache.
  */
-export const clearAllProctorCache = () => {
-  console.log('[ProctorCache] Explicitly wiping all proctoring localStorage items...');
-  localStorage.removeItem(CACHE_KEYS.PHOTO);
-  localStorage.removeItem(CACHE_KEYS.DESCRIPTOR);
-  localStorage.removeItem(CACHE_KEYS.EXPIRY);
-  localStorage.removeItem(CACHE_KEYS.ACTIVE_TEST);
+export const clearAllProctorCache = (testID) => {
+  console.log(`[ProctorCache] Wiping proctoring localStorage items for testID: ${testID || 'all'}`);
+  
+  if (!testID) {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.startsWith('proctor_reference_') || 
+        key.startsWith('proctor_cache_') || 
+        key.startsWith('proctor_active_') || 
+        key.startsWith('proctor_violations_') || 
+        key.startsWith('proctor_events_')
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    return;
+  }
+
+  const keys = getProctorCacheKeys(testID);
+  localStorage.removeItem(keys.PHOTO);
+  localStorage.removeItem(keys.DESCRIPTOR);
+  localStorage.removeItem(keys.EXPIRY);
+  localStorage.removeItem(keys.ACTIVE_TEST);
   
   const keysToRemove = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && (
       key.startsWith('proctor_violations_') || 
-      key.startsWith('proctor_events_')
+      key.startsWith('proctor_events_') ||
+      key.includes(`_${testID}`)
     )) {
       keysToRemove.push(key);
     }
   }
-  
   keysToRemove.forEach(key => localStorage.removeItem(key));
 };
 
@@ -56,13 +80,14 @@ export const clearAllProctorCache = () => {
  * Checks if the cached proctoring session has expired.
  * If expired, it automatically wipes all proctoring local storage entries.
  */
-export const checkAndClearProctorCache = () => {
-  const expiry = localStorage.getItem(CACHE_KEYS.EXPIRY);
+export const checkAndClearProctorCache = (testID) => {
+  const keys = getProctorCacheKeys(testID);
+  const expiry = localStorage.getItem(keys.EXPIRY);
   if (!expiry) return;
 
   const expiryTime = parseInt(expiry, 10);
   if (isNaN(expiryTime) || Date.now() > expiryTime) {
     console.log('[ProctorCache] Proctoring cache has expired. Performing automatic cleanup...');
-    clearAllProctorCache();
+    clearAllProctorCache(testID);
   }
 };

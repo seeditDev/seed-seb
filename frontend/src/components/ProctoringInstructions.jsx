@@ -254,11 +254,11 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       
       const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
       
-      localStorage.setItem('proctor_reference_photo', dataUrl);
-      localStorage.setItem('proctor_reference_descriptor', JSON.stringify(Array.from(detection.descriptor)));
+      const testID = assessment?.id || 'unknown';
+      localStorage.setItem('proctor_reference_photo_' + testID, dataUrl);
+      localStorage.setItem('proctor_reference_descriptor_' + testID, JSON.stringify(Array.from(detection.descriptor)));
       
       const duration = assessment?.duration || 60;
-      const testID = assessment?.id || 'unknown';
       setProctorCacheExpiry(duration, testID);
       
       setPhotoUrl(dataUrl);
@@ -276,13 +276,16 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
   useEffect(() => {
     // Pre-load photo from cache if present
-    const existingPhoto = localStorage.getItem('proctor_reference_photo');
-    const existingDescriptor = localStorage.getItem('proctor_reference_descriptor');
-    if (existingPhoto && existingDescriptor) {
-      setPhotoUrl(existingPhoto);
-      setPhotoStatus('captured');
+    const testID = assessment?.id;
+    if (testID) {
+      const existingPhoto = localStorage.getItem('proctor_reference_photo_' + testID);
+      const existingDescriptor = localStorage.getItem('proctor_reference_descriptor_' + testID);
+      if (existingPhoto && existingDescriptor) {
+        setPhotoUrl(existingPhoto);
+        setPhotoStatus('captured');
+      }
     }
-  }, []);
+  }, [assessment?.id]);
 
   const handleContinue = () => {
     if (canContinue && streamRef.current && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured') {
@@ -428,8 +431,9 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                               setPhotoStatus('pending');
                               setPhotoUrl(null);
                               setCaptureError('');
-                              localStorage.removeItem('proctor_reference_photo');
-                              localStorage.removeItem('proctor_reference_descriptor');
+                              const testID = assessment?.id || 'unknown';
+                              localStorage.removeItem('proctor_reference_photo_' + testID);
+                              localStorage.removeItem('proctor_reference_descriptor_' + testID);
                             }}
                           >
                             <FaSync />

@@ -101,6 +101,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     const passkeyInputRef = useRef(null);
     const [proctoringData, setProctoringData] = useState({
         violationCount: 0,
+        audioViolationCount: 0,
         violations: []
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -173,6 +174,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         // Reset proctoring data state
         setProctoringData({
             violationCount: 0,
+            audioViolationCount: 0,
             violations: []
         });
     }, [setLastProgressSync, user, currentTest]);
@@ -2020,21 +2022,41 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                         <h1>{currentTest.name || currentTest.testInfo?.name}</h1>
                     </div>
                     {ENABLE_PROCTORING && (
-                        <div className="mcq-proctor-stats" style={{ display: 'flex', paddingRight: '20px' }}>
-                            <div className="proctor-stat-pill ai-violation-pill" style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
-                                color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
-                                border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                padding: '6px 12px',
-                                borderRadius: '20px',
-                                fontSize: '0.85rem',
-                                fontWeight: '600'
-                            }}>
-                                <span>AI Violations: {proctoringData.violationCount} / {currentTest.maxViolations || 5}</span>
-                            </div>
+                        <div className="mcq-proctor-stats" style={{ display: 'flex', gap: '8px', paddingRight: '20px' }}>
+                            {shouldUseAudioProctoring && (
+                                <div className="proctor-stat-pill audio-violation-pill" style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: proctoringData.audioViolationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                    color: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981',
+                                    border: proctoringData.audioViolationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600'
+                                }}>
+                                    <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
+                                    🎤 Audio Proctor | Violations: {proctoringData.audioViolationCount} / {currentTest.testInfo?.maxAudioViolations || 3}
+                                </div>
+                            )}
+                            {shouldUseProctoring && (
+                                <div className="proctor-stat-pill ai-violation-pill" style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                                    color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
+                                    border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600'
+                                }}>
+                                    <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
+                                    📷 Camera Proctor | Violations: {proctoringData.violationCount} / {currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -2835,11 +2857,15 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     onAutoSubmit={handleAutoSubmit}
                     isTestActive={!!currentTest && !currentTest.submitted}
                     maxViolations={Number(currentTest.testInfo?.maxViolations) || 5}
+                    onReady={() => {
+                        console.log('[MCQPage] Camera proctoring ready');
+                    }}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
                         setProctoringData(prev => {
                             const isRealViolation = ['no_face', 'multiple_faces', 'tab_switch'].includes(violationInfo.violationType);
                             return {
+                                ...prev,
                                 violationCount: typeof violationInfo.violationCount === 'number'
                                     ? violationInfo.violationCount
                                     : prev.violationCount,
@@ -2864,15 +2890,28 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     testID={currentTest.testInfo?.id || currentTest.id || 'unknown'}
                     isTestActive={!!currentTest && !currentTest.submitted}
                     maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || 3}
+                    onReady={() => {
+                        console.log('[MCQPage] Audio proctoring ready');
+                    }}
                     onViolationUpdate={(info) => {
                         if (!info?.type) return;
-                        setProctoringData(prev => ({
-                            ...prev,
-                            violations: [
-                                ...prev.violations,
-                                { type: info.type, timestamp: info.timestamp }
-                            ]
-                        }));
+                        setProctoringData(prev => {
+                            const nextAudioCount = (prev.audioViolationCount || 0) + 1;
+                            const maxLimit = Number(currentTest.testInfo?.maxAudioViolations) || 3;
+                            if (nextAudioCount >= maxLimit) {
+                                setTimeout(() => {
+                                    handleAutoSubmit({ reason: 'proctoring_violations' });
+                                }, 1000);
+                            }
+                            return {
+                                ...prev,
+                                audioViolationCount: nextAudioCount,
+                                violations: [
+                                    ...prev.violations,
+                                    { type: info.type, timestamp: info.timestamp }
+                                ]
+                            };
+                        });
                     }}
                 />
             )}
