@@ -135,6 +135,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
 
     const [challenges, setChallenges] = useState([]);
     const [selectedChallenge, setSelectedChallenge] = useState(null);
+    const currentChallengeIndex = challenges.findIndex(ch => ch.id === selectedChallenge?.id);
     const [completedChallenges, setCompletedChallenges] = useState({});
     const [language, setLanguage] = useState('cpp');
     const [code, setCode] = useState('');
@@ -752,7 +753,6 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
     };
 
     // Previous and Next buttons toggling
-    const currentChallengeIndex = challenges.findIndex(ch => ch.id === selectedChallenge?.id);
 
     const handlePrevChallenge = () => {
         if (isEmbedded && (settings.forwardOnly || (settings.questionTimers && settings.questionTimers.length > 0))) {
