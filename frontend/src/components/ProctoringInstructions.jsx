@@ -573,6 +573,30 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                 </div>
               )}
 
+              {/* Section details for Multi-Section Assessments */}
+              {assessment.isMultiSection && assessment.sections && assessment.sections.length > 0 && (
+                <div style={{ marginTop: '20px', background: 'rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <h4 style={{ color: '#818cf8', margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: '700', letterSpacing: '-0.01em', textAlign: 'left' }}>Assessment Section Breakdowns</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {assessment.sections.map((sec, idx) => {
+                      const secQCount = Array.isArray(sec.questionIds) ? sec.questionIds.length : (Array.isArray(sec.questions) ? sec.questions.length : (Number(sec.questions) || 0));
+                      return (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ color: '#94a3b8', fontWeight: '700', fontSize: '0.85rem' }}>SECTION {idx + 1}</span>
+                            <span style={{ color: '#ffffff', fontWeight: '600', fontSize: '0.9rem' }}>{sec.name}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>
+                            <span>⏱️ {sec.duration_minutes || sec.duration || 0} Mins</span>
+                            <span>❓ {secQCount > 0 ? `${secQCount} Questions` : sec.type?.toUpperCase()}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="instructions-section">
                 <h3>
                   <FaCheckCircle className="section-icon check-icon" />

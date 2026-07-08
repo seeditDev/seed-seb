@@ -22,6 +22,7 @@ import { fetchQuestionsForContest } from '../services/codingQuestionBankService'
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
+import timeService from '../services/timeService';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -169,22 +170,6 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
 
 
 
-  // Track active question elapsed seconds
-  useEffect(() => {
-    let qTimer;
-    if (secStarted && questionIndex !== undefined) {
-      qTimer = setInterval(() => {
-        setTimeSpentPerQ(prev => ({
-          ...prev,
-          [questionIndex]: (prev[questionIndex] || 0) + 1
-        }));
-      }, 1000);
-    }
-    return () => {
-      if (qTimer) clearInterval(qTimer);
-    };
-  }, [secStarted, questionIndex]);
-
   const hasTimerStartedRef = useRef(false);
 
   // Auto-submit when section timer expires
@@ -197,14 +182,6 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secTimer]);
-
-  // Per-question time tracker
-  useEffect(() => {
-    const t = setInterval(() => {
-      setTimeSpentPerQ(prev => ({ ...prev, [questionIndex]: (prev[questionIndex] || 0) + 1 }));
-    }, 1000);
-    return () => clearInterval(t);
-  }, [questionIndex]);
 
   const isFirstMount = useRef(true);
   const questionTimerStartedRef = useRef(false);
@@ -288,8 +265,28 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
     }
   }, [answers, timeSpentPerQ, questions, stateKey]);
 
+  const questionEnterTimeRef = useRef(null);
+
+  useEffect(() => {
+    questionEnterTimeRef.current = timeService.now();
+  }, [questionIndex]);
+
   const handleSelectOption = (optIdx) => {
     if (lockedQuestions.includes(questionIndex)) return;
+
+    // Calculate time spent since entering or last selection on this question
+    const now = timeService.now();
+    const elapsedMs = now - (questionEnterTimeRef.current || now);
+    const elapsedSecs = Math.max(0, Math.round(elapsedMs / 1000));
+
+    setTimeSpentPerQ(prev => ({
+      ...prev,
+      [questionIndex]: (prev[questionIndex] || 0) + elapsedSecs
+    }));
+
+    // Reset enter time to now for subsequent selections
+    questionEnterTimeRef.current = now;
+
     setAnswers(prev => ({ ...prev, [questionIndex]: optIdx }));
   };
 
@@ -377,26 +374,26 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {settings.audioProctored && (
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
+              display: 'flex', alignItems: 'center', gap: '4px',
               background: (proctoringData?.audioViolationCount || 0) > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.12)',
               color: (proctoringData?.audioViolationCount || 0) > 0 ? '#ef4444' : '#10b981',
               border: (proctoringData?.audioViolationCount || 0) > 0 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16,185,129,0.3)',
-              padding: '5px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600'
+              padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '700'
             }}>
-              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: (proctoringData?.audioViolationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
-              🎤 AUDIO PROCTOR | Violations: {proctoringData?.audioViolationCount || 0} / {settings.maxAudioViolations || 3}
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: (proctoringData?.audioViolationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
+              🎤 Audio: {proctoringData?.audioViolationCount || 0}/{settings.maxAudioViolations || 3}
             </div>
           )}
           {settings.proctored && (
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
+              display: 'flex', alignItems: 'center', gap: '4px',
               background: (proctoringData?.violationCount || 0) > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.12)',
               color: (proctoringData?.violationCount || 0) > 0 ? '#ef4444' : '#10b981',
-              border: (proctoringData?.violationCount || 0) > 0 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16,185,129,0.3)',
-              padding: '5px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600'
+              border: (proctoringData?.violationCount || 0) > 0 ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+              padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '700'
             }}>
-              <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: (proctoringData?.violationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
-              📷 CAMERA PROCTOR | Violations: {proctoringData?.violationCount || 0} / {settings.maxViolations || 7}
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: (proctoringData?.violationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
+              📷 Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 7}
             </div>
           )}
           <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{attempted} / {total} Answered</span>
@@ -646,7 +643,9 @@ const MultiSectionAssessment = () => {
 
   const shouldUseAudioProctoring = useMemo(() => {
     if (!assessment) return false;
-    return isTruthy(assessment.audioProctored) || (assessment.sections || []).some(s => isTruthy(s.audioProctored));
+    return isTruthy(assessment.audioProctored) || 
+           isTruthy(assessment.proctored) || 
+           (assessment.sections || []).some(s => isTruthy(s.audioProctored) || isTruthy(s.proctored));
   }, [assessment]);
 
   const maxViolations = useMemo(() => {
@@ -896,8 +895,10 @@ const MultiSectionAssessment = () => {
     setCountdownSecIdx(idx);
     setSectionCountdown(10);
     setCurrentSecIdx(idx);
-    setIsVisualProctorReady(false);
-    setIsAudioProctorReady(false);
+    if (idx === 0) {
+      setIsVisualProctorReady(false);
+      setIsAudioProctorReady(false);
+    }
     if (assessment && assessment.sections) {
       const section = assessment.sections[idx];
       if (section) setSecTimer((section.duration_minutes || 30) * 60);
@@ -922,6 +923,8 @@ const MultiSectionAssessment = () => {
         submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
         type: 'multisection',
         sections: examResults,
+        completed: true,
+        status: 'submitted',
         autoSubmitted: true,
         autoSubmitReason: reason || 'proctoring_violations'
       };
@@ -1076,7 +1079,10 @@ const MultiSectionAssessment = () => {
           testID: assessment.id, testName: assessment.name,
           assessmentId: assessment.id, assessmentName: assessment.name,
           submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
-          type: 'multisection', sections: updatedResults
+          type: 'multisection',
+          completed: true,
+          status: 'submitted',
+          sections: updatedResults
         };
 
         const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
@@ -1184,64 +1190,18 @@ const MultiSectionAssessment = () => {
   // Exam finished screen
   if (examFinished) {
     return (
-      <div className="msa-finished-container" style={{ maxWidth: '850px', margin: '60px auto', padding: '30px', background: '#1e293b', borderRadius: '12px', color: '#f8fafc', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif" }}>
-        <div style={{ textAlign: 'center', marginBottom: '35px' }}>
-          <FaCheckCircle style={{ color: '#10b981', fontSize: '4.5rem', marginBottom: '15px' }} />
-          <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'white', marginBottom: '10px' }}>Assessment Completed!</h1>
-          <p style={{ color: '#94a3b8', fontSize: '1.1rem' }}>
-            Congratulations <strong>{user?.Name}</strong>, your answers have been successfully recorded and submitted.
-          </p>
-        </div>
-
-        <div style={{ background: '#0f172a', borderRadius: '8px', padding: '20px', marginBottom: '30px' }}>
-          <h3 style={{ borderBottom: '1px solid #334155', paddingBottom: '10px', marginBottom: '15px', color: '#38bdf8' }}>Summary of Time Spent per Question</h3>
-          {(assessment.sections || []).map((sec, sIdx) => {
-            const secRes = examResults[sec.sectionId] || {};
-            const qList = sectionData[sec.sectionId]?.questions || [];
-            return (
-              <div key={sec.sectionId} style={{ marginBottom: '25px' }}>
-                <h4 style={{ color: '#e2e8f0', marginBottom: '8px', fontSize: '1.05rem' }}>
-                  {sIdx + 1}. {sec.name} ({sec.type.toUpperCase()})
-                </h4>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #1e293b', color: '#64748b' }}>
-                      <th style={{ padding: '8px 12px' }}>Q No.</th>
-                      <th style={{ padding: '8px 12px' }}>Question</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right' }}>Time Spent</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {qList.map((q, qIdx) => {
-                      const qId = q.questionId || q.id || qIdx.toString();
-                      const spent = sec.type === 'mcq'
-                        ? (secRes.data?.timeSpentPerQ?.[qIdx] || 0)
-                        : (secRes.data?.timeSpentPerQ?.[qId] || 0);
-                      return (
-                        <tr key={qIdx} style={{ borderBottom: '1px solid #1e293b' }}>
-                          <td style={{ padding: '10px 12px', color: '#94a3b8' }}>Q{qIdx + 1}</td>
-                          <td style={{ padding: '10px 12px', color: '#cbd5e1', maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {q.title || q.question || 'Coding Challenge'}
-                          </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600', color: '#10b981' }}>{formatSecs(spent)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ textAlign: 'center' }}>
-          <button
-            onClick={() => navigate('/student/dashboard')}
-            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '12px 30px', fontSize: '1rem', fontWeight: '700', borderRadius: '6px', cursor: 'pointer' }}
-          >
-            Return to Dashboard
-          </button>
-        </div>
+      <div className="msa-finished-container" style={{ maxWidth: '600px', margin: '100px auto', padding: '45px', background: '#1e293b', borderRadius: '12px', color: '#f8fafc', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif", textAlign: 'center' }}>
+        <FaCheckCircle style={{ color: '#10b981', fontSize: '5rem', marginBottom: '20px' }} />
+        <h1 style={{ fontSize: '2.4rem', fontWeight: '800', color: 'white', marginBottom: '15px' }}>Assessment Completed!</h1>
+        <p style={{ color: '#94a3b8', fontSize: '1.2rem', lineHeight: '1.6', marginBottom: '40px' }}>
+          Congratulations <strong>{user?.Name}</strong>, your answers have been successfully recorded and submitted. You may now safely return to the dashboard.
+        </p>
+        <button
+          onClick={() => navigate('/student/dashboard')}
+          style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.1rem', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
+        >
+          Return to Dashboard
+        </button>
       </div>
     );
   }
@@ -1266,7 +1226,7 @@ const MultiSectionAssessment = () => {
           questionTimer: activeSection.questionTimer || 0,
           forwardOnly: isTruthy(activeSection.forwardOnly) || (activeSection.questionTimer > 0),
           proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
-          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
+          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(assessment.proctored) || isTruthy(activeSection.audioProctored) || isTruthy(activeSection.proctored),
           maxViolations: Number(assessment.maxViolations) || 7,
           maxAudioViolations: Number(assessment.maxAudioViolations) || 3
         }
@@ -1276,7 +1236,7 @@ const MultiSectionAssessment = () => {
           forwardOnly: isTruthy(activeSection.forwardOnly) || (codingQTimers.length > 0),
           proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
           maxViolations: Number(assessment.maxViolations) || 7,
-          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
+          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(assessment.proctored) || isTruthy(activeSection.audioProctored) || isTruthy(activeSection.proctored),
           maxAudioViolations: Number(assessment.maxAudioViolations) || 3
         };
     const sectionView = activeSection.type === 'mcq'

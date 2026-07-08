@@ -5,45 +5,50 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 // Flags violations for: sustained noise/talking, mic disconnected, permission denied.
 // Prop interface matches ProctoringEngine for seamless use alongside camera proctoring.
 
-const SAMPLE_INTERVAL_MS = 300;    // how often we read the analyser
-const NOISE_HOLD_FRAMES  = 12;     // ~3.6 seconds of sustained noise before flagging
-const NOISE_THRESHOLD    = 0.04;   // RMS energy threshold (0-1 scale, empirically tuned)
-const COOLDOWN_MS        = 8000;   // min gap between consecutive violations
+const SAMPLE_INTERVAL_MS = 250;    // how often we read the analyser
+const NOISE_HOLD_FRAMES = 4;      // ~1.0 second of sustained noise before flagging
+const NOISE_THRESHOLD = 0.015;  // RMS energy threshold (increased to 0.050 as requested)
+const COOLDOWN_MS = 6000;   // min gap between consecutive violations
 
 const AudioProctoringEngine = ({
   studentID,
   testID,
-  isTestActive    = true,
+  isTestActive = true,
   isProctorActive = true,
-  maxViolations   = 3,
+  maxViolations = 3,
   onViolationUpdate,
   onReady,
 }) => {
   const [violationCount, setViolationCount] = useState(0);
-  const [micStatus,      setMicStatus]      = useState("idle"); // idle|active|denied|disconnected|noise
+  const [micStatus, setMicStatus] = useState("idle"); // idle|active|denied|disconnected|noise
 
-  const audioCtxRef       = useRef(null);
-  const analyserRef       = useRef(null);
-  const streamRef         = useRef(null);
-  const intervalRef       = useRef(null);
-  const noiseFramesRef    = useRef(0);
-  const lastViolationRef  = useRef(0);
+  const audioCtxRef = useRef(null);
+  const analyserRef = useRef(null);
+  const streamRef = useRef(null);
+  const intervalRef = useRef(null);
+  const noiseFramesRef = useRef(0);
+  const lastViolationRef = useRef(0);
   const violationCountRef = useRef(0);
-  const onViolationRef    = useRef(onViolationUpdate);
-  const isInitializedRef  = useRef(false);
-  const onReadyRef        = useRef(onReady);
+  const onViolationRef = useRef(onViolationUpdate);
+  const isInitializedRef = useRef(false);
+  const onReadyRef = useRef(onReady);
 
   useEffect(() => { onViolationRef.current = onViolationUpdate; }, [onViolationUpdate]);
   useEffect(() => { onReadyRef.current = onReady; }, [onReady]);
 
   const getRMS = useCallback(() => {
     if (!analyserRef.current) return 0;
-    const bufLen   = analyserRef.current.fftSize;
-    const data     = new Float32Array(bufLen);
+    if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+      audioCtxRef.current.resume().catch(() => { });
+    }
+    const bufLen = analyserRef.current.fftSize;
+    const data = new Float32Array(bufLen);
     analyserRef.current.getFloatTimeDomainData(data);
     let sumSq = 0;
     for (let i = 0; i < bufLen; i++) sumSq += data[i] * data[i];
-    return Math.sqrt(sumSq / bufLen);
+    const rms = Math.sqrt(sumSq / bufLen);
+    console.log("[AudioProctor] Current RMS:", rms.toFixed(4));
+    return rms;
   }, []);
 
   const reportViolation = useCallback((type) => {
@@ -93,7 +98,10 @@ const AudioProctoringEngine = ({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       streamRef.current = stream;
-      const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended") {
+        await ctx.resume().catch(() => { });
+      }
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
       ctx.createMediaStreamSource(stream).connect(analyser);
@@ -122,8 +130,8 @@ const AudioProctoringEngine = ({
     initMicrophone();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (streamRef.current)  streamRef.current.getTracks().forEach(t => t.stop());
-      if (audioCtxRef.current) audioCtxRef.current.close().catch(() => {});
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      if (audioCtxRef.current) audioCtxRef.current.close().catch(() => { });
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -136,36 +144,15 @@ const AudioProctoringEngine = ({
   }, [isTestActive, isProctorActive, startSampling]);
 
   const statusConfig = {
-    idle:         { icon: "🎤", color: "#64748b", label: "Mic initializing..." },
-    active:       { icon: "🎤", color: "#10b981", label: "Mic active"          },
-    noise:        { icon: "🔊", color: "#f59e0b", label: "Noise detected!"     },
-    denied:       { icon: "🚫", color: "#ef4444", label: "Mic blocked"         },
-    disconnected: { icon: "❌", color: "#ef4444", label: "Mic disconnected"    },
+    idle: { icon: "🎤", color: "#64748b", label: "Mic initializing..." },
+    active: { icon: "🎤", color: "#10b981", label: "Mic active" },
+    noise: { icon: "🔊", color: "#f59e0b", label: "Noise detected!" },
+    denied: { icon: "🚫", color: "#ef4444", label: "Mic blocked" },
+    disconnected: { icon: "❌", color: "#ef4444", label: "Mic disconnected" },
   };
   const cfg = statusConfig[micStatus] || statusConfig.idle;
 
-  return (
-    <div className="audio-proctor-widget" style={{
-      position: "fixed", bottom: "14px", right: "14px",
-      background: "rgba(15,23,42,0.92)", border: "1px solid " + cfg.color,
-      borderRadius: "10px", padding: "6px 12px", display: "flex",
-      alignItems: "center", gap: "8px", zIndex: 9990,
-      pointerEvents: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-      backdropFilter: "blur(8px)", transition: "border-color 0.3s ease", minWidth: "140px",
-    }}>
-      <span style={{ fontSize: "1rem" }}>{cfg.icon}</span>
-      <div style={{ flex: 1 }}>
-        <div style={{ color: cfg.color, fontSize: "0.7rem", fontWeight: 700, lineHeight: 1.2 }}>
-          {cfg.label}
-        </div>
-        {violationCount > 0 && (
-          <div style={{ color: "#f87171", fontSize: "0.65rem", marginTop: "1px" }}>
-            Audio violations: {violationCount}/{maxViolations}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return null;
 };
 
 export default AudioProctoringEngine;

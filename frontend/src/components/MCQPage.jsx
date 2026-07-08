@@ -922,11 +922,31 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         }
     };
 
+    const questionEnterTimeRef = useRef(null);
+
+    useEffect(() => {
+        questionEnterTimeRef.current = timeService.now();
+    }, [questionIndex]);
+
     // Handle option selection
     const handleSelectOption = (option) => {
         if (isEmbedded && lockedQuestions.includes(questionIndex)) {
             return;
         }
+
+        // Calculate time spent since entering or last selection on this question
+        const now = timeService.now();
+        const elapsedMs = now - (questionEnterTimeRef.current || now);
+        const elapsedSecs = Math.max(0, Math.round(elapsedMs / 1000));
+
+        setTimeSpentPerQ(prev => ({
+            ...prev,
+            [questionIndex]: (prev[questionIndex] || 0) + elapsedSecs
+        }));
+
+        // Reset enter time to now for subsequent selections
+        questionEnterTimeRef.current = now;
+
         setAnswers({
             ...answers,
             [questionIndex]: option
@@ -1505,21 +1525,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         }
     }, [isEmbedded, settings.questionTimer, questionIndex, currentTest, handleAutoSubmit]);
 
-    // Track active question elapsed seconds
-    useEffect(() => {
-        let qTimer;
-        if (currentTest && !currentTest.submitted && questionIndex !== undefined) {
-            qTimer = setInterval(() => {
-                setTimeSpentPerQ(prev => ({
-                    ...prev,
-                    [questionIndex]: (prev[questionIndex] || 0) + 1
-                }));
-            }, 1000);
-        }
-        return () => {
-            if (qTimer) clearInterval(qTimer);
-        };
-    }, [currentTest, questionIndex]);
+
 
     useEffect(() => {
         if (currentTest && !currentTest.submitted) {
@@ -2027,34 +2033,34 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                 <div className="proctor-stat-pill audio-violation-pill" style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '6px',
+                                    gap: '4px',
                                     background: proctoringData.audioViolationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
                                     color: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981',
                                     border: proctoringData.audioViolationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '600'
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '700'
                                 }}>
-                                    <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
-                                    🎤 Audio Proctor | Violations: {proctoringData.audioViolationCount} / {currentTest.testInfo?.maxAudioViolations || 3}
+                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
+                                    🎤 Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 3}
                                 </div>
                             )}
                             {shouldUseProctoring && (
                                 <div className="proctor-stat-pill ai-violation-pill" style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '6px',
+                                    gap: '4px',
                                     background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
                                     color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
                                     border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '600'
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '700'
                                 }}>
-                                    <span style={{ display: 'inline-block', width: '7px', height: '7px', borderRadius: '50%', background: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
-                                    📷 Camera Proctor | Violations: {proctoringData.violationCount} / {currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
+                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
+                                    📷 Camera: {proctoringData.violationCount}/{currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
                                 </div>
                             )}
                         </div>
@@ -2789,14 +2795,18 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         )
     );
 
-    // Enable audio proctoring when the assessment metadata has audioProctored flag
+    // Enable audio proctoring when the assessment metadata has audioProctored or proctored flag
     const shouldUseAudioProctoring = Boolean(
-        isEmbedded ? settings.audioProctored : (
+        isEmbedded ? (settings.audioProctored || settings.proctored) : (
             currentTest && (
                 currentTest.testInfo?.audioProctored === true ||
                 currentTest.testInfo?.audioProctored === 1 ||
                 currentTest.testInfo?.audioProctored === "1" ||
-                currentTest.testInfo?.audioProctored === "true"
+                currentTest.testInfo?.audioProctored === "true" ||
+                currentTest.testInfo?.proctored === true ||
+                currentTest.testInfo?.proctored === 1 ||
+                currentTest.testInfo?.proctored === "1" ||
+                currentTest.testInfo?.proctored === "true"
             )
         )
     );

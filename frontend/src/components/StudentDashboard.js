@@ -2060,7 +2060,7 @@ const StudentDashboard = () => {
           />
         ) : (
           <div className="lw-overlay" style={{ zIndex: 1200 }}>
-            <div className="lw-card" style={{ maxWidth: '740px' }}>
+            <div className="lw-card" style={{ maxWidth: '780px' }}>
               <div className="lw-card-header">
                 <div className="lw-step-badge">Step 4 of 4</div>
                 <h3 className="lw-title">Test Details & Instructions</h3>
@@ -2086,8 +2086,32 @@ const StudentDashboard = () => {
                   </div>
                 </div>
 
+                {/* Section details for Multi-Section Assessments */}
+                {selectedAssessment.isMultiSection && selectedAssessment.sections && selectedAssessment.sections.length > 0 && (
+                  <div style={{ marginTop: '20px', background: 'rgba(15, 23, 42, 0.6)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <h4 style={{ color: '#38bdf8', margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: '700', letterSpacing: '-0.01em' }}>Assessment Section Breakdowns</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {selectedAssessment.sections.map((sec, idx) => {
+                        const secQCount = Array.isArray(sec.questionIds) ? sec.questionIds.length : (Array.isArray(sec.questions) ? sec.questions.length : (Number(sec.questions) || 0));
+                        return (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ color: '#64748b', fontWeight: '700', fontSize: '0.85rem' }}>SECTION {idx + 1}</span>
+                              <span style={{ color: '#f8fafc', fontWeight: '600', fontSize: '0.9rem' }}>{sec.name}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>
+                              <span>⏱️ {sec.duration_minutes || sec.duration || 0} Mins</span>
+                              <span>❓ {secQCount > 0 ? `${secQCount} Questions` : sec.type?.toUpperCase()}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Malpractice Warning Box */}
-                <div className="lw-malpractice-box">
+                <div className="lw-malpractice-box" style={{ marginTop: '20px' }}>
                   <p className="lw-malpractice-title">⚠️ Proctoring System Active</p>
                   <ul className="lw-malpractice-list">
                     <li>Do not switch tabs or leave this window during the test.</li>
@@ -2097,10 +2121,21 @@ const StudentDashboard = () => {
                   </ul>
                 </div>
               </div>
-              <div className="lw-card-footer">
+              <div className="lw-card-footer" style={{ padding: '18px 24px' }}>
                 <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
-                <button className="lw-btn-success" onClick={handleAgreeAndLaunch}>
-                  <FaCheckCircle style={{ marginRight: '6px' }} />I Agree & Start Assessment
+                <button 
+                  className="lw-btn-success" 
+                  onClick={handleAgreeAndLaunch}
+                  style={{ 
+                    padding: '12px 28px', 
+                    fontSize: '1.05rem', 
+                    fontWeight: '800', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.25)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <FaCheckCircle style={{ marginRight: '8px' }} />I Agree & Start Assessment
                 </button>
               </div>
             </div>

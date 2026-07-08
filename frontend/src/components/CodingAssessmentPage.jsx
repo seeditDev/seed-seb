@@ -1929,13 +1929,21 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             currentAssessment.audioProctored === true ||
             currentAssessment.audioProctored === 1 ||
             currentAssessment.audioProctored === "1" ||
-            currentAssessment.audioProctored === "true"
+            currentAssessment.audioProctored === "true" ||
+            currentAssessment.proctored === true ||
+            currentAssessment.proctored === 1 ||
+            currentAssessment.proctored === "1" ||
+            currentAssessment.proctored === "true"
         )) ||
         (isEmbedded && parentSettings && (
             parentSettings.audioProctored === true ||
             parentSettings.audioProctored === 1 ||
             parentSettings.audioProctored === "1" ||
-            parentSettings.audioProctored === "true"
+            parentSettings.audioProctored === "true" ||
+            parentSettings.proctored === true ||
+            parentSettings.proctored === 1 ||
+            parentSettings.proctored === "1" ||
+            parentSettings.proctored === "true"
         ))
     );
 
@@ -1973,7 +1981,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     }}
                 />
             )}
-            {currentAssessment && currentAssessment.audioProctored && user && (
+            {shouldUseAudioProctoring && currentAssessment && user && (
                 <AudioProctoringEngine
                     studentID={user.Email}
                     testID={currentAssessment.id || 'unknown'}
@@ -2022,32 +2030,32 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 <div className="proctor-stat-pill audio-violation-pill" style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '6px',
+                                    gap: '4px',
                                     background: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
                                     color: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? '#ef4444' : '#10b981',
                                     border: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '600'
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '700'
                                 }}>
-                                    <span>🎤 Audio Proctor | Violations: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount} / {Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 3}</span>
+                                    <span>🎤 Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 3}</span>
                                 </div>
                             )}
                             {shouldUseProctoring && (
                                 <div className="proctor-stat-pill ai-violation-pill" style={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '6px',
+                                    gap: '4px',
                                     background: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
                                     color: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? '#ef4444' : '#10b981',
                                     border: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '600'
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.65rem',
+                                    fontWeight: '700'
                                 }}>
-                                    <span>📷 Camera Proctor | Violations: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount} / {currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}</span>
+                                    <span>📷 Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}</span>
                                 </div>
                             )}
                         </div>
