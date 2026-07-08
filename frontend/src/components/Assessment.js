@@ -921,7 +921,9 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
 
     if (!isOpen) return null;
 
-    // Re-enable PyQt check to limit assessment to desktop app
+    // ── SEED-SEB verification temporarily disabled for browser UI testing ──
+    // To re-enable: uncomment the block below before production deployment
+    /*
     if (!isRunningInPyQt()) {
         return (
             <div className="assessment-modal">
@@ -951,6 +953,8 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
             </div>
         );
     }
+    */
+
 
     return (
         <div className="assessment-modal">
