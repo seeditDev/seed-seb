@@ -130,7 +130,7 @@ const normalizeQuestion = (q) => {
 const CODING_ROUTE_BASE = '/student/coding';
 const AUTO_SUBMIT_NOTICE_KEY = 'codingAutoSubmitNotice';
 
-const CodingAssessmentPage = () => {
+const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {} }) => {
     const navigate = useNavigate();
     const { assessmentSlug } = useParams();
 
@@ -138,6 +138,98 @@ const CodingAssessmentPage = () => {
     const [user, setUser] = useState(null);
     const [accessControl, setAccessControl] = useState(null);
     const [userAttempts, setUserAttempts] = useState({});
+
+    // Embedded Mode helper to submit scores and code map
+    const handleEmbeddedSectionSubmit = async (reason = '') => {
+        try {
+            const finalScores = { ...questionScores };
+            const allAnswers = {};
+            for (const q of questions) {
+                const code = codeMap[`${q.id}_${language}`] || "";
+                allAnswers[q.id] = code;
+                
+                if (!finalScores[q.id]) {
+                    const hidden = q.hiddenTests || q.sampleTests || [];
+                    const bridgeLang = language === 'python3' ? 'python' : language;
+                    let passes = 0;
+                    for (const tc of hidden) {
+                        try {
+                            const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                            const exit = res.exit_code !== undefined ? res.exit_code : 0;
+                            const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
+                            const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
+                            if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
+                        } catch (err) {}
+                    }
+                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || 20) : 0;
+                    finalScores[q.id] = {
+                        score: qScore,
+                        percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
+                        passed: passes,
+                        total: hidden.length,
+                        submitted: true
+                    };
+                }
+            }
+
+            if (onSectionSubmit) {
+                onSectionSubmit({
+                    answers: allAnswers,
+                    timeSpentPerQ: {},
+                    completed: finalScores,
+                    autoSubmitted: reason ? true : false,
+                    tabViolation: reason === 'navigation' ? true : false
+                });
+            }
+        } catch (err) {
+            console.error("Embedded submit failure:", err);
+        }
+    };
+
+    // Sync embedded questions and assessment settings
+    useEffect(() => {
+        if (isEmbedded && testData && testData.questions) {
+            const normalized = testData.questions.map(normalizeQuestion);
+            setQuestions(normalized);
+            setCurrentAssessment({
+                id: 'embedded-section',
+                name: 'Coding Section',
+                maxViolations: settings.maxViolations || 5,
+                proctored: settings.proctored || false,
+                audioProctored: settings.audioProctored || false
+            });
+            setActiveQuestionIndex(0);
+            if (normalized.length > 0) {
+                setVisitedQuestions({ [normalized[0].id]: true });
+            }
+            setLoading(false);
+        }
+    }, [isEmbedded, testData, settings]);
+
+    // Initialize code boilerplates in embedded mode
+    useEffect(() => {
+        if (isEmbedded && questions.length > 0) {
+            const initialCodeMap = {};
+            const availableLanguages = ["cpp", "c", "python", "java"];
+            questions.forEach(q => {
+                availableLanguages.forEach(lang => {
+                    initialCodeMap[`${q.id}_${lang}`] = q.boilerplates?.[lang] || FREE_BOILERPLATES[lang] || "";
+                });
+            });
+            setCodeMap(initialCodeMap);
+        }
+    }, [isEmbedded, questions]);
+
+    // Synchronize section timer in embedded mode
+    useEffect(() => {
+        if (isEmbedded) {
+            setRemainingTime(secTimer);
+            if (secTimer <= 0) {
+                handleFinalSubmit();
+            }
+        }
+    }, [secTimer, isEmbedded]);
+
 
     // List view states
     const [availableAssessments, setAvailableAssessments] = useState([]);
@@ -315,6 +407,8 @@ const CodingAssessmentPage = () => {
 
     // Load initial data
     useEffect(() => {
+        if (isEmbedded) return; // Skip standard loading flow
+        
         const loadInitialData = async () => {
             setLoading(true);
             try {
@@ -1121,9 +1215,17 @@ const CodingAssessmentPage = () => {
         }
     };
 
-    // Auto-Submit and Submit logic
     const autoSubmitAttempt = async (reason) => {
         if (isSubmitting) return;
+
+        if (isEmbedded) {
+            setIsSubmitting(true);
+            setSubmitPhase('evaluating');
+            await handleEmbeddedSectionSubmit(reason);
+            setIsSubmitting(false);
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -1240,6 +1342,14 @@ const CodingAssessmentPage = () => {
 
         // Close the confirm dialog immediately
         setShowSubmitModal(false);
+
+        if (isEmbedded) {
+            setIsSubmitting(true);
+            setSubmitPhase('evaluating');
+            await handleEmbeddedSectionSubmit();
+            setIsSubmitting(false);
+            return;
+        }
 
         // Phase 1: Evaluate any unevaluated questions
         setIsSubmitting(true);
@@ -1463,7 +1573,7 @@ const CodingAssessmentPage = () => {
     // ==========================================
     // RENDER: LIST VIEW
     // ==========================================
-    if (!assessmentSlug) {
+    if (!assessmentSlug && !isEmbedded) {
         return (
             <div className="mcq-page">
                 {/* Header */}
@@ -1769,7 +1879,7 @@ const CodingAssessmentPage = () => {
 
     // Enable proctoring dynamically if the assessment metadata has proctored flag enabled
     const shouldUseProctoring = Boolean(
-        currentAssessment && (
+        currentAssessment && !isEmbedded && (
             currentAssessment.proctored === true ||
             currentAssessment.proctored === 1 ||
             currentAssessment.proctored === "1" ||
@@ -1810,9 +1920,11 @@ const CodingAssessmentPage = () => {
             {/* Top Workspace Header Bar */}
             <header className="workspace-header">
                 <div className="header-left">
-                    <button className="exit-workspace-btn" onClick={() => setShowSubmitModal(true)}>
-                        <FaArrowLeft /> Exit Portal
-                    </button>
+                    {!isEmbedded && (
+                        <button className="exit-workspace-btn" onClick={() => setShowSubmitModal(true)}>
+                            <FaArrowLeft /> Exit Portal
+                        </button>
+                    )}
                     <span className="assessment-title-label">
                         {currentAssessment?.name || "SEED-IT Assessment"}
                     </span>
@@ -1856,7 +1968,7 @@ const CodingAssessmentPage = () => {
                         <span className="remaining-timer-span">{formatRemainingTime()}</span>
                     </div>
                     <button className="submit-assessment-btn" onClick={() => setShowSubmitModal(true)}>
-                        Submit Assessment
+                        {isEmbedded ? "Submit Section" : "Submit Assessment"}
                     </button>
                 </div>
             </header>

@@ -21,7 +21,7 @@ import { supabase } from '../supabaseClient';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
-import CodingAssessmentSandbox from './CodingAssessmentSandbox';
+import CodingAssessmentPage from './CodingAssessmentPage';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -580,7 +580,7 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
 
 
 // ─── Coding Section Renderer ──────────────────────────────────────────────────
-// Uses the real CodingAssessmentSandbox in embedded mode for full feature parity.
+// Uses the real CodingAssessmentPage in embedded mode for full feature parity.
 
 const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const testData = {
@@ -588,7 +588,7 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
   };
 
   return (
-    <CodingAssessmentSandbox
+    <CodingAssessmentPage
       isEmbedded={true}
       testData={testData}
       secTimer={secTimer}
