@@ -220,22 +220,25 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
   useEffect(() => {
     if (settings.questionTimer <= 0) return;
     const t = setInterval(() => {
-      setQTimerRemaining(prev => {
-        if (prev <= 1) {
-          setLockedQuestions(l => [...l, questionIndex]);
-          if (questionIndex + 1 < questions.length) {
-            setQuestionIndex(q => q + 1);
-          } else {
-            handleSubmit();
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
+      setQTimerRemaining(prev => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(t);
+  }, [settings.questionTimer]);
+
+  useEffect(() => {
+    if (settings.questionTimer > 0 && qTimerRemaining === 0) {
+      setLockedQuestions(l => {
+        if (l.includes(questionIndex)) return l;
+        return [...l, questionIndex];
+      });
+      if (questionIndex + 1 < questions.length) {
+        setQuestionIndex(q => q + 1);
+      } else {
+        handleSubmit();
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionIndex, settings.questionTimer, questions.length]);
+  }, [qTimerRemaining, questionIndex, questions.length, settings.questionTimer]);
 
   const handleSubmit = useCallback(() => {
     let correct = 0;
