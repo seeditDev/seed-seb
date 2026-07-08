@@ -139,6 +139,81 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [accessControl, setAccessControl] = useState(null);
     const [userAttempts, setUserAttempts] = useState({});
 
+
+
+    // List view states
+    const [availableAssessments, setAvailableAssessments] = useState([]);
+    const [filteredAssessments, setFilteredAssessments] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterDifficulty, setFilterDifficulty] = useState('All');
+    const [filterStatus, setFilterStatus] = useState('All');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Passkey states
+    const [selectedAssessment, setSelectedAssessment] = useState(null);
+    const [showPasskeyModal, setShowPasskeyModal] = useState(false);
+    const [passkey, setPasskey] = useState('');
+    const [passkeyError, setPasskeyError] = useState('');
+    const [isValidatingPasskey, setIsValidatingPasskey] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(false);
+
+    // Active workspace states
+    const [currentAssessment, setCurrentAssessment] = useState(null);
+    const [questions, setQuestions] = useState([]);
+    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+    const [language, setLanguage] = useState('cpp');
+    const [codeMap, setCodeMap] = useState({}); // Key: questionId_language -> Code text
+    const [visitedQuestions, setVisitedQuestions] = useState({}); // questionId -> boolean
+    const [bookmarkedQuestions, setBookmarkedQuestions] = useState({}); // questionId -> boolean
+    const [questionScores, setQuestionScores] = useState({}); // questionId -> { score, passed, total }
+    const [customInput, setCustomInput] = useState('');
+    const [useCustomInput, setUseCustomInput] = useState(false);
+
+    // Execution logs
+    const [stdout, setStdout] = useState('');
+    const [stderr, setStderr] = useState('');
+    const [exitCode, setExitCode] = useState(null);
+    const [isRunning, setIsRunning] = useState(false);
+    const [isEvaluating, setIsEvaluating] = useState(false);
+    const [runResults, setRunResults] = useState(null); // Results for sample test runs
+    const [evalResults, setEvalResults] = useState(null); // Results for hidden test runs
+    const [activeResultTab, setActiveResultTab] = useState('input'); // 'input', 'output', 'results'
+
+    // Timer & Proctoring
+    const [startTime, setStartTime] = useState(null);
+    const [remainingTime, setRemainingTime] = useState(0);
+    const [testDuration, setTestDuration] = useState(0); // in seconds
+    const [violationCount, setViolationCount] = useState(0);
+    const [proctorWarning, setProctorWarning] = useState(null);
+    const [isLockedOut, setIsLockedOut] = useState(false);
+    const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
+    const [submitPhase, setSubmitPhase] = useState(null);
+    const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
+    const [proctoringData, setProctoringData] = useState({
+        violationCount: 0,
+        violations: []
+    });
+    const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
+    const [startCountdown, setStartCountdown] = useState(null); // null or number (seconds)
+
+    // Custom Alert State
+    const [alertConfig, setAlertConfig] = useState(null);
+
+    // Question-Specific Output States
+    const [questionResults, setQuestionResults] = useState({});
+    const prevQuestionIndexRef = useRef(0);
+
+    // Resizable pane state
+    const [leftPaneWidth, setLeftPaneWidth] = useState(42); // percentage
+    const [outputPaneHeight, setOutputPaneHeight] = useState(220); // pixels
+    const isDraggingVertRef = useRef(false);
+    const isDraggingHorizRef = useRef(false);
+    const workspaceBodyRef = useRef(null);
+    const rightPaneRef = useRef(null);
+
     // Embedded Mode helper to submit scores and code map
     const handleEmbeddedSectionSubmit = async (reason = '') => {
         try {
@@ -229,80 +304,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             }
         }
     }, [secTimer, isEmbedded]);
-
-
-    // List view states
-    const [availableAssessments, setAvailableAssessments] = useState([]);
-    const [filteredAssessments, setFilteredAssessments] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterDifficulty, setFilterDifficulty] = useState('All');
-    const [filterStatus, setFilterStatus] = useState('All');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Passkey states
-    const [selectedAssessment, setSelectedAssessment] = useState(null);
-    const [showPasskeyModal, setShowPasskeyModal] = useState(false);
-    const [passkey, setPasskey] = useState('');
-    const [passkeyError, setPasskeyError] = useState('');
-    const [isValidatingPasskey, setIsValidatingPasskey] = useState(false);
-    const [showInstructions, setShowInstructions] = useState(false);
-
-    // Active workspace states
-    const [currentAssessment, setCurrentAssessment] = useState(null);
-    const [questions, setQuestions] = useState([]);
-    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
-    const [language, setLanguage] = useState('cpp');
-    const [codeMap, setCodeMap] = useState({}); // Key: questionId_language -> Code text
-    const [visitedQuestions, setVisitedQuestions] = useState({}); // questionId -> boolean
-    const [bookmarkedQuestions, setBookmarkedQuestions] = useState({}); // questionId -> boolean
-    const [questionScores, setQuestionScores] = useState({}); // questionId -> { score, passed, total }
-    const [customInput, setCustomInput] = useState('');
-    const [useCustomInput, setUseCustomInput] = useState(false);
-
-    // Execution logs
-    const [stdout, setStdout] = useState('');
-    const [stderr, setStderr] = useState('');
-    const [exitCode, setExitCode] = useState(null);
-    const [isRunning, setIsRunning] = useState(false);
-    const [isEvaluating, setIsEvaluating] = useState(false);
-    const [runResults, setRunResults] = useState(null); // Results for sample test runs
-    const [evalResults, setEvalResults] = useState(null); // Results for hidden test runs
-    const [activeResultTab, setActiveResultTab] = useState('input'); // 'input', 'output', 'results'
-
-    // Timer & Proctoring
-    const [startTime, setStartTime] = useState(null);
-    const [remainingTime, setRemainingTime] = useState(0);
-    const [testDuration, setTestDuration] = useState(0); // in seconds
-    const [violationCount, setViolationCount] = useState(0);
-    const [proctorWarning, setProctorWarning] = useState(null);
-    const [isLockedOut, setIsLockedOut] = useState(false);
-    const [showSubmitModal, setShowSubmitModal] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
-    const [submitPhase, setSubmitPhase] = useState(null);
-    const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
-    const [proctoringData, setProctoringData] = useState({
-        violationCount: 0,
-        violations: []
-    });
-    const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
-    const [startCountdown, setStartCountdown] = useState(null); // null or number (seconds)
-
-    // Custom Alert State
-    const [alertConfig, setAlertConfig] = useState(null);
-
-    // Question-Specific Output States
-    const [questionResults, setQuestionResults] = useState({});
-    const prevQuestionIndexRef = useRef(0);
-
-    // Resizable pane state
-    const [leftPaneWidth, setLeftPaneWidth] = useState(42); // percentage
-    const [outputPaneHeight, setOutputPaneHeight] = useState(220); // pixels
-    const isDraggingVertRef = useRef(false);
-    const isDraggingHorizRef = useRef(false);
-    const workspaceBodyRef = useRef(null);
-    const rightPaneRef = useRef(null);
 
     // Vertical divider drag (left/right pane split)
     const startVertDrag = useCallback((e) => {
