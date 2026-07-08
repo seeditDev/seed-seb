@@ -16,7 +16,7 @@ import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
 import { db } from '../firebase-config';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { supabase } from '../supabaseClient';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
@@ -92,7 +92,7 @@ const normalizeQuestion = (q) => {
 
 // ─── MCQ Section Renderer ────────────────────────────────────────────────────
 
-const MCQSectionView = ({ sectionData, secTimer, secStarted = false, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
+const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringData = { violationCount: 0, violations: [] }, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const questions = useMemo(() => sectionData?.questions || [], [sectionData?.questions]);
   const stateKey = `msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`;
 
@@ -161,16 +161,13 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, settings = 
   }, [answers, questionIndex, bookmarked, lockedQuestions, qTimerRemaining, timeSpentPerQ, stateKey]);
 
   const [showReview, setShowReview] = useState(false);
-  const [proctoringData, setProctoringData] = useState({ violationCount: 0, violations: [] });
   const [customNotice, setCustomNotice] = useState(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   const onSubmitRef = useRef(onSectionSubmit);
   useEffect(() => { onSubmitRef.current = onSectionSubmit; }, [onSectionSubmit]);
 
-  // Get user info for proctoring
-  const user = (() => { try { return JSON.parse(localStorage.getItem('auth_data') || '{}'); } catch { return {}; } })();
-  const testID = assessmentId || sectionData?.id || sectionData?.name || 'mcq-section';
+
 
   const hasTimerStartedRef = useRef(false);
 
@@ -256,11 +253,6 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, settings = 
     });
     const total = questions.length;
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-    const violationStats = (proctoringData.violations || []).reduce((acc, v) => {
-      if (v.type === 'no_face') acc.totalNoFace++;
-      else if (v.type === 'multiple_faces') acc.totalMultipleFaces++;
-      return acc;
-    }, { totalNoFace: 0, totalMultipleFaces: 0 });
     
     // Clean up active MCQ state from localStorage
     localStorage.removeItem(stateKey);
@@ -272,13 +264,13 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, settings = 
         score: correct,
         totalQuestions: total,
         percentage: pct,
-        violationCount: proctoringData.violationCount || 0,
-        totalNoFace: violationStats.totalNoFace,
-        totalMultipleFaces: violationStats.totalMultipleFaces,
-        violations: proctoringData.violations || []
+        violationCount: 0,
+        totalNoFace: 0,
+        totalMultipleFaces: 0,
+        violations: []
       });
     }
-  }, [answers, timeSpentPerQ, questions, proctoringData, stateKey]);
+  }, [answers, timeSpentPerQ, questions, stateKey]);
 
   const handleSelectOption = (optIdx) => {
     if (lockedQuestions.includes(questionIndex)) return;
@@ -321,42 +313,6 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, settings = 
 
   return (
     <div className="mcq-test-content" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
-
-      {/* Proctoring Engines */}
-      {settings.proctored && user?.Email && (
-        <ProctoringEngine
-          studentID={user.Email}
-          testID={testID}
-          isTestActive={true}
-          maxViolations={settings.maxViolations || 7}
-          onViolationUpdate={(info) => {
-            if (!info?.violationType) return;
-            setProctoringData(prev => {
-              const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
-              return {
-                violationCount: typeof info.violationCount === 'number' ? info.violationCount : prev.violationCount,
-                violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
-              };
-            });
-          }}
-          onAutoSubmit={() => handleSubmit()}
-        />
-      )}
-      {settings.audioProctored && user?.Email && (
-        <AudioProctoringEngine
-          studentID={user.Email}
-          testID={testID}
-          isTestActive={true}
-          maxViolations={settings.maxAudioViolations || 3}
-          onViolationUpdate={(info) => {
-            if (!info?.type) return;
-            setProctoringData(prev => ({
-              ...prev,
-              violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
-            }));
-          }}
-        />
-      )}
 
       {/* Submit Confirmation Overlay */}
       {showSubmitConfirm && (
@@ -604,13 +560,19 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubm
     questions: sectionData?.questions || []
   };
 
+  const embeddedSettings = {
+    ...settings,
+    proctored: false,
+    audioProctored: false
+  };
+
   return (
     <CodingAssessmentPage
       isEmbedded={true}
       testData={testData}
       secTimer={secTimer}
       onSectionSubmit={onSectionSubmit}
-      settings={settings}
+      settings={embeddedSettings}
     />
   );
 };
@@ -639,6 +601,30 @@ const MultiSectionAssessment = () => {
   const [sectionData, setSectionData] = useState({});
   const [examResults, setExamResults] = useState({});
   const [examFinished, setExamFinished] = useState(false);
+  const [proctoringData, setProctoringData] = useState({
+    violationCount: 0,
+    violations: []
+  });
+
+  const shouldUseProctoring = useMemo(() => {
+    if (!assessment) return false;
+    return isTruthy(assessment.proctored) || (assessment.sections || []).some(s => isTruthy(s.proctored));
+  }, [assessment]);
+
+  const shouldUseAudioProctoring = useMemo(() => {
+    if (!assessment) return false;
+    return isTruthy(assessment.audioProctored) || (assessment.sections || []).some(s => isTruthy(s.audioProctored));
+  }, [assessment]);
+
+  const maxViolations = useMemo(() => {
+    if (!assessment) return 7;
+    return Number(assessment.maxViolations) || 7;
+  }, [assessment]);
+
+  const maxAudioViolations = useMemo(() => {
+    if (!assessment) return 3;
+    return Number(assessment.maxAudioViolations) || 3;
+  }, [assessment]);
 
   // Crash recovery
   const [restoredProgress, setRestoredProgress] = useState(null);
@@ -680,6 +666,27 @@ const MultiSectionAssessment = () => {
 
     setUser(authData);
     setAssessment(assessmentData);
+
+    // Verify if already completed/submitted
+    const checkAttempt = async () => {
+      try {
+        const college = authData.College || 'KGKITE';
+        const year = authData.Year || '2026';
+        const docPath = `AssessmentResults/${assessmentData.id}/colleges/${college}/years/${year}/students/${authData.Email}`;
+        const docSnap = await getDoc(doc(db, docPath));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.completed === true || data.status === 'submitted') {
+            alert('You have already completed and submitted this assessment. Re-attempts are not permitted.');
+            navigate('/student/dashboard');
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('[MSA] Failed to check existing attempt:', err);
+      }
+    };
+    checkAttempt();
 
     // Crash recovery
     const progressKey = `msaProgress_${assessmentData.id}`;
@@ -844,6 +851,98 @@ const MultiSectionAssessment = () => {
     }
   }, [assessment]);
 
+  const autoSubmitEntireExam = useCallback((reason) => {
+    if (examFinishedRef.current) return;
+    examFinishedRef.current = true;
+    setSecStarted(false);
+    clearInterval(timerRef.current);
+
+    if (user?.Email && assessment) {
+      const college = user.College || 'KGKITE';
+      const year = user.Year || '2026';
+      
+      const attemptData = {
+        email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
+        college, year, department: user.Department || '',
+        testID: assessment.id, testName: assessment.name,
+        assessmentId: assessment.id, assessmentName: assessment.name,
+        submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
+        type: 'multisection',
+        sections: examResults,
+        autoSubmitted: true,
+        autoSubmitReason: reason || 'proctoring_violations'
+      };
+
+      const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+      setDoc(doc(db, docPath), attemptData, { merge: true })
+        .then(() => console.log('[MSA] Final result saved to Firestore'))
+        .catch(e => console.error('[MSA] Firestore final save failed:', e));
+
+      setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
+        .catch(e => console.error('[MSA] Student-centric save failed:', e));
+
+      const totalScore = Object.values(examResults).reduce((a, s) => a + (s.data?.score || 0), 0);
+      const totalQ = Object.values(examResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
+      const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
+      const totalViolations = proctoringData.violationCount;
+
+      const timeStartedISO = examStartTimeRef.current;
+      const timeEndedISO = new Date().toISOString();
+      const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(timeStartedISO).getTime()) / 1000);
+      const timeM = Math.floor(timeTaken / 60);
+      const timeS = timeTaken % 60;
+      const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
+
+      const totalNoFace = Object.values(examResults).reduce((a, s) => a + (s.data?.totalNoFace || 0), 0) + 
+                          (proctoringData.violations.filter(v => v.type === 'no_face').length);
+      const totalMultipleFaces = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMultipleFaces || 0), 0) + 
+                                 (proctoringData.violations.filter(v => v.type === 'multiple_faces').length);
+      
+      const allViolations = proctoringData.violations;
+
+      supabase.from('mcq_results').upsert({
+        roll_number: user['Roll Number'] || '',
+        name: user.Name || '',
+        email: user.Email,
+        college,
+        year,
+        department: user.Department || '',
+        test_id: assessment.id,
+        test_name: assessment.name,
+        score: totalScore,
+        total_questions: totalQ,
+        correct_answers: totalScore,
+        incorrect_answers: totalQ - totalScore,
+        percentage: pct,
+        time_taken: timeTaken,
+        time_taken_formatted: timeTakenFormatted,
+        time_started: timeStartedISO,
+        time_ended: timeEndedISO,
+        submitted_at: timeEndedISO,
+        auto_submitted: true,
+        auto_submit_reason: reason || 'proctoring_violations',
+        violation_count: totalViolations,
+        total_no_face: totalNoFace,
+        total_multiple_faces: totalMultipleFaces,
+        violations: allViolations,
+        updated_at: timeEndedISO
+      }, { onConflict: 'email,test_id' }).then(
+        ({ data, error }) => {
+          if (error) {
+            console.warn('[MSA] Supabase save failed:', error.message || error);
+          } else {
+            console.log('[MSA] Supabase save succeeded:', data);
+          }
+        },
+        e => console.warn('[MSA] Supabase save failed (transport):', e)
+      );
+    }
+
+    setExamFinished(true);
+    localStorage.removeItem('multisectionAssessmentData');
+    localStorage.removeItem(`msaProgress_${assessment.id}`);
+  }, [assessment, user, examResults, proctoringData]);
+
   const autoSubmitSection = useCallback((sectionResults) => {
     if (examFinishedRef.current) return;
     if (!assessment?.sections || currentSecIdx < 0 || currentSecIdx >= assessment.sections.length) return;
@@ -922,7 +1021,7 @@ const MultiSectionAssessment = () => {
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
         const totalQ = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
         const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
-        const totalViolations = Object.values(updatedResults).reduce((a, s) => a + (s.data?.violationCount || 0), 0);
+        const totalViolations = proctoringData.violationCount;
 
         // Metrics computation
         const timeStartedISO = examStartTimeRef.current;
@@ -932,15 +1031,9 @@ const MultiSectionAssessment = () => {
         const timeS = timeTaken % 60;
         const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
 
-        const totalNoFace = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalNoFace || 0), 0);
-        const totalMultipleFaces = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalMultipleFaces || 0), 0);
-        
-        const allViolations = Object.values(updatedResults).reduce((acc, s) => {
-          if (Array.isArray(s.data?.violations)) {
-            return acc.concat(s.data.violations);
-          }
-          return acc;
-        }, []);
+        const totalNoFace = proctoringData.violations.filter(v => v.type === 'no_face').length;
+        const totalMultipleFaces = proctoringData.violations.filter(v => v.type === 'multiple_faces').length;
+        const allViolations = proctoringData.violations;
 
         const autoSubmitted = Object.values(updatedResults).some(s => s.data?.autoSubmitted);
         const autoSubmitReason = Object.values(updatedResults)
@@ -1108,6 +1201,7 @@ const MultiSectionAssessment = () => {
           sectionData={activeSecData}
           secTimer={secTimer}
           secStarted={secStarted}
+          proctoringData={proctoringData}
           settings={sectionSettings}
           onSectionSubmit={autoSubmitSection}
           assessmentName={assessment.name || ''}
@@ -1128,6 +1222,42 @@ const MultiSectionAssessment = () => {
 
     return (
       <>
+        {shouldUseProctoring && user?.Email && (
+          <ProctoringEngine
+            studentID={user.Email}
+            testID={assessment.id}
+            isTestActive={currentSecIdx >= 0 && !examFinished}
+            maxViolations={maxViolations}
+            onViolationUpdate={(info) => {
+              if (!info?.violationType) return;
+              setProctoringData(prev => {
+                const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
+                return {
+                  violationCount: typeof info.violationCount === 'number' ? info.violationCount : prev.violationCount,
+                  violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
+                };
+              });
+            }}
+            onAutoSubmit={() => {
+              autoSubmitEntireExam('proctoring_violations');
+            }}
+          />
+        )}
+        {shouldUseAudioProctoring && user?.Email && (
+          <AudioProctoringEngine
+            studentID={user.Email}
+            testID={assessment.id}
+            isTestActive={currentSecIdx >= 0 && !examFinished}
+            maxViolations={maxAudioViolations}
+            onViolationUpdate={(info) => {
+              if (!info?.type) return;
+              setProctoringData(prev => ({
+                ...prev,
+                violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
+              }));
+            }}
+          />
+        )}
         {sectionView}
         {/* Pre-section countdown overlay */}
         {sectionCountdown !== null && (

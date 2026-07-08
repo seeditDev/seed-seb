@@ -28,6 +28,8 @@ import {
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase-config';
 import TrackingService from '../services/trackingService';
 import DataService from '../services/dataService';
 import MCQService from '../services/mcqService';
@@ -431,7 +433,18 @@ const StudentDashboard = () => {
       // Check attempt status for each assessment in parallel to determine completion
       const statusPromises = combined.map(async (item) => {
         try {
-          if (item.type === 'mcq') {
+          if (item.isMultiSection || item.type === 'multisection') {
+            const college = userData.College || 'KGKITE';
+            const year = userData.Year || '2026';
+            const docPath = `AssessmentResults/${item.id}/colleges/${college}/years/${year}/students/${userData.Email || userData.email}`;
+            const docSnap = await getDoc(doc(db, docPath));
+            let isCompleted = false;
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              isCompleted = (data.completed === true || data.status === 'submitted');
+            }
+            item.completed = isCompleted;
+          } else if (item.type === 'mcq') {
             const check = await MCQService.checkExistingAttempt(
               userData.Email || userData.email,
               item.id,
@@ -598,7 +611,18 @@ const StudentDashboard = () => {
       }
 
       let check;
-      if (assessment.type === 'mcq') {
+      if (assessment.isMultiSection || assessment.type === 'multisection') {
+        const college = user.College || 'KGKITE';
+        const year = user.Year || '2026';
+        const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+        const docSnap = await getDoc(doc(db, docPath));
+        let isCompleted = false;
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          isCompleted = (data.completed === true || data.status === 'submitted');
+        }
+        check = { exists: docSnap.exists(), completed: isCompleted };
+      } else if (assessment.type === 'mcq') {
         check = await MCQService.checkExistingAttempt(
           user.Email, assessment.id, user.College, user.Year, user.Department
         );
