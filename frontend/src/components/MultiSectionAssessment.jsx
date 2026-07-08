@@ -194,10 +194,19 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
   }, [questionIndex]);
 
   const isFirstMount = useRef(true);
+  const questionTimerStartedRef = useRef(false);
+
+  // Mark if question timer has successfully started with a positive value
+  useEffect(() => {
+    if (qTimerRemaining > 0) {
+      questionTimerStartedRef.current = true;
+    }
+  }, [qTimerRemaining]);
 
   // Per-question lock timer
   useEffect(() => {
     if (settings.questionTimer > 0) {
+      questionTimerStartedRef.current = false; // Reset start indicator on question transition
       if (isFirstMount.current) {
         isFirstMount.current = false;
         // Don't reset if we restored a saved timer for this question index!
@@ -226,7 +235,7 @@ const MCQSectionView = ({ sectionData, secTimer, settings = {}, onSectionSubmit,
   }, [settings.questionTimer]);
 
   useEffect(() => {
-    if (settings.questionTimer > 0 && qTimerRemaining === 0) {
+    if (settings.questionTimer > 0 && qTimerRemaining === 0 && questionTimerStartedRef.current) {
       setLockedQuestions(l => {
         if (l.includes(questionIndex)) return l;
         return [...l, questionIndex];
