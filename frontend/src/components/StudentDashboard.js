@@ -722,7 +722,14 @@ const StudentDashboard = () => {
 
     // 4. Secure Env Check
     await new Promise(r => setTimeout(r, 800));
-    const secureEnvOk = false; // Bypassed for browser verification
+    const ua = navigator.userAgent || '';
+    const hostname = window.location.hostname;
+    const isDev = hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development';
+    const secureEnvOk = ua.includes('SEEDSEB') || ua.includes('QtWebEngine') || ua.includes('QtWebKit') ||
+      !!window.qt || !!window.desktopBackend || window.pyqtFlag === true ||
+      typeof window.pyqtAppReady === 'function' ||
+      (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari')) ||
+      isDev;
     setPreflightResults(prev => ({ ...prev, secureEnv: secureEnvOk ? 'pass' : 'fail' }));
 
     // 5. System Hardening Check
