@@ -654,7 +654,7 @@ const ProctoringEngine = ({
       }
 
       // 2. Run YOLOv8 detection (Object Detection Guard)
-      if (window.yolov8Model && window.yolov8Loaded) {
+      if (window.yolov8Model && window.yolov8Loaded && !window.yoloModelBroken) {
         try {
           const yoloResult = await runYolov8Inference(video, window.yolov8Model);
           console.log('[ProctoringEngine] YOLOv8 detection result:', yoloResult);
@@ -674,7 +674,8 @@ const ProctoringEngine = ({
             violationType = 'prohibited_object';
           }
         } catch (yoloErr) {
-          console.error('[ProctoringEngine] YOLOv8 runtime error:', yoloErr);
+          console.error('[ProctoringEngine] YOLOv8 runtime error (disabling YOLOv8 engine due to backend failure):', yoloErr);
+          window.yoloModelBroken = true; // Disable YOLOv8 to prevent UI thread freezing
         }
       }
 

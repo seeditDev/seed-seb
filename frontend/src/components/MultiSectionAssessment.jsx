@@ -912,7 +912,10 @@ const MultiSectionAssessment = () => {
           correct_answers: totalScore, incorrect_answers: totalQ - totalScore,
           percentage: pct, submitted_at: new Date().toISOString(),
           violation_count: totalViolations, updated_at: new Date().toISOString()
-        }, { onConflict: 'email,test_id' }).catch(e => console.warn('[MSA] Supabase save failed:', e));
+        }, { onConflict: 'email,test_id' }).then(
+          () => console.log('[MSA] Supabase save succeeded'),
+          e => console.warn('[MSA] Supabase save failed:', e)
+        );
       }
 
       setExamFinished(true);
