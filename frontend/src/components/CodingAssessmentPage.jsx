@@ -188,6 +188,33 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [violationCount, setViolationCount] = useState(0);
     const [proctorWarning, setProctorWarning] = useState(null);
     const [isLockedOut, setIsLockedOut] = useState(false);
+    const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
+    const [submitPhase, setSubmitPhase] = useState(null);
+    const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
+    const [proctoringData, setProctoringData] = useState({
+        violationCount: 0,
+        audioViolationCount: 0,
+        violations: []
+    });
+    const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
+    const [startCountdown, setStartCountdown] = useState(null); // null or number (seconds)
+
+    // Custom Alert State
+    const [alertConfig, setAlertConfig] = useState(null);
+
+    // Question-Specific Output States
+    const [questionResults, setQuestionResults] = useState({});
+    const prevQuestionIndexRef = useRef(0);
+
+    // Resizable pane state
+    const [leftPaneWidth, setLeftPaneWidth] = useState(42); // percentage
+    const [outputPaneHeight, setOutputPaneHeight] = useState(220); // pixels
+    const isDraggingVertRef = useRef(false);
+    const isDraggingHorizRef = useRef(false);
+    const workspaceBodyRef = useRef(null);
+    const rightPaneRef = useRef(null);
 
     const [timeSpentPerQ, setTimeSpentPerQ] = useState(() => {
         try {
@@ -219,33 +246,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             if (qTimer) clearInterval(qTimer);
         };
     }, [submissionSuccess, questions, activeQuestionIndex]);
-    const [showSubmitModal, setShowSubmitModal] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
-    const [submitPhase, setSubmitPhase] = useState(null);
-    const [autoSubmitNotice, setAutoSubmitNotice] = useState(null);
-    const [proctoringData, setProctoringData] = useState({
-        violationCount: 0,
-        audioViolationCount: 0,
-        violations: []
-    });
-    const [submissionSuccess, setSubmissionSuccess] = useState(null); // { score, percentage, perQuestion }
-    const [startCountdown, setStartCountdown] = useState(null); // null or number (seconds)
-
-    // Custom Alert State
-    const [alertConfig, setAlertConfig] = useState(null);
-
-    // Question-Specific Output States
-    const [questionResults, setQuestionResults] = useState({});
-    const prevQuestionIndexRef = useRef(0);
-
-    // Resizable pane state
-    const [leftPaneWidth, setLeftPaneWidth] = useState(42); // percentage
-    const [outputPaneHeight, setOutputPaneHeight] = useState(220); // pixels
-    const isDraggingVertRef = useRef(false);
-    const isDraggingHorizRef = useRef(false);
-    const workspaceBodyRef = useRef(null);
-    const rightPaneRef = useRef(null);
 
     // Embedded Mode helper to submit scores and code map
     const handleEmbeddedSectionSubmit = async (reason = '') => {
