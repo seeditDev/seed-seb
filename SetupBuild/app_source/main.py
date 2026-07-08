@@ -757,6 +757,36 @@ class PreLaunchDialog(QDialog):
         self.error_label.show()
 
 
+def is_descendant(pid, parent_pid):
+    """Check if a process is a descendant of parent_pid or runs from app directories."""
+    try:
+        # Check parent-child hierarchy
+        curr_pid = pid
+        visited = set()
+        while curr_pid and curr_pid > 0 and curr_pid not in visited:
+            if curr_pid == parent_pid:
+                return True
+            visited.add(curr_pid)
+            p = psutil.Process(curr_pid)
+            curr_pid = p.ppid()
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        pass
+
+    try:
+        # Fallback path check
+        p = psutil.Process(pid)
+        exe_path = p.exe()
+        if exe_path:
+            exe_path_lower = exe_path.lower()
+            app_root_lower = runtime_manager.app_root.lower()
+            if app_root_lower in exe_path_lower:
+                return True
+    except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError):
+        pass
+
+    return False
+
+
 class ProcessTerminationThread(QThread):
     """Background daemon thread to continuously terminate unauthorized software (browsers, discord, OBS, VMs etc)"""
     def __init__(self, parent=None):
@@ -767,13 +797,19 @@ class ProcessTerminationThread(QThread):
         self.stopped = True
 
     def run(self):
+        mypid = os.getpid()
+        forbidden_lower = {p.lower() for p in FORBIDDEN_PROCESSES}
         while not self.stopped:
             for proc in psutil.process_iter(attrs=['pid', 'name']):
-                if proc.info['name'] in FORBIDDEN_PROCESSES:
+                name = proc.info.get('name')
+                if name and name.lower() in forbidden_lower:
+                    pid = proc.info['pid']
+                    if is_descendant(pid, mypid):
+                        continue
                     try:
-                        p = psutil.Process(proc.info['pid'])
+                        p = psutil.Process(pid)
                         p.terminate()
-                        logging.warning(f"Terminated unauthorized process: {proc.info['name']}")
+                        logging.warning(f"Terminated unauthorized process: {name} (PID: {pid})")
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         pass
             self.sleep(1)
