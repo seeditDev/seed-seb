@@ -138,7 +138,7 @@ const App = () => {
   const [isDesktopApp, setIsDesktopApp] = useState(true);
 
   useEffect(() => {
-    const activeTheme = localStorage.getItem('portal_theme') || 'light';
+    const activeTheme = localStorage.getItem('portal_theme') || 'bw';
     document.documentElement.setAttribute('data-theme', activeTheme);
   }, []);
 

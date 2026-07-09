@@ -31,8 +31,8 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [currentTheme, setCurrentTheme] = useState(() => {
-    // Default to 'Classic Ice (light)' if no preference saved yet
-    return localStorage.getItem('portal_theme') || 'light';
+    // Default to 'Monochrome Minimalist (B&W)' if no preference saved yet
+    return localStorage.getItem('portal_theme') || 'bw';
   });
 
   useEffect(() => {

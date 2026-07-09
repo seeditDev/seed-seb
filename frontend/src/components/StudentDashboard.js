@@ -77,7 +77,7 @@ const StudentDashboard = () => {
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'light';
+    return localStorage.getItem('portal_theme') || 'bw';
   });
 
   // Assessments List State
@@ -1627,7 +1627,7 @@ const StudentDashboard = () => {
       {
         id: 'light',
         name: 'Classic Ice (Light)',
-        desc: 'Sleek, high-contrast light mode for daytime coding. (Default)',
+        desc: 'Sleek, high-contrast light mode for daytime coding.',
         preview: ['#f3f4f6', '#ffffff', '#4f46e5']
       },
       {
@@ -1651,7 +1651,7 @@ const StudentDashboard = () => {
       {
         id: 'bw',
         name: 'Monochrome Minimalist (B&W)',
-        desc: 'High-contrast, clean black & white theme.',
+        desc: 'High-contrast, clean black & white theme. (Default)',
         preview: ['#ffffff', '#000000', '#000000']
       }
     ];
