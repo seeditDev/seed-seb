@@ -672,8 +672,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Fetch assessment questions JSON
     const fetchAssessmentJSON = async (url) => {
         try {
+            let cleanUrl = url;
+            if (url.startsWith('http')) {
+                if (url.includes('/seed-contents/main/')) {
+                    cleanUrl = url.split('/seed-contents/main/')[1];
+                } else if (url.includes('/SEEDDB/main/')) {
+                    cleanUrl = url.split('/SEEDDB/main/')[1];
+                } else if (url.includes('/contents/')) {
+                    cleanUrl = url.split('/contents/')[1];
+                }
+            }
             // 1. Try local fetch first
-            const localUrl = `${LOCAL_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+            const localUrl = `${LOCAL_BASE_URL}${cleanUrl.startsWith('/') ? '' : '/'}${cleanUrl}`;
             try {
                 const response = await fetch(localUrl);
                 if (response.ok) return await response.json();

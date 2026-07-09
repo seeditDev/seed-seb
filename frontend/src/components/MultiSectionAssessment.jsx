@@ -787,6 +787,15 @@ const MultiSectionAssessment = () => {
               : `/seed-contents/coding/${slugify(sec.name)}.json`;
           }
           let cleanPath = fetchUrl;
+          if (cleanPath.startsWith('http')) {
+            if (cleanPath.includes('/seed-contents/main/')) {
+              cleanPath = cleanPath.split('/seed-contents/main/')[1];
+            } else if (cleanPath.includes('/SEEDDB/main/')) {
+              cleanPath = cleanPath.split('/SEEDDB/main/')[1];
+            } else if (cleanPath.includes('/contents/')) {
+              cleanPath = cleanPath.split('/contents/')[1];
+            }
+          }
           if (cleanPath.startsWith('/seed-contents/')) cleanPath = cleanPath.substring('/seed-contents/'.length);
           else if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
 

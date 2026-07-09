@@ -93,6 +93,20 @@ class DataService {
                 console.log('[DataService] GitHub API error:', apiError);
             }
 
+            // Try local public folder fallback
+            try {
+                console.log('[DataService] Trying local fallback fetch:', localUrl);
+                const localResponse = await fetch(localUrl);
+                if (localResponse.ok) {
+                    console.log('[DataService] Local fallback fetch successful');
+                    const data = await localResponse.json();
+                    cacheManager.setLocalCache(cacheKey, data);
+                    return data;
+                }
+            } catch (localError) {
+                console.log('[DataService] Local fallback error:', localError);
+            }
+
             throw new Error('All fetch attempts failed');
         } catch (error) {
             console.error('[DataService] All fetch attempts failed:', error);
@@ -436,14 +450,32 @@ class DataService {
             const url = 'https://raw.githubusercontent.com/seeditDev/SEEDDB/main/portalLinks/portalLinks.json';
             console.log('Fetching portal links from URL:', url);
             
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                console.error('Portal links HTTP error, status:', response.status);
-                throw new Error(`Failed to fetch portal links: HTTP error ${response.status}`);
+            let links = null;
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    links = await response.json();
+                }
+            } catch (err) {
+                console.warn('Failed to fetch remote portal links:', err);
             }
-            
-            const links = await response.json();
+
+            if (!links) {
+                try {
+                    const localUrl = '/SEEDDB/portalLinks/portalLinks.json';
+                    console.log('Trying local fallback for portal links:', localUrl);
+                    const response = await fetch(localUrl);
+                    if (response.ok) {
+                        links = await response.json();
+                    }
+                } catch (localErr) {
+                    console.error('Failed local fallback for portal links:', localErr);
+                }
+            }
+
+            if (!links) {
+                throw new Error('Failed to fetch portal links from all sources');
+            }
             console.log('Portal links received:', links);
             
             // Store in sessionStorage

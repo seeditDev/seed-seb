@@ -873,10 +873,37 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             // Assuming URL format: /mcqs/test-name.json or full URL
             let testPath = url;
             if (url.includes('http')) {
-                // If it's a full URL, use it directly
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to fetch test data');
-                return await response.json();
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) return await response.json();
+                    throw new Error('Remote fetch failed');
+                } catch (e) {
+                    console.log('[MCQPage] Full URL fetch failed, attempting local fallback:', url);
+                    let localFallbackUrl = null;
+                    if (url.includes('/seed-contents/main/')) {
+                        const relPath = url.split('/seed-contents/main/')[1];
+                        localFallbackUrl = `/seed-contents/${relPath}`;
+                    } else if (url.includes('/SEEDDB/main/')) {
+                        const relPath = url.split('/SEEDDB/main/')[1];
+                        localFallbackUrl = `/SEEDDB/${relPath}`;
+                    } else if (url.includes('/contents/')) {
+                        const relPath = url.split('/contents/')[1];
+                        if (url.includes('seed-contents')) {
+                            localFallbackUrl = `/seed-contents/${relPath}`;
+                        } else if (url.includes('SEEDDB')) {
+                            localFallbackUrl = `/SEEDDB/${relPath}`;
+                        }
+                    }
+                    if (localFallbackUrl) {
+                        try {
+                            const response = await fetch(localFallbackUrl);
+                            if (response.ok) return await response.json();
+                        } catch (localErr) {
+                            console.error('[MCQPage] Local fallback fetch failed:', localErr);
+                        }
+                    }
+                    throw e;
+                }
             }
 
             // Try local first

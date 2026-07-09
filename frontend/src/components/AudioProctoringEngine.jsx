@@ -126,14 +126,41 @@ const AudioProctoringEngine = ({
   }, [startSampling, reportViolation]);
 
   useEffect(() => {
-    if (!isTestActive || !isProctorActive) return;
+    if (!isTestActive || !isProctorActive) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+      isInitializedRef.current = false;
+      return;
+    }
+
     initMicrophone();
+
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-      if (audioCtxRef.current) audioCtxRef.current.close().catch(() => { });
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+      isInitializedRef.current = false;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isTestActive, isProctorActive, initMicrophone]);
 
   useEffect(() => {
     if (!isTestActive || !isProctorActive) {

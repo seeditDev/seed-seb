@@ -114,16 +114,33 @@ const StudentDashboard = () => {
       }
 
       try {
-        const githubRes = await fetch("https://raw.githubusercontent.com/seeditDev/SEEDDB/main/Premium/ai-interview.json");
-        if (githubRes.ok) {
-          const list = await githubRes.json();
-          if (Array.isArray(list)) {
-            const allowed = list.some(email => String(email).trim().toLowerCase() === userEmail);
-            setIsAiInterviewAllowed(allowed);
+        let list = null;
+        try {
+          const githubRes = await fetch("https://raw.githubusercontent.com/seeditDev/SEEDDB/main/Premium/ai-interview.json");
+          if (githubRes.ok) {
+            list = await githubRes.json();
+          }
+        } catch (githubErr) {
+          console.warn("GitHub fetch for AI interview list failed, trying local fallback:", githubErr);
+        }
+
+        if (!list) {
+          try {
+            const localRes = await fetch("/SEEDDB/Premium/ai-interview.json");
+            if (localRes.ok) {
+              list = await localRes.json();
+            }
+          } catch (localErr) {
+            console.error("Local fallback for AI interview list failed:", localErr);
           }
         }
+
+        if (Array.isArray(list)) {
+          const allowed = list.some(email => String(email).trim().toLowerCase() === userEmail);
+          setIsAiInterviewAllowed(allowed);
+        }
       } catch (err) {
-        console.warn("Failed to fetch AI Interview access list from GitHub:", err);
+        console.warn("Failed to check AI Interview access:", err);
       }
     };
 
@@ -174,10 +191,25 @@ const StudentDashboard = () => {
       let quoteOfTheDay = DEFAULT_QUOTES[(dayOfMonth - 1) % 31];
 
       try {
-        const res = await fetch("https://raw.githubusercontent.com/seeditDev/seed-contents/main/welcome.json");
-        if (res.ok) {
-          const data = await res.json();
-          if (data && typeof data === 'object' && !Array.isArray(data)) {
+        let data = null;
+        try {
+          const res = await fetch("https://raw.githubusercontent.com/seeditDev/seed-contents/main/welcome.json");
+          if (res.ok) data = await res.json();
+        } catch (githubErr) {
+          console.warn("GitHub welcome fetch failed, trying local fallback:", githubErr);
+        }
+
+        if (!data) {
+          try {
+            const localRes = await fetch("/seed-contents/welcome.json");
+            if (localRes.ok) data = await localRes.json();
+          } catch (localErr) {
+            console.error("Local welcome fallback failed:", localErr);
+          }
+        }
+
+        if (data) {
+          if (typeof data === 'object' && !Array.isArray(data)) {
             // Check if structured: { quotes: ..., updates: ... }
             if (data.quotes) {
               const qData = data.quotes;
