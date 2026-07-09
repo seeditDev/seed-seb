@@ -77,7 +77,7 @@ const StudentDashboard = () => {
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'dark';
+    return localStorage.getItem('portal_theme') || 'light';
   });
 
   // Assessments List State
@@ -1621,13 +1621,13 @@ const StudentDashboard = () => {
       {
         id: 'dark',
         name: 'Midnight Space (Dark)',
-        desc: 'Futuristic slate theme with indigo highlights (default).',
+        desc: 'Futuristic slate theme with indigo highlights.',
         preview: ['#090d16', '#111827', '#6366f1']
       },
       {
         id: 'light',
         name: 'Classic Ice (Light)',
-        desc: 'Sleek, high-contrast light mode for daytime coding.',
+        desc: 'Sleek, high-contrast light mode for daytime coding. (Default)',
         preview: ['#f3f4f6', '#ffffff', '#4f46e5']
       },
       {

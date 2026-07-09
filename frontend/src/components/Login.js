@@ -31,29 +31,14 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'dark';
+    // Default to 'Classic Ice (light)' if no preference saved yet
+    return localStorage.getItem('portal_theme') || 'light';
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', currentTheme);
   }, [currentTheme]);
 
-  useEffect(() => {
-    const themes = ['dark', 'light', 'crimson', 'emerald', 'red-light', 'bw'];
-    let currentIndex = themes.indexOf(currentTheme);
-    if (currentIndex === -1) currentIndex = 0;
-
-    const timer = setInterval(() => {
-      currentIndex = (currentIndex + 1) % themes.length;
-      setCurrentTheme(themes[currentIndex]);
-    }, 4000);
-
-    return () => {
-      clearInterval(timer);
-      const savedTheme = localStorage.getItem('portal_theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    };
-  }, []);
 
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("rememberedUser"));
