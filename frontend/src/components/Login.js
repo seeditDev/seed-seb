@@ -293,7 +293,7 @@ const Login = () => {
       {/* Floating 3D Geometric shapes */}
       <div className="geometric-cube"></div>
       <div className="geometric-sphere"></div>
-      
+
       {/* 3D trophy svg background */}
       <svg className="geometric-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
@@ -305,7 +305,7 @@ const Login = () => {
 
       {/* Floating 3D Programming Language Chips */}
       <div className="floating-chip chip-python">
-        <span className="chip-logo" style={{ color: '#387eb8' }}>🐍</span>
+        <span className="chip-logo" style={{ color: '#07243bff' }}>🐍</span>
         <span>Python</span>
       </div>
       <div className="floating-chip chip-java">
@@ -607,7 +607,7 @@ const Login = () => {
                 />
                 <label htmlFor="remember-me-checkbox">Remember Me</label>
               </div>
-              <a href="#forgot" className="forgot-password-link">Forgot Password?</a>
+
             </div>
 
             {/* Login button */}
@@ -617,26 +617,6 @@ const Login = () => {
 
             {error && <div className="error">{error}</div>}
           </form>
-
-          {/* Social Sign In section */}
-          <div className="divider">
-            <span>or continue with</span>
-          </div>
-
-          <div className="social-buttons">
-            <button type="button" className="social-btn">
-              <FaGoogle className="social-logo" style={{ color: '#ea4335' }} />
-              Google
-            </button>
-            <button type="button" className="social-btn">
-              <FaMicrosoft className="social-logo" style={{ color: '#00a4ef' }} />
-              Microsoft
-            </button>
-          </div>
-
-          <div className="signup-link-block">
-            New to SEED? <span>Sign up</span>
-          </div>
         </div>
       </div>
 

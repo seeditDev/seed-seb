@@ -38,14 +38,14 @@ try:
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, "app.log")
     
-    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    # file_handler = logging.FileHandler(log_file, encoding='utf-8')
     console_handler = logging.StreamHandler(sys.stdout)
     
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[file_handler, console_handler]
+        handlers=[console_handler]
     )
 except Exception as e:
     # Fallback to basic console logging if directory creation/write fails
@@ -1190,9 +1190,9 @@ class MainWindow(QMainWindow):
 
     def changeEvent(self, event):
         """Security monitor for window deactivation (workspace swipe/minimize actions). Silently blocks switches by refocusing."""
-        if event.type() == QEvent.Type.ActivationChange:
-            if not self.isActiveWindow():
-                logging.warning("Security Alert: Sandbox deactivated. Silently blocking and refocusing window...")
+        if event.type() in [QEvent.Type.ActivationChange, QEvent.Type.WindowStateChange]:
+            if not self.isActiveWindow() or self.isMinimized():
+                logging.warning("Security Alert: Sandbox deactivated or minimized. Silently blocking and refocusing window...")
                 
                 # Instantly force window back to front fullscreen kiosk mode
                 self.showFullScreen()
@@ -1287,14 +1287,17 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Asks for confirmation using custom ExitConfirmDialog, blocking it entirely during assessments."""
         if getattr(self, 'is_assessment_active', False):
-            logging.warning("Close attempt blocked: Active assessment in progress.")
-            dlg = StyledJSDialog(
-                title="Exit Blocked",
-                message="You cannot exit the SEED-SEB browser during an active assessment.\nPlease complete and submit your assessment first.",
-                confirm_mode=False
-            )
-            dlg.exec()
+            logging.warning("Close attempt blocked: Active assessment in progress. Refocusing window...")
             event.ignore()
+            self.showFullScreen()
+            self.raise_()
+            self.activateWindow()
+            try:
+                import ctypes
+                hwnd = int(self.winId())
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+            except Exception as e:
+                logging.error(f"Failed SetForegroundWindow: {e}")
             return
 
         # Show our custom exit confirmation popup dialog
