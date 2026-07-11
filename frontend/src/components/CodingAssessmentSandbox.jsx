@@ -460,19 +460,44 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                         instructions: q.content?.inputFormat || q.instructions || '',
                         constraints: Array.isArray(q.content?.constraints) ? q.content.constraints.join('\n') : (q.constraints || ''),
                         isPremium: q.metadata?.isPremium || false,
-                        testCases: (q.content?.sampleTestCases || []).map(tc => ({
-                            input: tc.input,
-                            expected: tc.expected || tc.expectedOutput
+                        testCases: (q.content?.sampleTestCases || q.sampleTestCases || []).map(tc => ({
+                            input: tc.input || '',
+                            expected: tc.expected || tc.output || tc.expectedOutput || ''
                         })),
                         boilerplates: (() => {
-                            const bp = q.boilerplates || {};
+                            const getNormalizedLangKey = (k) => {
+                                const clean = String(k).trim().toLowerCase();
+                                if (clean === 'c') return 'c';
+                                if (clean === 'cpp' || clean === 'c++') return 'cpp';
+                                if (clean === 'java') return 'java';
+                                if (clean === 'python' || clean === 'python3') return 'python';
+                                if (clean === 'javascript' || clean === 'js') return 'javascript';
+                                return clean;
+                            };
+
+                            const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
+                            const bp = {};
+
+                            Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+                                const norm = getNormalizedLangKey(lang);
+                                if (norm === 'python') {
+                                    bp.python = val;
+                                    bp.python3 = val;
+                                } else {
+                                    bp[norm] = val;
+                                }
+                            });
+
                             if (q.solution?.code) {
-                                const c = q.solution.code;
-                                if (c.C) bp.c = c.C;
-                                if (c['C++']) bp.cpp = c['C++'];
-                                if (c.Java) bp.java = c.Java;
-                                if (c.Python3) { bp.python = c.Python3; bp.python3 = c.Python3; }
-                                if (c.JavaScript) bp.javascript = c.JavaScript;
+                                Object.entries(q.solution.code).forEach(([lang, val]) => {
+                                    const norm = getNormalizedLangKey(lang);
+                                    if (norm === 'python') {
+                                        bp.python = val;
+                                        bp.python3 = val;
+                                    } else {
+                                        bp[norm] = val;
+                                    }
+                                });
                             }
                             return bp;
                         })(),

@@ -117,6 +117,95 @@ const FREE_BOILERPLATES = {
     java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
 };
 
+const normalizeQuestion = (q) => {
+    if (!q) return q;
+    const id = q.questionId || q.id || '';
+    const title = q.title || '';
+    const description = q.content?.problemStatement || q.description || '';
+    const instructions = q.content?.inputFormat || q.instructions || '';
+    const constraints = Array.isArray(q.content?.constraints) 
+        ? q.content.constraints.join('\n') 
+        : (q.constraints || '');
+
+    // Normalize boilerplates robustly supporting camelCase, lowerCase, and standard language keys
+    const getNormalizedLangKey = (k) => {
+        const clean = String(k).trim().toLowerCase();
+        if (clean === 'c') return 'c';
+        if (clean === 'cpp' || clean === 'c++') return 'cpp';
+        if (clean === 'java') return 'java';
+        if (clean === 'python' || clean === 'python3') return 'python';
+        if (clean === 'javascript' || clean === 'js') return 'javascript';
+        return clean;
+    };
+
+    const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
+    const boilerplates = {};
+
+    Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+        const norm = getNormalizedLangKey(lang);
+        if (norm === 'python') {
+            boilerplates.python = val;
+            boilerplates.python3 = val;
+        } else {
+            boilerplates[norm] = val;
+        }
+    });
+
+    if (q.solution?.code) {
+        Object.entries(q.solution.code).forEach(([lang, val]) => {
+            const norm = getNormalizedLangKey(lang);
+            if (norm === 'python') {
+                boilerplates.python = val;
+                boilerplates.python3 = val;
+            } else {
+                boilerplates[norm] = val;
+            }
+        });
+    }
+
+    // Normalize sample test cases
+    const sampleTestCases = (q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []).map(tc => ({
+        ...tc,
+        input: tc.input || '',
+        expected: tc.expected || tc.output || tc.expectedOutput || tc.expected_output || ''
+    }));
+
+    // Normalize hidden test cases
+    let hidden = [];
+    if (q.testCases?.hidden) {
+        hidden = q.testCases.hidden.map(tc => ({
+            ...tc,
+            id: tc.id || tc.label || '',
+            input: tc.input || '',
+            expected: tc.expectedOutput || tc.expected || tc.output || tc.expected_output || ''
+        }));
+    } else if (Array.isArray(q.testCases)) {
+        hidden = q.testCases.map(tc => ({
+            ...tc,
+            id: tc.id || '',
+            input: tc.input || '',
+            expected: tc.expected || tc.output || tc.expectedOutput || tc.expected_output || ''
+        }));
+    }
+
+    return {
+        ...q,
+        id,
+        title,
+        description,
+        instructions,
+        constraints,
+        boilerplates,
+        sampleTestCases,
+        sampleTests: sampleTestCases,
+        hiddenTests: hidden,
+        testCases: {
+            ...q.testCases,
+            hidden: hidden
+        }
+    };
+};
+
 const CodingSandbox = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -197,18 +286,18 @@ const CodingSandbox = () => {
                     for (const ch of DEFAULT_CHALLENGES) {
                         await setDoc(doc(db, "codingChallenges", ch.id), ch);
                     }
-                    setChallenges(DEFAULT_CHALLENGES);
+                    setChallenges(DEFAULT_CHALLENGES.map(normalizeQuestion));
                 } else {
                     const fetchedList = [];
                     challengesSnap.forEach(doc => {
-                        fetchedList.push({ id: doc.id, ...doc.data() });
+                        fetchedList.push(normalizeQuestion({ id: doc.id, ...doc.data() }));
                     });
                     fetchedList.sort((a, b) => a.title.localeCompare(b.title));
                     setChallenges(fetchedList);
                 }
             } catch (err) {
                 console.error("Failed to load challenges from database. Using local backup:", err);
-                setChallenges(DEFAULT_CHALLENGES);
+                setChallenges(DEFAULT_CHALLENGES.map(normalizeQuestion));
             }
         };
 

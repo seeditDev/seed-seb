@@ -65,14 +65,40 @@ const normalizeQuestion = (q) => {
     ? q.content.constraints.join('\n')
     : (q.constraints || '');
 
-  const boilerplates = { ...(q.boilerplates || {}) };
+  // Normalize boilerplates robustly supporting camelCase, lowerCase, and standard language keys
+  const getNormalizedLangKey = (k) => {
+    const clean = String(k).trim().toLowerCase();
+    if (clean === 'c') return 'c';
+    if (clean === 'cpp' || clean === 'c++') return 'cpp';
+    if (clean === 'java') return 'java';
+    if (clean === 'python' || clean === 'python3') return 'python';
+    if (clean === 'javascript' || clean === 'js') return 'javascript';
+    return clean;
+  };
+
+  const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
+  const boilerplates = {};
+
+  Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+    const norm = getNormalizedLangKey(lang);
+    if (norm === 'python') {
+      boilerplates.python = val;
+      boilerplates.python3 = val;
+    } else {
+      boilerplates[norm] = val;
+    }
+  });
+
   if (q.solution?.code) {
-    const c = q.solution.code;
-    if (c.C) boilerplates.c = c.C;
-    if (c['C++']) boilerplates.cpp = c['C++'];
-    if (c.Java) boilerplates.java = c.Java;
-    if (c.Python3) { boilerplates.python = c.Python3; }
-    if (c.JavaScript) boilerplates.javascript = c.JavaScript;
+    Object.entries(q.solution.code).forEach(([lang, val]) => {
+      const norm = getNormalizedLangKey(lang);
+      if (norm === 'python') {
+        boilerplates.python = val;
+        boilerplates.python3 = val;
+      } else {
+        boilerplates[norm] = val;
+      }
+    });
   }
 
   const testCases = (q.content?.sampleTestCases || []).map(tc => ({

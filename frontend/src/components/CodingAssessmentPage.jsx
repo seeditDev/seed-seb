@@ -75,15 +75,40 @@ const normalizeQuestion = (q) => {
         ? q.content.constraints.join('\n') 
         : (q.constraints || '');
 
-    // Normalize boilerplates
-    const boilerplates = q.boilerplates || {};
+    // Normalize boilerplates robustly supporting camelCase, lowerCase, and standard language keys
+    const getNormalizedLangKey = (k) => {
+        const clean = String(k).trim().toLowerCase();
+        if (clean === 'c') return 'c';
+        if (clean === 'cpp' || clean === 'c++') return 'cpp';
+        if (clean === 'java') return 'java';
+        if (clean === 'python' || clean === 'python3') return 'python';
+        if (clean === 'javascript' || clean === 'js') return 'javascript';
+        return clean;
+    };
+
+    const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
+    const boilerplates = {};
+
+    Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+        const norm = getNormalizedLangKey(lang);
+        if (norm === 'python') {
+            boilerplates.python = val;
+            boilerplates.python3 = val;
+        } else {
+            boilerplates[norm] = val;
+        }
+    });
+
     if (q.solution?.code) {
-        const code = q.solution.code;
-        if (code.C) boilerplates.c = code.C;
-        if (code['C++']) boilerplates.cpp = code['C++'];
-        if (code.Java) boilerplates.java = code.Java;
-        if (code.Python3) boilerplates.python = code.Python3;
-        if (code.JavaScript) boilerplates.javascript = code.JavaScript;
+        Object.entries(q.solution.code).forEach(([lang, val]) => {
+            const norm = getNormalizedLangKey(lang);
+            if (norm === 'python') {
+                boilerplates.python = val;
+                boilerplates.python3 = val;
+            } else {
+                boilerplates[norm] = val;
+            }
+        });
     }
 
     // Normalize sample test cases
@@ -1014,7 +1039,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const availableLanguages = ["cpp", "c", "python", "java"];
             parsedQuestions.forEach(q => {
                 availableLanguages.forEach(lang => {
-                    initialCodeMap[`${q.id}_${lang}`] = FREE_BOILERPLATES[lang] || "";
+                    initialCodeMap[`${q.id}_${lang}`] = q.boilerplates?.[lang] || FREE_BOILERPLATES[lang] || "";
                 });
             });
             setCodeMap(initialCodeMap);
@@ -1128,7 +1153,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
-        const boilerplate = FREE_BOILERPLATES[language] || "";
+        const boilerplate = currentQuestion.boilerplates?.[language] || FREE_BOILERPLATES[language] || "";
         handleCodeChange(boilerplate);
     };
 
@@ -2310,7 +2335,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                             setLanguage(newLang);
                                             const codeKey = `${currentQuestion.id}_${newLang}`;
                                             if (!codeMap[codeKey]) {
-                                                const boilerplate = FREE_BOILERPLATES[newLang] || "";
+                                                const boilerplate = currentQuestion.boilerplates?.[newLang] || FREE_BOILERPLATES[newLang] || "";
                                                 setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
                                             }
                                         }}

@@ -32,15 +32,40 @@ const normalizeQuestion = (q) => {
     ? q.content.constraints.join('\n') 
     : (q.constraints || '');
 
-  // Normalize boilerplates
-  const boilerplates = q.boilerplates || {};
+  // Normalize boilerplates robustly supporting camelCase, lowerCase, and standard language keys
+  const getNormalizedLangKey = (k) => {
+    const clean = String(k).trim().toLowerCase();
+    if (clean === 'c') return 'c';
+    if (clean === 'cpp' || clean === 'c++') return 'cpp';
+    if (clean === 'java') return 'java';
+    if (clean === 'python' || clean === 'python3') return 'python';
+    if (clean === 'javascript' || clean === 'js') return 'javascript';
+    return clean;
+  };
+
+  const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
+  const boilerplates = {};
+
+  Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+    const norm = getNormalizedLangKey(lang);
+    if (norm === 'python') {
+      boilerplates.python = val;
+      boilerplates.python3 = val;
+    } else {
+      boilerplates[norm] = val;
+    }
+  });
+
   if (q.solution?.code) {
-    const code = q.solution.code;
-    if (code.C) boilerplates.c = code.C;
-    if (code['C++']) boilerplates.cpp = code['C++'];
-    if (code.Java) boilerplates.java = code.Java;
-    if (code.Python3) boilerplates.python3 = code.Python3;
-    if (code.JavaScript) boilerplates.javascript = code.JavaScript;
+    Object.entries(q.solution.code).forEach(([lang, val]) => {
+      const norm = getNormalizedLangKey(lang);
+      if (norm === 'python') {
+        boilerplates.python = val;
+        boilerplates.python3 = val;
+      } else {
+        boilerplates[norm] = val;
+      }
+    });
   }
 
   // Normalize sample test cases
@@ -227,8 +252,8 @@ const PracticeSandbox = () => {
       if (progress && progress.submittedCode) {
         setCode(progress.submittedCode);
       } else {
-        // Fallback to free standard boilerplate template
-        setCode(FREE_BOILERPLATES[defaultLang] || '');
+        // Fallback to question-specific boilerplate, then free standard boilerplate template
+        setCode(qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '');
       }
     } catch (err) {
       if (err.message?.includes('404') || err.message?.includes('not found')) {
@@ -244,7 +269,7 @@ const PracticeSandbox = () => {
   // Switch template
   useEffect(() => {
     if (!question) return;
-    setCode(FREE_BOILERPLATES[language] || '');
+    setCode(question.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
     setStdout('');
     setStderr('');
     setExitCode(null);
@@ -257,7 +282,7 @@ const PracticeSandbox = () => {
   };
 
   const confirmReset = () => {
-    setCode(FREE_BOILERPLATES[language] || '');
+    setCode(question?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
     setShowResetConfirm(false);
   };
 
