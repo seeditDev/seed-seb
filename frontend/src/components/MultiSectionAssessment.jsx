@@ -962,32 +962,6 @@ const MultiSectionAssessment = () => {
 
       const totalMarksSum = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
 
-      const attemptData = {
-        email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-        college, year, department: user.Department || '',
-        testID: assessment.id, testName: assessment.name,
-        assessmentId: assessment.id, assessmentName: assessment.name,
-        submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
-        type: 'multisection',
-        sections: examResults,
-        sectionsArray: sectionsList,
-        questions: aggregatedQuestions,
-        coding: aggregatedCoding,
-        totalMarks: totalMarksSum,
-        completed: true,
-        status: 'submitted',
-        autoSubmitted: true,
-        autoSubmitReason: reason || 'proctoring_violations'
-      };
-
-      const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
-      setDoc(doc(db, docPath), attemptData, { merge: true })
-        .then(() => console.log('[MSA] Final result saved to Firestore'))
-        .catch(e => console.error('[MSA] Firestore final save failed:', e));
-
-      setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
-        .catch(e => console.error('[MSA] Student-centric save failed:', e));
-
       const totalScore = Object.values(examResults).reduce((a, s) => a + (s.data?.score || 0), 0);
       const totalQ = Object.values(examResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
       const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
@@ -1006,6 +980,42 @@ const MultiSectionAssessment = () => {
                                  (proctoringData.violations.filter(v => v.type === 'multiple_faces').length);
       
       const allViolations = proctoringData.violations;
+
+      const attemptData = {
+        email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
+        college, year, department: user.Department || '',
+        testID: assessment.id, testName: assessment.name,
+        assessmentId: assessment.id, assessmentName: assessment.name,
+        submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
+        type: 'multisection',
+        sections: examResults,
+        sectionsArray: sectionsList,
+        questions: aggregatedQuestions,
+        coding: aggregatedCoding,
+        totalMarks: totalMarksSum,
+        score: totalScore,
+        totalQuestions: totalQ,
+        correctAnswers: totalScore,
+        incorrectAnswers: totalQ - totalScore,
+        percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+        timeTaken: timeTakenFormatted,
+        timeTakenSeconds: timeTaken,
+        violationCount: totalViolations,
+        totalNoFace,
+        totalMultipleFaces,
+        completed: true,
+        status: 'submitted',
+        autoSubmitted: true,
+        autoSubmitReason: reason || 'proctoring_violations'
+      };
+
+      const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+      setDoc(doc(db, docPath), attemptData, { merge: true })
+        .then(() => console.log('[MSA] Final result saved to Firestore'))
+        .catch(e => console.error('[MSA] Firestore final save failed:', e));
+
+      setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
+        .catch(e => console.error('[MSA] Student-centric save failed:', e));
 
       supabase.from('mcq_results').upsert({
         roll_number: user['Roll Number'] || '',
@@ -1188,30 +1198,6 @@ const MultiSectionAssessment = () => {
 
         const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
 
-        const attemptData = {
-          email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-          college, year, department: user.Department || '',
-          testID: assessment.id, testName: assessment.name,
-          assessmentId: assessment.id, assessmentName: assessment.name,
-          submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
-          type: 'multisection',
-          sections: updatedResults,
-          sectionsArray: sectionsList,
-          questions: aggregatedQuestions,
-          coding: aggregatedCoding,
-          totalMarks: totalMarksSum,
-          completed: true,
-          status: 'submitted'
-        };
-
-        const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
-        setDoc(doc(db, docPath), attemptData, { merge: true })
-          .then(() => console.log('[MSA] Final result saved to Firestore'))
-          .catch(e => console.error('[MSA] Firestore final save failed:', e));
-
-        setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
-          .catch(e => console.error('[MSA] Student-centric save failed:', e));
-
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
         const totalQ = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
         const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
@@ -1234,6 +1220,42 @@ const MultiSectionAssessment = () => {
           .map(s => s.data?.autoSubmitReason || '')
           .filter(Boolean)
           .join(', ');
+
+        const attemptData = {
+          email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
+          college, year, department: user.Department || '',
+          testID: assessment.id, testName: assessment.name,
+          assessmentId: assessment.id, assessmentName: assessment.name,
+          submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
+          type: 'multisection',
+          sections: updatedResults,
+          sectionsArray: sectionsList,
+          questions: aggregatedQuestions,
+          coding: aggregatedCoding,
+          totalMarks: totalMarksSum,
+          score: totalScore,
+          totalQuestions: totalQ,
+          correctAnswers: totalScore,
+          incorrectAnswers: totalQ - totalScore,
+          percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+          timeTaken: timeTakenFormatted,
+          timeTakenSeconds: timeTaken,
+          violationCount: totalViolations,
+          totalNoFace,
+          totalMultipleFaces,
+          completed: true,
+          status: 'submitted',
+          autoSubmitted,
+          autoSubmitReason
+        };
+
+        const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+        setDoc(doc(db, docPath), attemptData, { merge: true })
+          .then(() => console.log('[MSA] Final result saved to Firestore'))
+          .catch(e => console.error('[MSA] Firestore final save failed:', e));
+
+        setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
+          .catch(e => console.error('[MSA] Student-centric save failed:', e));
 
         supabase.from('mcq_results').upsert({
           roll_number: user['Roll Number'] || '',
