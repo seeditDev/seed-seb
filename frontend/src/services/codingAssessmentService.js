@@ -269,6 +269,8 @@ class CodingAssessmentService {
                 autoSubmitReason: autoSubmitReason || '',
                 languageUsed: languageUsed || '',
                 executionStats: executionStats || {},
+                totalMarks: resultData.totalMarks || 0,
+                coding: resultData.coding || [],
                 violations: violations || [],
                 violationCount: violationCount || 0,
                 updatedAt: serverTimestamp()
@@ -332,6 +334,8 @@ class CodingAssessmentService {
                     language_used: resultData.languageUsed || '',
                     execution_stats: resultData.executionStats || {},
                     violations: resultData.violations || [],
+                    total_marks: resultData.totalMarks || 0,
+                    coding: resultData.coding || [],
                     updated_at: new Date().toISOString()
                 }, {
                     onConflict: 'email,test_id'
@@ -372,6 +376,8 @@ class CodingAssessmentService {
                         violations: resultData.violations || [],
                         language_used: resultData.languageUsed || '',
                         execution_stats: resultData.executionStats || {},
+                        total_marks: resultData.totalMarks || 0,
+                        coding: resultData.coding || [],
                         updated_at: new Date().toISOString()
                     }, { onConflict: 'email,test_id,type' });
                 if (arErr) console.warn('[CodingAssessmentService] assessment_results upsert failed (non-blocking):', arErr.message);

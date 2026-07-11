@@ -246,6 +246,24 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
     });
     const total = questions.length;
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+    const questionsDetails = questions.map((q, idx) => {
+      const selectedIdx = answers[idx];
+      const selectedAnswer = selectedIdx !== undefined ? (q.options?.[selectedIdx] || '') : '';
+      const isCorrect = selectedAnswer === q.correctAnswer;
+      const timeSpent = timeSpentPerQ[idx] || 0;
+      return {
+        questionNumber: idx + 1,
+        questionText: q.question || q.text || '',
+        difficulty: (q.difficulty || 'medium').toLowerCase(),
+        topic: q.topic || q.tag || (q.tags ? (Array.isArray(q.tags) ? q.tags[0] : q.tags) : 'General'),
+        tags: Array.isArray(q.tags) ? q.tags : (q.tags ? [q.tags] : (q.topic ? [q.topic] : ['General'])),
+        isCorrect,
+        selectedAnswer,
+        correctAnswer: q.correctAnswer || '',
+        timeSpent
+      };
+    });
     
     // Clean up active MCQ state from localStorage
     localStorage.removeItem(stateKey);
@@ -256,7 +274,9 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
         timeSpentPerQ,
         score: correct,
         totalQuestions: total,
+        totalMarks: total,
         percentage: pct,
+        questions: questionsDetails,
         violationCount: 0,
         totalNoFace: 0,
         totalMultipleFaces: 0,
@@ -924,6 +944,24 @@ const MultiSectionAssessment = () => {
       const college = user.College || 'KGKITE';
       const year = user.Year || '2026';
       
+      const sectionsList = Object.values(examResults).map(sec => ({
+        sectionName: sec.sectionName || '',
+        name: sec.sectionName || '',
+        score: sec.data?.score || 0,
+        totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
+        maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0
+      }));
+
+      const aggregatedQuestions = Object.values(examResults)
+        .filter(sec => sec.type === 'mcq' && sec.data?.questions)
+        .reduce((acc, sec) => acc.concat(sec.data.questions), []);
+
+      const aggregatedCoding = Object.values(examResults)
+        .filter(sec => sec.type === 'coding' && sec.data?.coding)
+        .reduce((acc, sec) => acc.concat(sec.data.coding), []);
+
+      const totalMarksSum = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
+
       const attemptData = {
         email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
         college, year, department: user.Department || '',
@@ -932,6 +970,10 @@ const MultiSectionAssessment = () => {
         submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
         type: 'multisection',
         sections: examResults,
+        sectionsArray: sectionsList,
+        questions: aggregatedQuestions,
+        coding: aggregatedCoding,
+        totalMarks: totalMarksSum,
         completed: true,
         status: 'submitted',
         autoSubmitted: true,
@@ -990,16 +1032,62 @@ const MultiSectionAssessment = () => {
         total_no_face: totalNoFace,
         total_multiple_faces: totalMultipleFaces,
         violations: allViolations,
+        total_marks: totalMarksSum,
+        questions: aggregatedQuestions,
         updated_at: timeEndedISO
       }, { onConflict: 'email,test_id' }).then(
         ({ data, error }) => {
           if (error) {
-            console.warn('[MSA] Supabase save failed:', error.message || error);
+            console.warn('[MSA] Supabase mcq_results save failed:', error.message || error);
           } else {
-            console.log('[MSA] Supabase save succeeded:', data);
+            console.log('[MSA] Supabase mcq_results save succeeded:', data);
           }
         },
-        e => console.warn('[MSA] Supabase save failed (transport):', e)
+        e => console.warn('[MSA] Supabase mcq_results save failed (transport):', e)
+      );
+
+      // Upsert to unified assessment_results table
+      supabase.from('assessment_results').upsert({
+        type: 'multisection',
+        test_id: assessment.id,
+        test_name: assessment.name,
+        roll_number: user['Roll Number'] || '',
+        name: user.Name || '',
+        email: user.Email,
+        college,
+        year,
+        department: user.Department || '',
+        score: totalScore,
+        total_questions: totalQ,
+        correct_answers: totalScore,
+        incorrect_answers: totalQ - totalScore,
+        percentage: pct,
+        status: 'submitted',
+        time_taken: timeTaken,
+        time_taken_formatted: timeTakenFormatted,
+        time_started: timeStartedISO,
+        time_ended: timeEndedISO,
+        submitted_at: timeEndedISO,
+        auto_submitted: true,
+        auto_submit_reason: reason || 'proctoring_violations',
+        violation_count: totalViolations,
+        total_no_face: totalNoFace,
+        total_multiple_faces: totalMultipleFaces,
+        violations: allViolations,
+        total_marks: totalMarksSum,
+        questions: aggregatedQuestions,
+        coding: aggregatedCoding,
+        sections: sectionsList,
+        updated_at: timeEndedISO
+      }, { onConflict: 'email,test_id,type' }).then(
+        ({ data, error }) => {
+          if (error) {
+            console.warn('[MSA] Supabase assessment_results save failed:', error.message || error);
+          } else {
+            console.log('[MSA] Supabase assessment_results save succeeded:', data);
+          }
+        },
+        e => console.warn('[MSA] Supabase assessment_results save failed (transport):', e)
       );
     }
 
@@ -1082,6 +1170,24 @@ const MultiSectionAssessment = () => {
       if (user?.Email) {
         const college = user.College || 'KGKITE';
         const year = user.Year || '2026';
+        const sectionsList = Object.values(updatedResults).map(sec => ({
+          sectionName: sec.sectionName || '',
+          name: sec.sectionName || '',
+          score: sec.data?.score || 0,
+          totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
+          maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0
+        }));
+
+        const aggregatedQuestions = Object.values(updatedResults)
+          .filter(sec => sec.type === 'mcq' && sec.data?.questions)
+          .reduce((acc, sec) => acc.concat(sec.data.questions), []);
+
+        const aggregatedCoding = Object.values(updatedResults)
+          .filter(sec => sec.type === 'coding' && sec.data?.coding)
+          .reduce((acc, sec) => acc.concat(sec.data.coding), []);
+
+        const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
+
         const attemptData = {
           email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
           college, year, department: user.Department || '',
@@ -1089,9 +1195,13 @@ const MultiSectionAssessment = () => {
           assessmentId: assessment.id, assessmentName: assessment.name,
           submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
           type: 'multisection',
+          sections: updatedResults,
+          sectionsArray: sectionsList,
+          questions: aggregatedQuestions,
+          coding: aggregatedCoding,
+          totalMarks: totalMarksSum,
           completed: true,
-          status: 'submitted',
-          sections: updatedResults
+          status: 'submitted'
         };
 
         const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
@@ -1150,16 +1260,62 @@ const MultiSectionAssessment = () => {
           total_no_face: totalNoFace,
           total_multiple_faces: totalMultipleFaces,
           violations: allViolations,
+          total_marks: totalMarksSum,
+          questions: aggregatedQuestions,
           updated_at: timeEndedISO
         }, { onConflict: 'email,test_id' }).then(
           ({ data, error }) => {
             if (error) {
-              console.warn('[MSA] Supabase save failed:', error.message || error);
+              console.warn('[MSA] Supabase mcq_results save failed:', error.message || error);
             } else {
-              console.log('[MSA] Supabase save succeeded:', data);
+              console.log('[MSA] Supabase mcq_results save succeeded:', data);
             }
           },
-          e => console.warn('[MSA] Supabase save failed (transport):', e)
+          e => console.warn('[MSA] Supabase mcq_results save failed (transport):', e)
+        );
+
+        // Upsert to unified assessment_results table
+        supabase.from('assessment_results').upsert({
+          type: 'multisection',
+          test_id: assessment.id,
+          test_name: assessment.name,
+          roll_number: user['Roll Number'] || '',
+          name: user.Name || '',
+          email: user.Email,
+          college,
+          year,
+          department: user.Department || '',
+          score: totalScore,
+          total_questions: totalQ,
+          correct_answers: totalScore,
+          incorrect_answers: totalQ - totalScore,
+          percentage: pct,
+          status: 'submitted',
+          time_taken: timeTaken,
+          time_taken_formatted: timeTakenFormatted,
+          time_started: timeStartedISO,
+          time_ended: timeEndedISO,
+          submitted_at: timeEndedISO,
+          auto_submitted: autoSubmitted,
+          auto_submit_reason: autoSubmitReason,
+          violation_count: totalViolations,
+          total_no_face: totalNoFace,
+          total_multiple_faces: totalMultipleFaces,
+          violations: allViolations,
+          total_marks: totalMarksSum,
+          questions: aggregatedQuestions,
+          coding: aggregatedCoding,
+          sections: sectionsList,
+          updated_at: timeEndedISO
+        }, { onConflict: 'email,test_id,type' }).then(
+          ({ data, error }) => {
+            if (error) {
+              console.warn('[MSA] Supabase assessment_results save failed:', error.message || error);
+            } else {
+              console.log('[MSA] Supabase assessment_results save succeeded:', data);
+            }
+          },
+          e => console.warn('[MSA] Supabase assessment_results save failed (transport):', e)
         );
       }
 

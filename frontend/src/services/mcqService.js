@@ -248,6 +248,8 @@ class MCQService {
                 autoSubmitted: autoSubmitted || false,
                 autoSubmitReason: resultData.autoSubmitReason || '',
                 answers: answers || {},
+                totalMarks: resultData.totalMarks || resultData.totalQuestions || 0,
+                questions: resultData.questions || [],
                 // Proctoring data
                 violationCount: resultData.violationCount || 0,
                 totalNoFace: resultData.totalNoFace || 0,
@@ -316,6 +318,8 @@ class MCQService {
                     total_no_face: resultData.totalNoFace || 0,
                     total_multiple_faces: resultData.totalMultipleFaces || 0,
                     violations: resultData.violations || [],
+                    total_marks: resultData.totalMarks || resultData.totalQuestions || 0,
+                    questions: resultData.questions || [],
                     updated_at: new Date().toISOString()
                 }, {
                     onConflict: 'email,test_id'
@@ -354,6 +358,8 @@ class MCQService {
                         total_no_face: resultData.totalNoFace || 0,
                         total_multiple_faces: resultData.totalMultipleFaces || 0,
                         violations: resultData.violations || [],
+                        total_marks: resultData.totalMarks || resultData.totalQuestions || 0,
+                        questions: resultData.questions || [],
                         updated_at: new Date().toISOString()
                     }, { onConflict: 'email,test_id,type' });
                 if (arErr) console.warn('[MCQService] assessment_results upsert failed (non-blocking):', arErr.message);

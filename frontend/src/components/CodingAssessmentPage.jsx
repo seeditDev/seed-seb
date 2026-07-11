@@ -224,9 +224,33 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         return {};
     });
 
+    const [compilationCounts, setCompilationCounts] = useState(() => {
+        try {
+            const saved = localStorage.getItem("codingCompilationCounts");
+            if (saved) return JSON.parse(saved) || {};
+        } catch (_) {}
+        return {};
+    });
+
+    const [questionSubmitTimes, setQuestionSubmitTimes] = useState(() => {
+        try {
+            const saved = localStorage.getItem("codingQuestionSubmitTimes");
+            if (saved) return JSON.parse(saved) || {};
+        } catch (_) {}
+        return {};
+    });
+
     useEffect(() => {
         localStorage.setItem("codingTimeSpentPerQ", JSON.stringify(timeSpentPerQ));
     }, [timeSpentPerQ]);
+
+    useEffect(() => {
+        localStorage.setItem("codingCompilationCounts", JSON.stringify(compilationCounts));
+    }, [compilationCounts]);
+
+    useEffect(() => {
+        localStorage.setItem("codingQuestionSubmitTimes", JSON.stringify(questionSubmitTimes));
+    }, [questionSubmitTimes]);
 
     useEffect(() => {
         let qTimer;
@@ -281,10 +305,43 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             }
 
             if (onSectionSubmit) {
+                let totalEarnedWeight = 0;
+                let totalMaxWeight = 0;
+
+                const codingDetails = questions.map((q, idx) => {
+                    const scoreObj = finalScores[q.id] || { score: 0, percentage: 0, passed: 0, total: 0 };
+                    const passed = scoreObj.passed || 0;
+                    const total = scoreObj.total || 0;
+                    const status = total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
+                    
+                    totalEarnedWeight += scoreObj.score || 0;
+                    totalMaxWeight += q.weight || 20;
+
+                    return {
+                        questionNumber: idx + 1,
+                        problemTitle: q.name || q.title || `Question ${idx + 1}`,
+                        title: q.name || q.title || `Question ${idx + 1}`,
+                        difficulty: q.difficulty || 'Easy',
+                        language: language || '',
+                        status,
+                        testsPassed: passed,
+                        totalTests: total,
+                        compilationCount: compilationCounts[q.id] || 0,
+                        attempts: compilationCounts[q.id] || 0,
+                        timeComplexity: q.timeComplexity || '',
+                        spaceComplexity: q.spaceComplexity || '',
+                        submittedAt: questionSubmitTimes[q.id] || new Date().toISOString()
+                    };
+                });
+
                 onSectionSubmit({
                     answers: allAnswers,
                     timeSpentPerQ: timeSpentPerQ,
                     completed: finalScores,
+                    coding: codingDetails,
+                    score: totalEarnedWeight,
+                    totalMarks: totalMaxWeight,
+                    totalQuestions: questions.length,
                     autoSubmitted: reason ? true : false,
                     tabViolation: reason === 'navigation' ? true : false
                 });
@@ -1104,6 +1161,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const runSampleTestCases = async () => {
         if (!currentQuestion) return;
 
+        setCompilationCounts(prev => {
+            const updated = { ...prev, [currentQuestion.id]: (prev[currentQuestion.id] || 0) + 1 };
+            localStorage.setItem("codingCompilationCounts", JSON.stringify(updated));
+            return updated;
+        });
+
         setIsRunning(true);
         setActiveResultTab('results');
         setRunResults(null);
@@ -1179,6 +1242,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Flow: show evaluating overlay → run hidden tests (min 5 s) → close overlay → show inline submitted result
     const evaluateQuestion = async () => {
         if (!currentQuestion) return;
+
+        setCompilationCounts(prev => {
+            const updated = { ...prev, [currentQuestion.id]: (prev[currentQuestion.id] || 0) + 1 };
+            localStorage.setItem("codingCompilationCounts", JSON.stringify(updated));
+            return updated;
+        });
+        setQuestionSubmitTimes(prev => {
+            const updated = { ...prev, [currentQuestion.id]: new Date().toISOString() };
+            localStorage.setItem("codingQuestionSubmitTimes", JSON.stringify(updated));
+            return updated;
+        });
 
         setIsEvaluating(true);
         setEvalResults(null);
@@ -1317,6 +1391,28 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const elapsed = Math.round((timeService.now() - parseInt(storedStartTime, 10)) / 1000);
 
             // Gather metadata payload
+            const codingSubmissions = activeQuestions.map((q, idx) => {
+                const scoreObj = finalScores[q.id] || { score: 0, percentage: 0, passed: 0, total: 0 };
+                const passed = scoreObj.passed || 0;
+                const total = scoreObj.total || 0;
+                const status = total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
+                return {
+                    questionNumber: idx + 1,
+                    problemTitle: q.name || q.title || `Question ${idx + 1}`,
+                    title: q.name || q.title || `Question ${idx + 1}`,
+                    difficulty: q.difficulty || 'Easy',
+                    language: language || '',
+                    status,
+                    testsPassed: passed,
+                    totalTests: total,
+                    compilationCount: compilationCounts[q.id] || 0,
+                    attempts: compilationCounts[q.id] || 0,
+                    timeComplexity: q.timeComplexity || '',
+                    spaceComplexity: q.spaceComplexity || '',
+                    submittedAt: questionSubmitTimes[q.id] || new Date().toISOString()
+                };
+            });
+
             const resultData = {
                 email: authData.Email,
                 college: authData.College,
@@ -1330,6 +1426,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 totalQuestions: activeQuestions.length,
                 correctAnswers: totalEarnedWeight, // mapped for GAS Row compatibility
                 incorrectAnswers: totalMaxWeight - totalEarnedWeight,
+                totalMarks: totalMaxWeight,
                 percentage: finalPercent,
                 timeTaken: elapsed,
                 timeStartedISO: new Date(parseInt(storedStartTime, 10)).toISOString(),
@@ -1351,6 +1448,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     ? proctoringData.violations 
                     : [{ type: 'tab_switch', count: violationCount, reason: 'Tab switch count exceeded' }],
                 languageUsed: language,
+                coding: codingSubmissions,
                 executionStats: {
                     scores: finalScores,
                     codeMap: storedCodeMap
@@ -1446,6 +1544,28 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 user.Department
             );
 
+            const codingSubmissions = questions.map((q, idx) => {
+                const scoreObj = finalScores[q.id] || { score: 0, percentage: 0, passed: 0, total: 0 };
+                const passed = scoreObj.passed || 0;
+                const total = scoreObj.total || 0;
+                const status = total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
+                return {
+                    questionNumber: idx + 1,
+                    problemTitle: q.name || q.title || `Question ${idx + 1}`,
+                    title: q.name || q.title || `Question ${idx + 1}`,
+                    difficulty: q.difficulty || 'Easy',
+                    language: language || '',
+                    status,
+                    testsPassed: passed,
+                    totalTests: total,
+                    compilationCount: compilationCounts[q.id] || 0,
+                    attempts: compilationCounts[q.id] || 0,
+                    timeComplexity: q.timeComplexity || '',
+                    spaceComplexity: q.spaceComplexity || '',
+                    submittedAt: questionSubmitTimes[q.id] || new Date().toISOString()
+                };
+            });
+
             const resultData = {
                 email: user.Email,
                 college: user.College,
@@ -1459,6 +1579,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 totalQuestions: questions.length,
                 correctAnswers: totalEarnedWeight,
                 incorrectAnswers: totalMaxWeight - totalEarnedWeight,
+                totalMarks: totalMaxWeight,
                 percentage: finalPercent,
                 timeTaken: elapsed,
                 timeStartedISO: new Date(startTime).toISOString(),
@@ -1470,6 +1591,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 totalMultipleFaces: 0,
                 violations: [],
                 languageUsed: language,
+                coding: codingSubmissions,
                 executionStats: {
                     scores: finalScores,
                     codeMap: codeMap
@@ -1515,6 +1637,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         localStorage.removeItem("codingAssessmentTimer");
         localStorage.removeItem("codingAssessmentData");
         localStorage.removeItem("codingAssessmentCode");
+        localStorage.removeItem("codingCompilationCounts");
+        localStorage.removeItem("codingQuestionSubmitTimes");
         clearAllProctorCache();
         
         setCurrentAssessment(null);
@@ -1523,6 +1647,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setRemainingTime(0);
         setCodeMap({});
         setQuestionScores({});
+        setCompilationCounts({});
+        setQuestionSubmitTimes({});
     };
 
     // Get color classification of question navigation bubble

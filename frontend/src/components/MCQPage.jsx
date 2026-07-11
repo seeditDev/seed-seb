@@ -504,6 +504,24 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             const testID = test?.id || testData?.id || 'unknown';
             const testName = testData?.name || test?.name || 'Unknown Test';
 
+            const questionsDetails = questionSet.map((q, idx) => {
+                const selectedIdx = restoredAnswers[idx];
+                const selectedAnswer = selectedIdx !== undefined ? (q.options?.[selectedIdx] || '') : '';
+                const isCorrect = selectedAnswer === q.correctAnswer;
+                const timeSpent = 0;
+                return {
+                    questionNumber: idx + 1,
+                    questionText: q.question || q.text || '',
+                    difficulty: (q.difficulty || testData?.difficulty || test?.difficulty || 'medium').toLowerCase(),
+                    topic: q.topic || q.tag || (q.tags ? (Array.isArray(q.tags) ? q.tags[0] : q.tags) : 'General'),
+                    tags: Array.isArray(q.tags) ? q.tags : (q.tags ? [q.tags] : (q.topic ? [q.topic] : ['General'])),
+                    isCorrect,
+                    selectedAnswer,
+                    correctAnswer: q.correctAnswer || '',
+                    timeSpent
+                };
+            });
+
             const resultData = {
                 email: user.Email,
                 college: user.College,
@@ -517,6 +535,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 totalQuestions,
                 correctAnswers,
                 incorrectAnswers: totalQuestions - correctAnswers,
+                totalMarks: totalQuestions,
                 percentage,
                 timeTaken,
                 timeStarted: startTimeISO,
@@ -525,6 +544,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 timeEndedISO: timeService.getNow().toISOString(),
                 submittedAtISO: timeService.getNow().toISOString(),
                 answers: restoredAnswers,
+                questions: questionsDetails,
                 autoSubmitted: true,
                 autoSubmitReason: getAutoSubmitReasonLabel(reason),
                 // Include proctoring data
@@ -1282,6 +1302,24 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 return acc;
             }, { totalNoFace: 0, totalMultipleFaces: 0 });
 
+            const questionsDetails = (currentTest.questions || []).map((q, idx) => {
+                const selectedIdx = answers[idx];
+                const selectedAnswer = selectedIdx !== undefined ? (q.options?.[selectedIdx] || '') : '';
+                const isCorrect = selectedAnswer === q.correctAnswer;
+                const timeSpent = timeSpentPerQ[idx] || 0;
+                return {
+                    questionNumber: idx + 1,
+                    questionText: q.question || q.text || '',
+                    difficulty: (q.difficulty || currentTest.difficulty || 'medium').toLowerCase(),
+                    topic: q.topic || q.tag || (q.tags ? (Array.isArray(q.tags) ? q.tags[0] : q.tags) : 'General'),
+                    tags: Array.isArray(q.tags) ? q.tags : (q.tags ? [q.tags] : (q.topic ? [q.topic] : ['General'])),
+                    isCorrect,
+                    selectedAnswer,
+                    correctAnswer: q.correctAnswer || '',
+                    timeSpent
+                };
+            });
+
             const resultData = {
                 email: user.Email,
                 college: user.College,
@@ -1295,6 +1333,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 totalQuestions: totalQuestions,
                 correctAnswers: correctAnswers,
                 incorrectAnswers: incorrectAnswers,
+                totalMarks: totalQuestions,
                 percentage: percentage,
                 timeTaken: timeTaken,
                 timeStarted: testStartTimeISO || timeService.getNow().toISOString(),
@@ -1303,6 +1342,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 timeEndedISO: timeService.getNow().toISOString(),
                 submittedAtISO: timeService.getNow().toISOString(),
                 answers: answers,
+                questions: questionsDetails,
                 timeSpentPerQ: timeSpentPerQ,
                 autoSubmitted: currentTest.autoSubmitted || false,
                 autoSubmitReason: '',
@@ -1404,6 +1444,24 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             // Turn off camera immediately on auto submit trigger
             stopGlobalCameraStream();
 
+            const questionsDetails = (currentTest.questions || []).map((q, idx) => {
+                const selectedIdx = answers[idx];
+                const selectedAnswer = selectedIdx !== undefined ? (q.options?.[selectedIdx] || '') : '';
+                const isCorrect = selectedAnswer === q.correctAnswer;
+                const timeSpent = timeSpentPerQ[idx] || 0;
+                return {
+                    questionNumber: idx + 1,
+                    questionText: q.question || q.text || '',
+                    difficulty: (q.difficulty || currentTest.difficulty || 'medium').toLowerCase(),
+                    topic: q.topic || q.tag || (q.tags ? (Array.isArray(q.tags) ? q.tags[0] : q.tags) : 'General'),
+                    tags: Array.isArray(q.tags) ? q.tags : (q.tags ? [q.tags] : (q.topic ? [q.topic] : ['General'])),
+                    isCorrect,
+                    selectedAnswer,
+                    correctAnswer: q.correctAnswer || '',
+                    timeSpent
+                };
+            });
+
             const resultData = {
                 email: user.Email,
                 college: user.College,
@@ -1417,6 +1475,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 totalQuestions: totalQuestions,
                 correctAnswers: correctAnswers,
                 incorrectAnswers: incorrectAnswers,
+                totalMarks: totalQuestions,
                 percentage: percentage,
                 timeTaken: timeTaken,
                 timeStarted: testStartTimeISO || timeService.getNow().toISOString(),
@@ -1425,6 +1484,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 timeEndedISO: timeService.getNow().toISOString(),
                 submittedAtISO: timeService.getNow().toISOString(),
                 answers: answers,
+                questions: questionsDetails,
                 timeSpentPerQ: timeSpentPerQ,
                 autoSubmitted: true,
                 autoSubmitReason: reasonLabel,
