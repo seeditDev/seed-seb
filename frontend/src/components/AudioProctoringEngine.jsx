@@ -8,7 +8,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 const SAMPLE_INTERVAL_MS = 250;    // how often we read the analyser
 const NOISE_HOLD_FRAMES = 4;      // ~1.0 second of sustained noise before flagging
 const NOISE_THRESHOLD = 0.015;  // RMS energy threshold (increased to 0.050 as requested)
-const COOLDOWN_MS = 6000;   // min gap between consecutive violations
+const COOLDOWN_MS = 4000;   // min gap between consecutive violations
 
 const AudioProctoringEngine = ({
   studentID,
@@ -136,7 +136,7 @@ const AudioProctoringEngine = ({
         streamRef.current = null;
       }
       if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current.close().catch(() => { });
         audioCtxRef.current = null;
       }
       isInitializedRef.current = false;
@@ -155,7 +155,7 @@ const AudioProctoringEngine = ({
         streamRef.current = null;
       }
       if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current.close().catch(() => { });
         audioCtxRef.current = null;
       }
       isInitializedRef.current = false;

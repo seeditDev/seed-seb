@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchQuestionsIndex } from '../services/codingQuestionBankService';
 import { getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, saveSheetProgress } from '../services/codingProgressService';
 import DataService from '../services/dataService';
-import { 
-  FaSearch, FaCheckCircle, 
-  FaFileAlt, FaBookOpen, 
+import {
+  FaSearch, FaCheckCircle,
+  FaFileAlt, FaBookOpen,
   FaAngleRight, FaAngleDown, FaChevronLeft,
   FaLock, FaStar, FaFolderOpen, FaFolder,
   FaRocket, FaPython, FaCoffee, FaDatabase,
@@ -55,11 +55,11 @@ const getRoadmapStyle = (slug) => {
 const getCorrectArticleForProblem = (courseId, prob) => {
   if (!prob) return '';
   if (prob.article) return prob.article;
-  
+
   const cid = String(courseId || '').toLowerCase();
   const pName = String(prob.title || prob.name || '').toLowerCase();
   const pid = String(prob.id || '').toLowerCase();
-  
+
   const inAny = (...keywords) => keywords.some(k => pName.includes(k) || pid.includes(k));
 
   if (cid.includes('python') || cid.includes('learn_python')) {
@@ -128,7 +128,7 @@ const getCorrectArticleForProblem = (courseId, prob) => {
   if (cid.includes('figma') || cid.includes('ui-ux') || cid.includes('design')) return 'gfg-sub-software-tools-figma-tutorial';
   if (cid.includes('powershell') || cid.includes('windows')) return 'gfg-sub-software-tools-windows-powershell-tutorial';
   if (cid.includes('gemini') || cid.includes('copilot') || cid.includes('llm') || cid.includes('ai-tools')) return 'gfg-sub-software-tools-what-is-google-gemini-ai';
-  
+
   if (inAny('loop', 'iteration', 'while', 'for')) return 'gfg-sub-python-python-inner-functions';
   if (inAny('conditional', 'if else', 'switch')) return 'gfg-sub-java-c-vs-java-vs-python';
   if (inAny('array', 'list', 'linked')) return 'gfg-sub-dsa-circular-linked-list';
@@ -225,7 +225,7 @@ const PracticeHome = () => {
       if (saved) {
         try {
           initialDicts[sheet.id] = JSON.parse(saved);
-        } catch (e) {}
+        } catch (e) { }
       } else {
         initialDicts[sheet.id] = {};
       }
@@ -250,7 +250,7 @@ const PracticeHome = () => {
       const saved = localStorage.getItem(key);
       let dict = {};
       if (saved) {
-        try { dict = JSON.parse(saved); } catch (e) {}
+        try { dict = JSON.parse(saved); } catch (e) { }
       }
       dict[problemId] = isNewSolved;
       localStorage.setItem(key, JSON.stringify(dict));
@@ -415,7 +415,7 @@ const PracticeHome = () => {
     } else if (articleUrl.startsWith('/articles/')) {
       fetchPath = articleUrl;
     }
-    
+
     if (fetchPath.endsWith('.json.json')) {
       fetchPath = fetchPath.replace('.json.json', '.json');
     } else if (!fetchPath.endsWith('.json')) {
@@ -516,7 +516,7 @@ const PracticeHome = () => {
     setLoading(true);
     try {
       const email = authData?.Email || authData?.email || '';
-      
+
       // Auto sync with cloud at start
       if (email && navigator.onLine) {
         await syncProgressWithFirebase(email);
@@ -718,7 +718,7 @@ const PracticeHome = () => {
 
         const coursesList = [...mockCourses];
         setCourses(coursesList);
-        
+
         // Auto-expand first course
         if (coursesList.length > 0) {
           setExpandedCourses({ [coursesList[0].id]: true });
@@ -774,16 +774,16 @@ const PracticeHome = () => {
 
       return (
         <div className="ph-section ps-sheet-detail" style={{ margin: '20px auto' }}>
-          <button 
+          <button
             onClick={() => setSelectedSheet(null)}
             className="ph-topbar-btn"
-            style={{ 
-              borderRadius: '8px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px', 
-              marginBottom: '20px', 
-              background: 'rgba(255,255,255,0.04)', 
+            style={{
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginBottom: '20px',
+              background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.08)',
               color: 'var(--ph-text)'
             }}
@@ -791,23 +791,23 @@ const PracticeHome = () => {
             <FaChevronLeft /> Back to Sheets
           </button>
 
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '2fr 1fr', 
-            gap: '24px', 
-            background: 'var(--ph-surface)', 
-            border: '1px solid var(--ph-border)', 
-            borderRadius: '16px', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr',
+            gap: '24px',
+            background: 'var(--ph-surface)',
+            border: '1px solid var(--ph-border)',
+            borderRadius: '16px',
             padding: '24px',
             marginBottom: '30px'
           }}>
             <div>
-              <span style={{ 
-                background: `${sheet.borderColor}15`, 
-                color: sheet.borderColor, 
-                fontSize: '11px', 
-                fontWeight: 'bold', 
-                textTransform: 'uppercase', 
+              <span style={{
+                background: `${sheet.borderColor}15`,
+                color: sheet.borderColor,
+                fontSize: '11px',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 padding: '4px 10px',
                 borderRadius: '4px',
@@ -817,18 +817,18 @@ const PracticeHome = () => {
               <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{sheet.title}</h2>
               <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>{sheet.desc}</p>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
               <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
                   <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="40" 
-                    stroke={sheet.borderColor} 
-                    strokeWidth="8" 
-                    fill="transparent" 
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke={sheet.borderColor}
+                    strokeWidth="8"
+                    fill="transparent"
                     strokeDasharray={251.2}
                     strokeDashoffset={dashOffset}
                     strokeLinecap="round"
@@ -850,10 +850,10 @@ const PracticeHome = () => {
               // ─── A2Z SHEET NESTED STRUCTURE (Sections -> Subcategories -> Problems) ───
               sheet.sections.map((section, secIdx) => (
                 <div key={section.title} style={{ marginBottom: '10px' }}>
-                  <h3 style={{ 
-                    fontSize: '18px', 
-                    fontWeight: '800', 
-                    color: 'var(--ph-text)', 
+                  <h3 style={{
+                    fontSize: '18px',
+                    fontWeight: '800',
+                    color: 'var(--ph-text)',
                     marginBottom: '14px',
                     borderBottom: '2px solid var(--ph-border)',
                     paddingBottom: '8px',
@@ -868,24 +868,24 @@ const PracticeHome = () => {
                     {section.subcategories.map((sub, subIdx) => {
                       const accordionKey = `${section.title}-${sub.title}`;
                       const isOpen = !!expandedTopics[accordionKey];
-                      
+
                       return (
-                        <div 
-                          key={sub.title} 
-                          style={{ 
-                            background: 'var(--ph-surface)', 
-                            border: '1px solid var(--ph-border)', 
-                            borderRadius: '12px', 
-                            overflow: 'hidden' 
+                        <div
+                          key={sub.title}
+                          style={{
+                            background: 'var(--ph-surface)',
+                            border: '1px solid var(--ph-border)',
+                            borderRadius: '12px',
+                            overflow: 'hidden'
                           }}
                         >
-                          <div 
+                          <div
                             onClick={() => setExpandedTopics(prev => ({ ...prev, [accordionKey]: !prev[accordionKey] }))}
-                            style={{ 
-                              padding: '14px 20px', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'space-between', 
+                            style={{
+                              padding: '14px 20px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
                               cursor: 'pointer',
                               background: 'rgba(255,255,255,0.01)',
                               borderBottom: isOpen ? '1px solid var(--ph-border)' : 'none'
@@ -899,7 +899,7 @@ const PracticeHome = () => {
                                 Lecture {subIdx + 1}: {sub.title}
                               </strong>
                             </div>
-                            
+
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                               <span style={{ fontSize: '12px', color: 'var(--ph-text-dim)', fontWeight: '600' }}>
                                 {sub.problems.length} Problems
@@ -927,13 +927,13 @@ const PracticeHome = () => {
                                     const diffClass = p.difficulty?.toLowerCase() || 'easy';
                                     const isSolved = !!(sheetSolvedDicts['a2z'] || {})[p.id] || solvedIdsSet.has(p.id);
                                     return (
-                                      <tr 
+                                      <tr
                                         key={p.id || pIdx}
                                         className={`ph-problem-row ${isSolved ? 'solved' : ''}`}
                                         style={{ background: 'rgba(255,255,255,0.005)' }}
                                       >
-                                        <td 
-                                          className="ph-col-status" 
+                                        <td
+                                          className="ph-col-status"
                                           style={{ paddingLeft: '20px', fontSize: '14px', cursor: 'pointer' }}
                                           onClick={() => toggleProblemSolved('a2z', p.id)}
                                         >
@@ -943,11 +943,11 @@ const PracticeHome = () => {
                                             ) : (isQuestionPremium(p.id) && !isPremiumUser) ? (
                                               <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
                                             ) : (
-                                              <span style={{ 
-                                                width: '14px', 
-                                                height: '14px', 
-                                                borderRadius: '50%', 
-                                                border: '2px solid var(--ph-text-dim)', 
+                                              <span style={{
+                                                width: '14px',
+                                                height: '14px',
+                                                borderRadius: '50%',
+                                                border: '2px solid var(--ph-text-dim)',
                                                 display: 'inline-block',
                                                 opacity: 0.6
                                               }} />
@@ -957,8 +957,8 @@ const PracticeHome = () => {
                                         <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{pIdx + 1}</td>
                                         <td className="ph-col-title">
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span 
-                                              className="ph-problem-title-text" 
+                                            <span
+                                              className="ph-problem-title-text"
                                               style={{ fontWeight: '500', cursor: p.article ? 'pointer' : 'default', color: 'var(--ph-text)' }}
                                               onClick={() => p.article && openArticle(p.article, p.name, p.id, 'a2z')}
                                             >
@@ -1051,22 +1051,22 @@ const PracticeHome = () => {
                 const pct = section.problems.length > 0 ? Math.round((solvedSecCount / section.problems.length) * 100) : 0;
 
                 return (
-                  <div 
-                    key={section.title} 
-                    style={{ 
-                      background: 'var(--ph-surface)', 
-                      border: '1px solid var(--ph-border)', 
-                      borderRadius: '12px', 
-                      overflow: 'hidden' 
+                  <div
+                    key={section.title}
+                    style={{
+                      background: 'var(--ph-surface)',
+                      border: '1px solid var(--ph-border)',
+                      borderRadius: '12px',
+                      overflow: 'hidden'
                     }}
                   >
-                    <div 
+                    <div
                       onClick={() => setExpandedTopics(prev => ({ ...prev, [accordionKey]: !prev[accordionKey] }))}
-                      style={{ 
-                        padding: '16px 20px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between', 
+                      style={{
+                        padding: '16px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         cursor: 'pointer',
                         background: 'rgba(255,255,255,0.01)',
                         borderBottom: isOpen ? '1px solid var(--ph-border)' : 'none'
@@ -1080,7 +1080,7 @@ const PracticeHome = () => {
                           Step {secIdx + 1}: {section.title}
                         </strong>
                       </div>
-                      
+
                       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -1114,13 +1114,13 @@ const PracticeHome = () => {
                               const diffClass = p.difficulty?.toLowerCase() || 'easy';
 
                               return (
-                                <tr 
+                                <tr
                                   key={p.id || pIdx}
                                   className={`ph-problem-row ${isSolved ? 'solved' : ''}`}
                                   style={{ background: 'rgba(255,255,255,0.005)' }}
                                 >
-                                  <td 
-                                    className="ph-col-status" 
+                                  <td
+                                    className="ph-col-status"
                                     style={{ paddingLeft: '20px', fontSize: '14px', cursor: 'pointer' }}
                                     onClick={() => toggleProblemSolved(sheet.id, p.id)}
                                   >
@@ -1130,11 +1130,11 @@ const PracticeHome = () => {
                                       ) : (isQuestionPremium(p.id) && !isPremiumUser) ? (
                                         <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
                                       ) : (
-                                        <span style={{ 
-                                          width: '14px', 
-                                          height: '14px', 
-                                          borderRadius: '50%', 
-                                          border: '2px solid var(--ph-text-dim)', 
+                                        <span style={{
+                                          width: '14px',
+                                          height: '14px',
+                                          borderRadius: '50%',
+                                          border: '2px solid var(--ph-text-dim)',
                                           display: 'inline-block',
                                           opacity: 0.6
                                         }} />
@@ -1144,8 +1144,8 @@ const PracticeHome = () => {
                                   <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{pIdx + 1}</td>
                                   <td className="ph-col-title">
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                      <span 
-                                        className="ph-problem-title-text" 
+                                      <span
+                                        className="ph-problem-title-text"
                                         style={{ fontWeight: '500', cursor: p.article ? 'pointer' : 'default', color: 'var(--ph-text)' }}
                                         onClick={() => p.article && openArticle(p.article, p.name, p.id, sheet.id)}
                                       >
@@ -1236,8 +1236,6 @@ const PracticeHome = () => {
       <div className="ph-section" style={{ margin: '30px auto' }}>
         <div className="ph-hero" style={{ padding: '20px 0' }}>
           <div className="ph-hero-tag">Structured Sheets</div>
-          <h1 className="ph-hero-title">Structured <span>Learning Paths</span></h1>
-          <p className="ph-hero-sub">Master DSA, system design, and competitive coding with curated worksheets.</p>
         </div>
 
         <div className="ps-categories-container" style={{ marginTop: '20px' }}>
@@ -1246,21 +1244,21 @@ const PracticeHome = () => {
               <h2 className="ps-category-header">
                 {categoryName}
               </h2>
-              
+
               <div className="ps-cards-grid">
                 {sheets.map(sheet => {
                   const totalQs = getSheetTotalProblems(sheet);
                   const solvedQs = getSheetSolvedCount(sheet);
-                  const style = { 
-                    '--theme-border-color': sheet.borderColor, 
-                    '--theme-border-color-15': `${sheet.borderColor}15`, 
-                    '--theme-border-color-25': `${sheet.borderColor}25`, 
-                    '--theme-border-color-30': `${sheet.borderColor}30`, 
-                    '--theme-border-color-50': `${sheet.borderColor}50` 
+                  const style = {
+                    '--theme-border-color': sheet.borderColor,
+                    '--theme-border-color-15': `${sheet.borderColor}15`,
+                    '--theme-border-color-25': `${sheet.borderColor}25`,
+                    '--theme-border-color-30': `${sheet.borderColor}30`,
+                    '--theme-border-color-50': `${sheet.borderColor}50`
                   };
 
                   return (
-                    <div 
+                    <div
                       key={sheet.id}
                       className="ps-sheet-card"
                       style={style}
@@ -1274,7 +1272,7 @@ const PracticeHome = () => {
                         <span className="ps-card-stats">
                           {solvedQs}/{totalQs} Solved
                         </span>
-                        
+
                         <div className="ps-card-actions">
                           {sheet.id === 'a2z' || sheet.id === 'blind75' || sheet.id === 'sde' || sheet.id === 'striver79' ? (
                             <>
@@ -1347,7 +1345,7 @@ const PracticeHome = () => {
         if (!finalUrl.endsWith('.json')) {
           finalUrl = `coding/testbank/${mod.slug}.json`;
         }
-        
+
         // Clean and prepare the path relative to the seed-contents repository root
         let cleanPath = finalUrl;
         if (cleanPath.startsWith('/seed-contents/')) {
@@ -1375,7 +1373,7 @@ const PracticeHome = () => {
           if (!localResponse.ok) throw new Error(`Local fetch failed: HTTP ${localResponse.status}`);
           data = await localResponse.json();
         }
-        
+
         // Mapped questions array from the contest file
         let questionsList = data.questions || [];
         if (questionsList.length === 0 && Array.isArray(data.questionIds) && data.questionIds.length > 0) {
@@ -1404,8 +1402,8 @@ const PracticeHome = () => {
   // Filter flat list of questions
   const filteredQuestions = questions.filter(q => {
     const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser);
-    const matchesSearch = !searchQuery || 
-      q.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = !searchQuery ||
+      q.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.questionId?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || q.category === selectedCategory;
     const matchesDifficulty = selectedDifficulty === 'All' || q.difficulty === selectedDifficulty;
@@ -1419,21 +1417,21 @@ const PracticeHome = () => {
       <div className="ph-topbar" style={{ background: 'transparent', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', padding: '12px 0px', marginBottom: '20px', position: 'static' }}>
         <div className="ph-section" style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', padding: '0 32px' }}>
           <div className="ph-topbar-nav" style={{ gap: '8px' }}>
-            <button 
+            <button
               className={`ph-topbar-btn ${activeTab === 'paths' && !selectedModule ? 'active' : ''}`}
               onClick={() => { setSelectedModule(null); setSelectedSheet(null); setSelectedCourse(null); setActiveTab('paths'); }}
               style={{ borderRadius: '8px' }}
             >
               Course Curriculum
             </button>
-            <button 
+            <button
               className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
               onClick={() => { setSelectedModule(null); setSelectedSheet(null); setSelectedCourse(null); setActiveTab('sheets'); }}
               style={{ borderRadius: '8px' }}
             >
               Structured Sheets
             </button>
-            <button 
+            <button
               className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
               onClick={() => { setSelectedModule(null); setSelectedSheet(null); setSelectedCourse(null); setActiveTab('bank'); }}
               style={{ borderRadius: '8px' }}
@@ -1462,7 +1460,7 @@ const PracticeHome = () => {
       {selectedModule ? (
         // ─── CONTEST QUESTION LIST VIEW ───
         <div className="ph-section" style={{ margin: '30px auto' }}>
-          <button 
+          <button
             onClick={() => setSelectedModule(null)}
             style={{
               background: 'none', border: 'none', color: '#7c6bff', fontSize: '15px',
@@ -1549,11 +1547,6 @@ const PracticeHome = () => {
       ) : activeTab === 'paths' ? (
         // ─── STRUCTURED LEARNING PATHS VIEW ───
         <div className="ph-section" style={{ margin: '30px auto' }}>
-          <div className="ph-hero" style={{ padding: '20px 0' }}>
-            <div className="ph-hero-tag">Learning Paths</div>
-            <h1 className="ph-hero-title">Continuous <span>Curriculum</span></h1>
-            <p className="ph-hero-sub">Work through structural programming courses assigned by your facilitators.</p>
-          </div>
 
           {loading ? (
             <div className="ph-loading">
@@ -1582,17 +1575,17 @@ const PracticeHome = () => {
                   );
                 }
 
-                 // calculate stats
-                 let totalQs = 0;
-                 let solvedQs = 0;
-                 scrapedSyllabus.modules.forEach(m => {
-                   m.submodules.forEach(s => {
-                     s.problems.forEach(p => {
-                       totalQs++;
-                       if (solvedIdsSet.has(p.id)) solvedQs++;
-                     });
-                   });
-                 });
+                // calculate stats
+                let totalQs = 0;
+                let solvedQs = 0;
+                scrapedSyllabus.modules.forEach(m => {
+                  m.submodules.forEach(s => {
+                    s.problems.forEach(p => {
+                      totalQs++;
+                      if (solvedIdsSet.has(p.id)) solvedQs++;
+                    });
+                  });
+                });
 
                 const percentage = totalQs > 0 ? Math.round((solvedQs / totalQs) * 100) : 0;
                 const dashOffset = 251.2 - (251.2 * (solvedQs / totalQs || 0));
@@ -1600,7 +1593,7 @@ const PracticeHome = () => {
                 return (
                   <div className="ps-sheet-detail" style={{ marginTop: '20px' }}>
                     {/* Header back button */}
-                    <button 
+                    <button
                       onClick={() => setSelectedCourse(null)}
                       className="ph-topbar-btn"
                       style={{
@@ -1618,23 +1611,23 @@ const PracticeHome = () => {
                     </button>
 
                     {/* Course syllabus metadata header */}
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '2fr 1fr', 
-                      gap: '24px', 
-                      background: 'var(--ph-surface)', 
-                      border: '1px solid var(--ph-border)', 
-                      borderRadius: '16px', 
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '2fr 1fr',
+                      gap: '24px',
+                      background: 'var(--ph-surface)',
+                      border: '1px solid var(--ph-border)',
+                      borderRadius: '16px',
                       padding: '24px',
                       marginBottom: '30px'
                     }}>
                       <div>
-                        <span style={{ 
-                          background: 'rgba(124,107,255,0.15)', 
-                          color: '#7c6bff', 
-                          fontSize: '11px', 
-                          fontWeight: 'bold', 
-                          textTransform: 'uppercase', 
+                        <span style={{
+                          background: 'rgba(124,107,255,0.15)',
+                          color: '#7c6bff',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          textTransform: 'uppercase',
                           letterSpacing: '0.05em',
                           padding: '4px 10px',
                           borderRadius: '4px',
@@ -1646,18 +1639,18 @@ const PracticeHome = () => {
                           {scrapedSyllabus.description}
                         </p>
                       </div>
-                      
+
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
                         <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
                             <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
-                            <circle 
-                              cx="50" 
-                              cy="50" 
-                              r="40" 
-                              stroke="#7c6bff" 
-                              strokeWidth="8" 
-                              fill="transparent" 
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              stroke="#7c6bff"
+                              strokeWidth="8"
+                              fill="transparent"
                               strokeDasharray={251.2}
                               strokeDashoffset={dashOffset}
                               strokeLinecap="round"
@@ -1682,7 +1675,7 @@ const PracticeHome = () => {
                         const first4ProblemIds = modIdx === 0 ? mod.submodules.flatMap(s => s.problems).slice(0, 4).map(p => p.id) : [];
 
                         return (
-                          <div 
+                          <div
                             key={modIdx}
                             style={{
                               background: 'var(--ph-surface)',
@@ -1692,7 +1685,7 @@ const PracticeHome = () => {
                             }}
                           >
                             {/* Module header toggle */}
-                            <div 
+                            <div
                               onClick={() => setExpandedTopics(prev => ({ ...prev, [accordionKey]: !isOpen }))}
                               style={{
                                 padding: '16px 20px',
@@ -1724,7 +1717,7 @@ const PracticeHome = () => {
                             {isOpen && (
                               <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', background: 'rgba(0,0,0,0.08)' }}>
                                 {mod.submodules.map((sub, subIdx) => (
-                                  <div 
+                                  <div
                                     key={subIdx}
                                     style={{
                                       background: 'rgba(255,255,255,0.02)',
@@ -1766,11 +1759,11 @@ const PracticeHome = () => {
                                                 ) : status === 'LOCKED' ? (
                                                   <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
                                                 ) : (
-                                                  <span style={{ 
-                                                    width: '12px', 
-                                                    height: '12px', 
-                                                    borderRadius: '50%', 
-                                                    border: '2px solid var(--ph-text-dim)', 
+                                                  <span style={{
+                                                    width: '12px',
+                                                    height: '12px',
+                                                    borderRadius: '50%',
+                                                    border: '2px solid var(--ph-text-dim)',
                                                     display: 'inline-block',
                                                     opacity: 0.6
                                                   }} />
@@ -1779,12 +1772,12 @@ const PracticeHome = () => {
                                               <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{pIdx + 1}</td>
                                               <td className="ph-col-title">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                  <span 
+                                                  <span
                                                     className="ph-problem-title-text"
-                                                    style={{ 
-                                                      fontWeight: '500', 
-                                                      color: 'var(--ph-text)', 
-                                                      cursor: isAptitude ? 'default' : (status === 'LOCKED' ? 'not-allowed' : 'pointer') 
+                                                    style={{
+                                                      fontWeight: '500',
+                                                      color: 'var(--ph-text)',
+                                                      cursor: isAptitude ? 'default' : (status === 'LOCKED' ? 'not-allowed' : 'pointer')
                                                     }}
                                                     onClick={() => {
                                                       if (isAptitude) return;
@@ -1848,7 +1841,7 @@ const PracticeHome = () => {
               // Calculate total and solved
               let totalQs = 0;
               let solvedQs = 0;
-              
+
               if (course.id === 'programming_fundamentals') {
                 totalQs = 348;
                 solvedQs = solvedIds.filter(id => id.startsWith('Q0.')).length;
@@ -1865,16 +1858,16 @@ const PracticeHome = () => {
 
               return (
                 <div className="ps-sheet-detail" style={{ marginTop: '20px' }}>
-                  <button 
+                  <button
                     onClick={() => setSelectedCourse(null)}
                     className="ph-topbar-btn"
-                    style={{ 
-                      borderRadius: '8px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '6px', 
-                      marginBottom: '20px', 
-                      background: 'rgba(255,255,255,0.04)', 
+                    style={{
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '20px',
+                      background: 'rgba(255,255,255,0.04)',
                       border: '1px solid rgba(255,255,255,0.08)',
                       color: 'var(--ph-text)'
                     }}
@@ -1882,23 +1875,23 @@ const PracticeHome = () => {
                     <FaChevronLeft /> Back to Courses
                   </button>
 
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '2fr 1fr', 
-                    gap: '24px', 
-                    background: 'var(--ph-surface)', 
-                    border: '1px solid var(--ph-border)', 
-                    borderRadius: '16px', 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1fr',
+                    gap: '24px',
+                    background: 'var(--ph-surface)',
+                    border: '1px solid var(--ph-border)',
+                    borderRadius: '16px',
                     padding: '24px',
                     marginBottom: '30px'
                   }}>
                     <div>
-                      <span style={{ 
-                        background: 'rgba(124,107,255,0.15)', 
-                        color: '#7c6bff', 
-                        fontSize: '11px', 
-                        fontWeight: 'bold', 
-                        textTransform: 'uppercase', 
+                      <span style={{
+                        background: 'rgba(124,107,255,0.15)',
+                        color: '#7c6bff',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                         padding: '4px 10px',
                         borderRadius: '4px',
@@ -1907,23 +1900,23 @@ const PracticeHome = () => {
                       }}>COURSE</span>
                       <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{course.title}</h2>
                       <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                        {course.id === 'programming_fundamentals' 
+                        {course.id === 'programming_fundamentals'
                           ? 'Master core programming fundamentals in C, Python, and Java. Work through basic datatypes, operators, conditionals, loops, crunching, arrays, and strings.'
                           : 'Complete the assigned structural curriculum module.'}
                       </p>
                     </div>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
                       <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
                           <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
-                          <circle 
-                            cx="50" 
-                            cy="50" 
-                            r="40" 
-                            stroke="#7c6bff" 
-                            strokeWidth="8" 
-                            fill="transparent" 
+                          <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            stroke="#7c6bff"
+                            strokeWidth="8"
+                            fill="transparent"
                             strokeDasharray={251.2}
                             strokeDashoffset={dashOffset}
                             strokeLinecap="round"
@@ -1969,7 +1962,7 @@ const PracticeHome = () => {
                                     const qid = item.questionId;
                                     const qidNum = parseInt(qid.replace('Q0.', ''), 10) || 0;
                                     const lowerT = (item.title || '').toLowerCase();
-                                    
+
                                     let targetMod = '';
                                     if (lowerT.includes('datatype') || qidNum <= 31) {
                                       targetMod = 'FPS001'; // Basic Datatypes
@@ -1986,7 +1979,7 @@ const PracticeHome = () => {
                                     } else {
                                       targetMod = 'FPS007'; // Strings / Misc
                                     }
-                                    
+
                                     return targetMod === mod.id;
                                   });
 
@@ -2016,17 +2009,17 @@ const PracticeHome = () => {
                                     }
                                   }
                                 }
-                                
+
                                 const enrichedItems = items.map(p => {
                                   const qid = p.id || p.questionId || '';
                                   const lowerQ = String(qid).toLowerCase();
                                   const lowerMod = String(mod.id).toLowerCase();
-                                  
+
                                   let article = getCorrectArticleForProblem(course.id, p);
-                                  
-                                  
+
+
                                   let youtube = p.youtube || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-                                  
+
                                   return {
                                     ...p,
                                     article,
@@ -2042,22 +2035,22 @@ const PracticeHome = () => {
                           };
 
                           return (
-                            <div 
-                              key={mod.id} 
-                              style={{ 
-                                background: 'var(--ph-surface)', 
-                                border: '1px solid var(--ph-border)', 
-                                borderRadius: '12px', 
-                                overflow: 'hidden' 
+                            <div
+                              key={mod.id}
+                              style={{
+                                background: 'var(--ph-surface)',
+                                border: '1px solid var(--ph-border)',
+                                borderRadius: '12px',
+                                overflow: 'hidden'
                               }}
                             >
-                              <div 
+                              <div
                                 onClick={handleToggleStep}
-                                style={{ 
-                                  padding: '12px 18px', 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'space-between', 
+                                style={{
+                                  padding: '12px 18px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
                                   cursor: 'pointer',
                                   background: 'rgba(255,255,255,0.01)',
                                   borderBottom: isOpen ? '1px solid var(--ph-border)' : 'none'
@@ -2071,7 +2064,7 @@ const PracticeHome = () => {
                                     Step {modIdx + 1}: {mod.name}
                                   </strong>
                                 </div>
-                                
+
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <div style={{ width: '80px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -2116,13 +2109,13 @@ const PracticeHome = () => {
                                           const diffClass = p.difficulty?.toLowerCase() || 'easy';
 
                                           return (
-                                            <tr 
+                                            <tr
                                               key={p.id || pIdx}
                                               className={`ph-problem-row ${isSolved ? 'solved' : ''}`}
                                               style={{ background: 'rgba(255,255,255,0.005)' }}
                                             >
-                                              <td 
-                                                className="ph-col-status" 
+                                              <td
+                                                className="ph-col-status"
                                                 style={{ paddingLeft: '20px', fontSize: '14px', cursor: 'pointer' }}
                                               >
                                                 <span className="ph-status-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -2131,11 +2124,11 @@ const PracticeHome = () => {
                                                   ) : status === 'LOCKED' ? (
                                                     <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
                                                   ) : (
-                                                    <span style={{ 
-                                                      width: '14px', 
-                                                      height: '14px', 
-                                                      borderRadius: '50%', 
-                                                      border: '2px solid var(--ph-text-dim)', 
+                                                    <span style={{
+                                                      width: '14px',
+                                                      height: '14px',
+                                                      borderRadius: '50%',
+                                                      border: '2px solid var(--ph-text-dim)',
                                                       display: 'inline-block',
                                                       opacity: 0.6
                                                     }} />
@@ -2145,12 +2138,12 @@ const PracticeHome = () => {
                                               <td className="ph-col-num" style={{ color: 'var(--ph-text-dim)' }}>{pIdx + 1}</td>
                                               <td className="ph-col-title">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                  <span 
-                                                    className="ph-problem-title-text" 
-                                                    style={{ 
-                                                      fontWeight: '500', 
-                                                      cursor: (p.contentType === 'mcq' && p.article) ? 'pointer' : 'default', 
-                                                      color: 'var(--ph-text)' 
+                                                  <span
+                                                    className="ph-problem-title-text"
+                                                    style={{
+                                                      fontWeight: '500',
+                                                      cursor: (p.contentType === 'mcq' && p.article) ? 'pointer' : 'default',
+                                                      color: 'var(--ph-text)'
                                                     }}
                                                     onClick={() => {
                                                       if (p.contentType === 'mcq' && p.article && course.id === 'learn_aptitude') {
@@ -2191,29 +2184,29 @@ const PracticeHome = () => {
                                               <td className="ph-col-score" style={{ textAlign: 'right', paddingRight: '20px' }}>
                                                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                                                   <button
-                                                      onClick={() => {
-                                                        if (status === 'LOCKED') {
-                                                          setShowPremiumModal(true);
-                                                        } else {
-                                                          navigate(`/student/practice/course/${course.id}/${p.id}`);
-                                                        }
-                                                      }}
-                                                      style={{
-                                                        background: 'var(--ph-primary)',
-                                                        border: '1px solid rgba(124,107,255,0.4)',
-                                                        borderRadius: '6px',
-                                                        color: 'white',
-                                                        fontSize: '11px',
-                                                        fontWeight: 'bold',
-                                                        padding: '4px 12px',
-                                                        cursor: status === 'LOCKED' ? 'not-allowed' : 'pointer',
-                                                        transition: 'all 0.2s'
-                                                      }}
-                                                    >
-                                                      {course.id === 'learn_aptitude'
-                                                        ? (p.contentType === 'practice_test' ? 'Take Test' : 'Study')
-                                                        : 'Solve'}
-                                                    </button>
+                                                    onClick={() => {
+                                                      if (status === 'LOCKED') {
+                                                        setShowPremiumModal(true);
+                                                      } else {
+                                                        navigate(`/student/practice/course/${course.id}/${p.id}`);
+                                                      }
+                                                    }}
+                                                    style={{
+                                                      background: 'var(--ph-primary)',
+                                                      border: '1px solid rgba(124,107,255,0.4)',
+                                                      borderRadius: '6px',
+                                                      color: 'white',
+                                                      fontSize: '11px',
+                                                      fontWeight: 'bold',
+                                                      padding: '4px 12px',
+                                                      cursor: status === 'LOCKED' ? 'not-allowed' : 'pointer',
+                                                      transition: 'all 0.2s'
+                                                    }}
+                                                  >
+                                                    {course.id === 'learn_aptitude'
+                                                      ? (p.contentType === 'practice_test' ? 'Take Test' : 'Study')
+                                                      : 'Solve'}
+                                                  </button>
                                                 </div>
                                               </td>
                                             </tr>
@@ -2232,22 +2225,22 @@ const PracticeHome = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {course.subcourses.map(sub => (
                           <div key={sub.id} style={{ borderLeft: '2px solid rgba(124,107,255,0.3)', paddingLeft: '14px' }}>
-                            <div 
+                            <div
                               onClick={() => toggleSubcourseExpand(sub.id)}
                               style={{
-                                display: 'flex', alignItems: 'center', gap: '8px', 
+                                display: 'flex', alignItems: 'center', gap: '8px',
                                 cursor: 'pointer', padding: '6px 0', color: 'var(--ph-text)', fontWeight: 600
                               }}
                             >
                               {expandedSubcourses[sub.id] ? <FaAngleDown /> : <FaAngleRight />}
                               <span>{sub.title}</span>
                             </div>
-                            
+
                             {expandedSubcourses[sub.id] && (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                                 {sub.modules.map(mod => (
-                                  <div 
-                                    key={mod.id} 
+                                  <div
+                                    key={mod.id}
                                     onClick={() => handleModuleClick(mod)}
                                     style={{
                                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -2275,8 +2268,8 @@ const PracticeHome = () => {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {course.modules.map(mod => (
-                          <div 
-                            key={mod.id} 
+                          <div
+                            key={mod.id}
                             onClick={() => handleModuleClick(mod)}
                             style={{
                               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -2306,14 +2299,14 @@ const PracticeHome = () => {
             // ─── TILE GRID FOR COURSES OR ROADMAPS ───
             <div>
               {/* Sub-tab Toggle Header */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                borderBottom: '1px solid rgba(255,255,255,0.06)', 
-                paddingBottom: '16px', 
-                marginBottom: '28px' 
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                paddingBottom: '16px',
+                marginBottom: '28px'
               }}>
-                <button 
+                <button
                   onClick={() => setCurriculumSubTab('technical')}
                   style={{
                     background: curriculumSubTab === 'technical' ? 'rgba(124,107,255,0.15)' : 'transparent',
@@ -2332,7 +2325,7 @@ const PracticeHome = () => {
                 >
                   Technical Courses
                 </button>
-                <button 
+                <button
                   onClick={() => setCurriculumSubTab('aptitude')}
                   style={{
                     background: curriculumSubTab === 'aptitude' ? 'rgba(124,107,255,0.15)' : 'transparent',
@@ -2351,7 +2344,7 @@ const PracticeHome = () => {
                 >
                   Aptitude Courses
                 </button>
-                <button 
+                <button
                   onClick={() => setCurriculumSubTab('roadmaps')}
                   style={{
                     background: curriculumSubTab === 'roadmaps' ? 'rgba(124,107,255,0.15)' : 'transparent',
@@ -2485,18 +2478,18 @@ const PracticeHome = () => {
                           }
                         }
 
-                        const style = { 
-                          '--theme-border-color': '#7c6bff', 
-                          '--theme-border-color-15': 'rgba(124,107,255,0.15)', 
-                          '--theme-border-color-25': 'rgba(124,107,255,0.25)', 
-                          '--theme-border-color-30': 'rgba(124,107,255,0.30)', 
-                          '--theme-border-color-50': 'rgba(124,107,255,0.50)' 
+                        const style = {
+                          '--theme-border-color': '#7c6bff',
+                          '--theme-border-color-15': 'rgba(124,107,255,0.15)',
+                          '--theme-border-color-25': 'rgba(124,107,255,0.25)',
+                          '--theme-border-color-30': 'rgba(124,107,255,0.30)',
+                          '--theme-border-color-50': 'rgba(124,107,255,0.50)'
                         };
 
                         const isCompleted = totalQs > 0 && solvedQs === totalQs;
 
                         return (
-                          <div 
+                          <div
                             key={course.id}
                             className="ps-sheet-card"
                             style={{
@@ -2515,11 +2508,11 @@ const PracticeHome = () => {
                                 )}
                               </h3>
                               <p className="ps-card-desc">
-                                {course.id === 'programming_fundamentals' 
+                                {course.id === 'programming_fundamentals'
                                   ? 'Master core programming fundamentals: basic datatypes, operators, conditionals, loops, crunching, arrays, and strings.'
                                   : course.id === 'learn_aptitude'
-                                  ? 'Master Quantitative Aptitude, Logical Reasoning, and Verbal Ability with standard MCQ practice sets.'
-                                  : `Learn and master problem solving, logic building, and algorithms for ${course.title}.`}
+                                    ? 'Master Quantitative Aptitude, Logical Reasoning, and Verbal Ability with standard MCQ practice sets.'
+                                    : `Learn and master problem solving, logic building, and algorithms for ${course.title}.`}
                               </p>
                             </div>
 
@@ -2527,7 +2520,7 @@ const PracticeHome = () => {
                               <span className="ps-card-stats">
                                 {solvedQs}/{totalQs} Solved
                               </span>
-                              
+
                               <div className="ps-card-actions">
                                 <button
                                   onClick={() => setSelectedCourse(course.id)}
@@ -2550,7 +2543,7 @@ const PracticeHome = () => {
                   {roadmapsData.map((roadmap, idx) => {
                     const styleInfo = getRoadmapStyle(roadmap.slug);
                     return (
-                      <div 
+                      <div
                         key={idx}
                         style={{
                           background: 'var(--ph-surface)',
@@ -2589,11 +2582,11 @@ const PracticeHome = () => {
                               const total = qids.length;
                               const solved = qids.filter(id => solvedIdsSet.has(id)).length;
                               const percent = total > 0 ? Math.round((solved / total) * 100) : 0;
-                              
+
                               let statusText = 'Not Started';
                               let statusColor = '#94a3b8';
                               let actionText = 'Start Course';
-                              
+
                               if (percent === 100) {
                                 statusText = 'Completed';
                                 statusColor = '#10b981';
@@ -2605,8 +2598,8 @@ const PracticeHome = () => {
                               }
 
                               return (
-                                <div 
-                                  key={sIdx} 
+                                <div
+                                  key={sIdx}
                                   style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -2693,7 +2686,7 @@ const PracticeHome = () => {
                                         if (courseExists) {
                                           setSelectedCourse(step.target);
                                         } else {
-                                          const matchedCourse = courses.find(c => 
+                                          const matchedCourse = courses.find(c =>
                                             c.id.toLowerCase() === step.target.toLowerCase() ||
                                             c.title.toLowerCase().includes(step.label.toLowerCase())
                                           );
@@ -2832,13 +2825,13 @@ const PracticeHome = () => {
 
                     const diffClass = q.difficulty === 'Hard' ? 'hard'
                       : q.difficulty === 'Medium' ? 'medium'
-                      : q.difficulty === 'Beginner' ? 'beginner'
-                      : 'easy';
+                        : q.difficulty === 'Beginner' ? 'beginner'
+                          : 'easy';
 
                     const statusIcon = status === 'SOLVED' ? <FaCheckCircle style={{ color: 'var(--ph-success)' }} />
                       : status === 'ATTEMPTED' ? <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: '#fbbf24' }}></span>
-                      : status === 'LOCKED' ? <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
-                      : null;
+                        : status === 'LOCKED' ? <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
+                          : null;
 
                     return (
                       <tr
@@ -2963,7 +2956,7 @@ const PracticeHome = () => {
                 ✕
               </button>
             </div>
-            
+
             <div className="ph-article-scroll" onScroll={handleScroll}>
               {activeArticle.isExternal ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -2972,16 +2965,16 @@ const PracticeHome = () => {
                   <p style={{ color: 'var(--ph-text-dim)', marginBottom: '24px', maxWidth: '500px', margin: '0 auto 24px' }}>
                     This tutorial is hosted on an external source website ({new URL(activeArticle.url).hostname}). Click the button below to view it.
                   </p>
-                  <a 
+                  <a
                     href={activeArticle.url}
-                    target="_blank" 
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="ph-topbar-btn active"
-                    style={{ 
-                      textDecoration: 'none', 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      gap: '8px', 
+                    style={{
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
                       padding: '10px 24px',
                       borderRadius: '8px',
                       fontSize: '14px',
@@ -3016,8 +3009,8 @@ const PracticeHome = () => {
                     }
                     return null;
                   })()}
-                  
-                  <div 
+
+                  <div
                     className="ph-article-content"
                     onClick={handleArticleContainerClick}
                     dangerouslySetInnerHTML={{ __html: activeArticle.content }}

@@ -346,8 +346,8 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     // Load available MCQ tests based on access control
     const loadAvailableTests = async (accessControlData, userData) => {
         try {
-            if (!accessControlData?.courses?.mcqs) {
-                console.log('No mcqs section found in access control');
+            if (!accessControlData?.courses?.assessments) {
+                console.log('No assessments section found in access control');
                 setAvailableTests([]);
                 setFilteredTests([]);
                 return;
@@ -383,8 +383,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 return modules;
             };
 
-            // Get MCQ modules from access control
-            const mcqModules = extractAllModules(accessControlData?.courses?.mcqs);
+            // Get MCQ modules from assessments in access control
+            const allModules = extractAllModules(accessControlData?.courses?.assessments);
+            const mcqModules = {};
+            Object.entries(allModules).forEach(([key, val]) => {
+                if (val.type === 'mcq') {
+                    mcqModules[key] = val;
+                }
+            });
             const allowedModuleIds = departmentAccess.allowed_modules || [];
 
             // Filter tests that user has access to

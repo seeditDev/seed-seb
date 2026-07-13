@@ -17,6 +17,7 @@ import {
   FaTimes,
   FaCheck,
   FaCheckCircle,
+  FaArrowLeft,
   FaExclamationTriangle,
   FaWifi,
   FaPlug,
@@ -37,6 +38,7 @@ import {
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
+import '../styles/PracticeHome.css';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import TrackingService from '../services/trackingService';
@@ -129,6 +131,12 @@ const StudentDashboard = () => {
   const [filteredAssessments, setFilteredAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedSeries, setSelectedSeries] = useState(null);
+
+  useEffect(() => {
+    setSelectedSeries(null);
+    setSearchTerm("");
+  }, [activeTab]);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
@@ -390,12 +398,16 @@ const StudentDashboard = () => {
         if (!course) return {};
         const modules = {};
         if (course.modules) {
-          Object.assign(modules, course.modules);
+          Object.entries(course.modules).forEach(([k, mod]) => {
+            modules[k] = { ...mod, seriesName: course.title || 'General Assessments', seriesKey: 'general', seriesDescription: course.description || '' };
+          });
         }
         if (course.subcourses) {
-          Object.values(course.subcourses).forEach(sub => {
+          Object.entries(course.subcourses).forEach(([subId, sub]) => {
             if (sub.modules) {
-              Object.assign(modules, sub.modules);
+              Object.entries(sub.modules).forEach(([k, mod]) => {
+                modules[k] = { ...mod, seriesName: sub.title || subId, seriesKey: subId, seriesDescription: sub.description || '' };
+              });
             }
           });
         }
@@ -457,6 +469,9 @@ const StudentDashboard = () => {
               type,
               isMultiSection: !!module.isMultiSection || type === 'MSA',
               sections: module.sections || [],
+              seriesName: module.seriesName || 'General Assessments',
+              seriesKey: module.seriesKey || 'general',
+              seriesDescription: module.seriesDescription || '',
               proctored: module.proctored,
               maxViolations: module.maxViolations,
               display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999),
@@ -978,6 +993,25 @@ const StudentDashboard = () => {
   const dept = user?.Department || "N/A";
 
   const renderAssessments = () => {
+    // 1. Group all loaded assessments by series key
+    const seriesMap = {};
+    assessments.forEach(a => {
+      const sKey = a.seriesKey || 'general';
+      const sName = a.seriesName || 'General Assessments';
+      const sDesc = a.seriesDescription || `Practice and evaluation modules for ${sName}.`;
+      if (!seriesMap[sKey]) {
+        seriesMap[sKey] = {
+          key: sKey,
+          title: sName,
+          description: sDesc,
+          assessments: []
+        };
+      }
+      seriesMap[sKey].assessments.push(a);
+    });
+
+    const seriesList = Object.values(seriesMap);
+
     return (
       <div className="assessments-tab-content">
         <div className="dashboard-welcome">
@@ -985,122 +1019,275 @@ const StudentDashboard = () => {
           <p>Complete your scheduled MCQ quizzes and coding assessments below.</p>
         </div>
 
-        {/* Filters Panel */}
-        <div className="dashboard-filters-bar">
-          <div className="search-box-wrapper">
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search by assessment name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-
-          <div className="filter-dropdowns">
-            <div className="filter-item">
-              <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="diff-filter-select">
-                <option value="All">All Types</option>
-                <option value="MCQ">MCQ Quiz</option>
-                <option value="Coding">Coding</option>
-              </select>
+        {selectedSeries === null ? (
+          // ─── SERIES TILE VIEW ───
+          <>
+            {/* Filters Panel for Series */}
+            <div className="dashboard-filters-bar">
+              <div className="search-box-wrapper">
+                <FaSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search series by name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+              </div>
             </div>
-            <div className="filter-item">
-              <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)} className="diff-filter-select">
-                <option value="All">All Difficulties</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-            </div>
-            <div className="filter-item">
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="diff-filter-select">
-                <option value="All">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Upcoming">Upcoming</option>
-                <option value="Expired">Expired</option>
-              </select>
-            </div>
-          </div>
-        </div>
 
-        {/* Grid List */}
-        {loading ? (
-          <div className="learn-loading">
-            <div className="learn-spinner"></div>
-            <p>Loading assessments catalog...</p>
-          </div>
-        ) : error ? (
-          <div className="error-banner">
-            <FaExclamationTriangle /> {error}
-          </div>
-        ) : filteredAssessments.length > 0 ? (
-          <div className="assessments-cards-grid">
-            {filteredAssessments.map(a => {
-              const sched = getScheduleStatus(a.schedule);
-              const isExpired = sched.status === "Expired";
-              const isUpcoming = sched.status === "Upcoming";
-              const isActive = sched.status === "Active";
+            {loading ? (
+              <div className="learn-loading">
+                <div className="learn-spinner"></div>
+                <p>Loading assessments catalog...</p>
+              </div>
+            ) : error ? (
+              <div className="error-banner">
+                <FaExclamationTriangle /> {error}
+              </div>
+            ) : seriesList.length > 0 ? (
+              <div className="ps-cards-grid">
+                {seriesList
+                  .filter(s => !searchTerm || s.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map(series => {
+                    const totalTests = series.assessments.length;
+                    const completedTests = series.assessments.filter(a => a.completed).length;
 
-              return (
-                <div key={a.id} className={`assessment-dashboard-card type-${a.type}`}>
-                  <div className="card-badge-row">
-                    <span className={`type-badge badge-${a.type}`}>
-                      {a.type === 'mcq' ? <FaQuestionCircle /> : <FaLaptopCode />} {a.type.toUpperCase()}
-                    </span>
-                    {a.completed && (
-                      <span className="difficulty-badge diff-easy" style={{ background: '#0e4429', color: '#39d353', border: '1px solid rgba(57, 211, 83, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <FaCheckCircle /> Completed
-                      </span>
-                    )}
-                    <span className={`difficulty-badge diff-${a.difficulty.toLowerCase()}`}>
-                      {a.difficulty}
-                    </span>
-                  </div>
+                    return (
+                      <div 
+                        key={series.key} 
+                        className="ps-sheet-card"
+                        style={{
+                          '--theme-border-color': '#7c6bff',
+                          minHeight: '190px'
+                        }}
+                      >
+                        <div>
+                          <h3 className="ps-card-title">{series.title}</h3>
+                          <p className="ps-card-desc" style={{ fontSize: '13px', marginTop: '6px', color: 'var(--ph-text-dim)' }}>
+                            {series.description}
+                          </p>
+                        </div>
+                        
+                        <div className="ps-card-footer" style={{ borderTop: '1px solid var(--ph-border)', paddingTop: '14px', marginTop: '16px' }}>
+                          <span className="ps-card-stats" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ph-text-dim)' }}>
+                            {completedTests}/{totalTests} Completed
+                          </span>
+                          
+                          <div className="ps-card-actions">
+                            <button 
+                              onClick={() => setSelectedSeries(series.key)} 
+                              className="ps-action-btn primary" 
+                              style={{ padding: '6px 16px', fontSize: '13px' }}
+                            >
+                              Start Test
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            ) : (
+              <div className="no-contests-message" style={{ textAlign: 'center', padding: '60px' }}>
+                No assessment series assigned to you.
+              </div>
+            )}
+          </>
+        ) : (
+          // ─── ASSESSMENTS DETAIL VIEW ───
+          (() => {
+            const series = seriesMap[selectedSeries];
+            if (!series) {
+              setSelectedSeries(null);
+              return null;
+            }
 
-                  <h3 className="assessment-card-title">{a.name}</h3>
+            // Filter assessments inside this series
+            let assessmentsToShow = series.assessments;
+            if (searchTerm.trim()) {
+              const q = searchTerm.toLowerCase();
+              assessmentsToShow = assessmentsToShow.filter(a => a.name.toLowerCase().includes(q));
+            }
+            if (filterDifficulty !== "All") {
+              assessmentsToShow = assessmentsToShow.filter(a => a.difficulty.toLowerCase() === filterDifficulty.toLowerCase());
+            }
+            if (filterType !== "All") {
+              assessmentsToShow = assessmentsToShow.filter(a => a.type.toLowerCase() === filterType.toLowerCase());
+            }
+            if (filterStatus !== "All") {
+              assessmentsToShow = assessmentsToShow.filter(a => {
+                const sched = getScheduleStatus(a.schedule);
+                return sched.status.toLowerCase() === filterStatus.toLowerCase();
+              });
+            }
 
-                  <div className="assessment-card-details">
-                    <div className="detail-item">
-                      <FaClock /> <span>{a.duration} Minutes</span>
-                    </div>
-                    <div className="detail-item">
-                      <FaClipboardList /> <span>{a.isMultiSection || a.type === 'MSA' ? `${a.sections?.length || 0} Sections` : `${a.questions} ${a.type === 'mcq' ? 'Questions' : 'Coding Tasks'}`}</span>
-                    </div>
-                    <div className="detail-item schedule">
-                      <FaCalendarAlt />
-                      <span>
-                        {a.schedule ? `${a.schedule.startDate} ${a.schedule.startTime} - ${a.schedule.endTime}` : 'Always open'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="assessment-card-actions">
-                    {a.completed ? (
-                      <button className="start-btn" disabled style={{ background: '#0e4429', color: '#39d353', cursor: 'not-allowed', border: '1px solid rgba(57, 211, 83, 0.3)', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        <FaCheckCircle /> Assessment Submitted
-                      </button>
-                    ) : isExpired ? (
-                      <span className="expired-badge-label">Expired</span>
-                    ) : isUpcoming ? (
-                      <button className="start-btn disabled" disabled>
-                        <FaLock /> Locks Until {a.schedule.startTime}
-                      </button>
-                    ) : (
-                      <button className="start-btn active" onClick={() => handleStartClick(a)}>
-                        Start Assessment
-                      </button>
-                    )}
+            return (
+              <>
+                {/* Back button and series header */}
+                <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <button 
+                    onClick={() => { setSelectedSeries(null); setSearchTerm(""); }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-main)',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '13px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <FaArrowLeft /> Back to Series
+                  </button>
+                  <div>
+                    <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{series.title}</h2>
+                    <p style={{ fontSize: '13px', color: 'var(--ph-text-dim)', margin: '2px 0 0 0' }}>{series.description}</p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="no-contests-message" style={{ textAlign: 'center', padding: '60px' }}>
-            No assessments match your current filters.
-          </div>
+
+                {/* Filters Panel for assessments inside series */}
+                <div className="dashboard-filters-bar">
+                  <div className="search-box-wrapper">
+                    <FaSearch className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search assessment by name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="search-input"
+                    />
+                  </div>
+
+                  <div className="filter-dropdowns">
+                    <div className="filter-item">
+                      <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="diff-filter-select">
+                        <option value="All">All Types</option>
+                        <option value="MCQ">MCQ Quiz</option>
+                        <option value="Coding">Coding</option>
+                        <option value="MSA">Multi-Section (MSA)</option>
+                      </select>
+                    </div>
+                    <div className="filter-item">
+                      <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)} className="diff-filter-select">
+                        <option value="All">All Difficulties</option>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                      </select>
+                    </div>
+                    <div className="filter-item">
+                      <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="diff-filter-select">
+                        <option value="All">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Expired">Expired</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {assessmentsToShow.length > 0 ? (
+                  <div className="ps-cards-grid">
+                    {assessmentsToShow.map(a => {
+                      const sched = getScheduleStatus(a.schedule);
+                      const isExpired = sched.status === "Expired";
+                      const isUpcoming = sched.status === "Upcoming";
+                      const isActive = sched.status === "Active";
+
+                      return (
+                        <div 
+                          key={a.id} 
+                          className="ps-sheet-card"
+                          style={{
+                            '--theme-border-color': a.type === 'mcq' ? '#0ea5e9' : (a.type === 'MSA' ? '#8b5cf6' : '#7c6bff'),
+                            border: a.completed ? '1px solid rgba(74,222,128,0.3)' : '1px solid var(--ph-border)',
+                            boxShadow: a.completed ? '0 4px 20px rgba(74,222,128,0.08)' : 'none',
+                            minHeight: '200px'
+                          }}
+                        >
+                          <div>
+                            <h3 className="ps-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span>{a.name}</span>
+                              {a.completed ? (
+                                <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ade80', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                                  Completed
+                                </span>
+                              ) : (
+                                <span className={`difficulty-badge diff-${a.difficulty.toLowerCase()}`}>
+                                  {a.difficulty}
+                                </span>
+                              )}
+                            </h3>
+                            <p className="ps-card-desc" style={{ fontSize: '12px', marginTop: '6px', color: 'var(--ph-text-dim)' }}>
+                              {a.description || `Assessment test covering various ${a.type} questions and topics.`}
+                            </p>
+                            
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px', fontSize: '12px', color: 'var(--ph-text-dim)' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <FaClock /> {a.duration} Mins
+                              </span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <FaClipboardList /> {a.isMultiSection || a.type === 'MSA' ? `${a.sections?.length || 0} Sections` : `${a.questions} ${a.type === 'mcq' ? 'Questions' : 'Coding Tasks'}`}
+                              </span>
+                              {a.schedule && (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <FaCalendarAlt /> {a.schedule.startDate}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--ph-border)', paddingTop: '14px', marginTop: '16px' }}>
+                            <span className="ps-card-stats" style={{ textTransform: 'uppercase', fontSize: '11px', fontWeight: 'bold', color: a.type === 'mcq' ? '#0ea5e9' : (a.type === 'MSA' ? '#a78bfa' : '#7c6bff') }}>
+                              {a.type.toUpperCase()}
+                            </span>
+                            
+                            <div className="ps-card-actions">
+                              {a.completed ? (
+                                <button className="ps-action-btn" disabled style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                  <FaCheckCircle /> Submitted
+                                </button>
+                              ) : isExpired ? (
+                                <button className="ps-action-btn" disabled style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ph-text-dim)', border: '1px solid var(--ph-border)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '13px' }}>
+                                  Expired
+                                </button>
+                              ) : isUpcoming ? (
+                                <button className="ps-action-btn" disabled style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ph-text-dim)', border: '1px solid var(--ph-border)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                  <FaLock /> Locked
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={() => handleStartClick(a)} 
+                                  className="ps-action-btn primary" 
+                                  style={{
+                                    padding: '6px 16px',
+                                    fontSize: '13px',
+                                    background: a.type === 'mcq' ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : (a.type === 'MSA' ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'linear-gradient(135deg, #7c6bff, #4f46e5)')
+                                  }}
+                                >
+                                  Start Test
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="no-contests-message" style={{ textAlign: 'center', padding: '60px' }}>
+                    No assessments match your current filters in this series.
+                  </div>
+                )}
+              </>
+            );
+          })()
         )}
       </div>
     );
