@@ -29,7 +29,7 @@ export const COLLEGES = {
     'KITE': 'KGiSL Institute of Technology (KITE)',
     'KGCAS': 'KGiSL College of Arts and Science (KGCAS)',
     'KGIIM': 'KGiSL Institute of Information Management (KGiSL-IIM)',
-    'SEED-IT': 'SEED Innovating Technologies and Educational Services (SEED-IT)'
+    'SEEDIT': 'SEED Innovating Technologies and Educational Services (SEED-IT)'
 };
 
 export const CACHE_CONFIG = {

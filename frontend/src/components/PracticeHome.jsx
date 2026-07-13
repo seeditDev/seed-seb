@@ -184,6 +184,8 @@ const PracticeHome = () => {
   const [cppQuestionIds, setCppQuestionIds] = useState([]);
   const [dsaQuestionIds, setDsaQuestionIds] = useState([]);
   const [courseQuestionIds, setCourseQuestionIds] = useState({});
+  const [courseSearch, setCourseSearch] = useState('');
+  const [courseFilter, setCourseFilter] = useState('All');
   const cQuestionIdsSet = useMemo(() => new Set(cQuestionIds), [cQuestionIds]);
   const javaQuestionIdsSet = useMemo(() => new Set(javaQuestionIds), [javaQuestionIds]);
   const cppQuestionIdsSet = useMemo(() => new Set(cppQuestionIds), [cppQuestionIds]);
@@ -2372,91 +2374,174 @@ const PracticeHome = () => {
 
               {(curriculumSubTab === 'technical' || curriculumSubTab === 'aptitude') ? (
                 <div className="ps-categories-container">
-                  <div className="ps-cards-grid">
-                    {courses
-                      .filter(c => curriculumSubTab === 'aptitude' ? c.id === 'learn_aptitude' : c.id !== 'learn_aptitude')
-                      .map(course => {
-                      let totalQs = 0;
-                      let solvedQs = 0;
+                  <div className="ph-problems-filterbar" style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
+                    <div className="ph-problems-search-wrap" style={{ flex: 1 }}>
+                      <FaSearch className="ph-problems-search-icon" />
+                      <input
+                        type="text"
+                        placeholder="Search courses..."
+                        value={courseSearch}
+                        onChange={e => setCourseSearch(e.target.value)}
+                        className="ph-problems-search"
+                      />
+                    </div>
+                    <select
+                      value={courseFilter}
+                      onChange={e => setCourseFilter(e.target.value)}
+                      className="ph-problems-select"
+                      style={{ minWidth: '160px' }}
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="Not Started">Not Started</option>
+                      <option value="In-Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
 
-                      if (course.id === 'programming_fundamentals') {
-                        totalQs = 348;
-                        solvedQs = solvedIds.filter(id => id.startsWith('Q0.')).length;
-                      } else if (course.id === 'learn_c') {
-                        totalQs = cQuestionIds.length || 609;
-                        solvedQs = solvedIds.filter(id => cQuestionIdsSet.has(id)).length;
-                      } else if (course.id === 'learn_cpp') {
-                        totalQs = cppQuestionIds.length || 825;
-                        solvedQs = solvedIds.filter(id => cppQuestionIdsSet.has(id)).length;
-                      } else if (course.id === 'learn_dsa') {
-                        totalQs = dsaQuestionIds.length || 926;
-                        solvedQs = solvedIds.filter(id => dsaQuestionIdsSet.has(id)).length;
-                      } else if (course.id === 'learn_java') {
-                        totalQs = javaQuestionIds.length || 883;
-                        solvedQs = solvedIds.filter(id => javaQuestionIdsSet.has(id)).length;
-                      } else if (course.id === 'learn_aptitude') {
-                        totalQs = 119;
-                        solvedQs = solvedIds.filter(id => id.startsWith('Q_apt_')).length;
-                      } else {
-                        totalQs = (course.modules || []).length * 10;
+                  <div className="ps-cards-grid">
+                    {(() => {
+                      const filtered = courses
+                        .filter(c => curriculumSubTab === 'aptitude' ? c.id === 'learn_aptitude' : c.id !== 'learn_aptitude')
+                        .filter(c => {
+                          if (courseSearch && !c.title.toLowerCase().includes(courseSearch.toLowerCase())) {
+                            return false;
+                          }
+                          if (courseFilter === 'All') return true;
+                          let totalQs = 0;
+                          let solvedQs = 0;
+                          if (c.id === 'programming_fundamentals') {
+                            totalQs = 348;
+                            solvedQs = solvedIds.filter(id => id.startsWith('Q0.')).length;
+                          } else if (c.id === 'learn_c') {
+                            totalQs = cQuestionIds.length || 609;
+                            solvedQs = solvedIds.filter(id => cQuestionIdsSet.has(id)).length;
+                          } else if (c.id === 'learn_cpp') {
+                            totalQs = cppQuestionIds.length || 825;
+                            solvedQs = solvedIds.filter(id => cppQuestionIdsSet.has(id)).length;
+                          } else if (c.id === 'learn_dsa') {
+                            totalQs = dsaQuestionIds.length || 926;
+                            solvedQs = solvedIds.filter(id => dsaQuestionIdsSet.has(id)).length;
+                          } else if (c.id === 'learn_java') {
+                            totalQs = javaQuestionIds.length || 883;
+                            solvedQs = solvedIds.filter(id => javaQuestionIdsSet.has(id)).length;
+                          } else if (c.id === 'learn_aptitude') {
+                            totalQs = 119;
+                            solvedQs = solvedIds.filter(id => id.startsWith('Q_apt_')).length;
+                          } else {
+                            const mappedQids = courseQuestionIds[c.id] || [];
+                            if (mappedQids.length > 0) {
+                              totalQs = mappedQids.length;
+                              solvedQs = mappedQids.filter(id => solvedIdsSet.has(id)).length;
+                            } else {
+                              totalQs = (c.modules || []).length * 10;
+                              solvedQs = 0;
+                            }
+                          }
+
+                          if (courseFilter === 'Completed') return totalQs > 0 && solvedQs === totalQs;
+                          if (courseFilter === 'In-Progress') return solvedQs > 0 && solvedQs < totalQs;
+                          if (courseFilter === 'Not Started') return solvedQs === 0;
+                          return true;
+                        });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', color: 'var(--ph-text-dim)' }}>
+                            <p style={{ margin: 0, fontSize: '15px' }}>No courses found matching your query or status filter.</p>
+                          </div>
+                        );
                       }
 
-                      const style = { 
-                        '--theme-border-color': '#7c6bff', 
-                        '--theme-border-color-15': 'rgba(124,107,255,0.15)', 
-                        '--theme-border-color-25': 'rgba(124,107,255,0.25)', 
-                        '--theme-border-color-30': 'rgba(124,107,255,0.30)', 
-                        '--theme-border-color-50': 'rgba(124,107,255,0.50)' 
-                      };
+                      return filtered.map(course => {
+                        let totalQs = 0;
+                        let solvedQs = 0;
 
-                      const isCompleted = totalQs > 0 && solvedQs === totalQs;
+                        if (course.id === 'programming_fundamentals') {
+                          totalQs = 348;
+                          solvedQs = solvedIds.filter(id => id.startsWith('Q0.')).length;
+                        } else if (course.id === 'learn_c') {
+                          totalQs = cQuestionIds.length || 609;
+                          solvedQs = solvedIds.filter(id => cQuestionIdsSet.has(id)).length;
+                        } else if (course.id === 'learn_cpp') {
+                          totalQs = cppQuestionIds.length || 825;
+                          solvedQs = solvedIds.filter(id => cppQuestionIdsSet.has(id)).length;
+                        } else if (course.id === 'learn_dsa') {
+                          totalQs = dsaQuestionIds.length || 926;
+                          solvedQs = solvedIds.filter(id => dsaQuestionIdsSet.has(id)).length;
+                        } else if (course.id === 'learn_java') {
+                          totalQs = javaQuestionIds.length || 883;
+                          solvedQs = solvedIds.filter(id => javaQuestionIdsSet.has(id)).length;
+                        } else if (course.id === 'learn_aptitude') {
+                          totalQs = 119;
+                          solvedQs = solvedIds.filter(id => id.startsWith('Q_apt_')).length;
+                        } else {
+                          const mappedQids = courseQuestionIds[course.id] || [];
+                          if (mappedQids.length > 0) {
+                            totalQs = mappedQids.length;
+                            solvedQs = mappedQids.filter(id => solvedIdsSet.has(id)).length;
+                          } else {
+                            totalQs = (course.modules || []).length * 10;
+                            solvedQs = 0;
+                          }
+                        }
 
-                      return (
-                        <div 
-                          key={course.id}
-                          className="ps-sheet-card"
-                          style={{
-                            ...style,
-                            border: isCompleted ? '1px solid rgba(74,222,128,0.3)' : '1px solid var(--ph-border)',
-                            boxShadow: isCompleted ? '0 4px 20px rgba(74,222,128,0.08)' : 'none'
-                          }}
-                        >
-                          <div>
-                            <h3 className="ps-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span>{course.title}</span>
-                              {isCompleted && (
-                                <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ade80', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
-                                  Mastered
-                                </span>
-                              )}
-                            </h3>
-                            <p className="ps-card-desc">
-                              {course.id === 'programming_fundamentals' 
-                                ? 'Master core programming fundamentals: basic datatypes, operators, conditionals, loops, crunching, arrays, and strings.'
-                                : course.id === 'learn_aptitude'
-                                ? 'Master Quantitative Aptitude, Logical Reasoning, and Verbal Ability with standard MCQ practice sets.'
-                                : `Learn and master problem solving, logic building, and algorithms for ${course.title}.`}
-                            </p>
-                          </div>
+                        const style = { 
+                          '--theme-border-color': '#7c6bff', 
+                          '--theme-border-color-15': 'rgba(124,107,255,0.15)', 
+                          '--theme-border-color-25': 'rgba(124,107,255,0.25)', 
+                          '--theme-border-color-30': 'rgba(124,107,255,0.30)', 
+                          '--theme-border-color-50': 'rgba(124,107,255,0.50)' 
+                        };
 
-                          <div className="ps-card-footer">
-                            <span className="ps-card-stats">
-                              {solvedQs}/{totalQs} Solved
-                            </span>
-                            
-                            <div className="ps-card-actions">
-                              <button
-                                onClick={() => setSelectedCourse(course.id)}
-                                className="ps-action-btn primary"
-                                style={{ padding: '6px 16px' }}
-                              >
-                                Start Learning
-                              </button>
+                        const isCompleted = totalQs > 0 && solvedQs === totalQs;
+
+                        return (
+                          <div 
+                            key={course.id}
+                            className="ps-sheet-card"
+                            style={{
+                              ...style,
+                              border: isCompleted ? '1px solid rgba(74,222,128,0.3)' : '1px solid var(--ph-border)',
+                              boxShadow: isCompleted ? '0 4px 20px rgba(74,222,128,0.08)' : 'none'
+                            }}
+                          >
+                            <div>
+                              <h3 className="ps-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>{course.title}</span>
+                                {isCompleted && (
+                                  <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ade80', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                                    Mastered
+                                  </span>
+                                )}
+                              </h3>
+                              <p className="ps-card-desc">
+                                {course.id === 'programming_fundamentals' 
+                                  ? 'Master core programming fundamentals: basic datatypes, operators, conditionals, loops, crunching, arrays, and strings.'
+                                  : course.id === 'learn_aptitude'
+                                  ? 'Master Quantitative Aptitude, Logical Reasoning, and Verbal Ability with standard MCQ practice sets.'
+                                  : `Learn and master problem solving, logic building, and algorithms for ${course.title}.`}
+                              </p>
+                            </div>
+
+                            <div className="ps-card-footer">
+                              <span className="ps-card-stats">
+                                {solvedQs}/{totalQs} Solved
+                              </span>
+                              
+                              <div className="ps-card-actions">
+                                <button
+                                  onClick={() => setSelectedCourse(course.id)}
+                                  className="ps-action-btn primary"
+                                  style={{ padding: '6px 16px' }}
+                                >
+                                  Start Learning
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               ) : (
