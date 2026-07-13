@@ -829,8 +829,8 @@ const MultiSectionAssessment = () => {
           let fetchUrl = sec.url || '';
           if (!fetchUrl || !fetchUrl.endsWith('.json')) {
             fetchUrl = sec.type === 'mcq'
-              ? `/seed-contents/mcq/${slugify(sec.name)}.json`
-              : `/seed-contents/coding/${slugify(sec.name)}.json`;
+              ? `/seed-contents/mcq/testbank/${slugify(sec.name)}.json`
+              : `/seed-contents/coding/testbank/${slugify(sec.name)}.json`;
           }
           let cleanPath = fetchUrl;
           if (cleanPath.startsWith('http')) {

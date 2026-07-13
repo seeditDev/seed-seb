@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaCheck, FaPlay, FaSignOutAlt, FaUser, FaArrowLeft, FaSearch, FaBookOpen, FaLock, FaKey, FaTimes } from 'react-icons/fa';
+import { FaCheck, FaPlay, FaSignOutAlt, FaUser, FaArrowLeft, FaSearch, FaBookOpen, FaLock, FaKey, FaTimes, FaTrophy, FaStar, FaBolt } from 'react-icons/fa';
 import { db } from '../firebase-config';
 import { collection, doc, setDoc, getDocs, getDoc } from 'firebase/firestore';
 import '../styles/LearnAndCodeHome.css';
@@ -377,7 +377,7 @@ const LearnAndCodeHome = () => {
                             </div>
 
                             <div className="guidance-card">
-                                <h3>💡 Practice Tip</h3>
+                                <h3><FaBookOpen style={{ marginRight: '8px', color: '#fbbf24' }} /> Practice Tip</h3>
                                 <p>To maximize learning, try writing your solutions in multiple languages. Our sandbox currently supports C, C++, Python, and Java compiles.</p>
                             </div>
                         </div>
@@ -397,19 +397,16 @@ const LearnAndCodeHome = () => {
                             </button>
                         </div>
                         <div className="premium-modal-body">
-                            <p>This practice challenge is locked for Premium accounts. Upgrade to unlock full access to the entire question library, advanced editorials, and compiler resources.</p>
+                            <p>This practice challenge is locked for Premium accounts. To upgrade, please reach out to your Placement Department or contact your SEED-IT Training Manager.</p>
                             <div className="premium-benefits">
-                                <div className="benefit-item">🏆 Full access to all coding challenges</div>
-                                <div className="benefit-item">⚡ Unlimited code compilations & submissions</div>
-                                <div className="benefit-item">📖 Detailed solution editorials & optimal templates</div>
-                            </div>
-                            <div className="premium-instructions">
-                                <p>Contact your course instructor or administrator to activate your premium subscription tier.</p>
+                                <div className="benefit-item"><FaTrophy style={{ marginRight: '8px', color: '#fbbf24' }} /> Full access to all coding challenges</div>
+                                <div className="benefit-item"><FaBolt style={{ marginRight: '8px', color: '#fbbf24' }} /> Unlimited code compilations & submissions</div>
+                                <div className="benefit-item"><FaBookOpen style={{ marginRight: '8px', color: '#fbbf24' }} /> Detailed solution editorials & optimal templates</div>
                             </div>
                         </div>
                         <div className="premium-modal-footer">
-                            <button className="premium-modal-ok-btn" onClick={() => setShowUpgradeModal(false)}>
-                                Understood
+                            <button className="premium-modal-ok-btn" onClick={() => setShowUpgradeModal(false)} style={{ width: '100%' }}>
+                                Close
                             </button>
                         </div>
                     </div>

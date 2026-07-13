@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
-import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch } from 'react-icons/fa';
+import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle } from 'react-icons/fa';
 import desktopBridge from '../utils/desktopBridge';
 import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBankService';
-import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase } from '../services/codingProgressService';
+import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus } from '../services/codingProgressService';
 import '../styles/PracticeSandbox.css';
 
 const FREE_BOILERPLATES = {
@@ -27,9 +27,14 @@ const normalizeQuestion = (q) => {
   if (!q) return q;
   const id = q.questionId || q.id || '';
   const title = q.title || '';
-  const description = q.content?.problemStatement || q.description || '';
-  const constraints = Array.isArray(q.content?.constraints) 
-    ? q.content.constraints.join('\n') 
+  let description = q.content?.problemStatement || q.description || '';
+
+  if (description) {
+    description = description.split(/#+\s*(?:videoExplanations|Video\s+Explanation|Video\s+Tutorial|video-explanation)/i)[0].trim();
+  }
+
+  const constraints = Array.isArray(q.content?.constraints)
+    ? q.content.constraints.join('\n')
     : (q.constraints || '');
 
   // Normalize boilerplates robustly supporting camelCase, lowerCase, and standard language keys
@@ -55,18 +60,6 @@ const normalizeQuestion = (q) => {
       boilerplates[norm] = val;
     }
   });
-
-  if (q.solution?.code) {
-    Object.entries(q.solution.code).forEach(([lang, val]) => {
-      const norm = getNormalizedLangKey(lang);
-      if (norm === 'python') {
-        boilerplates.python = val;
-        boilerplates.python3 = val;
-      } else {
-        boilerplates[norm] = val;
-      }
-    });
-  }
 
   // Normalize sample test cases
   const sampleTestCases = (q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []).map(tc => ({
@@ -106,7 +99,11 @@ const normalizeQuestion = (q) => {
     testCases: {
       ...q.testCases,
       hidden: hidden
-    }
+    },
+    content: q.content ? {
+      ...q.content,
+      problemStatement: description
+    } : undefined
   };
 };
 
@@ -143,12 +140,14 @@ const PracticeSandbox = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   // Custom reset confirmation modal (replaces native window.confirm)
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showDefaultResetConfirm, setShowDefaultResetConfirm] = useState(false);
   const [sidebarQuestions, setSidebarQuestions] = useState([]);
   const [solvedIds, setSolvedIds] = useState([]);
   const [problemDetails, setProblemDetails] = useState({});
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [sidebarDifficulty, setSidebarDifficulty] = useState('All');
   const [sidebarCategory, setSidebarCategory] = useState('All');
+  const [showContactInfo, setShowContactInfo] = useState(false);
   const [sidebarStatus, setSidebarStatus] = useState('All');
 
   // Resizable layout states
@@ -156,6 +155,10 @@ const PracticeSandbox = () => {
   const [editorHeight, setEditorHeight] = useState(60); // percentage
   const workspaceRef = useRef(null);
   const rightPanelRef = useRef(null);
+
+  const isPremiumUser = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium;
+  const isPremiumQuestion = (questionId && String(questionId).startsWith('Q0.')) ? false : (question?.isPremium || question?.metadata?.isPremium);
+  const showPremiumLock = isPremiumQuestion && !isPremiumUser;
 
   const startHorizontalDrag = (e) => {
     e.preventDefault();
@@ -213,10 +216,23 @@ const PracticeSandbox = () => {
             console.warn('Sandbox sidebar sync failed:', e);
           }
         }
-        const [indexQs, progress] = await Promise.all([
+        let [indexQs, progress] = await Promise.all([
           fetchQuestionsIndex().catch(() => []),
           getFullProgress(email).catch(() => ({ solvedProblems: [], problemDetails: {} })),
         ]);
+        if (questionId && !indexQs.some(q => q.questionId === questionId)) {
+          try {
+            const currentQ = await fetchQuestion(questionId);
+            if (currentQ) {
+              indexQs = [{
+                questionId: currentQ.questionId,
+                title: currentQ.title,
+                category: currentQ.metadata?.category || 'Practice',
+                difficulty: currentQ.metadata?.difficulty || 'Beginner'
+              }, ...indexQs];
+            }
+          } catch (e) {}
+        }
         setSidebarQuestions(indexQs);
         setSolvedIds(progress.solvedProblems || []);
         setProblemDetails(progress.problemDetails || {});
@@ -231,6 +247,7 @@ const PracticeSandbox = () => {
 
   const loadQuestionData = async (authData) => {
     setLoading(true);
+    setShowContactInfo(false);
     setError(null);
     try {
       const qRaw = await fetchQuestion(questionId);
@@ -278,12 +295,11 @@ const PracticeSandbox = () => {
   }, [language, question]);
 
   const handleResetCode = () => {
-    setShowResetConfirm(true);
+    setCode(question?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
   };
 
-  const confirmReset = () => {
-    setCode(question?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
-    setShowResetConfirm(false);
+  const handleResetToDefault = () => {
+    setCode(FREE_BOILERPLATES[language] || '');
   };
 
   // Compile and run custom input or sample cases
@@ -311,7 +327,7 @@ const PracticeSandbox = () => {
         for (let i = 0; i < samples.length; i++) {
           const tc = samples[i];
           const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
-          
+
           const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
           const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
           const isPassed = actualClean === expectedClean && res.exit_code === 0;
@@ -327,7 +343,7 @@ const PracticeSandbox = () => {
           });
         }
         setSampleResults(results);
-        
+
         // Populate exitCode, stdout, stderr with last sample case for fallback
         const last = results[results.length - 1];
         if (last) {
@@ -361,14 +377,14 @@ const PracticeSandbox = () => {
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
-      
+
       for (let i = 0; i < testCases.length; i++) {
         const tc = testCases[i];
         const tcWeight = tc.weight || 10;
         totalWeight += tcWeight;
 
         const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
-        
+
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
         const isPassed = actualClean === expectedClean && res.exit_code === 0;
@@ -434,7 +450,7 @@ const PracticeSandbox = () => {
   if (error) {
     return (
       <div className="psb-root" style={{ justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
-        <p style={{ color: '#f87171' }}>⚠️ {error}</p>
+        <p style={{ color: '#f87171' }}>{error}</p>
         <button className="psb-back-btn" onClick={() => navigate(-1)}>← Go Back</button>
       </div>
     );
@@ -463,12 +479,12 @@ const PracticeSandbox = () => {
     <div className="psb-root">
       {/* Header */}
       <div className="psb-header">
-        <button className="psb-back-btn" onClick={() => navigate('/student/dashboard', { state: { tab: 'practice' } })}>🏠 Home</button>
+        <button className="psb-back-btn" onClick={() => navigate('/student/dashboard', { state: { tab: 'practice' } })}>Home</button>
         <button className="psb-back-btn" onClick={() => navigate(-1)}>← Back</button>
-        
+
         {/* Toggle Sidebar Button */}
-        <button 
-          className={`psb-back-btn ${showSidebar ? 'active' : ''}`} 
+        <button
+          className={`psb-back-btn ${showSidebar ? 'active' : ''}`}
           onClick={() => setShowSidebar(!showSidebar)}
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           title="Toggle Problem List"
@@ -495,7 +511,7 @@ const PracticeSandbox = () => {
 
       {/* Main Workspace */}
       <div className="psb-main" ref={workspaceRef}>
-        
+
         {/* Collapsible Problems List Sidebar */}
         <div className={`psb-sidebar ${!showSidebar ? 'collapsed' : ''}`}>
           <div className="psb-sidebar-header">
@@ -507,9 +523,9 @@ const PracticeSandbox = () => {
             </div>
             <div className="psb-sidebar-search-wrap">
               <FaSearch className="psb-sidebar-search-icon" />
-              <input 
-                type="text" 
-                placeholder="Search questions..." 
+              <input
+                type="text"
+                placeholder="Search questions..."
                 value={sidebarSearch}
                 onChange={e => setSidebarSearch(e.target.value)}
                 className="psb-sidebar-search"
@@ -534,9 +550,9 @@ const PracticeSandbox = () => {
                 className="psb-sidebar-filter-select"
               >
                 <option value="All">All Status</option>
-                <option value="SOLVED">✅ Solved</option>
-                <option value="ATTEMPTED">🟡 Attempted</option>
-                <option value="UNSOLVED">○ Unsolved</option>
+                <option value="SOLVED">Solved</option>
+                <option value="ATTEMPTED">Attempted</option>
+                <option value="UNSOLVED">Todo</option>
               </select>
               <select
                 value={sidebarCategory}
@@ -551,21 +567,19 @@ const PracticeSandbox = () => {
           <div className="psb-sidebar-list">
             {filteredSidebarQuestions.map((q, idx) => {
               const isActive = q.questionId === questionId;
-              const isSolved = solvedIds.includes(q.questionId);
-              const isAttempted = Object.keys(problemDetails).includes(q.questionId) && !isSolved;
-              const status = isSolved ? 'SOLVED' : isAttempted ? 'ATTEMPTED' : 'UNSOLVED';
+              const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium || q.metadata?.isPremium, isPremiumUser);
 
               return (
-                <div 
+                <div
                   key={q.questionId}
-                  className={`psb-sidebar-item ${isActive ? 'active' : ''}`}
+                  className={`psb-sidebar-item ${isActive ? 'active' : ''} ${status === 'LOCKED' ? 'locked' : ''}`}
                   onClick={() => navigate(`/student/practice/solve/${q.questionId}`, { state: { scoringType } })}
                 >
-                  <span className="psb-sidebar-item-status">
-                    {status === 'SOLVED' ? '✅' : status === 'ATTEMPTED' ? '🟡' : '○'}
+                  <span className="psb-sidebar-item-status" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    {status === 'SOLVED' ? <FaCheckCircle style={{ color: 'var(--ps-success)' }} /> : status === 'ATTEMPTED' ? <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24' }}></span> : status === 'LOCKED' ? <FaLock style={{ color: 'var(--ps-text-dim)', fontSize: '11px' }} /> : <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', border: '2px solid var(--ps-text-dim)', opacity: 0.6 }}></span>}
                   </span>
                   <span className="psb-sidebar-item-title">
-                    {idx + 1}. {q.title}
+                    {idx + 1}. {q.title} {(q.isPremium || q.metadata?.isPremium) && <FaStar style={{ color: '#fbbf24', marginLeft: '4px', fontSize: '11px' }} />}
                   </span>
                   <span className={`psb-sidebar-item-diff ${q.difficulty?.toLowerCase() || 'easy'}`}>
                     {q.difficulty || 'Easy'}
@@ -592,96 +606,166 @@ const PracticeSandbox = () => {
             </div>
           </div>
 
-          <div className="psb-problem-content">
-            {activeLeftTab === 'description' ? (
-              <>
-                <h2 className="psb-problem-title">{question.title}</h2>
-                <div className="psb-q-badges">
-                  <span className={`psb-badge ${question.metadata?.difficulty?.toLowerCase() || 'easy'}`}>
-                    {question.metadata?.difficulty}
-                  </span>
-                  <span className="psb-badge cat">{question.metadata?.category}</span>
-                  {question.metadata?.isPremium && <span className="psb-badge premium">⭐ Premium</span>}
-                </div>
-
-                <div className="psb-section-label">Problem Statement</div>
-                <div className="psb-problem-text">{question.content?.problemStatement}</div>
-
-                <div className="psb-section-label">Input Format</div>
-                <div className="psb-problem-text">{question.content?.inputFormat || 'Read standard input.'}</div>
-
-                <div className="psb-section-label">Output Format</div>
-                <div className="psb-problem-text">{question.content?.outputFormat || 'Print standard output.'}</div>
-
-                {question.content?.constraints && question.content.constraints.length > 0 && (
-                  <>
-                    <div className="psb-section-label">Constraints</div>
-                    <ul className="psb-constraints-list">
-                      {question.content.constraints.map((c, i) => <li key={i}>{c}</li>)}
-                    </ul>
-                  </>
-                )}
-
-                {question.content?.sampleTestCases && question.content.sampleTestCases.map((s, i) => (
-                  <div className="psb-sample" key={i}>
-                    <div className="psb-sample-label">Sample Case {i + 1}</div>
-                    <div className="psb-sample-row">
-                      <div className="psb-sample-col">
-                        <label>Input</label>
-                        <pre>{s.input || '(empty)'}</pre>
-                      </div>
-                      <div className="psb-sample-col">
-                        <label>Expected Output</label>
-                        <pre>{s.output}</pre>
-                      </div>
-                    </div>
-                    {s.explanation && (
-                      <div className="psb-sample-explanation">
-                        <strong>Explanation:</strong> {s.explanation}
-                      </div>
-                    )}
+          <div className="psb-problem-content" style={{ position: 'relative' }}>
+            <div style={{ filter: showPremiumLock ? 'blur(6px)' : 'none', pointerEvents: showPremiumLock ? 'none' : 'auto', transition: 'filter 0.3s', height: '100%' }}>
+              {activeLeftTab === 'description' ? (
+                <>
+                  <h2 className="psb-problem-title">{question.title}</h2>
+                  <div className="psb-q-badges">
+                    <span className={`psb-badge ${question.metadata?.difficulty?.toLowerCase() || 'easy'}`}>
+                      {question.metadata?.difficulty}
+                    </span>
+                    <span className="psb-badge cat">{question.metadata?.category}</span>
+                    {question.metadata?.isPremium && <span className="psb-badge premium" style={{ display: 'inline-flex', alignItems: 'center' }}><FaStar style={{ marginRight: '4px' }} /> Premium</span>}
                   </div>
-                ))}
-              </>
-            ) : (
-              <>
-                <h3 style={{ marginBottom: '12px' }}>Editorial Solution</h3>
-                {solvedIds.includes(question.questionId) ? (
-                  question.solution?.approach ? (
+
+                  <div className="psb-section-label">Problem Statement</div>
+                  <div className="psb-problem-text">{question.content?.problemStatement}</div>
+
+                  <div className="psb-section-label">Input Format</div>
+                  <div className="psb-problem-text">{question.content?.inputFormat || 'Read standard input.'}</div>
+
+                  <div className="psb-section-label">Output Format</div>
+                  <div className="psb-problem-text">{question.content?.outputFormat || 'Print standard output.'}</div>
+
+                  {question.content?.constraints && question.content.constraints.length > 0 && (
                     <>
-                      <div className="psb-section-label">Approach</div>
-                      <div className="psb-problem-text">{question.solution.approach}</div>
-                      <div className="psb-section-label">Complexity</div>
-                      <div className="psb-problem-text">
-                        Time Complexity: <code>{question.solution.timeComplexity || 'O(N)'}</code>
-                        <br />
-                        Space Complexity: <code>{question.solution.spaceComplexity || 'O(1)'}</code>
-                      </div>
+                      <div className="psb-section-label">Constraints</div>
+                      <ul className="psb-constraints-list">
+                        {question.content.constraints.map((c, i) => <li key={i}>{c}</li>)}
+                      </ul>
                     </>
+                  )}
+
+                  {question.content?.sampleTestCases && question.content.sampleTestCases.map((s, i) => (
+                    <div className="psb-sample" key={i}>
+                      <div className="psb-sample-label">Sample Case {i + 1}</div>
+                      <div className="psb-sample-row">
+                        <div className="psb-sample-col">
+                          <label>Input</label>
+                          <pre>{s.input || '(empty)'}</pre>
+                        </div>
+                        <div className="psb-sample-col">
+                          <label>Expected Output</label>
+                          <pre>{s.output}</pre>
+                        </div>
+                      </div>
+                      {s.explanation && (
+                        <div className="psb-sample-explanation">
+                          <strong>Explanation:</strong> {s.explanation}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <h3 style={{ marginBottom: '12px' }}>Editorial Solution</h3>
+                  {solvedIds.includes(question.questionId) ? (
+                    question.solution?.approach ? (
+                      <>
+                        <div className="psb-section-label">Approach</div>
+                        <div className="psb-problem-text">{question.solution.approach}</div>
+                        <div className="psb-section-label">Complexity</div>
+                        <div className="psb-problem-text">
+                          Time Complexity: <code>{question.solution.timeComplexity || 'O(N)'}</code>
+                          <br />
+                          Space Complexity: <code>{question.solution.spaceComplexity || 'O(1)'}</code>
+                        </div>
+                      </>
+                    ) : (
+                      <p style={{ color: 'var(--ps-text-dim)' }}>Editorial solution details not supplied for this question.</p>
+                    )
                   ) : (
-                    <p style={{ color: 'var(--ps-text-dim)' }}>Editorial solution details not supplied for this question.</p>
-                  )
-                ) : (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '40px 20px',
+                      textAlign: 'center',
+                      background: 'rgba(255,255,255,0.02)',
+                      borderRadius: '12px',
+                      border: '1px dashed rgba(255,255,255,0.08)',
+                      marginTop: '20px'
+                    }}>
+                      <div style={{ fontSize: '28px', marginBottom: '16px', color: 'var(--ps-text-dim)', display: 'inline-flex', alignItems: 'center' }}><FaLock /></div>
+                      <h4 style={{ color: 'var(--ps-text)', marginBottom: '8px' }}>Editorial Solution Locked</h4>
+                      <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', maxWidth: '300px', margin: '0 auto' }}>
+                        You need to successfully solve this problem and pass all test cases to unlock the editorial approach and complexity analysis.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {showPremiumLock && (
+              <div className="premium-lock-overlay" style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.45)',
+                backdropFilter: 'blur(4px)',
+                color: '#1f2937',
+                padding: '24px',
+                textAlign: 'center',
+                zIndex: 10,
+                borderRadius: '8px'
+              }}>
+                <div style={{
+                  fontSize: '36px',
+                  marginBottom: '16px',
+                  color: '#1e1b4b'
+                }}>
+                  <FaLock />
+                </div>
+                <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: '#1e1b4b' }}>
+                  Premium Practice Question
+                </h3>
+                <p style={{ fontSize: '14px', color: '#4b5563', maxWidth: '320px', marginBottom: '20px', lineHeight: '1.5', textAlign: 'center' }}>
+                  This question is reserved for Premium subscribers. Please upgrade to unlock this and all other standard coding practice questions.
+                </p>
+                <button
+                  onClick={() => setShowContactInfo(true)}
+                  style={{
+                    background: '#7c6bff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: 'white',
+                    padding: '10px 20px',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(124,107,255,0.2)',
+                    transition: 'all 0.2s',
+                    marginBottom: '12px'
+                  }}
+                >
+                  Upgrade to Premium
+                </button>
+                {showContactInfo && (
                   <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '40px 20px',
-                    textAlign: 'center',
-                    background: 'rgba(255,255,255,0.02)',
-                    borderRadius: '12px',
-                    border: '1px dashed rgba(255,255,255,0.08)',
-                    marginTop: '20px'
+                    marginTop: '8px',
+                    fontSize: '13px',
+                    color: '#dc2626',
+                    fontWeight: '600',
+                    maxWidth: '300px',
+                    background: 'rgba(220,38,38,0.08)',
+                    border: '1px solid rgba(220,38,38,0.2)',
+                    borderRadius: '6px',
+                    padding: '8px 12px'
                   }}>
-                    <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔒</div>
-                    <h4 style={{ color: 'var(--ps-text)', marginBottom: '8px' }}>Editorial Solution Locked</h4>
-                    <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', maxWidth: '300px', margin: '0 auto' }}>
-                      You need to successfully solve this problem and pass all test cases to unlock the editorial approach and complexity analysis.
-                    </p>
+                    To upgrade, please reach out to your Placement Department or contact your SEED-IT Training Manager.
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -692,14 +776,27 @@ const PracticeSandbox = () => {
         {/* Right Side - Monaco Editor + Outputs */}
         <div className="psb-editor-panel" ref={rightPanelRef} style={{ width: `${100 - leftWidth}%` }} onClick={() => setShowSidebar(false)}>
           <div className="psb-editor-toolbar" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button className="psb-run-btn" onClick={handleRunCode} disabled={isRunning || isSubmitting}>
+            <button
+              className="psb-run-btn"
+              onClick={handleRunCode}
+              disabled={isRunning || isSubmitting || showPremiumLock}
+              style={{ opacity: showPremiumLock ? 0.6 : 1, cursor: showPremiumLock ? 'not-allowed' : 'pointer' }}
+            >
               {isRunning ? <div className="psb-spinner" /> : <FaPlay />} Run Code
             </button>
-            <button className="psb-submit-btn" onClick={handleSubmitCode} disabled={isRunning || isSubmitting}>
+            <button
+              className="psb-submit-btn"
+              onClick={handleSubmitCode}
+              disabled={isRunning || isSubmitting || showPremiumLock}
+              style={{ opacity: showPremiumLock ? 0.6 : 1, cursor: showPremiumLock ? 'not-allowed' : 'pointer' }}
+            >
               {isSubmitting ? <div className="psb-spinner" /> : <FaCheck />} Submit Answers
             </button>
-            <button className="psb-reset-btn" onClick={handleResetCode}>
-              <FaUndo /> Reset
+            <button className="psb-reset-btn" onClick={handleResetCode} disabled={showPremiumLock}>
+              <FaUndo /> Reset Template
+            </button>
+            <button className="psb-reset-btn" onClick={handleResetToDefault} disabled={showPremiumLock} title="Reset to empty main function template">
+              <FaCode /> Reset to Default
             </button>
           </div>
 
@@ -716,7 +813,8 @@ const PracticeSandbox = () => {
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
-                tabSize: 4
+                tabSize: 4,
+                readOnly: showPremiumLock
               }}
             />
           </div>
@@ -739,9 +837,9 @@ const PracticeSandbox = () => {
                 </span>
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--ps-text-dim)', cursor: 'pointer', userSelect: 'none', marginRight: '10px' }}>
-                <input 
-                  type="checkbox" 
-                  checked={useCustomInput} 
+                <input
+                  type="checkbox"
+                  checked={useCustomInput}
                   onChange={(e) => {
                     setUseCustomInput(e.target.checked);
                     if (e.target.checked) {
@@ -856,7 +954,7 @@ const PracticeSandbox = () => {
                   ) : (
                     <div>
                       <div className={`psb-score-banner ${submitScore === 100 ? 'pass' : submitScore > 0 ? 'partial' : 'fail'}`}>
-                        {submitScore === 100 ? '🎉 All Test Cases Passed!' : `🟡 Partial Score: ${submitScore}/100`}
+                        {submitScore === 100 ? 'All Test Cases Passed!' : `Partial Score: ${submitScore}/100`}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', maxHeight: '150px', overflowY: 'auto' }}>
                         {submitResults.map((tr, i) => (
@@ -880,54 +978,6 @@ const PracticeSandbox = () => {
           </div>
         </div>
       </div>
-      {/* ── Custom Reset Confirmation Modal ── */}
-      {showResetConfirm && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 99999
-        }}>
-          <div style={{
-            background: '#0f172a',
-            border: '1px solid #334155',
-            borderRadius: '16px',
-            padding: '32px 36px',
-            width: '380px',
-            boxShadow: '0 25px 60px rgba(0,0,0,0.5)'
-          }}>
-            <div style={{ fontSize: '2rem', textAlign: 'center', marginBottom: '12px' }}>🔄</div>
-            <h3 style={{ color: '#f8fafc', fontSize: '1.1rem', fontWeight: 700, textAlign: 'center', margin: '0 0 10px' }}>
-              Reset Code?
-            </h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', textAlign: 'center', lineHeight: 1.6, margin: '0 0 28px' }}>
-              This will discard all your current code and restore the default template for <strong style={{ color: '#e2e8f0' }}>{language}</strong>. This action cannot be undone.
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                style={{
-                  flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #334155',
-                  background: '#1e293b', color: '#cbd5e1', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmReset}
-                style={{
-                  flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
-                  background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white',
-                  fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer'
-                }}
-              >
-                ↺ Reset Code
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

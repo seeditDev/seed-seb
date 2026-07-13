@@ -192,16 +192,13 @@ const PracticeContestPage = () => {
         <div className="pcont-modal-overlay" onClick={() => setShowPremiumModal(false)}>
           <div className="pcont-modal" onClick={e => e.stopPropagation()}>
             <div className="pcont-modal-icon">⭐</div>
-            <div className="pcont-modal-title">Premium Content</div>
-            <div className="pcont-modal-desc">
+            <div className="pcont-modal-title">Premium Content Required</div>
+            <div className="pcont-modal-desc" style={{ marginBottom: '20px', lineHeight: '1.5' }}>
               This question is available exclusively to Premium members.
-              Upgrade your account to unlock all premium questions and courses.
+              To upgrade, please reach out to your Placement Department or contact your SEED-IT Training Manager.
             </div>
-            <button className="pcont-modal-btn primary" onClick={() => setShowPremiumModal(false)}>
-              Upgrade to Premium
-            </button>
-            <button className="pcont-modal-btn secondary" onClick={() => setShowPremiumModal(false)}>
-              Maybe Later
+            <button className="pcont-modal-btn primary" onClick={() => setShowPremiumModal(false)} style={{ width: '100%' }}>
+              Close
             </button>
           </div>
         </div>

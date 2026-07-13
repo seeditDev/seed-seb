@@ -36,8 +36,7 @@ class DataService {
                 return cachedData;
             }
 
-            // Try local first (Disabled to force raw GitHub CDN fetch)
-            /*
+            // Try local first
             try {
                 console.log('[DataService] Trying local fetch:', localUrl);
                 const localResponse = await fetch(localUrl);
@@ -51,7 +50,6 @@ class DataService {
             } catch (localError) {
                 console.log('[DataService] Local fetch error:', localError);
             }
-            */
 
             // Try raw GitHub URL (unlimited rate-limits) with timestamp cache-busting
             try {

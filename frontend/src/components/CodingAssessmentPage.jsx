@@ -688,14 +688,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         finalUrl = moduleUrl;
                     } else if (moduleSlug) {
                         // Internal coding assessment: use the slug to build local JSON path
-                        finalUrl = `/coding/${moduleSlug}.json`;
+                        finalUrl = `/coding/testbank/${moduleSlug}.json`;
                     } else if (moduleUrl.startsWith('/student/coding/')) {
                         // URL is the routing path — derive slug from the last segment
                         const slugFromUrl = moduleUrl.split('/').filter(Boolean).pop();
-                        finalUrl = `/coding/${slugFromUrl}.json`;
+                        finalUrl = `/coding/testbank/${slugFromUrl}.json`;
                     } else {
                         // Fallback: slugify the module name (for older HackerRank entries)
-                        finalUrl = `/coding/${slugify(module.name || key)}.json`;
+                        finalUrl = `/coding/testbank/${slugify(module.name || key)}.json`;
                     }
 
                     return {

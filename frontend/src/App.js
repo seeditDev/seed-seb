@@ -9,6 +9,7 @@ import cacheManager from './utils/cacheManager';
 import TrackingService from './services/trackingService';
 import timeService from './services/timeService';
 import PracticeSandbox from "./components/PracticeSandbox";
+import PracticeCourseSandbox from "./components/PracticeCourseSandbox";
 import MultiSectionAssessment from "./components/MultiSectionAssessment";
 import { logPortalActivityTime } from './services/codingProgressService';
 
@@ -446,6 +447,7 @@ const App = () => {
           <Route path="/student/coding" element={<CodingAssessmentPage />} />
           <Route path="/student/coding/:assessmentSlug" element={<CodingAssessmentPage />} />
           <Route path="/student/practice/solve/:questionId" element={<PracticeSandbox />} />
+          <Route path="/student/practice/course/:courseId/:questionId" element={<PracticeCourseSandbox />} />
           <Route path="/student/assessment/multisection/:assessmentSlug" element={<MultiSectionAssessment />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

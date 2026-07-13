@@ -245,6 +245,9 @@ export const syncProgressWithFirebase = async (uid) => {
  * Get question status for UI display.
  */
 export const getQuestionDisplayStatus = (questionId, solvedIds = [], problemDetails = {}, isPremium = false, userIsPremium = false) => {
+  if (questionId && String(questionId).startsWith('Q0.')) {
+    isPremium = false;
+  }
   if (isPremium && !userIsPremium) return 'LOCKED';
   if (solvedIds.includes(questionId)) return 'SOLVED';
   const detail = problemDetails[questionId];

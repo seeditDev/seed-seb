@@ -1,43 +1,25 @@
 /**
  * codingQuestionBankService.js
  *
- * Client-side service for fetching coding content from GitHub raw assets.
- * All data is stored as static JSON in the seed-contents GitHub repository.
+ * Client-side service for fetching coding content from local public folder.
+ * All data is stored as static JSON in the frontend/public/seed-contents directory.
  *
  * Data flow:
- *   GitHub raw URL → fetch → JSON parse → return data
- *
- * No authentication required for reads (public repo, raw.githubusercontent.com).
+ *   Local public path → fetch → JSON parse → return data
  */
 
-const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
-const LOCAL_BASE = '/seed-contents'; // For desktop local fallback
+const LOCAL_BASE = '/seed-contents'; // Served from React public folder
 
 /**
- * Fetch a JSON file from GitHub raw.
- * Falls back to local path if offline or local serving is active.
+ * Fetch a JSON file from the local public seed-contents directory.
  * @param {string} path - Relative path (e.g. 'coding/questions/Q1001.json')
  */
 const fetchJson = async (path) => {
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  const githubUrl = `${GITHUB_RAW_BASE}/${cleanPath}`;
   const localUrl = `${LOCAL_BASE}/${cleanPath}`;
-
-  // Try GitHub raw first
-  try {
-    const response = await fetch(githubUrl, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } catch (githubErr) {
-    // Fallback to local path (desktop mode)
-    try {
-      const localResponse = await fetch(localUrl);
-      if (!localResponse.ok) throw new Error(`Local fetch failed: HTTP ${localResponse.status}`);
-      return await localResponse.json();
-    } catch (localErr) {
-      throw new Error(`Failed to fetch ${path}: ${githubErr.message}`);
-    }
-  }
+  const response = await fetch(localUrl);
+  if (!response.ok) throw new Error(`Failed to load ${localUrl}: HTTP ${response.status}`);
+  return await response.json();
 };
 
 // ── Question Bank ─────────────────────────────────────────────────────────────
@@ -47,7 +29,52 @@ const fetchJson = async (path) => {
  * @param {string} questionId - e.g. 'Q1001'
  * @returns {Promise<Object>} Question data object
  */
+let questionMapCache = null;
+
 export const fetchQuestion = async (questionId) => {
+  if (questionId.startsWith('Q_apt_')) {
+    try {
+      const res = await fetch(`/articles/course/AptitudeCourses/${questionId}.json`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (_) {}
+  }
+
+  if (questionId.startsWith('Q0.') || /^[Q]\d+$/.test(questionId)) {
+    try {
+      return await fetchJson(`coding/questions/${questionId}.json`);
+    } catch (_) {}
+  }
+
+  if (!questionMapCache) {
+    try {
+      const mapRes = await fetch('/articles/course/TechnicalCourses/question_map.json');
+      if (mapRes.ok) {
+        questionMapCache = await mapRes.json();
+      }
+    } catch (_) {}
+  }
+
+  const mappedFolder = questionMapCache?.[questionId];
+  if (mappedFolder) {
+    try {
+      const res = await fetch(`/articles/course/TechnicalCourses/${mappedFolder}/Questionbank/${questionId}.json`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (_) {}
+  }
+
+  const folders = ['c', 'java', 'cpp', 'dsa'];
+  for (const f of folders) {
+    try {
+      const res = await fetch(`/articles/course/TechnicalCourses/${f}/Questionbank/${questionId}.json`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (_) {}
+  }
   return fetchJson(`coding/questions/${questionId}.json`);
 };
 

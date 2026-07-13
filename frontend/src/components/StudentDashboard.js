@@ -24,7 +24,16 @@ import {
   FaMicrophone,
   FaUserShield,
   FaCog,
-  FaUserTie
+  FaUserTie,
+  FaAward,
+  FaStar,
+  FaTrophy,
+  FaBookOpen,
+  FaRocket,
+  FaCrown,
+  FaGraduationCap,
+  FaGem,
+  FaSyncAlt
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
@@ -79,6 +88,41 @@ const StudentDashboard = () => {
   const [currentTheme, setCurrentTheme] = useState(() => {
     return localStorage.getItem('portal_theme') || 'bw';
   });
+
+  const [cQuestionIds, setCQuestionIds] = useState([]);
+  const [javaQuestionIds, setJavaQuestionIds] = useState([]);
+  const [cppQuestionIds, setCppQuestionIds] = useState([]);
+  const [dsaQuestionIds, setDsaQuestionIds] = useState([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/articles/CourseMappingFiles/learn-c-syllabus.json').then(r => r.json()).catch(() => null),
+      fetch('/articles/CourseMappingFiles/learn-java-syllabus.json').then(r => r.json()).catch(() => null),
+      fetch('/articles/CourseMappingFiles/learn-cpp-syllabus.json').then(r => r.json()).catch(() => null),
+      fetch('/articles/CourseMappingFiles/learn-dsa-syllabus.json').then(r => r.json()).catch(() => null),
+    ]).then(([cSyllabus, javaSyllabus, cppSyllabus, dsaSyllabus]) => {
+      const cQids = [];
+      if (cSyllabus) {
+        cSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => cQids.push(p.id))));
+      }
+      const javaQids = [];
+      if (javaSyllabus) {
+        javaSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => javaQids.push(p.id))));
+      }
+      const cppQids = [];
+      if (cppSyllabus) {
+        cppSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => cppQids.push(p.id))));
+      }
+      const dsaQids = [];
+      if (dsaSyllabus) {
+        dsaSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => dsaQids.push(p.id))));
+      }
+      setCQuestionIds(cQids);
+      setJavaQuestionIds(javaQids);
+      setCppQuestionIds(cppQids);
+      setDsaQuestionIds(dsaQids);
+    });
+  }, []);
 
   // Assessments List State
   const [assessments, setAssessments] = useState([]);
@@ -380,7 +424,7 @@ const StudentDashboard = () => {
             // Fallback to courseId or prefix checking (e.g. prefix is 'MA' -> mcq, 'CA' -> coding)
             let type = module.type;
             if (!type) {
-              if (courseId === 'mcqs' || module.id?.startsWith('MA') || module.url?.includes('mcqs/')) {
+              if (courseId === 'mcqs' || module.id?.startsWith('MA') || module.url?.includes('mcqs/') || module.url?.includes('/mcq/')) {
                 type = 'mcq';
               } else {
                 type = 'coding';
@@ -390,12 +434,12 @@ const StudentDashboard = () => {
             let finalUrl = module.url || '';
             if (finalUrl && !finalUrl.endsWith('.json')) {
               if (module.slug) {
-                finalUrl = `/${type}/${module.slug}.json`;
+                finalUrl = `/${type}/testbank/${module.slug}.json`;
               } else if (finalUrl.startsWith(`/student/${type}/`)) {
                 const slugFromUrl = finalUrl.split('/').filter(Boolean).pop();
-                finalUrl = `/${type}/${slugFromUrl}.json`;
+                finalUrl = `/${type}/testbank/${slugFromUrl}.json`;
               } else {
-                finalUrl = `/${type}/${slugify(module.name || key)}.json`;
+                finalUrl = `/${type}/testbank/${slugify(module.name || key)}.json`;
               }
             }
 
@@ -1004,8 +1048,8 @@ const StudentDashboard = () => {
                       {a.type === 'mcq' ? <FaQuestionCircle /> : <FaLaptopCode />} {a.type.toUpperCase()}
                     </span>
                     {a.completed && (
-                      <span className="difficulty-badge diff-easy" style={{ background: '#0e4429', color: '#39d353', border: '1px solid rgba(57, 211, 83, 0.2)' }}>
-                        ✓ Completed
+                      <span className="difficulty-badge diff-easy" style={{ background: '#0e4429', color: '#39d353', border: '1px solid rgba(57, 211, 83, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <FaCheckCircle /> Completed
                       </span>
                     )}
                     <span className={`difficulty-badge diff-${a.difficulty.toLowerCase()}`}>
@@ -1032,8 +1076,8 @@ const StudentDashboard = () => {
 
                   <div className="assessment-card-actions">
                     {a.completed ? (
-                      <button className="start-btn" disabled style={{ background: '#0e4429', color: '#39d353', cursor: 'not-allowed', border: '1px solid rgba(57, 211, 83, 0.3)', width: '100%' }}>
-                        ✓ Assessment Submitted
+                      <button className="start-btn" disabled style={{ background: '#0e4429', color: '#39d353', cursor: 'not-allowed', border: '1px solid rgba(57, 211, 83, 0.3)', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <FaCheckCircle /> Assessment Submitted
                       </button>
                     ) : isExpired ? (
                       <span className="expired-badge-label">Expired</span>
@@ -1097,7 +1141,7 @@ const StudentDashboard = () => {
           id: 'first_steps',
           title: 'First Steps',
           desc: 'Solved your first coding problem!',
-          icon: '🚀',
+          icon: <FaRocket />,
           color: '#38bdf8'
         });
       }
@@ -1106,7 +1150,7 @@ const StudentDashboard = () => {
           id: 'coding_scholar',
           title: 'Coding Scholar',
           desc: 'Solved 10+ coding practice problems.',
-          icon: '📚',
+          icon: <FaBookOpen />,
           color: '#a78bfa'
         });
       }
@@ -1115,7 +1159,7 @@ const StudentDashboard = () => {
           id: 'dsa_expert',
           title: 'DSA Expert',
           desc: 'Solved 30+ coding practice problems.',
-          icon: '🏆',
+          icon: <FaTrophy />,
           color: '#fb923c'
         });
       }
@@ -1124,7 +1168,7 @@ const StudentDashboard = () => {
           id: 'grandmaster',
           title: 'SEED-IT Grandmaster',
           desc: 'Solved 50+ coding practice problems.',
-          icon: '👑',
+          icon: <FaCrown />,
           color: '#f43f5e'
         });
       }
@@ -1142,7 +1186,7 @@ const StudentDashboard = () => {
             id: 'mcq_conqueror',
             title: 'MCQ Conqueror',
             desc: 'Completed all mapped MCQ courses.',
-            icon: '📝',
+            icon: <FaClipboardList />,
             color: '#34d399'
           });
         }
@@ -1152,7 +1196,7 @@ const StudentDashboard = () => {
             id: 'assessment_master',
             title: 'Assessment Master',
             desc: 'Completed all mapped Coding courses.',
-            icon: '🛡️',
+            icon: <FaShieldAlt />,
             color: '#fbbf24'
           });
         }
@@ -1163,10 +1207,63 @@ const StudentDashboard = () => {
             id: 'seed_graduate',
             title: 'SEED-IT Graduate',
             desc: 'Completed 100% of all assigned academic courses.',
-            icon: '🎓',
+            icon: <FaGraduationCap />,
             color: '#2dd4bf'
           });
         }
+      }
+
+      // 3. Dynamic course completion badges
+      const cSolved = progressData?.solvedProblems?.filter(id => cQuestionIds.includes(id)).length || 0;
+      const javaSolved = progressData?.solvedProblems?.filter(id => javaQuestionIds.includes(id)).length || 0;
+      const cppSolved = progressData?.solvedProblems?.filter(id => cppQuestionIds.includes(id)).length || 0;
+      const dsaSolved = progressData?.solvedProblems?.filter(id => dsaQuestionIds.includes(id)).length || 0;
+      const pfSolved = progressData?.solvedProblems?.filter(id => String(id).startsWith('Q0.')).length || 0;
+
+      if (cQuestionIds.length > 0 && cSolved >= cQuestionIds.length) {
+        badges.push({
+          id: 'c_master',
+          title: 'C Programming Master',
+          desc: 'Completed 100% of Learn C course curriculum.',
+          icon: <FaAward />,
+          color: '#7c6bff'
+        });
+      }
+      if (cppQuestionIds.length > 0 && cppSolved >= cppQuestionIds.length) {
+        badges.push({
+          id: 'cpp_master',
+          title: 'C++ Foundations Master',
+          desc: 'Completed 100% of C++ & DSA Foundations roadmap.',
+          icon: <FaRocket />,
+          color: '#3b82f6'
+        });
+      }
+      if (dsaQuestionIds.length > 0 && dsaSolved >= dsaQuestionIds.length) {
+        badges.push({
+          id: 'dsa_expert',
+          title: 'Data Structures Grandmaster',
+          desc: 'Completed 100% of Master DSA roadmap.',
+          icon: <FaGem />,
+          color: '#ec4899'
+        });
+      }
+      if (javaQuestionIds.length > 0 && javaSolved >= javaQuestionIds.length) {
+        badges.push({
+          id: 'java_champion',
+          title: 'Java Development Champion',
+          desc: 'Completed 100% of Learn Java course curriculum.',
+          icon: <FaTrophy />,
+          color: '#fb923c'
+        });
+      }
+      if (pfSolved >= 348) {
+        badges.push({
+          id: 'pf_expert',
+          title: 'Fundamentals Pioneer',
+          desc: 'Completed 100% of Programming Fundamentals.',
+          icon: <FaStar />,
+          color: '#10b981'
+        });
       }
 
       return badges;
@@ -1192,7 +1289,7 @@ const StudentDashboard = () => {
                 <div className="profile-meta-title">
                   <h2>{name}</h2>
                   <span className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}>
-                    {isPremium ? '★ Premium Edition' : 'Standard Edition'}
+                    {isPremium ? <><FaStar style={{ marginRight: '4px' }} /> Premium Edition</> : 'Standard Edition'}
                   </span>
                 </div>
               </div>
@@ -1223,7 +1320,7 @@ const StudentDashboard = () => {
 
             {/* Card 2: Placeholder Load Dashboard */}
             <div className="premium-profile-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', textAlign: 'center', gap: '16px' }}>
-              <div style={{ fontSize: '48px' }}>📊</div>
+              <FaAward style={{ color: 'var(--accent-coding)', fontSize: '48px' }} />
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Practice Utilisation Dashboard & Heatmap</h3>
               <p style={{ color: 'var(--ps-text-dim)', maxWidth: '400px', fontSize: '13px', lineHeight: '1.6' }}>
                 Track your active hours, streaks, and solved problems over the last 6 months in a calendar heatmap.
@@ -1286,6 +1383,22 @@ const StudentDashboard = () => {
     }
 
     // Statistics computation
+    const getSolvedCountForDate = (dateStr) => {
+      let count = 0;
+      if (progressData?.problemDetails) {
+        Object.values(progressData.problemDetails).forEach(detail => {
+          if (detail.status === 'SOLVED' && detail.lastSolvedAt) {
+            const solvedDate = detail.lastSolvedAt.split('T')[0];
+            if (solvedDate === dateStr) {
+              count++;
+            }
+          }
+        });
+      }
+      const activityCount = progressData?.activity?.[dateStr]?.problemsSolved || 0;
+      return Math.max(count, activityCount);
+    };
+
     let totalHours = 0;
     let totalProblemsSolved = progressData?.solvedProblems?.length || 0;
     if (progressData?.activity) {
@@ -1295,13 +1408,13 @@ const StudentDashboard = () => {
     }
 
     const getStreakCount = () => {
-      if (!progressData?.activity) return 0;
       let streak = 0;
       const checkDate = new Date();
-      while (true) {
+      for (let i = 0; i < 365; i++) {
         const dateStr = checkDate.toISOString().split('T')[0];
-        const dayInfo = progressData.activity[dateStr];
-        if (dayInfo && (dayInfo.hours > 0 || dayInfo.problemsSolved > 0)) {
+        const dayInfo = progressData?.activity?.[dateStr];
+        const solved = getSolvedCountForDate(dateStr);
+        if ((dayInfo && dayInfo.hours > 0) || solved > 0) {
           streak++;
           checkDate.setDate(checkDate.getDate() - 1);
         } else {
@@ -1343,7 +1456,7 @@ const StudentDashboard = () => {
               <div className="profile-meta-title">
                 <h2>{name}</h2>
                 <span className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}>
-                  {isPremium ? '★ Premium Edition' : 'Standard Edition'}
+                  {isPremium ? <><FaStar style={{ marginRight: '4px' }} /> Premium Edition</> : 'Standard Edition'}
                 </span>
               </div>
             </div>
@@ -1413,7 +1526,7 @@ const StudentDashboard = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  {loadingProfileProgress ? 'Syncing...' : '🔄 Sync with Cloud'}
+                  {loadingProfileProgress ? 'Syncing...' : <><FaSyncAlt style={{ marginRight: '4px' }} /> Sync with Cloud</>}
                 </button>
               </div>
 
@@ -1452,7 +1565,7 @@ const StudentDashboard = () => {
                         {wk.map((day, dIdx) => {
                           const dateStr = day.toISOString().split('T')[0];
                           const dayInfo = progressData?.activity?.[dateStr] || { hours: 0, problemsSolved: 0 };
-                          const solved = dayInfo.problemsSolved || 0;
+                          const solved = getSolvedCountForDate(dateStr);
 
                           // Color selector
                           let color = 'rgba(255, 255, 255, 0.04)'; // 0 solves
@@ -1480,7 +1593,10 @@ const StudentDashboard = () => {
                                 });
                                 setHoveredDay({
                                   dateStr: day.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-                                  dayInfo
+                                  dayInfo: {
+                                    ...dayInfo,
+                                    problemsSolved: solved
+                                  }
                                 });
                               }}
                               onMouseLeave={() => setHoveredDay(null)}
@@ -1515,7 +1631,7 @@ const StudentDashboard = () => {
         {/* Achievements & Badges Card */}
         <div className="premium-profile-card" style={{ padding: '24px' }}>
           <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '16px', color: 'var(--ph-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🏆</span> Achievements & Badges
+            <FaTrophy style={{ color: '#fbbf24', fontSize: '18px' }} /> Achievements & Badges
           </h3>
 
           {getCompletedCourses().length === 0 ? (
@@ -1530,7 +1646,7 @@ const StudentDashboard = () => {
               border: '1px dashed var(--border-color)',
               borderRadius: '12px'
             }}>
-              <span style={{ fontSize: '32px', marginBottom: '8px' }}>🎖️</span>
+              <FaAward style={{ fontSize: '32px', marginBottom: '8px', color: 'var(--ps-text-dim)' }} />
               <h4 style={{ color: 'var(--ph-text)', marginBottom: '4px' }}>No Badges Earned Yet</h4>
               <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', maxWidth: '400px', margin: '0 auto' }}>
                 Complete your assigned courses, coding assessments, or solve practice problems in the sandbox to unlock special merit badges.
@@ -1744,7 +1860,7 @@ const StudentDashboard = () => {
           <div className="lw-card" style={{ maxWidth: '550px', padding: '30px', margin: '20px' }}>
             <div className="lw-card-header" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h3 className="lw-title" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-coding)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>✨</span> Welcome to SEED Portal
+                <FaStar style={{ color: 'var(--accent-coding)', fontSize: '18px' }} /> Welcome to SEED Portal
               </h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0' }}>
                 Please type the exact quote of the day to close this window and enter the platform.
@@ -1821,7 +1937,7 @@ const StudentDashboard = () => {
           <div className="lw-card" style={{ maxWidth: '550px', padding: '30px', margin: '20px' }}>
             <div className="lw-card-header" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
               <h3 className="lw-title" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-coding)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>📢</span> Platform Updates & News
+                <FaAward style={{ color: 'var(--accent-coding)', fontSize: '18px' }} /> Platform Updates & News
               </h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0' }}>
                 Stay up to date with the latest features, releases, and platform notifications.
@@ -1840,7 +1956,7 @@ const StudentDashboard = () => {
                       borderRadius: '10px',
                       alignItems: 'flex-start'
                     }}>
-                      <span style={{ fontSize: '16px', color: 'var(--accent-coding)', marginTop: '2px' }}>⚡</span>
+                      <FaStar style={{ fontSize: '14px', color: 'var(--accent-coding)', marginTop: '2px' }} />
                       <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.4', flex: 1 }}>
                         {update}
                       </p>
@@ -1857,7 +1973,7 @@ const StudentDashboard = () => {
                   borderRadius: '12px',
                   alignItems: 'flex-start'
                 }}>
-                  <span style={{ fontSize: '18px', color: 'var(--accent-coding)', marginTop: '2px' }}>⚡</span>
+                  <FaStar style={{ fontSize: '16px', color: 'var(--accent-coding)', marginTop: '2px' }} />
                   <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.5', flex: 1 }}>
                     {welcomeUpdates}
                   </p>
@@ -2131,9 +2247,9 @@ const StudentDashboard = () => {
                               <span style={{ color: '#64748b', fontWeight: '700', fontSize: '0.85rem' }}>SECTION {idx + 1}</span>
                               <span style={{ color: '#f8fafc', fontWeight: '600', fontSize: '0.9rem' }}>{sec.name}</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>
-                              <span>⏱️ {sec.duration_minutes || sec.duration || 0} Mins</span>
-                              <span>❓ {secQCount > 0 ? `${secQCount} Questions` : sec.type?.toUpperCase()}</span>
+                            <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500', alignItems: 'center' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center' }}><FaClock style={{ marginRight: '4px' }} /> {sec.duration_minutes || sec.duration || 0} Mins</span>
+                              <span>{secQCount > 0 ? `${secQCount} Questions` : sec.type?.toUpperCase()}</span>
                             </div>
                           </div>
                         );
@@ -2144,7 +2260,7 @@ const StudentDashboard = () => {
 
                 {/* Malpractice Warning Box */}
                 <div className="lw-malpractice-box" style={{ marginTop: '20px' }}>
-                  <p className="lw-malpractice-title">⚠️ Proctoring System Active</p>
+                  <p className="lw-malpractice-title" style={{ display: 'flex', alignItems: 'center' }}><FaExclamationTriangle style={{ marginRight: '6px' }} /> Proctoring System Active</p>
                   <ul className="lw-malpractice-list">
                     <li>Do not switch tabs or leave this window during the test.</li>
                     <li>3 tab-switch violations will auto-lock and submit your assessment.</li>
@@ -2155,13 +2271,13 @@ const StudentDashboard = () => {
               </div>
               <div className="lw-card-footer" style={{ padding: '18px 24px' }}>
                 <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
-                <button 
-                  className="lw-btn-success" 
+                <button
+                  className="lw-btn-success"
                   onClick={handleAgreeAndLaunch}
-                  style={{ 
-                    padding: '12px 28px', 
-                    fontSize: '1.05rem', 
-                    fontWeight: '800', 
+                  style={{
+                    padding: '12px 28px',
+                    fontSize: '1.05rem',
+                    fontWeight: '800',
                     borderRadius: '8px',
                     boxShadow: '0 4px 15px rgba(16, 185, 129, 0.25)',
                     transition: 'all 0.2s ease'
@@ -2300,7 +2416,7 @@ const StudentDashboard = () => {
 
       {/* Footer */}
       <footer className="dashboard-footer">
-        <p>&copy; {new Date().getFullYear()} SEED Innovating Technologies and Educatio Services (SEED-IT). (v{APP_VERSION})</p>
+        <p>&copy; {new Date().getFullYear()} SEED Innovating Technologies and Educational Services (SEED-IT). (v{APP_VERSION})</p>
       </footer>
     </div>
   );

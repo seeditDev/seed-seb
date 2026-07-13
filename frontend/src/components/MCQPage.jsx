@@ -892,6 +892,20 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             // Extract test path from URL or use it directly
             // Assuming URL format: /mcqs/test-name.json or full URL
             let testPath = url;
+
+            // Normalize path to plural mcqs/testBank if referencing mcq/testbank
+            if (testPath && typeof testPath === 'string') {
+                if (testPath.includes('mcq/testbank/')) {
+                    testPath = testPath.replace('mcq/testbank/', 'mcqs/testBank/');
+                } else if (testPath.includes('mcq/testbank')) {
+                    testPath = testPath.replace('mcq/testbank', 'mcqs/testBank');
+                } else if (testPath.startsWith('/mcq/')) {
+                    testPath = '/mcqs/' + testPath.substring(5);
+                } else if (testPath.startsWith('mcq/')) {
+                    testPath = 'mcqs/' + testPath.substring(4);
+                }
+            }
+
             if (url.includes('http')) {
                 try {
                     const response = await fetch(url);
