@@ -433,13 +433,14 @@ const StudentDashboard = () => {
 
             let finalUrl = module.url || '';
             if (finalUrl && !finalUrl.endsWith('.json')) {
+              const urlType = type === 'MSA' ? (courseId === 'mcqs' || module.id?.startsWith('MA') ? 'mcq' : 'coding') : type;
               if (module.slug) {
-                finalUrl = `/${type}/testbank/${module.slug}.json`;
-              } else if (finalUrl.startsWith(`/student/${type}/`)) {
+                finalUrl = `/${urlType}/testbank/${module.slug}.json`;
+              } else if (finalUrl.startsWith(`/student/${urlType}/`)) {
                 const slugFromUrl = finalUrl.split('/').filter(Boolean).pop();
-                finalUrl = `/${type}/testbank/${slugFromUrl}.json`;
+                finalUrl = `/${urlType}/testbank/${slugFromUrl}.json`;
               } else {
-                finalUrl = `/${type}/testbank/${slugify(module.name || key)}.json`;
+                finalUrl = `/${urlType}/testbank/${slugify(module.name || key)}.json`;
               }
             }
 
@@ -454,7 +455,7 @@ const StudentDashboard = () => {
               duration: module.duration_minutes || 60,
               slug: derivedSlug,
               type,
-              isMultiSection: !!module.isMultiSection,
+              isMultiSection: !!module.isMultiSection || type === 'MSA',
               sections: module.sections || [],
               proctored: module.proctored,
               maxViolations: module.maxViolations,
@@ -463,7 +464,8 @@ const StudentDashboard = () => {
               questions: Array.isArray(module.questions) ? module.questions.length : (typeof module.questions === 'number' ? module.questions : (module.questionIds?.length || 0))
             };
 
-            if (type === 'coding') {
+            const listType = type === 'coding' || (type === 'MSA' && courseId === 'assessments') ? 'coding' : 'mcq';
+            if (listType === 'coding') {
               item.languages = module.languages || ["c", "cpp", "java", "python"];
               codingList.push(item);
             } else {
@@ -509,7 +511,7 @@ const StudentDashboard = () => {
       // Check attempt status for each assessment in parallel to determine completion
       const statusPromises = combined.map(async (item) => {
         try {
-          if (item.isMultiSection || item.type === 'multisection') {
+          if (item.isMultiSection || item.type === 'multisection' || item.type === 'MSA') {
             const college = userData.College || 'KGKITE';
             const year = userData.Year || '2026';
             const docPath = `AssessmentResults/${item.id}/colleges/${college}/years/${year}/students/${userData.Email || userData.email}`;
@@ -687,7 +689,7 @@ const StudentDashboard = () => {
       }
 
       let check;
-      if (assessment.isMultiSection || assessment.type === 'multisection') {
+      if (assessment.isMultiSection || assessment.type === 'multisection' || assessment.type === 'MSA') {
         const college = user.College || 'KGKITE';
         const year = user.Year || '2026';
         const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
@@ -1064,7 +1066,7 @@ const StudentDashboard = () => {
                       <FaClock /> <span>{a.duration} Minutes</span>
                     </div>
                     <div className="detail-item">
-                      <FaClipboardList /> <span>{a.questions} {a.type === 'mcq' ? 'Questions' : 'Coding Tasks'}</span>
+                      <FaClipboardList /> <span>{a.isMultiSection || a.type === 'MSA' ? `${a.sections?.length || 0} Sections` : `${a.questions} ${a.type === 'mcq' ? 'Questions' : 'Coding Tasks'}`}</span>
                     </div>
                     <div className="detail-item schedule">
                       <FaCalendarAlt />
