@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "springboot",
     "contestCode": "DEPINJ1",
     "module": "IoC and Dependency Injection",
@@ -26,7 +26,7 @@
       "IoC and Dependency Injection",
       "What Happens in a Traditional App"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "- Let’s remove direct dependency on payment implementations\n- Let’s allow multiple payment methods without changing `OrderService`\n- Let’s keep the design simple and flexible\n\n---\n\nThe problem in the previous design was that `OrderService` depended directly on concrete payment classes.\n\nTo fix this, we introduce an **interface** that represents a payment.\n\n```java\ninterface PaymentService {\n    void pay();\n}\n```\n\nNow, each payment type implements this interface.\n\n```java\nclass CreditCardPaymentService implements PaymentService {\n    public void pay() {\n        System.out.println(\"Payment done using Credit Card\");\n    }\n}\n\nclass UPIPaymentService implements PaymentService {\n    public void pay() {\n        System.out.println(\"Payment done using UPI\");\n    }\n}\n```\n\n---\n\n**Updating OrderService**\n\n```java\nclass OrderService {\n\n    private PaymentService paymentService;\n\n    public OrderService(PaymentService paymentService) {\n        this.paymentService = paymentService;\n    }\n\n    public void placeOrder() {\n        paymentService.pay();\n        System.out.println(\"Order placed\");\n    }\n}\n```\n\nNow, `OrderService`:\n\n* Does not know which payment method is used\n* Depends only on the `PaymentService` interface\n* Does not need to change when new payment types are added\n\n---\n\n**Using the Application**\n\n```java\npublic class Main {\n    public static void main(String[] args) {\n\n        PaymentService payment = new UPIPaymentService();\n        OrderService orderService = new OrderService(payment);\n\n        orderService.placeOrder();\n    }\n}\n```\n\nTo switch payment methods, only this line changes:\n\n```java\nPaymentService payment = new CreditCardPaymentService();\n```\n\n`OrderService` remains untouched.\n\n---\n\n**Key Idea:** `OrderService` depends on an **interface**, **NOT on a concrete payment class**.\n\nThis design is called **loose coupling**.",

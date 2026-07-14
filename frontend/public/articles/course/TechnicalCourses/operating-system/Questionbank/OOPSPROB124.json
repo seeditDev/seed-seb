@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "operating-system",
     "contestCode": "SYNCPROB",
     "module": "Process Synchronization and Deadlocks",
@@ -26,7 +26,7 @@
       "Process Synchronization and Deadlocks",
       "Classical Synchronization Problems"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "**To implement the Producer-Consumer Problem using semaphores**, we need to synchronize access to a shared buffer so that:\n- Producers do not insert items into a full buffer.\n- Consumers do not remove items from an empty buffer.\n- Only one process accesses the buffer at a time.\n\nWe define three semaphores:\n| **Semaphore** | **Purpose**                                | **Initial Value**     |\n| --------- | -------------------------------------- | ----------------- |\n| `mutex`   | Ensures mutual exclusion (1 at a time) | 1                 |\n| `empty`   | Counts empty slots in the buffer       | `n` (buffer size) |\n| `full`    | Counts filled slots in the buffer      | 0                 |\n\n---\n\n**Producer Code (Pseudocode)**\n```java\ndo {\n  // produce item\n\n  wait(empty);   // wait for an empty slot\n  wait(mutex);   // lock the buffer\n\n  // add item to buffer\n\n  signal(mutex); // unlock buffer\n  signal(full);  // increment filled slots\n} while(true);\n```\n**Consumer Code (Pseudocode)**\n```java\ndo {\n  wait(full);    // wait for item to be available\n  wait(mutex);   // lock the buffer\n\n  // remove item from buffer\n\n  signal(mutex); // unlock buffer\n  signal(empty); // increment empty slots\n} while(true);\n```\n**Explanation:**\n- The producer waits if the buffer is full (`empty == 0`).\n- The consumer waits if the buffer is empty (`full == 0`).\n- `mutex` ensures that only one process accesses the buffer at a time.\n- `empty` and `full` track the buffer’s state.",

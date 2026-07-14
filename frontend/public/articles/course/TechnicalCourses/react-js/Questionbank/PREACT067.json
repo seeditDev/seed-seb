@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "react-js",
     "contestCode": "CREACT016",
     "module": "React Hooks",
@@ -26,7 +26,7 @@
       "React Hooks",
       "Memoization"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Let’s imagine you’re building a component with a button that increments a counter. You pass this button’s click handler as a prop to a child component. Every time the parent re-renders, **a new function is created**, even if the actual logic hasn’t changed. This can cause unnecessary re-renders in child components, even if they’re wrapped in **`React.memo`**!\n\n#### Why Do We Need **`useCallback`**?\nJust like **`useMemo`** remembers values, **`useCallback`** remembers functions. It ensures the **same function reference** is reused between re-renders, preventing unnecessary child re-renders when passing functions as props.\n\n#### The Problem Without `useCallback`\n```jsx\nfunction Parent() {\n  const [count, setCount] = useState(0);\n\n  // ❌ New function created on every render\n  const handleClick = () => {\n    setCount(c => c + 1);\n  };\n\n  return (\n    \n      \n    \n  );\n}\n\nconst Child = memo(function ({ onClick }) {\n  console.log(\"Child re-rendered!\"); // Logs every time \n  return Click Me;\n});\n```\nEven with **`React.memo`**, the child re-renders because **`handleClick`** is a new function every time!\n\n#### How `useCallback` Fixes This\n```jsx\nimport { useCallback } from 'react';\n\nfunction Parent() {\n  const [count, setCount] = useState(0);\n\n  // ✅ Same function reference until deps change\n  const handleClick = useCallback(() => {\n    setCount(c => c + 1);\n  }, []); // Empty array = no dependencies\n\n  return (\n    \n      \n    \n  );\n}\n```\nNow, **`Child`** won’t re-render unnecessarily because **`handleClick`** remains the same!\n\n#### Key Points to Remember\n1. **What It Does**: **`useCallback`** memoizes (remembers) functions between re-renders\n2. **When to Use**:\n   - Passing functions to memoized components (**`React.memo`**)\n   - When functions are dependencies in other hooks (**`useEffect`**, **`useMemo`**)\n3. **Dependency Array**: Works exactly like **`useMemo`**/**`useEffect`** – list variables that should trigger a new function creation\n\n#### Real-World Example: Search Component\n```jsx\nfunction SearchPage() {\n  const [query, setQuery] = useState('');\n  const [results, setResults] = useState([]);\n\n  // 🔄 Recreated on every render without useCallback\n  const search = useCallback(() => {\n    fetch(`/api/search?q=${query}`)\n      .then(res => res.json())\n      .then(setResults);\n  }, [query]); // ✅ Only changes when query changes\n\n  return (\n    \n      \n      \n    \n  );\n}\n```\n**Tip**: Don’t overuse **`useCallback`**! Only use it when:\n- You have proven performance issues\n- Passing functions to memoized components\n- Functions are used in dependency arrays\n\n**`useCallback`** helps optimize performance by preserving function identities between renders, working hand-in-hand with **`React.memo`** to prevent unnecessary child re-renders. Use it wisely!",

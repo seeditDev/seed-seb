@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "sql-intermediate",
     "contestCode": "SQ00BS03A",
     "module": "Normalization and ER diagrams",
@@ -26,7 +26,7 @@
       "Normalization and ER diagrams",
       "Entity relationships"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "A partial dependency occurs when a non-key attribute is dependent on only **part** of a composite primary key. A composite key is a primary key made up of two or more attributes. The non-key attribute doesn't need the **entire** primary key to determine its value, just a portion of it.\n\nThink of it like this:\n\nImagine a table tracking employee training courses. The primary key is a composite of **EmployeeID** and **CourseID**. Now, if **CourseName** is also an attribute in the table, and **CourseName** is determined **only** by **CourseID** (and not the **EmployeeID**), then we have a partial dependency. The employee doesn't affect the course name; the course ID alone is sufficient.\n\n**Example Data (Illustrating Partial Dependency):**\n\n| EmployeeID | CourseID | CourseName         | CompletionDate |\n|------------|----------|--------------------|----------------|\n| 123        | CS101    | Intro to Python    | 2023-10-26     |\n| 123        | DB201    | Database Design    | 2023-11-15     |\n| 456        | CS101    | Intro to Python    | 2023-11-01     |\n| 789        | CS101    | Intro to Python    | 2023-11-10     |\n| 456        | WEB301   | Advanced Web Dev   | 2023-12-01     |\n\n**Let's trace the dependencies:**\n\n* `EmployeeID, CourseID → CompletionDate` (The date an employee completed a specific course.)\n* `CourseID → CourseName` (The name of the course based on its ID.)\n* Therefore, `EmployeeID, CourseID → CourseName` (Partial Dependency - `CourseName` only depends on `CourseID`, a part of the primary key)\n\n**See how this looks in a database:**\n\n```sql\nCREATE TABLE EmployeeTraining (\n    EmployeeID VARCHAR(10),\n    CourseID VARCHAR(10),\n    CourseName VARCHAR(50),\n    CompletionDate DATE,\n    PRIMARY KEY (EmployeeID, CourseID)\n);\n```\nIn this table, `CourseName` is partially dependent on `CourseID` which is part of the primary key (`EmployeeID`, `CourseID`).\n\n**Key Points to Remember:**\n\n* Partial dependencies only apply when you have a composite primary key.\n* They lead to redundancy (the same `CourseName` is repeated for every employee who takes the course).\n* They cause update anomalies (if you want to change a `CourseName`, you have to update it in multiple rows).\n* To remove a partial dependency, create a new table with the attribute(s) that make up the partial dependency, and the attribute(s) that depend on it.",

@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "machine-learning",
     "contestCode": "CLASSIFYMOD",
     "module": "Classification (Supervised Learning)",
@@ -26,7 +26,7 @@
       "Classification (Supervised Learning)",
       "Classification Models"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Let’s use a **Random Forest** to predict if a student will **Pass (1)** or **Fail (0)**  \nbased on their **Study Hours** and **Attendance**.  \n\n---\n\n**Step 1: Create the Dataset**\n\nWe’ll reuse our small student dataset.  \n\n```python\nimport pandas as pd\n\ndata = {\n    \"Study_Hours\": [2, 3, 4, 5, 6, 2, 3, 4, 5, 6, 7, 8, 9],\n    \"Attendance\": [60, 65, 70, 75, 80, 62, 68, 72, 78, 85, 88, 90, 95],\n    \"Pass\":        [0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]\n}\n\ndf = pd.DataFrame(data)\n\nX = df[[\"Study_Hours\", \"Attendance\"]]  # Features\ny = df[\"Pass\"]                         # Label\n````\n\n---\n\n**Step 2: Train a Random Forest**\n\nWe create a `RandomForestClassifier` with more trees, limited depth, and leaf smoothing so that the model gives **soft probabilities** instead of only `[1.0, 0.0]`.\n\n```python\nfrom sklearn.ensemble import RandomForestClassifier\n\n# Train a random forest with 100 trees, limited depth, and smoothing\nmodel = RandomForestClassifier(\n    n_estimators=100, \n    max_depth=3,        \n    min_samples_leaf=2,  \n    random_state=42      \n)\nmodel.fit(X, y)\n```\n\nExplanation of parameters:\n* ```n_estimators=100``` → The forest will use 100 decision trees (more stable probabilities).\n* ```max_depth=3``` → Restricts how deep each tree can grow (prevents overfitting).\n* ```min_samples_leaf=2``` → Ensures each leaf has at least 2 samples, smoothing probability estimates.\n* ```random_state=42``` → Fixes randomness, so you get the same results every time.\n\n---\n\n**Step 3: Make Predictions**\n\nNow let’s predict on the training data.\n\n```python\npredictions = model.predict(X)\nprint(\"Predictions:\", predictions.tolist())\n```\n\n**Output**\n\n```sdf\nPredictions: [0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]\n```\n\n**The Random Forest predicts correctly for all students.**\n\n---\n\n**Step 4: Probability of Predictions**\n\nRandom Forests can also tell us the **probability** (how many trees voted for each class).\n\n```python\nprobabilities = model.predict_proba(X)\nfor row in probabilities:\n    fail, pass_ = row\n    print(f\"[{fail:.1f} {pass_:.1f}]   # {int(fail*100)}% Fail, {int(pass_*100)}% Pass\")\n\n```\n\nExample output:\n\n```sdf\n[1.0 0.0]   # 100% Fail, 0% Pass\n[1.0 0.0]   # 100% Fail, 0% Pass\n[0.8 0.2]   # 80% Fail, 20% Pass\n[0.0 1.0]   # 0% Fail, 100% Pass\n[0.0 1.0]   # 0% Fail, 100% Pass\n[1.0 0.0]   # 100% Fail, 0% Pass\n[1.0 0.0]   # 100% Fail, 0% Pass\n[0.4 0.6]   # 40% Fail, 60% Pass\n[0.0 1.0]   # 0% Fail, 100% Pass\n[0.0 1.0]   # 0% Fail, 100% Pass\n[0.0 1.0]   # 0% Fail, 100% Pass\n[0.0 1.0]   # 0% Fail, 100% Pass\n[0.0 1.0]   # 0% Fail, 100% Pass\n```",

@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "operating-system",
     "contestCode": "SYNCPROB",
     "module": "Process Synchronization and Deadlocks",
@@ -26,7 +26,7 @@
       "Process Synchronization and Deadlocks",
       "Classical Synchronization Problems"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Now that we understand the **Dining Philosophers Problem** and its synchronization challenges, let’s explore how **semaphores** can be used to coordinate the philosopher’s actions, ensuring safety, avoiding deadlock, and minimizing starvation.\n\n**Why Semaphores?**\nA **semaphore** is a synchronization primitive that allows controlled access to shared resources.\n\nIn the dining philosophers scenario:\n- **Forks** are the shared resources.\n- **Semaphores** ensure that a philosopher picks up forks only when they are available.\n- This prevents two philosophers from holding the same fork at the same time.\n\n---\n\n### Basic Semaphore Approach:\nModel each fork `fork[i]` as a binary semaphore initialized to `1`.\n\n**Rules:**\n1. **Thinking –** The philosopher does not hold any fork.\n2. **Hungry –** The philosopher tries to pick up both forks.\n3. **Eating –** The philosopher holds both forks and eats.\n\n**Pseudocode:**\n```java\nwait(fork[i]);            // pick up left fork\nwait(fork[(i+1) % N]);    // pick up right fork\n// Eat\nsignal(fork[i]);          // put down left fork\nsignal(fork[(i+1) % N]);  // put down right fork\n```\n\n**Deadlock Risk with Basic Approach:**\nIf **all philosophers pick up their left fork first**, each waits for the right fork → **circular wait** → **deadlock**.\n\n\n\n---\n\n**Deadlock Prevention Strategies with Semaphores:**\n1. **Asymmetric Solution**\n- Odd-numbered philosophers pick up the **left fork first**, then the right fork.\n- Even-numbered philosophers pick up the **right fork first**, then the left fork.\n- This breaks circular wait by **not letting everyone request in the same direction**.\n\n2. **Global Semaphore Limit (`N - 1` “room”)**\nUse a **counting semaphore** room initialized to `N-1`.\n```java\nwait(room);              // Ensure only N-1 philosophers enter\nwait(fork[i]);           \nwait(fork[(i+1) % N]);   \n// Eat\nsignal(fork[i]);         \nsignal(fork[(i+1) % N]); \nsignal(room);            // Leave room\n```\n**Why this works:**\nWith at most N-1 philosophers inside, **at least one fork remains on the table** in the worst case where each of those N-1 philosophers holds one fork. That guarantees **at least one philosopher can still acquire two forks**, eat, and release them — **breaking the circular wait**.\n\n3. **Resource Hierarchy**\n- Impose a strict global order on forks (e.g., always pick the lower-numbered fork first, then the higher-numbered).\n- This prevents circular waiting.\n\n---\n\n**Advantages of the Semaphore Solution:**\n- Ensures **mutual exclusion** (no fork is shared at the same time).\n- Can **prevent deadlock** with the right strategy.\n- Supports **concurrent eating** when forks are available.",

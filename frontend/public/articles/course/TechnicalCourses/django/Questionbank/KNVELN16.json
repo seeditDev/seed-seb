@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "django",
     "contestCode": "BCFEJHA",
     "module": "Core Django Fundamentals – Data Modeling",
@@ -26,7 +26,7 @@
       "Core Django Fundamentals – Data Modeling",
       "Field validations & relationships"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "In Django, field validations refer to the checks that are performed to ensure that the data entered into a model or form field is valid and meets certain rules or constraints before it gets saved to the database.\n\nHere are some common built-in validations:\n1. Required fields: By default, all fields are optional. To make a field required, use the `null=False` and `blank=False` parameters when defining the field.\n2. Max length: For CharField and TextField, you can specify a maximum length using the `max_length` parameter.\n3. Unique values: To ensure a field contains unique values across all records, use the `unique=True` parameter.\n4. Choices: You can limit the possible values for a field by providing a list of choices using the `choices` parameter.\n5. Numeric range: For IntegerField and FloatField in forms, you can set minimum and maximum values using the `min_value` and `max_value` parameters. \\\nIn models, you must use **validators** like `MinValueValidator` and `MaxValueValidator` to enforce numeric limits. (Make sure you import it before using as: `from django.core.validators import MinValueValidator, MaxValueValidator\n`)\n6. Date and time validation: DateField and DateTimeField automatically validate that the input is a valid date or datetime.\n7. Email validation: EmailField ensures that the input is a valid email address format.\n8. URL validation: URLField checks if the input is a valid URL format.\n\n**Note:** When we add / update the data in the database, these validations **DO NOT** run automatically. \\\nWe have to add a function `full_clean()` to our `views.py` file before `save()` to enforce validation.\n\nLet's look at an example using some of these validations:\n\n```python\nfrom django.db import models\nfrom django.core.validators import MinValueValidator, MaxValueValidator\n\nclass Book(models.Model):\n    title = models.CharField(max_length=200, blank=False)\n    author = models.CharField(max_length=100)\n    publication_year = models.IntegerField(validators=[MinValueValidator(1800), MaxValueValidator(2023)]\n    isbn = models.CharField(max_length=13, unique=True)\n    genre = models.CharField(max_length=50, choices=[\n        ('FIC', 'Fiction'),\n        ('NON', 'Non-Fiction'),\n        ('SCI', 'Science'),\n        ('HIS', 'History')\n    ])\n    website = models.URLField(blank=True)\n```\n\nIn this example, we've applied various built-in validations:\n- The title is required (blank=False) and has a maximum length of 200 characters.\n- The publication year must be between 1800 and 2023.\n- The ISBN must be unique across all books.\n- The genre is limited to predefined choices.\n- The website, if provided, must be a valid URL.\n\n#### Video Explanation:",

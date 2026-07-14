@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "react-js",
     "contestCode": "CREACT013",
     "module": "React Hooks",
@@ -26,7 +26,7 @@
       "React Hooks",
       "Immutability Revisited & Refs"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "In React, state updates must be immutable. This means you can’t modify existing state directly. Instead, you create a new version of the state. For example:\n```jsx\n// ❌ Mutation (avoid!)\nuser.name = 'Ava';  \n\n// ✅ Correct: Replace the entire object  \nsetUser({ name: 'Ava' });\n```\nWhen you call `setUser`, React creates a new object in memory. The old `{ name: 'Ivy' }` and new `{ name: 'Ava' }` objects coexist briefly, allowing React to track changes.\n\n#### Objects, References, and \"Identical Twins\"\nIn JavaScript, objects are stored **by reference**. Even if two objects look identical, they’re distinct if created separately:\n\n```jsx\nconst user1 = { name: 'Ava' };  \nconst user2 = { name: 'Ava' };  \nconsole.log(user1 === user2); // false (different memory addresses)\n```\n\nReact uses reference comparisons to detect state changes. Mutating an existing object won’t trigger re-renders because the reference stays the same.\n\n#### Handling Multiple State Variables\nConsider two state variables:\n```jsx\nconst [user, setUser] = useState({ name: 'Ivy' });  \nconst [items, setItems] = useState([1, 2, 3]);  \n```\n\nWhen updating `user` with `setUser`, React reuses the existing `items` array. All snapshots share the same array reference until `setItems` is called. This minimizes unnecessary re-renders and memory usage.\n\n#### Snapshots vs. Component Instances\n- **Component Instances**: Long-lived JavaScript objects that manage state, effects, and DOM nodes. Created on mount, destroyed on unmount.\n- **Snapshots**: A \"frozen\" view of props/state at the time of rendering. Each render produces a new snapshot, capturing the state’s value at that moment.\n\nFor example, event handlers in a snapshot always \"see\" the state as it was during that render:\n```jsx\nconst handleClick = () => {  \n  console.log(user.name); // Logs 'Ivy' even if state updated later  \n};  \n```\n\n#### Implications for React Hooks\n1. **useEffect Dependencies**:\nReact compares dependency array references. If you mutate an object, the effect won’t re-run:\n\n```jsx\nuseEffect(() => {  \n  // Effect depends on user  \n}, [user]); // Only triggers if user reference changes  \n```\nwe will read more about `useEffect` in up-coming lesson\n\n2. **Memoization (useMemo/useCallback)**:\nMemoized values recompute only when dependencies change by reference.\n\nImmutability might feel a bit strange at first, but it’s like giving React clear \"before and after\" snapshots to work with. By always creating fresh copies of your data (instead of editing the original), you help React spot changes instantly, keep your app fast, and avoid confusing bugs. Think of it as leaving a trail of breadcrumbs—each new state is a step forward, never a messy scribble over the past. \n\n\n#### Video Explanation:",

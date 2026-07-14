@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "operating-system",
     "contestCode": "DEADLOCKPRE",
     "module": "Process Synchronization and Deadlocks",
@@ -26,7 +26,7 @@
       "Process Synchronization and Deadlocks",
       "Handling Deadlocks"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Now, in this component, we will discuss how to implement the Banker's Algorithm in code.\n\n---\n\nHere are the steps involved:\n**Step 1: Define the input matrices**\nWe define:\n- `allocation[][]` → currently allocated resources.\n- `max[][]` → maximum demand of each process.\n- `total[]` → total system resources.\n```java\nint[][] allocation = {\n    {0, 1, 0}, {2, 0, 0}, {3, 0, 2}, {2, 1, 1}, {0, 0, 2}\n};\n\nint[][] max = {\n    {7, 5, 3}, {3, 2, 2}, {9, 0, 2}, {2, 2, 2}, {4, 3, 3}\n};\n\nint[] total = {10, 5, 7};\n```\n**Step 2: Calculate the Need matrix**\nNeed matrix = Max - Allocation\nIt tells us how many more resources each process may need to complete.\n```java\n// P -> Number of processes\n// R -> Number of resource types\nint[][] need = new int[P][R];\nfor (int i = 0; i \nAvailable = Total − Σ(allocated resources)\nThis shows how many resources are currently free.\n```java\nint[] available = new int[R];\nfor (int j = 0; j \nWe try to find a sequence in which all processes can finish one by one without a deadlock.\n```java\n// Determine the safe sequence using Banker's Algorithm\nboolean[] finished = new boolean[P];  // Tracks whether each process is finished\n\n// Stores the safe sequence of processes\nint[] safeSeq = new int[P];  \n\n// Number of processes added to the safe sequence\nint count = 0;                       \n\n// Loop until all processes have been added to the safe sequence (count reaches P)\nwhile (count  available[j]) {\n                    canRun = false;\n                    break;\n                }\n            }\n\n            // If process i can run, allocate its resources and mark it as finished\n            if (canRun) {\n                for (int j = 0; j < R; j++) {\n                    // Release resources of process i\n                    available[j] += allocation[i][j];  \n                }\n                safeSeq[count++] = i;    // Add process i to the safe sequence\n                finished[i] = true;      // Mark process i as finished\n                found = true;            // A valid process was found in this pass\n            }\n        }\n    }\n\n    // If no unfinished process could run, the system is in an unsafe state\n    if (!found) {\n        System.out.println(\"System is in an UNSAFE state.\");\n        return;\n    }\n}\n```\nAt last, **print the safe sequence**.",

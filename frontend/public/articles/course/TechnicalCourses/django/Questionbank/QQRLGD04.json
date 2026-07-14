@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "django",
     "contestCode": "PENGHR",
     "module": "User Authentication & Authorization",
@@ -26,7 +26,7 @@
       "User Authentication & Authorization",
       "User Management – Authentication"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Now that users can register, the next step is letting them log in and log out.\n\n#### Why Login and Logout Matter\n- Login checks if the username and password match a registered user. If so, Django logs them in and starts a session.\n- Logout ends that session to keep their account secure. \\\n**Django makes this easy with built-in tools!**\n\n#### User Login\n**Django's Built-in Login Form**\nUse Django’s ready-made AuthenticationForm:\n```python\nfrom django.contrib.auth.forms import AuthenticationForm\n```\nThis form already has username and password fields.\n**Login View** \\\nYour view handles two things:\n1. GET: Show the empty form.\n2. POST: Process the submitted form.\n\n**Key functions:**\n```python\nfrom django.contrib.auth import authenticate, login\n```\n**Basic login logic:**\n```python\ndef login_view(request):\n    if request.method == 'POST':\n        form = AuthenticationForm(request, data=request.POST)\n        if form.is_valid():\n            user = form.get_user()\n            login(request, user)\n            return redirect('home')\n    else:\n        form = AuthenticationForm()\n    return render(request, 'login.html', {'form': form})\n```\n\n**Login Template (login.html)**\n```html\n\n  {{ form.as_p }}\n  Login\n\n\n{% if form.errors %}\n  Login failed. Check your credentials.\n{% endif %}\n```\n**URL for Login**\nIn urls.py:\n```python\npath('login/', login_view, name='login')\n```\n\n#### User Logout\n**Logout View**\nDjango provides a simple function:\n```python\nfrom django.contrib.auth import logout\n\ndef logout_view(request):\n    logout(request)\n    return redirect('home')\n```\n**URL for Logout**\nIn urls.py:\n```python\npath('logout/', logout_view, name='logout')\n```\n**Logout Link (in templates)**\n```html\nLogout\n```\n\n**Checking If a User is Logged In (in templates)**\nDjango gives you the user object in all templates.\n```html\n{% if user.is_authenticated %}\n  Hello, {{ user.username }}!\n  Logout\n{% else %}\n  Login\n  Register\n{% endif %}\n```\n\n#### Video Explanation:",

@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "flask",
     "contestCode": "YRRISE",
     "module": "Database connection",
@@ -26,7 +26,7 @@
       "Database connection",
       "Connecting FLASK to database"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Let us now review the code to understand the DB setup.\n\nThe code in the IDE creates a Flask web app that connects to an SQLite database, defines a User model, and shows a list of users on the homepage using a template.\n\n### Note-1 \nWe have already added some users to the database. \\\nWhen you run the code - you will be able to view the current entries in the db.\n\n### How does the code work?\nLet us look at the key components\n1. Flask App Setup - the following code creates a Flask app and gets the absolute directory path of the current file for storing the database.\n```python\napp = Flask(__name__)\nbasedir = os.path.abspath(os.path.dirname(__file__))\n```\n\n2. Database configuration\n   - Tells Flask to use a SQLite database file called users.db in the current folder.\n   - Disables a feature that tracks every change in the database, which saves memory.\n```python\napp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'users.db')\napp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False\n```\n\n3. User Model Definition - Defines a User class that represents a table in the database.\n   - id is the primary key.\n   - name and email are required fields (nullable=False).\n   - email must be unique.\n```python\nclass User(db.Model):\n    id = db.Column(db.Integer, primary_key=True)\n    name = db.Column(db.String(80), nullable=False)\n    email = db.Column(db.String(120), nullable=False, unique=True)\n```\n\n4. The root URL `/` will run this function. It fetches all users from the database.\n```python\n@app.route('/')\ndef show_users():\n    users = User.query.all()\n    return render_template('user.html', users=users)\n```\n\n### Note-2\nYou will need to # Define User model and # Create DB only once for your project. \\\nOnce your file - `users.db` is in place - you will just do CRUD operations on the db - however, you wont need to define / create it repeatedly.",

@@ -931,7 +931,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                     </div>
                 </div>
             )}
-            {/* LeetCode Header Nav */}
+            {/* SEED-IT Header Nav */}
             <header className="sandbox-workspace-header">
                 <div className="header-left">
                     <button 
@@ -1140,7 +1140,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
             {/* Main Sandbox Layout */}
             <div className={`sandbox-wrapper ${mode === 'free' ? 'free-mode' : ''}`}>
                 <div className="sandbox-layout">
-                    {/* Left Side: LeetCode-style tabbed problem details panel */}
+                    {/* Left Side: SEED-IT-style tabbed problem details panel */}
                     {mode !== 'free' && selectedChallenge && (
                         <div className="problem-panel">
                             <div className="problem-tabs-header">

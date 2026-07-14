@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "django",
     "contestCode": "GQYZIJ",
     "module": "Forms, Validations & User Interactions",
@@ -26,7 +26,7 @@
       "Forms, Validations & User Interactions",
       "Form Rendering & Submission"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "In the previous lesson, we learned how to create forms using Django’s Form class and how to display them in templates. Now we will see how those forms can be connected to the database — so when a user fills out a form and submits it, the data gets saved in your model.\n\nThis is where **ModelForms** come in.\n\nA ModelForm is a special kind of Django form that is linked directly to a model. It knows which fields are in your model and can automatically create form fields for them. It also knows how to save the data to the database.\n\nThink of it as a smart form that already understands your data structure.\n#### Step-by-Step: Handling Form Submissions with a ModelForm\nLet’s say you have a model called `Product` like this:\n```python\n# models.py\nfrom django.db import models\n\nclass Product(models.Model):\n    name = models.CharField(max_length=100)\n    price = models.FloatField()\n    description = models.TextField()\n```\nNow, let’s create a ModelForm for this model.\n\n```python\n# forms.py\nfrom django import forms\nfrom .models import Product\n\nclass ProductForm(forms.ModelForm):\n    class Meta:\n        model = Product\n        fields = ['name', 'price', 'description']\n```\nThis form will now automatically create fields for `name`, `price`, and `description`.\n\n#### What Happens When a User Submits the Form?\nFrom submitting the form to saving it in the database.\n\n1. User sees the form\nThe user visits a URL that shows a blank form.\n```python\n# views.py\nfrom django.shortcuts import render, redirect\nfrom .forms import ProductForm\n\ndef add_product_view(request):\n    if request.method == 'POST':\n        form = ProductForm(request.POST)  # Bind data from request\n        if form.is_valid():               # Validates the form\n            form.save()                   # Saves to the Product table!\n            return redirect('product_list')  # Go to another page after saving\n    else:\n        form = ProductForm()              # Empty form for GET request\n\n    return render(request, 'add_product.html', {'form': form})\n```\n**The HTML Template**\n```html\n\n{% extends \"base.html\" %}\n\n{% block content %}\n  Add a New Product\n  \n   \n    {{ form.as_p }}\n    Submit\n  \n{% endblock %}\n```\n\n#### What Django Does Behind the Scenes\n- On a GET request, it shows the empty form.\n- On a POST request, it grabs the submitted data using request.POST.\n- The ProductForm checks the data and, if valid, uses .save() to:\n- Create a new Product object\n- Insert it into the database\n- Then it redirects the user to another page so the form isn’t submitted again by accident.\n\n#### Video Explanation:",

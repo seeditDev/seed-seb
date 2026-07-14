@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "django",
     "contestCode": "BCFEJH",
     "module": "Core Django Fundamentals – Data Modeling",
@@ -26,7 +26,7 @@
       "Core Django Fundamentals – Data Modeling",
       "CRUD Operations with Django ORM"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "So far, we've been adding data to our database using the Django shell. While that's a great way to understand how things work behind the scenes, it's not practical for real-world applications.\n\nIn this lesson, we'll start exploring CRUD operations using Django's ORM (Object-Relational Mapping) system. \\\nCRUD stands for Create, Read, Update, and Delete — the four basic operations you can perform on a database.\n\nWe'll begin with the \"C\" — Create:\n\nLet's say we have a simple model called 'Book' in our models.py file:\n\n```python\nfrom django.db import models\n\nclass Book(models.Model):\n    title = models.CharField(max_length=200)\n    author = models.CharField(max_length=100)\n    publication_date = models.DateField()\n```\n\nTo create a new book record, we can use either the `.create()` method or the `.save()` method in our `views.py` file\n\n#### Method:1 Using `.create()`:\nThis method creates and saves the object in one step.\n\n```python\nfrom django.http import HttpResponse\nfrom .models import Book\n\ndef add_book(request):\n    Book.objects.create(\n        title=\"Django for Beginners\",\n        author=\"William S. Vincent\",\n        publication_date=\"2020-01-01\"\n    )\n    return HttpResponse(\"Book added successfully!\")\n```\n- Book.objects.create(...) creates a new Book object and immediately saves it to the database.\n- This is the most concise way to create a new record when all data is available at once.\n\n#### Method:2 Using `.save()`:\nThis method separates object creation and saving into two steps.\n```python\nfrom django.http import HttpResponse\nfrom .models import Book\n\ndef add_book(request):\n    # Step 1: Create an instance (not yet saved)\n    new_book = Book(\n        title=\"Django for Beginners\",\n        author=\"William S. Vincent\",\n        publication_date=\"2020-01-01\"\n    )\n\n    # Step 2: Save the instance to the database\n    new_book.save()\n\n    return HttpResponse(\"Book added using .save()\")\n```\n- This approach is useful when you want to set values dynamically or modify the object before saving it.\n- It's like saying: \"Let me prepare the record, then I’ll decide when to store it in the database.\"\n\n#### When to use which?\n\n|                  **Use .create() when...**                  |               **Use .save() when...**              |\n|:-----------------------------------------------------------:|:--------------------------------------------------:|\n| You want a quick one-liner and already have all the values. | You're not doing any custom logic before saving.   |\n| You're not doing any custom logic before saving.            | You plan to modify or validate data before saving. |\n\n#### Video Explanation:",
