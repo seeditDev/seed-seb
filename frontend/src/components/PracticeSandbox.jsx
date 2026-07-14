@@ -1184,13 +1184,11 @@ const PracticeSandbox = () => {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', maxHeight: '150px', overflowY: 'auto' }}>
                         {submitResults.map((tr, i) => (
-                          <div key={tr.id} style={{
-                            display: 'flex', justifyContent: 'space-between',
-                            padding: '8px 12px', background: '#0a0a14', borderRadius: '6px',
+                          <div key={tr.id} className="psb-test-case-row" style={{
                             borderLeft: `3px solid ${tr.passed ? 'var(--ps-success)' : 'var(--ps-error)'}`
                           }}>
                             <span>Test Case {i + 1} ({tr.id})</span>
-                            <span style={{ color: tr.passed ? 'var(--ps-success)' : 'var(--ps-error)', fontWeight: 'bold' }}>
+                            <span className="psb-test-case-status" style={{ color: tr.passed ? 'var(--ps-success)' : 'var(--ps-error)', fontWeight: 'bold' }}>
                               {tr.passed ? 'Passed' : 'Failed'}
                             </span>
                           </div>

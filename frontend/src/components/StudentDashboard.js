@@ -381,7 +381,7 @@ const StudentDashboard = () => {
         getDoc(doc(db, "userApiKeys", userEmail.trim())).then((docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            
+
             // Check if it's the new format (has a 'keys' array)
             let loadedKeys = [];
             if (Array.isArray(data.keys)) {
@@ -407,7 +407,7 @@ const StudentDashboard = () => {
                 });
               }
             }
-            
+
             localStorage.setItem('user_api_keys', JSON.stringify(loadedKeys));
             setApiKeysList(loadedKeys);
           }
@@ -880,8 +880,19 @@ const StudentDashboard = () => {
     const secureEnvOk = ua.includes('SEEDSEB') || ua.includes('QtWebEngine') || ua.includes('QtWebKit') ||
       !!window.qt || !!window.desktopBackend || window.pyqtFlag === true ||
       typeof window.pyqtAppReady === 'function' ||
-      (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari')) ||
-      isDev;
+      (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari'));// || isDev;
+    console.log("[SecureEnv Diagnostic]", {
+      ua,
+      uaIncludesSEEDSEB: ua.includes('SEEDSEB'),
+      uaIncludesQtWebEngine: ua.includes('QtWebEngine'),
+      uaIncludesQtWebKit: ua.includes('QtWebKit'),
+      windowQt: !!window.qt,
+      windowDesktopBackend: !!window.desktopBackend,
+      windowPyqtFlag: window.pyqtFlag,
+      windowPyqtAppReady: typeof window.pyqtAppReady,
+      uaExcludesStandardBrowsers: (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari')),
+      isDev
+    });
     setPreflightResults(prev => ({ ...prev, secureEnv: secureEnvOk ? 'pass' : 'fail' }));
 
     // 5. System Hardening Check
@@ -1113,8 +1124,8 @@ const StudentDashboard = () => {
                     const completedTests = series.assessments.filter(a => a.completed).length;
 
                     return (
-                      <div 
-                        key={series.key} 
+                      <div
+                        key={series.key}
                         className="ps-sheet-card"
                         style={{
                           '--theme-border-color': '#7c6bff',
@@ -1127,16 +1138,16 @@ const StudentDashboard = () => {
                             {series.description}
                           </p>
                         </div>
-                        
+
                         <div className="ps-card-footer" style={{ borderTop: '1px solid var(--ph-border)', paddingTop: '14px', marginTop: '16px' }}>
                           <span className="ps-card-stats" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ph-text-dim)' }}>
                             {completedTests}/{totalTests} Completed
                           </span>
-                          
+
                           <div className="ps-card-actions">
-                            <button 
-                              onClick={() => setSelectedSeries(series.key)} 
-                              className="ps-action-btn primary" 
+                            <button
+                              onClick={() => setSelectedSeries(series.key)}
+                              className="ps-action-btn primary"
                               style={{ padding: '6px 16px', fontSize: '13px' }}
                             >
                               Start Test
@@ -1185,7 +1196,7 @@ const StudentDashboard = () => {
               <>
                 {/* Back button and series header */}
                 <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <button 
+                  <button
                     onClick={() => { setSelectedSeries(null); setSearchTerm(""); }}
                     style={{
                       display: 'inline-flex',
@@ -1260,8 +1271,8 @@ const StudentDashboard = () => {
                       const isActive = sched.status === "Active";
 
                       return (
-                        <div 
-                          key={a.id} 
+                        <div
+                          key={a.id}
                           className="ps-sheet-card"
                           style={{
                             '--theme-border-color': a.type === 'mcq' ? '#0ea5e9' : (a.type === 'MSA' ? '#8b5cf6' : '#7c6bff'),
@@ -1286,7 +1297,7 @@ const StudentDashboard = () => {
                             <p className="ps-card-desc" style={{ fontSize: '12px', marginTop: '6px', color: 'var(--ph-text-dim)' }}>
                               {a.description || `Assessment test covering various ${a.type} questions and topics.`}
                             </p>
-                            
+
                             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px', fontSize: '12px', color: 'var(--ph-text-dim)' }}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <FaClock /> {a.duration} Mins
@@ -1306,7 +1317,7 @@ const StudentDashboard = () => {
                             <span className="ps-card-stats" style={{ textTransform: 'uppercase', fontSize: '11px', fontWeight: 'bold', color: a.type === 'mcq' ? '#0ea5e9' : (a.type === 'MSA' ? '#a78bfa' : '#7c6bff') }}>
                               {a.type.toUpperCase()}
                             </span>
-                            
+
                             <div className="ps-card-actions">
                               {a.completed ? (
                                 <button className="ps-action-btn" disabled style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
@@ -1321,9 +1332,9 @@ const StudentDashboard = () => {
                                   <FaLock /> Locked
                                 </button>
                               ) : (
-                                <button 
-                                  onClick={() => handleStartClick(a)} 
-                                  className="ps-action-btn primary" 
+                                <button
+                                  onClick={() => handleStartClick(a)}
+                                  className="ps-action-btn primary"
                                   style={{
                                     padding: '6px 16px',
                                     fontSize: '13px',
@@ -2150,12 +2161,12 @@ const StudentDashboard = () => {
           overflow: 'hidden'
         }}>
           {/* Clickable Header */}
-          <div 
+          <div
             onClick={() => toggleSection('theme')}
-            style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               cursor: 'pointer',
               userSelect: 'none'
             }}
@@ -2176,10 +2187,10 @@ const StudentDashboard = () => {
 
           {/* Collapsible Body */}
           {expandedSettingsSections.theme && (
-            <div style={{ 
-              marginTop: '24px', 
-              borderTop: '1px solid var(--border-color)', 
-              paddingTop: '20px' 
+            <div style={{
+              marginTop: '24px',
+              borderTop: '1px solid var(--border-color)',
+              paddingTop: '20px'
             }}>
               <div style={{
                 display: 'grid',
@@ -2245,12 +2256,12 @@ const StudentDashboard = () => {
           overflow: 'hidden'
         }}>
           {/* Clickable Header */}
-          <div 
+          <div
             onClick={() => toggleSection('aiApi')}
-            style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               cursor: 'pointer',
               userSelect: 'none'
             }}
@@ -2271,10 +2282,10 @@ const StudentDashboard = () => {
 
           {/* Collapsible Body */}
           {expandedSettingsSections.aiApi && (
-            <div style={{ 
-              marginTop: '24px', 
-              borderTop: '1px solid var(--border-color)', 
-              paddingTop: '20px' 
+            <div style={{
+              marginTop: '24px',
+              borderTop: '1px solid var(--border-color)',
+              paddingTop: '20px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
                 <button
