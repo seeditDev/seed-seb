@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "sql-intermediate",
     "contestCode": "SQ00BS09A",
     "module": "Window Functions",
@@ -26,7 +26,7 @@
       "Window Functions",
       "Window functions"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "**Distribution Functions: NTILE()**\n\n* **NTILE(n):**\n    * Divides rows into `n` groups (tiles) based on the specified ordering.\n    * Commonly used for creating quartiles (NTILE(4)), percentiles (NTILE(100)), etc.\n\n**Example:**\n\n```sql\nSELECT employee, salary,\n  NTILE(4) OVER (ORDER BY salary) AS quartile\nFROM employees;\n```\n**Frame Specifications**\n\nFrame specifications define the subset of rows within a partition that a window function operates on. They are used to control the range of rows included in calculations.\n\n**Purpose:**\n\n* To refine the scope of window functions within a partition.\n* To create rolling or sliding windows for calculations.\n\n**Types of Frame Specifications:**\n\n* **`ROWS`:**\n    * Specifies the frame based on physical row offsets.\n    * Defines the window by counting the number of rows before and/or after the current row.\n    * Example: `ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING`\n        * Includes the current row, the row immediately preceding it, and the row immediately following it.\n\n* **`RANGE`:**\n    * Specifies the frame based on logical value ranges.\n    * Defines the window by specifying a range of values relative to the current row's value in the `ORDER BY` clause.\n    * Example: `RANGE BETWEEN INTERVAL '1' DAY PRECEDING AND CURRENT ROW`\n        * Includes rows where the value in the `ORDER BY` column is within a one-day interval before the current row's value, including the current row.\n\n**Example:**\n\n```sql\nSELECT date, revenue,\n  AVG(revenue) OVER (ORDER BY date ROWS 2 PRECEDING) AS moving_avg\nFROM sales;\n```\n\n**Example Dataset: employees**\n\n| employee_id | department | salary |\n|-------------|------------|--------|\n| 1           | HR         | 50000  |\n| 2           | HR         | 60000  |\n| 3           | IT         | 70000  |\n| 4           | IT         | 80000  |\n| 5           | IT         | 75000  |\n\n### Task\n* Complete the code to divide the table into 2 group using ntile and get max salary at every row.\n\n**Expected output table after operations**\n\n```jbs\n┌─────────────┬────────┬─────────────┬─────────────┐\n│ employee_id │ salary │ ntile_group │ running_max │\n├─────────────┼────────┼─────────────┼─────────────┤\n│ 1           │ 50000  │ 2           │ 50000       │\n│ 2           │ 60000  │ 2           │ 60000       │\n│ 3           │ 70000  │ 1           │ 70000       │\n│ 4           │ 80000  │ 1           │ 80000       │\n│ 5           │ 75000  │ 1           │ 80000       │\n└─────────────┴────────┴─────────────┴─────────────┘\n```\n\n**Effects:**\n\n* **NTILE(2):**\n    * Divides the 5 rows into 2 groups based on salary.\n    * Lower salaries (50k, 60k, 70k) fall into group 1, and higher salaries (75k, 80k) into group 2.\n* **Running Maximum (Frame Clause):**\n    * Calculates the maximum salary between the current row and the immediately preceding row.\n    * Uses `ROWS BETWEEN 1 PRECEDING AND CURRENT ROW` as the frame.\n    * The first row only considers itself because there is no preceding row.",

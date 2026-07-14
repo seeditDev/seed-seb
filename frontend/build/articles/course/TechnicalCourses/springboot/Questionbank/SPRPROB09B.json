@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "springboot",
     "contestCode": "DEPINJ2",
     "module": "IoC and Dependency Injection",
@@ -26,7 +26,7 @@
       "IoC and Dependency Injection",
       "Object Creation & Injection"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "In the previous demo, the application failed to start because Spring found two payment services and didn’t know which one to inject. \\\nNow let’s learn how to guide Spring.\n\n---\n\n**Solution 1: Using `@Primary`**\n- When multiple payment service classes exist, we tell Spring which one to use by default.\n- Spring will automatically use this default service unless we explicitly ask for another one.\n\n**Step 1**: Mark One Payment Service(`UPIPaymentService.java`) as **`Primary`** \\\nOpen `UPIPaymentService.java` and add this code in that\n```java\npackage com.example.demo.service;\nimport org.springframework.context.annotation.Primary;\nimport org.springframework.stereotype.Service;\n\n@Service\n@Primary\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n    @Override\n    public void pay() {\n        System.out.println(\"Payment done using UPI\");\n    }\n}\n```\n`CreditCardPaymentService` remains unchanged:\n\n---\n\n**What Happens Now?**\n- Spring finds two `PaymentService` beans(objects)\n- Sees one marked as `@Primary`\n- Injects `UPIPaymentService`\n\n**Application starts successfully**\n\n---\n\n**Solution 2: Using `@Qualifier`** \\\nInstead of a default, explicitly tell Spring which bean you want.\n\n\n\n**Step 1: Name the Payment Service Bean(Object)** \\\nWhen multiple classes implement the same interface, Spring needs a name to identify each one.\n```java\npackage com.example.demo.service;\nimport org.springframework.stereotype.Service;\n\n@Service(\"UPIPaymentService\")\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n    @Override\n    public void pay() {\n        System.out.println(\"Payment done using UPI\");\n    }\n}\n```\n\n- `@Service(\"UPIPaymentService\")` tells Spring: \\\n**“Register this class with the bean name UPIPaymentService”**\n\n\n\n\n**Step 2**: Use `@Qualifier` in `OrderService`\n```java\npackage com.example.demo.service;\nimport org.springframework.stereotype.Service;\nimport org.springframework.beans.factory.annotation.Qualifier;\n\n@Service\npublic class OrderService {\n\n    private final PaymentServiceInterface paymentService;\n\n    public OrderService( @Qualifier(\"UPIPaymentService\") PaymentServiceInterface paymentService) \n    {\n        this.paymentService = paymentService;\n    }\n\n    public void placeOrder() {\n        paymentService.pay();\n        System.out.println(\"Order placed\");\n    }\n}\n```\n\n- `@Qualifier(\"UPIPaymentService\")` tells Spring:\n**“Inject the bean whose name is UPIPaymentService”** \n\n---\n\n**What Happens Now?**\n- Spring sees multiple implementations\n- Reads the qualifier name\n- Injects `UPIPaymentService` only\n\n**Application runs successfully**\n\n---\n\n\n**Expected Output After Applying both solutions:**\n```sss\nPayment done using UPI\nOrder placed\n```",

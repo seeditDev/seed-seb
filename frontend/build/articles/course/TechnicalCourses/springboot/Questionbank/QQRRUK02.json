@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "springboot",
     "contestCode": "EXCHANDY",
     "module": "Making APIs Production-Ready",
@@ -26,7 +26,7 @@
       "Making APIs Production-Ready",
       "Custom Queries"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Run the code, API tester will get open.\nGo to POST endpoint and add below data :\n```json\n{\n  \"id\": 1,\n  \"name\": \"Laptop\",\n  \"brand\": \"Dell\",\n  \"supplierEmail\": \"test@gmail.com\"\n}\n```\n\nThen test GET Requests using:\n```sss\nGET /products\nGET /products/name/Laptop\nGET /products/brand/Dell\n```\nObserve the Response data\n\nAs you can see in this API, we are retrieving products not just by ID, but based on **specific fields like name and brand**. \\\nThese methods used to search/filter data are called Finder Methods.\n\n---'\n\n**Where Finder Methods are written** \\\nLook at your `ProductRepository`:\n```java\npublic List findByName(String name) {\n    return products.stream()\n            .filter(p -> p.getName().equalsIgnoreCase(name))\n            .collect(Collectors.toList());\n}\n\npublic List findByBrand(String brand) {\n    return products.stream()\n            .filter(p -> p.getBrand().equalsIgnoreCase(brand))\n            .collect(Collectors.toList());\n}\n```\n**Here:**\n- `findByName()` → finds products by name\n- `findByBrand()` → finds products by brand\n\nThese are your custom finder methods\n\n---\n\n**How it works internally**\n\n**When a request comes like:**\n```sss\nGET /products/name/Laptop\n```\n**Step-by-step flow:** \n1. Controller receives request\n2. Calls service:\n```java\nservice.getByName(name)\n```\n3. Service calls repository:\n```java\nrepository.findByName(name)\n```\n4. Repository filters data using:\n```java\nstream().filter(...)\n```\n5. Matching products are returned\n\n---\n\n**Controller usage**\n```java\n@GetMapping(\"/products/name/{name}\")\npublic ResponseEntity> getByName(@PathVariable String name) {\n    return ResponseEntity.ok(service.getByName(name));\n}\n```\n**Same for brand:**\n```java\n@GetMapping(\"/products/brand/{brand}\")\n```\n\n\n---\n\n**Key Understanding** \\\nFinder methods are used to:\n- Search data\n- Filter data\n- Retrieve specific records",

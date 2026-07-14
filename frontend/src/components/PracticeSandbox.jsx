@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
-import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle } from 'react-icons/fa';
+import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import desktopBridge from '../utils/desktopBridge';
 import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBankService';
 import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus } from '../services/codingProgressService';
@@ -123,7 +123,21 @@ const PracticeSandbox = () => {
   const [customInput, setCustomInput] = useState('');
   const [useCustomInput, setUseCustomInput] = useState(false);
   const [activeLeftTab, setActiveLeftTab] = useState('description'); // 'description', 'solution'
-  const [activeConsoleTab, setActiveConsoleTab] = useState('input'); // 'input', 'output', 'results'
+  const [activeConsoleTab, setActiveConsoleTab] = useState('input'); // 'input', 'output', 'results', 'tutor'
+
+  // AI Tutor state
+  const [tutorHint, setTutorHint] = useState(null);
+  const [isTutorLoading, setIsTutorLoading] = useState(false);
+  const [tutorProgress, setTutorProgress] = useState(0);
+  const [tutorError, setTutorError] = useState('');
+  const [tutorMode, setTutorMode] = useState('hint'); // 'hint', 'complexity', 'review'
+
+  useEffect(() => {
+    setTutorHint(null);
+    setTutorError('');
+    setTutorProgress(0);
+    setIsTutorLoading(false);
+  }, [questionId]);
 
   // Execution states
   const [isRunning, setIsRunning] = useState(false);
@@ -157,6 +171,16 @@ const PracticeSandbox = () => {
   const rightPanelRef = useRef(null);
 
   const isPremiumUser = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium;
+  const hasTutorApiKey = (() => {
+    if (localStorage.getItem('gemini_api_key') || localStorage.getItem('nvidia_api_key')) return true;
+    try {
+      const keys = JSON.parse(localStorage.getItem('user_api_keys') || '[]');
+      return keys.some(k => k.active && k.value);
+    } catch (e) {
+      return false;
+    }
+  })();
+  const isTutorUnlocked = isPremiumUser || hasTutorApiKey;
   const isPremiumQuestion = (questionId && String(questionId).startsWith('Q0.')) ? false : (question?.isPremium || question?.metadata?.isPremium);
   const showPremiumLock = isPremiumQuestion && !isPremiumUser;
 
@@ -300,6 +324,158 @@ const PracticeSandbox = () => {
 
   const handleResetToDefault = () => {
     setCode(FREE_BOILERPLATES[language] || '');
+  };
+
+  const triggerTutorHint = async (overrideMode = null) => {
+    if (!question) return;
+    const modeToUse = overrideMode || tutorMode;
+    if (!isTutorUnlocked) return;
+    setIsTutorLoading(true);
+    setTutorError('');
+    setTutorHint(null);
+    setTutorProgress(0);
+
+    try {
+      const { aiTutorService } = await import('../services/aiTutorService');
+      
+      const sampleTestCases = question.content?.sampleTestCases || [];
+      const explanation = question.content?.explanation || sampleTestCases.map((s, idx) => s.explanation).filter(Boolean).join('\n') || '';
+      
+      const res = await aiTutorService.getHint({
+        problemTitle: question.title,
+        problemStatement: question.content?.problemStatement || question.description || '',
+        explanation: explanation,
+        sampleTestCases: sampleTestCases,
+        userCode: code,
+        compilerStderr: stderr || '',
+        language: language,
+        tutorMode: modeToUse,
+        onProgress: (p) => setTutorProgress(p)
+      });
+      setTutorHint(res);
+    } catch (err) {
+      console.error("AI Tutor Hint fetch failed:", err);
+      setTutorError("Failed to initialize or execute the AI Tutor. Please try again.");
+    } finally {
+      setIsTutorLoading(false);
+    }
+  };
+
+  const renderTutorBody = () => {
+    if (!isTutorUnlocked) {
+      return (
+        <div className="compiler-output-display tutor-panel-body" style={{ textAlign: 'center', padding: '24px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '180px', gap: '12px' }}>
+          <FaLock style={{ color: '#fbbf24', fontSize: '32px', marginBottom: '8px' }} />
+          <h5 style={{ color: 'var(--ps-text, #f8fafc)', margin: 0, fontWeight: 'bold' }}>AI Tutor is a Premium Feature</h5>
+          <p style={{ color: 'var(--ps-text-dim, #94a3b8)', fontSize: '13px', maxWidth: '400px', margin: '0 auto', lineHeight: '1.5' }}>
+            Upgrade your account to Premium Edition or connect your own API Key (Gemini/NVIDIA) in Portal Settings to get real-time explanations, complexity analysis, and code optimization hints.
+          </p>
+        </div>
+      );
+    }
+
+    const activeStyle = {
+      background: 'var(--ps-accent, #fbbf24)',
+      color: '#000',
+      border: 'none',
+      padding: '6px 12px',
+      borderRadius: '6px',
+      fontSize: '12px',
+      fontWeight: '600',
+      cursor: 'pointer'
+    };
+
+    const inactiveStyle = {
+      background: 'transparent',
+      color: 'var(--ps-text-dim, #94a3b8)',
+      border: '1px solid var(--ps-border, rgba(255,255,255,0.15))',
+      padding: '6px 12px',
+      borderRadius: '6px',
+      fontSize: '12px',
+      fontWeight: '600',
+      cursor: 'pointer'
+    };
+
+    const handleModeSwitch = (mode) => {
+      setTutorMode(mode);
+      triggerTutorHint(mode);
+    };
+
+    let hintTitle = "Concept Hint & Error Explanation";
+    let hintDisclaimer = "Tip: Try to solve the problem by typing code manually in the editor based on the hint above.";
+    if (tutorMode === 'complexity') {
+      hintTitle = "Time & Space Complexity Analysis";
+      hintDisclaimer = "Tip: Look for redundant loops, nested operations, or unnecessary allocations.";
+    } else if (tutorMode === 'review') {
+      hintTitle = "Code Review & Optimization Suggestion";
+      hintDisclaimer = "Tip: Optimize variable scopes, clean logic branching, and handle boundary checks.";
+    }
+
+    return (
+      <div className="compiler-output-display tutor-panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Mode Selector Tabs */}
+        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--ps-border, rgba(255,255,255,0.1))', paddingBottom: '12px' }}>
+          <button style={tutorMode === 'hint' ? activeStyle : inactiveStyle} onClick={() => handleModeSwitch('hint')}>
+            Concept Hint
+          </button>
+          <button style={tutorMode === 'complexity' ? activeStyle : inactiveStyle} onClick={() => handleModeSwitch('complexity')}>
+            Complexity Analysis
+          </button>
+          <button style={tutorMode === 'review' ? activeStyle : inactiveStyle} onClick={() => handleModeSwitch('review')}>
+            Code Review
+          </button>
+        </div>
+
+        {/* Content Box */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {isTutorLoading ? (
+            <div className="tutor-loading-container" style={{ padding: '20px 0' }}>
+              <div className="tutor-spinner"></div>
+              <p>Generating {tutorMode === 'hint' ? 'Concept Hint' : tutorMode === 'complexity' ? 'Complexity Analysis' : 'Code Review'}...</p>
+              {tutorProgress > 0 && (
+                <div className="tutor-progress-bar-container">
+                  <div className="tutor-progress-bar-fill" style={{ width: `${tutorProgress}%` }}></div>
+                  <span className="tutor-progress-text">{tutorProgress}% loaded</span>
+                </div>
+              )}
+            </div>
+          ) : tutorError ? (
+            <div className="tutor-error-message" style={{ padding: '20px 0' }}>
+              <FaTimes style={{ color: 'var(--ps-error, #ef4444)' }} />
+              <p>{tutorError}</p>
+              <button onClick={() => triggerTutorHint()} className="tutor-retry-btn">Retry</button>
+            </div>
+          ) : tutorHint ? (
+            <div className="tutor-hint-container" style={{ margin: 0, padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--ps-border, rgba(255,255,255,0.1))', borderRadius: '10px' }}>
+              <div className="tutor-hint-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                <FaLightbulb className="tutor-hint-icon-glow" style={{ color: 'var(--ps-accent, #fbbf24)', marginRight: '8px', fontSize: '18px' }} />
+                <strong style={{ fontSize: '14px', color: 'var(--ps-text, #f8fafc)' }}>{hintTitle}</strong>
+              </div>
+              <div className="tutor-hint-content">
+                <p className="tutor-hint-text" style={{ fontSize: '13px', lineHeight: '1.6', color: 'var(--ps-text-dim, #cbd5e1)', whiteSpace: 'pre-wrap', margin: '0 0 12px 0' }}>{tutorHint.hint}</p>
+                <span className="tutor-hint-disclaimer" style={{ fontSize: '11px', color: 'var(--ps-text-muted, #94a3b8)', fontStyle: 'italic' }}>
+                  {hintDisclaimer}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="tutor-idle-container" style={{ padding: '24px 0', textAlign: 'center' }}>
+              <FaLightbulb className="tutor-idle-icon" style={{ fontSize: '36px', color: 'var(--ps-text-dim, #94a3b8)', marginBottom: '12px' }} />
+              <p style={{ fontSize: '13.5px', color: 'var(--ps-text-dim, #cbd5e1)', marginBottom: '16px' }}>
+                {tutorMode === 'hint' 
+                  ? 'Having trouble passing the tests or debugging syntax errors?' 
+                  : tutorMode === 'complexity' 
+                    ? 'Analyze runtime complexity and space usage of your code.' 
+                    : 'Get constructive feedback on logic flow, quality, and optimizations.'}
+              </p>
+              <button onClick={() => triggerTutorHint()} className="tutor-generate-btn">
+                Analyze & Assist
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   // Compile and run custom input or sample cases
@@ -835,6 +1011,10 @@ const PracticeSandbox = () => {
                 <span className={`psb-problem-tab ${activeConsoleTab === 'results' ? 'active' : ''}`} onClick={() => setActiveConsoleTab('results')}>
                   Submit Results ({submitResults.length})
                 </span>
+                <span className={`psb-problem-tab ${activeConsoleTab === 'tutor' ? 'active' : ''}`} onClick={() => setActiveConsoleTab('tutor')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <FaLightbulb style={{ color: 'var(--ps-accent, #fbbf24)' }} /> AI Tutor
+                  {!isTutorUnlocked && <FaStar style={{ color: '#fbbf24', fontSize: '10px' }} title="Premium Feature" />}
+                </span>
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--ps-text-dim)', cursor: 'pointer', userSelect: 'none', marginRight: '10px' }}>
                 <input
@@ -876,6 +1056,50 @@ const PracticeSandbox = () => {
 
               {activeConsoleTab === 'output' && (
                 <div style={{ background: 'var(--ps-bg)', padding: '12px', borderRadius: '8px', minHeight: '80px', overflowY: 'auto' }}>
+                  {stderr && (
+                    <div className="tutor-prompt-banner" style={{
+                      background: 'rgba(251, 191, 36, 0.08)',
+                      border: '1px solid rgba(251, 191, 36, 0.25)',
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <FaLightbulb style={{ color: '#fbbf24', fontSize: '16px', flexShrink: 0 }} />
+                        <span style={{ fontSize: '13px', color: 'var(--ps-text-dim, #94a3b8)', fontWeight: '500' }}>
+                          Confused by this compilation error? Get a concept hint from the AI Tutor.
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setActiveConsoleTab('tutor');
+                          if (isTutorUnlocked) {
+                            triggerTutorHint();
+                          }
+                        }}
+                        style={{
+                          background: 'var(--ps-accent, #fbbf24)',
+                          color: '#000',
+                          border: 'none',
+                          padding: '4px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                         Ask AI Tutor {!isTutorUnlocked && <FaStar style={{ fontSize: '10px' }} />}
+                      </button>
+                    </div>
+                  )}
                   {isRunning ? (
                     <div style={{ color: 'var(--ps-text-dim)' }}>Executing sandbox environment...</div>
                   ) : sampleResults && sampleResults.length > 0 ? (
@@ -942,6 +1166,8 @@ const PracticeSandbox = () => {
                   )}
                 </div>
               )}
+
+              {activeConsoleTab === 'tutor' && renderTutorBody()}
 
               {activeConsoleTab === 'results' && (
                 <div>

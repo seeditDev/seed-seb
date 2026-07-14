@@ -278,6 +278,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     }, [questionSubmitTimes]);
 
     useEffect(() => {
+        return () => {
+            // Stop the camera stream when CodingAssessmentPage unmounts
+            if (window.cameraStream) {
+                console.log('[CodingAssessmentPage] Component unmounted. Cleaning up camera stream...');
+                try {
+                    window.cameraStream.getTracks().forEach(track => {
+                        track.onended = null;
+                        track.stop();
+                    });
+                } catch (e) {
+                    console.warn('[CodingAssessmentPage] Error cleaning up camera stream:', e);
+                }
+                window.cameraStream = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
         let qTimer;
         // Increment time spent on the active question only when test is active/running
         const isExamActive = !submissionSuccess && questions.length > 0 && activeQuestionIndex !== undefined;
@@ -918,6 +936,25 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             setPasskeyError("Incorrect passkey. Please try again.");
             setPasskey('');
         }
+    };
+
+    const handleCancelPrelaunch = () => {
+        // Stop camera stream
+        if (window.cameraStream) {
+            try {
+                window.cameraStream.getTracks().forEach(track => {
+                    track.onended = null;
+                    track.stop();
+                });
+            } catch (e) {
+                console.warn('[CodingAssessmentPage] Error stopping camera stream on cancel:', e);
+            }
+            window.cameraStream = null;
+        }
+        setStartCountdown(null);
+        setCurrentAssessment(null);
+        setQuestions([]);
+        setLoading(false);
     };
 
     // Start assessment workspace
@@ -1757,6 +1794,28 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             {startCountdown}s
                         </div>
                     </div>
+                    
+                    <div style={{ marginTop: '32px' }}>
+                        <button
+                            onClick={handleCancelPrelaunch}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: '#94a3b8',
+                                padding: '12px 28px',
+                                borderRadius: '8px',
+                                fontSize: '0.9rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                outline: 'none'
+                            }}
+                            onMouseEnter={(e) => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.35)'; e.target.style.color = '#ffffff'; }}
+                            onMouseLeave={(e) => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)'; e.target.style.color = '#94a3b8'; }}
+                        >
+                            Cancel & Exit Assessment
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -1944,126 +2003,128 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setTimeout(() => { navigate(CODING_ROUTE_BASE); }, 6000);
 
         return (
-            <div style={{
-                minHeight: '100vh',
-                background: 'linear-gradient(135deg, #0f172a 0%, #0c1a2e 50%, #0f172a 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '24px',
-                fontFamily: "'Inter', sans-serif"
-            }}>
-                <div style={{
-                    background: 'linear-gradient(145deg, #1e293b, #0f172a)',
-                    border: '1px solid rgba(16,185,129,0.3)',
-                    borderRadius: '20px',
-                    padding: '40px',
-                    maxWidth: '560px',
-                    width: '100%',
-                    boxShadow: '0 0 60px rgba(16,185,129,0.15), 0 20px 60px rgba(0,0,0,0.5)',
-                    textAlign: 'center'
-                }}>
-                    {/* Success Icon */}
-                    <div style={{
-                        width: '80px',
-                        height: '80px',
-                        background: 'linear-gradient(135deg, #10b981, #059669)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 20px',
-                        boxShadow: '0 0 30px rgba(16,185,129,0.4)'
-                    }}>
-                        <FaCheckCircle style={{ fontSize: '38px', color: 'white' }} />
+            <div className="mcq-page">
+                {/* Header */}
+                <header className="mcq-header">
+                    <div className="mcq-header-top">
+                        <Link to="/student/dashboard" className="mcq-home-button">
+                            <FaArrowLeft /> Back to Dashboard
+                        </Link>
                     </div>
-
-                    <h1 style={{ color: '#10b981', fontSize: '1.7rem', fontWeight: '800', margin: '0 0 4px' }}>
-                        Assessment Submitted!
-                    </h1>
-                    <p style={{ color: '#64748b', fontSize: '0.95rem', margin: '0 0 4px' }}>
-                        {assessmentName}
+                    <h1>Coding Assessments Portal</h1>
+                    <p className="mcq-description">
+                        Your assessment has been successfully graded and recorded.
                     </p>
-                    <p style={{ color: '#334155', fontSize: '0.78rem', margin: '0 0 24px', fontStyle: 'italic' }}>
-                        Redirecting to dashboard in 6 seconds...
-                    </p>
+                </header>
 
-                    {/* Score Badge */}
-                    <div style={{
-                        background: percentage >= 75 ? 'rgba(16,185,129,0.12)' : percentage >= 40 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)',
-                        border: `1px solid ${percentage >= 75 ? 'rgba(16,185,129,0.35)' : percentage >= 40 ? 'rgba(245,158,11,0.35)' : 'rgba(239,68,68,0.35)'}`,
-                        borderRadius: '14px',
-                        padding: '18px 24px',
-                        marginBottom: '24px'
-                    }}>
-                        <div style={{ color: '#94a3b8', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>Final Score</div>
+                <div className="mcq-container" style={{ display: 'flex', justifyContent: 'center', padding: '40px 16px' }}>
+                    <div className="mcq-test-card" style={{ maxWidth: '560px', width: '100%', padding: '36px', position: 'relative', overflow: 'hidden' }}>
+                        {/* Green accent line on top like the Assessment tile */}
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: '#10b981' }} />
+                        
+                        {/* Success Icon */}
                         <div style={{
-                            fontSize: '2.8rem',
-                            fontWeight: '900',
-                            color: percentage >= 75 ? '#10b981' : percentage >= 40 ? '#f59e0b' : '#ef4444',
-                            lineHeight: 1
-                        }}>{percentage}%</div>
-                    </div>
-
-                    {/* Per-Question Breakdown */}
-                    {perQuestion && perQuestion.length > 0 && (
-                        <div style={{ marginBottom: '28px', textAlign: 'left' }}>
-                            <p style={{ color: '#94a3b8', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px', fontWeight: '700' }}>Question Breakdown</p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {perQuestion.map((q, idx) => {
-                                    const pct = q.percentage;
-                                    return (
-                                        <div key={q.id} style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            background: pct === 100 ? 'rgba(16,185,129,0.08)' : pct > 0 ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)',
-                                            border: `1px solid ${pct === 100 ? 'rgba(16,185,129,0.2)' : pct > 0 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.2)'}`,
-                                            borderRadius: '10px',
-                                            padding: '10px 14px'
-                                        }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <span style={{
-                                                    width: '28px', height: '28px',
-                                                    borderRadius: '50%',
-                                                    background: pct === 100 ? '#10b981' : pct > 0 ? '#f59e0b' : '#ef4444',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    color: 'white', fontSize: '0.7rem', fontWeight: '800'
-                                                }}>Q{idx + 1}</span>
-                                                <span style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>{q.name}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{
-                                                    color: pct === 100 ? '#10b981' : pct > 0 ? '#f59e0b' : '#ef4444',
-                                                    fontWeight: '700', fontSize: '0.85rem'
-                                                }}>{q.passed}/{q.total} passed</span>
-                                                {pct === 100 ? <FaCheck style={{ color: '#10b981', fontSize: '0.8rem' }} /> : <FaTimes style={{ color: pct > 0 ? '#f59e0b' : '#ef4444', fontSize: '0.8rem' }} />}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    <button
-                        onClick={() => navigate(CODING_ROUTE_BASE)}
-                        style={{
+                            width: '72px',
+                            height: '72px',
                             background: 'linear-gradient(135deg, #10b981, #059669)',
-                            color: 'white',
-                            border: 'none',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 20px',
+                            boxShadow: '0 0 24px rgba(16,185,129,0.3)'
+                        }}>
+                            <FaCheckCircle style={{ fontSize: '32px', color: 'white' }} />
+                        </div>
+
+                        <h2 style={{ color: '#10b981', fontSize: '1.6rem', fontWeight: '800', margin: '0 0 8px', textAlign: 'center' }}>
+                            Assessment Submitted!
+                        </h2>
+                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', margin: '0 0 4px', fontWeight: '600', textAlign: 'center' }}>
+                            {assessmentName}
+                        </p>
+                        <p style={{ color: '#64748b', fontSize: '0.8rem', margin: '0 0 28px', fontStyle: 'italic', textAlign: 'center' }}>
+                            Redirecting to portal list in 6 seconds...
+                        </p>
+
+                        {/* Score Badge */}
+                        <div style={{
+                            background: percentage >= 75 ? 'rgba(16,185,129,0.06)' : percentage >= 40 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.06)',
+                            border: `1px solid ${percentage >= 75 ? 'rgba(16,185,129,0.25)' : percentage >= 40 ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.25)'}`,
                             borderRadius: '12px',
-                            padding: '14px 32px',
-                            fontSize: '1rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            width: '100%',
-                            boxShadow: '0 4px 20px rgba(16,185,129,0.3)',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        Back to Dashboard Now
-                    </button>
+                            padding: '16px 20px',
+                            marginBottom: '28px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ color: '#64748b', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px', fontWeight: '700' }}>Final Score</div>
+                            <div style={{
+                                fontSize: '2.5rem',
+                                fontWeight: '900',
+                                color: percentage >= 75 ? '#10b981' : percentage >= 40 ? '#f59e0b' : '#ef4444',
+                                lineHeight: 1
+                            }}>{percentage}%</div>
+                        </div>
+
+                        {/* Per-Question Breakdown */}
+                        {perQuestion && perQuestion.length > 0 && (
+                            <div style={{ marginBottom: '28px', textAlign: 'left' }}>
+                                <p style={{ color: '#94a3b8', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px', fontWeight: '700' }}>Question Breakdown</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {perQuestion.map((q, idx) => {
+                                        const pct = q.percentage;
+                                        return (
+                                            <div key={q.id} style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                background: pct === 100 ? 'rgba(16,185,129,0.04)' : pct > 0 ? 'rgba(245,158,11,0.04)' : 'rgba(239,68,68,0.04)',
+                                                border: `1px solid ${pct === 100 ? 'rgba(16,185,129,0.15)' : pct > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)'}`,
+                                                borderRadius: '8px',
+                                                padding: '10px 14px'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <span style={{
+                                                        width: '24px', height: '24px',
+                                                        borderRadius: '50%',
+                                                        background: pct === 100 ? '#10b981' : pct > 0 ? '#f59e0b' : '#ef4444',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        color: 'white', fontSize: '0.7rem', fontWeight: '800'
+                                                    }}>Q{idx + 1}</span>
+                                                    <span style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '600' }}>{q.name}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{
+                                                        color: pct === 100 ? '#10b981' : pct > 0 ? '#f59e0b' : '#ef4444',
+                                                        fontWeight: '700', fontSize: '0.85rem'
+                                                    }}>{q.passed}/{q.total} passed</span>
+                                                    {pct === 100 ? <FaCheck style={{ color: '#10b981', fontSize: '0.8rem' }} /> : <FaTimes style={{ color: pct > 0 ? '#f59e0b' : '#ef4444', fontSize: '0.8rem' }} />}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => navigate(CODING_ROUTE_BASE)}
+                            style={{
+                                background: 'linear-gradient(135deg, #10b981, #059669)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '10px',
+                                padding: '12px 24px',
+                                fontSize: '0.95rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                width: '100%',
+                                boxShadow: '0 4px 14px rgba(16,185,129,0.2)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Back to Portal List
+                        </button>
+                    </div>
                 </div>
             </div>
         );

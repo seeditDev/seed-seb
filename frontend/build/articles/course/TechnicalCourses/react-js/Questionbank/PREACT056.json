@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "react-js",
     "contestCode": "CREACT014",
     "module": "React Hooks",
@@ -26,7 +26,7 @@
       "React Hooks",
       "Side Effects"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "When working with side effects in React (like timers, event listeners, or API calls), it's crucial to clean up after them to prevent memory leaks and unexpected behavior. Let's explore this with a practical example.\n\n#### The Problem: Lingering Effects\nImagine a timer component that counts up every second. If we toggle this component's visibility, what happens to the timer?\n\n**Starter Code (Problematic):**\n```jsx\nimport React, { useState, useEffect } from 'react';\n\nfunction Timer() {\n  const [count, setCount] = useState(0);\n\n  useEffect(() => {\n    const timerID = setInterval(() => {\n      setCount(c => c + 1);\n    }, 1000);\n  }, []); // No cleanup\n\n  return Count: {count};\n}\n\nfunction App() {\n  const [showTimer, setShowTimer] = useState(true);\n\n  return (\n    \n       setShowTimer(!showTimer)}>\n        Toggle Timer\n      \n      {showTimer && }\n    \n  );\n}\n```\n**The Issue:**\nWhen you click \"Toggle Timer\" to hide the component, the timer keeps running! This leads to:\n1. Memory leaks (unused timers consuming resources)\n2. Potential errors (updating state of an unmounted component)\n\n#### The Solution: Cleanup Functions\nReact's **`useEffect`** hook lets us return a cleanup function that runs:\n- Before the component unmounts\n- Before re-running the effect (if dependencies change)\n\n**Fixed Code:**\n```jsx\nuseEffect(() => {\n  const timerID = setInterval(() => {\n    setCount(c => c + 1);\n  }, 1000);\n\n  // Cleanup function\n  return () => {\n    clearInterval(timerID);\n  };\n}, []);\n```\n\n#### How It Works\n1. **Mounting:** When `` appears, React:\n   - Runs the effect (starts timer)\n   - Stores the cleanup function\n\n2. **Unmounting:** When toggled off:\n   - Calls the cleanup function (stops timer)\n   - Removes the component\n\n3. **Re-renders:** If dependencies change:\n   - Runs cleanup first (old effect)\n   - Runs new effect\n\n\n**Key Takeaways:**\n- Always clean up event listeners, timers, and subscriptions\n- Cleanup functions prevent memory leaks and errors\n- React handles cleanup automatically when you return a function from `useEffect`\n- Dependency arrays control when effects re-run (and cleanup happens before each re-run)\n\n### Task\n\nNow, go ahead and update the code to add a cleanup function as given in the above example.",

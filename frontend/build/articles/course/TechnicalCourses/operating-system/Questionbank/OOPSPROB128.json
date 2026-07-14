@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "operating-system",
     "contestCode": "SYNCPROB",
     "module": "Process Synchronization and Deadlocks",
@@ -26,7 +26,7 @@
       "Process Synchronization and Deadlocks",
       "Classical Synchronization Problems"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "- As we already discussed the **Producer-Consumer Problem**, let’s now explore another classic synchronization challenge: the **Readers-Writers Problem**.\n- The **Readers - Writers Problem** is a classic synchronization problem in operating systems.\n- It deals with a shared resource (like a file or database) where multiple readers can read simultaneously, but if a writer is writing, no other reader or writer can access it.\n  - In this submodule, we implement the **Readers Preference version**, where readers are given priority over writers.\n\n---\n\n**Key Synchronization Elements**\n- **`readcount`** (an integer counter) → Tracks the number of active readers currently accessing the shared resource.\n- **`mutex`** (a binary semaphore) → Used to ensure mutual exclusion when updating readcount.\n- **`wrt`** (a binary semaphore) → Used to ensure exclusive access to the shared resource.\n\n**What are **`wait()`** and **`signal()`**?**\n- `wait(semaphore)` → Decreases the value of the semaphore. If the value becomes negative, the process is blocked until it's positive again.\n- `signal(semaphore)` → Increases the value of the semaphore and wakes up a waiting process (if any).\n\n---\n\n**Reader Process**\n- Acquires `mutex` to update `readcount`.\n- If it's the first reader, blocks `wrt` to prevent writing.\n- Releases `mutex` and begins reading.\n- After reading, it again acquires `mutex` and decrements `readcount`.\n- If it's the last reader, it signals `wrt` to allow waiting writers.\n- Releases `mutex`.\n\n**Reader Code:**\n```java\ndo {\n   wait(mutex);          // Request access to readcount\n   readcount++;            \n   if (readcount == 1)\n      wait(wrt);         // First reader blocks writers\n   signal(mutex);        // Done updating readcount → allow others to proceed\n\n   // ---- Reading happens here ----\n\n   wait(mutex);          \n   readcunt--;            \n   if (readcount == 0)\n      signal(wrt);       // Last reader allows writers\n   signal(mutex);        // Done updating readcount → release lock\n} while(true);\n```\n\n---\n\n**Writer Process**\n- Waits on `wrt` to gain exclusive access to the shared resource.\n- Performs writing to the shared resource.\n- Signals `wrt` once writing is complete to allow other readers or writers.\n\n**Writer Code:**\n```java\ndo {\n   wait(wrt);            // Writer requests exclusive access\n\n   // ---- Writing happens here ----\n\n   signal(wrt);          // Writer releases access\n} while(true);\n```",

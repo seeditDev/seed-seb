@@ -40,6 +40,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const [isCapturing, setIsCapturing] = useState(false);
   // Track if we are proceeding to test
   const isProceedingRef = useRef(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1 = Face capture, 2 = Guidelines agreement
 
   useEffect(() => {
     // Request camera access when component mounts
@@ -85,7 +86,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     if (contentEl.scrollHeight <= contentEl.clientHeight) {
       setHasScrolledToBottom(true);
     }
-  }, []);
+  }, [currentStep]);
 
   const handleContentScroll = () => {
     const el = contentRef.current;
@@ -323,124 +324,120 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
     setCanContinue(false);
     requestCameraAccess();
   };
-
   return (
     <div className="proctoring-instructions-overlay">
       <div className="proctoring-instructions-modal">
         <div className="instructions-header">
           <h2>
             <FaCamera className="header-icon" />
-            Proctoring Guidelines
+            Exam Entry & Proctoring Guidelines
           </h2>
-          <p className="instructions-subtitle">Please read the following instructions carefully before starting the test</p>
+          <p className="instructions-subtitle">Follow the steps below to verify your identity and start your assessment</p>
         </div>
 
-        <div
-          className="instructions-content"
-          ref={contentRef}
-          onScroll={handleContentScroll}
-          tabIndex={0}
-        >
-          <div className="instructions-scroll-hint">
-            <FaExclamationTriangle className="hint-icon" />
-            <span>Scroll through the entire instructions and confirm acceptance to continue.</span>
+        {/* Wizard Progress Bar */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          padding: '16px 24px',
+          background: 'var(--bg-primary, #0f172a)',
+          borderBottom: '1px solid var(--border-color, #334155)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: photoStatus === 'captured' ? '#10b981' : 'var(--accent-coding, #10b981)',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              fontWeight: '700'
+            }}>
+              {photoStatus === 'captured' ? '✓' : '1'}
+            </span>
+            <span style={{ fontSize: '13.5px', fontWeight: '600', color: currentStep === 1 ? 'var(--text-main, #f1f5f9)' : 'var(--text-muted, #94a3b8)' }}>
+              Face Registration
+            </span>
           </div>
 
-          <div className="instructions-grid-layout">
-            <div className="instructions-left-column">
-              {/* Camera Preview Section */}
-              <div className="camera-preview-section">
+          <div style={{ width: '60px', height: '2px', background: currentStep === 2 ? '#10b981' : 'var(--border-color, #334155)' }}></div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: currentStep === 2 ? 'var(--accent-coding, #10b981)' : 'var(--bg-secondary, #1e293b)',
+              border: currentStep === 2 ? 'none' : '1px solid var(--border-color, #334155)',
+              color: currentStep === 2 ? 'white' : 'var(--text-muted, #94a3b8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '11px',
+              fontWeight: '700'
+            }}>
+              2
+            </span>
+            <span style={{ fontSize: '13.5px', fontWeight: '600', color: currentStep === 2 ? 'var(--text-main, #f1f5f9)' : 'var(--text-muted, #94a3b8)' }}>
+              Proctoring Guidelines
+            </span>
+          </div>
+        </div>
+
+        {/* STEP 1: IDENTITY VERIFICATION & CAPTURE */}
+        {currentStep === 1 && (
+          <div className="instructions-content">
+            <div className="registration-grid-layout">
+              {/* Left Column: Camera Preview */}
+              <div className="camera-preview-section" style={{ margin: 0 }}>
                 <h3>
                   <FaCamera className="section-icon" />
-                  Camera Access & Verification
+                  Camera Registration Preview
                 </h3>
                 <div className="camera-preview-container">
                   {cameraStatus === 'requesting' && (
                     <div className="camera-status-message">
                       <FaSpinner className="spinner-icon" />
                       <p>Requesting camera access...</p>
-                      <p className="camera-status-hint">Please allow camera access when prompted</p>
+                      <p className="camera-status-hint">Please allow camera access when prompted by the browser.</p>
                     </div>
                   )}
-                                    {cameraStatus === 'granted' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      <div className="camera-preview-wrapper">
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          muted
-                          playsInline
-                          className="instructions-video-preview"
-                        />
-                        
-                        {/* Live face guide oval */}
-                        {photoStatus !== 'captured' && (
-                          <div className="face-guide-oval">
-                            <div className="guide-text">Position face inside oval</div>
-                          </div>
-                        )}
 
-                        <div className="photo-capture-overlay">
-                          {photoStatus === 'captured' && (
-                            <div className="photo-scan-status scan-captured">
-                              <FaCheckCircle className="scan-success-icon" />
-                              <span>✓ Identity Verified & Registered!</span>
-                            </div>
-                          )}
+                  {cameraStatus === 'granted' && (
+                    <div className="camera-preview-wrapper" style={{ maxWidth: '100%', width: '100%' }}>
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className="instructions-video-preview"
+                      />
+                      
+                      {photoStatus !== 'captured' && (
+                        <div className="face-guide-oval">
+                          <div className="guide-text">Position face inside oval</div>
                         </div>
-                        {photoUrl && (
-                          <div className="photo-thumbnail">
-                            <img src={photoUrl} alt="Registered Identity" />
-                            <span className="thumbnail-label">ID REGISTERED</span>
+                      )}
+
+                      <div className="photo-capture-overlay">
+                        {photoStatus === 'captured' && (
+                          <div className="photo-scan-status scan-captured">
+                            <FaCheckCircle className="scan-success-icon" />
+                            <span>✓ Identity Verified & Registered!</span>
                           </div>
                         )}
                       </div>
-
-                      {/* Manual Capture Button Panel */}
-                      <div className="camera-controls-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {captureError && (
-                          <div className="lw-error-row" style={{ marginTop: '0', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '8px', fontSize: '0.88rem', fontWeight: '600' }}>
-                            <FaExclamationTriangle /> {captureError}
-                          </div>
-                        )}
-
-                        {photoStatus !== 'captured' ? (
-                          <button 
-                            className="lw-btn-primary" 
-                            style={{ width: '100%', justifyContent: 'center', gap: '8px', padding: '12px' }}
-                            onClick={captureReferencePhoto}
-                            disabled={isCapturing}
-                          >
-                            {isCapturing ? (
-                              <>
-                                <FaSpinner className="spinner-icon pulse" />
-                                <span>Verifying face quality...</span>
-                              </>
-                            ) : (
-                              <>
-                                <FaCamera />
-                                <span>Capture Registration Photo</span>
-                              </>
-                            )}
-                          </button>
-                        ) : (
-                          <button 
-                            className="lw-btn-secondary" 
-                            style={{ width: '100%', justifyContent: 'center', gap: '8px', padding: '12px', background: 'rgba(51, 65, 85, 0.65)', border: '1px solid rgba(100, 116, 139, 0.35)', color: '#cbd5e1' }}
-                            onClick={() => {
-                              setPhotoStatus('pending');
-                              setPhotoUrl(null);
-                              setCaptureError('');
-                              const testID = assessment?.id || 'unknown';
-                              localStorage.removeItem('proctor_reference_photo_' + testID);
-                              localStorage.removeItem('proctor_reference_descriptor_' + testID);
-                            }}
-                          >
-                            <FaSync />
-                            <span>Recapture Photo</span>
-                          </button>
-                        )}
-                      </div>
+                      {photoUrl && (
+                        <div className="photo-thumbnail">
+                          <img src={photoUrl} alt="Registered Identity" />
+                          <span className="thumbnail-label">REGISTERED</span>
+                        </div>
+                      )}
                     </div>
                   )}
                   
@@ -455,236 +452,381 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                   )}
                 </div>
               </div>
- 
-              {/* Validation Checklist UI */}
-              <div className="camera-verification-checklist">
-                <h4>Verification Steps</h4>
-                <ul>
-                  <li className={cameraStatus === 'granted' ? 'passed' : 'pending'}>
-                    <span className="badge-bullet"></span>
-                    <span className="badge-text">Webcam Access Permission</span>
-                    <span className="badge-status">{cameraStatus === 'granted' ? '✓ Passed' : '○ Pending'}</span>
-                  </li>
-                  <li className={photoStatus === 'captured' ? 'passed' : 'pending'}>
-                    <span className="badge-bullet"></span>
-                    <span className="badge-text">Offline Face Registration</span>
-                    <span className="badge-status">{photoStatus === 'captured' ? '✓ Registered' : isCapturing ? '⚡ Verifying...' : '○ Pending'}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
 
-            <div className="instructions-right-column">
-              {assessment && (
-                <div className="instructions-assessment-card" style={{
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                  borderRadius: '16px',
+              {/* Right Column: Controls & Verification Checklist */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{
+                  background: 'var(--bg-primary, #0f172a)',
+                  border: '1px solid var(--border-color, #334155)',
+                  borderRadius: '12px',
                   padding: '24px',
-                  marginBottom: '24px',
-                  boxShadow: '0 8px 24px rgba(79, 70, 229, 0.25)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  color: '#ffffff'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px'
                 }}>
-                  {/* Subtle background glow decorator */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '-50px',
-                    right: '-50px',
-                    width: '100px',
-                    height: '100px',
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    filter: 'blur(30px)',
-                    borderRadius: '50%'
-                  }}></div>
-                  
-                  <span style={{ 
-                    fontSize: '0.72rem', 
-                    color: '#c7d2fe', 
-                    fontWeight: '700', 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.15em',
-                    display: 'block',
-                    marginBottom: '8px',
-                    textAlign: 'left'
-                  }}>Selected Assessment</span>
-                  
-                  <h4 style={{
-                    margin: '0 0 20px',
-                    fontSize: '1.45rem',
-                    color: '#ffffff',
-                    fontWeight: '800',
-                    lineHeight: '1.3',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
-                    paddingBottom: '14px',
-                    textAlign: 'left'
-                  }}>{assessment.name}</h4>
-                  
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '14px'
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      padding: '12px 8px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      textAlign: 'center'
-                    }}>
-                      <FaLaptopCode style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</span>
-                      <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '700', marginTop: '4px', textTransform: 'capitalize' }}>{assessment.type}</span>
-                    </div>
-                    
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      padding: '12px 8px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      textAlign: 'center'
-                    }}>
-                      <FaClock style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</span>
-                      <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '700', marginTop: '4px' }}>{assessment.duration} Mins</span>
-                    </div>
-                    
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      padding: '12px 8px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      textAlign: 'center'
-                    }}>
-                      <FaClipboardList style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
-                      <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions</span>
-                      <span style={{ fontSize: '0.9rem', color: '#ffffff', fontWeight: '700', marginTop: '4px' }}>{assessment.questions || '—'} Qs</span>
-                    </div>
+                  <h4 style={{ color: 'var(--text-main, #f1f5f9)', fontSize: '15px', fontWeight: 700, margin: 0 }}>
+                    Register Face Profile
+                  </h4>
+                  <p style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '13px', margin: 0, lineHeight: '1.4' }}>
+                    Ensure you are in a well-lit room, looking straight at the camera. Click the button below to register your face structure.
+                  </p>
+
+                  <div className="camera-controls-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {captureError && (
+                      <div className="lw-error-row" style={{
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        color: '#f87171',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600'
+                      }}>
+                        <FaExclamationTriangle style={{ flexShrink: 0 }} /> {captureError}
+                      </div>
+                    )}
+
+                    {photoStatus !== 'captured' ? (
+                      <button 
+                        className="lw-btn-primary" 
+                        style={{ width: '100%', justifyContent: 'center', gap: '8px', padding: '12px', background: 'var(--accent-coding, #10b981)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600' }}
+                        onClick={captureReferencePhoto}
+                        disabled={isCapturing || cameraStatus !== 'granted'}
+                      >
+                        {isCapturing ? (
+                          <>
+                            <FaSpinner className="spinner-icon pulse" style={{ fontSize: '16px', margin: 0 }} />
+                            <span>Verifying face quality...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaCamera />
+                            <span>Capture Registration Photo</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button 
+                        className="lw-btn-secondary" 
+                        style={{ width: '100%', justifyContent: 'center', gap: '8px', padding: '12px', background: 'rgba(51, 65, 85, 0.65)', border: '1px solid rgba(100, 116, 139, 0.35)', color: '#cbd5e1', borderRadius: '8px' }}
+                        onClick={() => {
+                          setPhotoStatus('pending');
+                          setPhotoUrl(null);
+                          setCaptureError('');
+                          const testID = assessment?.id || 'unknown';
+                          localStorage.removeItem('proctor_reference_photo_' + testID);
+                          localStorage.removeItem('proctor_reference_descriptor_' + testID);
+                        }}
+                      >
+                        <FaSync />
+                        <span>Retake Registration Photo</span>
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
 
-              {/* Section details for Multi-Section Assessments */}
-              {assessment.isMultiSection && assessment.sections && assessment.sections.length > 0 && (
-                <div style={{ marginTop: '20px', background: 'rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <h4 style={{ color: '#818cf8', margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: '700', letterSpacing: '-0.01em', textAlign: 'left' }}>Assessment Section Breakdowns</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {assessment.sections.map((sec, idx) => {
-                      const secQCount = Array.isArray(sec.questionIds) ? sec.questionIds.length : (Array.isArray(sec.questions) ? sec.questions.length : (Number(sec.questions) || 0));
-                      return (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ color: '#94a3b8', fontWeight: '700', fontSize: '0.85rem' }}>SECTION {idx + 1}</span>
-                            <span style={{ color: '#ffffff', fontWeight: '600', fontSize: '0.9rem' }}>{sec.name}</span>
-                          </div>
-                          <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>
-                            <span>⏱️ {sec.duration_minutes || sec.duration || 0} Mins</span>
-                            <span>❓ {secQCount > 0 ? `${secQCount} Questions` : sec.type?.toUpperCase()}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                {/* Status Checks */}
+                <div className="camera-verification-checklist" style={{ margin: 0 }}>
+                  <h4>Verification Steps</h4>
+                  <ul>
+                    <li className={cameraStatus === 'granted' ? 'passed' : 'pending'}>
+                      <span className="badge-bullet"></span>
+                      <span className="badge-text">Webcam Access Permission</span>
+                      <span className="badge-status">{cameraStatus === 'granted' ? '✓ Passed' : '○ Pending'}</span>
+                    </li>
+                    <li className={photoStatus === 'captured' ? 'passed' : 'pending'}>
+                      <span className="badge-bullet"></span>
+                      <span className="badge-text">Offline Face Registration</span>
+                      <span className="badge-status">{photoStatus === 'captured' ? '✓ Registered' : isCapturing ? '⚡ Verifying...' : '○ Pending'}</span>
+                    </li>
+                  </ul>
                 </div>
-              )}
-
-              <div className="instructions-section">
-                <h3>
-                  <FaCheckCircle className="section-icon check-icon" />
-                  What You MUST Do:
-                </h3>
-                <ul className="instructions-list do-list">
-                  <li>Keep yourself clearly visible in front of the camera at all times</li>
-                  <li>Ensure good lighting so you are clearly visible</li>
-                  <li>Stay in front of the camera throughout the entire test</li>
-                  <li>Make sure only you are visible in the camera view</li>
-                  <li>Keep your eyes on the screen</li>
-                  <li>Ensure a stable internet connection</li>
-                </ul>
-              </div>
-
-              <div className="instructions-section">
-                <h3>
-                  <FaTimesCircle className="section-icon dont-icon" />
-                  What You MUST NOT Do:
-                </h3>
-                <ul className="instructions-list dont-list">
-                  <li>Do not leave your seat or move away from the camera</li>
-                  <li>Do not allow anyone else to appear in the camera view</li>
-                  <li>Do not cover yourself or turn away from the camera</li>
-                  <li>Do not use mobile phones or other devices during the test</li>
-                  <li>Do not switch tabs or minimize the browser window</li>
-                  <li>Do not communicate with anyone during the test</li>
-                </ul>
-              </div>
-
-              <div className="instructions-section warning-section">
-                <h3>
-                  <FaExclamationTriangle className="section-icon warning-icon" />
-                  Important Notes:
-                </h3>
-                <ul className="instructions-list warning-list">
-                  <li>Camera access is mandatory - the test cannot proceed without it</li>
-                  <li>Violations are tracked automatically (no person detected, multiple people detected)</li>
-                  <li>After 15 violations, your test will be automatically submitted</li>
-                  <li>A mini camera view will be displayed during the test</li>
-                  <li>Your test session is being monitored for integrity</li>
-                </ul>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className={`instructions-acknowledgement ${!hasScrolledToBottom ? 'disabled' : ''}`}>
-          <label>
-            <input
-              type="checkbox"
-              checked={isAcknowledged}
-              disabled={!hasScrolledToBottom}
-              onChange={(e) => setIsAcknowledged(e.target.checked)}
-            />
-            I have read and accept the proctoring guidelines
-          </label>
-          {!hasScrolledToBottom && (
-            <small>Scroll to the bottom of the instructions to enable this option.</small>
-          )}
-        </div>
+        {/* STEP 2: GUIDELINES & AGREEMENT */}
+        {currentStep === 2 && (
+          <>
+            <div
+              className="instructions-content"
+              ref={contentRef}
+              onScroll={handleContentScroll}
+              tabIndex={0}
+            >
+              <div className="instructions-scroll-hint">
+                <FaExclamationTriangle className="hint-icon" />
+                <span>Scroll through the guidelines and check the box at the bottom to start.</span>
+              </div>
 
+              <div className="instructions-grid-layout">
+                <div className="instructions-left-column">
+                  {assessment && (
+                    <div className="instructions-assessment-card" style={{
+                      background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 100%)',
+                      borderRadius: '16px',
+                      padding: '24px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      color: '#ffffff',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      <span style={{ 
+                        fontSize: '0.72rem', 
+                        color: '#c7d2fe', 
+                        fontWeight: '700', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.15em',
+                        display: 'block',
+                        marginBottom: '8px',
+                        textAlign: 'left'
+                      }}>Selected Assessment</span>
+                      
+                      <h4 style={{
+                        margin: '0 0 20px',
+                        fontSize: '1.45rem',
+                        color: '#ffffff',
+                        fontWeight: '800',
+                        lineHeight: '1.3',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+                        paddingBottom: '14px',
+                        textAlign: 'left'
+                      }}>{assessment.name}</h4>
+                      
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '12px'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          padding: '12px 8px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          textAlign: 'center'
+                        }}>
+                          <FaLaptopCode style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
+                          <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</span>
+                          <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: '700', marginTop: '4px', textTransform: 'capitalize' }}>{assessment.type}</span>
+                        </div>
+                        
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          padding: '12px 8px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          textAlign: 'center'
+                        }}>
+                          <FaClock style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
+                          <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration</span>
+                          <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: '700', marginTop: '4px' }}>{assessment.duration} Mins</span>
+                        </div>
+                        
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          padding: '12px 8px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          textAlign: 'center'
+                        }}>
+                          <FaClipboardList style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '6px' }} />
+                          <span style={{ fontSize: '0.7rem', color: '#e0e7ff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions</span>
+                          <span style={{ fontSize: '0.88rem', color: '#ffffff', fontWeight: '700', marginTop: '4px' }}>{assessment.questions || '—'} Qs</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section details for Multi-Section Assessments */}
+                  {assessment.isMultiSection && assessment.sections && assessment.sections.length > 0 && (
+                    <div style={{ marginTop: '0px', background: 'var(--bg-primary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                      <h4 style={{ color: 'var(--accent-coding)', margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: '700', letterSpacing: '-0.01em', textAlign: 'left' }}>Assessment Sections</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {assessment.sections.map((sec, idx) => {
+                          const secQCount = Array.isArray(sec.questionIds) ? sec.questionIds.length : (Array.isArray(sec.questions) ? sec.questions.length : (Number(sec.questions) || 0));
+                          return (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ color: 'var(--text-muted)', fontWeight: '700', fontSize: '0.85rem' }}>#{idx + 1}</span>
+                                <span style={{ color: 'var(--text-main)', fontWeight: '600', fontSize: '0.9rem' }}>{sec.name}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                                <span>⏱️ {sec.duration_minutes || sec.duration || 0}m</span>
+                                <span>❓ {secQCount > 0 ? `${secQCount} Qs` : sec.type?.toUpperCase()}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="instructions-right-column">
+                  <div className="instructions-section">
+                    <h3>
+                      <FaCheckCircle className="section-icon check-icon" />
+                      What You MUST Do:
+                    </h3>
+                    <ul className="instructions-list do-list">
+                      <li>
+                        <FaCheckCircle className="check-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Keep yourself clearly visible in front of the camera at all times</span>
+                      </li>
+                      <li>
+                        <FaCheckCircle className="check-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Ensure good lighting so you are clearly visible</span>
+                      </li>
+                      <li>
+                        <FaCheckCircle className="check-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Stay in front of the camera throughout the entire test</span>
+                      </li>
+                      <li>
+                        <FaCheckCircle className="check-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Make sure only you are visible in the camera view</span>
+                      </li>
+                      <li>
+                        <FaCheckCircle className="check-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Keep your eyes on the screen</span>
+                      </li>
+                      <li>
+                        <FaCheckCircle className="check-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Ensure a stable internet connection</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="instructions-section">
+                    <h3>
+                      <FaTimesCircle className="section-icon dont-icon" />
+                      What You MUST NOT Do:
+                    </h3>
+                    <ul className="instructions-list dont-list">
+                      <li>
+                        <FaTimesCircle className="dont-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Do not leave your seat or move away from the camera</span>
+                      </li>
+                      <li>
+                        <FaTimesCircle className="dont-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Do not allow anyone else to appear in the camera view</span>
+                      </li>
+                      <li>
+                        <FaTimesCircle className="dont-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Do not cover yourself or turn away from the camera</span>
+                      </li>
+                      <li>
+                        <FaTimesCircle className="dont-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Do not use mobile phones or other devices during the test</span>
+                      </li>
+                      <li>
+                        <FaTimesCircle className="dont-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Do not switch tabs or minimize the browser window</span>
+                      </li>
+                      <li>
+                        <FaTimesCircle className="dont-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Do not communicate with anyone during the test</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="instructions-section warning-section">
+                    <h3>
+                      <FaExclamationTriangle className="section-icon warning-icon" />
+                      Important Notes:
+                    </h3>
+                    <ul className="instructions-list warning-list">
+                      <li>
+                        <FaExclamationTriangle className="warning-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Camera access is mandatory - the test cannot proceed without it</span>
+                      </li>
+                      <li>
+                        <FaExclamationTriangle className="warning-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Violations are tracked automatically (no person detected, multiple people detected)</span>
+                      </li>
+                      <li>
+                        <FaExclamationTriangle className="warning-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>After 15 violations, your test will be automatically submitted</span>
+                      </li>
+                      <li>
+                        <FaExclamationTriangle className="warning-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>A mini camera view will be displayed during the test</span>
+                      </li>
+                      <li>
+                        <FaExclamationTriangle className="warning-icon" style={{ marginRight: '10px', flexShrink: 0, marginTop: '3px' }} />
+                        <span>Your test session is being monitored for integrity</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`instructions-acknowledgement ${!hasScrolledToBottom ? 'disabled' : ''}`}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={isAcknowledged}
+                  disabled={!hasScrolledToBottom}
+                  onChange={(e) => setIsAcknowledged(e.target.checked)}
+                />
+                I have read and accept the proctoring guidelines
+              </label>
+              {!hasScrolledToBottom && (
+                <small>Scroll to the bottom of the guidelines to enable agreement.</small>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Footer controls based on active wizard step */}
         <div className="instructions-footer">
-          <button 
-            className="instructions-btn cancel-btn"
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-          <button 
-            className={`instructions-btn continue-btn ${(!canContinue || !hasScrolledToBottom || !isAcknowledged || photoStatus !== 'captured') ? 'disabled' : ''}`}
-            onClick={handleContinue}
-            disabled={!canContinue || !hasScrolledToBottom || !isAcknowledged || photoStatus !== 'captured'}
-          >
-            {canContinue && hasScrolledToBottom && isAcknowledged && photoStatus === 'captured'
-              ? 'I Understand, Continue to Test' 
-              : cameraStatus === 'requesting' 
-                ? 'Waiting for Camera...' 
-                : !hasScrolledToBottom
-                  ? 'Scroll & Accept to Continue'
-                  : !isAcknowledged
-                    ? 'Please Accept Guidelines'
-                    : photoStatus === 'searching'
-                      ? 'Registering Face Photo...'
-                      : photoStatus === 'failed'
-                        ? 'Face Not Detected (Retry)'
-                        : 'Please Allow Camera Access First'}
-          </button>
+          {currentStep === 1 ? (
+            <>
+              <button 
+                className="instructions-btn cancel-btn"
+                onClick={onCancel}
+              >
+                Cancel
+              </button>
+              <button 
+                className={`instructions-btn continue-btn ${(!canContinue || photoStatus !== 'captured') ? 'disabled' : ''}`}
+                onClick={() => setCurrentStep(2)}
+                disabled={!canContinue || photoStatus !== 'captured'}
+              >
+                Proceed to Guidelines
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                className="instructions-btn cancel-btn"
+                onClick={() => setCurrentStep(1)}
+              >
+                Back to Registration
+              </button>
+              <button 
+                className={`instructions-btn continue-btn ${(!hasScrolledToBottom || !isAcknowledged) ? 'disabled' : ''}`}
+                onClick={handleContinue}
+                disabled={!hasScrolledToBottom || !isAcknowledged}
+              >
+                I Understand, Start Test
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

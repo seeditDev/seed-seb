@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "operating-system",
     "contestCode": "PAGINGCON",
     "module": "Memory Management",
@@ -26,7 +26,7 @@
       "Memory Management",
       "Paging Concepts"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "After learning about standard Page Tables and Translation Lookaside Buffers (TLBs), it’s time to explore a more **space-efficient way** to manage virtual memory: the **Inverted Page Table**.\n\n**What is an Inverted Page Table?**\nAn **Inverted Page Table** (IPT) is a type of page table where **each entry represents a frame in physical memory**, rather than a page in logical memory.\n- In traditional paging, every **process has its own page table**, which can consume a lot of memory.\n- In **inverted paging**, there's only **one global page table** for the whole system, and it stores **which virtual page (and from which process)** is currently occupying a particular **frame** in physical memory.\n\n---\n\n**How Does Inverted Paging Work?**\nEach entry in the Inverted Page Table contains:\n\n\n\n- **Process ID** (which process the page belongs to)\n- **Virtual Page Number** (the page number in that process’s address space)\n- **Control Bits** (valid, protection, etc.)\n\nAddress Translation Flow:\n1. CPU generates a **virtual address** (contains process ID + page number + offset).\n2. The system **searches the IPT** to find a matching (PID + Page Number).\n3. If a match is found → retrieve the **physical frame number** and access memory.\n4. If not found → **page fault** (page is not in memory).\n\n\n\n- **`m`** represents the **number of bits** used for addressing physical frames in physical memory.\n\n---\n\n**Why Use Inverted Page Tables?**\n| **Feature**             | **Traditional Page Table**    | **Inverted Page Table**               |\n| ------------------- | ------------------------- | --------------------------------- |\n| Entries per process | Many (can be huge)        | None                              |\n| Total tables        | One per process           | One for entire system             |\n| Memory usage        | High (per-process tables) | Low (one table, tied to RAM size) |\n| Lookup Speed        | Fast (with TLB)           | Slower (requires searching)       |\n\n**Drawbacks of Inverted Paging:**\n- **Slower lookups:** Because it may need to search through the entire table.\n- **Hashing required:** Many systems use hash tables to speed up the search process.\n- **More complex implementation** compared to standard page tables.\n\n**When Are Inverted Page Tables Used?**\n- In systems with **very large address spaces**, such as 64-bit machines.\n- When memory overhead from traditional per-process page tables becomes too costly.\n- Examples include some **Unix-like OS kernels and modern mainframes**.\n\n---\n\nAn **Inverted Page Table** is a memory-efficient structure that maps **frames to virtual pages**, reversing the traditional approach of mapping pages to frames.",

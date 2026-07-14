@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "machine-learning",
     "contestCode": "MLDEVPROJ2",
     "module": "Practice Projects",
@@ -26,7 +26,7 @@
       "Practice Projects",
       "Ride cancellation prediction"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Okay, Now let's proceed to the second part of our project: **cleaning and preparing the data** for our machine learning model.\n\n#### Problem Statement\n**Objective:** To clean and preprocess the raw Uber ride data, transforming it into a structured format suitable for training a machine learning model to predict ride cancellations.\n\n#### Tasks:\n1.  **Create Target Variable:** Engineer a new binary column named `is_cancelled`. This will be our target for prediction.\n    *   A ride should be marked as `1` (cancelled) if its `Booking Status` is 'Cancelled by Customer', 'Cancelled by Driver', or 'No Driver Found'.\n    *   A ride should be marked as `0` (not cancelled/completed) if its `Booking Status` is 'Completed'.\n    *   All other ride statuses (e.g., 'Incomplete') are not relevant for our prediction task and should be removed from the dataset.\n\n2.  **Engineer New Features:** Create a new column `hour_of_day` by extracting the hour from the `Time` column. This will help the model learn time-based patterns.\n\n3.  **Handle Missing Data (Corrected Logic):** The dataset uses the string `'null'` for missing values. First, convert these to a standard format (like `NaN`). Then, instead of dropping rows, **impute (fill) the missing values** in the `Avg VTAT` and `Avg CTAT` columns with `0`. This is critical because cancelled rides often lack arrival time data, and filling with `0` preserves these important examples for the model.\n\n4.  **Remove Unnecessary Columns:** Drop columns that are irrelevant, redundant, or would cause \"data leakage\" (i.e., they reveal the answer to the model). The following columns must be removed:\n    *   **Leakage Columns:** `Booking Status`, `Cancelled Rides by Customer`, `Reason for cancelling by Customer`, `Cancelled Rides by Driver`, `Driver Cancellation Reason`, `Incomplete Rides`, `Incomplete Rides Reason`.\n    *   **Post-Ride Info:** `Ride Distance`, `Booking Value`, `Driver Ratings`, `Customer Rating` (these are only known after a ride is completed).\n    *   **High Cardinality/ID Columns:** `Booking ID`, `Customer ID`.\n    *   **Redundant Columns:** `Date`, `Time` (since we have already extracted the `hour_of_day`).\n\n5.  **Combine and Save:** Create a final function that orchestrates all the above steps in the correct order and saves the resulting clean DataFrame to a new file named `clean_uber_rides_2024.csv`.\n\n**Expected Output**\\\nA file named `clean_uber_rides_2024.csv` should be generated. The file should contain both completed (`0`) and cancelled (`1`) rides.\\\nThe clean file format should look like this:\n```text\nVehicle Type,Pickup Location,Drop Location,Avg VTAT,Avg CTAT,Payment Method,is_cancelled,hour_of_day\neBike,Palam Vihar,Jhilmil,0.0,0.0,,1,12\nAuto,Khandsa,Malviya Nagar,13.4,25.8,Debit Card,0,8\nPremier Sedan,Central Secretariat,Inderlok,13.1,28.5,UPI,0,17\nBike,Ghitorni Village,Khan Market,5.3,19.6,UPI,0,22\n```",

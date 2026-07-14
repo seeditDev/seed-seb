@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "nodejs",
     "contestCode": "LNZVHH",
     "module": "Express.js Fundamentals",
@@ -26,7 +26,7 @@
       "Express.js Fundamentals",
       "Routing & Middleware"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "To understand how middleware functions execute in sequence within an Express application, let's walk through a simple example that demonstrates two middleware functions: one that logs the requested path and another that modifies the incoming request object.\n\n\n### **The Setup:**\n\nWe’ve built a simple Express server with one route (`/`) and two middleware functions. The goal is to observe how the order in which we register these middleware affects the behavior of our application.\n\n\n### **1. Logging the Request Path**\n\nThe first middleware is called `logPathMiddleware`. This function logs the path of every incoming request to the console. It’s registered using `app.use()`, meaning it applies to **all routes**.\n\n```js\nconst logPathMiddleware = (req, res, next) => {\n  console.log(`Requested Path: ${req.path}`);\n  next();\n};\n```\n\n* It accesses `req.path` and prints it.\n* Then, it calls `next()` to pass control to the next middleware in line.\n\n\n### **2. Adding a Custom Message to the Request Object**\n\nThe second middleware is `addCustomMessageMiddleware`. It adds a new property, `customMessage`, to the `req` object.\n\n```js\nconst addCustomMessageMiddleware = (req, res, next) => {\n  req.customMessage = 'Welcome to our API!';\n  next();\n};\n```\n\n* This middleware enriches the request object with additional data.\n* This data (`req.customMessage`) can then be accessed by any subsequent middleware or route handler.\n\n\n### **3. Registering Middleware in the Correct Order**\n\nWe register both middleware functions before the route handler:\n\n```js\napp.use(logPathMiddleware);\napp.use(addCustomMessageMiddleware);\n```\n\nThis order is crucial. If `addCustomMessageMiddleware` were placed **after** the route handler, then the route wouldn't have access to `req.customMessage`, and the message wouldn't appear in the response.\n\n\n### **4. The Route Handler**\n\nFinally, we define a route for GET requests to `/`:\n\n```js\napp.get('/', (req, res) => {\n  res.send(`Hello World! ${req.customMessage}`);\n});\n```\n\nThis handler sends a plain text response including the message set by the second middleware.\n\n\n### **What Happens When You Visit `/`?**\n\nWhen a client sends a GET request to `/`, here's the flow:\n\n1. `logPathMiddleware` logs the path `/` to the console.\n2. `addCustomMessageMiddleware` adds `req.customMessage = 'Welcome to our API!'`.\n3. The route handler reads that value and sends:\n\n   ```\n   Hello World! Welcome to our API!\n   ```\n\n\n### **Conclusion**\n\nThis example shows how middleware functions in Express execute **in the order they’re defined**, and how you can use that sequence to manipulate request or response objects before they reach the route handler. Middleware is a powerful pattern for building scalable and readable web applications.",

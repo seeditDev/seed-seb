@@ -34,12 +34,14 @@ import {
   FaCrown,
   FaGraduationCap,
   FaGem,
-  FaSyncAlt
+  FaSyncAlt,
+  FaChevronDown,
+  FaChevronRight
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
 import '../styles/PracticeHome.css';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import TrackingService from '../services/trackingService';
 import DataService from '../services/dataService';
@@ -90,6 +92,22 @@ const StudentDashboard = () => {
   const [currentTheme, setCurrentTheme] = useState(() => {
     return localStorage.getItem('portal_theme') || 'bw';
   });
+  const [apiKeysList, setApiKeysList] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user_api_keys')) || [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [newKeyProvider, setNewKeyProvider] = useState('gemini');
+  const [newKeyLabel, setNewKeyLabel] = useState('');
+  const [newKeyValue, setNewKeyValue] = useState('');
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [expandedSettingsSections, setExpandedSettingsSections] = useState({
+    theme: true,
+    aiApi: false
+  });
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState('');
 
   const [cQuestionIds, setCQuestionIds] = useState([]);
   const [javaQuestionIds, setJavaQuestionIds] = useState([]);
@@ -353,9 +371,50 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-    if (authData.Email || authData.email || authData.Name) {
+    const userEmail = authData.Email || authData.email;
+    if (userEmail || authData.Name) {
       setUser(authData);
       loadAssessments(authData);
+
+      // Load user API keys from Firestore
+      if (userEmail) {
+        getDoc(doc(db, "userApiKeys", userEmail.trim())).then((docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            // Check if it's the new format (has a 'keys' array)
+            let loadedKeys = [];
+            if (Array.isArray(data.keys)) {
+              loadedKeys = data.keys;
+            } else {
+              // Legacy format: migrate to list
+              if (data.gemini) {
+                loadedKeys.push({
+                  id: 'legacy-gemini',
+                  type: 'gemini',
+                  label: 'Default Gemini Key',
+                  value: data.gemini,
+                  active: true
+                });
+              }
+              if (data.nvidia) {
+                loadedKeys.push({
+                  id: 'legacy-nvidia',
+                  type: 'nvidia',
+                  label: 'Default NVIDIA Key',
+                  value: data.nvidia,
+                  active: true
+                });
+              }
+            }
+            
+            localStorage.setItem('user_api_keys', JSON.stringify(loadedKeys));
+            setApiKeysList(loadedKeys);
+          }
+        }).catch((err) => {
+          /* console.error("Error loading API keys from Firestore:", err); */ void 0;
+        });
+      }
     } else {
       navigate("/login");
     }
@@ -1921,6 +1980,105 @@ const StudentDashboard = () => {
     );
   };
 
+  const handleAddApiKey = async () => {
+    if (!newKeyValue.trim()) return;
+    const label = newKeyLabel.trim() || `${newKeyProvider === 'gemini' ? 'Gemini' : 'NVIDIA'} Key (${new Date().toLocaleDateString()})`;
+
+    // Create new key object
+    const newKey = {
+      id: Date.now().toString(),
+      type: newKeyProvider,
+      label: label,
+      value: newKeyValue.trim(),
+      active: true // make active by default when added
+    };
+
+    // Set all other keys of this provider type to active = false
+    const updatedKeys = apiKeysList.map(k => {
+      if (k.type === newKeyProvider) {
+        return { ...k, active: false };
+      }
+      return k;
+    });
+
+    updatedKeys.push(newKey);
+
+    // Save to local state & local storage
+    setApiKeysList(updatedKeys);
+    localStorage.setItem('user_api_keys', JSON.stringify(updatedKeys));
+
+    // Save to Firestore
+    const userEmail = user?.Email || user?.email;
+    if (userEmail) {
+      try {
+        await setDoc(doc(db, "userApiKeys", userEmail.trim()), {
+          keys: updatedKeys,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (fsErr) {
+        /* console.error("Error saving API keys to Firestore:", fsErr); */ void 0;
+      }
+    }
+
+    // Reset inputs
+    setNewKeyLabel('');
+    setNewKeyValue('');
+    setSaveSuccessMessage('API Key added successfully!');
+    setTimeout(() => setSaveSuccessMessage(''), 3000);
+  };
+
+  const handleSetActiveApiKey = async (keyId, providerType) => {
+    const updatedKeys = apiKeysList.map(k => {
+      if (k.type === providerType) {
+        return { ...k, active: k.id === keyId };
+      }
+      return k;
+    });
+
+    setApiKeysList(updatedKeys);
+    localStorage.setItem('user_api_keys', JSON.stringify(updatedKeys));
+
+    const userEmail = user?.Email || user?.email;
+    if (userEmail) {
+      try {
+        await setDoc(doc(db, "userApiKeys", userEmail.trim()), {
+          keys: updatedKeys,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (fsErr) {
+        /* console.error("Error saving API keys to Firestore:", fsErr); */ void 0;
+      }
+    }
+  };
+
+  const handleDeleteApiKey = async (keyId) => {
+    const updatedKeys = apiKeysList.filter(k => k.id !== keyId);
+
+    // If the deleted key was active, make another key of that type active (if exists)
+    const deletedKey = apiKeysList.find(k => k.id === keyId);
+    if (deletedKey && deletedKey.active) {
+      const remainingOfType = updatedKeys.filter(k => k.type === deletedKey.type);
+      if (remainingOfType.length > 0) {
+        remainingOfType[0].active = true;
+      }
+    }
+
+    setApiKeysList(updatedKeys);
+    localStorage.setItem('user_api_keys', JSON.stringify(updatedKeys));
+
+    const userEmail = user?.Email || user?.email;
+    if (userEmail) {
+      try {
+        await setDoc(doc(db, "userApiKeys", userEmail.trim()), {
+          keys: updatedKeys,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (fsErr) {
+        /* console.error("Error saving API keys to Firestore:", fsErr); */ void 0;
+      }
+    }
+  };
+
   const renderSettings = () => {
     const themes = [
       {
@@ -1967,6 +2125,13 @@ const StudentDashboard = () => {
       setCurrentTheme(themeId);
     };
 
+    const toggleSection = (sectionId) => {
+      setExpandedSettingsSections(prev => ({
+        ...prev,
+        [sectionId]: !prev[sectionId]
+      }));
+    };
+
     return (
       <div className="settings-tab-content">
         <div className="dashboard-welcome">
@@ -1974,69 +2139,468 @@ const StudentDashboard = () => {
           <p>Personalise your student workspace theme and interface appearance.</p>
         </div>
 
+        {/* SECTION 1: WORKSPACE COLOR MODE */}
         <div className="settings-section-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',
           borderRadius: '16px',
-          padding: '28px',
+          padding: '24px',
           marginTop: '24px',
-          boxShadow: '0 4px 20px var(--shadow-color)'
+          boxShadow: '0 4px 20px var(--shadow-color)',
+          overflow: 'hidden'
         }}>
-          <h3 style={{ color: 'var(--text-main)', marginBottom: '8px', fontSize: '18px', fontWeight: 600 }}>Workspace Color Mode</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
-            Choose a visual style that matches your environment. Themes apply globally to the login screen, sandboxes, and exams.
-          </p>
+          {/* Clickable Header */}
+          <div 
+            onClick={() => toggleSection('theme')}
+            style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <FaLaptopCode style={{ color: 'var(--accent-coding)', fontSize: '20px' }} />
+              <div>
+                <h3 style={{ color: 'var(--text-main)', margin: 0, fontSize: '17px', fontWeight: 600 }}>Workspace Color Mode</h3>
+                <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: '13px' }}>
+                  Choose a visual style that matches your environment.
+                </p>
+              </div>
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+              {expandedSettingsSections.theme ? <FaChevronDown /> : <FaChevronRight />}
+            </div>
+          </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '20px'
-          }}>
-            {themes.map(t => {
-              const active = currentTheme === t.id;
-              return (
-                <div
-                  key={t.id}
-                  onClick={() => handleThemeChange(t.id)}
+          {/* Collapsible Body */}
+          {expandedSettingsSections.theme && (
+            <div style={{ 
+              marginTop: '24px', 
+              borderTop: '1px solid var(--border-color)', 
+              paddingTop: '20px' 
+            }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gap: '20px'
+              }}>
+                {themes.map(t => {
+                  const active = currentTheme === t.id;
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => handleThemeChange(t.id)}
+                      style={{
+                        background: active ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+                        border: `2px solid ${active ? 'var(--accent-coding)' : 'var(--border-color)'}`,
+                        borderRadius: '14px',
+                        padding: '20px',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                      className={`theme-card-option ${active ? 'active' : ''}`}
+                    >
+                      {/* Theme Preview Bubbles */}
+                      <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
+                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[0], border: '1px solid rgba(255,255,255,0.08)' }} title="Primary BG" />
+                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[1], border: '1px solid rgba(255,255,255,0.08)' }} title="Secondary BG" />
+                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[2], border: '1px solid rgba(255,255,255,0.08)' }} title="Accent Color" />
+                      </div>
+
+                      <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>{t.name}</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0, lineHeight: '1.4' }}>{t.desc}</p>
+
+                      {active && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '12px',
+                          fontSize: '12px',
+                          color: 'var(--accent-coding)',
+                          fontWeight: 600
+                        }}>
+                          Active
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 2: AI - API CONNECTION */}
+        <div className="settings-section-card" style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '16px',
+          padding: '24px',
+          marginTop: '24px',
+          boxShadow: '0 4px 20px var(--shadow-color)',
+          overflow: 'hidden'
+        }}>
+          {/* Clickable Header */}
+          <div 
+            onClick={() => toggleSection('aiApi')}
+            style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <FaGem style={{ color: 'var(--accent-coding)', fontSize: '20px' }} />
+              <div>
+                <h3 style={{ color: 'var(--text-main)', margin: 0, fontSize: '17px', fontWeight: 600 }}>AI - API Connection</h3>
+                <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: '13px' }}>
+                  Configure Google Gemini and NVIDIA NIM API keys for tutor acceleration.
+                </p>
+              </div>
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+              {expandedSettingsSections.aiApi ? <FaChevronDown /> : <FaChevronRight />}
+            </div>
+          </div>
+
+          {/* Collapsible Body */}
+          {expandedSettingsSections.aiApi && (
+            <div style={{ 
+              marginTop: '24px', 
+              borderTop: '1px solid var(--border-color)', 
+              paddingTop: '20px' 
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+                <button
+                  onClick={() => setShowInstructionsModal(true)}
                   style={{
-                    background: active ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
-                    border: `2px solid ${active ? 'var(--accent-coding)' : 'var(--border-color)'}`,
-                    borderRadius: '14px',
-                    padding: '20px',
+                    background: 'transparent',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--accent-coding)',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    fontSize: '12.5px',
+                    fontWeight: '600',
                     cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    position: 'relative',
-                    overflow: 'hidden'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}
-                  className={`theme-card-option ${active ? 'active' : ''}`}
                 >
-                  {/* Theme Preview Bubbles */}
-                  <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
-                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[0], border: '1px solid rgba(255,255,255,0.08)' }} title="Primary BG" />
-                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[1], border: '1px solid rgba(255,255,255,0.08)' }} title="Secondary BG" />
-                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[2], border: '1px solid rgba(255,255,255,0.08)' }} title="Accent Color" />
+                  <FaGraduationCap /> How to Get Keys?
+                </button>
+              </div>
+
+              {/* Connected Keys List */}
+              <div style={{ marginBottom: '28px' }}>
+                <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '14px' }}>Connected API Keys</h4>
+                {apiKeysList.length === 0 ? (
+                  <div style={{
+                    background: 'var(--bg-primary)',
+                    border: '1px dashed var(--border-color)',
+                    borderRadius: '10px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    color: 'var(--text-muted)',
+                    fontSize: '13.5px'
+                  }}>
+                    No API keys connected yet. Fill out the form below to connect your first key.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {apiKeysList.map(k => (
+                      <div
+                        key={k.id}
+                        style={{
+                          background: 'var(--bg-primary)',
+                          border: `1px solid ${k.active ? 'var(--accent-coding)' : 'var(--border-color)'}`,
+                          borderRadius: '10px',
+                          padding: '12px 18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{
+                            background: k.type === 'gemini' ? '#10b981' : '#6366f1',
+                            color: 'white',
+                            fontSize: '10.5px',
+                            fontWeight: '700',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            textTransform: 'uppercase'
+                          }}>
+                            {k.type}
+                          </span>
+                          <div>
+                            <div style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: '600' }}>{k.label}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'monospace' }}>
+                              {k.value.substring(0, 8)}...{k.value.substring(k.value.length - 4)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {k.active ? (
+                            <span style={{
+                              color: '#10b981',
+                              fontSize: '12.5px',
+                              fontWeight: '700',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <FaCheckCircle /> Active
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleSetActiveApiKey(k.id, k.type)}
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Set Active
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleDeleteApiKey(k.id)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#ef4444',
+                              fontSize: '16px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '4px'
+                            }}
+                            title="Delete Key"
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add New Key Form */}
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
+                <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '16px' }}>Add New API Key</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px' }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>Provider</label>
+                      <select
+                        value={newKeyProvider}
+                        onChange={(e) => setNewKeyProvider(e.target.value)}
+                        style={{
+                          padding: '10px',
+                          background: 'var(--bg-primary)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-main)',
+                          borderRadius: '8px',
+                          fontSize: '13.5px',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="gemini">Google Gemini</option>
+                        <option value="nvidia">NVIDIA NIM</option>
+                      </select>
+                    </div>
+
+                    <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>Key Label / Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. My Personal Key, Class Key"
+                        value={newKeyLabel}
+                        onChange={(e) => setNewKeyLabel(e.target.value)}
+                        style={{
+                          padding: '10px 14px',
+                          background: 'var(--bg-primary)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-main)',
+                          borderRadius: '8px',
+                          fontSize: '13.5px',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
                   </div>
 
-                  <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>{t.name}</h4>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0, lineHeight: '1.4' }}>{t.desc}</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>API Key Value</label>
+                    <input
+                      type="password"
+                      placeholder={newKeyProvider === 'gemini' ? 'Enter Gemini API key (starts with AIzaSy...)' : 'Enter NVIDIA API key (starts with nvapi-...)'}
+                      value={newKeyValue}
+                      onChange={(e) => setNewKeyValue(e.target.value)}
+                      style={{
+                        padding: '10px 14px',
+                        background: 'var(--bg-primary)',
+                        border: '1px solid var(--border-color)',
+                        color: 'var(--text-main)',
+                        borderRadius: '8px',
+                        fontSize: '13.5px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
 
-                  {active && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      fontSize: '12px',
-                      color: 'var(--accent-coding)',
-                      fontWeight: 600
-                    }}>
-                      Active
-                    </span>
+                  {saveSuccessMessage && (
+                    <div style={{ color: 'var(--accent-coding)', fontSize: '14px', fontWeight: 600 }}>
+                      {saveSuccessMessage}
+                    </div>
                   )}
+
+                  <button
+                    onClick={handleAddApiKey}
+                    style={{
+                      alignSelf: 'flex-start',
+                      background: 'var(--accent-coding)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '10px 24px',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s',
+                      marginTop: '6px'
+                    }}
+                    onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.target.style.opacity = '1'}
+                  >
+                    Add Key
+                  </button>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* SETUP INSTRUCTIONS MODAL */}
+        {showInstructionsModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px',
+            backdropFilter: 'blur(4px)'
+          }}>
+            <div style={{
+              background: 'var(--bg-secondary, #1e293b)',
+              border: '1px solid var(--border-color, #334155)',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '32px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setShowInstructionsModal(false)}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '20px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted, #94a3b8)',
+                  fontSize: '20px',
+                  cursor: 'pointer'
+                }}
+              >
+                <FaTimes />
+              </button>
+
+              <h3 style={{ color: 'var(--text-main, #f1f5f9)', fontSize: '20px', fontWeight: 700, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FaGraduationCap style={{ color: 'var(--accent-coding, #10b981)' }} /> How to Create API Keys
+              </h3>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div>
+                  <h4 style={{ color: 'var(--text-main, #cbd5e1)', fontSize: '15px', fontWeight: 600, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} /> Google Gemini API Key
+                  </h4>
+                  <ol style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '13px', paddingLeft: '20px', lineHeight: '1.6', margin: 0 }}>
+                    <li>Go to <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-coding, #10b981)', textDecoration: 'underline' }}>Google AI Studio</a>.</li>
+                    <li>Log in with your Google Account.</li>
+                    <li>Click on the <strong>"Get API Key"</strong> button in the sidebar navigation.</li>
+                    <li>Click <strong>"Create API Key"</strong>, choose a Google Cloud project (ensure the key has <strong>no expiration date</strong>), and copy your generated key.</li>
+                  </ol>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border-color, #334155)', paddingTop: '20px' }}>
+                  <h4 style={{ color: 'var(--text-main, #cbd5e1)', fontSize: '15px', fontWeight: 600, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366f1' }} /> NVIDIA NIM API Key
+                  </h4>
+                  <ol style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '13px', paddingLeft: '20px', lineHeight: '1.6', margin: 0 }}>
+                    <li>Go to the <a href="https://build.nvidia.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-coding, #10b981)', textDecoration: 'underline' }}>NVIDIA Build Portal</a>.</li>
+                    <li>Sign up or log in with your NVIDIA Developer account.</li>
+                    <li>Select a model from the catalog (e.g. <strong>Llama 3.1 70B Instruct</strong>).</li>
+                    <li>Click <strong>"Get API Key"</strong> to generate your token (ensure the key configuration has <strong>no expiration date</strong>), and click Copy. (Keys start with <code>nvapi-</code>).</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                color: '#f59e0b',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '12.5px',
+                marginTop: '20px',
+                lineHeight: '1.4'
+              }}>
+                <strong>Crucial Note:</strong> When generating keys, please ensure you configure them with <strong>no expiration date</strong> (or unlimited validity) so that your coding sandbox connection remains continuous.
+              </div>
+
+              <button
+                onClick={() => setShowInstructionsModal(false)}
+                style={{
+                  marginTop: '32px',
+                  width: '100%',
+                  background: 'var(--accent-coding, #10b981)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

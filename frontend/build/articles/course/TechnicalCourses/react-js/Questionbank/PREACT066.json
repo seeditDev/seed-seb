@@ -6,7 +6,7 @@
   "createdAt": "2026-07-13",
   "updatedAt": "2026-07-13",
   "source": {
-    "platform": "CodeChef",
+    "platform": "SEED-IT",
     "courseSlug": "react-js",
     "contestCode": "CREACT016",
     "module": "React Hooks",
@@ -26,7 +26,7 @@
       "React Hooks",
       "Memoization"
     ],
-    "QBCategory": "CodeChef"
+    "QBCategory": "SEED-IT"
   },
   "content": {
     "problemStatement": "Let’s imagine you’re calculating something complex in your component, like filtering a huge list or doing heavy math. You don’t want this calculation to re-run every time your component re-renders (like when unrelated state changes).\n\n**This is where **`useMemo`** shines!**\n\n##### What Problem Does **`useMemo`** Solve?\n```jsx\nfunction Cart() {\n  const [items] = useState([...1000 items...]);\n  const [coupon, setCoupon] = useState('');\n\n  // ⚠️ This runs EVERY RENDER, even if items don't change\n  const total = calculateTotal(items); // Slow operation\n\n  return (\n    \n       setCoupon(e.target.value)} />\n      Total: ${total}\n    \n  );\n}\n```\nEvery keystroke in the input re-renders the component and re-calculates the total unnecessarily \n\n#### How **`useMemo`** Works\nIt \"remembers\" (memoizes) the calculation result and only re-calculates when dependencies change:\n```jsx\nimport { useMemo } from 'react';\n\nconst total = useMemo(() => {\n  return calculateTotal(items); \n}, [items]); // 🎯 Only re-run when \"items\" changes\n```\n**Key Parts:**\n- **Calculation function:** Your expensive operation\n- **Dependency array:** Tells React when to recalculate\n\n#### Real Example: Filtering a List\n```jsx\nfunction ProductList({ products, searchTerm }) {\n  const filteredProducts = useMemo(() => {\n    // 🔍 Slow filter operation\n    return products.filter(product => \n      product.name.includes(searchTerm)\n    );\n  }, [products, searchTerm]); // Re-filter when these change\n\n  return (\n    \n      {filteredProducts.map(product => (\n        {product.name}\n      ))}\n    \n  );\n}\n```\nCertainly! Here’s a table summarizing when to use `useMemo` in React:\n\n| **Good For**                                  | **Avoid When** |\n|-----------------------------------------------|----------------|\n| Heavy calculations\t                   | Simple operations (1+1, etc.). |\n| Large array operations              | Non-performance-critical code. |\n| Preventing child re-renders (when passing calculated values as props)    | Everywhere “just in case”. |\n\n#### The Dependency Array Rules\nSame as **`useEffect`**:\n```jsx\nuseMemo(() => {\n  // Your calculation\n}, [a, b]); // 🔄 Re-runs when a/b changes\n```\n⚠️ **Never ignore dependencies!** Missing dependencies = bugs.\n\n**Key Takeaways**\n1. **`useMemo = Memory`** - Remember expensive results\n2. **Dependencies matter** - Like useEffect’s dependency array\n3. **Not for everything** - Only use when you measure performance issues\n4. **Not a magic fix** - Combine with **`React.memo`** for best results",
