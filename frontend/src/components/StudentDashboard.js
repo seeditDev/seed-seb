@@ -875,12 +875,13 @@ const StudentDashboard = () => {
     // 4. Secure Env Check
     await new Promise(r => setTimeout(r, 800));
     const ua = navigator.userAgent || '';
-    const hostname = window.location.hostname;
-    const isDev = hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development';
-    const secureEnvOk = ua.includes('SEEDSEB') || ua.includes('QtWebEngine') || ua.includes('QtWebKit') ||
-      !!window.qt || !!window.desktopBackend || window.pyqtFlag === true ||
-      typeof window.pyqtAppReady === 'function' ||
-      (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari'));// || isDev;
+    const secureEnvOk = ua.includes('SEEDSEB') ||
+      ua.includes('QtWebEngine') ||
+      ua.includes('QtWebKit') ||
+      !!window.qt ||
+      !!window.desktopBackend ||
+      window.pyqtFlag === true;
+
     console.log("[SecureEnv Diagnostic]", {
       ua,
       uaIncludesSEEDSEB: ua.includes('SEEDSEB'),
@@ -889,9 +890,7 @@ const StudentDashboard = () => {
       windowQt: !!window.qt,
       windowDesktopBackend: !!window.desktopBackend,
       windowPyqtFlag: window.pyqtFlag,
-      windowPyqtAppReady: typeof window.pyqtAppReady,
-      uaExcludesStandardBrowsers: (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari')),
-      isDev
+      windowPyqtAppReady: typeof window.pyqtAppReady
     });
     setPreflightResults(prev => ({ ...prev, secureEnv: secureEnvOk ? 'pass' : 'fail' }));
 

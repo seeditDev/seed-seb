@@ -147,10 +147,12 @@ const App = () => {
     const ua = navigator.userAgent || '';
     const hostname = window.location.hostname;
     const isDev = hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development';
-    const isUAOk = ua.includes('SEEDSEB') || ua.includes('QtWebEngine') || ua.includes('QtWebKit') ||
-      !!window.qt || !!window.desktopBackend || window.pyqtFlag === true ||
-      typeof window.pyqtAppReady === 'function' ||
-      (!ua.includes('Chrome') && !ua.includes('Firefox') && !ua.includes('Safari'));
+    const isUAOk = ua.includes('SEEDSEB') || 
+      ua.includes('QtWebEngine') || 
+      ua.includes('QtWebKit') ||
+      !!window.qt || 
+      !!window.desktopBackend || 
+      window.pyqtFlag === true;
     setIsDesktopApp(isUAOk || isDev);
   }, []);
 
