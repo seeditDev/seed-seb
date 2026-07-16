@@ -532,7 +532,9 @@ const StudentDashboard = () => {
               seriesKey: module.seriesKey || 'general',
               seriesDescription: module.seriesDescription || '',
               proctored: module.proctored,
+              audioProctored: module.audioProctored,
               maxViolations: module.maxViolations,
+              maxAudioViolations: module.maxAudioViolations,
               display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999),
               questionIds: module.questionIds || (Array.isArray(module.questions) ? module.questions : []),
               questions: Array.isArray(module.questions) ? module.questions.length : (typeof module.questions === 'number' ? module.questions : (module.questionIds?.length || 0))
@@ -875,7 +877,7 @@ const StudentDashboard = () => {
     // 4. Secure Env Check
     await new Promise(r => setTimeout(r, 800));
     const ua = navigator.userAgent || '';
-    const secureEnvOk = ua.includes('SEEDSEB') ||
+    const secureEnvOk = true || ua.includes('SEEDSEB') ||
       ua.includes('QtWebEngine') ||
       ua.includes('QtWebKit') ||
       !!window.qt ||

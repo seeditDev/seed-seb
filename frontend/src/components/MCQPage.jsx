@@ -414,7 +414,9 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     duration: module.duration_minutes || 60,
                     slug: module.slug || slugify(module.id || module.name || key),
                     proctored: module.proctored,
-                    maxViolations: module.maxViolations
+                    audioProctored: module.audioProctored,
+                    maxViolations: module.maxViolations,
+                    maxAudioViolations: module.maxAudioViolations
                 }));
 
             console.log('Loaded accessible MCQ tests:', accessibleTests);
@@ -2150,7 +2152,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                     fontWeight: '700'
                                 }}>
                                     <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
-                                    🎤 Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 3}
+                                    🎤 Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 5}
                                 </div>
                             )}
                             {shouldUseProctoring && (
@@ -3006,7 +3008,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     studentID={user.Email}
                     testID={currentTest.testInfo?.id || currentTest.id || 'unknown'}
                     isTestActive={!!currentTest && !currentTest.submitted}
-                    maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || 3}
+                    maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 5}
                     onReady={() => {
                         console.log('[MCQPage] Audio proctoring ready');
                     }}
@@ -3014,7 +3016,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                         if (!info?.type) return;
                         setProctoringData(prev => {
                             const nextAudioCount = (prev.audioViolationCount || 0) + 1;
-                            const maxLimit = Number(currentTest.testInfo?.maxAudioViolations) || 3;
+                            const maxLimit = Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 5;
                             if (nextAudioCount >= maxLimit) {
                                 setTimeout(() => {
                                     handleAutoSubmit({ reason: 'proctoring_violations' });

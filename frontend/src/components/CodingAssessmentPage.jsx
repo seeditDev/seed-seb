@@ -728,7 +728,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         slug: module.slug || slugify(module.id || module.name || key),
                         languages: module.languages || ["c", "cpp", "java", "python"],
                         proctored: module.proctored,
+                        audioProctored: module.audioProctored,
                         maxViolations: module.maxViolations,
+                        maxAudioViolations: module.maxAudioViolations,
                         questionIds: module.questionIds || (Array.isArray(module.questions) ? module.questions : []),
                         questions: Array.isArray(module.questions) ? module.questions.length : (typeof module.questions === 'number' ? module.questions : (module.questionIds?.length || 0))
                     };
@@ -2208,7 +2210,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     studentID={user.Email}
                     testID={currentAssessment.id || 'unknown'}
                     isTestActive={!!currentAssessment && !submissionSuccess}
-                    maxViolations={Number(settings.maxAudioViolations) || 3}
+                    maxViolations={Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 5}
                     onReady={() => {
                         console.log('[CodingAssessmentPage] Audio proctoring ready');
                     }}
@@ -2216,7 +2218,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         if (!info?.type) return;
                         setProctoringData(prev => {
                             const nextAudioCount = (prev.audioViolationCount || 0) + 1;
-                            const maxLimit = Number(settings.maxAudioViolations) || 3;
+                            const maxLimit = Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 5;
                             if (nextAudioCount >= maxLimit) {
                                 setTimeout(() => {
                                     setIsLockedOut(true);
@@ -2261,7 +2263,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     fontSize: '0.65rem',
                                     fontWeight: '700'
                                 }}>
-                                    <span>🎤 Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 3}</span>
+                                    <span>🎤 Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 5}</span>
                                 </div>
                             )}
                             {shouldUseProctoring && (

@@ -427,7 +427,7 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
               padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '700'
             }}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: (proctoringData?.audioViolationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
-              🎤 Audio: {proctoringData?.audioViolationCount || 0}/{settings.maxAudioViolations || 3}
+              🎤 Audio: {proctoringData?.audioViolationCount || 0}/{settings.maxAudioViolations || 5}
             </div>
           )}
           {settings.proctored && (
@@ -700,8 +700,8 @@ const MultiSectionAssessment = () => {
   }, [assessment]);
 
   const maxAudioViolations = useMemo(() => {
-    if (!assessment) return 3;
-    return Number(assessment.maxAudioViolations) || 3;
+    if (!assessment) return 5;
+    return Number(assessment.maxAudioViolations) || 5;
   }, [assessment]);
 
   // Crash recovery
@@ -1441,7 +1441,7 @@ const MultiSectionAssessment = () => {
           proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
           audioProctored: isTruthy(assessment.audioProctored) || isTruthy(assessment.proctored) || isTruthy(activeSection.audioProctored) || isTruthy(activeSection.proctored),
           maxViolations: Number(assessment.maxViolations) || 7,
-          maxAudioViolations: Number(assessment.maxAudioViolations) || 3
+          maxAudioViolations: Number(assessment.maxAudioViolations) || 5
         }
       : {
           timerRestrictedSubmit: isTruthy(activeSection.timerRestrictedSubmit),
@@ -1450,7 +1450,7 @@ const MultiSectionAssessment = () => {
           proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
           maxViolations: Number(assessment.maxViolations) || 7,
           audioProctored: isTruthy(assessment.audioProctored) || isTruthy(assessment.proctored) || isTruthy(activeSection.audioProctored) || isTruthy(activeSection.proctored),
-          maxAudioViolations: Number(assessment.maxAudioViolations) || 3
+          maxAudioViolations: Number(assessment.maxAudioViolations) || 5
         };
     const sectionView = activeSection.type === 'mcq'
       ? (
