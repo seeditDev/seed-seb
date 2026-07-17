@@ -17,7 +17,7 @@ import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { supabase } from '../supabaseClient';
+import { safeUpsert } from '../supabaseClient';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
@@ -1043,7 +1043,7 @@ const MultiSectionAssessment = () => {
       setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
         .catch(e => console.error('[MSA] Student-centric save failed:', e));
 
-      supabase.from('mcq_results').upsert({
+      safeUpsert('mcq_results', {
         roll_number: user['Roll Number'] || '',
         name: user.Name || '',
         email: user.Email,
@@ -1083,7 +1083,7 @@ const MultiSectionAssessment = () => {
       );
 
       // Upsert to unified assessment_results table
-      supabase.from('assessment_results').upsert({
+      safeUpsert('assessment_results', {
         type: 'multisection',
         test_id: assessment.id,
         test_name: assessment.name,
@@ -1283,7 +1283,7 @@ const MultiSectionAssessment = () => {
         setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
           .catch(e => console.error('[MSA] Student-centric save failed:', e));
 
-        supabase.from('mcq_results').upsert({
+        safeUpsert('mcq_results', {
           roll_number: user['Roll Number'] || '',
           name: user.Name || '',
           email: user.Email,
@@ -1323,7 +1323,7 @@ const MultiSectionAssessment = () => {
         );
 
         // Upsert to unified assessment_results table
-        supabase.from('assessment_results').upsert({
+        safeUpsert('assessment_results', {
           type: 'multisection',
           test_id: assessment.id,
           test_name: assessment.name,

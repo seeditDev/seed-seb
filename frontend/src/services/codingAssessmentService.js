@@ -1,7 +1,7 @@
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs } from 'firebase/firestore';
 import timeService from './timeService';
-import { supabase } from '../supabaseClient';
+import { supabase, safeUpsert } from '../supabaseClient';
 
 
 class CodingAssessmentService {
@@ -107,9 +107,7 @@ class CodingAssessmentService {
 
             // Write initial status to Supabase coding_results table
             try {
-                const { error: supabaseError } = await supabase
-                    .from('coding_results')
-                    .upsert({
+                const { error: supabaseError } = await safeUpsert('coding_results', {
                         roll_number: rollNumber || '',
                         name: Name || '',
                         email: Email,
@@ -137,9 +135,7 @@ class CodingAssessmentService {
 
             // Also write initial 'started' status to unified assessment_results table
             try {
-                const { error: arErr } = await supabase
-                    .from('assessment_results')
-                    .upsert({
+                const { error: arErr } = await safeUpsert('assessment_results', {
                         type: 'coding',
                         test_id: assessmentID,
                         test_name: initialData.assessmentName,
@@ -307,9 +303,7 @@ class CodingAssessmentService {
     static async saveResultToSupabase(resultData) {
         try {
             // Check if coding_results table exists, if not fallback gracefully.
-            const { error } = await supabase
-                .from('coding_results')
-                .upsert({
+            const { error } = await safeUpsert('coding_results', {
                     roll_number: resultData.rollNumber || '',
                     name: resultData.name || '',
                     email: resultData.email || '',
@@ -347,9 +341,7 @@ class CodingAssessmentService {
 
             // Also upsert into unified assessment_results table
             try {
-                const { error: arErr } = await supabase
-                    .from('assessment_results')
-                    .upsert({
+                const { error: arErr } = await safeUpsert('assessment_results', {
                         type: 'coding',
                         test_id: resultData.assessmentID || '',
                         test_name: resultData.assessmentName || 'Unknown Coding Assessment',

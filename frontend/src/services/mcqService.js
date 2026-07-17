@@ -1,7 +1,7 @@
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs } from 'firebase/firestore';
 import timeService from './timeService';
-import { supabase } from '../supabaseClient';
+import { supabase, safeUpsert } from '../supabaseClient';
 
 
 class MCQService {
@@ -291,9 +291,7 @@ class MCQService {
      */
     static async saveResultToSupabase(resultData) {
         try {
-            const { data, error } = await supabase
-                .from('mcq_results')
-                .upsert({
+            const { data, error } = await safeUpsert('mcq_results', {
                     roll_number: resultData.rollNumber || '',
                     name: resultData.name || '',
                     email: resultData.email || '',
@@ -329,9 +327,7 @@ class MCQService {
 
             // Also upsert into unified assessment_results table
             try {
-                const { error: arErr } = await supabase
-                    .from('assessment_results')
-                    .upsert({
+                const { error: arErr } = await safeUpsert('assessment_results', {
                         type: 'mcq',
                         test_id: resultData.testID || '',
                         test_name: resultData.testName || 'Unknown Test',
