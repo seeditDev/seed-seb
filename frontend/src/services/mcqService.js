@@ -6,6 +6,27 @@ import { supabase, safeUpsert } from '../supabaseClient';
 
 class MCQService {
     /**
+     * Compute partialScore and fullScore from result data.
+     * partialScore = actual score earned.
+     * fullScore    = totalMarks only if 100% achieved, else 0.
+     */
+    static computeScoreFields(score, totalMarks, percentage) {
+        const partialScore = score || 0;
+        const fullScore = (percentage >= 100 || (totalMarks > 0 && score >= totalMarks)) ? (totalMarks || 0) : 0;
+        return { partialScore, fullScore };
+    }
+
+    /** Canonical centralized Firestore path. */
+    static canonicalPath(testID, college, year, email) {
+        return `AssessmentResults/${testID}/colleges/${college}/years/${year}/students/${email}`;
+    }
+
+    /** Legacy student-centric path (kept for duplicate detection + backward compat). */
+    static legacyPath(college, year, department, email, testID) {
+        return `colleges/${college}/years/${year}/departments/${department}/students/${email}/mcq_results/${testID}`;
+    }
+
+    /**
      * Check if student has already attempted the test
      * @param {string} email - Student email
      * @param {string} testID - Test ID
@@ -16,22 +37,33 @@ class MCQService {
      */
     static async checkExistingAttempt(email, testID, college, year, department) {
         try {
-            // Check if online first
             if (!navigator.onLine) {
                 console.warn('[MCQService] Client is offline, cannot check existing attempt');
-                // Return safe default - allow test to proceed, Firestore will handle duplicate on submit
                 return { exists: false, data: null, completed: false, offline: true };
             }
 
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/mcq_results/${testID}`;
-            const docRef = doc(db, docPath);
-            const docSnap = await getDoc(docRef);
+            // 1. Try canonical AssessmentResults path first
+            try {
+                const canonRef = doc(db, this.canonicalPath(testID, college, year, email));
+                const canonSnap = await getDoc(canonRef);
+                if (canonSnap.exists()) {
+                    const data = canonSnap.data();
+                    return {
+                        exists: true,
+                        data,
+                        completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
+                    };
+                }
+            } catch (e) { /* fall through to legacy */ }
 
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+            // 2. Fall back to legacy student-centric path
+            const legRef = doc(db, this.legacyPath(college, year, department, email, testID));
+            const legSnap = await getDoc(legRef);
+            if (legSnap.exists()) {
+                const data = legSnap.data();
                 return {
                     exists: true,
-                    data: data,
+                    data,
                     completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
                 };
             }
@@ -39,14 +71,9 @@ class MCQService {
             return { exists: false, data: null, completed: false };
         } catch (error) {
             console.error('[MCQService] Error checking existing attempt:', error);
-
-            // Handle offline errors gracefully
             if (error.code === 'unavailable' || error.message?.includes('offline') || error.message?.includes('network')) {
-                console.warn('[MCQService] Network error, allowing test to proceed');
                 return { exists: false, data: null, completed: false, offline: true };
             }
-
-            // For other errors, still allow test to proceed (Firestore will catch duplicates on submit)
             return { exists: false, data: null, completed: false, error: error.message };
         }
     }
@@ -105,9 +132,6 @@ class MCQService {
                 throw new Error('DUPLICATE_SUBMISSION: Test already completed. You cannot retake this test.');
             }
 
-            const docPath = `colleges/${College}/years/${Year}/departments/${Department}/students/${Email}/mcq_results/${testID}`;
-            const docRef = doc(db, docPath);
-
             const initialData = {
                 rollNumber: rollNumber || '',
                 name: Name || '',
@@ -118,6 +142,7 @@ class MCQService {
                 testID: testID,
                 testName: testData.name || testData.testInfo?.name || 'Unknown Test',
                 totalQuestions: testData.questions?.length || testData.totalQuestions || 0,
+                type: 'mcq',
                 timeStarted: serverTimestamp(),
                 timeStartedISO: timeService.getNow().toISOString(),
                 completed: false,
@@ -128,11 +153,18 @@ class MCQService {
                 createdAt: serverTimestamp()
             };
 
-            // Use setDoc with merge to avoid overwriting if document exists
-            await setDoc(docRef, initialData, { merge: true });
+            // Write to canonical AssessmentResults path (primary)
+            const canonPath = this.canonicalPath(testID, College, Year, Email);
+            await setDoc(doc(db, canonPath), initialData, { merge: true });
 
-            console.log('[MCQService] Initial attempt created:', docPath);
-            return { success: true, docPath };
+            // Also write to legacy path (secondary / backward compat)
+            try {
+                const legPath = this.legacyPath(College, Year, Department, Email, testID);
+                await setDoc(doc(db, legPath), initialData, { merge: true });
+            } catch (e) { /* non-blocking */ }
+
+            console.log('[MCQService] Initial attempt created:', canonPath);
+            return { success: true, docPath: canonPath };
         } catch (error) {
             console.error('[MCQService] Error creating initial attempt:', error);
             throw error;
@@ -145,9 +177,13 @@ class MCQService {
      */
     static async markTestAsSubmitting(email, testID, college, year, department) {
         try {
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/mcq_results/${testID}`;
-            const docRef = doc(db, docPath);
-            await setDoc(docRef, { completed: true, status: 'submitting' }, { merge: true });
+            const update = { completed: true, status: 'submitting' };
+            // Update canonical path
+            await setDoc(doc(db, this.canonicalPath(testID, college, year, email)), update, { merge: true });
+            // Also update legacy path
+            try {
+                await setDoc(doc(db, this.legacyPath(college, year, department, email, testID)), update, { merge: true });
+            } catch (e) { /* non-blocking */ }
             console.log('[MCQService] Marked test as submitting to prevent refresh reattempts');
             return true;
         } catch (error) {
@@ -203,9 +239,6 @@ class MCQService {
                 console.warn('[MCQService] Error checking existing attempt during save, continuing:', checkError);
             }
 
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/mcq_results/${testID}`;
-            const docRef = doc(db, docPath);
-
             // Get existing data if available (for attempts count)
             let existingData = null;
             try {
@@ -213,9 +246,11 @@ class MCQService {
                 if (existingCheck.exists) {
                     existingData = existingCheck.data;
                 }
-            } catch (e) {
-                // Ignore errors, use default
-            }
+            } catch (e) { /* ignore */ }
+
+            const { partialScore, fullScore } = this.computeScoreFields(
+                score, resultData.totalMarks || resultData.totalQuestions || 0, percentage
+            );
 
             const resultDocument = {
                 rollNumber: rollNumber || '',
@@ -226,12 +261,15 @@ class MCQService {
                 department: department,
                 testID: testID,
                 testName: testName || 'Unknown Test',
+                type: 'mcq',
                 score: score || 0,
                 totalQuestions: totalQuestions || 0,
                 correctAnswers: correctAnswers || 0,
                 incorrectAnswers: incorrectAnswers || 0,
                 percentage: percentage || 0,
-                timeTaken: timeTaken || 0, // in seconds
+                partialScore,
+                fullScore,
+                timeTaken: timeTaken || 0,
                 timeTakenFormatted: this.formatTime(timeTaken || 0),
                 timeStarted: timeStarted || serverTimestamp(),
                 timeStartedISO: resultData.timeStartedISO || timeService.getNow().toISOString(),
@@ -250,7 +288,6 @@ class MCQService {
                 answers: answers || {},
                 totalMarks: resultData.totalMarks || resultData.totalQuestions || 0,
                 questions: resultData.questions || [],
-                // Proctoring data
                 violationCount: resultData.violationCount || 0,
                 totalNoFace: resultData.totalNoFace || 0,
                 totalMultipleFaces: resultData.totalMultipleFaces || 0,
@@ -258,25 +295,20 @@ class MCQService {
                 updatedAt: serverTimestamp()
             };
 
-            // Use setDoc to create/update the document (student-centric path)
-            await setDoc(docRef, resultDocument, { merge: true });
+            // ── 1. Write to canonical AssessmentResults path (PRIMARY)
+            const canonPath = this.canonicalPath(testID, college, year, email);
+            await setDoc(doc(db, canonPath), resultDocument, { merge: true });
+            console.log('[MCQService] Result saved to canonical path:', canonPath);
 
-            // Also write to assessment-centric collection: AssessmentResults/{testID}/colleges/{college}/years/{year}/students/{email}
+            // ── 2. Write to legacy student-centric path (SECONDARY / backward compat)
             try {
-                const assessmentDocPath = `AssessmentResults/${testID}/colleges/${college}/years/${year}/students/${email}`;
-                const assessmentDocRef = doc(db, assessmentDocPath);
-                await setDoc(assessmentDocRef, {
-                    ...resultDocument,
-                    type: 'mcq',
-                    assessmentCentricPath: assessmentDocPath
-                }, { merge: true });
-                console.log('[MCQService] Result also saved to AssessmentResults:', assessmentDocPath);
-            } catch (assessErr) {
-                console.warn('[MCQService] AssessmentResults write failed (non-blocking):', assessErr.message);
+                const legPath = this.legacyPath(college, year, department, email, testID);
+                await setDoc(doc(db, legPath), resultDocument, { merge: true });
+            } catch (legErr) {
+                console.warn('[MCQService] Legacy path write failed (non-blocking):', legErr.message);
             }
 
-            console.log('[MCQService] Result saved to Firestore:', docPath);
-            return { success: true, docId: docPath, docRef: docRef };
+            return { success: true, docId: canonPath };
         } catch (error) {
             console.error('[MCQService] Error saving to Firestore:', error);
             throw error;
@@ -291,6 +323,9 @@ class MCQService {
      */
     static async saveResultToSupabase(resultData) {
         try {
+            const { partialScore: ps, fullScore: fs } = this.computeScoreFields(
+                resultData.score, resultData.totalMarks || resultData.totalQuestions || 0, resultData.percentage
+            );
             const { data, error } = await safeUpsert('mcq_results', {
                     roll_number: resultData.rollNumber || '',
                     name: resultData.name || '',
@@ -305,6 +340,8 @@ class MCQService {
                     correct_answers: resultData.correctAnswers || 0,
                     incorrect_answers: resultData.incorrectAnswers || 0,
                     percentage: resultData.percentage ? (resultData.percentage / 100) : 0,
+                    partial_score: ps,
+                    full_score: fs,
                     time_taken: resultData.timeTaken || 0,
                     time_taken_formatted: resultData.timeTakenFormatted || this.formatTime(resultData.timeTaken || 0),
                     time_started: resultData.timeStartedISO || new Date().toISOString(),
@@ -342,6 +379,8 @@ class MCQService {
                         correct_answers: resultData.correctAnswers || 0,
                         incorrect_answers: resultData.incorrectAnswers || 0,
                         percentage: resultData.percentage ? (resultData.percentage / 100) : 0,
+                        partial_score: ps,
+                        full_score: fs,
                         status: 'submitted',
                         time_taken: resultData.timeTaken || 0,
                         time_taken_formatted: resultData.timeTakenFormatted || this.formatTime(resultData.timeTaken || 0),
@@ -394,8 +433,9 @@ class MCQService {
             answers
         } = progressData;
 
-        const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/mcq_results/${testID}`;
-        const docRef = doc(db, docPath);
+        // Check canonical path to avoid overwriting submitted status
+        const canonPath = this.canonicalPath(testID, college, year, email);
+        const docRef = doc(db, canonPath);
 
         // Fetch existing document to prevent overwriting completed status
         try {
@@ -440,6 +480,10 @@ class MCQService {
         };
 
         await setDoc(docRef, progressDocument, { merge: true });
+        // Also sync to legacy path
+        try {
+            await setDoc(doc(db, this.legacyPath(college, year, department, email, testID)), progressDocument, { merge: true });
+        } catch (e) { /* non-blocking */ }
         return { success: true };
     }
 
@@ -472,8 +516,7 @@ class MCQService {
      */
     static async markSyncedToSupabase(email, testID, college, year, department) {
         try {
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/mcq_results/${testID}`;
-            const docRef = doc(db, docPath);
+            const docRef = doc(db, this.canonicalPath(testID, college, year, email));
 
             await setDoc(docRef, {
                 syncedToSupabase: true,

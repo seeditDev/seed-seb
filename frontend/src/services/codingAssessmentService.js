@@ -6,7 +6,34 @@ import { supabase, safeUpsert } from '../supabaseClient';
 
 class CodingAssessmentService {
     /**
+     * Helper: compute partialScore and fullScore
+     * partialScore  = actual earned score
+     * fullScore     = totalMarks only if student scored 100% (all hidden tests passed), else 0
+     */
+    static computeScoreFields(score, totalMarks, percentage) {
+        const partialScore = score || 0;
+        const fullScore = (percentage >= 100 || (totalMarks > 0 && score >= totalMarks)) ? (totalMarks || 0) : 0;
+        return { partialScore, fullScore };
+    }
+
+    /**
+     * Canonical Firestore path for a coding assessment result.
+     * AssessmentResults/{assessmentID}/colleges/{college}/years/{year}/students/{email}
+     */
+    static canonicalPath(assessmentID, college, year, email) {
+        return `AssessmentResults/${assessmentID}/colleges/${college}/years/${year}/students/${email}`;
+    }
+
+    /**
+     * Legacy student-centric path (kept for backward compat / duplicate-detection).
+     */
+    static legacyPath(college, year, department, email, assessmentID) {
+        return `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results/${assessmentID}`;
+    }
+
+    /**
      * Check if student has already completed the coding assessment
+     * Reads from canonical AssessmentResults path, falls back to legacy path.
      */
     static async checkExistingAttempt(email, assessmentID, college, year, department) {
         try {
@@ -15,12 +42,28 @@ class CodingAssessmentService {
                 return { exists: false, data: null, completed: false, offline: true };
             }
 
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results/${assessmentID}`;
-            const docRef = doc(db, docPath);
-            const docSnap = await getDoc(docRef);
+            // 1. Try canonical path first
+            const canonPath = this.canonicalPath(assessmentID, college, year, email);
+            const canonRef = doc(db, canonPath);
+            try {
+                const canonSnap = await getDoc(canonRef);
+                if (canonSnap.exists()) {
+                    const data = canonSnap.data();
+                    return {
+                        exists: true,
+                        data: data,
+                        completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
+                    };
+                }
+            } catch (e) { /* fall through to legacy */ }
 
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+            // 2. Fall back to legacy path
+            const legPath = this.legacyPath(college, year, department, email, assessmentID);
+            const legRef = doc(db, legPath);
+            const legSnap = await getDoc(legRef);
+
+            if (legSnap.exists()) {
+                const data = legSnap.data();
                 return {
                     exists: true,
                     data: data,
@@ -48,14 +91,15 @@ class CodingAssessmentService {
                 return {};
             }
 
+            // Try legacy path first for backward compat
             const colPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results`;
             const colRef = collection(db, colPath);
             const querySnapshot = await getDocs(colRef);
             
             const attemptsMap = {};
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                attemptsMap[doc.id] = {
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                attemptsMap[docSnap.id] = {
                     completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted',
                     score: data.score || 0,
                     percentage: data.percentage || 0,
@@ -83,9 +127,6 @@ class CodingAssessmentService {
                 throw new Error('DUPLICATE_SUBMISSION: Coding assessment already completed. Access is denied.');
             }
 
-            const docPath = `colleges/${College}/years/${Year}/departments/${Department}/students/${Email}/coding_results/${assessmentID}`;
-            const docRef = doc(db, docPath);
-
             const initialData = {
                 rollNumber: rollNumber || '',
                 name: Name || '',
@@ -100,10 +141,22 @@ class CodingAssessmentService {
                 completed: false,
                 submitted: false,
                 status: 'started',
+                type: 'coding',
                 attempts: 1,
                 from: 'student',
                 createdAt: serverTimestamp()
             };
+
+            // Write to canonical AssessmentResults path
+            const canonPath = this.canonicalPath(assessmentID, College, Year, Email);
+            const canonRef = doc(db, canonPath);
+            await setDoc(canonRef, initialData, { merge: true });
+
+            // Also write to legacy path for backward compat
+            try {
+                const legPath = this.legacyPath(College, Year, Department, Email, assessmentID);
+                await setDoc(doc(db, legPath), initialData, { merge: true });
+            } catch (e) { /* non-blocking */ }
 
             // Write initial status to Supabase coding_results table
             try {
@@ -121,6 +174,8 @@ class CodingAssessmentService {
                         correct_answers: 0,
                         incorrect_answers: 0,
                         percentage: 0,
+                        partial_score: 0,
+                        full_score: 0,
                         status: 'started',
                         time_taken: 0,
                         time_started: initialData.timeStartedISO,
@@ -150,6 +205,8 @@ class CodingAssessmentService {
                         correct_answers: 0,
                         incorrect_answers: 0,
                         percentage: 0,
+                        partial_score: 0,
+                        full_score: 0,
                         status: 'started',
                         time_taken: 0,
                         time_started: initialData.timeStartedISO,
@@ -160,13 +217,10 @@ class CodingAssessmentService {
                 console.warn('[CodingAssessmentService] assessment_results initial exception:', arEx.message);
             }
 
-            await setDoc(docRef, initialData, { merge: true });
-            console.log('[CodingAssessmentService] Initial attempt created:', docPath);
-            return { success: true, docPath };
+            console.log('[CodingAssessmentService] Initial attempt created:', canonPath);
+            return { success: true, docPath: canonPath };
         } catch (error) {
             console.warn('[CodingAssessmentService] Could not register attempt in Firestore (non-blocking):', error.message);
-            // Do NOT re-throw — Firestore permission issues must never block the test from starting.
-            // The student's progress is always saved to localStorage as primary backup.
             return { success: false, error: error.message };
         }
     }
@@ -176,9 +230,17 @@ class CodingAssessmentService {
      */
     static async markAsSubmitting(email, assessmentID, college, year, department) {
         try {
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results/${assessmentID}`;
-            const docRef = doc(db, docPath);
-            await setDoc(docRef, { completed: true, status: 'submitting' }, { merge: true });
+            const update = { completed: true, status: 'submitting' };
+
+            // Update canonical path
+            const canonPath = this.canonicalPath(assessmentID, college, year, email);
+            await setDoc(doc(db, canonPath), update, { merge: true });
+
+            // Also update legacy path
+            try {
+                const legPath = this.legacyPath(college, year, department, email, assessmentID);
+                await setDoc(doc(db, legPath), update, { merge: true });
+            } catch (e) { /* non-blocking */ }
 
             // Also write status: 'submitting' to Supabase
             try {
@@ -198,14 +260,14 @@ class CodingAssessmentService {
 
             return true;
         } catch (error) {
-            // Non-critical — silently ignore permission or network errors
             console.warn('[CodingAssessmentService] markAsSubmitting skipped (non-blocking):', error.message);
             return false;
         }
     }
 
     /**
-     * Save result to Firestore
+     * Save result to Firestore — writes to canonical AssessmentResults path (primary)
+     * and legacy colleges/... path (secondary for backward compat).
      */
     static async saveResultToFirestore(resultData) {
         try {
@@ -234,8 +296,7 @@ class CodingAssessmentService {
                 executionStats
             } = resultData;
 
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results/${assessmentID}`;
-            const docRef = doc(db, docPath);
+            const { partialScore, fullScore } = this.computeScoreFields(score, resultData.totalMarks || 0, percentage);
 
             const resultDocument = {
                 rollNumber: rollNumber || '',
@@ -246,11 +307,14 @@ class CodingAssessmentService {
                 department: department,
                 assessmentID: assessmentID,
                 assessmentName: assessmentName || 'Unknown Coding Assessment',
+                type: 'coding',
                 score: score || 0,
                 totalQuestions: totalQuestions || 0,
                 correctAnswers: correctAnswers || 0,
                 incorrectAnswers: incorrectAnswers || 0,
                 percentage: percentage || 0,
+                partialScore,
+                fullScore,
                 timeTaken: timeTaken || 0,
                 timeStarted: timeStarted || serverTimestamp(),
                 timeStartedISO: resultData.timeStartedISO || timeService.getNow().toISOString(),
@@ -272,24 +336,21 @@ class CodingAssessmentService {
                 updatedAt: serverTimestamp()
             };
 
-            await setDoc(docRef, resultDocument, { merge: true });
+            // ── 1. Write to canonical AssessmentResults path (PRIMARY)
+            const canonPath = this.canonicalPath(assessmentID, college, year, email);
+            const canonRef = doc(db, canonPath);
+            await setDoc(canonRef, resultDocument, { merge: true });
+            console.log('[CodingAssessmentService] Result saved to canonical path:', canonPath);
 
-            // Also write to assessment-centric path: AssessmentResults/{assessmentID}/colleges/{college}/years/{year}/students/{email}
+            // ── 2. Write to legacy path (SECONDARY / backward compat)
             try {
-                const assessmentDocPath = `AssessmentResults/${assessmentID}/colleges/${college}/years/${year}/students/${email}`;
-                const assessmentDocRef = doc(db, assessmentDocPath);
-                await setDoc(assessmentDocRef, {
-                    ...resultDocument,
-                    type: 'coding',
-                    assessmentCentricPath: assessmentDocPath
-                }, { merge: true });
-                console.log('[CodingAssessmentService] Result also saved to AssessmentResults:', assessmentDocPath);
-            } catch (assessErr) {
-                console.warn('[CodingAssessmentService] AssessmentResults write failed (non-blocking):', assessErr.message);
+                const legPath = this.legacyPath(college, year, department, email, assessmentID);
+                await setDoc(doc(db, legPath), resultDocument, { merge: true });
+            } catch (legErr) {
+                console.warn('[CodingAssessmentService] Legacy path write failed (non-blocking):', legErr.message);
             }
 
-            console.log('[CodingAssessmentService] Result saved to Firestore:', docPath);
-            return { success: true, docId: docPath, docRef };
+            return { success: true, docId: canonPath };
         } catch (error) {
             console.error('[CodingAssessmentService] Error saving to Firestore:', error);
             throw error;
@@ -302,6 +363,12 @@ class CodingAssessmentService {
      */
     static async saveResultToSupabase(resultData) {
         try {
+            const { partialScore, fullScore } = this.computeScoreFields(
+                resultData.score,
+                resultData.totalMarks || 0,
+                resultData.percentage
+            );
+
             // Check if coding_results table exists, if not fallback gracefully.
             const { error } = await safeUpsert('coding_results', {
                     roll_number: resultData.rollNumber || '',
@@ -317,6 +384,8 @@ class CodingAssessmentService {
                     correct_answers: resultData.correctAnswers || 0,
                     incorrect_answers: resultData.incorrectAnswers || 0,
                     percentage: resultData.percentage ? (resultData.percentage / 100) : 0,
+                    partial_score: partialScore,
+                    full_score: fullScore,
                     status: resultData.status || 'submitted',
                     time_taken: resultData.timeTaken || 0,
                     time_started: resultData.timeStartedISO || new Date().toISOString(),
@@ -356,6 +425,8 @@ class CodingAssessmentService {
                         correct_answers: resultData.correctAnswers || 0,
                         incorrect_answers: resultData.incorrectAnswers || 0,
                         percentage: resultData.percentage ? (resultData.percentage / 100) : 0,
+                        partial_score: partialScore,
+                        full_score: fullScore,
                         status: 'submitted',
                         time_taken: resultData.timeTaken || 0,
                         time_taken_formatted: CodingAssessmentService.formatTime(resultData.timeTaken || 0),
@@ -433,12 +504,11 @@ class CodingAssessmentService {
                 codeMap
             } = progressData;
 
-            const docPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results/${assessmentID}`;
-            const docRef = doc(db, docPath);
-
-            // Fetch to ensure we don't overwrite completed status
+            // Check canonical path to ensure we don't overwrite completed status
+            const canonPath = this.canonicalPath(assessmentID, college, year, email);
+            const canonRef = doc(db, canonPath);
             try {
-                const docSnap = await getDoc(docRef);
+                const docSnap = await getDoc(canonRef);
                 if (docSnap.exists() && docSnap.data().completed) {
                     return { success: true, skipped: true };
                 }
@@ -453,6 +523,7 @@ class CodingAssessmentService {
                 department,
                 assessmentID,
                 assessmentName: assessmentName || 'Unknown Coding Assessment',
+                type: 'coding',
                 progressTimeTaken: timeTaken || 0,
                 timeStarted: timeStarted || serverTimestamp(),
                 timeStartedISO: progressData.timeStartedISO || timeService.getNow().toISOString(),
@@ -466,7 +537,15 @@ class CodingAssessmentService {
                 updatedAt: serverTimestamp()
             };
 
-            await setDoc(docRef, progressDocument, { merge: true });
+            // Write to canonical path
+            await setDoc(canonRef, progressDocument, { merge: true });
+
+            // Also sync to legacy path
+            try {
+                const legPath = this.legacyPath(college, year, department, email, assessmentID);
+                await setDoc(doc(db, legPath), progressDocument, { merge: true });
+            } catch (e) { /* non-blocking */ }
+
             return { success: true };
         } catch (error) {
             console.error('[CodingAssessmentService] Progress backup failed:', error);

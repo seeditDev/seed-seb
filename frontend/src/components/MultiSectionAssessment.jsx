@@ -993,6 +993,10 @@ const MultiSectionAssessment = () => {
       const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
       const totalViolations = proctoringData.violationCount;
 
+      // Scoring fields
+      const partialScore = totalScore;
+      const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
+
       const timeStartedISO = examStartTimeRef.current;
       const timeEndedISO = new Date().toISOString();
       const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(timeStartedISO).getTime()) / 1000);
@@ -1024,6 +1028,8 @@ const MultiSectionAssessment = () => {
         correctAnswers: totalScore,
         incorrectAnswers: totalQ - totalScore,
         percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+        partialScore,
+        fullScore,
         timeTaken: timeTakenFormatted,
         timeTakenSeconds: timeTaken,
         violationCount: totalViolations,
@@ -1057,6 +1063,8 @@ const MultiSectionAssessment = () => {
         correct_answers: totalScore,
         incorrect_answers: totalQ - totalScore,
         percentage: pct,
+        partial_score: partialScore,
+        full_score: fullScore,
         time_taken: timeTaken,
         time_taken_formatted: timeTakenFormatted,
         time_started: timeStartedISO,
@@ -1098,6 +1106,8 @@ const MultiSectionAssessment = () => {
         correct_answers: totalScore,
         incorrect_answers: totalQ - totalScore,
         percentage: pct,
+        partial_score: partialScore,
+        full_score: fullScore,
         status: 'submitted',
         time_taken: timeTaken,
         time_taken_formatted: timeTakenFormatted,
@@ -1229,6 +1239,10 @@ const MultiSectionAssessment = () => {
         const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
         const totalViolations = proctoringData.violationCount;
 
+        // Scoring fields
+        const partialScore = totalScore;
+        const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
+
         // Metrics computation
         const timeStartedISO = examStartTimeRef.current;
         const timeEndedISO = new Date().toISOString();
@@ -1264,6 +1278,8 @@ const MultiSectionAssessment = () => {
           correctAnswers: totalScore,
           incorrectAnswers: totalQ - totalScore,
           percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+          partialScore,
+          fullScore,
           timeTaken: timeTakenFormatted,
           timeTakenSeconds: timeTaken,
           violationCount: totalViolations,
@@ -1297,6 +1313,8 @@ const MultiSectionAssessment = () => {
           correct_answers: totalScore,
           incorrect_answers: totalQ - totalScore,
           percentage: pct,
+          partial_score: partialScore,
+          full_score: fullScore,
           time_taken: timeTaken,
           time_taken_formatted: timeTakenFormatted,
           time_started: timeStartedISO,
@@ -1338,6 +1356,8 @@ const MultiSectionAssessment = () => {
           correct_answers: totalScore,
           incorrect_answers: totalQ - totalScore,
           percentage: pct,
+          partial_score: partialScore,
+          full_score: fullScore,
           status: 'submitted',
           time_taken: timeTaken,
           time_taken_formatted: timeTakenFormatted,
