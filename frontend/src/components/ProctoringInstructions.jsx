@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useReducer } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaCamera, FaExclamationTriangle, FaSpinner, FaSync, FaClock, FaLaptopCode, FaClipboardList } from 'react-icons/fa';
 import '../styles/ProctoringInstructions.css';
 import * as faceapi from 'face-api.js';
@@ -33,13 +33,20 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isAcknowledged, setIsAcknowledged] = useState(false);
   
-  // State for reference photo registration
-  const [photoStatus, setPhotoStatus] = useState('pending'); // pending, captured, failed
-  const [photoUrl, setPhotoUrl] = useState(null);  
-  const [captureError, setCaptureError] = useState('');
-  const [isCapturing, setIsCapturing] = useState(false);
-  // Track if we are proceeding to test
+  // Single reducer for all photo state — batches into one render to prevent video flicker
+  const [photoState, dispatchPhoto] = useReducer(
+    (state, action) => ({ ...state, ...action }),
+    { status: 'pending', url: null, error: '', capturing: false }
+  );
+  // Aliases for backwards-compatibility with JSX references
+  const photoStatus = photoState.status;
+  const photoUrl = photoState.url;
+  const captureError = photoState.error;
+  const isCapturing = photoState.capturing;
+
+  // Track if we are proceeding to test (must not stop camera on unmount if proceeding)
   const isProceedingRef = useRef(false);
+
   const [currentStep, setCurrentStep] = useState(1); // 1 = Face capture, 2 = Guidelines agreement
 
   useEffect(() => {
@@ -176,20 +183,17 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
   }, [cameraStatus]);
 
   const captureReferencePhoto = useCallback(async () => {
-    setCaptureError('');
-    setIsCapturing(true);
+    dispatchPhoto({ error: '', capturing: true });
     
     const modelsReady = await loadFaceApiForPhoto();
     if (!modelsReady) {
-      setCaptureError("AI face-detection models failed to load. Please check your connection.");
-      setIsCapturing(false);
+      dispatchPhoto({ error: "AI face-detection models failed to load. Please check your connection.", status: 'failed', capturing: false });
       return;
     }
     
     const video = videoRef.current;
     if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
-      setCaptureError("Camera stream is not ready yet. Please wait.");
-      setIsCapturing(false);
+      dispatchPhoto({ error: "Camera stream is not ready yet. Please wait.", capturing: false });
       return;
     }
     
@@ -201,9 +205,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       ).withFaceLandmarks().withFaceDescriptor();
       
       if (!detection) {
-        setCaptureError("No face detected in the frame. Please look directly at the camera and try again.");
-        setPhotoStatus('failed');
-        setIsCapturing(false);
+        dispatchPhoto({ error: "No face detected in the frame. Please look directly at the camera and try again.", status: 'failed', capturing: false });
         return;
       }
       
@@ -220,9 +222,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         (box.x + box.width) > (videoWidth - borderThresholdX) || 
         (box.y + box.height) > (videoHeight - borderThresholdY)
       ) {
-        setCaptureError("Face is too close to boundaries. Please center your face inside the guide.");
-        setPhotoStatus('failed');
-        setIsCapturing(false);
+        dispatchPhoto({ error: "Face is too close to boundaries. Please center your face inside the guide.", status: 'failed', capturing: false });
         return;
       }
 
@@ -239,9 +239,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
         const ratio = distLeft / distRight;
         console.log('[ProctoringInstructions] Manual capture symmetry ratio:', ratio);
         if (ratio < 0.55 || ratio > 1.8) {
-          setCaptureError("Please look straight at the camera. Side-facing photos are rejected.");
-          setPhotoStatus('failed');
-          setIsCapturing(false);
+          dispatchPhoto({ error: "Please look straight at the camera. Side-facing photos are rejected.", status: 'failed', capturing: false });
           return;
         }
       }
@@ -262,16 +260,12 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       const duration = assessment?.duration || 60;
       setProctorCacheExpiry(duration, testID);
       
-      setPhotoUrl(dataUrl);
-      setPhotoStatus('captured');
-      setCaptureError('');
+      // Single dispatch — one React render for all photo state changes (prevents flicker)
+      dispatchPhoto({ url: dataUrl, status: 'captured', error: '', capturing: false });
       console.log('[ProctoringInstructions] ✓ Reference photo manually captured and validated!');
     } catch (err) {
       console.error('[ProctoringInstructions] Error during manual face capture:', err);
-      setCaptureError("An error occurred during verification. Please try again.");
-      setPhotoStatus('failed');
-    } finally {
-      setIsCapturing(false);
+      dispatchPhoto({ error: "An error occurred during verification. Please try again.", status: 'failed', capturing: false });
     }
   }, [assessment]);
 
@@ -282,8 +276,8 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       const existingPhoto = localStorage.getItem('proctor_reference_photo_' + testID);
       const existingDescriptor = localStorage.getItem('proctor_reference_descriptor_' + testID);
       if (existingPhoto && existingDescriptor) {
-        setPhotoUrl(existingPhoto);
-        setPhotoStatus('captured');
+        // Single dispatch — avoids two renders
+        dispatchPhoto({ url: existingPhoto, status: 'captured' });
       }
     }
   }, [assessment?.id]);
@@ -410,12 +404,13 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
 
                   {cameraStatus === 'granted' && (
                     <div className="camera-preview-wrapper" style={{ maxWidth: '100%', width: '100%' }}>
-                      <video
+                    <video
                         ref={videoRef}
                         autoPlay
                         muted
                         playsInline
                         className="instructions-video-preview"
+                        style={{ willChange: 'transform', transform: 'translateZ(0)' }}
                       />
                       
                       {photoStatus !== 'captured' && (
@@ -513,9 +508,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                         className="lw-btn-secondary" 
                         style={{ width: '100%', justifyContent: 'center', gap: '8px', padding: '12px', background: 'rgba(51, 65, 85, 0.65)', border: '1px solid rgba(100, 116, 139, 0.35)', color: '#cbd5e1', borderRadius: '8px' }}
                         onClick={() => {
-                          setPhotoStatus('pending');
-                          setPhotoUrl(null);
-                          setCaptureError('');
+                          dispatchPhoto({ status: 'pending', url: null, error: '' });
                           const testID = assessment?.id || 'unknown';
                           localStorage.removeItem('proctor_reference_photo_' + testID);
                           localStorage.removeItem('proctor_reference_descriptor_' + testID);

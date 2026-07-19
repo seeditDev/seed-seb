@@ -157,6 +157,9 @@ const PracticeHome = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [tabLoading, setTabLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   // Structured Learning Paths State
   const [courses, setCourses] = useState([]);
@@ -1399,17 +1402,58 @@ const PracticeHome = () => {
     setExpandedSubcourses(prev => ({ ...prev, [sId]: !prev[sId] }));
   };
 
-  // Filter flat list of questions
-  const filteredQuestions = questions.filter(q => {
-    const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser);
-    const matchesSearch = !searchQuery ||
-      q.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.questionId?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || q.category === selectedCategory;
-    const matchesDifficulty = selectedDifficulty === 'All' || q.difficulty === selectedDifficulty;
-    const matchesStatus = selectedStatus === 'All' || status === selectedStatus;
-    return matchesSearch && matchesCategory && matchesDifficulty && matchesStatus;
-  });
+  // Reset pagination on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedDifficulty, selectedStatus]);
+
+  // Tab switching with smooth loader transition
+  const handleTabChange = (targetTab) => {
+    if (activeTab === targetTab && !selectedModule && !selectedSheet && !selectedCourse) return;
+    setTabLoading(true);
+    setSelectedModule(null);
+    setSelectedSheet(null);
+    setSelectedCourse(null);
+    setActiveTab(targetTab);
+    setCurrentPage(1);
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        setTabLoading(false);
+      }, 120);
+    });
+  };
+
+  // Filter flat list of questions (memoized for instant responsiveness)
+  const filteredQuestions = useMemo(() => {
+    if (!questions || questions.length === 0) return [];
+    return questions.filter(q => {
+      const matchesSearch = !searchQuery ||
+        (q.title && q.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (q.questionId && q.questionId.toLowerCase().includes(searchQuery.toLowerCase()));
+      if (!matchesSearch) return false;
+
+      const matchesCategory = selectedCategory === 'All' || q.category === selectedCategory;
+      if (!matchesCategory) return false;
+
+      const matchesDifficulty = selectedDifficulty === 'All' || q.difficulty === selectedDifficulty;
+      if (!matchesDifficulty) return false;
+
+      if (selectedStatus !== 'All') {
+        const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser);
+        if (status !== selectedStatus) return false;
+      }
+
+      return true;
+    });
+  }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, solvedIds, problemDetails, isPremiumUser]);
+
+  const totalPages = Math.ceil(filteredQuestions.length / PAGE_SIZE) || 1;
+
+  const paginatedQuestions = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredQuestions.slice(start, start + PAGE_SIZE);
+  }, [filteredQuestions, currentPage]);
 
   return (
     <div className="ph-root">
@@ -1419,21 +1463,21 @@ const PracticeHome = () => {
           <div className="ph-topbar-nav" style={{ gap: '8px' }}>
             <button
               className={`ph-topbar-btn ${activeTab === 'paths' && !selectedModule ? 'active' : ''}`}
-              onClick={() => { setSelectedModule(null); setSelectedSheet(null); setSelectedCourse(null); setActiveTab('paths'); }}
+              onClick={() => handleTabChange('paths')}
               style={{ borderRadius: '8px' }}
             >
               Course Curriculum
             </button>
             <button
               className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
-              onClick={() => { setSelectedModule(null); setSelectedSheet(null); setSelectedCourse(null); setActiveTab('sheets'); }}
+              onClick={() => handleTabChange('sheets')}
               style={{ borderRadius: '8px' }}
             >
               Structured Sheets
             </button>
             <button
               className={`ph-topbar-btn ${activeTab === 'bank' && !selectedModule ? 'active' : ''}`}
-              onClick={() => { setSelectedModule(null); setSelectedSheet(null); setSelectedCourse(null); setActiveTab('bank'); }}
+              onClick={() => handleTabChange('bank')}
               style={{ borderRadius: '8px' }}
             >
               Practice Bank
@@ -1457,7 +1501,16 @@ const PracticeHome = () => {
       )}
 
       {/* Main Panel Content */}
-      {selectedModule ? (
+      {tabLoading ? (
+        <div className="ph-tab-loader">
+          <div className="ph-spinner" style={{ width: '36px', height: '36px' }} />
+          <p style={{ marginTop: '14px', color: 'var(--ph-text-dim)', fontSize: '14px', fontWeight: 500 }}>
+            {activeTab === 'bank' ? 'Loading Question Bank...' : 'Loading Section...'}
+          </p>
+        </div>
+      ) : (
+        <div className="ph-tab-content-fade">
+          {selectedModule ? (
         // ─── CONTEST QUESTION LIST VIEW ───
         <div className="ph-section" style={{ margin: '30px auto' }}>
           <button
@@ -2807,68 +2860,105 @@ const PracticeHome = () => {
                 <div className="ph-empty-title">No problems match filters</div>
               </div>
             ) : (
-              <table className="ph-problems-table">
-                <thead>
-                  <tr>
-                    <th className="ph-col-status"></th>
-                    <th className="ph-col-num">#</th>
-                    <th className="ph-col-title">Title</th>
-                    <th className="ph-col-category">Category</th>
-                    <th className="ph-col-diff">Difficulty</th>
-                    <th className="ph-col-score">Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredQuestions.map((q, idx) => {
-                    const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser);
-                    const bestScore = problemDetails[q.questionId]?.bestScore;
+              <>
+                <table className="ph-problems-table">
+                  <thead>
+                    <tr>
+                      <th className="ph-col-status"></th>
+                      <th className="ph-col-num">#</th>
+                      <th className="ph-col-title">Title</th>
+                      <th className="ph-col-category">Category</th>
+                      <th className="ph-col-diff">Difficulty</th>
+                      <th className="ph-col-score">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedQuestions.map((q, idx) => {
+                      const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser);
+                      const bestScore = problemDetails[q.questionId]?.bestScore;
 
-                    const diffClass = q.difficulty === 'Hard' ? 'hard'
-                      : q.difficulty === 'Medium' ? 'medium'
-                        : q.difficulty === 'Beginner' ? 'beginner'
-                          : 'easy';
+                      const diffClass = q.difficulty === 'Hard' ? 'hard'
+                        : q.difficulty === 'Medium' ? 'medium'
+                          : q.difficulty === 'Beginner' ? 'beginner'
+                            : 'easy';
 
-                    const statusIcon = status === 'SOLVED' ? <FaCheckCircle style={{ color: 'var(--ph-success)' }} />
-                      : status === 'ATTEMPTED' ? <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: '#fbbf24' }}></span>
-                        : status === 'LOCKED' ? <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
-                          : null;
+                      const statusIcon = status === 'SOLVED' ? <FaCheckCircle style={{ color: 'var(--ph-success)' }} />
+                        : status === 'ATTEMPTED' ? <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: '#fbbf24' }}></span>
+                          : status === 'LOCKED' ? <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
+                            : null;
 
-                    return (
-                      <tr
-                        key={q.questionId}
-                        className={`ph-problem-row ${status === 'LOCKED' ? 'locked' : ''}`}
-                        onClick={() => handleQuestionClick(q, status)}
-                      >
-                        <td className="ph-col-status">
-                          <span className="ph-status-icon">{statusIcon}</span>
-                        </td>
-                        <td className="ph-col-num">{idx + 1}</td>
-                        <td className="ph-col-title">
-                          <span className="ph-problem-title-text">
-                            {q.questionId} – {q.title}
-                          </span>
-                          {q.isPremium && <FaStar style={{ color: '#fbbf24', marginLeft: '6px', fontSize: '11px' }} />}
-                        </td>
-                        <td className="ph-col-category">
-                          <span className="ph-cat-tag">{q.category || '—'}</span>
-                        </td>
-                        <td className="ph-col-diff">
-                          <span className={`ph-diff-tag ${diffClass}`}>{q.difficulty || 'Easy'}</span>
-                        </td>
-                        <td className="ph-col-score">
-                          {bestScore !== undefined ? (
-                            <span className={`ph-score-tag ${bestScore === 100 ? 'perfect' : 'partial'}`}>
-                              {bestScore}%
+                      const itemIndex = (currentPage - 1) * PAGE_SIZE + idx + 1;
+
+                      return (
+                        <tr
+                          key={q.questionId}
+                          className={`ph-problem-row ${status === 'LOCKED' ? 'locked' : ''}`}
+                          onClick={() => handleQuestionClick(q, status)}
+                        >
+                          <td className="ph-col-status">
+                            <span className="ph-status-icon">{statusIcon}</span>
+                          </td>
+                          <td className="ph-col-num">{itemIndex}</td>
+                          <td className="ph-col-title">
+                            <span className="ph-problem-title-text">
+                              {q.questionId} – {q.title}
                             </span>
-                          ) : (
-                            <span style={{ color: '#475569' }}>—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            {q.isPremium && <FaStar style={{ color: '#fbbf24', marginLeft: '6px', fontSize: '11px' }} />}
+                          </td>
+                          <td className="ph-col-category">
+                            <span className="ph-cat-tag">{q.category || '—'}</span>
+                          </td>
+                          <td className="ph-col-diff">
+                            <span className={`ph-diff-tag ${diffClass}`}>{q.difficulty || 'Easy'}</span>
+                          </td>
+                          <td className="ph-col-score">
+                            {bestScore !== undefined ? (
+                              <span className={`ph-score-tag ${bestScore === 100 ? 'perfect' : 'partial'}`}>
+                                {bestScore}%
+                              </span>
+                            ) : (
+                              <span style={{ color: '#475569' }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {filteredQuestions.length > PAGE_SIZE && (
+                  <div className="ph-pagination-bar">
+                    <div className="ph-pagination-info">
+                      Showing <strong>{(currentPage - 1) * PAGE_SIZE + 1}</strong> – <strong>{Math.min(currentPage * PAGE_SIZE, filteredQuestions.length)}</strong> of <strong>{filteredQuestions.length}</strong> questions
+                    </div>
+                    <div className="ph-pagination-btns">
+                      <button
+                        className="ph-pagination-btn"
+                        disabled={currentPage === 1}
+                        onClick={() => {
+                          setCurrentPage(prev => Math.max(prev - 1, 1));
+                          window.scrollTo({ top: 200, behavior: 'smooth' });
+                        }}
+                      >
+                        <FaChevronLeft /> Previous
+                      </button>
+                      <span className="ph-pagination-page-num">
+                        {currentPage} / {totalPages}
+                      </span>
+                      <button
+                        className="ph-pagination-btn"
+                        disabled={currentPage >= totalPages}
+                        onClick={() => {
+                          setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                          window.scrollTo({ top: 200, behavior: 'smooth' });
+                        }}
+                      >
+                        Next <FaAngleRight />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -2926,6 +3016,8 @@ const PracticeHome = () => {
 
         </div>
       )}
+    </div>
+  )}
 
       {/* Premium Upgrade Modal */}
       {showPremiumModal && (

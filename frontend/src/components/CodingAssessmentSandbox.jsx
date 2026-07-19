@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { FaPlay, FaCheck, FaTimes, FaUndo, FaList, FaBookOpen, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight, FaLightbulb, FaUser, FaLock, FaClock } from 'react-icons/fa';
 import { db } from '../firebase-config';
@@ -138,7 +138,8 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
     const currentChallengeIndex = challenges.findIndex(ch => ch.id === selectedChallenge?.id);
     const [completedChallenges, setCompletedChallenges] = useState({});
     const [language, setLanguage] = useState('cpp');
-    const [code, setCode] = useState('');
+    const [code, setCode] = useState('');  // Used only for initial load/reset
+    const editorRef = useRef(null);  // Direct editor instance to avoid setValue() on re-renders
     const [customInput, setCustomInput] = useState('');
     const [activeTab, setActiveTab] = useState('input'); // 'input', 'output', 'results'
     const [activeLeftTab, setActiveLeftTab] = useState('description'); // 'description', 'editorial', 'solutions', 'submissions'
@@ -548,20 +549,20 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
     useEffect(() => {
         const loadSavedAnswer = async () => {
             if (!selectedChallenge) return;
-            // Try loading from localStorage first
             const savedKey = `code_${selectedChallenge.id}_${language}`;
             const savedCode = localStorage.getItem(savedKey);
+            let newCode;
             if (savedCode) {
-                setCode(savedCode);
+                newCode = savedCode.replace(/\r\n/g, '\n');
+            } else if (mode === 'free') {
+                newCode = (FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+            } else if (selectedChallenge?.boilerplates?.[language]) {
+                newCode = selectedChallenge.boilerplates[language].replace(/\r\n/g, '\n');
             } else {
-                if (mode === 'free') {
-                    setCode(FREE_BOILERPLATES[language] || '');
-                } else if (selectedChallenge?.boilerplates?.[language]) {
-                    setCode(selectedChallenge.boilerplates[language]);
-                } else {
-                    setCode(FREE_BOILERPLATES[language] || '');
-                }
+                newCode = (FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
             }
+            setCode(newCode);
+            if (editorRef.current) editorRef.current.setValue(newCode);
         };
         loadSavedAnswer();
 
@@ -632,25 +633,29 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
         };
     }, [selectedChallenge, isLockedOut]);
 
-    // 5. Autosave code to localStorage every 30 seconds
+    // 5. Autosave code to localStorage every 30 seconds (reads live editor value)
     useEffect(() => {
-        if (!selectedChallenge || !code) return;
+        if (!selectedChallenge) return;
         const interval = setInterval(() => {
             const savedKey = `code_${selectedChallenge.id}_${language}`;
-            localStorage.setItem(savedKey, code);
+            const liveCode = editorRef.current ? editorRef.current.getValue() : code;
+            if (liveCode) localStorage.setItem(savedKey, liveCode);
         }, 30000);
         return () => clearInterval(interval);
-    }, [selectedChallenge, code, language]);
+    }, [selectedChallenge, language]);
 
     const handleResetCode = () => {
         if (window.confirm("Are you sure you want to reset your code to the default template?")) {
-            if (mode === 'free') {
-                setCode(FREE_BOILERPLATES[language] || '');
-            } else {
-                setCode(selectedChallenge?.boilerplates?.[language] || '');
-            }
+            const newCode = mode === 'free'
+                ? (FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n')
+                : (selectedChallenge?.boilerplates?.[language] || '').replace(/\r\n/g, '\n');
+            setCode(newCode);
+            if (editorRef.current) editorRef.current.setValue(newCode);
         }
     };
+
+    // Yield a paint frame to keep camera/UI alive before heavy execution
+    const yieldFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 
     // Compile and run code against public sample test cases
     const handleRunCode = async () => {
@@ -679,8 +684,11 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
 
         try {
             let results = [];
+            const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+            // Yield before execution so UI/camera frame can paint
+            await yieldFrame();
             if (mode === 'free') {
-                const res = await desktopBridge.runDirectSandbox(language, code, customInput);
+                const res = await desktopBridge.runDirectSandbox(language, currentCode, customInput);
                 setActiveTab('output');
                 setStdout(res.stdout || (res.exit_code === 0 && !res.stderr ? "Code execution completed successfully with no output." : ""));
                 setStderr(res.stderr || res.error || "");
@@ -688,7 +696,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                 return;
             } else {
                 const stdinPayload = JSON.stringify({ questionId: selectedChallenge.id, stdin: customInput });
-                results = await desktopBridge.runCode(language, code, stdinPayload);
+                results = await desktopBridge.runCode(language, currentCode, stdinPayload);
             }
 
             setTestResults(results.map(r => ({
@@ -728,7 +736,8 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
         }
 
         try {
-            // Execute submission against hidden test cases via desktopBridge
+            // Yield before heavy bridge call
+            await yieldFrame();
             await desktopBridge.saveAnswer(selectedChallenge.id, code);
             const result = await desktopBridge.submitCode(language, code, selectedChallenge.id);
             
@@ -1304,11 +1313,18 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                         {/* Editor Container */}
                         <div className="monaco-editor-container">
                             <Editor
+                                key={`${selectedChallenge?.id || 'sandbox'}_${language}`}
                                 height="100%"
                                 language={monacoLanguage}
                                 theme="vs-dark"
-                                value={code}
-                                onChange={(value) => setCode(value || '')}
+                                defaultValue={code}
+                                onMount={(editor) => {
+                                    editorRef.current = editor;
+                                    const currentCode = code || '';
+                                    if (editor.getValue() !== currentCode) {
+                                        editor.setValue(currentCode);
+                                    }
+                                }}
                                 options={{
                                     readOnly: isEmbedded && selectedChallenge && lockedChallenges.includes(selectedChallenge.id),
                                     fontSize: 14,
@@ -1316,7 +1332,8 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                                     minimap: { enabled: false },
                                     scrollBeyondLastLine: false,
                                     automaticLayout: true,
-                                    tabSize: 4
+                                    tabSize: 4,
+                                    wordWrap: 'off'
                                 }}
                             />
                         </div>

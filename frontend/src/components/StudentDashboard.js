@@ -851,13 +851,18 @@ const StudentDashboard = () => {
     setChargerConfirmed(false);
     setLaunchStep('preflight');
 
-    // 1. Internet Check
-    await new Promise(r => setTimeout(r, 1000));
+    // Small helper: yield one animation frame so the browser can paint before each check
+    const yieldFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
+    // 1. Internet Check — yield first so the preflight UI fully paints before we start
+    await new Promise(r => setTimeout(r, 600));
+    await yieldFrame();
     const internetOk = navigator.onLine;
     setPreflightResults(prev => ({ ...prev, internet: internetOk ? 'pass' : 'fail' }));
 
     // 2. Webcam Check
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 500));
+    await yieldFrame();
     let webcamOk = false;
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -866,7 +871,8 @@ const StudentDashboard = () => {
     setPreflightResults(prev => ({ ...prev, webcam: webcamOk ? 'pass' : 'fail' }));
 
     // 3. Microphone Check
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 500));
+    await yieldFrame();
     let micOk = false;
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -875,7 +881,8 @@ const StudentDashboard = () => {
     setPreflightResults(prev => ({ ...prev, microphone: micOk ? 'pass' : 'fail' }));
 
     // 4. Secure Env Check
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 500));
+    await yieldFrame();
     const ua = navigator.userAgent || '';
     const secureEnvOk = true || ua.includes('SEEDSEB') ||
       ua.includes('QtWebEngine') ||
@@ -897,7 +904,8 @@ const StudentDashboard = () => {
     setPreflightResults(prev => ({ ...prev, secureEnv: secureEnvOk ? 'pass' : 'fail' }));
 
     // 5. System Hardening Check
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 500));
+    await yieldFrame();
     const hardeningOk = true; // Bypassed for browser verification
     setPreflightResults(prev => ({ ...prev, hardening: hardeningOk ? 'pass' : 'fail' }));
 

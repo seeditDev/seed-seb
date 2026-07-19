@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { FaPlay, FaCheck, FaTimes, FaUndo, FaList, FaBookOpen, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight, FaLightbulb, FaUser, FaLock } from 'react-icons/fa';
 import { db } from '../firebase-config';
@@ -219,7 +219,8 @@ const CodingSandbox = () => {
     const [selectedChallenge, setSelectedChallenge] = useState(null);
     const [completedChallenges, setCompletedChallenges] = useState({});
     const [language, setLanguage] = useState('cpp');
-    const [code, setCode] = useState('');
+    const [code, setCode] = useState('');  // Used only for initial load/reset
+    const editorRef = useRef(null);  // Direct editor instance to avoid setValue() on re-renders
     const [customInput, setCustomInput] = useState('');
     const [activeTab, setActiveTab] = useState('input'); // 'input', 'output', 'results'
     const [activeLeftTab, setActiveLeftTab] = useState('description'); // 'description', 'editorial', 'solutions', 'submissions'
@@ -329,11 +330,16 @@ const CodingSandbox = () => {
 
     // 4. Sync boilerplate code when selected challenge or language changes
     useEffect(() => {
+        let newCode;
         if (mode === 'free') {
-            setCode(FREE_BOILERPLATES[language] || '');
+            newCode = (FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
         } else if (selectedChallenge?.boilerplates?.[language]) {
-            setCode(selectedChallenge.boilerplates[language]);
+            newCode = selectedChallenge.boilerplates[language].replace(/\r\n/g, '\n');
+        } else {
+            return; // no change needed
         }
+        setCode(newCode);
+        if (editorRef.current) editorRef.current.setValue(newCode);
         // Clear panel outputs when switching problems
         setStdout('');
         setStderr('');
@@ -344,13 +350,16 @@ const CodingSandbox = () => {
 
     const handleResetCode = () => {
         if (window.confirm("Are you sure you want to reset your code to the default template?")) {
-            if (mode === 'free') {
-                setCode(FREE_BOILERPLATES[language] || '');
-            } else {
-                setCode(selectedChallenge?.boilerplates?.[language] || '');
-            }
+            const newCode = mode === 'free'
+                ? (FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n')
+                : (selectedChallenge?.boilerplates?.[language] || '').replace(/\r\n/g, '\n');
+            setCode(newCode);
+            if (editorRef.current) editorRef.current.setValue(newCode);
         }
     };
+
+    // Yield a paint frame to keep camera/UI alive before heavy execution
+    const yieldFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 
     // Compile and run code with custom input
     const handleRunCode = async () => {
@@ -361,7 +370,9 @@ const CodingSandbox = () => {
         setExitCode(null);
 
         try {
-            const result = await desktopBridge.runDirectSandbox(language, code, customInput);
+            const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+            await yieldFrame();
+            const result = await desktopBridge.runDirectSandbox(language, currentCode, customInput);
             setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? "Code execution completed successfully with no output." : ""));
             setStderr(result.stderr || result.error || "");
             setExitCode(result.exit_code === undefined ? null : result.exit_code);
@@ -383,9 +394,12 @@ const CodingSandbox = () => {
         const cases = selectedChallenge.testCases || [];
 
         try {
+            const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+            await yieldFrame();
             for (let i = 0; i < cases.length; i++) {
                 const tc = cases[i];
-                const res = await desktopBridge.runDirectSandbox(language, code, tc.input);
+                if (i > 0) await yieldFrame();
+                const res = await desktopBridge.runDirectSandbox(language, currentCode, tc.input);
                 
                 const cleanActual = (res.stdout || '').replace(/\r\n/g, '\n').trim();
                 const cleanExpected = (tc.expected || '').replace(/\r\n/g, '\n').trim();
@@ -714,18 +728,26 @@ const CodingSandbox = () => {
                         {/* Editor Container */}
                         <div className="monaco-editor-container">
                             <Editor
+                                key={`${selectedChallenge?.id || 'sandbox'}_${language}`}
                                 height="100%"
                                 language={monacoLanguage}
                                 theme="vs-dark"
-                                value={code}
-                                onChange={(value) => setCode(value || '')}
+                                defaultValue={code}
+                                onMount={(editor) => {
+                                    editorRef.current = editor;
+                                    const currentCode = code || '';
+                                    if (editor.getValue() !== currentCode) {
+                                        editor.setValue(currentCode);
+                                    }
+                                }}
                                 options={{
                                     fontSize: 14,
                                     fontFamily: "'JetBrains Mono', 'Consolas', monospace",
                                     minimap: { enabled: false },
                                     scrollBeyondLastLine: false,
                                     automaticLayout: true,
-                                    tabSize: 4
+                                    tabSize: 4,
+                                    wordWrap: 'off'
                                 }}
                             />
                         </div>

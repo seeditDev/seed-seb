@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { 
@@ -27,6 +27,16 @@ const MONACO_LANG_MAP = {
   java: 'java',
   python3: 'python',
   javascript: 'javascript'
+};
+
+const EDITOR_OPTIONS = {
+  fontFamily: 'var(--ps-mono)',
+  fontSize: 14,
+  minimap: { enabled: false },
+  scrollbar: { vertical: 'visible', horizontal: 'visible' },
+  automaticLayout: true,
+  scrollBeyondLastLine: false,
+  tabSize: 4
 };
 
 const normalizeQuestion = (q) => {
@@ -150,7 +160,8 @@ const PracticeCourseSandbox = () => {
 
   // Editor & Compile states
   const [language, setLanguage] = useState('cpp');
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState('');  // Used only for initial load/reset
+  const editorRef = useRef(null);  // Direct editor instance to avoid setValue() on re-renders
   const [customInput, setCustomInput] = useState('');
   const [useCustomInput, setUseCustomInput] = useState(false);
   const [activeConsoleTab, setActiveConsoleTab] = useState('output');
@@ -252,7 +263,9 @@ const PracticeCourseSandbox = () => {
         // Check if code was previously saved
         const qProg = await getQuestionProgress(email, questionId);
         if (qProg && qProg.submittedCode) {
-          setCode(qProg.submittedCode);
+          const savedCode = (qProg.submittedCode || '').replace(/\r\n/g, '\n');
+          setCode(savedCode);
+          if (editorRef.current) editorRef.current.setValue(savedCode);
         } else {
           // Check if this question is a worked example / demonstration
           const stmt = qData.description || qData.content?.problemStatement || '';
@@ -288,22 +301,29 @@ const PracticeCourseSandbox = () => {
             // Generate code that prints expectedText
             const escaped = expectedText.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
             const lines = escaped.split('\n');
+            let initialCode = '';
             if (defaultLang === 'c') {
               const prints = lines.map(line => `    printf("${line}\\n");`).join('\n');
-              setCode(`#include <stdio.h>\n\nint main() {\n${prints}\n    return 0;\n}`);
+              initialCode = `#include <stdio.h>\n\nint main() {\n${prints}\n    return 0;\n}`;
             } else if (defaultLang === 'cpp') {
               const prints = lines.map(line => `    cout << "${line}" << endl;`).join('\n');
-              setCode(`#include <iostream>\nusing namespace std;\n\nint main() {\n${prints}\n    return 0;\n}`);
+              initialCode = `#include <iostream>\nusing namespace std;\n\nint main() {\n${prints}\n    return 0;\n}`;
             } else if (defaultLang === 'java') {
               const prints = lines.map(line => `        System.out.println("${line}");`).join('\n');
-              setCode(`import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n${prints}\n    }\n}`);
+              initialCode = `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n${prints}\n    }\n}`;
             } else if (defaultLang === 'python3') {
-              setCode(lines.map(line => `print("${line}")`).join('\n'));
+              initialCode = lines.map(line => `print("${line}")`).join('\n');
             } else {
-              setCode(qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '');
+              initialCode = qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '';
             }
+            const normalized = initialCode.replace(/\r\n/g, '\n');
+            setCode(normalized);
+            if (editorRef.current) editorRef.current.setValue(normalized);
           } else {
-            setCode(qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '');
+            const initialCode = qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '';
+            const normalized = initialCode.replace(/\r\n/g, '\n');
+            setCode(normalized);
+            if (editorRef.current) editorRef.current.setValue(normalized);
           }
         }
 
@@ -403,20 +423,33 @@ const PracticeCourseSandbox = () => {
     loadCourseAndQuestion();
   }, [courseId, questionId]);
 
-  // Switch templates on language change
+  const prevLangRef = useRef(language);
+  const prevQuestionIdRef = useRef(questionId);
+
+  // Switch templates on manual language or questionId change only
+  // Uses editorRef.setValue() directly to avoid React re-render cursor jump
   useEffect(() => {
     if (!question) return;
-    setCode(question.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
-    setStdout('');
-    setStderr('');
-    setExitCode(null);
-    setSubmitResults([]);
-    setSubmitScore(null);
-  }, [language, question]);
+    if (prevLangRef.current !== language || prevQuestionIdRef.current !== questionId) {
+      prevLangRef.current = language;
+      prevQuestionIdRef.current = questionId;
+      const langCode = (question.boilerplates?.[language] || FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+      setCode(langCode);
+      if (editorRef.current) editorRef.current.setValue(langCode);
+      setStdout('');
+      setStderr('');
+      setExitCode(null);
+      setSubmitResults([]);
+      setSubmitScore(null);
+    }
+  }, [language, questionId, question]);
 
   const currentIndex = syllabusQuestions.findIndex(q => q.questionId === questionId);
   const nextItem = currentIndex !== -1 && currentIndex < syllabusQuestions.length - 1 ? syllabusQuestions[currentIndex + 1] : null;
   const prevItem = currentIndex > 0 ? syllabusQuestions[currentIndex - 1] : null;
+
+  // Yield a paint frame so the browser can update UI (camera preview) before heavy execution
+  const yieldFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 
   const handleRunCode = async () => {
     setIsRunning(true);
@@ -427,16 +460,22 @@ const PracticeCourseSandbox = () => {
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
-      if (useCustomInput || !question.sampleTestCases || question.sampleTestCases.length === 0) {
-        const result = await desktopBridge.runDirectSandbox(bridgeLang, code, customInput);
+      const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+
+      await yieldFrame();
+
+      if (useCustomInput || !question?.sampleTestCases || question.sampleTestCases.length === 0) {
+        const result = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, customInput);
         setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? 'Execution completed successfully with no output.' : ''));
         setStderr(result.stderr || result.error || '');
         setExitCode(result.exit_code === undefined ? null : result.exit_code);
       } else {
         const results = [];
-        for (let i = 0; i < question.sampleTestCases.length; i++) {
-          const tc = question.sampleTestCases[i];
-          const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+        const samples = question.sampleTestCases || [];
+        for (let i = 0; i < samples.length; i++) {
+          const tc = samples[i];
+          if (i > 0) await yieldFrame();
+          const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
           const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
           const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
           const isPassed = actualClean === expectedClean && res.exit_code === 0;
@@ -506,12 +545,15 @@ const PracticeCourseSandbox = () => {
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
+      const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+      await yieldFrame();
       for (let i = 0; i < testCases.length; i++) {
         const tc = testCases[i];
         const tcWeight = tc.weight || 10;
         totalWeight += tcWeight;
 
-        const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+        if (i > 0) await yieldFrame();
+        const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
         
@@ -930,18 +972,19 @@ const PracticeCourseSandbox = () => {
             {/* Editor Workspace Panel */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', minHeight: '300px' }}>
               <Editor
+                key={`${questionId}_${language}`}
                 height="100%"
                 language={MONACO_LANG_MAP[language] || 'cpp'}
                 theme="vs-dark"
-                value={code}
-                onChange={val => setCode(val || '')}
-                options={{
-                  fontFamily: 'var(--ps-mono)',
-                  fontSize: 14,
-                  minimap: { enabled: false },
-                  scrollbar: { vertical: 'visible', horizontal: 'visible' },
-                  automaticLayout: true
+                defaultValue={code}
+                onMount={(editor) => {
+                  editorRef.current = editor;
+                  const currentCode = code || '';
+                  if (editor.getValue() !== currentCode) {
+                    editor.setValue(currentCode);
+                  }
                 }}
+                options={EDITOR_OPTIONS}
               />
             </div>
 

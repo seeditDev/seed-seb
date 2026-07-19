@@ -127,6 +127,63 @@ const callNvidiaAPI = async (apiKey, prompt) => {
   return data.choices?.[0]?.message?.content || '';
 };
 
+// Format literal compiler error diagnostics with line numbers and code snippets
+const formatLiteralError = (errorStr, userCode, language) => {
+  const errText = (errorStr || '').trim();
+  if (!errText) {
+    return "No compiler or execution errors detected. Please run your code first to verify output.";
+  }
+
+  const lines = errText.split('\n').map(l => l.trim()).filter(Boolean);
+  
+  // Extract line numbers from GCC/Clang/Python/Java error format
+  let lineNum = null;
+  let errorMsg = "";
+
+  const gccMatch = errText.match(/(?:solution|main|source|prog|Code|\.cpp|\.c|\.java|\.py)?[:\(]\s*(\d+)(?:[:\)]\d+)?[:\s]+(?:error|warning|fatal error)?[:\s]*(.*)/i);
+  const javaMatch = errText.match(/[:\(]\s*(\d+)[:\)]?\s*:\s*error:\s*(.*)/i);
+  const pyMatch = errText.match(/line\s+(\d+)/i);
+
+  if (gccMatch && gccMatch[1]) {
+    lineNum = gccMatch[1];
+    errorMsg = gccMatch[2] || gccMatch[0];
+  } else if (javaMatch && javaMatch[1]) {
+    lineNum = javaMatch[1];
+    errorMsg = javaMatch[2];
+  } else if (pyMatch && pyMatch[1]) {
+    lineNum = pyMatch[1];
+    errorMsg = lines[lines.length - 1] || "";
+  }
+
+  let codeSnippet = "";
+  if (lineNum && userCode) {
+    const codeLines = userCode.split('\n');
+    const idx = parseInt(lineNum, 10) - 1;
+    if (idx >= 0 && idx < codeLines.length) {
+      codeSnippet = codeLines[idx].trim();
+    }
+  }
+
+  let result = "Literal Error Analysis:\n";
+  if (lineNum) {
+    result += `• Reported Error at Line ${lineNum}`;
+    if (codeSnippet) {
+      result += `: \`${codeSnippet}\``;
+    }
+    result += `\n`;
+  }
+
+  if (errorMsg) {
+    result += `• Compiler Output: ${errorMsg}\n`;
+  } else if (lines.length > 0) {
+    result += `• Output: ${lines.slice(0, 3).join('\n')}\n`;
+  }
+
+  result += `\nActionable Fix: Verify syntax around line ${lineNum || 'the error'}, check variable declarations and matching brackets/semicolons, then re-run.`;
+
+  return result;
+};
+
 export const aiTutorService = {
   /**
    * Initialize local Transformers.js model (LaMini-GPT-124M)
@@ -134,75 +191,30 @@ export const aiTutorService = {
   async initLocalModel(onProgress) {
     if (localGenerator) return localGenerator;
 
-    const loadTransformersScript = () => {
-      return new Promise((resolve, reject) => {
-        if (window.transformers) {
-          resolve(window.transformers);
-          return;
-        }
-        const existingScript = document.getElementById('transformers-cdn-script');
-        if (existingScript) {
-          existingScript.addEventListener('load', () => resolve(window.transformers));
-          existingScript.addEventListener('error', (err) => reject(err));
-          return;
-        }
-        const script = document.createElement('script');
-        script.id = 'transformers-cdn-script';
-        script.src = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
-        script.async = true;
-        script.onload = () => {
-          console.log("[SEED-IT AI Tutor] Transformers.js UMD bundle loaded successfully from CDN.");
-          resolve(window.transformers);
-        };
-        script.onerror = (err) => {
-          console.error("[SEED-IT AI Tutor] Failed to load Transformers.js script:", err);
-          reject(err);
-        };
-        document.head.appendChild(script);
-      });
-    };
-
-    try {
-      const transformers = await loadTransformersScript();
-      if (!transformers) throw new Error("Transformers.js global object not found.");
-
-      const { pipeline, env } = transformers;
-      env.allowLocalModels = false; // force fetching web assets
-
-      let modelSource = 'Xenova/LaMini-GPT-124M';
-
-      if (window.desktopBridge && typeof window.desktopBridge.getLocalModelPort === 'function') {
-        try {
-          const port = window.desktopBridge.getLocalModelPort();
-          if (port > 0) {
-            modelSource = `http://127.0.0.1:${port}/interviewmodels/LaMini-GPT-124M/`;
-            console.log(`[SEED-IT AI Tutor] Connected to desktop model server: ${modelSource}`);
-          }
-        } catch (bridgeErr) {
-          console.warn("Could not query desktop model server port from QWebChannel:", bridgeErr);
-        }
-      }
-
-      localGenerator = await pipeline('text-generation', modelSource, {
-        progress_callback: (data) => {
-          if (data.status === 'progress' && typeof onProgress === 'function') {
-            onProgress(Math.round(data.progress));
-          }
-        }
-      });
+    if (window.transformers) {
+      const { pipeline } = window.transformers;
+      localGenerator = await pipeline('text-generation', 'Xenova/LaMini-GPT-124M');
       return localGenerator;
-    } catch (e) {
-      console.error("AI Tutor model loading failed:", e);
-      throw e;
     }
+    throw new Error("Local AI model unavailable. Displaying literal error diagnostics.");
   },
 
   /**
    * Generates a tutor hint based on error string, student code, and problem context
    */
   async getHint({ problemTitle, problemStatement, explanation, sampleTestCases, userCode, compilerStderr, language, onProgress, tutorMode = 'hint' }) {
+    const errText = (compilerStderr || '').trim();
+
+    // 1. Only run AI Tutor if there IS an error when requesting hints
+    if (tutorMode === 'hint' && !errText) {
+      return {
+        type: 'info',
+        hint: "No compiler or execution errors detected. Run your code first to verify compiler output or test cases before requesting an AI hint."
+      };
+    }
+
     // A. Check local cache first to save user quotas
-    const cacheKey = getCacheKey(problemTitle, language, tutorMode, userCode, compilerStderr);
+    const cacheKey = getCacheKey(problemTitle, language, tutorMode, userCode, errText);
     const cachedHint = localStorage.getItem(cacheKey);
     if (cachedHint) {
       return {
@@ -213,7 +225,7 @@ export const aiTutorService = {
 
     // B. If heuristic match is found and mode is standard hint, return it immediately
     if (tutorMode === 'hint') {
-      const heuristicHint = checkCommonErrors(compilerStderr, userCode, language);
+      const heuristicHint = checkCommonErrors(errText, userCode, language);
       if (heuristicHint) {
         localStorage.setItem(cacheKey, heuristicHint);
         return {
@@ -223,101 +235,74 @@ export const aiTutorService = {
       }
     }
 
-    // C. Format sample test cases
-    let formattedSamples = "";
-    if (Array.isArray(sampleTestCases) && sampleTestCases.length > 0) {
-      formattedSamples = sampleTestCases.map((s, i) => {
-        let str = `Sample Case ${i + 1}:\nInput: ${s.input || '(empty)'}\nOutput: ${s.output}`;
-        if (s.explanation) {
-          str += `\nExplanation: ${s.explanation}`;
-        }
-        return str;
-      }).join('\n\n');
-    }
-
-    const cleanError = (compilerStderr || 'Code executes but outputs incorrect results.').substring(0, 200);
-    const cleanCode = (userCode || '').substring(0, 800);
-    const cleanDesc = (problemStatement || '').substring(0, 800);
-    const cleanExplanation = (explanation || '').substring(0, 400);
-
-    // Context formatting
-    let context = `Context: Coding challenge "${problemTitle}" in ${language}.
-Description: ${cleanDesc}`;
-
-    if (cleanExplanation) {
-      context += `\nExplanation: ${cleanExplanation}`;
-    }
-    if (formattedSamples) {
-      context += `\n\nSample Test Cases:\n${formattedSamples}`;
-    }
-
-    context += `\n\nCompiler error: ${cleanError}
-Code: ${cleanCode}`;
-
-    // Prompt instructions based on tutorMode
-    let instruction = "";
-    if (tutorMode === 'hint') {
-      instruction = "Instruction: You are SEED Mentor. Explain the coding error or logic failure in 2 simple sentences. Give a concept hint. Do NOT show corrected code or reveal full solutions under any circumstances.";
-    } else if (tutorMode === 'complexity') {
-      instruction = "Instruction: You are SEED Mentor. Analyze the Time Complexity and Space Complexity of the student's code. Explain the complexity analysis in simple terms, and suggest general improvements. Do NOT show corrected code.";
-    } else if (tutorMode === 'review') {
-      instruction = "Instruction: You are SEED Mentor. Review the student's code quality, identify logic flaws or edge cases they might have missed, and suggest optimized patterns or fixes. Do NOT show corrected code or copy-paste the direct solution.";
-    }
-
-    const prompt = `${context}
-
-${instruction}
-Tutor:`;
-
-    // D. Run external APIs or fallback to local LLM
+    // Check API keys (Gemini / NVIDIA)
     const geminiKey = localStorage.getItem('gemini_api_key');
     const nvidiaKey = localStorage.getItem('nvidia_api_key');
 
-    try {
-      let text = "";
-      let type = "";
+    if (geminiKey || nvidiaKey) {
+      // C. Format sample test cases & Prompt
+      let formattedSamples = "";
+      if (Array.isArray(sampleTestCases) && sampleTestCases.length > 0) {
+        formattedSamples = sampleTestCases.map((s, i) => {
+          let str = `Sample Case ${i + 1}:\nInput: ${s.input || '(empty)'}\nOutput: ${s.output}`;
+          if (s.explanation) {
+            str += `\nExplanation: ${s.explanation}`;
+          }
+          return str;
+        }).join('\n\n');
+      }
 
-      if (geminiKey) {
-        text = await callGeminiAPI(geminiKey, prompt);
-        type = "gemini";
-      } else if (nvidiaKey) {
-        text = await callNvidiaAPI(nvidiaKey, prompt);
-        type = "nvidia";
-      } else {
-        // Fallback to built-in local LLM
-        const generator = await this.initLocalModel(onProgress);
-        const output = await generator(prompt, {
-          max_new_tokens: 60,
-          temperature: 0.5,
-          repetition_penalty: 1.2
-        });
-        text = output[0].generated_text.trim();
-        if (text.includes("Tutor:")) {
-          text = text.split("Tutor:").pop().trim();
+      const cleanError = (errText || 'Code executes but outputs incorrect results.').substring(0, 200);
+      const cleanCode = (userCode || '').substring(0, 800);
+      const cleanDesc = (problemStatement || '').substring(0, 800);
+      const cleanExplanation = (explanation || '').substring(0, 400);
+
+      let context = `Context: Coding challenge "${problemTitle}" in ${language}.\nDescription: ${cleanDesc}`;
+      if (cleanExplanation) context += `\nExplanation: ${cleanExplanation}`;
+      if (formattedSamples) context += `\n\nSample Test Cases:\n${formattedSamples}`;
+      context += `\n\nCompiler error: ${cleanError}\nCode: ${cleanCode}`;
+
+      let instruction = "";
+      if (tutorMode === 'hint') {
+        instruction = "Instruction: You are SEED Mentor. Explain the coding error or logic failure in 2 simple sentences. Give a concept hint. Do NOT show corrected code.";
+      } else if (tutorMode === 'complexity') {
+        instruction = "Instruction: You are SEED Mentor. Analyze the Time Complexity and Space Complexity of the student's code in simple terms. Do NOT show corrected code.";
+      } else if (tutorMode === 'review') {
+        instruction = "Instruction: You are SEED Mentor. Review the student's code quality and suggest optimizations. Do NOT show corrected code.";
+      }
+
+      const prompt = `${context}\n\n${instruction}\nTutor:`;
+
+      try {
+        let text = "";
+        let type = "";
+        if (geminiKey) {
+          text = await callGeminiAPI(geminiKey, prompt);
+          type = "gemini";
+        } else if (nvidiaKey) {
+          text = await callNvidiaAPI(nvidiaKey, prompt);
+          type = "nvidia";
         }
-        type = "llm";
-      }
 
-      // Check output sanity to prevent solution leak (for hints mode only)
-      if (tutorMode === 'hint' && (text.includes("{") || text.includes(";") || text.includes("return ") || text.length < 5)) {
-        text = "Double check your variable scopes, indices, and verify that you initialized all pointers or array inputs correctly before usage.";
-      }
+        if (tutorMode === 'hint' && (text.includes("{") || text.includes(";") || text.includes("return ") || text.length < 5)) {
+          text = "Double check your variable scopes, indices, and verify that you initialized all pointers or array inputs correctly before usage.";
+        }
 
-      // Save valid output to cache
-      if (text) {
-        localStorage.setItem(cacheKey, text);
+        if (text) {
+          localStorage.setItem(cacheKey, text);
+          return { type, hint: text };
+        }
+      } catch (apiErr) {
+        console.warn("External AI API call failed, falling back to literal error analysis.", apiErr);
       }
-
-      return {
-        type: type,
-        hint: text
-      };
-    } catch (e) {
-      console.warn("AI generation query failed, returning warning fallback.", e);
-      return {
-        type: 'error',
-        hint: e.message || "Failed to process the AI assistance request. Please verify your keys and try again."
-      };
     }
+
+    // D. Fallback: Fast & 100% reliable Literal Compiler Error Diagnostics
+    const literalHint = formatLiteralError(errText, userCode, language);
+    localStorage.setItem(cacheKey, literalHint);
+    return {
+      type: 'literal',
+      hint: literalHint
+    };
   }
 };

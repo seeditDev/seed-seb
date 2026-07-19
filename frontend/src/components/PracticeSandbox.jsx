@@ -119,7 +119,8 @@ const PracticeSandbox = () => {
 
   // Editor states
   const [language, setLanguage] = useState('cpp');
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState('');  // Used only for initial load, reset, and AI tutor reads
+  const editorRef = useRef(null);  // Direct editor instance — avoids setValue() on every render
   const [customInput, setCustomInput] = useState('');
   const [useCustomInput, setUseCustomInput] = useState(false);
   const [activeLeftTab, setActiveLeftTab] = useState('description'); // 'description', 'solution'
@@ -290,11 +291,17 @@ const PracticeSandbox = () => {
 
       // Check if code is saved in local progress
       const progress = await getQuestionProgress(authData?.Email || authData?.email || '', questionId);
+      let initialCode;
       if (progress && progress.submittedCode) {
-        setCode(progress.submittedCode);
+        initialCode = progress.submittedCode.replace(/\r\n/g, '\n');
       } else {
         // Fallback to question-specific boilerplate, then free standard boilerplate template
-        setCode(qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '');
+        initialCode = (qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '').replace(/\r\n/g, '\n');
+      }
+      setCode(initialCode);
+      // Push directly to editor model if already mounted (e.g. navigating between questions)
+      if (editorRef.current) {
+        editorRef.current.setValue(initialCode);
       }
     } catch (err) {
       if (err.message?.includes('404') || err.message?.includes('not found')) {
@@ -307,23 +314,39 @@ const PracticeSandbox = () => {
     }
   };
 
-  // Switch template
+  const prevLangRef = useRef(language);
+  const prevQuestionIdRef = useRef(questionId);
+
+  // Switch template only on manual language or questionId change
+  // Uses editorRef.setValue() directly — never triggers a React re-render or cursor reset
   useEffect(() => {
     if (!question) return;
-    setCode(question.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
-    setStdout('');
-    setStderr('');
-    setExitCode(null);
-    setSubmitResults([]);
-    setSubmitScore(null);
-  }, [language, question]);
+    if (prevLangRef.current !== language || prevQuestionIdRef.current !== questionId) {
+      prevLangRef.current = language;
+      prevQuestionIdRef.current = questionId;
+      const newCode = (question.boilerplates?.[language] || FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+      setCode(newCode);
+      if (editorRef.current) {
+        editorRef.current.setValue(newCode);
+      }
+      setStdout('');
+      setStderr('');
+      setExitCode(null);
+      setSubmitResults([]);
+      setSubmitScore(null);
+    }
+  }, [language, questionId, question]);
 
   const handleResetCode = () => {
-    setCode(question?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '');
+    const defaultCode = (question?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+    setCode(defaultCode);
+    if (editorRef.current) editorRef.current.setValue(defaultCode);
   };
 
   const handleResetToDefault = () => {
-    setCode(FREE_BOILERPLATES[language] || '');
+    const defaultCode = (FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+    setCode(defaultCode);
+    if (editorRef.current) editorRef.current.setValue(defaultCode);
   };
 
   const triggerTutorHint = async (overrideMode = null) => {
@@ -341,12 +364,13 @@ const PracticeSandbox = () => {
       const sampleTestCases = question.content?.sampleTestCases || [];
       const explanation = question.content?.explanation || sampleTestCases.map((s, idx) => s.explanation).filter(Boolean).join('\n') || '';
       
+      const liveCode = editorRef.current ? editorRef.current.getValue() : code;
       const res = await aiTutorService.getHint({
         problemTitle: question.title,
         problemStatement: question.content?.problemStatement || question.description || '',
         explanation: explanation,
         sampleTestCases: sampleTestCases,
-        userCode: code,
+        userCode: liveCode,
         compilerStderr: stderr || '',
         language: language,
         tutorMode: modeToUse,
@@ -478,6 +502,9 @@ const PracticeSandbox = () => {
     );
   };
 
+  // Yield a paint frame so the browser can update the UI (camera preview etc) before heavy execution
+  const yieldFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
   // Compile and run custom input or sample cases
   const handleRunCode = async () => {
     setIsRunning(true);
@@ -489,20 +516,24 @@ const PracticeSandbox = () => {
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
+      const currentCode = editorRef.current ? editorRef.current.getValue() : code;
 
-      // If user selected useCustomInput, run only customInput
+      // Yield to browser paint loop before heavy execution so camera/UI stays live
+      await yieldFrame();
+
       if (useCustomInput || !question.sampleTestCases || question.sampleTestCases.length === 0) {
-        const result = await desktopBridge.runDirectSandbox(bridgeLang, code, customInput);
+        const result = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, customInput);
         setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? 'Execution completed with no output.' : ''));
         setStderr(result.stderr || result.error || '');
         setExitCode(result.exit_code === undefined ? null : result.exit_code);
       } else {
-        // Run against all sample test cases
         const results = [];
         const samples = question.sampleTestCases || [];
         for (let i = 0; i < samples.length; i++) {
           const tc = samples[i];
-          const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+          // Yield between each test case to keep UI responsive
+          if (i > 0) await yieldFrame();
+          const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
 
           const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
           const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
@@ -553,13 +584,17 @@ const PracticeSandbox = () => {
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
+      const currentCode = editorRef.current ? editorRef.current.getValue() : code;
 
+      await yieldFrame();
       for (let i = 0; i < testCases.length; i++) {
         const tc = testCases[i];
         const tcWeight = tc.weight || 10;
         totalWeight += tcWeight;
 
-        const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+        // Yield between each hidden test case to keep UI/camera responsive
+        if (i > 0) await yieldFrame();
+        const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
 
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
@@ -591,13 +626,13 @@ const PracticeSandbox = () => {
       }
       setSubmitScore(score);
 
-      // Save progress
+      // Save progress (currentCode already captured at start of try block)
       if (email) {
         if (score === 100) {
-          await markQuestionSolved(email, questionId, language, score);
+          await markQuestionSolved(email, questionId, language, score, currentCode);
           setSolvedIds(prev => [...new Set([...prev, questionId])]);
         } else {
-          await markQuestionAttempted(email, questionId, language, score);
+          await markQuestionAttempted(email, questionId, language, score, currentCode);
         }
         setProblemDetails(prev => ({
           ...prev,
@@ -978,11 +1013,19 @@ const PracticeSandbox = () => {
 
           <div className="psb-editor-wrap" style={{ height: `${editorHeight}%` }}>
             <Editor
+              key={`${questionId}_${language}`}
               height="100%"
               language={MONACO_LANG_MAP[language] || 'cpp'}
               theme={['light', 'red-light', 'bw'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
-              value={code}
-              onChange={val => setCode(val || '')}
+              defaultValue={code}
+              onMount={(editor) => {
+                editorRef.current = editor;
+                // Ensure initial value is set from state (handles async load timing)
+                const currentCode = code || '';
+                if (editor.getValue() !== currentCode) {
+                  editor.setValue(currentCode);
+                }
+              }}
               options={{
                 fontSize: 14,
                 fontFamily: "'JetBrains Mono', 'Consolas', monospace",
@@ -990,7 +1033,8 @@ const PracticeSandbox = () => {
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
                 tabSize: 4,
-                readOnly: showPremiumLock
+                readOnly: showPremiumLock,
+                wordWrap: 'off'
               }}
             />
           </div>
