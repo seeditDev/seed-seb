@@ -274,7 +274,7 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
     };
   }
   
-  local.activity[today].hours = parseFloat((local.activity[today].hours + (minutes / 60)).toFixed(3));
+  local.activity[today].hours = (local.activity[today].hours || 0) + (minutes / 60);
   
   saveLocalProgress(uid, local);
   

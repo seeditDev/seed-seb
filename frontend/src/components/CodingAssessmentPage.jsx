@@ -2153,21 +2153,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             currentAssessment.audioProctored === true ||
             currentAssessment.audioProctored === 1 ||
             currentAssessment.audioProctored === "1" ||
-            currentAssessment.audioProctored === "true" ||
-            currentAssessment.proctored === true ||
-            currentAssessment.proctored === 1 ||
-            currentAssessment.proctored === "1" ||
-            currentAssessment.proctored === "true"
+            currentAssessment.audioProctored === "true"
+            // NOTE: do NOT fall back to currentAssessment.proctored here.
+            // Camera and audio proctoring are independent — audioProctored: false
+            // must remain off even when proctored (camera) is true.
         )) ||
         (isEmbedded && parentSettings && (
             parentSettings.audioProctored === true ||
             parentSettings.audioProctored === 1 ||
             parentSettings.audioProctored === "1" ||
-            parentSettings.audioProctored === "true" ||
-            parentSettings.proctored === true ||
-            parentSettings.proctored === 1 ||
-            parentSettings.proctored === "1" ||
-            parentSettings.proctored === "true"
+            parentSettings.audioProctored === "true"
+            // Same rule: do NOT inherit audio from parentSettings.proctored
         ))
     );
 

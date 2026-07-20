@@ -598,6 +598,30 @@ const StudentDashboard = () => {
               isCompleted = (data.completed === true || data.status === 'submitted');
             }
             item.completed = isCompleted;
+          } else if (item.type === 'spoken_english' || item.type === 'sea' || item.type === 'SPOKEN_ENGLISH') {
+            const college = userData.College || 'KGKITE';
+            const year = userData.Year || '2026';
+            const department = userData.Department || 'CSE';
+            const userEmail = (userData.Email || userData.email || '').toLowerCase();
+            const docPath = `AssessmentResults/${item.id}/colleges/${college}/years/${year}/students/${userEmail}`;
+            const docSnap = await getDoc(doc(db, docPath));
+            let isCompleted = false;
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              isCompleted = (data.completed === true || data.status === 'submitted');
+            } else {
+              const seaDocPath = `colleges/${college}/years/${year}/departments/${department}/students/${userEmail}/sea_results/${item.id}`;
+              const seaSnap = await getDoc(doc(db, seaDocPath));
+              if (seaSnap.exists()) {
+                isCompleted = (seaSnap.data()?.completed === true || seaSnap.data()?.status === 'submitted');
+              } else {
+                const contestSnap = await getDoc(doc(db, 'users', userEmail, 'contestAttempts', item.id));
+                if (contestSnap.exists()) {
+                  isCompleted = (contestSnap.data()?.completed === true || contestSnap.data()?.status === 'submitted');
+                }
+              }
+            }
+            item.completed = isCompleted;
           } else if (item.type === 'mcq') {
             const check = await MCQService.checkExistingAttempt(
               userData.Email || userData.email,
@@ -776,6 +800,17 @@ const StudentDashboard = () => {
           isCompleted = (data.completed === true || data.status === 'submitted');
         }
         check = { exists: docSnap.exists(), completed: isCompleted };
+      } else if (assessment.type === 'spoken_english' || assessment.type === 'sea' || assessment.type === 'SPOKEN_ENGLISH') {
+        const college = user.College || 'KGKITE';
+        const year = user.Year || '2026';
+        const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+        const docSnap = await getDoc(doc(db, docPath));
+        let isCompleted = false;
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          isCompleted = (data.completed === true || data.status === 'submitted');
+        }
+        check = { exists: docSnap.exists(), completed: isCompleted };
       } else if (assessment.type === 'mcq') {
         check = await MCQService.checkExistingAttempt(
           user.Email, assessment.id, user.College, user.Year, user.Department
@@ -932,7 +967,11 @@ const StudentDashboard = () => {
 
       const testData = await fetchJSONFile(assessment.url);
 
-      if (assessment.isMultiSection) {
+      if (assessment.type === 'spoken_english' || assessment.type === 'SPOKEN_ENGLISH' || assessment.url?.includes('spoken_english')) {
+        sessionStorage.setItem("spokenEnglishAssessmentData", JSON.stringify({ ...testData, ...assessment }));
+        setLaunchStep(null);
+        navigate(`/student/spoken-english/${assessment.slug}`);
+      } else if (assessment.isMultiSection) {
         sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
         setLaunchStep(null);
         navigate(`/student/assessment/multisection/${assessment.slug}`);
@@ -1675,6 +1714,17 @@ const StudentDashboard = () => {
       });
     }
 
+    const formatUsageTime = (hoursDecimal) => {
+      const totalMins = Math.round((hoursDecimal || 0) * 60);
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      const hrText = hrs === 1 ? 'hr' : 'hrs';
+      const minText = mins === 1 ? 'min' : 'mins';
+      if (hrs === 0) return `${mins} ${minText}`;
+      if (mins === 0) return `${hrs} ${hrText}`;
+      return `${hrs} ${hrText} ${mins} ${minText}`;
+    };
+
     const getStreakCount = () => {
       let streak = 0;
       const checkDate = new Date();
@@ -1763,7 +1813,7 @@ const StudentDashboard = () => {
                 <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Problems Solved</div>
               </div>
               <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#38bdf8' }}>{totalHours.toFixed(1)} hrs</div>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#38bdf8' }}>{formatUsageTime(totalHours)}</div>
                 <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Time Spent Active</div>
               </div>
               <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
@@ -1991,7 +2041,7 @@ const StudentDashboard = () => {
             <div style={{ color: '#94a3b8', marginTop: '4px' }}>
               • Solved: {hoveredDay.dayInfo.problemsSolved} problems
               <br />
-              • Portal Time: {hoveredDay.dayInfo.hours.toFixed(2)} hours
+              • Portal Time: {formatUsageTime(hoveredDay.dayInfo.hours)}
             </div>
           </div>
         )}

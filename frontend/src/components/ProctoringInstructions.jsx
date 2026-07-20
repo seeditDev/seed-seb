@@ -414,9 +414,13 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                       />
                       
                       {photoStatus !== 'captured' && (
-                        <div className="face-guide-oval">
-                          <div className="guide-text">Position face inside oval</div>
-                        </div>
+                        <>
+                          {/* Vignette: separate static div so it never repaints during state updates */}
+                          <div className="face-guide-vignette" aria-hidden="true" />
+                          <div className="face-guide-oval">
+                            <div className="guide-text">Position face inside oval</div>
+                          </div>
+                        </>
                       )}
 
                       <div className="photo-capture-overlay">

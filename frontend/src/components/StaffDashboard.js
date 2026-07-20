@@ -95,6 +95,17 @@ const StaffDashboard = () => {
   const [mcqYearOptions, setMcqYearOptions] = useState([]);
   const [showMcqAnalytics, setShowMcqAnalytics] = useState(false);
 
+  // Question Bank Reports state
+  const [qbResults, setQbResults] = useState([]);
+  const [filteredQbResults, setFilteredQbResults] = useState([]);
+  const [qbLoading, setQbLoading] = useState(false);
+  const [qbSearchTerm, setQbSearchTerm] = useState("");
+  const [qbDeptFilter, setQbDeptFilter] = useState("");
+  const [qbYearFilter, setQbYearFilter] = useState("");
+  const [qbSortConfig, setQbSortConfig] = useState({ key: 'totalSolved', order: 'desc' });
+  const [qbDeptOptions, setQbDeptOptions] = useState([]);
+  const [qbYearOptions, setQbYearOptions] = useState([]);
+
   const [exportFormat, setExportFormat] = useState('excel');
   const [exportLoading, setExportLoading] = useState(false);
 
@@ -1283,6 +1294,29 @@ const StaffDashboard = () => {
         <span className="staff-nav-text">MCQ Reports</span>
       </button>
       <button
+        className={`staff-nav-item ${activeSection === "qb-reports" ? 'staff-nav-active' : ''}`}
+        onClick={() => {
+          setActiveSection("qb-reports");
+          setIsMobileMenuOpen(false);
+          if (qbResults.length === 0) {
+            handleFetchQbResults();
+          }
+        }}
+      >
+        <FaGraduationCap />
+        <span className="staff-nav-text">Question Bank Reports</span>
+      </button>
+      <button
+        className={`staff-nav-item ${activeSection === "spoken-reports" ? 'staff-nav-active' : ''}`}
+        onClick={() => {
+          setActiveSection("spoken-reports");
+          setIsMobileMenuOpen(false);
+        }}
+      >
+        <FaMicrophone />
+        <span className="staff-nav-text">Spoken English Reports</span>
+      </button>
+      <button
         className={`staff-nav-item ${activeSection === "placements" ? 'staff-nav-active' : ''}`}
         onClick={() => {
           setActiveSection("placements");
@@ -1399,10 +1433,123 @@ const StaffDashboard = () => {
       }
     } catch (err) {
       console.error("Error fetching MCQ results:", err);
-      setMcqError("An error occurred while fetching reports.");
+      setMcqError("An error occurred while fetching MCQ results");
     } finally {
       setMcqLoading(false);
     }
+  };
+
+  const handleFetchQbResults = async () => {
+    try {
+      setQbLoading(true);
+      const { collection, getDocs } = await import('firebase/firestore');
+      const snap = await getDocs(collection(db, 'codingProgress'));
+      const progMap = {};
+      snap.forEach(d => {
+        progMap[d.id.toLowerCase()] = d.data();
+      });
+
+      const staffCollege = userInfo.College || user?.College || '';
+
+      const records = (students || []).map(s => {
+        const email = (s.Email || s.email || '').toLowerCase();
+        const prog = progMap[email] || {};
+        const solvedList = Array.isArray(prog.solvedProblems) ? prog.solvedProblems : [];
+        const details = prog.problemDetails || {};
+        const activity = prog.activity || {};
+        
+        let totalHours = 0;
+        Object.values(activity).forEach(act => {
+          totalHours += Number(act.hours) || 0;
+        });
+
+        return {
+          rollNumber: s.RollNumber || s.rollNumber || s['Roll Number'] || 'N/A',
+          name: s.Name || s.name || 'Student',
+          email: s.Email || s.email || email,
+          college: s.College || s.college || staffCollege,
+          department: (s.Department || s.department || 'N/A').toUpperCase().trim(),
+          year: String(s[yearKey] || s.Year || s.year || 'N/A'),
+          totalSolved: solvedList.length,
+          totalAttempted: Object.keys(details).length,
+          totalHours
+        };
+      });
+
+      const depts = [...new Set(records.map(r => r.department).filter(Boolean))].sort();
+      const years = [...new Set(records.map(r => r.year).filter(Boolean))].sort();
+      setQbDeptOptions(depts);
+      setQbYearOptions(years);
+
+      setQbResults(records);
+      setFilteredQbResults(records);
+    } catch (err) {
+      console.error('Failed to fetch Question Bank results:', err);
+    } finally {
+      setQbLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let result = [...qbResults];
+    if (qbDeptFilter) {
+      result = result.filter(r => r.department === qbDeptFilter);
+    }
+    if (qbYearFilter) {
+      result = result.filter(r => r.year === qbYearFilter);
+    }
+    if (qbSearchTerm) {
+      const q = qbSearchTerm.toLowerCase();
+      result = result.filter(r =>
+        r.name.toLowerCase().includes(q) ||
+        r.rollNumber.toLowerCase().includes(q) ||
+        r.email.toLowerCase().includes(q)
+      );
+    }
+
+    result.sort((a, b) => {
+      let aVal = a[qbSortConfig.key];
+      let bVal = b[qbSortConfig.key];
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+      if (aVal < bVal) return qbSortConfig.order === 'asc' ? -1 : 1;
+      if (aVal > bVal) return qbSortConfig.order === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    setFilteredQbResults(result);
+  }, [qbResults, qbDeptFilter, qbYearFilter, qbSearchTerm, qbSortConfig]);
+
+  const handleExportQbResults = () => {
+    const formatUsageTime = (hoursDecimal) => {
+      const totalMins = Math.round((hoursDecimal || 0) * 60);
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      const hrText = hrs === 1 ? 'hr' : 'hrs';
+      const minText = mins === 1 ? 'min' : 'mins';
+      if (hrs === 0) return `${mins} ${minText}`;
+      if (mins === 0) return `${hrs} ${hrText}`;
+      return `${hrs} ${hrText} ${mins} ${minText}`;
+    };
+
+    const dataToExport = filteredQbResults.map((r, i) => ({
+      "S.No": i + 1,
+      "Roll Number": r.rollNumber,
+      "Student Name": r.name,
+      "Email": r.email,
+      "College": r.college,
+      "Department": r.department,
+      "Year": r.year,
+      "QB Solved Problems": r.totalSolved,
+      "Attempted Problems": r.totalAttempted,
+      "Practice Time": formatUsageTime(r.totalHours),
+      "Status": r.totalSolved > 0 ? "Active Practitioner" : r.totalAttempted > 0 ? "Started" : "Inactive"
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "QB_Completion_Report");
+    XLSX.writeFile(workbook, `QuestionBank_Completion_Report_${userInfo?.College || 'College'}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleMcqFilter = () => {
@@ -2226,6 +2373,214 @@ const StaffDashboard = () => {
           )}
           {showReportsAnalytics && renderReportsAnalytics()}
           {activeSection === "mcq-reports" && renderMCQReports()}
+          {activeSection === "qb-reports" && (() => {
+            const formatUsageTime = (hoursDecimal) => {
+              const totalMins = Math.round((hoursDecimal || 0) * 60);
+              const hrs = Math.floor(totalMins / 60);
+              const mins = totalMins % 60;
+              const hrText = hrs === 1 ? 'hr' : 'hrs';
+              const minText = mins === 1 ? 'min' : 'mins';
+              if (hrs === 0) return `${mins} ${minText}`;
+              if (mins === 0) return `${hrs} ${hrText}`;
+              return `${hrs} ${hrText} ${mins} ${minText}`;
+            };
+
+            const activeCount = filteredQbResults.filter(r => r.totalSolved > 0).length;
+            const totalSolvedSum = filteredQbResults.reduce((acc, r) => acc + r.totalSolved, 0);
+
+            return (
+              <div className="staff-reports-section">
+                <div className="staff-section-header-row" style={{ padding: '0 1rem' }}>
+                  <div>
+                    <h2 className="staff-section-title">Question Bank Completion Reports</h2>
+                    <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', margin: '4px 0 0' }}>
+                      Track student problem-solving progress across Question Bank modules in your college
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button className="staff-filter-btn" onClick={handleFetchQbResults} disabled={qbLoading}>
+                      {qbLoading ? "Refreshing..." : "Refresh Data"}
+                    </button>
+                    <button className="staff-filter-btn" style={{ background: '#10b981' }} onClick={handleExportQbResults} disabled={filteredQbResults.length === 0}>
+                      <FaDownload /> Export Excel
+                    </button>
+                  </div>
+                </div>
+
+                {/* Stat Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', padding: '0 1rem', margin: '16px 0' }}>
+                  <div className="staff-metric-card" style={{ background: 'var(--bg-secondary, #1e293b)', border: '1px solid var(--border-color, #334155)', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>COHORT STUDENTS</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f1f5f9', marginTop: '4px' }}>{filteredQbResults.length}</div>
+                  </div>
+                  <div className="staff-metric-card" style={{ background: 'var(--bg-secondary, #1e293b)', border: '1px solid var(--border-color, #334155)', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>ACTIVE SOLVERS</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981', marginTop: '4px' }}>{activeCount}</div>
+                  </div>
+                  <div className="staff-metric-card" style={{ background: 'var(--bg-secondary, #1e293b)', border: '1px solid var(--border-color, #334155)', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>TOTAL SOLVED PROBLEMS</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#38bdf8', marginTop: '4px' }}>{totalSolvedSum}</div>
+                  </div>
+                  <div className="staff-metric-card" style={{ background: 'var(--bg-secondary, #1e293b)', border: '1px solid var(--border-color, #334155)', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>AVG SOLVED / ACTIVE STUDENT</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#a855f7', marginTop: '4px' }}>
+                      {activeCount > 0 ? (totalSolvedSum / activeCount).toFixed(1) : '0'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="staff-filter-bar">
+                  <select
+                    className="staff-select"
+                    value={qbDeptFilter}
+                    onChange={(e) => setQbDeptFilter(e.target.value)}
+                  >
+                    <option value="">All Departments</option>
+                    {qbDeptOptions.map(dept => <option key={dept} value={dept}>{dept}</option>)}
+                  </select>
+
+                  <select
+                    className="staff-select"
+                    value={qbYearFilter}
+                    onChange={(e) => setQbYearFilter(e.target.value)}
+                  >
+                    <option value="">All Years</option>
+                    {qbYearOptions.map(year => <option key={year} value={year}>{year}</option>)}
+                  </select>
+
+                  <select
+                    className="staff-select"
+                    value={`${qbSortConfig.key}-${qbSortConfig.order}`}
+                    onChange={(e) => {
+                      const [key, order] = e.target.value.split('-');
+                      setQbSortConfig({ key, order });
+                    }}
+                  >
+                    <option value="totalSolved-desc">Most Solved First</option>
+                    <option value="totalSolved-asc">Least Solved First</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="rollNumber-asc">Roll Number (A-Z)</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    className="staff-search-input"
+                    placeholder="Search by name, roll no, or email..."
+                    value={qbSearchTerm}
+                    onChange={(e) => setQbSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                {/* Data Table */}
+                <div className="staff-table-container">
+                  {qbLoading ? (
+                    <div className="staff-loading-spinner">Loading Question Bank Reports...</div>
+                  ) : filteredQbResults.length === 0 ? (
+                    <div className="staff-no-data">No student question bank progress records found.</div>
+                  ) : (
+                    <table className="staff-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Roll Number</th>
+                          <th>Student Name</th>
+                          <th>Department</th>
+                          <th>Year</th>
+                          <th>Solved Problems</th>
+                          <th>Attempted</th>
+                          <th>Practice Time</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredQbResults.map((r, idx) => {
+                          const statusBadgeClass = r.totalSolved > 0 ? 'passed' : r.totalAttempted > 0 ? 'warning' : 'failed';
+                          const statusText = r.totalSolved > 0 ? 'Active' : r.totalAttempted > 0 ? 'Started' : 'Inactive';
+                          return (
+                            <tr key={idx}>
+                              <td>{idx + 1}</td>
+                              <td><strong>{r.rollNumber}</strong></td>
+                              <td>{r.name}</td>
+                              <td>{r.department}</td>
+                              <td>{r.year}</td>
+                              <td>
+                                <span className={`staff-score-badge ${r.totalSolved >= 50 ? 'passed' : r.totalSolved > 0 ? 'warning' : 'failed'}`}>
+                                  {r.totalSolved} solved
+                                </span>
+                              </td>
+                              <td>{r.totalAttempted}</td>
+                              <td style={{ fontWeight: 600, color: '#38bdf8' }}>{formatUsageTime(r.totalHours)}</td>
+                              <td>
+                                <span className={`staff-status-badge ${statusBadgeClass}`}>
+                                  {statusText}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          {activeSection === "spoken-reports" && (
+            <div className="staff-section-card">
+              <h2 className="staff-section-title"><FaMicrophone /> Spoken English & Communication Reports</h2>
+              <p className="staff-section-subtitle">Candidate CEFR level, WPM pace metrics, and communication skills diagnostics for {user?.College || 'College'}</p>
+              
+              <div className="staff-table-container" style={{ marginTop: '20px' }}>
+                <table className="staff-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Roll Number</th>
+                      <th>Student Name</th>
+                      <th>Department</th>
+                      <th>Year</th>
+                      <th>CEFR Level</th>
+                      <th>Accuracy Score</th>
+                      <th>Speaking Pace</th>
+                      <th>Fillers Used</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mcqResults.filter(r => r.testType === 'spoken_english' || r.cefrLevel).length === 0 ? (
+                      <tr>
+                        <td colSpan="9" style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
+                          No spoken English assessment records found for this college.
+                        </td>
+                      </tr>
+                    ) : (
+                      mcqResults.filter(r => r.testType === 'spoken_english' || r.cefrLevel).map((r, idx) => (
+                        <tr key={idx}>
+                          <td>{idx + 1}</td>
+                          <td><strong>{r.rollNumber || 'N/A'}</strong></td>
+                          <td>{r.studentName || r.name || 'N/A'}</td>
+                          <td>{r.department || 'N/A'}</td>
+                          <td>{r.year || 'N/A'}</td>
+                          <td>
+                            <span className="staff-score-badge passed">
+                              {r.cefrLevel || 'B2'} ({r.cefrName || 'Upper Inter'})
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: 800, color: '#38bdf8' }}>{r.percentage || r.score || 0}%</td>
+                          <td style={{ fontWeight: 600 }}>{r.wpm || 0} WPM</td>
+                          <td>
+                            <span className={`staff-status-badge ${(r.fillerCount || 0) > 3 ? 'warning' : 'passed'}`}>
+                              {r.fillerCount || 0} fillers
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
           {activeSection === "profile" && (
             <div className="staff-profile-section">
               <h2 className="staff-section-title">Staff Profile</h2>

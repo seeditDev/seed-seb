@@ -22,6 +22,7 @@ import { fetchQuestionsForContest } from '../services/codingQuestionBankService'
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
+import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -689,9 +690,11 @@ const MultiSectionAssessment = () => {
 
   const shouldUseAudioProctoring = useMemo(() => {
     if (!assessment) return false;
-    return isTruthy(assessment.audioProctored) || 
-           isTruthy(assessment.proctored) || 
-           (assessment.sections || []).some(s => isTruthy(s.audioProctored) || isTruthy(s.proctored));
+    // Audio proctoring is INDEPENDENT of camera proctoring.
+    // Only activate if audioProctored is explicitly true at the top-level or any section.
+    // Do NOT fall back to assessment.proctored — that controls camera only.
+    return isTruthy(assessment.audioProctored) ||
+           (assessment.sections || []).some(s => isTruthy(s.audioProctored));
   }, [assessment]);
 
   const maxViolations = useMemo(() => {
@@ -1232,6 +1235,10 @@ const MultiSectionAssessment = () => {
           .filter(sec => sec.type === 'coding' && sec.data?.coding)
           .reduce((acc, sec) => acc.concat(sec.data.coding), []);
 
+        const aggregatedSpokenEnglish = Object.values(updatedResults)
+          .filter(sec => (sec.type === 'spoken_english' || sec.type === 'speech' || sec.type === 'sea'))
+          .map(sec => sec.data || {});
+
         const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
 
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
@@ -1272,6 +1279,8 @@ const MultiSectionAssessment = () => {
           sectionsArray: sectionsList,
           questions: aggregatedQuestions,
           coding: aggregatedCoding,
+          spokenEnglish: aggregatedSpokenEnglish.length > 0 ? aggregatedSpokenEnglish[0] : null,
+          sea: aggregatedSpokenEnglish.length > 0 ? aggregatedSpokenEnglish[0] : null,
           totalMarks: totalMarksSum,
           score: totalScore,
           totalQuestions: totalQ,
@@ -1459,7 +1468,8 @@ const MultiSectionAssessment = () => {
           questionTimer: activeSection.questionTimer || 0,
           forwardOnly: isTruthy(activeSection.forwardOnly) || (activeSection.questionTimer > 0),
           proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
-          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(assessment.proctored) || isTruthy(activeSection.audioProctored) || isTruthy(activeSection.proctored),
+          // audioProctored is independent of camera proctoring — only use its own flag
+          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
           maxViolations: Number(assessment.maxViolations) || 7,
           maxAudioViolations: Number(assessment.maxAudioViolations) || 5
         }
@@ -1469,10 +1479,20 @@ const MultiSectionAssessment = () => {
           forwardOnly: isTruthy(activeSection.forwardOnly) || (codingQTimers.length > 0),
           proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
           maxViolations: Number(assessment.maxViolations) || 7,
-          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(assessment.proctored) || isTruthy(activeSection.audioProctored) || isTruthy(activeSection.proctored),
+          // audioProctored is independent of camera proctoring — only use its own flag
+          audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
           maxAudioViolations: Number(assessment.maxAudioViolations) || 5
         };
-    const sectionView = activeSection.type === 'mcq'
+    const sectionView = (activeSection.type === 'spoken_english' || activeSection.type === 'speech' || activeSection.type === 'sea')
+      ? (
+        <SpokenEnglishAssessment
+          key={`spoken-${activeSection.sectionId}`}
+          assessmentData={{ ...activeSecData, name: activeSection.name }}
+          user={user}
+          onBack={() => autoSubmitSection()}
+        />
+      )
+      : activeSection.type === 'mcq'
       ? (
         <MCQSectionView
           key={`mcq-${activeSection.sectionId}`}

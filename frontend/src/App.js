@@ -11,6 +11,7 @@ import timeService from './services/timeService';
 import PracticeSandbox from "./components/PracticeSandbox";
 import PracticeCourseSandbox from "./components/PracticeCourseSandbox";
 import MultiSectionAssessment from "./components/MultiSectionAssessment";
+import SpokenEnglishAssessment from "./components/SpokenEnglishAssessment";
 import { logPortalActivityTime } from './services/codingProgressService';
 
 import desktopBridge from './utils/desktopBridge';
@@ -451,6 +452,8 @@ const App = () => {
           <Route path="/student/practice/solve/:questionId" element={<PracticeSandbox />} />
           <Route path="/student/practice/course/:courseId/:questionId" element={<PracticeCourseSandbox />} />
           <Route path="/student/assessment/multisection/:assessmentSlug" element={<MultiSectionAssessment />} />
+          <Route path="/student/spoken-english/:assessmentSlug" element={<SpokenEnglishAssessment />} />
+          <Route path="/student/sea/:assessmentSlug" element={<SpokenEnglishAssessment />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>

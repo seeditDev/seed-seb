@@ -2904,20 +2904,18 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         )
     );
 
-    // Enable audio proctoring when the assessment metadata has audioProctored or proctored flag
+    // Audio proctoring is INDEPENDENT of camera proctoring.
+    // Only activate when audioProctored is explicitly set \u2014 never inherit from proctored (camera).
     const shouldUseAudioProctoring = Boolean(
-        isEmbedded ? (settings.audioProctored || settings.proctored) : (
-            currentTest && (
+        isEmbedded
+            ? Boolean(settings.audioProctored)   // embedded: use only audioProctored, never proctored
+            : (currentTest && (
                 currentTest.testInfo?.audioProctored === true ||
                 currentTest.testInfo?.audioProctored === 1 ||
                 currentTest.testInfo?.audioProctored === "1" ||
-                currentTest.testInfo?.audioProctored === "true" ||
-                currentTest.testInfo?.proctored === true ||
-                currentTest.testInfo?.proctored === 1 ||
-                currentTest.testInfo?.proctored === "1" ||
-                currentTest.testInfo?.proctored === "true"
-            )
-        )
+                currentTest.testInfo?.audioProctored === "true"
+                // do NOT fall back to proctored (camera) flag here
+            ))
     );
 
     // Main render
