@@ -182,4 +182,4 @@ const AudioProctoringEngine = ({
   return null;
 };
 
-export default AudioProctoringEngine;
+export default React.memo(AudioProctoringEngine);

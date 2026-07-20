@@ -393,17 +393,31 @@ const CodingSandbox = () => {
         const results = [];
         const cases = selectedChallenge.testCases || [];
 
+const isCodeBlankOrEmpty = (codeStr) => {
+  if (!codeStr || typeof codeStr !== 'string') return true;
+  const trimmed = codeStr.trim();
+  if (trimmed === '') return true;
+  const noComments = trimmed
+    .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
+    .replace(/#.*/g, '')
+    .trim();
+  return noComments === '';
+};
+
         try {
             const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+            const isBlank = isCodeBlankOrEmpty(currentCode);
             await yieldFrame();
             for (let i = 0; i < cases.length; i++) {
                 const tc = cases[i];
                 if (i > 0) await yieldFrame();
-                const res = await desktopBridge.runDirectSandbox(language, currentCode, tc.input);
+                const res = isBlank
+                    ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
+                    : await desktopBridge.runDirectSandbox(language, currentCode, tc.input);
                 
                 const cleanActual = (res.stdout || '').replace(/\r\n/g, '\n').trim();
                 const cleanExpected = (tc.expected || '').replace(/\r\n/g, '\n').trim();
-                const isPassed = cleanActual === cleanExpected && res.exit_code === 0;
+                const isPassed = !isBlank && (cleanActual === cleanExpected) && res.exit_code === 0 && !res.error;
 
                 results.push({
                     index: i + 1,
@@ -411,7 +425,7 @@ const CodingSandbox = () => {
                     expected: cleanExpected,
                     actual: cleanActual,
                     passed: isPassed,
-                    stderr: res.stderr || res.error || ""
+                    stderr: isBlank ? 'No code submitted in editor.' : (res.stderr || res.error || "")
                 });
             }
             setTestResults(results);

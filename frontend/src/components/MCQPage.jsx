@@ -9,6 +9,7 @@ import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import timeService from '../services/timeService';
 import { clearAllProctorCache } from '../utils/proctorCache';
+import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 
 // ========================================
 // PROCTORING CONFIGURATION
@@ -1798,24 +1799,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
      * @param {string} text - Text to render
      * @returns {React.ReactNode}
      */
-    const renderTextWithCode = (text) => {
-        if (!text) return null;
-        // Split by triple backticks
-        const parts = text.split(/(```[\s\S]*?```)/g);
-        return parts.map((part, index) => {
-            if (part.startsWith('```') && part.endsWith('```')) {
-                // Extract code from backticks
-                const code = part.slice(3, -3).trim();
-                return (
-                    <pre key={index} className="mcq-code-snippet">
-                        <code>{code}</code>
-                    </pre>
-                );
-            }
-            // Return regular text span for non-code parts
-            return <span key={index}>{part}</span>;
-        });
-    };
+    const renderTextWithCode = (text) => renderMathAndCode(text, false);
 
     // Render test selector
     const renderTestSelector = () => {
@@ -2209,7 +2193,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                             </div>
                                             <div className="mcq-review-question">{renderTextWithCode(question.question)}</div>
                                             <div className="mcq-review-answer">
-                                                Your answer: {answers[index] !== undefined ? question.options[answers[index]] : 'Not answered'}
+                                                Your answer: {answers[index] !== undefined ? renderMathAndCode(question.options[answers[index]], true) : 'Not answered'}
                                             </div>
                                             <div className="mcq-review-actions">
                                                 <button onClick={() => {
@@ -2294,7 +2278,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                                     style={isLocked ? { cursor: 'not-allowed', opacity: 0.8 } : {}}
                                                 >
                                                     <span className="mcq-option-letter">{letter}</span>
-                                                    <span className="mcq-option-text">{option}</span>
+                                                    <span className="mcq-option-text">{renderMathAndCode(option, true)}</span>
                                                 </button>
                                             );
                                         })}
@@ -2388,17 +2372,6 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                 })}
                             </div>
                         </div>
-
-                        {/* Sidebar Submit Action */}
-                        {!(isEmbedded && settings.timerRestrictedSubmit) && (
-                            <button
-                                className="mcq-sidebar-submit-btn"
-                                onClick={handleSubmit}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? 'Submitting...' : (isEmbedded ? 'Submit Section' : 'Finish Test')}
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>
@@ -2591,7 +2564,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                         return (
                                             <div key={oIndex} className={optionClass}>
                                                 <span className="option-marker">{String.fromCharCode(65 + oIndex)}.</span>
-                                                <span className="option-text">{option}</span>
+                                                <span className="option-text">{renderMathAndCode(option, true)}</span>
                                                 {oIndex === correctOptionIndex && <FaCheck className="sol-icon-right" />}
                                                 {oIndex === userSelectedIndex && !isCorrect && <FaTimes className="sol-icon-right" />}
                                             </div>

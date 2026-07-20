@@ -492,7 +492,9 @@ const ProctoringEngine = ({
       attachTrackHandlers(stream);
       
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        if (videoRef.current.srcObject !== stream) {
+          videoRef.current.srcObject = stream;
+        }
         videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.muted = true;
         videoRef.current.play().catch(() => {});
@@ -954,13 +956,6 @@ const ProctoringEngine = ({
         ))}
       </div>
 
-      {/* Loading State */}
-      {!isInitialized && (
-        <div className="proctor-loading">
-          <p>Initializing proctoring system...</p>
-        </div>
-      )}
-
       {/* Error State */}
       {error && !isWebcamBlocked && (
         <div className="proctor-error">
@@ -972,4 +967,4 @@ const ProctoringEngine = ({
   );
 };
 
-export default ProctoringEngine;
+export default React.memo(ProctoringEngine);

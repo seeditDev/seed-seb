@@ -24,6 +24,7 @@ import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
+import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -120,7 +121,7 @@ const normalizeQuestion = (q) => {
 
 // ─── MCQ Section Renderer ────────────────────────────────────────────────────
 
-const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringData = { violationCount: 0, violations: [] }, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
+const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, proctoringData = { violationCount: 0, violations: [] }, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const questions = useMemo(() => sectionData?.questions || [], [sectionData?.questions]);
   const stateKey = `msa_active_mcq_state_${assessmentId}_${sectionData?.id || 'section'}`;
 
@@ -345,16 +346,7 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
     }
   };
 
-  const renderTextWithCode = (text) => {
-    if (!text) return null;
-    const parts = text.split(/(```[\s\S]*?```)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('```') && part.endsWith('```')) {
-        return <pre key={i} className="mcq-code-snippet"><code>{part.slice(3, -3).trim()}</code></pre>;
-      }
-      return <span key={i}>{part}</span>;
-    });
-  };
+  const renderTextWithCode = (text) => renderMathAndCode(text, false);
 
   if (questions.length === 0) {
     return (
@@ -537,7 +529,7 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
                       style={isLocked ? { cursor: 'not-allowed', opacity: 0.8 } : {}}
                     >
                       <span className="mcq-option-letter">{String.fromCharCode(65 + oIdx)}</span>
-                      <span className="mcq-option-text">{opt}</span>
+                      <span className="mcq-option-text">{renderMathAndCode(opt, true)}</span>
                     </button>
                   ))}
                 </div>
@@ -608,26 +600,17 @@ const MCQSectionView = ({ sectionData, secTimer, secStarted = false, proctoringD
             </div>
           </div>
 
-          {!settings.timerRestrictedSubmit && (
-            <button
-              className="mcq-sidebar-submit-btn"
-              style={{ marginTop: '16px', width: '100%' }}
-              onClick={() => setShowSubmitConfirm(true)}
-            >
-              Review & Submit
-            </button>
-          )}
         </div>
       </div>
     </div>
   );
-};
+});
 
 
 // ─── Coding Section Renderer ──────────────────────────────────────────────────
 // Uses the real CodingAssessmentPage in embedded mode for full feature parity.
 
-const CodingSectionView = ({ sectionData, secTimer, settings = {}, proctoringData, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
+const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, proctoringData, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const testData = {
     questions: sectionData?.questions || []
   };
@@ -649,7 +632,7 @@ const CodingSectionView = ({ sectionData, secTimer, settings = {}, proctoringDat
       parentSettings={settings}
     />
   );
-};
+});
 
 
 // ─── Main Orchestrator ────────────────────────────────────────────────────────
@@ -713,6 +696,49 @@ const MultiSectionAssessment = () => {
   const timerRef = useRef(null);
   const examFinishedRef = useRef(examFinished);
   useEffect(() => { examFinishedRef.current = examFinished; }, [examFinished]);
+
+  const handleProctorReady = useCallback(() => {
+    console.log('[MSA] Camera Proctoring is ready');
+    setIsVisualProctorReady(true);
+  }, []);
+
+  const handleProctorViolationUpdate = useCallback((info) => {
+    if (!info?.violationType) return;
+    setProctoringData(prev => {
+      const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
+      return {
+        ...prev,
+        violationCount: typeof info.violationCount === 'number' ? info.violationCount : prev.violationCount,
+        violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
+      };
+    });
+  }, []);
+
+  const handleProctorAutoSubmit = useCallback(() => {
+    autoSubmitEntireExam('proctoring_violations');
+  }, [autoSubmitEntireExam]);
+
+  const handleAudioProctorReady = useCallback(() => {
+    console.log('[MSA] Audio Proctoring is ready');
+    setIsAudioProctorReady(true);
+  }, []);
+
+  const handleAudioProctorViolationUpdate = useCallback((info) => {
+    if (!info?.type) return;
+    setProctoringData(prev => {
+      const nextAudioCount = (prev.audioViolationCount || 0) + 1;
+      if (nextAudioCount >= maxAudioViolations) {
+        setTimeout(() => {
+          autoSubmitEntireExam('proctoring_violations');
+        }, 1000);
+      }
+      return {
+        ...prev,
+        audioViolationCount: nextAudioCount,
+        violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
+      };
+    });
+  }, [maxAudioViolations, autoSubmitEntireExam]);
 
   // ── Block back/forward navigation during exam & hide PyQt SEB nav buttons
   useEffect(() => {
@@ -949,7 +975,10 @@ const MultiSectionAssessment = () => {
     assessment
   ]);
 
+  const submittingSecIdxRef = useRef(-1);
+
   const handleStartSection = useCallback((idx) => {
+    submittingSecIdxRef.current = -1;
     setCountdownSecIdx(idx);
     setSectionCountdown(10);
     setCurrentSecIdx(idx);
@@ -1164,6 +1193,12 @@ const MultiSectionAssessment = () => {
   const autoSubmitSection = useCallback((sectionResults) => {
     if (examFinishedRef.current) return;
     if (!assessment?.sections || currentSecIdx < 0 || currentSecIdx >= assessment.sections.length) return;
+
+    if (submittingSecIdxRef.current === currentSecIdx) {
+      console.warn(`[MSA] Duplicate section submission call blocked for section index ${currentSecIdx}`);
+      return;
+    }
+    submittingSecIdxRef.current = currentSecIdx;
 
     const activeSection = assessment.sections[currentSecIdx];
     if (!activeSection) return;
@@ -1519,63 +1554,30 @@ const MultiSectionAssessment = () => {
         />
       );
 
-    return (
-      <>
-        {shouldUseProctoring && user?.Email && (
-          <ProctoringEngine
-            studentID={user.Email}
-            testID={assessment.id}
-            isTestActive={currentSecIdx >= 0 && !examFinished}
-            maxViolations={maxViolations}
-            onReady={() => {
-              console.log('[MSA] Camera Proctoring is ready');
-              setIsVisualProctorReady(true);
-            }}
-            onViolationUpdate={(info) => {
-              if (!info?.violationType) return;
-              setProctoringData(prev => {
-                const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
-                return {
-                  ...prev,
-                  violationCount: typeof info.violationCount === 'number' ? info.violationCount : prev.violationCount,
-                  violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
-                };
-              });
-            }}
-            onAutoSubmit={() => {
-              autoSubmitEntireExam('proctoring_violations');
-            }}
-          />
-        )}
-        {shouldUseAudioProctoring && user?.Email && (
-          <AudioProctoringEngine
-            studentID={user.Email}
-            testID={assessment.id}
-            isTestActive={currentSecIdx >= 0 && !examFinished}
-            maxViolations={maxAudioViolations}
-            onReady={() => {
-              console.log('[MSA] Audio Proctoring is ready');
-              setIsAudioProctorReady(true);
-            }}
-            onViolationUpdate={(info) => {
-              if (!info?.type) return;
-              setProctoringData(prev => {
-                const nextAudioCount = (prev.audioViolationCount || 0) + 1;
-                if (nextAudioCount >= maxAudioViolations) {
-                  setTimeout(() => {
-                    autoSubmitEntireExam('proctoring_violations');
-                  }, 1000);
-                }
-                return {
-                  ...prev,
-                  audioViolationCount: nextAudioCount,
-                  violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
-                };
-              });
-            }}
-          />
-        )}
-        {sectionView}
+  return (
+    <>
+      {shouldUseProctoring && user?.Email && (
+        <ProctoringEngine
+          studentID={user.Email}
+          testID={assessment.id}
+          isTestActive={currentSecIdx >= 0 && !examFinished}
+          maxViolations={maxViolations}
+          onReady={handleProctorReady}
+          onViolationUpdate={handleProctorViolationUpdate}
+          onAutoSubmit={handleProctorAutoSubmit}
+        />
+      )}
+      {shouldUseAudioProctoring && user?.Email && (
+        <AudioProctoringEngine
+          studentID={user.Email}
+          testID={assessment.id}
+          isTestActive={currentSecIdx >= 0 && !examFinished}
+          maxViolations={maxAudioViolations}
+          onReady={handleAudioProctorReady}
+          onViolationUpdate={handleAudioProctorViolationUpdate}
+        />
+      )}
+      {sectionView}
         {/* Pre-section countdown overlay */}
         {sectionCountdown !== null && (() => {
           const activeSec = assessment?.sections?.[countdownSecIdx];

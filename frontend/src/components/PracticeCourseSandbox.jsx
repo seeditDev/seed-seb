@@ -530,6 +530,17 @@ const PracticeCourseSandbox = () => {
     }
   };
 
+const isCodeBlankOrEmpty = (codeStr) => {
+  if (!codeStr || typeof codeStr !== 'string') return true;
+  const trimmed = codeStr.trim();
+  if (trimmed === '') return true;
+  const noComments = trimmed
+    .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
+    .replace(/#.*/g, '')
+    .trim();
+  return noComments === '';
+};
+
   const handleSubmitCode = async () => {
     setIsSubmitting(true);
     setActiveConsoleTab('results');
@@ -546,6 +557,7 @@ const PracticeCourseSandbox = () => {
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
       const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+      const isBlank = isCodeBlankOrEmpty(currentCode);
       await yieldFrame();
       for (let i = 0; i < testCases.length; i++) {
         const tc = testCases[i];
@@ -553,13 +565,16 @@ const PracticeCourseSandbox = () => {
         totalWeight += tcWeight;
 
         if (i > 0) await yieldFrame();
-        const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+        const res = isBlank
+          ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
+          : await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
         
         // Handle placeholder test cases gracefully (code runs successfully & compiles)
-        const isPlaceholder = expectedClean === 'expected' || expectedClean === 'expectedoutput' || expectedClean === '';
-        const isPassed = (isPlaceholder ? true : actualClean === expectedClean) && res.exit_code === 0;
+        const isPlaceholder = expectedClean === 'expected' || expectedClean === 'expectedoutput';
+        const isPassed = !isBlank && (isPlaceholder ? actualClean.length > 0 : actualClean === expectedClean) && res.exit_code === 0 && !res.error;
 
         if (isPassed) {
           passedCount++;
@@ -572,7 +587,7 @@ const PracticeCourseSandbox = () => {
           input: tc.input,
           expected: expectedClean,
           actual: actualClean,
-          stderr: res.stderr || res.error || ''
+          stderr: isBlank ? 'No code submitted in editor.' : (res.stderr || res.error || '')
         });
       }
 

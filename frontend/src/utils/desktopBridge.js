@@ -211,6 +211,22 @@ const desktopBridge = {
     },
     
     runDirectSandbox: async (language, code, stdin = "") => {
+        const trimmedCode = String(code || "").trim();
+        const noComments = trimmedCode
+            .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
+            .replace(/#.*/g, '')
+            .trim();
+
+        if (trimmedCode === "" || noComments === "") {
+            return {
+                stdout: "",
+                stderr: "No code submitted in editor. Blank submissions cannot be executed or evaluated.",
+                output: "",
+                exit_code: 1,
+                error: "Blank Code Submitted"
+            };
+        }
+
         const backend = await initBridge();
         if (backend) {
             const rawResult = await backend.runDirectSandbox(String(language || ""), String(code || ""), String(stdin || ""));

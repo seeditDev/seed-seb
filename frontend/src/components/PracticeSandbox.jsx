@@ -566,6 +566,17 @@ const PracticeSandbox = () => {
     }
   };
 
+const isCodeBlankOrEmpty = (codeStr) => {
+  if (!codeStr || typeof codeStr !== 'string') return true;
+  const trimmed = codeStr.trim();
+  if (trimmed === '') return true;
+  const noComments = trimmed
+    .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
+    .replace(/#.*/g, '')
+    .trim();
+  return noComments === '';
+};
+
   // Submit code against hidden test cases
   const handleSubmitCode = async () => {
     if (!question) return;
@@ -585,6 +596,7 @@ const PracticeSandbox = () => {
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
       const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+      const isBlank = isCodeBlankOrEmpty(currentCode);
 
       await yieldFrame();
       for (let i = 0; i < testCases.length; i++) {
@@ -594,11 +606,13 @@ const PracticeSandbox = () => {
 
         // Yield between each hidden test case to keep UI/camera responsive
         if (i > 0) await yieldFrame();
-        const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+        const res = isBlank
+          ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
+          : await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
 
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
-        const isPassed = actualClean === expectedClean && res.exit_code === 0;
+        const isPassed = !isBlank && (actualClean === expectedClean) && res.exit_code === 0 && !res.error;
 
         if (isPassed) {
           passedCount++;
@@ -611,7 +625,7 @@ const PracticeSandbox = () => {
           input: tc.input,
           expected: expectedClean,
           actual: actualClean,
-          stderr: res.stderr || res.error || ''
+          stderr: isBlank ? 'No code submitted in editor.' : (res.stderr || res.error || '')
         });
       }
 

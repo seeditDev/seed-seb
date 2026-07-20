@@ -156,6 +156,17 @@ const normalizeQuestion = (q) => {
 const CODING_ROUTE_BASE = '/student/coding';
 const AUTO_SUBMIT_NOTICE_KEY = 'codingAutoSubmitNotice';
 
+export const isCodeBlankOrEmpty = (code) => {
+    if (!code || typeof code !== 'string') return true;
+    const trimmed = code.trim();
+    if (trimmed === '') return true;
+    const noComments = trimmed
+        .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
+        .replace(/#.*/g, '')
+        .trim();
+    return noComments === '';
+};
+
 const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {}, parentProctoringData = null, parentSettings = null }) => {
     const navigate = useNavigate();
     const { assessmentSlug } = useParams();
@@ -326,21 +337,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (!finalScores[q.id]) {
                     const hidden = q.hiddenTests || q.sampleTests || [];
                     const bridgeLang = language === 'python3' ? 'python' : language;
+                    const isBlank = isCodeBlankOrEmpty(code);
                     let passes = 0;
-                    for (const tc of hidden) {
-                        try {
-                            const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
-                            const exit = res.exit_code !== undefined ? res.exit_code : 0;
-                            const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
-                            const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
-                            if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
-                        } catch (err) {}
+                    if (!isBlank) {
+                        for (const tc of hidden) {
+                            try {
+                                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                const exit = res.exit_code !== undefined ? res.exit_code : 0;
+                                const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
+                                const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
+                                if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
+                            } catch (err) {}
+                        }
                     }
-                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || 20) : 0;
+                    const qScore = (!isBlank && hidden.length > 0) ? (passes / hidden.length) * (q.weight || 20) : 0;
                     finalScores[q.id] = {
                         score: qScore,
-                        percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
-                        passed: passes,
+                        percentage: (!isBlank && hidden.length > 0) ? Math.round((passes / hidden.length) * 100) : 0,
+                        passed: isBlank ? 0 : passes,
                         total: hidden.length,
                         submitted: true
                     };
@@ -1245,6 +1259,21 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         const sampleTests = currentQuestion.sampleTests || [];
         const startTimestamp = Date.now();
         const bridgeLang = language === 'python3' ? 'python' : language;
+        const isBlank = isCodeBlankOrEmpty(code);
+
+        if (isBlank) {
+            setStderr("No code submitted. Please write solution code before running test cases.");
+            setRunResults(sampleTests.map((tc, idx) => ({
+                index: idx + 1,
+                input: tc.input,
+                expected: tc.expected,
+                actual: "",
+                stderr: "No code submitted in editor.",
+                passed: false
+            })));
+            setIsRunning(false);
+            return;
+        }
 
         try {
             const results = [];
@@ -1329,6 +1358,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         const hiddenTests = currentQuestion.hiddenTests || currentQuestion.sampleTests || [];
         const startTimestamp = Date.now();
         const bridgeLang = language === 'python3' ? 'python' : language;
+        const isEvalBlank = isCodeBlankOrEmpty(code);
 
         let passedCount = 0;
         let results = [];
@@ -1337,6 +1367,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         try {
             for (let i = 0; i < hiddenTests.length; i++) {
                 const tc = hiddenTests[i];
+                if (isEvalBlank) {
+                    results.push({ index: i + 1, passed: false, error: "No code submitted in editor." });
+                    continue;
+                }
                 const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
@@ -1349,8 +1383,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             }
 
             const total = hiddenTests.length;
-            const score = total > 0 ? Math.round((passedCount / total) * 100) : 0;
-            const earnedWeight = total > 0 ? (passedCount / total) * (currentQuestion.weight || 20) : 0;
+            const score = (!isEvalBlank && total > 0) ? Math.round((passedCount / total) * 100) : 0;
+            const earnedWeight = (!isEvalBlank && total > 0) ? (passedCount / total) * (currentQuestion.weight || 20) : 0;
 
             const newScores = {
                 ...questionScores,
