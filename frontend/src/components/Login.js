@@ -5,6 +5,7 @@ import DataService from "../services/dataService";
 import TrackingService from "../services/trackingService";
 import { COLLEGES, ACADEMIC_YEARS } from "../config/constants";
 import desktopBridge from "../utils/desktopBridge";
+import { getStorageJson } from "../utils/storageUtils";
 
 const DASHBOARD_PATHS = {
   student: "/student/dashboard",
@@ -41,7 +42,7 @@ const Login = () => {
 
 
   useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem("rememberedUser"));
+    const savedUser = getStorageJson("rememberedUser", null);
     if (savedUser) {
       setUsername(savedUser.username);
       setPassword(savedUser.password);

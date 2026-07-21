@@ -5,11 +5,14 @@ import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode,
 import desktopBridge from '../utils/desktopBridge';
 import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBankService';
 import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus } from '../services/codingProgressService';
+import { getAuthData } from '../utils/storageUtils';
 import '../styles/PracticeSandbox.css';
 
 const FREE_BOILERPLATES = {
   c: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
   cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
+  'c++': `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
+  python: `print("Hello, World!")`,
   python3: `print("Hello, World!")`,
   java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
   javascript: `console.log("Hello, World!");`
@@ -18,9 +21,34 @@ const FREE_BOILERPLATES = {
 const MONACO_LANG_MAP = {
   c: 'c',
   cpp: 'cpp',
+  'c++': 'cpp',
   java: 'java',
+  python: 'python',
   python3: 'python',
   javascript: 'javascript'
+};
+
+const getBoilerplate = (boilerplatesObj, langKey) => {
+  if (!langKey) return '';
+  const clean = String(langKey).trim().toLowerCase();
+  const b = boilerplatesObj || {};
+  
+  if (clean === 'java') {
+    return b.java || b.Java || FREE_BOILERPLATES.java;
+  }
+  if (clean === 'python' || clean === 'python3' || clean === 'py') {
+    return b.python3 || b.Python3 || b.python || b.Python || FREE_BOILERPLATES.python3;
+  }
+  if (clean === 'cpp' || clean === 'c++') {
+    return b.cpp || b['C++'] || b['c++'] || FREE_BOILERPLATES.cpp;
+  }
+  if (clean === 'c') {
+    return b.c || b.C || FREE_BOILERPLATES.c;
+  }
+  if (clean === 'javascript' || clean === 'js') {
+    return b.javascript || b.JavaScript || b.js || FREE_BOILERPLATES.javascript;
+  }
+  return b[clean] || FREE_BOILERPLATES[clean] || '';
 };
 
 const normalizeQuestion = (q) => {
@@ -222,7 +250,7 @@ const PracticeSandbox = () => {
   };
 
   useEffect(() => {
-    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    const authData = getAuthData();
     setUser(authData);
 
     // Scoring override from location state if coming from module/contest
@@ -296,7 +324,7 @@ const PracticeSandbox = () => {
         initialCode = progress.submittedCode.replace(/\r\n/g, '\n');
       } else {
         // Fallback to question-specific boilerplate, then free standard boilerplate template
-        initialCode = (qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '').replace(/\r\n/g, '\n');
+        initialCode = getBoilerplate(qData.boilerplates, defaultLang).replace(/\r\n/g, '\n');
       }
       setCode(initialCode);
       // Push directly to editor model if already mounted (e.g. navigating between questions)
@@ -324,7 +352,7 @@ const PracticeSandbox = () => {
     if (prevLangRef.current !== language || prevQuestionIdRef.current !== questionId) {
       prevLangRef.current = language;
       prevQuestionIdRef.current = questionId;
-      const newCode = (question.boilerplates?.[language] || FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+      const newCode = getBoilerplate(question.boilerplates, language).replace(/\r\n/g, '\n');
       setCode(newCode);
       if (editorRef.current) {
         editorRef.current.setValue(newCode);
@@ -338,13 +366,13 @@ const PracticeSandbox = () => {
   }, [language, questionId, question]);
 
   const handleResetCode = () => {
-    const defaultCode = (question?.boilerplates?.[language] || FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+    const defaultCode = getBoilerplate(question?.boilerplates, language).replace(/\r\n/g, '\n');
     setCode(defaultCode);
     if (editorRef.current) editorRef.current.setValue(defaultCode);
   };
 
   const handleResetToDefault = () => {
-    const defaultCode = (FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+    const defaultCode = (FREE_BOILERPLATES[language] || FREE_BOILERPLATES[language === 'python3' ? 'python' : 'python3'] || '').replace(/\r\n/g, '\n');
     setCode(defaultCode);
     if (editorRef.current) editorRef.current.setValue(defaultCode);
   };
@@ -1027,14 +1055,14 @@ const isCodeBlankOrEmpty = (codeStr) => {
 
           <div className="psb-editor-wrap" style={{ height: `${editorHeight}%` }}>
             <Editor
-              key={`${questionId}_${language}`}
+              key={questionId}
               height="100%"
               language={MONACO_LANG_MAP[language] || 'cpp'}
               theme={['light', 'red-light', 'bw'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
-              defaultValue={code}
+              value={code}
+              onChange={(val) => setCode(val || '')}
               onMount={(editor) => {
                 editorRef.current = editor;
-                // Ensure initial value is set from state (handles async load timing)
                 const currentCode = code || '';
                 if (editor.getValue() !== currentCode) {
                   editor.setValue(currentCode);

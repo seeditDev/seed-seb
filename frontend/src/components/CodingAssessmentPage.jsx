@@ -14,6 +14,7 @@ import { clearAllProctorCache } from '../utils/proctorCache';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
+import { getAuthData } from '../utils/storageUtils';
 import '../styles/CodingAssessmentPage.css';
 
 const LOCAL_BASE_URL = '/seed-contents';
@@ -424,7 +425,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             // Sync user details if not set
             if (!user) {
-                const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
+                const authData = getAuthData();
                 setUser(authData);
             }
 
@@ -2450,7 +2451,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             {/* Monaco Editor */}
                             <div className="monaco-wrapper">
                                 <Editor
-                                    key={`${currentQuestion.id}_${language}`}
+                                    key={currentQuestion.id}
                                     height="100%"
                                     language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : language)}
                                     value={codeMap[`${currentQuestion.id}_${language}`] || ""}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchPracticeContest, fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import { getSolvedQuestionIds, getFullProgress, getQuestionDisplayStatus } from '../services/codingProgressService';
+import { getAuthData } from '../utils/storageUtils';
 import '../styles/PracticeContestPage.css';
 
 const DIFF_CLASS = {
@@ -26,7 +27,7 @@ const PracticeContestPage = () => {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   useEffect(() => {
-    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    const authData = getAuthData();
     setUser(authData);
     loadData(authData);
   }, [courseId, moduleId, contestId]);

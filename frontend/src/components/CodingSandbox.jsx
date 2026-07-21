@@ -742,11 +742,12 @@ const isCodeBlankOrEmpty = (codeStr) => {
                         {/* Editor Container */}
                         <div className="monaco-editor-container">
                             <Editor
-                                key={`${selectedChallenge?.id || 'sandbox'}_${language}`}
+                                key={selectedChallenge?.id || 'sandbox'}
                                 height="100%"
                                 language={monacoLanguage}
                                 theme="vs-dark"
-                                defaultValue={code}
+                                value={code}
+                                onChange={(val) => setCode(val || '')}
                                 onMount={(editor) => {
                                     editorRef.current = editor;
                                     const currentCode = code || '';

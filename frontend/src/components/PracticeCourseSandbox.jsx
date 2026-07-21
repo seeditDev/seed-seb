@@ -11,11 +11,14 @@ import {
   markQuestionSolved, markQuestionAttempted, getQuestionProgress, 
   getFullProgress 
 } from '../services/codingProgressService';
+import { getAuthData } from '../utils/storageUtils';
 import '../styles/PracticeSandbox.css'; // Reuse core sandbox tokens and styling
 
 const FREE_BOILERPLATES = {
   c: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
   cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
+  'c++': `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
+  python: `print("Hello, World!")`,
   python3: `print("Hello, World!")`,
   java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
   javascript: `console.log("Hello, World!");`
@@ -24,10 +27,36 @@ const FREE_BOILERPLATES = {
 const MONACO_LANG_MAP = {
   c: 'c',
   cpp: 'cpp',
+  'c++': 'cpp',
   java: 'java',
+  python: 'python',
   python3: 'python',
   javascript: 'javascript'
 };
+
+const getBoilerplate = (boilerplatesObj, langKey) => {
+  if (!langKey) return '';
+  const clean = String(langKey).trim().toLowerCase();
+  const b = boilerplatesObj || {};
+  
+  if (clean === 'java') {
+    return b.java || b.Java || FREE_BOILERPLATES.java;
+  }
+  if (clean === 'python' || clean === 'python3' || clean === 'py') {
+    return b.python3 || b.Python3 || b.python || b.Python || FREE_BOILERPLATES.python3;
+  }
+  if (clean === 'cpp' || clean === 'c++') {
+    return b.cpp || b['C++'] || b['c++'] || FREE_BOILERPLATES.cpp;
+  }
+  if (clean === 'c') {
+    return b.c || b.C || FREE_BOILERPLATES.c;
+  }
+  if (clean === 'javascript' || clean === 'js') {
+    return b.javascript || b.JavaScript || b.js || FREE_BOILERPLATES.javascript;
+  }
+  return b[clean] || FREE_BOILERPLATES[clean] || '';
+};
+
 
 const EDITOR_OPTIONS = {
   fontFamily: 'var(--ps-mono)',
@@ -220,7 +249,7 @@ const PracticeCourseSandbox = () => {
   const [showAwardModal, setShowAwardModal] = useState(false);
 
   useEffect(() => {
-    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    const authData = getAuthData();
     setUser(authData);
 
     const loadCourseAndQuestion = async () => {
@@ -311,16 +340,16 @@ const PracticeCourseSandbox = () => {
             } else if (defaultLang === 'java') {
               const prints = lines.map(line => `        System.out.println("${line}");`).join('\n');
               initialCode = `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n${prints}\n    }\n}`;
-            } else if (defaultLang === 'python3') {
+            } else if (defaultLang === 'python3' || defaultLang === 'python') {
               initialCode = lines.map(line => `print("${line}")`).join('\n');
             } else {
-              initialCode = qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '';
+              initialCode = getBoilerplate(qData.boilerplates, defaultLang);
             }
             const normalized = initialCode.replace(/\r\n/g, '\n');
             setCode(normalized);
             if (editorRef.current) editorRef.current.setValue(normalized);
           } else {
-            const initialCode = qData.boilerplates?.[defaultLang] || FREE_BOILERPLATES[defaultLang] || '';
+            const initialCode = getBoilerplate(qData.boilerplates, defaultLang);
             const normalized = initialCode.replace(/\r\n/g, '\n');
             setCode(normalized);
             if (editorRef.current) editorRef.current.setValue(normalized);
@@ -433,7 +462,7 @@ const PracticeCourseSandbox = () => {
     if (prevLangRef.current !== language || prevQuestionIdRef.current !== questionId) {
       prevLangRef.current = language;
       prevQuestionIdRef.current = questionId;
-      const langCode = (question.boilerplates?.[language] || FREE_BOILERPLATES[language] || '').replace(/\r\n/g, '\n');
+      const langCode = getBoilerplate(question.boilerplates, language).replace(/\r\n/g, '\n');
       setCode(langCode);
       if (editorRef.current) editorRef.current.setValue(langCode);
       setStdout('');
@@ -512,14 +541,18 @@ const PracticeCourseSandbox = () => {
   };
 
   const handleMarkConceptComplete = async () => {
-    const email = user?.Email || user?.email || '';
-    if (email) {
-      await markQuestionSolved(email, questionId, 'Concept', 100);
-      const updatedSolved = [...new Set([...solvedIds, questionId])];
-      setSolvedIds(updatedSolved);
-      
-      // Check if this action completed the entire course syllabus
-      checkCourseCompletion(updatedSolved);
+    try {
+      const email = user?.Email || user?.email || '';
+      if (email) {
+        await markQuestionSolved(email, questionId, 'Concept', 100);
+        const updatedSolved = [...new Set([...solvedIds, questionId])];
+        setSolvedIds(updatedSolved);
+        
+        // Check if this action completed the entire course syllabus
+        checkCourseCompletion(updatedSolved);
+      }
+    } catch (err) {
+      console.error('[PracticeCourseSandbox] Error marking concept complete:', err);
     }
 
     if (nextItem) {
@@ -987,11 +1020,12 @@ const isCodeBlankOrEmpty = (codeStr) => {
             {/* Editor Workspace Panel */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', minHeight: '300px' }}>
               <Editor
-                key={`${questionId}_${language}`}
+                key={questionId}
                 height="100%"
                 language={MONACO_LANG_MAP[language] || 'cpp'}
                 theme="vs-dark"
-                defaultValue={code}
+                value={code}
+                onChange={(val) => setCode(val || '')}
                 onMount={(editor) => {
                   editorRef.current = editor;
                   const currentCode = code || '';

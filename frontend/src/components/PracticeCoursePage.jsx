@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchCourse, fetchModulesForCourse, fetchContestsForModule, fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import { getSolvedQuestionIds } from '../services/codingProgressService';
+import { getAuthData } from '../utils/storageUtils';
 import '../styles/PracticeHome.css'; // Reuse base styles
 
 const PracticeCoursePage = () => {
@@ -16,7 +17,7 @@ const PracticeCoursePage = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    const authData = getAuthData();
     setUser(authData);
     loadData(authData);
   }, [courseId]);

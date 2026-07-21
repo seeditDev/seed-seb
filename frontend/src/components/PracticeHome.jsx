@@ -14,6 +14,7 @@ import {
 import roadmapsData from './roadmaps_data.json';
 import '../styles/PracticeHome.css';
 import { CATEGORIZED_SHEETS } from '../config/sheetsData';
+import { getAuthData } from '../utils/storageUtils';
 
 const CATEGORIES = [
   'Arrays', 'Strings', 'Sorting', 'Searching', 'Recursion',
@@ -502,7 +503,7 @@ const PracticeHome = () => {
   };
 
   useEffect(() => {
-    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    const authData = getAuthData();
     setUser(authData);
     loadData(authData);
   }, []);
@@ -1895,15 +1896,24 @@ const PracticeHome = () => {
               let totalQs = 0;
               let solvedQs = 0;
 
+              const normCourseId = course.id ? course.id.replace(/-/g, '_') : '';
+              const mappedCourseQids = courseQuestionIds[course.id] || courseQuestionIds[normCourseId] || [];
+
               if (course.id === 'programming_fundamentals') {
                 totalQs = 348;
                 solvedQs = solvedIds.filter(id => id.startsWith('Q0.')).length;
               } else if (course.hasSubcourses) {
                 course.subcourses.forEach(sub => {
-                  totalQs += sub.modules.length * 10;
+                  const normSubId = sub.id ? sub.id.replace(/-/g, '_') : '';
+                  const qids = courseQuestionIds[sub.id] || courseQuestionIds[normSubId] || [];
+                  totalQs += qids.length || (sub.modules ? sub.modules.length * 10 : 0);
+                  solvedQs += qids.filter(id => solvedIdsSet.has(id)).length;
                 });
+              } else if (mappedCourseQids.length > 0) {
+                totalQs = mappedCourseQids.length;
+                solvedQs = mappedCourseQids.filter(id => solvedIdsSet.has(id)).length;
               } else {
-                totalQs = course.modules.length * 10;
+                totalQs = (course.modules || []).length * 10;
               }
 
               const percentage = totalQs > 0 ? Math.round((solvedQs / totalQs) * 100) : 0;
@@ -2455,6 +2465,9 @@ const PracticeHome = () => {
                           if (courseFilter === 'All') return true;
                           let totalQs = 0;
                           let solvedQs = 0;
+                          const normId = c.id.replace(/-/g, '_');
+                          const mappedQids = courseQuestionIds[c.id] || courseQuestionIds[normId] || [];
+
                           if (c.id === 'programming_fundamentals') {
                             totalQs = 348;
                             solvedQs = solvedIds.filter(id => id.startsWith('Q0.')).length;
@@ -2473,15 +2486,12 @@ const PracticeHome = () => {
                           } else if (c.id === 'learn_aptitude') {
                             totalQs = 119;
                             solvedQs = solvedIds.filter(id => id.startsWith('Q_apt_')).length;
+                          } else if (mappedQids.length > 0) {
+                            totalQs = mappedQids.length;
+                            solvedQs = mappedQids.filter(id => solvedIdsSet.has(id)).length;
                           } else {
-                            const mappedQids = courseQuestionIds[c.id] || [];
-                            if (mappedQids.length > 0) {
-                              totalQs = mappedQids.length;
-                              solvedQs = mappedQids.filter(id => solvedIdsSet.has(id)).length;
-                            } else {
-                              totalQs = (c.modules || []).length * 10;
-                              solvedQs = 0;
-                            }
+                            totalQs = (c.modules || []).length * 10;
+                            solvedQs = 0;
                           }
 
                           if (courseFilter === 'Completed') return totalQs > 0 && solvedQs === totalQs;
@@ -2501,6 +2511,8 @@ const PracticeHome = () => {
                       return filtered.map(course => {
                         let totalQs = 0;
                         let solvedQs = 0;
+                        const normId = course.id.replace(/-/g, '_');
+                        const mappedQids = courseQuestionIds[course.id] || courseQuestionIds[normId] || [];
 
                         if (course.id === 'programming_fundamentals') {
                           totalQs = 348;
@@ -2520,15 +2532,12 @@ const PracticeHome = () => {
                         } else if (course.id === 'learn_aptitude') {
                           totalQs = 119;
                           solvedQs = solvedIds.filter(id => id.startsWith('Q_apt_')).length;
+                        } else if (mappedQids.length > 0) {
+                          totalQs = mappedQids.length;
+                          solvedQs = mappedQids.filter(id => solvedIdsSet.has(id)).length;
                         } else {
-                          const mappedQids = courseQuestionIds[course.id] || [];
-                          if (mappedQids.length > 0) {
-                            totalQs = mappedQids.length;
-                            solvedQs = mappedQids.filter(id => solvedIdsSet.has(id)).length;
-                          } else {
-                            totalQs = (course.modules || []).length * 10;
-                            solvedQs = 0;
-                          }
+                          totalQs = (course.modules || []).length * 10;
+                          solvedQs = 0;
                         }
 
                         const style = {
@@ -2540,6 +2549,7 @@ const PracticeHome = () => {
                         };
 
                         const isCompleted = totalQs > 0 && solvedQs === totalQs;
+                        const moduleCount = mappedQids.length > 0 ? Math.ceil(mappedQids.length / 10) : (course.modules?.length || 1);
 
                         return (
                           <div
@@ -2571,7 +2581,7 @@ const PracticeHome = () => {
 
                             <div className="ps-card-footer">
                               <span className="ps-card-stats">
-                                {solvedQs}/{totalQs} Solved
+                                {solvedQs}/{totalQs} Solved • {moduleCount} {moduleCount === 1 ? 'Module' : 'Modules'}
                               </span>
 
                               <div className="ps-card-actions">

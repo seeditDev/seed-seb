@@ -697,6 +697,204 @@ const MultiSectionAssessment = () => {
   const examFinishedRef = useRef(examFinished);
   useEffect(() => { examFinishedRef.current = examFinished; }, [examFinished]);
 
+  const autoSubmitEntireExam = useCallback((reason) => {
+    if (examFinishedRef.current) return;
+    examFinishedRef.current = true;
+    setSecStarted(false);
+    clearInterval(timerRef.current);
+
+    if (user?.Email && assessment) {
+      const college = user.College || 'KGKITE';
+      const year = user.Year || '2026';
+      
+      const sectionsList = Object.values(examResults).map(sec => ({
+        sectionName: sec.sectionName || '',
+        name: sec.sectionName || '',
+        score: sec.data?.score || 0,
+        totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
+        maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0
+      }));
+
+      const aggregatedQuestions = Object.values(examResults)
+        .filter(sec => sec.type === 'mcq' && sec.data?.questions)
+        .reduce((acc, sec) => acc.concat(sec.data.questions), []);
+
+      const aggregatedCoding = Object.values(examResults)
+        .filter(sec => sec.type === 'coding' && sec.data?.coding)
+        .reduce((acc, sec) => acc.concat(sec.data.coding), []);
+
+      const totalMarksSum = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
+
+      const totalScore = Object.values(examResults).reduce((a, s) => a + (s.data?.score || 0), 0);
+      const totalQ = Object.values(examResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
+      const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
+      const totalViolations = proctoringData.violationCount;
+
+      // Scoring fields
+      const partialScore = totalScore;
+      const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
+
+      const timeStartedISO = examStartTimeRef.current;
+      const timeEndedISO = new Date().toISOString();
+      const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(timeStartedISO).getTime()) / 1000);
+      const timeM = Math.floor(timeTaken / 60);
+      const timeS = timeTaken % 60;
+      const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
+
+      const totalNoFace = Object.values(examResults).reduce((a, s) => a + (s.data?.totalNoFace || 0), 0) + 
+                          (proctoringData.violations.filter(v => v.type === 'no_face').length);
+      const totalMultipleFaces = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMultipleFaces || 0), 0) + 
+                                 (proctoringData.violations.filter(v => v.type === 'multiple_faces').length);
+      
+      const allViolations = proctoringData.violations;
+
+      const attemptData = {
+        email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
+        college, year, department: user.Department || '',
+        testID: assessment.id, testName: assessment.name,
+        assessmentId: assessment.id, assessmentName: assessment.name,
+        submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
+        type: 'multisection',
+        sections: examResults,
+        sectionsArray: sectionsList,
+        questions: aggregatedQuestions,
+        coding: aggregatedCoding,
+        totalMarks: totalMarksSum,
+        score: totalScore,
+        totalQuestions: totalQ,
+        correctAnswers: totalScore,
+        incorrectAnswers: totalQ - totalScore,
+        percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+        partialScore,
+        fullScore,
+        timeTaken: timeTakenFormatted,
+        timeTakenSeconds: timeTaken,
+        violationCount: totalViolations,
+        totalNoFace,
+        totalMultipleFaces,
+        completed: true,
+        status: 'submitted',
+        autoSubmitted: true,
+        autoSubmitReason: reason || 'proctoring_violations'
+      };
+
+      const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+      setDoc(doc(db, docPath), attemptData, { merge: true })
+        .then(() => console.log('[MSA] Final result saved to Firestore'))
+        .catch(e => console.error('[MSA] Firestore final save failed:', e));
+
+      setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
+        .catch(e => console.error('[MSA] Student-centric save failed:', e));
+
+      safeUpsert('mcq_results', {
+        roll_number: user['Roll Number'] || '',
+        name: user.Name || '',
+        email: user.Email,
+        college,
+        year,
+        department: user.Department || '',
+        test_id: assessment.id,
+        test_name: assessment.name,
+        score: totalScore,
+        total_questions: totalQ,
+        correct_answers: totalScore,
+        incorrect_answers: totalQ - totalScore,
+        percentage: pct,
+        partial_score: partialScore,
+        full_score: fullScore,
+        time_taken: timeTaken,
+        time_taken_formatted: timeTakenFormatted,
+        time_started: timeStartedISO,
+        time_ended: timeEndedISO,
+        submitted_at: timeEndedISO,
+        auto_submitted: true,
+        auto_submit_reason: reason || 'proctoring_violations',
+        violation_count: totalViolations,
+        total_no_face: totalNoFace,
+        total_multiple_faces: totalMultipleFaces,
+        violations: allViolations,
+        total_marks: totalMarksSum,
+        questions: aggregatedQuestions,
+        updated_at: timeEndedISO
+      }, { onConflict: 'email,test_id' }).then(
+        ({ data, error }) => {
+          if (error) {
+            console.warn('[MSA] Supabase mcq_results save failed:', error.message || error);
+          } else {
+            console.log('[MSA] Supabase mcq_results save succeeded:', data);
+          }
+        },
+        e => console.warn('[MSA] Supabase mcq_results save failed (transport):', e)
+      );
+
+      // Upsert to unified assessment_results table
+      safeUpsert('assessment_results', {
+        type: 'multisection',
+        test_id: assessment.id,
+        test_name: assessment.name,
+        roll_number: user['Roll Number'] || '',
+        name: user.Name || '',
+        email: user.Email,
+        college,
+        year,
+        department: user.Department || '',
+        score: totalScore,
+        total_questions: totalQ,
+        correct_answers: totalScore,
+        incorrect_answers: totalQ - totalScore,
+        percentage: pct,
+        partial_score: partialScore,
+        full_score: fullScore,
+        status: 'submitted',
+        time_taken: timeTaken,
+        time_taken_formatted: timeTakenFormatted,
+        time_started: timeStartedISO,
+        time_ended: timeEndedISO,
+        submitted_at: timeEndedISO,
+        auto_submitted: true,
+        auto_submit_reason: reason || 'proctoring_violations',
+        violation_count: totalViolations,
+        total_no_face: totalNoFace,
+        total_multiple_faces: totalMultipleFaces,
+        violations: allViolations,
+        total_marks: totalMarksSum,
+        questions: aggregatedQuestions,
+        coding: aggregatedCoding,
+        sections: sectionsList,
+        updated_at: timeEndedISO
+      }, { onConflict: 'email,test_id,type' }).then(
+        ({ data, error }) => {
+          if (error) {
+            console.warn('[MSA] Supabase assessment_results save failed:', error.message || error);
+          } else {
+            console.log('[MSA] Supabase assessment_results save succeeded:', data);
+          }
+        },
+        e => console.warn('[MSA] Supabase assessment_results save failed (transport):', e)
+      );
+    }
+
+    setExamFinished(true);
+    sessionStorage.removeItem('multisectionAssessmentData');
+    localStorage.removeItem(`msaProgress_${assessment?.id}`);
+
+    // Clear MCQ, Coding, and proctoring temporary workspace details
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        (assessment?.id && key.startsWith(`msa_active_mcq_state_${assessment.id}`)) ||
+        key.startsWith(`codingAssessmentCode`) ||
+        key.startsWith(`codingTimeSpentPerQ`) ||
+        key.startsWith(`proctor_violations_`) ||
+        key.startsWith(`proctor_events_`)
+      )) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  }, [assessment, user, examResults, proctoringData]);
+
   const handleProctorReady = useCallback(() => {
     console.log('[MSA] Camera Proctoring is ready');
     setIsVisualProctorReady(true);
@@ -991,204 +1189,6 @@ const MultiSectionAssessment = () => {
       if (section) setSecTimer((section.duration_minutes || 30) * 60);
     }
   }, [assessment]);
-
-  const autoSubmitEntireExam = useCallback((reason) => {
-    if (examFinishedRef.current) return;
-    examFinishedRef.current = true;
-    setSecStarted(false);
-    clearInterval(timerRef.current);
-
-    if (user?.Email && assessment) {
-      const college = user.College || 'KGKITE';
-      const year = user.Year || '2026';
-      
-      const sectionsList = Object.values(examResults).map(sec => ({
-        sectionName: sec.sectionName || '',
-        name: sec.sectionName || '',
-        score: sec.data?.score || 0,
-        totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
-        maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0
-      }));
-
-      const aggregatedQuestions = Object.values(examResults)
-        .filter(sec => sec.type === 'mcq' && sec.data?.questions)
-        .reduce((acc, sec) => acc.concat(sec.data.questions), []);
-
-      const aggregatedCoding = Object.values(examResults)
-        .filter(sec => sec.type === 'coding' && sec.data?.coding)
-        .reduce((acc, sec) => acc.concat(sec.data.coding), []);
-
-      const totalMarksSum = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
-
-      const totalScore = Object.values(examResults).reduce((a, s) => a + (s.data?.score || 0), 0);
-      const totalQ = Object.values(examResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
-      const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
-      const totalViolations = proctoringData.violationCount;
-
-      // Scoring fields
-      const partialScore = totalScore;
-      const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
-
-      const timeStartedISO = examStartTimeRef.current;
-      const timeEndedISO = new Date().toISOString();
-      const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(timeStartedISO).getTime()) / 1000);
-      const timeM = Math.floor(timeTaken / 60);
-      const timeS = timeTaken % 60;
-      const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
-
-      const totalNoFace = Object.values(examResults).reduce((a, s) => a + (s.data?.totalNoFace || 0), 0) + 
-                          (proctoringData.violations.filter(v => v.type === 'no_face').length);
-      const totalMultipleFaces = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMultipleFaces || 0), 0) + 
-                                 (proctoringData.violations.filter(v => v.type === 'multiple_faces').length);
-      
-      const allViolations = proctoringData.violations;
-
-      const attemptData = {
-        email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-        college, year, department: user.Department || '',
-        testID: assessment.id, testName: assessment.name,
-        assessmentId: assessment.id, assessmentName: assessment.name,
-        submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
-        type: 'multisection',
-        sections: examResults,
-        sectionsArray: sectionsList,
-        questions: aggregatedQuestions,
-        coding: aggregatedCoding,
-        totalMarks: totalMarksSum,
-        score: totalScore,
-        totalQuestions: totalQ,
-        correctAnswers: totalScore,
-        incorrectAnswers: totalQ - totalScore,
-        percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
-        partialScore,
-        fullScore,
-        timeTaken: timeTakenFormatted,
-        timeTakenSeconds: timeTaken,
-        violationCount: totalViolations,
-        totalNoFace,
-        totalMultipleFaces,
-        completed: true,
-        status: 'submitted',
-        autoSubmitted: true,
-        autoSubmitReason: reason || 'proctoring_violations'
-      };
-
-      const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
-      setDoc(doc(db, docPath), attemptData, { merge: true })
-        .then(() => console.log('[MSA] Final result saved to Firestore'))
-        .catch(e => console.error('[MSA] Firestore final save failed:', e));
-
-      setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
-        .catch(e => console.error('[MSA] Student-centric save failed:', e));
-
-      safeUpsert('mcq_results', {
-        roll_number: user['Roll Number'] || '',
-        name: user.Name || '',
-        email: user.Email,
-        college,
-        year,
-        department: user.Department || '',
-        test_id: assessment.id,
-        test_name: assessment.name,
-        score: totalScore,
-        total_questions: totalQ,
-        correct_answers: totalScore,
-        incorrect_answers: totalQ - totalScore,
-        percentage: pct,
-        partial_score: partialScore,
-        full_score: fullScore,
-        time_taken: timeTaken,
-        time_taken_formatted: timeTakenFormatted,
-        time_started: timeStartedISO,
-        time_ended: timeEndedISO,
-        submitted_at: timeEndedISO,
-        auto_submitted: true,
-        auto_submit_reason: reason || 'proctoring_violations',
-        violation_count: totalViolations,
-        total_no_face: totalNoFace,
-        total_multiple_faces: totalMultipleFaces,
-        violations: allViolations,
-        total_marks: totalMarksSum,
-        questions: aggregatedQuestions,
-        updated_at: timeEndedISO
-      }, { onConflict: 'email,test_id' }).then(
-        ({ data, error }) => {
-          if (error) {
-            console.warn('[MSA] Supabase mcq_results save failed:', error.message || error);
-          } else {
-            console.log('[MSA] Supabase mcq_results save succeeded:', data);
-          }
-        },
-        e => console.warn('[MSA] Supabase mcq_results save failed (transport):', e)
-      );
-
-      // Upsert to unified assessment_results table
-      safeUpsert('assessment_results', {
-        type: 'multisection',
-        test_id: assessment.id,
-        test_name: assessment.name,
-        roll_number: user['Roll Number'] || '',
-        name: user.Name || '',
-        email: user.Email,
-        college,
-        year,
-        department: user.Department || '',
-        score: totalScore,
-        total_questions: totalQ,
-        correct_answers: totalScore,
-        incorrect_answers: totalQ - totalScore,
-        percentage: pct,
-        partial_score: partialScore,
-        full_score: fullScore,
-        status: 'submitted',
-        time_taken: timeTaken,
-        time_taken_formatted: timeTakenFormatted,
-        time_started: timeStartedISO,
-        time_ended: timeEndedISO,
-        submitted_at: timeEndedISO,
-        auto_submitted: true,
-        auto_submit_reason: reason || 'proctoring_violations',
-        violation_count: totalViolations,
-        total_no_face: totalNoFace,
-        total_multiple_faces: totalMultipleFaces,
-        violations: allViolations,
-        total_marks: totalMarksSum,
-        questions: aggregatedQuestions,
-        coding: aggregatedCoding,
-        sections: sectionsList,
-        updated_at: timeEndedISO
-      }, { onConflict: 'email,test_id,type' }).then(
-        ({ data, error }) => {
-          if (error) {
-            console.warn('[MSA] Supabase assessment_results save failed:', error.message || error);
-          } else {
-            console.log('[MSA] Supabase assessment_results save succeeded:', data);
-          }
-        },
-        e => console.warn('[MSA] Supabase assessment_results save failed (transport):', e)
-      );
-    }
-
-    setExamFinished(true);
-    sessionStorage.removeItem('multisectionAssessmentData');
-    localStorage.removeItem(`msaProgress_${assessment.id}`);
-
-    // Clear MCQ, Coding, and proctoring temporary workspace details
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (
-        key.startsWith(`msa_active_mcq_state_${assessment.id}`) ||
-        key.startsWith(`codingAssessmentCode`) ||
-        key.startsWith(`codingTimeSpentPerQ`) ||
-        key.startsWith(`proctor_violations_`) ||
-        key.startsWith(`proctor_events_`)
-      )) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
-  }, [assessment, user, examResults, proctoringData]);
 
   const autoSubmitSection = useCallback((sectionResults) => {
     if (examFinishedRef.current) return;

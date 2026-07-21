@@ -895,6 +895,115 @@ const ProctoringEngine = ({
     };
   }, [initializeWebcam, isTestActive]);
 
+  // Draggable camera preview state
+  const containerRef = useRef(null);
+  const [position, setPosition] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('proctoring_camera_pos');
+      return saved ? JSON.parse(saved) : null;
+    } catch (_) {
+      return null;
+    }
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ mouseX: 0, mouseY: 0, elemX: 0, elemY: 0 });
+
+  const handleMouseDown = useCallback((e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const rect = containerRef.current?.getBoundingClientRect();
+    const elemX = rect ? rect.left : (window.innerWidth - 200);
+    const elemY = rect ? rect.top : 65;
+
+    dragStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      elemX,
+      elemY
+    };
+    setIsDragging(true);
+  }, []);
+
+  const handleTouchStart = useCallback((e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const rect = containerRef.current?.getBoundingClientRect();
+    const elemX = rect ? rect.left : (window.innerWidth - 200);
+    const elemY = rect ? rect.top : 65;
+
+    dragStartRef.current = {
+      mouseX: touch.clientX,
+      mouseY: touch.clientY,
+      elemX,
+      elemY
+    };
+    setIsDragging(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - dragStartRef.current.mouseX;
+      const deltaY = e.clientY - dragStartRef.current.mouseY;
+
+      const rect = containerRef.current?.getBoundingClientRect();
+      const width = rect ? rect.width : 200;
+      const height = rect ? rect.height : 150;
+
+      const rawX = dragStartRef.current.elemX + deltaX;
+      const rawY = dragStartRef.current.elemY + deltaY;
+
+      const clampedX = Math.max(10, Math.min(window.innerWidth - width - 10, rawX));
+      const clampedY = Math.max(10, Math.min(window.innerHeight - height - 10, rawY));
+
+      const newPos = { x: clampedX, y: clampedY };
+      setPosition(newPos);
+      try {
+        sessionStorage.setItem('proctoring_camera_pos', JSON.stringify(newPos));
+      } catch (_) {}
+    };
+
+    const handleTouchMove = (e) => {
+      if (!e.touches || e.touches.length === 0) return;
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - dragStartRef.current.mouseX;
+      const deltaY = touch.clientY - dragStartRef.current.mouseY;
+
+      const rect = containerRef.current?.getBoundingClientRect();
+      const width = rect ? rect.width : 200;
+      const height = rect ? rect.height : 150;
+
+      const rawX = dragStartRef.current.elemX + deltaX;
+      const rawY = dragStartRef.current.elemY + deltaY;
+
+      const clampedX = Math.max(10, Math.min(window.innerWidth - width - 10, rawX));
+      const clampedY = Math.max(10, Math.min(window.innerHeight - height - 10, rawY));
+
+      const newPos = { x: clampedX, y: clampedY };
+      setPosition(newPos);
+      try {
+        sessionStorage.setItem('proctoring_camera_pos', JSON.stringify(newPos));
+      } catch (_) {}
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging]);
+
   // Block exam if webcam is not available
   if (isWebcamBlocked) {
     return (
@@ -913,11 +1022,22 @@ const ProctoringEngine = ({
 
   return (
     <div className="proctoring-engine">
-      {/* Top Section: Violation Counter and Camera Preview - Side by side */}
-      <div className="proctoring-top-section">
+      {/* Top Section: Violation Counter and Camera Preview - Draggable */}
+      <div 
+        ref={containerRef}
+        className={`proctoring-top-section ${isDragging ? 'is-dragging' : ''}`}
+        style={position ? { top: `${position.y}px`, left: `${position.x}px`, right: 'auto', bottom: 'auto' } : {}}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+      >
         <div className="proctoring-top-row">
           {/* Mini Camera View */}
           <div className="mini-camera-view">
+            {/* Drag Handle Overlay */}
+            <div className="camera-drag-handle" title="Click and drag to move camera preview anywhere on screen">
+              <span className="drag-dots">⋮⋮</span>
+              <span>DRAG TO MOVE</span>
+            </div>
             <video
               ref={videoRef}
               autoPlay

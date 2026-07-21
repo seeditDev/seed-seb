@@ -10,6 +10,7 @@ import ProctoringInstructions from './ProctoringInstructions';
 import timeService from '../services/timeService';
 import { clearAllProctorCache } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
+import { getAuthData } from '../utils/storageUtils';
 
 // ========================================
 // PROCTORING CONFIGURATION
@@ -237,7 +238,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     // Load user data and access control
     useEffect(() => {
         if (isEmbedded) {
-            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
+            const authData = getAuthData();
             setUser(authData);
             if (testData) {
                 setCurrentTest({

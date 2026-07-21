@@ -3,6 +3,7 @@ import { FaDownload, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
 import DataService from '../services/dataService';
 import { API_ENDPOINTS, FILE_TYPES } from '../config/constants';
 import timeService from '../services/timeService';
+import { getAuthData } from '../utils/storageUtils';
 import '../styles/Assessment.css';
 
 // Define a loading spinner animation
@@ -1044,7 +1045,7 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                                             const sessionAuth = sessionStorage.getItem('hackerRankAuthInProgress');
                                             
                                             // Construct access URL based on user's college
-                                            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
+                                            const authData = getAuthData();
                                             const college = authData.College || '';
                                             const email = authData.Email || '';
                                             const hackerRankEmail = authData["Hackerrank Mail"] || email;
