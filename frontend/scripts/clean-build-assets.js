@@ -13,6 +13,16 @@ if (fs.existsSync(ignoreSrc)) {
   } catch (e) {}
 }
 
+// Copy index.html to 404.html for Cloudflare Pages native SPA fallback routing
+const indexHtml = path.join(buildDir, 'index.html');
+const fallback404 = path.join(buildDir, '404.html');
+if (fs.existsSync(indexHtml)) {
+  try {
+    fs.copyFileSync(indexHtml, fallback404);
+    console.log('[clean-build-assets] Generated 404.html for Cloudflare Pages SPA fallback.');
+  } catch (e) {}
+}
+
 // Remove local data folders from web build output
 ['articles', 'seed-contents'].forEach((folder) => {
   const target = path.join(buildDir, folder);
