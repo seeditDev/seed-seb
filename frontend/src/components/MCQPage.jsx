@@ -11,6 +11,7 @@ import timeService from '../services/timeService';
 import { clearAllProctorCache } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { getAuthData } from '../utils/storageUtils';
+import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 
 // ========================================
 // PROCTORING CONFIGURATION
@@ -1344,38 +1345,37 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 };
             });
 
-            const resultData = {
+            const rawResultData = {
                 email: user.Email,
                 college: user.College,
                 year: user.Year,
                 department: user.Department,
                 rollNumber: user["Roll Number"] || '',
                 name: user.Name || '',
-                testID: currentTest.testInfo?.id || currentTest.id || 'unknown',
-                testName: currentTest.name || currentTest.testInfo?.name || 'Unknown Test',
+                assessmentID: currentTest.testInfo?.id || currentTest.id || 'unknown',
+                assessmentName: currentTest.name || currentTest.testInfo?.name || 'Unknown Test',
+                testType: 'mcq',
                 score: correctAnswers,
                 totalQuestions: totalQuestions,
                 correctAnswers: correctAnswers,
                 incorrectAnswers: incorrectAnswers,
                 totalMarks: totalQuestions,
                 percentage: percentage,
-                timeTaken: timeTaken,
-                timeStarted: testStartTimeISO || timeService.getNow().toISOString(),
-                timeStartedISO: testStartTimeISO || timeService.getNow().toISOString(),
-                timeEnded: timeService.getNow().toISOString(),
-                timeEndedISO: timeService.getNow().toISOString(),
-                submittedAtISO: timeService.getNow().toISOString(),
+                timeTakenSeconds: timeTaken,
+                startedAt: testStartTimeISO || timeService.getNow().toISOString(),
+                submittedAt: timeService.getNow().toISOString(),
                 answers: answers,
                 questions: questionsDetails,
                 timeSpentPerQ: timeSpentPerQ,
                 autoSubmitted: currentTest.autoSubmitted || false,
                 autoSubmitReason: '',
-                // Include proctoring data
                 violationCount: proctoringData.violationCount || 0,
                 totalNoFace: violationStats.totalNoFace || 0,
                 totalMultipleFaces: violationStats.totalMultipleFaces || 0,
                 violations: proctoringData.violations || []
             };
+
+            const resultData = buildUnifiedResultPayload(rawResultData);
 
             console.log('[MCQPage] Submitting result:', resultData);
 

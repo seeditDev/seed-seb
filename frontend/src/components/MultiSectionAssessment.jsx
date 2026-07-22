@@ -25,6 +25,7 @@ import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
+import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -645,6 +646,7 @@ const MultiSectionAssessment = () => {
 
   // coordinator refs
   const examStartTimeRef = useRef(new Date().toISOString());
+  const sectionStartTimesRef = useRef({});
 
   // Section coordinator state
   const [currentSecIdx, setCurrentSecIdx] = useState(-1);
@@ -748,11 +750,12 @@ const MultiSectionAssessment = () => {
       
       const allViolations = proctoringData.violations;
 
-      const attemptData = {
+      const rawAttemptData = {
         email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
         college, year, department: user.Department || '',
         testID: assessment.id, testName: assessment.name,
         assessmentId: assessment.id, assessmentName: assessment.name,
+        startedAt: timeStartedISO,
         submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
         type: 'multisection',
         sections: examResults,
@@ -772,11 +775,14 @@ const MultiSectionAssessment = () => {
         violationCount: totalViolations,
         totalNoFace,
         totalMultipleFaces,
+        violations: allViolations,
         completed: true,
         status: 'submitted',
         autoSubmitted: true,
         autoSubmitReason: reason || 'proctoring_violations'
       };
+
+      const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
       const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
       setDoc(doc(db, docPath), attemptData, { merge: true })
@@ -1177,6 +1183,7 @@ const MultiSectionAssessment = () => {
 
   const handleStartSection = useCallback((idx) => {
     submittingSecIdxRef.current = -1;
+    sectionStartTimesRef.current[idx] = new Date().toISOString();
     setCountdownSecIdx(idx);
     setSectionCountdown(10);
     setCurrentSecIdx(idx);
@@ -1203,11 +1210,18 @@ const MultiSectionAssessment = () => {
     const activeSection = assessment.sections[currentSecIdx];
     if (!activeSection) return;
 
+    const secStartTimeISO = sectionStartTimesRef.current[currentSecIdx] || new Date().toISOString();
+    const secEndTimeISO = new Date().toISOString();
+    const secTimeSpentSeconds = Math.round((new Date(secEndTimeISO).getTime() - new Date(secStartTimeISO).getTime()) / 1000);
+
     const updatedResults = {
       ...examResults,
       [activeSection.sectionId]: {
         sectionName: activeSection.name,
         type: activeSection.type,
+        startTimeISO: secStartTimeISO,
+        endTimeISO: secEndTimeISO,
+        timeSpentSeconds: secTimeSpentSeconds,
         data: sectionResults || {}
       }
     };

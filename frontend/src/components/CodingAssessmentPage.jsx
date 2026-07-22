@@ -15,6 +15,7 @@ import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import { getAuthData } from '../utils/storageUtils';
+import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import '../styles/CodingAssessmentPage.css';
 
 const LOCAL_BASE_URL = '/seed-contents';
@@ -277,6 +278,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         return {};
     });
 
+    const [questionStartTimes, setQuestionStartTimes] = useState(() => {
+        try {
+            const saved = localStorage.getItem("codingQuestionStartTimes");
+            if (saved) return JSON.parse(saved) || {};
+        } catch (_) {}
+        return {};
+    });
+
     useEffect(() => {
         localStorage.setItem("codingTimeSpentPerQ", JSON.stringify(timeSpentPerQ));
     }, [timeSpentPerQ]);
@@ -288,6 +297,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     useEffect(() => {
         localStorage.setItem("codingQuestionSubmitTimes", JSON.stringify(questionSubmitTimes));
     }, [questionSubmitTimes]);
+
+    useEffect(() => {
+        localStorage.setItem("codingQuestionStartTimes", JSON.stringify(questionStartTimes));
+    }, [questionStartTimes]);
 
     useEffect(() => {
         return () => {
@@ -501,6 +514,15 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         window.addEventListener('mousemove', onMove);
         window.addEventListener('mouseup', onUp);
     }, [leftPaneWidth]);
+
+    useEffect(() => {
+        if (currentQuestion && currentQuestion.id) {
+            setQuestionStartTimes(prev => {
+                if (prev[currentQuestion.id]) return prev;
+                return { ...prev, [currentQuestion.id]: new Date().toISOString() };
+            });
+        }
+    }, [currentQuestion]);
 
     // Horizontal divider drag (editor/output pane split within right pane)
     const startHorizDrag = useCallback((e) => {
@@ -1661,11 +1683,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     attempts: compilationCounts[q.id] || 0,
                     timeComplexity: q.timeComplexity || '',
                     spaceComplexity: q.spaceComplexity || '',
+                    timeSpentSeconds: timeSpentPerQ[q.id] || 0,
+                    startedAt: questionStartTimes[q.id] || new Date(startTime).toISOString(),
                     submittedAt: questionSubmitTimes[q.id] || new Date().toISOString()
                 };
             });
 
-            const resultData = {
+            const rawResultData = {
                 email: user.Email,
                 college: user.College,
                 year: user.Year,
@@ -1674,15 +1698,16 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 name: user.Name || '',
                 assessmentID: currentAssessment.id,
                 assessmentName: currentAssessment.name,
+                testType: 'coding',
                 score: totalEarnedWeight,
                 totalQuestions: questions.length,
                 correctAnswers: totalEarnedWeight,
                 incorrectAnswers: totalMaxWeight - totalEarnedWeight,
                 totalMarks: totalMaxWeight,
                 percentage: finalPercent,
-                timeTaken: elapsed,
-                timeStartedISO: new Date(startTime).toISOString(),
-                timeEndedISO: timeService.getNow().toISOString(),
+                timeTakenSeconds: elapsed,
+                startedAt: new Date(startTime).toISOString(),
+                submittedAt: timeService.getNow().toISOString(),
                 autoSubmitted: false,
                 autoSubmitReason: '',
                 violationCount: violationCount,
@@ -1690,12 +1715,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 totalMultipleFaces: 0,
                 violations: [],
                 languageUsed: language,
-                coding: codingSubmissions,
+                codingSubmissions: codingSubmissions,
                 executionStats: {
                     scores: finalScores,
                     codeMap: codeMap
                 }
             };
+
+            const resultData = buildUnifiedResultPayload(rawResultData);
 
             await CodingAssessmentService.submitCodingResult(resultData);
             clearLocalSession();
