@@ -1,6 +1,16 @@
+process.env.CI = "false";
+
 module.exports = {
   webpack: {
     configure: (webpackConfig) => {
+      // Add browser polyfill fallbacks for Node modules (e.g. face-api.js)
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false
+      };
+
       // Suppress source map warnings from node_modules (especially face-api.js)
       webpackConfig.module.rules = webpackConfig.module.rules.map((rule) => {
         if (rule.enforce === 'pre' && rule.use && Array.isArray(rule.use)) {
