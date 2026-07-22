@@ -112,7 +112,15 @@ class RuntimeManager:
         return True
 
     def get_binary_path(self, binary_name):
-        return self.binaries.get(binary_name, binary_name)
+        path = self.binaries.get(binary_name, binary_name)
+        if path and os.path.exists(path):
+            return path
+        if binary_name == "python":
+            return sys.executable if sys.executable else "python"
+        found = shutil.which(binary_name)
+        if found:
+            return found
+        return path
 
 # Singleton instance
 runtime_manager = RuntimeManager()

@@ -667,31 +667,46 @@ class PreLaunchDialog(QDialog):
         except Exception:
             pass
 
-        # 2. Kill any FORBIDDEN_PROCESSES already running before launch
+        # 2. Kill any FORBIDDEN_PROCESSES already running before launch (excluding self and system shells)
+        mypid = os.getpid()
+        SAFE_SYSTEM_BINARIES = {
+            'cmd.exe', 'powershell.exe', 'pwsh.exe', 'conhost.exe',
+            'windowsterminal.exe', 'wt.exe', 'python.exe', 'python3.exe', 'pythonw.exe'
+        }
         killed = []
         for proc in psutil.process_iter(attrs=['pid', 'name']):
             try:
                 name = proc.info.get('name', '')
-                if name and name.lower() in [p.lower() for p in FORBIDDEN_PROCESSES]:
-                    psutil.Process(proc.info['pid']).terminate()
+                pid = proc.info.get('pid')
+                if not name or not pid or pid == mypid:
+                    continue
+                if is_descendant(pid, mypid):
+                    continue
+                name_lower = name.lower()
+                if name_lower in SAFE_SYSTEM_BINARIES:
+                    continue
+                if name_lower in [p.lower() for p in FORBIDDEN_PROCESSES]:
+                    psutil.Process(pid).terminate()
                     killed.append(name)
                     logging.warning(f'[Security] Pre-launch terminated: {name}')
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
 
-        if threats_found or killed:
+        if threats_found:
             self.debugger_check_passed = False
-            detail = ', '.join(threats_found + killed)
-            self.debugger_label.setText(f"🛡️ <b>Security Scan:</b> Blocked & cleaned ({detail[:60]})")
-            self.debugger_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
-            if threats_found:
-                # Debugger on the process itself — hard block
-                self.debugger_check_passed = False
-                self.show_error('Debugger detected. Please close all debugging tools and restart.')
+            self.debugger_label.setText(f"🛡️ <b>Security Scan:</b> Debugger detected ({threats_found[0]})")
+            self.debugger_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.show_error('Debugger detected. Please close all debugging tools and restart.')
         else:
             self.debugger_check_passed = True
-            self.debugger_label.setText("✅ <b>Security Scan:</b> No threats detected")
-            self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            if killed:
+                unique_killed = list(set(killed))
+                detail = ', '.join(unique_killed[:3])
+                self.debugger_label.setText(f"✅ <b>Security Scan:</b> Cleaned background apps ({detail})")
+                self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            else:
+                self.debugger_label.setText("✅ <b>Security Scan:</b> System secure (No threats)")
+                self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def check_version(self):
@@ -739,7 +754,7 @@ class PreLaunchDialog(QDialog):
         if self.internet_check_passed and self.version_check_passed and self.debugger_check_passed:
             self.checks_passed = True
             self.launch_button.setEnabled(True)
-            self.launch_button.setText("\U0001f680 Launch Application")
+            self.launch_button.setText("Launch Application")
         else:
             self.checks_passed = False
             self.launch_button.setEnabled(False)
@@ -799,19 +814,27 @@ class ProcessTerminationThread(QThread):
     def run(self):
         mypid = os.getpid()
         forbidden_lower = {p.lower() for p in FORBIDDEN_PROCESSES}
+        SAFE_SYSTEM_BINARIES = {
+            'cmd.exe', 'powershell.exe', 'pwsh.exe', 'conhost.exe',
+            'windowsterminal.exe', 'wt.exe', 'python.exe', 'python3.exe', 'pythonw.exe'
+        }
         while not self.stopped:
             for proc in psutil.process_iter(attrs=['pid', 'name']):
                 name = proc.info.get('name')
-                if name and name.lower() in forbidden_lower:
-                    pid = proc.info['pid']
-                    if is_descendant(pid, mypid):
+                if name:
+                    name_lower = name.lower()
+                    if name_lower in SAFE_SYSTEM_BINARIES:
                         continue
-                    try:
-                        p = psutil.Process(pid)
-                        p.terminate()
-                        logging.warning(f"Terminated unauthorized process: {name} (PID: {pid})")
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        pass
+                    if name_lower in forbidden_lower:
+                        pid = proc.info['pid']
+                        if pid == mypid or is_descendant(pid, mypid):
+                            continue
+                        try:
+                            p = psutil.Process(pid)
+                            p.terminate()
+                            logging.warning(f"Terminated unauthorized process: {name} (PID: {pid})")
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            pass
             self.sleep(1)
 
 
@@ -970,8 +993,19 @@ class MainWindow(QMainWindow):
                 color: #f8fafc;
                 border-color: #475569;
             }
-            QPushButton:pressed {
-                background-color: #475569;
+            QPushButton#wifiBtn {
+                background-color: #1e293b;
+                color: #38bdf8;
+                border: 1px solid #334155;
+            }
+            QPushButton#wifiBtn:hover {
+                background-color: #334155;
+                color: #7dd3fc;
+                border-color: #38bdf8;
+            }
+            QPushButton#wifiBtn.disconnected {
+                color: #ef4444;
+                border-color: #ef4444;
             }
             QPushButton#logoutBtn {
                 background-color: #ef4444;
@@ -1009,14 +1043,20 @@ class MainWindow(QMainWindow):
         logo_label = QLabel("🛡️ SEED-IT Secure Portal")
         logo_label.setStyleSheet("color: white; font-weight: bold; font-size: 14px; margin-right: 15px;")
 
-        # Logout Button (Force Close behavior)
+        # Wi-Fi Quick Settings Button (header near Logout)
+        wifi_btn = QPushButton("📶 Wi-Fi")
+        wifi_btn.setObjectName("wifiBtn")
+        wifi_btn.clicked.connect(self.toggle_wifi_panel)
+
+        # Logout Button (Triggers 10-second countdown closing page)
         logout_btn = QPushButton("🚪 Logout")
         logout_btn.setObjectName("logoutBtn")
-        logout_btn.clicked.connect(self.force_close_application)
+        logout_btn.clicked.connect(self.start_logout_sequence)
 
         # Store button references as attributes to enable/disable dynamically
         self.back_btn = back_btn
         self.forward_btn = forward_btn
+        self.wifi_btn = wifi_btn
         self.logout_btn = logout_btn
 
         # Add to layout
@@ -1025,6 +1065,7 @@ class MainWindow(QMainWindow):
         nav_layout.addWidget(refresh_btn)
         nav_layout.addStretch(1)
         nav_layout.addWidget(logo_label)
+        nav_layout.addWidget(wifi_btn)
         nav_layout.addWidget(logout_btn)
 
         self.main_layout.addWidget(nav_bar)
@@ -1232,6 +1273,8 @@ class MainWindow(QMainWindow):
         # Hide exit/navigation buttons on assessment pages, show them on dashboards/login
         self.back_btn.setVisible(not is_assessment)
         self.forward_btn.setVisible(not is_assessment)
+        if hasattr(self, 'wifi_btn'):
+            self.wifi_btn.setVisible(not is_assessment)
         self.logout_btn.setVisible(not is_assessment)
         
         logging.info(f"URL changed: {url.toString()} (Assessment Active: {is_assessment})")
@@ -1274,15 +1317,113 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
+    def toggle_wifi_panel(self):
+        """Opens or closes the Windows-style Wi-Fi Quick Panel underneath the Wi-Fi navbar button."""
+        if hasattr(self, 'wifi_panel') and self.wifi_panel and self.wifi_panel.isVisible():
+            self.wifi_panel.close()
+            self.wifi_panel = None
+            return
+
+        self.wifi_panel = WindowsWifiPanel(self)
+        
+        # Position panel directly under the Wi-Fi header button
+        btn_pos = self.wifi_btn.mapToGlobal(self.wifi_btn.rect().bottomLeft())
+        panel_x = btn_pos.x() - self.wifi_panel.width() + self.wifi_btn.width()
+        panel_y = btn_pos.y() + 4
+        
+        screen_geo = QApplication.primaryScreen().geometry()
+        if panel_x + self.wifi_panel.width() > screen_geo.width():
+            panel_x = screen_geo.width() - self.wifi_panel.width() - 10
+        if panel_x < 10:
+            panel_x = 10
+            
+        self.wifi_panel.move(panel_x, panel_y)
+        self.wifi_panel.show()
+
+    def update_wifi_button_status(self, is_connected):
+        """Updates the Wi-Fi button status color & text silently without intrusive popups."""
+        if not hasattr(self, 'wifi_btn'):
+            return
+        if is_connected:
+            self.wifi_btn.setText("📶 Wi-Fi")
+            self.wifi_btn.setProperty("class", "")
+            self.wifi_btn.setStyleSheet("""
+                QPushButton#wifiBtn {
+                    background-color: #1e293b;
+                    color: #38bdf8;
+                    border: 1px solid #334155;
+                }
+                QPushButton#wifiBtn:hover {
+                    background-color: #334155;
+                    color: #7dd3fc;
+                    border-color: #38bdf8;
+                }
+            """)
+        else:
+            self.wifi_btn.setText("⚠️ Wi-Fi (Offline)")
+            self.wifi_btn.setStyleSheet("""
+                QPushButton#wifiBtn {
+                    background-color: rgba(239, 68, 68, 0.15);
+                    color: #f87171;
+                    border: 1px solid #ef4444;
+                }
+                QPushButton#wifiBtn:hover {
+                    background-color: rgba(239, 68, 68, 0.3);
+                    color: #white;
+                }
+            """)
+
     def verify_internet_connectivity(self):
-        """Periodic check for internet connectivity. If lost, opens the custom WiFi configuration dialog."""
+        """Periodic check for internet connectivity. Updates header status silently without intrusive popups."""
         try:
-            # Quick request to verify connection
             requests.get("https://www.google.com", timeout=4)
+            self.update_wifi_button_status(True)
         except Exception:
-            logging.warning("Internet connection lost during periodic check. Opening WifiSetupDialog.")
-            dialog = WifiSetupDialog(self)
-            dialog.exec()
+            logging.warning("Internet connection check: Offline status detected.")
+            self.update_wifi_button_status(False)
+
+    def start_logout_sequence(self):
+        """Triggers a 10-second graceful exit countdown page upon Logout click to allow complete cleanup."""
+        logging.info("Logout clicked. Initiating 10-second graceful exit sequence...")
+        
+        # Stop periodic timers
+        try:
+            if hasattr(self, 'conn_monitor_timer'):
+                self.conn_monitor_timer.stop()
+            if hasattr(self, 'vd_guard_timer'):
+                self.vd_guard_timer.stop()
+        except Exception:
+            pass
+
+        # Unhook keyboard locks & restore touchpad gestures
+        self.unblock_win_shortcuts()
+        self._restore_swipe_gestures()
+
+        # Show 10-second countdown closing page
+        dialog = LogoutCountdownDialog(self)
+        dialog.exec()
+
+        # Perform final process & server cleanup
+        try:
+            if hasattr(self, 'process_terminator') and self.process_terminator:
+                self.process_terminator.stop()
+        except Exception:
+            pass
+        try:
+            if self.local_server:
+                self.local_server.shutdown()
+                self.local_server.server_close()
+        except Exception:
+            pass
+        try:
+            if self.model_server:
+                self.model_server.shutdown()
+                self.model_server.server_close()
+        except Exception:
+            pass
+
+        logging.info("Logout 10-second sequence finished. Exiting application.")
+        os._exit(0)
 
     def closeEvent(self, event):
         """Asks for confirmation using custom ExitConfirmDialog, blocking it entirely during assessments."""
@@ -1354,6 +1495,312 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logging.warning(f"[Security] Could not restore swipe gestures: {e}")
 
+
+
+class LogoutCountdownDialog(QDialog):
+    """10-second countdown dialog displayed upon Logout to allow complete background cleanup."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Closing SEED-SEB")
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setModal(True)
+        self.setFixedSize(520, 260)
+        self.remaining_seconds = 10
+        self.init_ui()
+
+    def init_ui(self):
+        self.setObjectName("logoutCountdownDialog")
+        self.setStyleSheet("""
+            QDialog#logoutCountdownDialog {
+                background-color: #0f172a;
+                border: 2px solid #3b82f6;
+                border-radius: 14px;
+            }
+            QLabel#titleLabel {
+                color: #f8fafc;
+                font-size: 18px;
+                font-weight: 700;
+            }
+            QLabel#descLabel {
+                color: #94a3b8;
+                font-size: 13px;
+                line-height: 1.5;
+            }
+            QLabel#timerLabel {
+                color: #38bdf8;
+                font-size: 36px;
+                font-weight: 800;
+            }
+            QProgressBar {
+                border: none;
+                border-radius: 5px;
+                background-color: #1e293b;
+                height: 10px;
+            }
+            QProgressBar::chunk {
+                background-color: #3b82f6;
+                border-radius: 5px;
+            }
+            QPushButton#closeNowBtn {
+                background-color: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 20px;
+                font-weight: 600;
+                font-size: 13px;
+            }
+            QPushButton#closeNowBtn:hover {
+                background-color: #dc2626;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(30, 26, 30, 26)
+        layout.setSpacing(14)
+
+        # Header Title
+        title_row = QHBoxLayout()
+        icon = QLabel("🚪")
+        icon.setStyleSheet("font-size: 24px; background: transparent;")
+        title = QLabel("Logging Out & Closing Application...", self)
+        title.setObjectName("titleLabel")
+        title_row.addWidget(icon)
+        title_row.addWidget(title)
+        title_row.addStretch()
+        layout.addLayout(title_row)
+
+        # Description
+        desc = QLabel(
+            "Safely saving progress, flushing proctoring logs, and releasing system hooks.\n"
+            "The application will automatically close when complete.",
+            self
+        )
+        desc.setObjectName("descLabel")
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        # Countdown Display + Progress Bar
+        counter_row = QHBoxLayout()
+        self.timer_label = QLabel("10s", self)
+        self.timer_label.setObjectName("timerLabel")
+        counter_row.addWidget(self.timer_label)
+
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(100)
+        self.progress_bar.setTextVisible(False)
+        counter_row.addWidget(self.progress_bar, 1)
+        layout.addLayout(counter_row)
+
+        # Bottom row with Exit Now button
+        btn_row = QHBoxLayout()
+        status_info = QLabel("✨ Releasing hardware & network locks...", self)
+        status_info.setStyleSheet("color: #64748b; font-size: 12px; font-style: italic;")
+        btn_row.addWidget(status_info)
+        btn_row.addStretch()
+
+        exit_now_btn = QPushButton("Close Immediately ➔", self)
+        exit_now_btn.setObjectName("closeNowBtn")
+        exit_now_btn.clicked.connect(self.accept)
+        btn_row.addWidget(exit_now_btn)
+        layout.addLayout(btn_row)
+
+        # Start 1-second countdown timer
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.tick)
+        self.timer.start(1000)
+
+    def tick(self):
+        self.remaining_seconds -= 1
+        self.timer_label.setText(f"{self.remaining_seconds}s")
+        self.progress_bar.setValue(int((self.remaining_seconds / 10.0) * 100))
+
+        if self.remaining_seconds <= 0:
+            self.timer.stop()
+            self.accept()
+
+
+class WindowsWifiPanel(QDialog):
+    """Windows 11 / Windows 10 Quick Settings style Wi-Fi Dropdown Panel."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Wi-Fi Quick Panel")
+        self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setModal(False)
+        self.setFixedSize(360, 420)
+        self.init_ui()
+
+    def init_ui(self):
+        self.setObjectName("windowsWifiPanel")
+        self.setStyleSheet("""
+            QDialog#windowsWifiPanel {
+                background-color: #0f172a;
+                border: 1px solid #334155;
+                border-radius: 12px;
+            }
+            QLabel {
+                color: #f8fafc;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QComboBox, QLineEdit {
+                background-color: #1e293b;
+                color: #f8fafc;
+                border: 1px solid #334155;
+                border-radius: 6px;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            QComboBox:focus, QLineEdit:focus {
+                border-color: #38bdf8;
+            }
+            QPushButton {
+                border-radius: 6px;
+                padding: 7px 14px;
+                font-weight: 600;
+                font-size: 12px;
+            }
+            QPushButton#connectBtn {
+                background-color: #38bdf8;
+                color: #0f172a;
+                border: none;
+            }
+            QPushButton#connectBtn:hover {
+                background-color: #0284c7;
+                color: white;
+            }
+            QPushButton#refreshBtn {
+                background-color: #334155;
+                color: #cbd5e1;
+                border: 1px solid #475569;
+            }
+            QPushButton#refreshBtn:hover {
+                background-color: #475569;
+                color: #f8fafc;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 16, 18, 16)
+        layout.setSpacing(12)
+
+        # Header Title Row
+        header_row = QHBoxLayout()
+        wifi_title = QLabel("📶  Wi-Fi Networks", self)
+        wifi_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #f8fafc;")
+        header_row.addWidget(wifi_title)
+        header_row.addStretch()
+
+        self.refresh_btn = QPushButton("🔄 Refresh", self)
+        self.refresh_btn.setObjectName("refreshBtn")
+        self.refresh_btn.clicked.connect(self.refresh_networks)
+        header_row.addWidget(self.refresh_btn)
+        layout.addLayout(header_row)
+
+        # Active Network Status Card
+        self.status_card = QWidget(self)
+        self.status_card.setStyleSheet("""
+            QWidget {
+                background-color: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 10px;
+            }
+        """)
+        card_layout = QVBoxLayout(self.status_card)
+        card_layout.setContentsMargins(10, 8, 10, 8)
+        
+        self.status_lbl = QLabel("Checking connection...", self)
+        self.status_lbl.setStyleSheet("font-size: 12px; font-weight: 600; color: #38bdf8;")
+        card_layout.addWidget(self.status_lbl)
+        layout.addWidget(self.status_card)
+
+        # Wi-Fi Select dropdown
+        layout.addWidget(QLabel("Select Available Network:", self))
+        from PyQt6.QtWidgets import QComboBox, QLineEdit
+        self.wifi_combo = QComboBox(self)
+        layout.addWidget(self.wifi_combo)
+
+        # Password input
+        layout.addWidget(QLabel("Security Key / Password:", self))
+        self.password_input = QLineEdit(self)
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_input.setPlaceholderText("Enter Wi-Fi password")
+        layout.addWidget(self.password_input)
+
+        # Status Notice
+        self.msg_label = QLabel("", self)
+        self.msg_label.setStyleSheet("color: #fca5a5; font-size: 12px; font-weight: 600;")
+        layout.addWidget(self.msg_label)
+
+        # Connect button
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        self.connect_btn = QPushButton("Connect", self)
+        self.connect_btn.setObjectName("connectBtn")
+        self.connect_btn.clicked.connect(self.attempt_connect)
+        btn_row.addWidget(self.connect_btn)
+        layout.addLayout(btn_row)
+
+        # Initial scan
+        self.refresh_networks()
+
+    def refresh_networks(self):
+        self.wifi_combo.clear()
+        self.msg_label.setText("Scanning Wi-Fi networks...")
+        QApplication.processEvents()
+        
+        # Check current internet state
+        connected = False
+        try:
+            r = requests.get("https://www.google.com", timeout=3)
+            connected = (r.status_code == 200)
+        except Exception:
+            connected = False
+
+        if connected:
+            self.status_lbl.setText("🟢 Connected to Internet")
+            self.status_lbl.setStyleSheet("color: #10b981; font-weight: bold;")
+        else:
+            self.status_lbl.setText("🔴 Disconnected — No Internet Access")
+            self.status_lbl.setStyleSheet("color: #ef4444; font-weight: bold;")
+
+        wifis = get_available_wifis()
+        if wifis:
+            for w in wifis:
+                self.wifi_combo.addItem(f"📶 {w}")
+            self.msg_label.setText(f"Found {len(wifis)} networks nearby.")
+            self.msg_label.setStyleSheet("color: #10b981; font-size: 12px;")
+        else:
+            self.wifi_combo.addItem("No Wi-Fi networks found")
+            self.msg_label.setText("No wireless networks detected.")
+            self.msg_label.setStyleSheet("color: #f59e0b; font-size: 12px;")
+
+    def attempt_connect(self):
+        selected_text = self.wifi_combo.currentText()
+        if not selected_text or "No Wi-Fi" in selected_text:
+            self.msg_label.setText("Please select a valid Wi-Fi network.")
+            self.msg_label.setStyleSheet("color: #ef4444; font-size: 12px;")
+            return
+
+        ssid = selected_text.replace("📶 ", "").strip()
+        password = self.password_input.text()
+
+        self.msg_label.setText(f"Connecting to {ssid}...")
+        self.msg_label.setStyleSheet("color: #38bdf8; font-size: 12px;")
+        QApplication.processEvents()
+
+        success = connect_to_wifi(ssid, password)
+        if success:
+            self.msg_label.setText("✅ Connected successfully!")
+            self.msg_label.setStyleSheet("color: #10b981; font-size: 12px;")
+            self.status_lbl.setText("🟢 Connected to Internet")
+            self.status_lbl.setStyleSheet("color: #10b981; font-weight: bold;")
+            if self.parent() and hasattr(self.parent(), 'update_wifi_button_status'):
+                self.parent().update_wifi_button_status(True)
+        else:
+            self.msg_label.setText("❌ Connection failed. Check password.")
+            self.msg_label.setStyleSheet("color: #ef4444; font-size: 12px;")
 
 
 class ExitConfirmDialog(QDialog):
@@ -1663,6 +2110,26 @@ def connect_to_wifi(ssid, password):
         return False
 
 
+def check_and_disable_caps_lock():
+    """Checks if Caps Lock is ON at application launch and automatically turns it OFF."""
+    if sys.platform == 'win32':
+        try:
+            import ctypes
+            VK_CAPITAL = 0x14
+            # GetKeyState: low-order bit (1) indicates Caps Lock is toggled ON
+            is_on = bool(ctypes.windll.user32.GetKeyState(VK_CAPITAL) & 1)
+            if is_on:
+                logging.info("[Keyboard] Caps Lock detected ON at launch. Turning it OFF...")
+                # Simulate Caps Lock key press and release
+                ctypes.windll.user32.keybd_event(VK_CAPITAL, 0x45, 0x0001, 0)
+                ctypes.windll.user32.keybd_event(VK_CAPITAL, 0x45, 0x0001 | 0x0002, 0)
+                logging.info("[Keyboard] Caps Lock turned OFF successfully.")
+            else:
+                logging.info("[Keyboard] Caps Lock is OFF.")
+        except Exception as e:
+            logging.warning(f"[Keyboard] Could not check or disable Caps Lock: {e}")
+
+
 def main():
     # Enforce single instance using a Win32 Mutex check
     import ctypes
@@ -1741,6 +2208,9 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("SEED-SEB")
     
+    # Check if Caps Lock is ON at application launch and turn it OFF
+    check_and_disable_caps_lock()
+
     # Clean up temp_workspace directory on startup to remove orphaned folders from previous crashes
     try:
         import shutil
