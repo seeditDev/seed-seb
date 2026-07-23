@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchQuestionsIndex } from '../services/codingQuestionBankService';
 import { getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, saveSheetProgress } from '../services/codingProgressService';
 import DataService from '../services/dataService';
+import { fetchArticleFile } from '../utils/articleFetcher';
 import {
   FaSearch, FaCheckCircle,
   FaFileAlt, FaBookOpen,
@@ -413,11 +414,11 @@ const PracticeHome = () => {
     }
 
     let slug = articleUrl.replace(/\/$/, '').split('/').pop();
-    let fetchPath = `/articles/${slug}.json`;
+    let fetchPath = `${slug}.json`;
     if (articleUrl.startsWith('articles/')) {
-      fetchPath = `/${articleUrl}`;
+      fetchPath = articleUrl.substring(9);
     } else if (articleUrl.startsWith('/articles/')) {
-      fetchPath = articleUrl;
+      fetchPath = articleUrl.substring(10);
     }
 
     if (fetchPath.endsWith('.json.json')) {
@@ -427,7 +428,7 @@ const PracticeHome = () => {
     }
 
     try {
-      const response = await fetch(fetchPath);
+      const response = await fetchArticleFile(fetchPath);
       if (!response.ok) {
         throw new Error('Not found');
       }
@@ -531,11 +532,11 @@ const PracticeHome = () => {
         fetchQuestionsIndex().catch(() => []),
         getFullProgress(email).catch(() => ({ solvedProblems: [], problemDetails: {} })),
         DataService.getAccessControl().catch(() => null),
-        fetch('/articles/CourseMappingFiles/learn-c-syllabus.json').then(r => r.json()).catch(() => null),
-        fetch('/articles/CourseMappingFiles/learn-java-syllabus.json').then(r => r.json()).catch(() => null),
-        fetch('/articles/CourseMappingFiles/learn-cpp-syllabus.json').then(r => r.json()).catch(() => null),
-        fetch('/articles/CourseMappingFiles/learn-dsa-syllabus.json').then(r => r.json()).catch(() => null),
-        fetch('/articles/CourseMappingFiles/course_question_ids.json').then(r => r.json()).catch(() => ({})),
+        fetchArticleFile('CourseMappingFiles/learn-c-syllabus.json').then(r => r.json()).catch(() => null),
+        fetchArticleFile('CourseMappingFiles/learn-java-syllabus.json').then(r => r.json()).catch(() => null),
+        fetchArticleFile('CourseMappingFiles/learn-cpp-syllabus.json').then(r => r.json()).catch(() => null),
+        fetchArticleFile('CourseMappingFiles/learn-dsa-syllabus.json').then(r => r.json()).catch(() => null),
+        fetchArticleFile('CourseMappingFiles/course_question_ids.json').then(r => r.json()).catch(() => ({})),
       ]);
 
       const cQids = [];

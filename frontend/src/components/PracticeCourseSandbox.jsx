@@ -12,6 +12,7 @@ import {
   getFullProgress 
 } from '../services/codingProgressService';
 import { getAuthData } from '../utils/storageUtils';
+import { fetchArticleFile } from '../utils/articleFetcher';
 import '../styles/PracticeSandbox.css'; // Reuse core sandbox tokens and styling
 
 const FREE_BOILERPLATES = {
@@ -224,8 +225,9 @@ const PracticeCourseSandbox = () => {
     if (href && (href.startsWith('#/articles/') || href.includes('AptitudeCourses'))) {
       e.preventDefault();
       const localPath = href.replace('#/', '');
+      const cleanPath = localPath.endsWith('.json') ? localPath : `${localPath}.json`;
       try {
-        const response = await fetch(`/${localPath}.json`);
+        const response = await fetchArticleFile(cleanPath);
         if (response.ok) {
           const data = await response.json();
           setActiveArticle({
@@ -360,11 +362,11 @@ const PracticeCourseSandbox = () => {
         let flatSequence = [];
         if (courseId.startsWith('learn_') && courseId !== 'learn_python') {
           const courseSlug = courseId.substring(6); // remove 'learn_'
-          let syllabusPath = `articles/CourseMappingFiles/learn-${courseSlug}-syllabus.json`;
+          let syllabusPath = `CourseMappingFiles/learn-${courseSlug}-syllabus.json`;
           if (courseId === 'learn_aptitude') {
-            syllabusPath = 'articles/course/AptitudeCourses/learn-aptitude-syllabus.json';
+            syllabusPath = 'course/AptitudeCourses/learn-aptitude-syllabus.json';
           }
-          const res = await fetch(`/${syllabusPath}`);
+          const res = await fetchArticleFile(syllabusPath);
           if (res.ok) {
             const syllabusData = await res.json();
             let firstModProblemCount = 0;

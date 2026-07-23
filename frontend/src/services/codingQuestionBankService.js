@@ -7,6 +7,7 @@
  * Data flow:
  *   Local public path → fetch → JSON parse → return data
  */
+import { fetchArticleFile } from '../utils/articleFetcher';
 
 const LOCAL_BASE = '/seed-contents'; // Served from React public folder
 
@@ -34,7 +35,7 @@ let questionMapCache = null;
 export const fetchQuestion = async (questionId) => {
   if (questionId.startsWith('Q_apt_')) {
     try {
-      const res = await fetch(`/articles/course/AptitudeCourses/${questionId}.json`);
+      const res = await fetchArticleFile(`course/AptitudeCourses/${questionId}.json`);
       if (res.ok) {
         return await res.json();
       }
@@ -49,7 +50,7 @@ export const fetchQuestion = async (questionId) => {
 
   if (!questionMapCache) {
     try {
-      const mapRes = await fetch('/articles/course/TechnicalCourses/question_map.json');
+      const mapRes = await fetchArticleFile('course/TechnicalCourses/question_map.json');
       if (mapRes.ok) {
         questionMapCache = await mapRes.json();
       }
@@ -59,7 +60,7 @@ export const fetchQuestion = async (questionId) => {
   const mappedFolder = questionMapCache?.[questionId];
   if (mappedFolder) {
     try {
-      const res = await fetch(`/articles/course/TechnicalCourses/${mappedFolder}/Questionbank/${questionId}.json`);
+      const res = await fetchArticleFile(`course/TechnicalCourses/${mappedFolder}/Questionbank/${questionId}.json`);
       if (res.ok) {
         return await res.json();
       }
@@ -69,7 +70,7 @@ export const fetchQuestion = async (questionId) => {
   const folders = ['c', 'java', 'cpp', 'dsa'];
   for (const f of folders) {
     try {
-      const res = await fetch(`/articles/course/TechnicalCourses/${f}/Questionbank/${questionId}.json`);
+      const res = await fetchArticleFile(`course/TechnicalCourses/${f}/Questionbank/${questionId}.json`);
       if (res.ok) {
         return await res.json();
       }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { APP_VERSION } from "../App";
+import { fetchArticleFile } from '../utils/articleFetcher';
 import {
   FaBars,
   FaUser,
@@ -116,10 +117,10 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     Promise.all([
-      fetch('/articles/CourseMappingFiles/learn-c-syllabus.json').then(r => r.json()).catch(() => null),
-      fetch('/articles/CourseMappingFiles/learn-java-syllabus.json').then(r => r.json()).catch(() => null),
-      fetch('/articles/CourseMappingFiles/learn-cpp-syllabus.json').then(r => r.json()).catch(() => null),
-      fetch('/articles/CourseMappingFiles/learn-dsa-syllabus.json').then(r => r.json()).catch(() => null),
+      fetchArticleFile('CourseMappingFiles/learn-c-syllabus.json').then(r => r.json()).catch(() => null),
+      fetchArticleFile('CourseMappingFiles/learn-java-syllabus.json').then(r => r.json()).catch(() => null),
+      fetchArticleFile('CourseMappingFiles/learn-cpp-syllabus.json').then(r => r.json()).catch(() => null),
+      fetchArticleFile('CourseMappingFiles/learn-dsa-syllabus.json').then(r => r.json()).catch(() => null),
     ]).then(([cSyllabus, javaSyllabus, cppSyllabus, dsaSyllabus]) => {
       const cQids = [];
       if (cSyllabus) {
