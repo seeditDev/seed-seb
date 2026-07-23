@@ -1,4 +1,5 @@
 // desktopBridge.js - Communication layer between React and PyQt
+import { executeJavaScript } from './jsCompiler';
 
 let bridgeInstance = null;
 let initPromise = null;
@@ -100,26 +101,30 @@ const desktopBridge = {
     },
 
     runCode: async (language, code, stdin = "") => {
+        const cleanLang = String(language || "").toLowerCase().trim();
+        const isJs = cleanLang === 'javascript' || cleanLang === 'js' || cleanLang === 'node' || cleanLang === 'nodejs';
+
         const backend = await initBridge();
         if (backend) {
-            const rawResult = await backend.runCode(String(language || ""), String(code || ""), String(stdin || ""));
-            return safeJsonParse(rawResult, { 
-                stdout: "", 
-                stderr: "PyQt backend returned invalid data.", 
-                output: "",
-                exit_code: -1, 
-                error: "Invalid Backend Output" 
-            });
-        } else {
-            console.warn("[DesktopBridge] Local compiler backend not connected. Run code is disabled in web fallback.");
-            return { 
-                stdout: "", 
-                stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
-                output: "",
-                exit_code: -1, 
-                error: "Desktop App Environment Required" 
-            };
+            try {
+                const rawResult = await backend.runCode(String(language || ""), String(code || ""), String(stdin || ""));
+                const res = safeJsonParse(rawResult, null);
+                if (res) return res;
+            } catch (_) {}
         }
+
+        if (isJs) {
+            return await executeJavaScript(code, stdin);
+        }
+
+        console.warn("[DesktopBridge] Local compiler backend not connected. Run code is disabled in web fallback.");
+        return { 
+            stdout: "", 
+            stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
+            output: "",
+            exit_code: -1, 
+            error: "Desktop App Environment Required" 
+        };
     },
 
     submitCode: async (language, code, questionId) => {
@@ -227,26 +232,30 @@ const desktopBridge = {
             };
         }
 
+        const cleanLang = String(language || "").toLowerCase().trim();
+        const isJs = cleanLang === 'javascript' || cleanLang === 'js' || cleanLang === 'node' || cleanLang === 'nodejs';
+
         const backend = await initBridge();
         if (backend) {
-            const rawResult = await backend.runDirectSandbox(String(language || ""), String(code || ""), String(stdin || ""));
-            return safeJsonParse(rawResult, { 
-                stdout: "", 
-                stderr: "PyQt sandbox execution returned invalid response.", 
-                output: "",
-                exit_code: -1, 
-                error: "Invalid Backend Output" 
-            });
-        } else {
-            console.warn("[DesktopBridge] Local compiler backend not connected. Sandbox execution is disabled in web fallback.");
-            return { 
-                stdout: "", 
-                stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
-                output: "",
-                exit_code: -1, 
-                error: "Desktop App Environment Required" 
-            };
+            try {
+                const rawResult = await backend.runDirectSandbox(String(language || ""), String(code || ""), String(stdin || ""));
+                const res = safeJsonParse(rawResult, null);
+                if (res) return res;
+            } catch (_) {}
         }
+
+        if (isJs) {
+            return await executeJavaScript(code, stdin);
+        }
+
+        console.warn("[DesktopBridge] Local compiler backend not connected. Sandbox execution is disabled in web fallback.");
+        return { 
+            stdout: "", 
+            stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
+            output: "",
+            exit_code: -1, 
+            error: "Desktop App Environment Required" 
+        };
     },
 
     getContests: async () => {
