@@ -478,6 +478,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     }, [isEmbedded, questions, codeMap]);
 
     const hasTimerStartedRef = useRef(false);
+    const autoSubmitAttemptRef = useRef(null);
 
     // Synchronize section timer in embedded mode
     useEffect(() => {
@@ -1155,7 +1156,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             if (elapsedOfflineSec > 300) {
                 console.warn(`[CodingAssessmentPage] Offline exit (${elapsedOfflineSec}s) exceeded 5-minute grace period (300s).`);
                 alert("Your assessment was auto-submitted because your offline window exceeded the 5-minute grace period.");
-                autoSubmitAttempt("grace-period-exceeded-5min");
+                autoSubmitAttemptRef.current?.("grace-period-exceeded-5min");
                 return;
             }
 
@@ -1167,7 +1168,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const remaining = Math.max(0, durationSec - totalElapsed);
 
             if (remaining <= 0) {
-                autoSubmitAttempt("grace-expired");
+                autoSubmitAttemptRef.current?.("grace-expired");
                 return;
             }
 
@@ -1191,7 +1192,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         } catch (e) {
             console.error("Error restoring local state:", e);
         }
-    }, [autoSubmitAttempt]);
+    }, []);
 
     // Timer Tick
     useEffect(() => {
@@ -1209,7 +1210,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             if (remaining <= 0) {
                 clearInterval(interval);
-                autoSubmitAttempt("timer");
+                autoSubmitAttemptRef.current?.("timer");
             }
         }, 1000);
 
@@ -1603,6 +1604,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             setIsSubmitting(false);
         }
     };
+    autoSubmitAttemptRef.current = autoSubmitAttempt;
 
     // Manual Submit — phases: evaluating → submitting → done
     const handleFinalSubmit = async () => {
