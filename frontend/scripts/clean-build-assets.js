@@ -13,6 +13,16 @@ if (fs.existsSync(ignoreSrc)) {
   } catch (e) {}
 }
 
+// Copy worker.js to build folder if present
+const workerSrc = path.join(__dirname, '..', 'worker.js');
+const workerDest = path.join(buildDir, 'worker.js');
+if (fs.existsSync(workerSrc)) {
+  try {
+    fs.copyFileSync(workerSrc, workerDest);
+    console.log('[clean-build-assets] Copied worker.js to build folder.');
+  } catch (e) {}
+}
+
 // Copy wrangler.json to build folder if present
 const wranglerSrc = path.join(__dirname, '..', 'wrangler.json');
 const wranglerDest = path.join(buildDir, 'wrangler.json');
