@@ -42,7 +42,7 @@ import {
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
 import '../styles/PracticeHome.css';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import TrackingService from '../services/trackingService';
 import DataService from '../services/dataService';
@@ -242,11 +242,54 @@ const StudentDashboard = () => {
       } catch (_) {}
     }
 
-    setActiveResumeSession(null);
+    // 3. Fallback: Query Firestore for Remote Active Attempt if local storage was wiped (e.g. laptop reboot)
+    const checkRemoteActiveAttempt = async () => {
+      try {
+        const userDocRef = doc(db, 'users', email);
+        const attemptsColRef = collection(userDocRef, 'contestAttempts');
+        const q = query(attemptsColRef, where('completed', '==', false));
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+          const docSnap = snap.docs[0];
+          const data = docSnap.data();
+          const lastActiveISO = data.updated_at || data.submittedAtISO || data.timeStartedISO || '';
+          const lastActiveMs = lastActiveISO ? new Date(lastActiveISO).getTime() : 0;
+          const elapsedOfflineSec = Math.floor((nowMs - lastActiveMs) / 1000);
+
+          if (elapsedOfflineSec <= 300) {
+            setActiveResumeSession({
+              type: data.type || 'multisection',
+              id: data.testID || data.assessmentId || docSnap.id,
+              name: data.testName || data.assessmentName || 'Active Assessment',
+              slug: data.slug || data.testID || docSnap.id,
+              isRemoteRestored: true,
+              elapsedOfflineSec,
+              remoteSnapshot: data
+            });
+            return;
+          }
+        }
+      } catch (remoteErr) {
+        console.warn('[StudentDashboard] Remote active attempt check skipped:', remoteErr.message);
+      }
+      setActiveResumeSession(null);
+    };
+
+    checkRemoteActiveAttempt();
   }, [user]);
 
   const handleResumeSession = (session) => {
     if (!session) return;
+    if (session.isRemoteRestored && session.remoteSnapshot) {
+      if (session.type === 'multisection') {
+        localStorage.setItem(`msaProgress_${session.id}`, JSON.stringify(session.remoteSnapshot));
+        sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.remoteSnapshot.assessmentData || { id: session.id, name: session.name }));
+        navigate(`/student/assessment/multisection/${session.slug}`);
+        return;
+      }
+    }
+
     if (session.type === 'multisection') {
       sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.assessmentData));
       navigate(`/student/assessment/multisection/${session.slug}`);

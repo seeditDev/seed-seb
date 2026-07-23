@@ -503,7 +503,6 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       await safeUpsert('assessment_results', cleanSupabaseAssessmentPayload, { onConflict: 'email,test_id,type' });
       await safeUpsert('sea_results', supabasePayload, { onConflict: 'email,test_id' });
       await safeUpsert('spoken_english_results', supabasePayload, { onConflict: 'email,test_id' });
-      await safeUpsert('assessment_attempts', attemptPayload, { onConflict: 'email,test_id' });
     } catch (supErr) {
       console.warn('[Supabase Storage] Notice:', supErr);
     }
