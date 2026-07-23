@@ -43,13 +43,13 @@ if (fs.existsSync(indexHtml)) {
   } catch (e) {}
 }
 
-// Remove local data folders from web build output
-['articles', 'seed-contents'].forEach((folder) => {
+// Ensure articles folder is cleaned if empty
+['articles'].forEach((folder) => {
   const target = path.join(buildDir, folder);
   if (fs.existsSync(target)) {
     try {
       fs.rmSync(target, { recursive: true, force: true });
-      console.log(`[clean-build-assets] Removed ${folder} from build folder.`);
+      console.log(`[clean-build-assets] Cleaned ${folder} from build folder.`);
     } catch (err) {
       console.warn(`[clean-build-assets] Notice: ${err.message}`);
     }

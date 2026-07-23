@@ -201,6 +201,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [currentAssessment, setCurrentAssessment] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+    const currentQuestion = questions[activeQuestionIndex] || null;
     const [language, setLanguage] = useState('cpp');
     const [codeMap, setCodeMap] = useState({}); // Key: questionId_language -> Code text
     const [visitedQuestions, setVisitedQuestions] = useState({}); // questionId -> boolean
@@ -1813,7 +1814,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     };
 
     // Active state selectors
-    const currentQuestion = questions[activeQuestionIndex];
 
     // ==========================================
     // RENDER: FULLSCREEN COUNTDOWN SCREEN
