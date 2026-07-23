@@ -16,6 +16,7 @@ import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import { getAuthData } from '../utils/storageUtils';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
+import { normalizeTestCaseArray } from '../utils/testCaseUtils';
 import '../styles/CodingAssessmentPage.css';
 
 const LOCAL_BASE_URL = '/seed-contents';
@@ -117,28 +118,14 @@ const normalizeQuestion = (q) => {
     }
 
     // Normalize sample test cases
-    const sampleTestCases = (q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []).map(tc => ({
-        ...tc,
-        input: tc.input || '',
-        expected: tc.expected || tc.output || tc.expectedOutput || tc.expected_output || ''
-    }));
+    const sampleTestCases = normalizeTestCaseArray(q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []);
 
     // Normalize hidden test cases
     let hidden = [];
     if (q.testCases?.hidden) {
-        hidden = q.testCases.hidden.map(tc => ({
-            ...tc,
-            id: tc.id || tc.label || '',
-            input: tc.input || '',
-            expected: tc.expectedOutput || tc.expected || tc.output || tc.expected_output || ''
-        }));
+        hidden = normalizeTestCaseArray(q.testCases.hidden);
     } else if (Array.isArray(q.testCases)) {
-        hidden = q.testCases.map(tc => ({
-            ...tc,
-            id: tc.id || '',
-            input: tc.input || '',
-            expected: tc.expected || tc.output || tc.expectedOutput || tc.expected_output || ''
-        }));
+        hidden = normalizeTestCaseArray(q.testCases);
     }
 
     return {

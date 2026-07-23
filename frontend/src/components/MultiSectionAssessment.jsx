@@ -26,6 +26,7 @@ import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
+import { normalizeTestCaseArray } from '../utils/testCaseUtils';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -104,16 +105,13 @@ const normalizeQuestion = (q) => {
     });
   }
 
-  const testCases = (q.content?.sampleTestCases || []).map(tc => ({
-    input: tc.input,
-    expected: tc.expected || tc.expectedOutput
-  }));
+  const testCases = normalizeTestCaseArray(q.content?.sampleTestCases || []);
 
   let hidden = [];
   if (q.testCases?.hidden) {
-    hidden = q.testCases.hidden.map(tc => ({ id: tc.id || tc.label, input: tc.input, expected: tc.expectedOutput || tc.expected }));
+    hidden = normalizeTestCaseArray(q.testCases.hidden);
   } else if (Array.isArray(q.testCases)) {
-    hidden = q.testCases.map(tc => ({ id: tc.id || '', input: tc.input, expected: tc.expected }));
+    hidden = normalizeTestCaseArray(q.testCases);
   }
 
   return { ...q, id, title, description, instructions, constraints, boilerplates, testCases, hiddenTests: hidden };
