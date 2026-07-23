@@ -170,6 +170,90 @@ const StudentDashboard = () => {
   const [welcomeUpdates, setWelcomeUpdates] = useState(null);
   const [showUpdatesModal, setShowUpdatesModal] = useState(false);
   const [isAiInterviewAllowed, setIsAiInterviewAllowed] = useState(false);
+  const [activeResumeSession, setActiveResumeSession] = useState(null);
+
+  // Active assessment session detection (5-minute exit grace window)
+  useEffect(() => {
+    if (!user) return;
+    const email = user.Email || user.email || '';
+    const nowMs = new Date().getTime();
+
+    // 1. Check Multi-Section active session
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('msaProgress_')) {
+        try {
+          const progress = JSON.parse(localStorage.getItem(key) || '{}');
+          if (progress.email === email && progress.currentSecIdx >= 0) {
+            const lastActiveMs = progress.lastActiveTimestamp || (progress.savedAt ? new Date(progress.savedAt).getTime() : 0);
+            const elapsedOfflineSec = Math.floor((nowMs - lastActiveMs) / 1000);
+
+            if (elapsedOfflineSec <= 300) {
+              const activeBackup = localStorage.getItem(`msaActiveAssessment_${progress.assessmentId}`);
+              if (activeBackup) {
+                const assessmentObj = JSON.parse(activeBackup);
+                setActiveResumeSession({
+                  type: 'multisection',
+                  id: progress.assessmentId,
+                  name: assessmentObj.title || assessmentObj.name || 'Multi-Section Assessment',
+                  currentSecIdx: progress.currentSecIdx,
+                  elapsedOfflineSec,
+                  remainingSecTimer: Math.max(0, (progress.secTimer || 0) - elapsedOfflineSec),
+                  assessmentData: assessmentObj,
+                  slug: assessmentObj.slug || progress.assessmentId
+                });
+                return;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    // 2. Check Single-Section Coding active session
+    const codingData = localStorage.getItem('codingAssessmentData');
+    const codingStartTime = localStorage.getItem('codingAssessmentStartTime');
+    const codingTimer = localStorage.getItem('codingAssessmentTimer');
+    const codingLastActive = localStorage.getItem('codingLastActiveTime');
+    if (codingData && codingStartTime && codingTimer) {
+      try {
+        const { assessment } = JSON.parse(codingData);
+        const lastActiveMs = parseInt(codingLastActive || codingStartTime, 10);
+        const elapsedOfflineSec = Math.floor((nowMs - lastActiveMs) / 1000);
+
+        if (elapsedOfflineSec <= 300) {
+          const durationSec = parseInt(codingTimer, 10);
+          const startTimeMs = parseInt(codingStartTime, 10);
+          const totalElapsed = Math.floor((nowMs - startTimeMs) / 1000);
+          const remaining = Math.max(0, durationSec - totalElapsed);
+
+          if (remaining > 0) {
+            setActiveResumeSession({
+              type: 'coding',
+              id: assessment.id,
+              name: assessment.name || 'Coding Assessment',
+              slug: assessment.slug || assessment.id,
+              remainingSecTimer: remaining,
+              elapsedOfflineSec
+            });
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+
+    setActiveResumeSession(null);
+  }, [user]);
+
+  const handleResumeSession = (session) => {
+    if (!session) return;
+    if (session.type === 'multisection') {
+      sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.assessmentData));
+      navigate(`/student/assessment/multisection/${session.slug}`);
+    } else if (session.type === 'coding') {
+      navigate(`/student/coding/${session.slug}`);
+    }
+  };
 
   useEffect(() => {
     const checkAiInterviewAccess = async () => {
@@ -1147,6 +1231,52 @@ const StudentDashboard = () => {
           <h1>Welcome, {name}!</h1>
           <p>Complete your scheduled MCQ quizzes and coding assessments below.</p>
         </div>
+
+        {activeResumeSession && (
+          <div style={{
+            background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+            border: '2px solid #F59E0B',
+            borderRadius: '12px',
+            padding: '16px 22px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 8px 24px rgba(245, 158, 11, 0.2)',
+            color: '#FFF'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '50%',
+                background: '#FEF3C7', color: '#D97706',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '22px', fontWeight: 'bold'
+              }}>
+                ⚡
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '16px', color: '#FBBF24', fontWeight: '700' }}>
+                  Active Assessment in Progress — Resumable Session
+                </h4>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#CBD5E1' }}>
+                  You exited <strong>{activeResumeSession.name}</strong> within the 5-minute grace period.
+                  {activeResumeSession.type === 'multisection' && ` Resuming Section ${activeResumeSession.currentSecIdx + 1}.`}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleResumeSession(activeResumeSession)}
+              style={{
+                background: '#F59E0B', color: '#0F172A',
+                border: 'none', padding: '10px 22px', borderRadius: '8px',
+                fontWeight: 'bold', fontSize: '14px', cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+              }}
+            >
+              Resume Assessment Now →
+            </button>
+          </div>
+        )}
 
         {selectedSeries === null ? (
           // ─── SERIES TILE VIEW ───

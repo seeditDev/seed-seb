@@ -966,6 +966,23 @@ const MultiSectionAssessment = () => {
     try {
       authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
       assessmentData = JSON.parse(sessionStorage.getItem('multisectionAssessmentData') || 'null');
+
+      // Fallback to persistent localStorage backup if sessionStorage was cleared by browser exit/tab close
+      if (!assessmentData) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('msaActiveAssessment_')) {
+            try {
+              const backup = JSON.parse(localStorage.getItem(key) || 'null');
+              if (backup) {
+                assessmentData = backup;
+                sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(backup));
+                break;
+              }
+            } catch (_) {}
+          }
+        }
+      }
     } catch (e) {
       console.error('[MSA] Failed to parse localStorage:', e);
     }
@@ -977,6 +994,7 @@ const MultiSectionAssessment = () => {
 
     setUser(authData);
     setAssessment(assessmentData);
+    localStorage.setItem(`msaActiveAssessment_${assessmentData.id}`, JSON.stringify(assessmentData));
 
     // Verify if already completed/submitted
     const checkAttempt = async () => {
@@ -989,6 +1007,9 @@ const MultiSectionAssessment = () => {
           const data = docSnap.data();
           if (data.completed === true || data.status === 'submitted') {
             alert('You have already completed and submitted this assessment. Re-attempts are not permitted.');
+            sessionStorage.removeItem('multisectionAssessmentData');
+            localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+            localStorage.removeItem(`msaProgress_${assessmentData.id}`);
             navigate('/student/dashboard');
             return;
           }
@@ -999,29 +1020,55 @@ const MultiSectionAssessment = () => {
     };
     checkAttempt();
 
-    // Crash recovery
+    // Crash / Exit recovery with 5-minute grace period check
     const progressKey = `msaProgress_${assessmentData.id}`;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(progressKey) || 'null'); } catch (_) {}
     if (saved && saved.email === authData.Email) {
-      console.log('[MSA] Restoring partial progress');
+      const nowMs = new Date().getTime();
+      const lastActiveMs = saved.lastActiveTimestamp || (saved.savedAt ? new Date(saved.savedAt).getTime() : nowMs);
+      const elapsedOfflineSec = Math.floor((nowMs - lastActiveMs) / 1000);
+
+      if (elapsedOfflineSec > 300) {
+        console.warn(`[MSA] Offline exit duration (${elapsedOfflineSec}s) exceeded 5-minute grace period (300s). Auto-submitting.`);
+        alert("Your assessment was auto-submitted because your offline exit window exceeded the 5-minute grace period.");
+        setExamResults(saved.examResults || {});
+        setSecCompleted(saved.completedSections || {});
+        setTimeout(() => {
+          autoSubmitEntireExam('grace_period_exceeded_5min');
+        }, 500);
+        return;
+      }
+
+      console.log(`[MSA] Restoring progress within 5-min grace period (${elapsedOfflineSec}s offline)`);
       setExamResults(saved.examResults || {});
       setSecCompleted(saved.completedSections || {});
-      setRestoredProgress(saved);
+      setRestoredProgress({
+        ...saved,
+        elapsedOfflineSec
+      });
     }
 
     loadAllSections(assessmentData);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Resume after crash
+  // ── Resume after crash / exit
   useEffect(() => {
     if (!assessment || !restoredProgress) return;
     if (restoredProgress.currentSecIdx !== undefined && restoredProgress.currentSecIdx >= 0) {
-      console.log('[MSA] Resuming active section index:', restoredProgress.currentSecIdx);
+      const elapsed = restoredProgress.elapsedOfflineSec || 0;
+      const adjustedTimer = Math.max(0, (restoredProgress.secTimer || 0) - elapsed);
+
+      console.log('[MSA] Resuming active section index:', restoredProgress.currentSecIdx, 'Adjusted timer:', adjustedTimer, 's');
       setCurrentSecIdx(restoredProgress.currentSecIdx);
       setSecStarted(restoredProgress.secStarted || false);
-      setSecTimer(restoredProgress.secTimer || 0);
+      setSecTimer(adjustedTimer);
+
+      if (adjustedTimer <= 0 && restoredProgress.secStarted) {
+        console.warn('[MSA] Active section timer expired while offline. Submitting active section.');
+        setTimeout(() => autoSubmitSection(), 1000);
+      }
     } else {
       const nextIdx = (restoredProgress.lastSectionIdx ?? -1) + 1;
       const sectionsCount = (assessment.sections || []).length;
@@ -1035,10 +1082,11 @@ const MultiSectionAssessment = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assessment, restoredProgress]);
 
-  // ── Continuous progress save to localStorage
+  // ── Continuous progress save & heartbeat to localStorage
   useEffect(() => {
     if (!assessment || currentSecIdx < 0 || !secStarted) return;
     const progressKey = `msaProgress_${assessment.id}`;
+    const nowMs = new Date().getTime();
     const snapshot = {
       assessmentId: assessment.id,
       email: user?.Email || '',
@@ -1047,9 +1095,11 @@ const MultiSectionAssessment = () => {
       currentSecIdx,
       secStarted,
       secTimer,
-      savedAt: new Date().toISOString()
+      savedAt: new Date().toISOString(),
+      lastActiveTimestamp: nowMs
     };
     localStorage.setItem(progressKey, JSON.stringify(snapshot));
+    localStorage.setItem(`msaActiveAssessment_${assessment.id}`, JSON.stringify(assessment));
   }, [assessment, user, secCompleted, examResults, currentSecIdx, secStarted, secTimer]);
 
   // ── Fetch all section JSON files

@@ -1132,22 +1132,30 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             // Sync navigation to slug
             navigate(`${CODING_ROUTE_BASE}/${assessment.slug}`);
         } catch (err) {
-            console.error("Failed to load test workspace:", err);
-            setError(err.message || "Failed to load assessment. Please check your network connectivity.");
-        } finally {
-            setLoading(false);
-        }
+}
     };
 
-    // Restore state from reload
+    // Restore state from reload / exit with 5-minute grace check
     const restoreAssessmentState = useCallback(() => {
         try {
             const storedStartTime = localStorage.getItem("codingAssessmentStartTime");
             const storedDuration = localStorage.getItem("codingAssessmentTimer");
             const storedData = localStorage.getItem("codingAssessmentData");
             const storedCodeMap = localStorage.getItem("codingAssessmentCode");
+            const storedLastActive = localStorage.getItem("codingLastActiveTime");
 
             if (!storedStartTime || !storedDuration || !storedData) {
+                return;
+            }
+
+            const now = timeService.now();
+            const lastActiveMs = parseInt(storedLastActive || storedStartTime, 10);
+            const elapsedOfflineSec = Math.floor((now - lastActiveMs) / 1000);
+
+            if (elapsedOfflineSec > 300) {
+                console.warn(`[CodingAssessmentPage] Offline exit (${elapsedOfflineSec}s) exceeded 5-minute grace period (300s).`);
+                alert("Your assessment was auto-submitted because your offline window exceeded the 5-minute grace period.");
+                autoSubmitAttempt("grace-period-exceeded-5min");
                 return;
             }
 
@@ -1155,9 +1163,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const durationSec = parseInt(storedDuration, 10);
             const { assessment, questions } = JSON.parse(storedData);
 
-            const now = timeService.now();
-            const elapsed = Math.floor((now - startTimeMs) / 1000);
-            const remaining = Math.max(0, durationSec - elapsed);
+            const totalElapsed = Math.floor((now - startTimeMs) / 1000);
+            const remaining = Math.max(0, durationSec - totalElapsed);
 
             if (remaining <= 0) {
                 autoSubmitAttempt("grace-expired");
@@ -1178,13 +1185,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             // Restore active indexes and color visited questions
             setActiveQuestionIndex(0);
-            if (questions.length > 0) {
+            if (questions && questions.length > 0) {
                 setVisitedQuestions({ [questions[0].id]: true });
             }
         } catch (e) {
             console.error("Error restoring local state:", e);
         }
-    }, []);
+    }, [autoSubmitAttempt]);
 
     // Timer Tick
     useEffect(() => {
