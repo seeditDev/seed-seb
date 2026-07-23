@@ -5,7 +5,7 @@ import { db } from '../firebase-config';
 import { collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from 'firebase/firestore';
 import desktopBridge from '../utils/desktopBridge';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { normalizeTestCaseArray } from '../utils/testCaseUtils';
+import { normalizeTestCaseArray, compareOutputs } from '../utils/testCaseUtils';
 import '../styles/CodingSandbox.css';
 
 // Predefined fallback challenges
@@ -405,7 +405,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 
                 const cleanActual = (res.stdout || '').replace(/\r\n/g, '\n').trim();
                 const cleanExpected = (tc.expected || '').replace(/\r\n/g, '\n').trim();
-                const isPassed = !isBlank && (cleanActual === cleanExpected) && res.exit_code === 0 && !res.error;
+                const isPassed = !isBlank && compareOutputs(res.stdout, tc.expected) && (res.exit_code === 0 || res.exit_code === undefined) && !res.error;
 
                 results.push({
                     index: i + 1,
