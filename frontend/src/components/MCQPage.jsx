@@ -2975,8 +2975,8 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
     return (
         <div className="mcq-page">
-            {/* Proctoring Engine - Active only when test is running */}
-            {shouldUseProctoring && currentTest && !currentTest.submitted && user && (
+            {/* Proctoring Engine - Active only when test is running (standalone mode only) */}
+            {!isEmbedded && shouldUseProctoring && currentTest && !currentTest.submitted && user && (
                 <ProctoringEngine
                     studentID={user.Email}
                     testID={currentTest.testInfo?.id || currentTest.id || 'unknown'}
@@ -3010,7 +3010,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 />
             )}
             {/* Audio Proctoring Engine - active alongside camera when audioProctored is set */}
-            {shouldUseAudioProctoring && currentTest && !currentTest.submitted && user && (
+            {!isEmbedded && shouldUseAudioProctoring && currentTest && !currentTest.submitted && user && (
                 <AudioProctoringEngine
                     studentID={user.Email}
                     testID={currentTest.testInfo?.id || currentTest.id || 'unknown'}

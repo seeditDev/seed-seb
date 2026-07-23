@@ -2246,8 +2246,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // ==========================================
     return (
         <div className="coding-workspace-page">
-            {/* Proctoring Engine - Active only when assessment is running and proctored is enabled */}
-            {shouldUseProctoring && currentAssessment && user && (
+            {/* Proctoring Engine - Active only when assessment is running and proctored is enabled (standalone mode only) */}
+            {!isEmbedded && shouldUseProctoring && currentAssessment && user && (
                 <ProctoringEngine
                     studentID={user.Email}
                     testID={currentAssessment.id || 'unknown'}
@@ -2275,7 +2275,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     }}
                 />
             )}
-            {shouldUseAudioProctoring && currentAssessment && user && (
+            {!isEmbedded && shouldUseAudioProctoring && currentAssessment && user && (
                 <AudioProctoringEngine
                     studentID={user.Email}
                     testID={currentAssessment.id || 'unknown'}
