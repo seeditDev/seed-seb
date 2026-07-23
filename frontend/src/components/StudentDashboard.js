@@ -719,17 +719,26 @@ const StudentDashboard = () => {
     setFilteredAssessments(filtered);
   }, [searchTerm, filterDifficulty, filterType, filterStatus, assessments]);
 
-  // Fetch JSON files (local or GitHub fallback)
+  // Fetch JSON files: GitHub Raw Primary (1st), GitHub API (2nd), Local Fallback (3rd)
   const fetchJSONFile = async (url) => {
-    try {
-      const localUrl = `${LOCAL_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-      try {
-        const response = await fetch(localUrl);
-        if (response.ok) return await response.json();
-      } catch (err) {
-        console.log("Local fetch failed, trying GitHub repository fallback");
-      }
+    const cleanUrl = url.replace(/^\/+/, '').replace(/^seed-contents\//, '').replace(/^SEEDDB\//, '');
 
+    // 1st: GitHub Raw Primary (seed-contents repo)
+    try {
+      const seedContentsRawUrl = `https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cleanUrl}`;
+      const rawRes = await fetch(seedContentsRawUrl);
+      if (rawRes.ok) return await rawRes.json();
+    } catch (_) {}
+
+    // 2nd: GitHub Raw Primary (SEEDDB repo)
+    try {
+      const seedDbRawUrl = `https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cleanUrl}`;
+      const rawRes = await fetch(seedDbRawUrl);
+      if (rawRes.ok) return await rawRes.json();
+    } catch (_) {}
+
+    // 3rd: GitHub API fallback with token
+    try {
       const token = atob([_0x5f, _0x4e, _0x3d, _0x2c, _0x1b, _0xa0, _0xb1, _0xc2, _0xd3, _0xe4].join(''));
       const githubUrl = `${GITHUB_API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
       const apiRes = await fetch(githubUrl, {
@@ -744,15 +753,16 @@ const StudentDashboard = () => {
         const decoded = atob(data.content);
         return JSON.parse(decoded);
       }
+    } catch (_) {}
 
-      const rawUrl = `${GITHUB_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-      const rawRes = await fetch(rawUrl);
-      if (!rawRes.ok) throw new Error("Could not download questions JSON.");
-      return await rawRes.json();
-    } catch (err) {
-      console.error("All fetch attempts failed:", err);
-      throw err;
-    }
+    // 4th: Local Fallback
+    try {
+      const localUrl = `/seed-contents/${cleanUrl}`;
+      const localRes = await fetch(localUrl);
+      if (localRes.ok) return await localRes.json();
+    } catch (_) {}
+
+    throw new Error(`Could not download assessment JSON file: ${cleanUrl}`);
   };
 
   // ─────────────────────────────────────────────────────────────────

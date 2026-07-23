@@ -9,14 +9,26 @@
  */
 import { fetchArticleFile } from '../utils/articleFetcher';
 
-const LOCAL_BASE = '/seed-contents'; // Served from React public folder
+const GITHUB_SEED_CONTENTS_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
+const LOCAL_BASE = '/seed-contents';
 
 /**
- * Fetch a JSON file from the local public seed-contents directory.
+ * Fetch a JSON file: GitHub Raw Primary (1st), Local Fallback (2nd).
  * @param {string} path - Relative path (e.g. 'coding/questions/Q1001.json')
  */
 const fetchJson = async (path) => {
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  
+  // 1st: GitHub Raw Primary
+  const githubUrl = `${GITHUB_SEED_CONTENTS_BASE}/${cleanPath}`;
+  try {
+    const response = await fetch(githubUrl);
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (_) {}
+
+  // 2nd: Local Fallback
   const localUrl = `${LOCAL_BASE}/${cleanPath}`;
   const response = await fetch(localUrl);
   if (!response.ok) throw new Error(`Failed to load ${localUrl}: HTTP ${response.status}`);
