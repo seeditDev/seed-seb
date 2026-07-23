@@ -13,6 +13,16 @@ if (fs.existsSync(ignoreSrc)) {
   } catch (e) {}
 }
 
+// Copy wrangler.json to build folder if present
+const wranglerSrc = path.join(__dirname, '..', 'wrangler.json');
+const wranglerDest = path.join(buildDir, 'wrangler.json');
+if (fs.existsSync(wranglerSrc)) {
+  try {
+    fs.copyFileSync(wranglerSrc, wranglerDest);
+    console.log('[clean-build-assets] Copied wrangler.json to build folder.');
+  } catch (e) {}
+}
+
 // Copy index.html to 404.html for Cloudflare Pages native SPA fallback routing
 const indexHtml = path.join(buildDir, 'index.html');
 const fallback404 = path.join(buildDir, '404.html');
