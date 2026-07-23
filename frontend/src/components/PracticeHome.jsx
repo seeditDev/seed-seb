@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchQuestionsIndex } from '../services/codingQuestionBankService';
 import { getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, saveSheetProgress } from '../services/codingProgressService';
 import DataService from '../services/dataService';
-import { fetchArticleFile } from '../utils/articleFetcher';
+import { fetchArticleFile, fetchArticleJson } from '../utils/articleFetcher';
 import {
   FaSearch, FaCheckCircle,
   FaFileAlt, FaBookOpen,
@@ -207,8 +207,7 @@ const PracticeHome = () => {
     const course = courses.find(c => c.id === selectedCourse);
     if (course && course.isScrapedCourse && course.syllabusUrl) {
       setLoading(true);
-      fetch(`/${course.syllabusUrl}`)
-        .then(res => res.json())
+      fetchArticleJson(course.syllabusUrl)
         .then(data => {
           setScrapedSyllabus(data);
           setLoading(false);

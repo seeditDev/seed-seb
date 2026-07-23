@@ -417,8 +417,16 @@ const PracticeCourseSandbox = () => {
           };
 
           for (const mid of moduleUrls) {
-            const res = await fetch(`/seed-contents/coding/${modulePaths[mid]}`);
-            if (res.ok) {
+            let res;
+            try {
+              res = await fetch(`https://raw.githubusercontent.com/seeditDev/seed-contents/main/coding/${modulePaths[mid]}`);
+            } catch (_) {}
+            if (!res || !res.ok) {
+              try {
+                res = await fetch(`/seed-contents/coding/${modulePaths[mid]}`);
+              } catch (_) {}
+            }
+            if (res && res.ok) {
               const data = await res.json();
               (data.questionIds || []).forEach(qid => {
                 flatSequence.push({
