@@ -988,7 +988,17 @@ const MultiSectionAssessment = () => {
     }
 
     if (!authData?.Email || !assessmentData) {
-      navigate('/student/dashboard');
+      navigate('/student/dashboard', { replace: true });
+      return;
+    }
+
+    // Immediately block if already submitted locally
+    if (assessmentData.id && localStorage.getItem(`msaCompleted_${assessmentData.id}`) === 'true') {
+      alert('You have already completed and submitted this assessment. Re-attempts are not permitted.');
+      sessionStorage.removeItem('multisectionAssessmentData');
+      localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+      localStorage.removeItem(`msaProgress_${assessmentData.id}`);
+      navigate('/student/dashboard', { replace: true });
       return;
     }
 
@@ -996,7 +1006,7 @@ const MultiSectionAssessment = () => {
     setAssessment(assessmentData);
     localStorage.setItem(`msaActiveAssessment_${assessmentData.id}`, JSON.stringify(assessmentData));
 
-    // Verify if already completed/submitted
+    // Verify if already completed/submitted on server
     const checkAttempt = async () => {
       try {
         const college = authData.College || 'KGKITE';
@@ -1006,11 +1016,12 @@ const MultiSectionAssessment = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.completed === true || data.status === 'submitted') {
+            localStorage.setItem(`msaCompleted_${assessmentData.id}`, 'true');
             alert('You have already completed and submitted this assessment. Re-attempts are not permitted.');
             sessionStorage.removeItem('multisectionAssessmentData');
             localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
             localStorage.removeItem(`msaProgress_${assessmentData.id}`);
-            navigate('/student/dashboard');
+            navigate('/student/dashboard', { replace: true });
             return;
           }
         }
@@ -1496,15 +1507,19 @@ const MultiSectionAssessment = () => {
       }
 
       setExamFinished(true);
+      if (assessment?.id) {
+        localStorage.setItem(`msaCompleted_${assessment.id}`, 'true');
+      }
       sessionStorage.removeItem('multisectionAssessmentData');
-      localStorage.removeItem(`msaProgress_${assessment.id}`);
+      localStorage.removeItem(`msaProgress_${assessment?.id}`);
+      localStorage.removeItem(`msaActiveAssessment_${assessment?.id}`);
 
       // Clear MCQ, Coding, and proctoring temporary workspace details
       const keysToRemove = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && (
-          key.startsWith(`msa_active_mcq_state_${assessment.id}`) ||
+          key.startsWith(`msa_active_mcq_state_${assessment?.id}`) ||
           key.startsWith(`codingAssessmentCode`) ||
           key.startsWith(`codingTimeSpentPerQ`) ||
           key.startsWith(`proctor_violations_`) ||
@@ -1516,6 +1531,19 @@ const MultiSectionAssessment = () => {
       keysToRemove.forEach(k => localStorage.removeItem(k));
     }
   }, [assessment, currentSecIdx, examResults, handleStartSection, user]);
+
+  // Intercept forward navigation when exam is finished
+  useEffect(() => {
+    if (examFinished) {
+      window.history.replaceState(null, '', '/student/dashboard');
+      const handleForward = () => {
+        window.history.pushState(null, '', '/student/dashboard');
+        navigate('/student/dashboard', { replace: true });
+      };
+      window.addEventListener('popstate', handleForward);
+      return () => window.removeEventListener('popstate', handleForward);
+    }
+  }, [examFinished, navigate]);
 
   // ────────────────────────── RENDER ─────────────────────────────────────────
 
@@ -1538,7 +1566,10 @@ const MultiSectionAssessment = () => {
           Congratulations <strong>{user?.Name}</strong>, your answers have been successfully recorded and submitted. You may now safely return to the dashboard.
         </p>
         <button
-          onClick={() => navigate('/student/dashboard')}
+          onClick={() => {
+            window.history.replaceState(null, '', '/student/dashboard');
+            navigate('/student/dashboard', { replace: true });
+          }}
           style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.1rem', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
         >
           Return to Dashboard

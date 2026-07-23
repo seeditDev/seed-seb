@@ -619,7 +619,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 // Redirect to unified student dashboard if no active session exists
                 const hasPending = localStorage.getItem("codingAssessmentData");
                 if (!hasPending) {
-                    navigate("/student/dashboard");
+                    navigate("/student/dashboard", { replace: true });
                     return;
                 }
 
@@ -1594,11 +1594,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     : 'Your coding assessment was auto-submitted due to excessive tab switching violations.');
             
             setAutoSubmitMessage(noticeMsg);
-            navigate(CODING_ROUTE_BASE);
+            navigate('/student/dashboard', { replace: true });
         } catch (e) {
             console.error("Auto submit failed:", e);
             clearLocalSession();
-            navigate(CODING_ROUTE_BASE);
+            navigate('/student/dashboard', { replace: true });
         } finally {
             setIsSubmitting(false);
         }
@@ -1767,6 +1767,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Clean local variables
     const clearLocalSession = () => {
+        if (currentAssessment?.id) {
+            localStorage.setItem(`codingCompleted_${currentAssessment.id}`, "true");
+        }
         localStorage.removeItem("codingAssessmentStartTime");
         localStorage.removeItem("codingAssessmentTimer");
         localStorage.removeItem("codingAssessmentData");
