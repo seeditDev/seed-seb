@@ -152,8 +152,10 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         } catch (_) { }
     }, []);
     const clearTestSessionStorage = useCallback(() => {
-        // localStorage.removeItem('mcqLastProgressSync'); // Commented out to align with lenient reconnection
-        // Use localStorage instead of sessionStorage for persistence across tab closes
+        if (currentTest?.id || currentTest?.testInfo?.id) {
+            const tId = currentTest?.id || currentTest?.testInfo?.id;
+            localStorage.setItem(`mcqCompleted_${tId}`, 'true');
+        }
         localStorage.removeItem('mcqTestStartTime');
         localStorage.removeItem('mcqTestStartTimeISO');
         localStorage.removeItem('mcqTestDuration');
@@ -161,6 +163,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         localStorage.removeItem('mcqTestAnswers');
         localStorage.removeItem('mcqActiveTestSlug');
         localStorage.removeItem('mcqLastProgressSync');
+        localStorage.removeItem('mcqLastActiveTime');
         localStorage.removeItem('mcqPendingSubmission');
         localStorage.removeItem('mcqReloadGraceDeadline');
         setLastProgressSync(null);
@@ -345,6 +348,19 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             }
         }
     }, [currentTest, testSlug, navigate, isEmbedded]);
+
+    // Intercept forward navigation when test is submitted
+    useEffect(() => {
+        if (currentTest?.submitted) {
+            window.history.replaceState(null, '', '/student/dashboard');
+            const handleForward = () => {
+                window.history.pushState(null, '', '/student/dashboard');
+                navigate('/student/dashboard', { replace: true });
+            };
+            window.addEventListener('popstate', handleForward);
+            return () => window.removeEventListener('popstate', handleForward);
+        }
+    }, [currentTest?.submitted, navigate]);
 
     // Load available MCQ tests based on access control
     const loadAvailableTests = async (accessControlData, userData) => {
@@ -1163,7 +1179,25 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             const durationSec = parseInt(storedDuration, 10);
             const { test, testData } = JSON.parse(storedTestData);
 
+            const testId = test?.id || testData?.id;
+            if (testId && localStorage.getItem(`mcqCompleted_${testId}`) === 'true') {
+                navigate('/student/dashboard', { replace: true });
+                return false;
+            }
+
             const now = timeService.now();
+            const storedLastActive = localStorage.getItem('mcqLastActiveTime');
+            const lastActiveMs = storedLastActive ? parseInt(storedLastActive, 10) : startTimeMs;
+            const elapsedOfflineSec = Math.floor((now - lastActiveMs) / 1000);
+
+            if (elapsedOfflineSec > 300) {
+                autoSubmitStoredAttempt({
+                    reason: 'exit_timeout',
+                    noticeMessage: 'Your MCQ attempt was auto-submitted because your offline exit window exceeded 5 minutes.'
+                });
+                return false;
+            }
+
             const elapsed = Math.floor((now - startTimeMs) / 1000);
             const remaining = Math.max(0, durationSec - elapsed);
 
@@ -1577,6 +1611,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         let timer;
         if (currentTest && !currentTest.submitted && testDuration > 0 && !isEmbedded) {
             timer = setInterval(() => {
+                localStorage.setItem('mcqLastActiveTime', timeService.now().toString());
                 setElapsedTime(prev => {
                     const newElapsed = prev + 1;
                     const newRemaining = testDuration - newElapsed;
