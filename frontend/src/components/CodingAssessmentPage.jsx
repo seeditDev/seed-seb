@@ -55,6 +55,9 @@ public class Main {
     }
 }`,
   python: `# Write your code here
+`,
+  javascript: `// Write your code here
+console.log("Hello, World!");
 `
 };
 
@@ -467,7 +470,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     useEffect(() => {
         if (isEmbedded && questions.length > 0 && Object.keys(codeMap).length === 0) {
             const initialCodeMap = {};
-            const availableLanguages = ["cpp", "c", "python", "java"];
+            const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
             questions.forEach(q => {
                 availableLanguages.forEach(lang => {
                     initialCodeMap[`${q.id}_${lang}`] = q.boilerplates?.[lang] || FREE_BOILERPLATES[lang] || "";
@@ -1114,7 +1117,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             // Initialize default boilerplate codes for all questions and all languages
             const initialCodeMap = {};
-            const availableLanguages = ["cpp", "c", "python", "java"];
+            const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
             parsedQuestions.forEach(q => {
                 availableLanguages.forEach(lang => {
                     initialCodeMap[`${q.id}_${lang}`] = q.boilerplates?.[lang] || FREE_BOILERPLATES[lang] || "";
@@ -2478,6 +2481,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         <option value="c">C (GCC GCC)</option>
                                         <option value="python">Python 3 (Python)</option>
                                         <option value="java">Java (OpenJDK javac)</option>
+                                        <option value="javascript">JavaScript (Node.js 18)</option>
                                     </select>
                                 </div>
                                 <div className="toolbar-right">
@@ -2492,7 +2496,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 <Editor
                                     key={currentQuestion.id}
                                     height="100%"
-                                    language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : language)}
+                                    language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
                                     value={codeMap[`${currentQuestion.id}_${language}`] || ""}
                                     onChange={handleCodeChange}
                                     theme={['light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}

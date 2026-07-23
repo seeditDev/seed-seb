@@ -312,7 +312,7 @@ const PracticeSandbox = () => {
       }
 
       // Detect default language
-      const allowedLangs = qData.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3'];
+      const allowedLangs = qData.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3', 'JavaScript'];
       const firstAllowed = allowedLangs[0] || 'Python3';
       const defaultLang = firstAllowed === 'Python3' ? 'python3' : firstAllowed === 'C++' ? 'cpp' : firstAllowed.toLowerCase();
       setLanguage(defaultLang);
@@ -709,7 +709,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
     );
   }
 
-  const supportedLanguages = question.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3'];
+  const supportedLanguages = question.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3', 'JavaScript'];
 
   // Filter sidebar questions
   const filteredSidebarQuestions = sidebarQuestions.filter(q => {
@@ -755,7 +755,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
             className="psb-lang-select"
           >
             {supportedLanguages.map(lang => {
-              const val = lang === 'Python3' ? 'python3' : lang.toLowerCase();
+              const val = lang === 'Python3' ? 'python3' : (lang === 'JavaScript' || lang === 'JS' ? 'javascript' : lang.toLowerCase());
               return <option key={val} value={val}>{lang}</option>;
             })}
           </select>

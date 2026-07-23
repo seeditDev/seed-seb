@@ -270,7 +270,7 @@ const PracticeCourseSandbox = () => {
         setSolvedIds(progress.solvedProblems || []);
 
         // 3. Detect default language based on Course & Question Boilerplates
-        const allowedLangs = qData.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3'];
+        const allowedLangs = qData.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3', 'JavaScript'];
         let firstAllowed = allowedLangs[0] || 'Python3';
         
         // Override default language matching the course type
@@ -709,9 +709,10 @@ const isCodeBlankOrEmpty = (codeStr) => {
             className="psb-lang-select"
             style={{ padding: '6px 14px', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', color: 'var(--ps-text)', border: '1px solid var(--ps-border)', fontWeight: 'bold' }}
           >
-            {(question.judging?.supportedLanguages || ['C', 'Java', 'Python3']).map(lang => (
-              <option key={lang} value={lang === 'Python3' ? 'python3' : lang.toLowerCase()}>{lang}</option>
-            ))}
+            {(question.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3', 'JavaScript']).map(lang => {
+              const val = lang === 'Python3' ? 'python3' : (lang === 'JavaScript' || lang === 'JS' ? 'javascript' : lang.toLowerCase());
+              return <option key={lang} value={val}>{lang}</option>;
+            })}
           </select>
         )}
       </div>

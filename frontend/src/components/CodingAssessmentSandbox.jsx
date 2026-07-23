@@ -119,7 +119,8 @@ const FREE_BOILERPLATES = {
     c: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
     cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
     python: `print("Hello, World!")`,
-    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
+    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
+    javascript: `console.log("Hello, World!");`
 };
 
 const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {} }) => {
@@ -817,7 +818,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
         }
     };
 
-    const monacoLanguage = language === 'cpp' ? 'cpp' : language === 'c' ? 'c' : language === 'java' ? 'java' : 'python';
+    const monacoLanguage = language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'java' ? 'java' : (language === 'javascript' ? 'javascript' : 'python')));
     const userInitials = user?.Name ? user.Name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
 
     return (
@@ -1301,6 +1302,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                                     <option value="c">C (GCC 10.2)</option>
                                     <option value="python">Python 3.10</option>
                                     <option value="java">Java 15</option>
+                                    <option value="javascript">JavaScript (Node.js 18)</option>
                                 </select>
                             </div>
                             <div className="toolbar-right">
