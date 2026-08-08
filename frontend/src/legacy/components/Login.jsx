@@ -32,7 +32,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'leetcode-dark';
+    return localStorage.getItem('portal_theme') || 'professionalism';
   });
 
   useEffect(() => {

@@ -83,7 +83,7 @@ const StudentDashboard = () => {
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'leetcode-dark';
+    return localStorage.getItem('portal_theme') || 'professionalism';
   });
   const [apiKeysList, setApiKeysList] = useState(() => {
     try {
@@ -2278,15 +2278,9 @@ const StudentDashboard = () => {
   const renderSettings = () => {
     const themes = [
       {
-        id: 'leetcode-dark',
-        name: 'LeetCode Dark Mode (Default)',
-        desc: 'Official LeetCode dark mode with signature orange highlights and clean dark panels.',
-        preview: ['#1a1a1a', '#282828', '#ffa116']
-      },
-      {
-        id: 'leetcode-light',
-        name: 'LeetCode Light Mode',
-        desc: 'Official LeetCode light mode with crisp typography and warm brand accents.',
+        id: 'professionalism',
+        name: 'Professionalism (LeetCode Light)',
+        desc: 'Official LeetCode light mode with crisp JetBrains Mono typography, clean borders, and warm brand accents. (Default)',
         preview: ['#f7f8fa', '#ffffff', '#ffa116']
       },
       {
