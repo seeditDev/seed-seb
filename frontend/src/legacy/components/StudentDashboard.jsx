@@ -2280,8 +2280,8 @@ const StudentDashboard = () => {
       {
         id: 'professionalism',
         name: 'Professionalism',
-        desc: 'Classic Ice light mode design system with crisp typography and clean card layouts. (Default)',
-        preview: ['#f3f4f6', '#ffffff', '#4f46e5']
+        desc: 'Pristine, high-contrast light mode design system with clean card layouts and crisp typography. (Default)',
+        preview: ['#fafafa', '#ffffff', '#007aff']
       },
       {
         id: 'dark',
