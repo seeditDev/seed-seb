@@ -140,6 +140,7 @@ export default function AppShell({ children }) {
       hostname.endsWith(".lovable.app") ||
       hostname.endsWith(".vercel.app") ||
       hostname.endsWith(".pages.dev") ||
+      hostname.includes("seedit.site") ||
       import.meta.env.DEV;
     const isUAOk =
       ua.includes("SEEDSEB") ||
@@ -215,6 +216,9 @@ export default function AppShell({ children }) {
   const handleEnableWebAccess = () => {
     localStorage.setItem("web_access_bypass", "true");
     setIsDesktopApp(true);
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   };
 
   if (error) {
@@ -285,15 +289,12 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
 
         <div className="seb-lock__card">
           <div className="seb-lock__actions">
-            <a 
-              className="seb-btn seb-btn--primary" 
-              href="https://www.seedit.site"
-              onClick={(e) => {
-                onEnableWebAccess();
-              }}
+            <button
+              className="seb-btn seb-btn--primary"
+              onClick={onEnableWebAccess}
             >
               🚀 Go to Web Portal
-            </a>
+            </button>
             <a
               className="seb-btn seb-btn--secondary"
               href="https://github.com/seeditDev/SEED-SEB-APP/releases/tag/SEED-SEB-APP"
@@ -327,7 +328,7 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
             <ul className="seb-lock__step-list">
               <li className="seb-lock__step-item">
                 <span className="seb-lock__step-num">1</span>
-                <span><strong>Web Edition:</strong> Click "Launch Web Portal" above to sign in, practice coding problems, and view student scorecards directly in your browser.</span>
+                <span><strong>Web Edition:</strong> Click "Go to Web Portal" above to sign in, practice coding problems, and view student scorecards directly in your browser.</span>
               </li>
               <li className="seb-lock__step-item">
                 <span className="seb-lock__step-num">2</span>
