@@ -85,7 +85,7 @@ const StudentDashboard = () => {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [userPremiumState, setUserPremiumState] = useState(null);
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'professionalism';
+    return localStorage.getItem('portal_theme') || 'bw';
   });
   const [apiKeysList, setApiKeysList] = useState(() => {
     try {
@@ -2451,12 +2451,6 @@ const StudentDashboard = () => {
   const renderSettings = () => {
     const themes = [
       {
-        id: 'professionalism',
-        name: 'Professionalism',
-        desc: 'Pristine, high-contrast light mode design system with clean card layouts and crisp typography. (Default)',
-        preview: ['#f8f9fa', '#ffffff', '#2563eb']
-      },
-      {
         id: 'dark',
         name: 'Midnight Space (Dark)',
         desc: 'Futuristic slate theme with indigo highlights.',
@@ -2489,7 +2483,7 @@ const StudentDashboard = () => {
       {
         id: 'bw',
         name: 'Monochrome Minimalist (B&W)',
-        desc: 'High-contrast, clean black & white theme.',
+        desc: 'High-contrast, clean black & white theme. (Default)',
         preview: ['#ffffff', '#000000', '#000000']
       }
     ];

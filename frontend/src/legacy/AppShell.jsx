@@ -113,7 +113,7 @@ export default function AppShell({ children }) {
   const [isDesktopApp, setIsDesktopApp] = useState(true);
 
   useEffect(() => {
-    const activeTheme = localStorage.getItem("portal_theme") || "professionalism";
+    const activeTheme = localStorage.getItem("portal_theme") || "bw";
     document.documentElement.setAttribute("data-theme", activeTheme);
 
     const onError = (e) => {
