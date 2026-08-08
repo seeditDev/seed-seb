@@ -91,3 +91,68 @@ export const checkAndClearProctorCache = (testID) => {
     clearAllProctorCache(testID);
   }
 };
+
+/**
+ * Record a proctoring violation event to local cache
+ */
+export const recordViolation = (testID, email, type, details = {}) => {
+  if (!testID || !email) return { count: 0, violations: [] };
+
+  const cleanEmail = String(email).toLowerCase();
+  const cleanTestID = String(testID);
+  const countKey = `proctor_violations_${cleanEmail}_${cleanTestID}`;
+  const logKey = `proctor_events_${cleanEmail}_${cleanTestID}`;
+
+  let violations = [];
+  try {
+    violations = JSON.parse(localStorage.getItem(logKey) || '[]');
+  } catch (_) {
+    violations = [];
+  }
+
+  const newEntry = {
+    type: type || 'malpractice',
+    timestamp: new Date().toISOString(),
+    time: new Date().toLocaleTimeString(),
+    ...details
+  };
+
+  violations.push(newEntry);
+  const count = violations.length;
+
+  try {
+    localStorage.setItem(logKey, JSON.stringify(violations));
+    localStorage.setItem(countKey, count.toString());
+  } catch (_) {}
+
+  return { count, violations };
+};
+
+/**
+ * Get all recorded violations for an assessment session
+ */
+export const getViolations = (testID, email) => {
+  if (!testID || !email) return { violationCount: 0, violations: [] };
+
+  const cleanEmail = String(email).toLowerCase();
+  const cleanTestID = String(testID);
+  const countKey = `proctor_violations_${cleanEmail}_${cleanTestID}`;
+  const logKey = `proctor_events_${cleanEmail}_${cleanTestID}`;
+
+  let violations = [];
+  try {
+    violations = JSON.parse(localStorage.getItem(logKey) || '[]');
+  } catch (_) {
+    violations = [];
+  }
+
+  let count = violations.length;
+  try {
+    const savedCount = parseInt(localStorage.getItem(countKey) || '0', 10);
+    if (!isNaN(savedCount) && savedCount > count) {
+      count = savedCount;
+    }
+  } catch (_) {}
+
+  return { violationCount: count, violations };
+};

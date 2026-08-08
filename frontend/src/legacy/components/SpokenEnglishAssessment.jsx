@@ -6,6 +6,7 @@ import {
   FaUser, FaVideo, FaBan, FaLock
 } from 'react-icons/fa';
 import { evaluateSpokenEnglishSession } from '../services/spokenEnglishEvaluator';
+import { getViolations } from '../utils/proctorCache';
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import '../styles/SpokenEnglishAssessment.css';
@@ -472,6 +473,12 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       submitted_at: new Date().toISOString()
     };
 
+    const vInfo = getViolations(testId, userEmail);
+    const allViolations = vInfo.violations || [];
+    const finalViolationCount = Math.max(vInfo.violationCount || 0, allViolations.length);
+    const totalNoFace = allViolations.filter(v => v.type === 'no_face').length;
+    const totalMultipleFaces = allViolations.filter(v => v.type === 'multiple_faces').length;
+
     const firestorePayload = {
       id: docId,
       email: userEmail,
@@ -494,6 +501,10 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       parameters: evaluation.parameters,
       grammarErrors: evaluation.grammarErrors,
       responses: supabasePayload.responses,
+      violationCount: finalViolationCount,
+      totalNoFace: totalNoFace,
+      totalMultipleFaces: totalMultipleFaces,
+      violations: allViolations,
       submittedAt: new Date().toISOString()
     };
 

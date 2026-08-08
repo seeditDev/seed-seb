@@ -23,6 +23,7 @@ import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
+import { getViolations } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
@@ -1368,24 +1369,11 @@ const MultiSectionAssessment = () => {
 
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
         const totalQ = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
-        const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
-        const totalViolations = proctoringData.violationCount;
-
-        // Scoring fields
-        const partialScore = totalScore;
-        const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
-
-        // Metrics computation
-        const timeStartedISO = examStartTimeRef.current;
-        const timeEndedISO = new Date().toISOString();
-        const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(timeStartedISO).getTime()) / 1000);
-        const timeM = Math.floor(timeTaken / 60);
-        const timeS = timeTaken % 60;
-        const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
-
-        const totalNoFace = proctoringData.violations.filter(v => v.type === 'no_face').length;
-        const totalMultipleFaces = proctoringData.violations.filter(v => v.type === 'multiple_faces').length;
-        const allViolations = proctoringData.violations;
+        const vInfo = getViolations(assessment.id, user.Email);
+        const allViolations = (vInfo.violations && vInfo.violations.length > 0) ? vInfo.violations : (proctoringData.violations || []);
+        const totalViolations = Math.max(vInfo.violationCount || 0, proctoringData.violationCount || 0, allViolations.length);
+        const totalNoFace = allViolations.filter(v => v.type === 'no_face').length;
+        const totalMultipleFaces = allViolations.filter(v => v.type === 'multiple_faces').length;
 
         const autoSubmitted = Object.values(updatedResults).some(s => s.data?.autoSubmitted);
         const autoSubmitReason = Object.values(updatedResults)
@@ -1419,6 +1407,7 @@ const MultiSectionAssessment = () => {
           violationCount: totalViolations,
           totalNoFace,
           totalMultipleFaces,
+          violations: allViolations,
           completed: true,
           status: 'submitted',
           autoSubmitted,

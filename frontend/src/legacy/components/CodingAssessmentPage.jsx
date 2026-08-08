@@ -10,7 +10,7 @@ import desktopBridge from '../utils/desktopBridge';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
-import { clearAllProctorCache } from '../utils/proctorCache';
+import { clearAllProctorCache, getViolations, recordViolation } from '../utils/proctorCache';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
@@ -1556,18 +1556,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 autoSubmitReason: reason === 'timer' 
                     ? 'Timer hit 0' 
                     : (reason === 'proctoring_violations' ? 'Proctoring violations exceeded limit' : 'Tab switch limit lockout'),
-                violationCount: reason === 'proctoring_violations' 
-                    ? (proctoringData.violationCount || 5) 
-                    : (violationCount >= 3 ? 3 : violationCount),
-                totalNoFace: reason === 'proctoring_violations' 
-                    ? proctoringData.violations.filter(v => v.type === 'no_face').length 
-                    : 0,
-                totalMultipleFaces: reason === 'proctoring_violations' 
-                    ? proctoringData.violations.filter(v => v.type === 'multiple_faces').length 
-                    : 0,
-                violations: reason === 'proctoring_violations' 
-                    ? proctoringData.violations 
-                    : [{ type: 'tab_switch', count: violationCount, reason: 'Tab switch count exceeded' }],
+                violationCount: (() => {
+                    const vInfo = getViolations(activeAssessment.id, authData.Email);
+                    return Math.max(violationCount, vInfo.violationCount, (vInfo.violations || []).length);
+                })(),
+                totalNoFace: (() => {
+                    const vInfo = getViolations(activeAssessment.id, authData.Email);
+                    return (vInfo.violations || []).filter(v => v.type === 'no_face').length;
+                })(),
+                totalMultipleFaces: (() => {
+                    const vInfo = getViolations(activeAssessment.id, authData.Email);
+                    return (vInfo.violations || []).filter(v => v.type === 'multiple_faces').length;
+                })(),
+                violations: (() => {
+                    const vInfo = getViolations(activeAssessment.id, authData.Email);
+                    return vInfo.violations.length > 0
+                        ? vInfo.violations
+                        : [{ type: 'tab_switch', count: violationCount, reason: 'Tab switch limit lockout' }];
+                })(),
                 languageUsed: language,
                 coding: codingSubmissions,
                 executionStats: {
@@ -1621,6 +1627,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             setViolationCount((prev) => {
                 const next = prev + 1;
+                recordViolation(currentAssessment?.id || 'coding', user?.Email, type, { message: `Tab switch violation ${next}` });
                 if (next >= TAB_SWITCH_LIMIT) {
                     setIsLockedOut(true);
                     autoSubmitAttemptRef.current?.('tab_switch_lockout');
@@ -1754,10 +1761,22 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 submittedAt: timeService.getNow().toISOString(),
                 autoSubmitted: false,
                 autoSubmitReason: '',
-                violationCount: violationCount,
-                totalNoFace: 0,
-                totalMultipleFaces: 0,
-                violations: [],
+                violationCount: (() => {
+                    const vInfo = getViolations(currentAssessment.id, user.Email);
+                    return Math.max(violationCount, vInfo.violationCount, (vInfo.violations || []).length);
+                })(),
+                totalNoFace: (() => {
+                    const vInfo = getViolations(currentAssessment.id, user.Email);
+                    return (vInfo.violations || []).filter(v => v.type === 'no_face').length;
+                })(),
+                totalMultipleFaces: (() => {
+                    const vInfo = getViolations(currentAssessment.id, user.Email);
+                    return (vInfo.violations || []).filter(v => v.type === 'multiple_faces').length;
+                })(),
+                violations: (() => {
+                    const vInfo = getViolations(currentAssessment.id, user.Email);
+                    return vInfo.violations;
+                })(),
                 languageUsed: language,
                 codingSubmissions: codingSubmissions,
                 executionStats: {

@@ -4,6 +4,7 @@ import * as tf from '@tensorflow/tfjs';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import '../styles/ProctoringEngine.css';
 import timeService from '../services/timeService';
+import { recordViolation } from '../utils/proctorCache';
 
 // Helper to resolve models directory path under both file:// and http/https protocols
 const getModelsPath = (subPath) => {
@@ -552,10 +553,20 @@ const ProctoringEngine = ({
         msg = 'Face verification failed: Different person detected in camera view!';
       }
 
+      // Record to local cache for Firestore submission
+      const record = recordViolation(testID, studentID, type, { message: msg });
+
       // Defer side effects to prevent updating other React components during this state transition
       setTimeout(() => {
         showAlert(msg, 'warning');
-        notifyViolationEvent(type, newCount);
+        if (onViolationUpdateRef.current) {
+          onViolationUpdateRef.current({
+            violationCount: newCount,
+            violationType: type,
+            violations: record.violations,
+            timestamp: new Date().toISOString()
+          });
+        }
 
         if (newCount >= maxViolationsRef.current && onAutoSubmitRef.current) {
           console.log('[ProctoringEngine] Violation count reached limit. Auto-submitting exam...');
@@ -563,7 +574,7 @@ const ProctoringEngine = ({
 
           setTimeout(() => {
             if (onAutoSubmitRef.current) {
-              onAutoSubmitRef.current({ reason: 'proctoring_violations', violationCount: newCount });
+              onAutoSubmitRef.current({ reason: 'proctoring_violations', violationCount: newCount, violations: record.violations });
             }
           }, 2000);
         }
@@ -571,7 +582,7 @@ const ProctoringEngine = ({
 
       return newCount;
     });
-  }, [notifyViolationEvent, showAlert]);
+  }, [testID, studentID, showAlert]);
 
   // Single-frame detection helper (used in scheduled sequences)
   const detectFrame = useCallback(async () => {

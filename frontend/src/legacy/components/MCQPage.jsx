@@ -8,7 +8,7 @@ import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import timeService from '../services/timeService';
-import { clearAllProctorCache } from '../utils/proctorCache';
+import { clearAllProctorCache, getViolations, recordViolation } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { getAuthData } from '../utils/storageUtils';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
@@ -1356,11 +1356,17 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             // Step 2: Generating marks (simulate processing)
             await new Promise(resolve => setTimeout(resolve, 800));
 
-            // Prepare result data with proctoring information
-            const violationStats = (proctoringData.violations || []).reduce((acc, violation) => {
+            // Prepare result data with proctoring information from local cache + state
+            const testID = currentTest.testInfo?.id || currentTest.id || 'unknown';
+            const vInfo = getViolations(testID, user?.Email);
+            const allViolations = (vInfo.violations && vInfo.violations.length > 0)
+                ? vInfo.violations
+                : (proctoringData.violations || []);
+            const finalViolationCount = Math.max(vInfo.violationCount || 0, proctoringData.violationCount || 0, allViolations.length);
+
+            const violationStats = allViolations.reduce((acc, violation) => {
                 if (violation.type === 'no_face') acc.totalNoFace++;
                 else if (violation.type === 'multiple_faces') acc.totalMultipleFaces++;
-                // looking_away removed - no longer tracked
                 return acc;
             }, { totalNoFace: 0, totalMultipleFaces: 0 });
 
@@ -1406,10 +1412,10 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 timeSpentPerQ: timeSpentPerQ,
                 autoSubmitted: currentTest.autoSubmitted || false,
                 autoSubmitReason: '',
-                violationCount: proctoringData.violationCount || 0,
+                violationCount: finalViolationCount,
                 totalNoFace: violationStats.totalNoFace || 0,
                 totalMultipleFaces: violationStats.totalMultipleFaces || 0,
-                violations: proctoringData.violations || []
+                violations: allViolations
             };
 
             const resultData = buildUnifiedResultPayload(rawResultData);
