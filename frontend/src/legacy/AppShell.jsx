@@ -132,10 +132,14 @@ export default function AppShell({ children }) {
   useEffect(() => {
     const ua = navigator.userAgent || "";
     const hostname = window.location.hostname;
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const hasWebBypass = localStorage.getItem("web_access_bypass") === "true" || urlParams?.get("bypass") === "true" || urlParams?.get("mode") === "web";
     const isDev =
       hostname === "localhost" ||
       hostname === "127.0.0.1" ||
       hostname.endsWith(".lovable.app") ||
+      hostname.endsWith(".vercel.app") ||
+      hostname.endsWith(".pages.dev") ||
       import.meta.env.DEV;
     const isUAOk =
       ua.includes("SEEDSEB") ||
@@ -144,7 +148,7 @@ export default function AppShell({ children }) {
       !!window.qt ||
       !!window.desktopBackend ||
       window.pyqtFlag === true;
-    setIsDesktopApp(isUAOk || isDev);
+    setIsDesktopApp(isUAOk || isDev || hasWebBypass);
   }, []);
 
   useEffect(() => {
@@ -208,6 +212,11 @@ export default function AppShell({ children }) {
     };
   }, []);
 
+  const handleEnableWebAccess = () => {
+    localStorage.setItem("web_access_bypass", "true");
+    setIsDesktopApp(true);
+  };
+
   if (error) {
     return (
       <div className="seb-fallback">
@@ -225,7 +234,7 @@ export default function AppShell({ children }) {
   }
 
   if (!isDesktopApp) {
-    return <DesktopOnlyNotice />;
+    return <DesktopOnlyNotice onEnableWebAccess={handleEnableWebAccess} />;
   }
 
   return (
@@ -239,49 +248,91 @@ export default function AppShell({ children }) {
 export function AppShellLoading() {
   return (
     <div className="seb-boot">
-      <img src="/SEED_Logo.png" alt="SEED-IT" width="150" height="auto" />
-      <p>Loading... Please wait</p>
+      <div className="seb-boot__brand">
+        <div className="seb-boot__spinner-ring"></div>
+        <div className="seb-boot__logo-wrapper">
+          <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
+        </div>
+      </div>
+      <div className="seb-boot__title">SEED-IT Exam Platform</div>
+      <div className="seb-boot__status">
+        <span className="seb-boot__dot"></span>
+        <span>Initializing Security Sandbox...</span>
+      </div>
+      <div className="seb-boot__progress-bar">
+        <div className="seb-boot__progress-fill"></div>
+      </div>
     </div>
   );
 }
 
-function DesktopOnlyNotice() {
+function DesktopOnlyNotice({ onEnableWebAccess }) {
   return (
     <div className="seb-lock">
-      <div className="seb-lock__card">
-        <div className="seb-lock__badge" aria-hidden="true">
-          🛡️
+      <div className="seb-lock__container">
+        <div className="seb-lock__header">
+          <div className="seb-lock__brand-row">
+            <img src="/SEED_Logo.png" alt="SEED-IT" className="seb-lock__logo" />
+          </div>
+          <div className="seb-lock__badge">
+            🛡️ SEED-IT Academic & Assessment Security Portal
+          </div>
+          <h1 className="seb-lock__title">SEED-SEB Secure Exam Environment</h1>
+          <p className="seb-lock__subtitle">
+            Welcome to the SEED-IT Assessment Platform. Proctored exams run securely inside the SEED-SEB desktop application. You can also launch the Web Edition below to practice and manage assessments.
+          </p>
         </div>
-        <h1>Install SEED-SEB.exe to explore the platform</h1>
-        <p>
-          For security, academic integrity, and automated camera proctoring, this platform is
-          locked down and can only be accessed inside the official SEED-SEB (Secure Exam
-          Browser) desktop application.
-        </p>
-        <div className="seb-lock__steps">
-          <h3>How to access</h3>
-          <ol>
-            <li>
-              Download the official <strong>SEED-SEB-Setup.exe</strong> installer provided by
-              your university or administrator.
-            </li>
-            <li>Run the installer and complete setup on your Windows device.</li>
-            <li>
-              Launch <strong>SEED-SEB</strong> from your desktop; it loads the platform inside a
-              secure sandbox.
-            </li>
-          </ol>
-        </div>
-        <a
-          className="seb-lock__cta"
-          href="https://seedit-portal.vercel.app/download"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Download SEED-SEB installer
-        </a>
-        <div className="seb-lock__meta">
-          Running version v{APP_VERSION} | Protected by SEED-IT Sandbox Security
+
+        <div className="seb-lock__card">
+          <div className="seb-lock__actions">
+            <button className="seb-btn seb-btn--primary" onClick={onEnableWebAccess}>
+              🚀 Launch Web Portal
+            </button>
+            <a
+              className="seb-btn seb-btn--secondary"
+              href="https://github.com/seeditDev/seed-seb/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              💻 Download SEED-SEB (.exe)
+            </a>
+          </div>
+
+          <div className="seb-lock__grid">
+            <div className="seb-lock__feature">
+              <span className="seb-lock__feature-icon">📹</span>
+              <h4>AI Camera Proctoring</h4>
+              <p>Real-time Face-API detection & multi-person alert tracking.</p>
+            </div>
+            <div className="seb-lock__feature">
+              <span className="seb-lock__feature-icon">⚡</span>
+              <h4>Code Sandbox & Practice</h4>
+              <p>Multi-language IDE supporting Java, Python, C++, SQL & DSA.</p>
+            </div>
+            <div className="seb-lock__feature">
+              <span className="seb-lock__feature-icon">🎙️</span>
+              <h4>Spoken English AI</h4>
+              <p>CEFR audio evaluation & real-time pronunciation scoring.</p>
+            </div>
+          </div>
+
+          <div className="seb-lock__steps">
+            <h3>Recommended Access Modes</h3>
+            <ul className="seb-lock__step-list">
+              <li className="seb-lock__step-item">
+                <span className="seb-lock__step-num">1</span>
+                <span><strong>Web Edition:</strong> Click "Launch Web Portal" above to sign in, practice coding problems, and view student scorecards directly in your browser.</span>
+              </li>
+              <li className="seb-lock__step-item">
+                <span className="seb-lock__step-num">2</span>
+                <span><strong>Desktop SEB App:</strong> Download and install <code>SEED-SEB-Setup.exe</code> on Windows for high-security official proctored examinations.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="seb-lock__footer">
+            SEED-IT Platform v{APP_VERSION} | Protected by Anti-Cheat & Sandbox Guard
+          </div>
         </div>
       </div>
     </div>
