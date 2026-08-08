@@ -2308,6 +2308,12 @@ const StudentDashboard = () => {
         preview: ['#fdfafb', '#ffffff', '#dc2626']
       },
       {
+        id: 'academic',
+        name: 'Ancient Academic (Professor)',
+        desc: 'Subtle, dignified paper & ink theme with classic serif typography for senior academia.',
+        preview: ['#F7F4EE', '#FFFFFF', '#1E3A8A']
+      },
+      {
         id: 'bw',
         name: 'Monochrome Minimalist (B&W)',
         desc: 'High-contrast, clean black & white theme. (Default)',
