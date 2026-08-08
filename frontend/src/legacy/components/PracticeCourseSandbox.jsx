@@ -191,6 +191,7 @@ const PracticeCourseSandbox = () => {
   // Editor & Compile states
   const [language, setLanguage] = useState('cpp');
   const [code, setCode] = useState('');  // Used only for initial load/reset
+  const codeRef = useRef('');
   const editorRef = useRef(null);  // Direct editor instance to avoid setValue() on re-renders
   const [customInput, setCustomInput] = useState('');
   const [useCustomInput, setUseCustomInput] = useState(false);
@@ -1031,15 +1032,17 @@ const isCodeBlankOrEmpty = (codeStr) => {
             {/* Editor Workspace Panel */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', minHeight: '300px' }}>
               <Editor
-                key={questionId}
+                key={`${questionId}_${language}`}
                 height="100%"
                 language={MONACO_LANG_MAP[language] || 'cpp'}
                 theme="vs-dark"
-                value={code}
-                onChange={(val) => setCode(val || '')}
+                defaultValue={code}
+                onChange={(val) => {
+                  codeRef.current = val || '';
+                }}
                 onMount={(editor) => {
                   editorRef.current = editor;
-                  const currentCode = code || '';
+                  const currentCode = codeRef.current || code || '';
                   if (editor.getValue() !== currentCode) {
                     editor.setValue(currentCode);
                   }

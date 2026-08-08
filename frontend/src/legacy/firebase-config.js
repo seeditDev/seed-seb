@@ -52,7 +52,12 @@ export function ensureAnonymousAuth() {
                     return;
                 }
                 unsubscribe();
-                finish(null);
+                signInAnonymously(auth)
+                    .then((cred) => finish(cred.user))
+                    .catch((err) => {
+                        console.error('[firebase] Anonymous sign-in failed:', err?.code || err);
+                        finish(null);
+                    });
             },
             (err) => {
                 console.error('[firebase] Auth state error:', err?.code || err);

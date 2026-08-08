@@ -646,6 +646,11 @@ const MultiSectionAssessment = () => {
   // coordinator refs
   const examStartTimeRef = useRef(new Date().toISOString());
   const sectionStartTimesRef = useRef({});
+  // Mirror user/assessment into refs so callbacks that run before the first
+  // React state flush (e.g. grace-period auto-submit 500ms after mount) can
+  // still read them synchronously.
+  const userRef = useRef(null);
+  const assessmentRef = useRef(null);
 
   // Section coordinator state
   const [currentSecIdx, setCurrentSecIdx] = useState(-1);
@@ -697,6 +702,11 @@ const MultiSectionAssessment = () => {
   const timerRef = useRef(null);
   const examFinishedRef = useRef(examFinished);
   useEffect(() => { examFinishedRef.current = examFinished; }, [examFinished]);
+  // Keep userRef/assessmentRef in sync with state for callback closures
+  useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => { assessmentRef.current = assessment; }, [assessment]);
+  // Prevents React StrictMode double-invoke from firing the grace-period auto-submit twice
+  const gracePeriodFiredRef = useRef(false);
 
   const autoSubmitEntireExam = useCallback((reason) => {
     if (examFinishedRef.current) return;
@@ -704,24 +714,39 @@ const MultiSectionAssessment = () => {
     setSecStarted(false);
     clearInterval(timerRef.current);
 
+    // Use refs so this works even when called before the first React state flush
+    // (e.g. the grace-period path calls this 500ms after mount when state is still null)
+    const effectiveUser = userRef.current;
+    const effectiveAssessment = assessmentRef.current;
+
     // BUG FIXED (P0 cross-tenant write): `user.College || 'KGKITE'` wrote one
     // college's attempt into another college's document path whenever the
     // profile field was blank. Skip the remote write instead of substituting —
     // local progress is still kept so nothing is silently lost.
-    const tenant = resolveTenant(user);
-    if (user?.Email && assessment && !tenant.valid) {
+    const tenant = resolveTenant(effectiveUser);
+    if (effectiveUser?.Email && effectiveAssessment && !tenant.valid) {
       console.error('[MSA] Incomplete profile, refusing remote write:', tenant.missing);
     }
-    if (user?.Email && assessment && tenant.valid) {
+    if (effectiveUser?.Email && effectiveAssessment && tenant.valid) {
       const { college, year } = tenant;
       
-      const sectionsList = Object.values(examResults).map(sec => ({
-        sectionName: sec.sectionName || '',
-        name: sec.sectionName || '',
-        score: sec.data?.score || 0,
-        totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
-        maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0
-      }));
+      const sectionsList = Object.values(examResults).map(sec => {
+        const secTime = sec.timeSpentSeconds || sec.data?.timeSpentSeconds || 0;
+        const secM = Math.floor(secTime / 60);
+        const secS = secTime % 60;
+        return {
+          sectionName: sec.sectionName || '',
+          name: sec.sectionName || '',
+          score: sec.data?.score || 0,
+          totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
+          maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
+          startTimeISO: sec.startTimeISO || '',
+          endTimeISO: sec.endTimeISO || '',
+          timeSpentSeconds: secTime,
+          timeTaken: secTime,
+          timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`
+        };
+      });
 
       const aggregatedQuestions = Object.values(examResults)
         .filter(sec => sec.type === 'mcq' && sec.data?.questions)
@@ -757,10 +782,10 @@ const MultiSectionAssessment = () => {
       const allViolations = proctoringData.violations;
 
       const rawAttemptData = {
-        email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-        college, year, department: user.Department || '',
-        testID: assessment.id, testName: assessment.name,
-        assessmentId: assessment.id, assessmentName: assessment.name,
+        email: effectiveUser.Email, rollNumber: effectiveUser['Roll Number'] || '', name: effectiveUser.Name || '',
+        college, year, department: effectiveUser.Department || '',
+        testID: effectiveAssessment.id, testName: effectiveAssessment.name,
+        assessmentId: effectiveAssessment.id, assessmentName: effectiveAssessment.name,
         startedAt: timeStartedISO,
         submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
         type: 'multisection',
@@ -790,23 +815,23 @@ const MultiSectionAssessment = () => {
 
       const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
-      const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
+      const docPath = `AssessmentResults/${effectiveAssessment.id}/colleges/${college}/years/${year}/students/${effectiveUser.Email}`;
       setDoc(doc(db, docPath), attemptData, { merge: true })
         .then(() => console.log('[MSA] Final result saved to Firestore'))
         .catch(e => console.error('[MSA] Firestore final save failed:', e));
 
-      setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
+      setDoc(doc(db, 'users', effectiveUser.Email, 'contestAttempts', effectiveAssessment.id), attemptData, { merge: true })
         .catch(e => console.error('[MSA] Student-centric save failed:', e));
 
       safeUpsert('mcq_results', {
-        roll_number: user['Roll Number'] || '',
-        name: user.Name || '',
-        email: user.Email,
+        roll_number: effectiveUser['Roll Number'] || '',
+        name: effectiveUser.Name || '',
+        email: effectiveUser.Email,
         college,
         year,
-        department: user.Department || '',
-        test_id: assessment.id,
-        test_name: assessment.name,
+        department: effectiveUser.Department || '',
+        test_id: effectiveAssessment.id,
+        test_name: effectiveAssessment.name,
         score: totalScore,
         total_questions: totalQ,
         correct_answers: totalScore,
@@ -842,14 +867,14 @@ const MultiSectionAssessment = () => {
       // Upsert to unified assessment_results table
       safeUpsert('assessment_results', {
         type: 'multisection',
-        test_id: assessment.id,
-        test_name: assessment.name,
-        roll_number: user['Roll Number'] || '',
-        name: user.Name || '',
-        email: user.Email,
+        test_id: effectiveAssessment.id,
+        test_name: effectiveAssessment.name,
+        roll_number: effectiveUser['Roll Number'] || '',
+        name: effectiveUser.Name || '',
+        email: effectiveUser.Email,
         college,
         year,
-        department: user.Department || '',
+        department: effectiveUser.Department || '',
         score: totalScore,
         total_questions: totalQ,
         correct_answers: totalScore,
@@ -888,14 +913,14 @@ const MultiSectionAssessment = () => {
 
     setExamFinished(true);
     sessionStorage.removeItem('multisectionAssessmentData');
-    localStorage.removeItem(`msaProgress_${assessment?.id}`);
+    localStorage.removeItem(`msaProgress_${effectiveAssessment?.id}`);
 
     // Clear MCQ, Coding, and proctoring temporary workspace details
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && (
-        (assessment?.id && key.startsWith(`msa_active_mcq_state_${assessment.id}`)) ||
+        (effectiveAssessment?.id && key.startsWith(`msa_active_mcq_state_${effectiveAssessment.id}`)) ||
         key.startsWith(`codingAssessmentCode`) ||
         key.startsWith(`codingTimeSpentPerQ`) ||
         key.startsWith(`proctor_violations_`) ||
@@ -1010,6 +1035,10 @@ const MultiSectionAssessment = () => {
 
     setUser(authData);
     setAssessment(assessmentData);
+    // Mirror into refs immediately so autoSubmitEntireExam can use them
+    // synchronously before React has flushed the above state updates.
+    userRef.current = authData;
+    assessmentRef.current = assessmentData;
     localStorage.setItem(`msaActiveAssessment_${assessmentData.id}`, JSON.stringify(assessmentData));
 
     // Verify if already completed/submitted on server
@@ -1039,7 +1068,8 @@ const MultiSectionAssessment = () => {
     };
     checkAttempt();
 
-    // Crash / Exit recovery with 5-minute grace period check
+    // Crash / Exit recovery with 15-minute grace period check.
+    // Guard with a ref so React StrictMode's double-invoke does not fire this twice.
     const progressKey = `msaProgress_${assessmentData.id}`;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(progressKey) || 'null'); } catch (_) {}
@@ -1047,14 +1077,18 @@ const MultiSectionAssessment = () => {
       const nowMs = new Date().getTime();
       const lastActiveMs = saved.lastActiveTimestamp || (saved.savedAt ? new Date(saved.savedAt).getTime() : nowMs);
       const elapsedOfflineSec = Math.floor((nowMs - lastActiveMs) / 1000);
+      const GRACE_PERIOD_SEC = 900; // 15 minutes
 
-      if (elapsedOfflineSec > 300) {
-        console.warn(`[MSA] Offline exit duration (${elapsedOfflineSec}s) exceeded 5-minute grace period (300s). Auto-submitting.`);
-        alert("Your assessment was auto-submitted because your offline exit window exceeded the 5-minute grace period.");
+      if (elapsedOfflineSec > GRACE_PERIOD_SEC) {
+        if (gracePeriodFiredRef.current) return; // StrictMode guard
+        gracePeriodFiredRef.current = true;
+        console.warn(`[MSA] Offline exit duration (${elapsedOfflineSec}s) exceeded ${GRACE_PERIOD_SEC / 60}-minute grace period. Auto-submitting.`);
+        alert(`Your assessment was auto-submitted because your offline exit window exceeded ${GRACE_PERIOD_SEC / 60} minutes.`);
         setExamResults(saved.examResults || {});
         setSecCompleted(saved.completedSections || {});
+        // Use a short delay to let React batch the state above, then submit
         setTimeout(() => {
-          autoSubmitEntireExam('grace_period_exceeded_5min');
+          autoSubmitEntireExam('grace_period_exceeded');
         }, 500);
         return;
       }
@@ -1080,13 +1114,25 @@ const MultiSectionAssessment = () => {
       const adjustedTimer = Math.max(0, (restoredProgress.secTimer || 0) - elapsed);
 
       console.log('[MSA] Resuming active section index:', restoredProgress.currentSecIdx, 'Adjusted timer:', adjustedTimer, 's');
-      setCurrentSecIdx(restoredProgress.currentSecIdx);
-      setSecStarted(restoredProgress.secStarted || false);
-      setSecTimer(adjustedTimer);
 
       if (adjustedTimer <= 0 && restoredProgress.secStarted) {
         console.warn('[MSA] Active section timer expired while offline. Submitting active section.');
+        setCurrentSecIdx(restoredProgress.currentSecIdx);
+        setSecStarted(true);
+        setSecTimer(0);
+        setSectionCountdown(null);
         setTimeout(() => autoSubmitSection(), 1000);
+      } else if (restoredProgress.secStarted) {
+        // Was actively in the section — restore directly without prelaunch
+        setCurrentSecIdx(restoredProgress.currentSecIdx);
+        setSecStarted(true);
+        setSecTimer(adjustedTimer);
+        setSectionCountdown(null);
+      } else {
+        // Was on prelaunch screen — restart prelaunch properly
+        // This prevents the section view from rendering without the overlay
+        handleStartSection(restoredProgress.currentSecIdx);
+        if (adjustedTimer > 0) setSecTimer(adjustedTimer);
       }
     } else {
       const nextIdx = (restoredProgress.lastSectionIdx ?? -1) + 1;
@@ -1218,9 +1264,14 @@ const MultiSectionAssessment = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secTimer, secStarted]);
 
+  const countdownWaitRef = useRef(0);
+
   // ── Pre-section countdown
   useEffect(() => {
-    if (sectionCountdown === null) return;
+    if (sectionCountdown === null) {
+      countdownWaitRef.current = 0;
+      return;
+    }
     if (sectionCountdown <= 0) {
       const activeSec = assessment?.sections?.[countdownSecIdx];
       const qList = activeSec ? sectionData[activeSec.sectionId]?.questions : null;
@@ -1229,9 +1280,15 @@ const MultiSectionAssessment = () => {
       const visualReady = !shouldUseProctoring || isVisualProctorReady;
       const audioReady = !shouldUseAudioProctoring || isAudioProctorReady;
 
-      if (questionsLoaded && visualReady && audioReady) {
+      countdownWaitRef.current += 1;
+
+      if (questionsLoaded && ((visualReady && audioReady) || countdownWaitRef.current > 6)) {
         setSecStarted(true);
         setSectionCountdown(null);
+        countdownWaitRef.current = 0;
+      } else {
+        const t = setTimeout(() => setSectionCountdown(0), 1000);
+        return () => clearTimeout(t);
       }
       return;
     }
@@ -1253,13 +1310,21 @@ const MultiSectionAssessment = () => {
   const handleStartSection = useCallback((idx) => {
     submittingSecIdxRef.current = -1;
     sectionStartTimesRef.current[idx] = new Date().toISOString();
-    setCountdownSecIdx(idx);
-    setSectionCountdown(10);
     setCurrentSecIdx(idx);
+
     if (idx === 0) {
+      // Section 0: initial prelaunch check for camera/mic resources
+      setCountdownSecIdx(0);
+      setSectionCountdown(5);
       setIsVisualProctorReady(false);
       setIsAudioProctorReady(false);
+    } else {
+      // Subsequent sections: single proctoring session continues seamlessly!
+      setCountdownSecIdx(idx);
+      setSectionCountdown(null);
+      setSecStarted(true);
     }
+
     if (assessment && assessment.sections) {
       const section = assessment.sections[idx];
       if (section) setSecTimer((section.duration_minutes || 30) * 60);
@@ -1345,13 +1410,23 @@ const MultiSectionAssessment = () => {
       }
       if (user?.Email && tenant.valid) {
         const { college, year } = tenant;
-        const sectionsList = Object.values(updatedResults).map(sec => ({
-          sectionName: sec.sectionName || '',
-          name: sec.sectionName || '',
-          score: sec.data?.score || 0,
-          totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
-          maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0
-        }));
+        const sectionsList = Object.values(updatedResults).map(sec => {
+          const secTime = sec.timeSpentSeconds || sec.data?.timeSpentSeconds || 0;
+          const secM = Math.floor(secTime / 60);
+          const secS = secTime % 60;
+          return {
+            sectionName: sec.sectionName || '',
+            name: sec.sectionName || '',
+            score: sec.data?.score || 0,
+            totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
+            maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || 0,
+            startTimeISO: sec.startTimeISO || '',
+            endTimeISO: sec.endTimeISO || '',
+            timeSpentSeconds: secTime,
+            timeTaken: secTime,
+            timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`
+          };
+        });
 
         const aggregatedQuestions = Object.values(updatedResults)
           .filter(sec => sec.type === 'mcq' && sec.data?.questions)
@@ -1369,6 +1444,17 @@ const MultiSectionAssessment = () => {
 
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
         const totalQ = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
+        const pct = totalQ > 0 ? totalScore / totalQ : 0;
+        const partialScore = totalScore;
+        const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
+
+        const timeStartedISO = examStartTimeRef.current;
+        const timeEndedISO = new Date().toISOString();
+        const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(timeStartedISO).getTime()) / 1000);
+        const timeM = Math.floor(timeTaken / 60);
+        const timeS = timeTaken % 60;
+        const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
+
         const vInfo = getViolations(assessment.id, user.Email);
         const allViolations = (vInfo.violations && vInfo.violations.length > 0) ? vInfo.violations : (proctoringData.violations || []);
         const totalViolations = Math.max(vInfo.violationCount || 0, proctoringData.violationCount || 0, allViolations.length);
@@ -1381,12 +1467,14 @@ const MultiSectionAssessment = () => {
           .filter(Boolean)
           .join(', ');
 
-        const attemptData = {
+        const rawAttemptData = {
           email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
           college, year, department: user.Department || '',
           testID: assessment.id, testName: assessment.name,
           assessmentId: assessment.id, assessmentName: assessment.name,
-          submittedAt: serverTimestamp(), submittedAtISO: new Date().toISOString(),
+          startedAt: timeStartedISO,
+          startedAtISO: timeStartedISO,
+          submittedAt: serverTimestamp(), submittedAtISO: timeEndedISO,
           type: 'multisection',
           sections: updatedResults,
           sectionsArray: sectionsList,
@@ -1413,6 +1501,8 @@ const MultiSectionAssessment = () => {
           autoSubmitted,
           autoSubmitReason
         };
+
+        const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
         const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
         setDoc(doc(db, docPath), attemptData, { merge: true })
@@ -1572,7 +1662,7 @@ const MultiSectionAssessment = () => {
         <ProctoringEngine
           studentID={user.Email}
           testID={assessment.id}
-          isTestActive={currentSecIdx >= 0 && secStarted && !examFinished && sectionCountdown === null}
+          isTestActive={currentSecIdx >= 0 && !examFinished}
           maxViolations={maxViolations}
           onReady={handleProctorReady}
           onViolationUpdate={handleProctorViolationUpdate}
@@ -1583,7 +1673,7 @@ const MultiSectionAssessment = () => {
         <AudioProctoringEngine
           studentID={user.Email}
           testID={assessment.id}
-          isTestActive={currentSecIdx >= 0 && secStarted && !examFinished && sectionCountdown === null}
+          isTestActive={currentSecIdx >= 0 && !examFinished}
           maxViolations={maxAudioViolations}
           onReady={handleAudioProctorReady}
           onViolationUpdate={handleAudioProctorViolationUpdate}
@@ -1687,32 +1777,36 @@ const MultiSectionAssessment = () => {
         <aside className="msa-sidebar">
           <h3 className="msa-sidebar-title">Exam Sections</h3>
           <div className="msa-section-list">
-            {(assessment.sections || []).map((sec, idx) => {
-              const isCompleted = !!secCompleted[sec.sectionId];
-              const isActive = idx === currentSecIdx;
-              const isLocked = idx > currentSecIdx && !isCompleted;
-              return (
-                <div key={sec.sectionId} className={`msa-sec-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}>
-                  <div className="msa-sec-card-header">
-                    <span className="msa-sec-icon">{sec.type === 'mcq' ? <FaBookOpen /> : <FaCode />}</span>
-                    <span className="msa-sec-name">{sec.name}</span>
+            {(() => {
+              const firstUncompletedIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+              const activeIdx = currentSecIdx >= 0 ? currentSecIdx : (firstUncompletedIdx >= 0 ? firstUncompletedIdx : 0);
+              return (assessment?.sections || []).map((sec, idx) => {
+                const isCompleted = !!secCompleted[sec.sectionId];
+                const isActive = idx === currentSecIdx;
+                const isLocked = !isCompleted && idx > activeIdx;
+                return (
+                  <div key={sec.sectionId} className={`msa-sec-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}>
+                    <div className="msa-sec-card-header">
+                      <span className="msa-sec-icon">{sec.type === 'mcq' ? <FaBookOpen /> : <FaCode />}</span>
+                      <span className="msa-sec-name">{sec.name}</span>
+                    </div>
+                    <div className="msa-sec-card-meta">
+                      <span>{sec.duration_minutes} Mins</span>
+                      <span>•</span>
+                      <span>{sec.type.toUpperCase()}</span>
+                    </div>
+                    {isCompleted
+                      ? <span className="msa-badge completed">Submitted</span>
+                      : isActive
+                        ? <span className="msa-badge active">Active Now</span>
+                        : isLocked
+                          ? <span className="msa-badge locked"><FaLock /> Locked</span>
+                          : <button className="msa-start-btn" onClick={() => handleStartSection(idx)}>Start Section</button>
+                    }
                   </div>
-                  <div className="msa-sec-card-meta">
-                    <span>{sec.duration_minutes} Mins</span>
-                    <span>•</span>
-                    <span>{sec.type.toUpperCase()}</span>
-                  </div>
-                  {isCompleted
-                    ? <span className="msa-badge completed">Submitted</span>
-                    : isActive
-                      ? <span className="msa-badge active">Active Now</span>
-                      : isLocked
-                        ? <span className="msa-badge locked"><FaLock /> Locked</span>
-                        : <button className="msa-start-btn" onClick={() => handleStartSection(idx)}>Start Section</button>
-                  }
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </aside>
 
@@ -1730,8 +1824,14 @@ const MultiSectionAssessment = () => {
                   <li>Fullscreen mode is monitored and proctored. Tab switches will log violations.</li>
                 </ul>
               </div>
-              <button className="msa-action-btn primary" onClick={() => handleStartSection(0)}>
-                Proceed to First Section <FaChevronRight />
+              <button
+                className="msa-action-btn primary"
+                onClick={() => {
+                  const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+                  handleStartSection(targetIdx >= 0 ? targetIdx : 0);
+                }}
+              >
+                Proceed to Assessment Section <FaChevronRight />
               </button>
             </div>
           ) : (

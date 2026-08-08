@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 
 // AudioProctoringEngine
 // Monitors student microphone using Web Audio API (AudioContext + AnalyserNode).
 // Flags violations for: sustained noise/talking, mic disconnected, permission denied.
-// Prop interface matches ProctoringEngine for seamless use alongside camera proctoring.
+//
+// KEY DESIGN: mic permission is requested once when isTestActive first becomes true.
+// The stream is kept alive for the entire exam. Sampling is paused when !isTestActive
+// but the mic is NOT torn down – avoids repeated permission prompts between sections.
 
-const SAMPLE_INTERVAL_MS = 250;    // how often we read the analyser
-const NOISE_HOLD_FRAMES = 4;      // ~1.0 second of sustained noise before flagging
-const NOISE_THRESHOLD = 0.015;  // RMS energy threshold (increased to 0.050 as requested)
-const COOLDOWN_MS = 4000;   // min gap between consecutive violations
+const SAMPLE_INTERVAL_MS = 250;
+const NOISE_HOLD_FRAMES = 4;   // ~1s of sustained noise
+const NOISE_THRESHOLD   = 0.015;
+const COOLDOWN_MS       = 4000;
 
 const AudioProctoringEngine = ({
   studentID,
@@ -19,165 +22,145 @@ const AudioProctoringEngine = ({
   onViolationUpdate,
   onReady,
 }) => {
-  const [violationCount, setViolationCount] = useState(0);
-  const [micStatus, setMicStatus] = useState("idle"); // idle|active|denied|disconnected|noise
-
-  const audioCtxRef = useRef(null);
-  const analyserRef = useRef(null);
-  const streamRef = useRef(null);
-  const intervalRef = useRef(null);
-  const noiseFramesRef = useRef(0);
-  const lastViolationRef = useRef(0);
-  const violationCountRef = useRef(0);
+  // Keep latest callbacks in refs so closures never go stale
   const onViolationRef = useRef(onViolationUpdate);
-  const isInitializedRef = useRef(false);
-  const onReadyRef = useRef(onReady);
-
+  const onReadyRef     = useRef(onReady);
   useEffect(() => { onViolationRef.current = onViolationUpdate; }, [onViolationUpdate]);
-  useEffect(() => { onReadyRef.current = onReady; }, [onReady]);
+  useEffect(() => { onReadyRef.current = onReady; },             [onReady]);
 
-  const getRMS = useCallback(() => {
-    if (!analyserRef.current) return 0;
-    if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume().catch(() => { });
-    }
-    const bufLen = analyserRef.current.fftSize;
-    const data = new Float32Array(bufLen);
-    analyserRef.current.getFloatTimeDomainData(data);
-    let sumSq = 0;
-    for (let i = 0; i < bufLen; i++) sumSq += data[i] * data[i];
-    const rms = Math.sqrt(sumSq / bufLen);
-    console.log("[AudioProctor] Current RMS:", rms.toFixed(4));
-    return rms;
-  }, []);
+  // Internal resources
+  const audioCtxRef    = useRef(null);
+  const analyserRef    = useRef(null);
+  const streamRef      = useRef(null);
+  const intervalRef    = useRef(null);
 
+  // Counters / guards
+  const noiseFramesRef    = useRef(0);
+  const lastViolationRef  = useRef(0);
+  const violationCountRef = useRef(0);
+  const initializedRef    = useRef(false);  // mic stream acquired
+  const initStartedRef    = useRef(false);  // getUserMedia in-flight
+
+  // ── Violation reporter ────────────────────────────────────────────────────
   const reportViolation = useCallback((type) => {
     const now = Date.now();
     if (now - lastViolationRef.current < COOLDOWN_MS) return;
     lastViolationRef.current = now;
-    const newCount = violationCountRef.current + 1;
-    violationCountRef.current = newCount;
-    setViolationCount(newCount);
-    console.warn("[AudioProctor] Violation #" + newCount + ": " + type);
-    if (onViolationRef.current) {
-      onViolationRef.current({
-        type, count: newCount, maxViolations,
-        timestamp: new Date().toISOString(), studentID, testID,
-      });
-    }
+    const newCount = ++violationCountRef.current;
+    console.warn(`[AudioProctor] Violation #${newCount}: ${type}`);
+    onViolationRef.current?.({ type, count: newCount, maxViolations, timestamp: new Date().toISOString(), studentID, testID });
   }, [maxViolations, studentID, testID]);
 
+  // ── RMS helper ────────────────────────────────────────────────────────────
+  const getRMS = useCallback(() => {
+    if (!analyserRef.current) return 0;
+    if (audioCtxRef.current?.state === "suspended") {
+      audioCtxRef.current.resume().catch(() => {});
+    }
+    const data = new Float32Array(analyserRef.current.fftSize);
+    analyserRef.current.getFloatTimeDomainData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+    return Math.sqrt(sum / data.length);
+  }, []);
+
+  // ── Sampling loop ─────────────────────────────────────────────────────────
   const startSampling = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (intervalRef.current) return;   // already running
     intervalRef.current = setInterval(() => {
-      if (!isTestActive || !isProctorActive) return;
+      // Track disconnected?
       if (streamRef.current) {
         const tracks = streamRef.current.getAudioTracks();
         if (!tracks.length || tracks[0].readyState === "ended") {
-          setMicStatus("disconnected");
           reportViolation("audio-mic-disconnected");
           return;
         }
       }
       const rms = getRMS();
       if (rms > NOISE_THRESHOLD) {
-        noiseFramesRef.current += 1;
-        if (noiseFramesRef.current >= NOISE_HOLD_FRAMES) {
-          setMicStatus("noise");
+        if (++noiseFramesRef.current >= NOISE_HOLD_FRAMES) {
           reportViolation("audio-noise-detected");
           noiseFramesRef.current = 0;
         }
       } else {
         noiseFramesRef.current = Math.max(0, noiseFramesRef.current - 1);
-        setMicStatus(prev => prev === "noise" ? "active" : prev);
       }
     }, SAMPLE_INTERVAL_MS);
-  }, [getRMS, isTestActive, isProctorActive, reportViolation]);
+  }, [getRMS, reportViolation]);
 
+  const stopSampling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  // ── Mic initialisation (runs once) ────────────────────────────────────────
   const initMicrophone = useCallback(async () => {
     try {
+      console.log("[AudioProctor] Requesting mic permission...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       streamRef.current = stream;
+
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      if (ctx.state === "suspended") {
-        await ctx.resume().catch(() => { });
-      }
+      if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
       ctx.createMediaStreamSource(stream).connect(analyser);
+
       audioCtxRef.current = ctx;
       analyserRef.current = analyser;
-      isInitializedRef.current = true;
-      setMicStatus("active");
+      initializedRef.current = true;
+
+      console.log("[AudioProctor] Mic initialized, firing onReady");
+      onReadyRef.current?.();
       startSampling();
-      if (onReadyRef.current) {
-        onReadyRef.current();
-      }
     } catch (err) {
       console.error("[AudioProctor] Mic init failed:", err);
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setMicStatus("denied");
         reportViolation("audio-permission-denied");
       } else {
-        setMicStatus("disconnected");
         reportViolation("audio-mic-disconnected");
       }
+      // Always fire onReady so prelaunch countdown does not hang forever
+      console.log("[AudioProctor] Mic init failed, still firing onReady to unblock prelaunch");
+      onReadyRef.current?.();
     }
+    initStartedRef.current = false;
   }, [startSampling, reportViolation]);
 
+  // ── Effect: start mic on first activation, pause/resume sampling ──────────
   useEffect(() => {
-    if (!isTestActive || !isProctorActive) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    const active = isTestActive && isProctorActive;
+
+    if (active) {
+      if (!initializedRef.current && !initStartedRef.current) {
+        initStartedRef.current = true;
+        initMicrophone();
+      } else if (initializedRef.current) {
+        startSampling();
       }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-        streamRef.current = null;
-      }
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => { });
-        audioCtxRef.current = null;
-      }
-      isInitializedRef.current = false;
-      return;
+    } else {
+      // Pause sampling but keep the mic stream alive
+      stopSampling();
     }
+  }, [isTestActive, isProctorActive, initMicrophone, startSampling, stopSampling]);
 
-    initMicrophone();
-
+  // ── Teardown on unmount only ──────────────────────────────────────────────
+  useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-        streamRef.current = null;
-      }
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => { });
-        audioCtxRef.current = null;
-      }
-      isInitializedRef.current = false;
+      console.log("[AudioProctor] Unmounting — releasing mic resources");
+      stopSampling();
+      streamRef.current?.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+      analyserRef.current = null;
+      initializedRef.current = false;
+      initStartedRef.current = false;
     };
-  }, [isTestActive, isProctorActive, initMicrophone]);
-
-  useEffect(() => {
-    if (!isTestActive || !isProctorActive) {
-      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    } else if (isInitializedRef.current && !intervalRef.current) {
-      startSampling();
-    }
-  }, [isTestActive, isProctorActive, startSampling]);
-
-  const statusConfig = {
-    idle: { icon: "🎤", color: "#64748b", label: "Mic initializing..." },
-    active: { icon: "🎤", color: "#10b981", label: "Mic active" },
-    noise: { icon: "🔊", color: "#f59e0b", label: "Noise detected!" },
-    denied: { icon: "🚫", color: "#ef4444", label: "Mic blocked" },
-    disconnected: { icon: "❌", color: "#ef4444", label: "Mic disconnected" },
-  };
-  const cfg = statusConfig[micStatus] || statusConfig.idle;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };

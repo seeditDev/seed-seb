@@ -49,19 +49,41 @@ export const buildUnifiedResultPayload = (rawPayload) => {
   // Normalize sectionsArray
   let sectionsArray = [];
   if (Array.isArray(rawPayload.sectionsArray) && rawPayload.sectionsArray.length > 0) {
-    sectionsArray = rawPayload.sectionsArray.map(sec => ({
-      sectionName: sec.sectionName || sec.name || 'Section',
-      score: typeof sec.score === 'number' ? sec.score : 0,
-      totalMarks: typeof sec.totalMarks === 'number' ? sec.totalMarks : (sec.maxScore || 0),
-      timeTaken: typeof sec.timeTaken === 'number' ? sec.timeTaken : (sec.timeSpentSeconds || 0)
-    }));
+    sectionsArray = rawPayload.sectionsArray.map(sec => {
+      const secTime = typeof sec.timeTaken === 'number' ? sec.timeTaken : (sec.timeSpentSeconds || 0);
+      const secM = Math.floor(secTime / 60);
+      const secS = secTime % 60;
+      return {
+        sectionName: sec.sectionName || sec.name || 'Section',
+        name: sec.sectionName || sec.name || 'Section',
+        score: typeof sec.score === 'number' ? sec.score : 0,
+        totalMarks: typeof sec.totalMarks === 'number' ? sec.totalMarks : (sec.maxScore || 0),
+        maxScore: typeof sec.totalMarks === 'number' ? sec.totalMarks : (sec.maxScore || 0),
+        timeTaken: secTime,
+        timeSpentSeconds: secTime,
+        timeTakenFormatted: sec.timeTakenFormatted || `${secM}:${secS < 10 ? '0' : ''}${secS}`,
+        startTimeISO: sec.startTimeISO || sec.startedAtISO || '',
+        endTimeISO: sec.endTimeISO || sec.submittedAtISO || ''
+      };
+    });
   } else if (rawPayload.sections && typeof rawPayload.sections === 'object') {
-    sectionsArray = Object.entries(rawPayload.sections).map(([key, sec]) => ({
-      sectionName: sec.sectionName || sec.name || key,
-      score: sec.data?.score || sec.score || 0,
-      totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || sec.totalMarks || 0,
-      timeTaken: sec.data?.timeSpentSeconds || sec.timeSpentSeconds || 0
-    }));
+    sectionsArray = Object.entries(rawPayload.sections).map(([key, sec]) => {
+      const secTime = sec.data?.timeSpentSeconds || sec.timeSpentSeconds || sec.timeTaken || 0;
+      const secM = Math.floor(secTime / 60);
+      const secS = secTime % 60;
+      return {
+        sectionName: sec.sectionName || sec.name || key,
+        name: sec.sectionName || sec.name || key,
+        score: sec.data?.score || sec.score || 0,
+        totalMarks: sec.data?.totalMarks || sec.data?.totalQuestions || sec.totalMarks || 0,
+        maxScore: sec.data?.totalMarks || sec.data?.totalQuestions || sec.totalMarks || 0,
+        timeTaken: secTime,
+        timeSpentSeconds: secTime,
+        timeTakenFormatted: sec.timeTakenFormatted || `${secM}:${secS < 10 ? '0' : ''}${secS}`,
+        startTimeISO: sec.startTimeISO || sec.data?.startTimeISO || '',
+        endTimeISO: sec.endTimeISO || sec.data?.endTimeISO || ''
+      };
+    });
   }
 
   // Spoken / Speech CEFR metrics

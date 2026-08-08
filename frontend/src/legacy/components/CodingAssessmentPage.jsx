@@ -299,8 +299,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     useEffect(() => {
         return () => {
-            // Stop the camera stream when CodingAssessmentPage unmounts
-            if (window.cameraStream) {
+            // Stop the camera stream when CodingAssessmentPage unmounts —
+            // BUT only when running standalone (not embedded inside MultiSectionAssessment).
+            // In embedded mode the parent ProctoringEngine owns the camera for the full exam;
+            // stopping it here would kill proctoring when the coding section ends.
+            if (!isEmbedded && window.cameraStream) {
                 console.log('[CodingAssessmentPage] Component unmounted. Cleaning up camera stream...');
                 try {
                     window.cameraStream.getTracks().forEach(track => {
@@ -313,7 +316,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 window.cameraStream = null;
             }
         };
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         let qTimer;
@@ -1207,23 +1210,31 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         // Tab switch monitoring disabled per requirements
     }, [startTime, currentAssessment, isLockedOut]);
 
-    // Handle code editor change and save locally
+    const editorRef = useRef(null);
+    const codeMapRef = useRef(codeMap);
+    useEffect(() => {
+        codeMapRef.current = codeMap;
+    }, [codeMap]);
+
+    // Handle code editor change: update ref & throttled local storage (0ms typing latency)
     const handleCodeChange = (value) => {
         if (!currentQuestion) return;
 
         const key = `${currentQuestion.id}_${language}`;
-        const newCodeMap = {
-            ...codeMap,
+        codeMapRef.current = {
+            ...codeMapRef.current,
             [key]: value
         };
-        setCodeMap(newCodeMap);
-        localStorage.setItem("codingAssessmentCode", JSON.stringify(newCodeMap));
+        throttledLocalStorageSet("codingAssessmentCode", codeMapRef.current);
     };
 
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
         const boilerplate = currentQuestion.boilerplates?.[language] || FREE_BOILERPLATES[language] || "";
+        if (editorRef.current) {
+            editorRef.current.setValue(boilerplate);
+        }
         handleCodeChange(boilerplate);
     };
 
@@ -1488,7 +1499,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 authData.Department
             );
 
-            // Grade questions that haven't been submitted yet (0 score default)
+            // Grade questions that haven't been submitted yet by running test cases on codeMap
             const finalScores = { ...questionScores };
             let totalMaxWeight = 0;
             let totalEarnedWeight = 0;
@@ -1498,13 +1509,30 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (finalScores[q.id]) {
                     totalEarnedWeight += finalScores[q.id].score;
                 } else {
+                    const code = storedCodeMap[`${q.id}_${language}`] || "";
+                    const hidden = q.hiddenTests || q.sampleTests || [];
+                    const bridgeLang = language === 'python3' ? 'python' : language;
+                    let passes = 0;
+                    if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
+                        for (const tc of hidden) {
+                            try {
+                                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                const exit = res.exit_code !== undefined ? res.exit_code : 0;
+                                const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
+                                const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
+                                if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
+                            } catch (err) {}
+                        }
+                    }
+                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || 20) : 0;
                     finalScores[q.id] = {
-                        score: 0,
-                        percentage: 0,
-                        passed: 0,
-                        total: q.hiddenTests?.length || 0,
-                        submitted: false
+                        score: qScore,
+                        percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
+                        passed: passes,
+                        total: hidden.length,
+                        submitted: true
                     };
+                    totalEarnedWeight += qScore;
                 }
             }
 
@@ -1534,7 +1562,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 };
             });
 
-            const resultData = {
+            const rawResultData = {
                 email: authData.Email,
                 college: authData.College,
                 year: authData.Year,
@@ -1543,6 +1571,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 name: authData.Name || '',
                 assessmentID: activeAssessment.id,
                 assessmentName: activeAssessment.name,
+                testType: 'coding',
                 score: totalEarnedWeight,
                 totalQuestions: activeQuestions.length,
                 correctAnswers: totalEarnedWeight, // mapped for GAS Row compatibility
@@ -1550,6 +1579,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 totalMarks: totalMaxWeight,
                 percentage: finalPercent,
                 timeTaken: elapsed,
+                timeTakenSeconds: elapsed,
+                startedAt: new Date(parseInt(storedStartTime, 10)).toISOString(),
+                submittedAt: timeService.getNow().toISOString(),
                 timeStartedISO: new Date(parseInt(storedStartTime, 10)).toISOString(),
                 timeEndedISO: timeService.getNow().toISOString(),
                 autoSubmitted: true,
@@ -1576,13 +1608,16 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 })(),
                 languageUsed: language,
                 coding: codingSubmissions,
+                codingSubmissions: codingSubmissions,
                 executionStats: {
                     scores: finalScores,
                     codeMap: storedCodeMap
                 }
             };
 
+            const resultData = buildUnifiedResultPayload(rawResultData);
             await CodingAssessmentService.submitCodingResult(resultData);
+            await markAssessmentCompleted(authData, activeAssessment.id);
             clearLocalSession();
 
             const noticeMsg = reason === 'timer' 
@@ -2548,11 +2583,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             {/* Monaco Editor */}
                             <div className="monaco-wrapper">
                                 <Editor
-                                    key={currentQuestion.id}
+                                    key={`${currentQuestion.id}_${language}`}
                                     height="100%"
                                     language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
-                                    value={codeMap[`${currentQuestion.id}_${language}`] || ""}
+                                    defaultValue={codeMap[`${currentQuestion.id}_${language}`] || ""}
                                     onChange={handleCodeChange}
+                                    onMount={(editor) => {
+                                        editorRef.current = editor;
+                                    }}
                                     theme={['light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
                                     options={{
                                         fontSize: 14,

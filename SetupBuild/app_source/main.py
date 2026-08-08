@@ -1140,10 +1140,11 @@ class MainWindow(QMainWindow):
         """Loads React app from load-balanced Netlify sites, or falls back to local build/server."""
         # List of 4 Netlify domains for load balancing
         netlify_urls = [
-            "https://seed-seb-1.netlify.app",
-            "https://seed-seb-2.netlify.app",
-            "https://seed-seb-3.netlify.app",
-            "https://seed-seb-4.netlify.app"
+            "https://seed-seb.seed-skillup.workers.dev"
+            # "https://seed-seb-1.netlify.app",
+            # "https://seed-seb-2.netlify.app",
+            # "https://seed-seb-3.netlify.app",
+            # "https://seed-seb-4.netlify.app"
         ]
         
         # Select randomly

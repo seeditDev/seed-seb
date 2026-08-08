@@ -140,6 +140,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
     const [completedChallenges, setCompletedChallenges] = useState({});
     const [language, setLanguage] = useState('cpp');
     const [code, setCode] = useState('');  // Used only for initial load/reset
+    const codeRef = useRef('');
     const editorRef = useRef(null);  // Direct editor instance to avoid setValue() on re-renders
     const [customInput, setCustomInput] = useState('');
     const [activeTab, setActiveTab] = useState('input'); // 'input', 'output', 'results'
@@ -196,9 +197,10 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
     const handleManualSubmit = async () => {
         setShowSubmitConfirm(false);
         if (isEmbedded) {
+            const activeCode = editorRef.current ? editorRef.current.getValue() : (codeRef.current || code);
             try {
                 if (selectedChallenge) {
-                    await desktopBridge.saveAnswer(selectedChallenge.id, code).catch(() => {});
+                    await desktopBridge.saveAnswer(selectedChallenge.id, activeCode).catch(() => {});
                 }
             } catch (_) {}
             
@@ -209,7 +211,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                 if (savedCode) {
                     allAnswers[ch.id] = savedCode;
                 } else if (ch.id === selectedChallenge?.id) {
-                    allAnswers[ch.id] = code;
+                    allAnswers[ch.id] = activeCode;
                 }
             });
 
@@ -723,8 +725,9 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
         setTestResults([]);
 
         // Save answer to localStorage before submission
+        const currentCode = editorRef.current ? editorRef.current.getValue() : (codeRef.current || code);
         const savedKey = `code_${selectedChallenge.id}_${language}`;
-        localStorage.setItem(savedKey, code);
+        localStorage.setItem(savedKey, currentCode);
 
         if (!isRunningInPyQt()) {
             setIsTesting(false);
@@ -1315,15 +1318,17 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                         {/* Editor Container */}
                         <div className="monaco-editor-container">
                             <Editor
-                                key={selectedChallenge?.id || 'sandbox'}
+                                key={`${selectedChallenge?.id || 'sandbox'}_${monacoLanguage}`}
                                 height="100%"
                                 language={monacoLanguage}
                                 theme="vs-dark"
-                                value={code}
-                                onChange={(val) => setCode(val || '')}
+                                defaultValue={code}
+                                onChange={(val) => {
+                                    codeRef.current = val || '';
+                                }}
                                 onMount={(editor) => {
                                     editorRef.current = editor;
-                                    const currentCode = code || '';
+                                    const currentCode = codeRef.current || code || '';
                                     if (editor.getValue() !== currentCode) {
                                         editor.setValue(currentCode);
                                     }

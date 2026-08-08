@@ -147,7 +147,8 @@ const PracticeSandbox = () => {
 
   // Editor states
   const [language, setLanguage] = useState('cpp');
-  const [code, setCode] = useState('');  // Used only for initial load, reset, and AI tutor reads
+  const [code, setCode] = useState('');  // Used only for initial load, reset, and fallback
+  const codeRef = useRef('');
   const editorRef = useRef(null);  // Direct editor instance — avoids setValue() on every render
   const [customInput, setCustomInput] = useState('');
   const [useCustomInput, setUseCustomInput] = useState(false);
@@ -1055,15 +1056,17 @@ const isCodeBlankOrEmpty = (codeStr) => {
 
           <div className="psb-editor-wrap" style={{ height: `${editorHeight}%` }}>
             <Editor
-              key={questionId}
+              key={`${questionId}_${language}`}
               height="100%"
               language={MONACO_LANG_MAP[language] || 'cpp'}
               theme={['light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
-              value={code}
-              onChange={(val) => setCode(val || '')}
+              defaultValue={code}
+              onChange={(val) => {
+                codeRef.current = val || '';
+              }}
               onMount={(editor) => {
                 editorRef.current = editor;
-                const currentCode = code || '';
+                const currentCode = codeRef.current || code || '';
                 if (editor.getValue() !== currentCode) {
                   editor.setValue(currentCode);
                 }

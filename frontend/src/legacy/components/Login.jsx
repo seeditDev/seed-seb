@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from '../router-compat';
-import { FaCheckCircle, FaUser, FaLock, FaEye, FaEyeSlash, FaBook, FaTrophy, FaChartBar, FaQuoteLeft, FaShieldAlt, FaArrowRight, FaGoogle, FaMicrosoft, FaGlobe, FaLaptop } from "react-icons/fa";
+import { FaCheckCircle, FaUser, FaLock, FaEye, FaEyeSlash, FaBook, FaTrophy, FaChartBar, FaQuoteLeft, FaShieldAlt, FaArrowRight, FaGoogle, FaMicrosoft, FaGlobe, FaLaptop, FaCircleNotch } from "react-icons/fa";
 import DataService from "../services/dataService";
 import TrackingService from "../services/trackingService";
 import { COLLEGES, ACADEMIC_YEARS } from "../config/constants";
@@ -612,7 +612,15 @@ const Login = () => {
 
             {/* Login button */}
             <button type="submit" disabled={loading} className="login-button">
-              {loading ? 'Logging in...' : 'Login'} <FaArrowRight />
+              {loading ? (
+                <>
+                  <FaCircleNotch className="login-spinner spin" /> Logging in...
+                </>
+              ) : (
+                <>
+                  Login <FaArrowRight />
+                </>
+              )}
             </button>
 
             {error && <div className="error">{error}</div>}
@@ -624,9 +632,15 @@ const Login = () => {
       {showSuccess && (
         <div className="modal-overlay">
           <div className="success-modal">
-            <FaCheckCircle className="success-icon" />
-            <p>Welcome to SEED!</p>
+            <div className="success-icon-container">
+              <div className="success-spinner-ring"></div>
+              <FaCheckCircle className="success-icon" />
+            </div>
+            <h3 className="welcome-title">Welcome to SEED!</h3>
             <p className="redirect-text">Redirecting to dashboard...</p>
+            <div className="redirect-progress-bar">
+              <div className="redirect-progress-fill"></div>
+            </div>
           </div>
         </div>
       )}

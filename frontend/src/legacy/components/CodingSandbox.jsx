@@ -208,6 +208,7 @@ const CodingSandbox = () => {
     const [completedChallenges, setCompletedChallenges] = useState({});
     const [language, setLanguage] = useState('cpp');
     const [code, setCode] = useState('');  // Used only for initial load/reset
+    const codeRef = useRef('');
     const editorRef = useRef(null);  // Direct editor instance to avoid setValue() on re-renders
     const [customInput, setCustomInput] = useState('');
     const [activeTab, setActiveTab] = useState('input'); // 'input', 'output', 'results'
@@ -731,15 +732,17 @@ const isCodeBlankOrEmpty = (codeStr) => {
                         {/* Editor Container */}
                         <div className="monaco-editor-container">
                             <Editor
-                                key={selectedChallenge?.id || 'sandbox'}
+                                key={`${selectedChallenge?.id || 'sandbox'}_${monacoLanguage}`}
                                 height="100%"
                                 language={monacoLanguage}
                                 theme="vs-dark"
-                                value={code}
-                                onChange={(val) => setCode(val || '')}
+                                defaultValue={code}
+                                onChange={(val) => {
+                                    codeRef.current = val || '';
+                                }}
                                 onMount={(editor) => {
                                     editorRef.current = editor;
-                                    const currentCode = code || '';
+                                    const currentCode = codeRef.current || code || '';
                                     if (editor.getValue() !== currentCode) {
                                         editor.setValue(currentCode);
                                     }
