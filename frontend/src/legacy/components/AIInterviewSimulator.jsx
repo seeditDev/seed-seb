@@ -225,7 +225,7 @@ const AIInterviewSimulator = ({ user }) => {
     const evaluation = await aiInterviewService.getEvaluationReport(chatHistory, domain, difficulty, company, apiKey, useLocalModel);
     setEvaluationScores(evaluation);
 
-    // Save results directly to Supabase
+    // Save results to local history
     setSavingResult(true);
     try {
       await aiInterviewService.saveResults(user, domain, difficulty, company, evaluation, chatHistory, durationSeconds);

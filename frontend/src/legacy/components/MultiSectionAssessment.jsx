@@ -17,7 +17,6 @@ import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { safeUpsert } from '../supabaseClient';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
@@ -1433,93 +1432,6 @@ const MultiSectionAssessment = () => {
 
         setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
           .catch(e => console.error('[MSA] Student-centric save failed:', e));
-
-        safeUpsert('mcq_results', {
-          roll_number: user['Roll Number'] || '',
-          name: user.Name || '',
-          email: user.Email,
-          college,
-          year,
-          department: user.Department || '',
-          test_id: assessment.id,
-          test_name: assessment.name,
-          score: totalScore,
-          total_questions: totalQ,
-          correct_answers: totalScore,
-          incorrect_answers: totalQ - totalScore,
-          percentage: pct,
-          partial_score: partialScore,
-          full_score: fullScore,
-          time_taken: timeTaken,
-          time_taken_formatted: timeTakenFormatted,
-          time_started: timeStartedISO,
-          time_ended: timeEndedISO,
-          submitted_at: timeEndedISO,
-          auto_submitted: autoSubmitted,
-          auto_submit_reason: autoSubmitReason,
-          violation_count: totalViolations,
-          total_no_face: totalNoFace,
-          total_multiple_faces: totalMultipleFaces,
-          violations: allViolations,
-          total_marks: totalMarksSum,
-          questions: aggregatedQuestions,
-          updated_at: timeEndedISO
-        }, { onConflict: 'email,test_id' }).then(
-          ({ data, error }) => {
-            if (error) {
-              console.warn('[MSA] Supabase mcq_results save failed:', error.message || error);
-            } else {
-              console.log('[MSA] Supabase mcq_results save succeeded:', data);
-            }
-          },
-          e => console.warn('[MSA] Supabase mcq_results save failed (transport):', e)
-        );
-
-        // Upsert to unified assessment_results table
-        safeUpsert('assessment_results', {
-          type: 'multisection',
-          test_id: assessment.id,
-          test_name: assessment.name,
-          roll_number: user['Roll Number'] || '',
-          name: user.Name || '',
-          email: user.Email,
-          college,
-          year,
-          department: user.Department || '',
-          score: totalScore,
-          total_questions: totalQ,
-          correct_answers: totalScore,
-          incorrect_answers: totalQ - totalScore,
-          percentage: pct,
-          partial_score: partialScore,
-          full_score: fullScore,
-          status: 'submitted',
-          time_taken: timeTaken,
-          time_taken_formatted: timeTakenFormatted,
-          time_started: timeStartedISO,
-          time_ended: timeEndedISO,
-          submitted_at: timeEndedISO,
-          auto_submitted: autoSubmitted,
-          auto_submit_reason: autoSubmitReason,
-          violation_count: totalViolations,
-          total_no_face: totalNoFace,
-          total_multiple_faces: totalMultipleFaces,
-          violations: allViolations,
-          total_marks: totalMarksSum,
-          questions: aggregatedQuestions,
-          coding: aggregatedCoding,
-          sections: sectionsList,
-          updated_at: timeEndedISO
-        }, { onConflict: 'email,test_id,type' }).then(
-          ({ data, error }) => {
-            if (error) {
-              console.warn('[MSA] Supabase assessment_results save failed:', error.message || error);
-            } else {
-              console.log('[MSA] Supabase assessment_results save succeeded:', data);
-            }
-          },
-          e => console.warn('[MSA] Supabase assessment_results save failed (transport):', e)
-        );
       }
 
       setExamFinished(true);

@@ -1,7 +1,7 @@
 /**
  * resultTransformer.js
  * Standardizes assessment result payloads across MultiSection, Coding, and MCQ tests
- * into a single unified JSON schema compatible with both Firebase and Supabase.
+ * into a single unified JSON schema compatible with Firebase.
  */
 
 export const buildUnifiedResultPayload = (rawPayload) => {

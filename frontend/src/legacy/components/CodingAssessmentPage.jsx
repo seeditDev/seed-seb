@@ -1698,7 +1698,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const finalPercent = totalMaxWeight > 0 ? Math.round((totalEarnedWeight / totalMaxWeight) * 100) : 0;
             const elapsed = getElapsedSeconds();
 
-            // Phase 2: Submit to Firebase / Supabase
+            // Phase 2: Submit to Firebase
             setSubmitPhase('submitting');
 
             await CodingAssessmentService.markAsSubmitting(

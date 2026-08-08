@@ -1,7 +1,6 @@
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import timeService from './timeService';
-import { supabase, safeUpsert } from '../supabaseClient';
 
 
 class MCQService {
@@ -647,145 +646,25 @@ class MCQService {
      * @returns {Promise<{success: boolean, data: Array}>}
      */
     static async fetchMCQResults(college) {
-        /*
-        // --- GOOGLE SHEETS FETCH LOGIC (COMMENTED OUT) ---
-        try {
-            const payload = {
-                action: 'getMCQResults',
-                college: college
-            };
-
-            const response = await fetch(GAS_ENDPOINT, {
-                method: 'POST',
-                mode: 'no-cors', // In no-cors mode, fetch won't return data. 
-                // Wait, if we need to READ data, we CANNOT use no-cors.
-                // Google Apps Script web apps return data if they use CORS.
-                // However, GAS often redirect which causes issues with no-cors.
-                // For GETTING data, we usually use a GET request or a POST with redirect handled.
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
-
-            // Note: If the GAS is set up as a Web App with access 'Anyone', 
-            // responding with JSON usually works with fetch if mode is 'cors' (default).
-            // Let's try standard fetch first. If it fails, we might need to use a different approach.
-
-            // Actually, to get data back from GAS, we should NOT use no-cors.
-            // Using standard fetch:
-            const corsResponse = await fetch(GAS_ENDPOINT, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-
-            const result = await corsResponse.json();
-            return result;
-        } catch (error) {
-            console.error('[MCQService] Error fetching MCQ results:', error);
-            throw error;
-        }
-        // --------------------------------------------------
-        */
-
-        // --- SUPABASE FETCH LOGIC ---
-        try {
-            const { data, error } = await supabase
-                .from('mcq_results')
-                .select('*')
-                .eq('college', college);
-
-            if (error) throw error;
-
-            // Map the Supabase snake_case fields back to the format expected by the frontend
-            const mappedData = data.map(r => ({
-                'Timestamp': r.created_at || r.submitted_at || new Date().toISOString(),
-                'Roll Number': r.roll_number || '',
-                'Name': r.name || '',
-                'Email': r.email || '',
-                'College': r.college || '',
-                'Year': r.year || '',
-                'Department': r.department || '',
-                'Test ID': r.test_id || '',
-                'Test Name': r.test_name || 'Unknown Test',
-                'Score': r.score || 0,
-                'Total Questions': r.total_questions || 0,
-                'Correct Answers': r.correct_answers || 0,
-                'Incorrect Answers': r.incorrect_answers || 0,
-                'Percentage': r.percentage || 0,
-                'Time Taken': r.time_taken_formatted || '',
-                'Time Started': r.time_started || '',
-                'Time Ended': r.time_ended || '',
-                'Submitted At': r.submitted_at || '',
-                'Auto Submitted': r.auto_submitted ? 'Yes' : 'No',
-                'Auto Submit Reason': r.auto_submit_reason || '',
-                'Violation Count': r.violation_count || 0,
-                'Total No Face': r.total_no_face || 0,
-                'Total Multiple Faces': r.total_multiple_faces || 0,
-                'Violations Details': typeof r.violations === 'string' ? r.violations : JSON.stringify(r.violations || [])
-            }));
-
-            return { success: true, data: mappedData };
-        } catch (error) {
-            console.error('[MCQService] Error fetching MCQ results from Supabase:', error);
-            return { success: false, message: error.message };
-        }
+        return { success: true, data: [] };
     }
 
     /**
-     * Submit MCQ test result (saves to both Firestore and Supabase, Sheets commented out)
+     * Submit MCQ test result (saves to Firestore)
      * @param {object} resultData - Complete result data
-     * @returns {Promise<{success: boolean, firestore: boolean, supabase: boolean}>}
+     * @returns {Promise<{success: boolean, firestore: boolean}>}
      */
     static async submitMCQResult(resultData) {
         let firestoreSuccess = false;
 
         try {
-            // Step 1: Save to Firestore first (prevents duplicate submissions)
-            try {
-                await this.saveResultToFirestore(resultData);
-                firestoreSuccess = true;
-                console.log('[MCQService] ✅ Firestore save successful');
-            } catch (firestoreError) {
-                console.error('[MCQService] ❌ Firestore save failed:', firestoreError);
-
-                // If it's a duplicate submission error, throw it immediately
-                if (firestoreError.message.includes('DUPLICATE_SUBMISSION')) {
-                    throw firestoreError;
-                }
-
-                // For other errors, continue to try Supabase
-                throw new Error(`Firestore save failed: ${firestoreError.message}`);
-            }
-
-
-
-            // --- SUPABASE SAVE LOGIC ---
-            // Step 2: Save to Supabase (Non-blocking)
-            this.saveResultToSupabase(resultData).then(async () => {
-                // Mark as synced in Firestore (using Supabase flag)
-                if (firestoreSuccess) {
-                    await this.markSyncedToSupabase(
-                        resultData.email,
-                        resultData.testID,
-                        resultData.college,
-                        resultData.year,
-                        resultData.department
-                    );
-                }
-                console.log('[MCQService] ✅ Supabase save successful');
-            }).catch(supabaseError => {
-                console.error('[MCQService] ⚠️ Supabase save failed:', supabaseError);
-                // Save to localStorage for retry
-                if (firestoreSuccess) {
-                    this.saveUnsyncedResult(resultData);
-                }
-            });
+            await this.saveResultToFirestore(resultData);
+            firestoreSuccess = true;
+            console.log('[MCQService] ✅ Firestore save successful');
 
             return {
-                success: firestoreSuccess, // Success if at least Firestore worked
-                firestore: firestoreSuccess,
-                supabase: false // Pending
+                success: firestoreSuccess,
+                firestore: firestoreSuccess
             };
         } catch (error) {
             console.error('[MCQService] ❌ Submission failed:', error);

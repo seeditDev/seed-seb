@@ -8,7 +8,6 @@ import {
 import { evaluateSpokenEnglishSession } from '../services/spokenEnglishEvaluator';
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { supabase, safeUpsert } from '../supabaseClient';
 import '../styles/SpokenEnglishAssessment.css';
 
 const CALIBRATION_TEXT = "Checking microphone clarity and background noise levels.";
@@ -498,16 +497,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       submittedAt: new Date().toISOString()
     };
 
-    // 1. Resilient Supabase Storage (assessment_results + sea_results + spoken_english_results)
-    try {
-      await safeUpsert('assessment_results', cleanSupabaseAssessmentPayload, { onConflict: 'email,test_id,type' });
-      await safeUpsert('sea_results', supabasePayload, { onConflict: 'email,test_id' });
-      await safeUpsert('spoken_english_results', supabasePayload, { onConflict: 'email,test_id' });
-    } catch (supErr) {
-      console.warn('[Supabase Storage] Notice:', supErr);
-    }
-
-    // 2. Resilient Firestore Storage (Matching MCQ & Coding Platform Architecture)
+    // 1. Resilient Firestore Storage (Matching MCQ & Coding Platform Architecture)
     try {
       const college = currentUser?.College || currentUser?.college || 'SEEDIT';
       const year = currentUser?.Year || currentUser?.year || '2K27';

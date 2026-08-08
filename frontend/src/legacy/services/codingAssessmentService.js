@@ -1,7 +1,6 @@
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import timeService from './timeService';
-import { supabase, safeUpsert } from '../supabaseClient';
 
 
 class CodingAssessmentService {
@@ -255,22 +254,6 @@ class CodingAssessmentService {
                 assessmentID, college, year, department, email
             });
 
-            // Also write status: 'submitting' to Supabase
-            try {
-                await supabase
-                    .from('coding_results')
-                    .upsert({
-                        email,
-                        test_id: assessmentID,
-                        status: 'submitting',
-                        updated_at: new Date().toISOString()
-                    }, {
-                        onConflict: 'email,test_id'
-                    });
-            } catch (supErr) {
-                console.warn('[CodingAssessmentService] Supabase markAsSubmitting status update failed:', supErr.message);
-            }
-
             return true;
         } catch (error) {
             console.warn('[CodingAssessmentService] markAsSubmitting skipped (non-blocking):', error.message);
@@ -364,110 +347,11 @@ class CodingAssessmentService {
 
 
     /**
-     * Save result to Supabase
-     */
-    static async saveResultToSupabase(resultData) {
-        try {
-            const { partialScore, fullScore } = this.computeScoreFields(
-                resultData.score,
-                resultData.totalMarks || 0,
-                resultData.percentage
-            );
-
-            // Check if coding_results table exists, if not fallback gracefully.
-            const { error } = await safeUpsert('coding_results', {
-                    roll_number: resultData.rollNumber || '',
-                    name: resultData.name || '',
-                    email: resultData.email || '',
-                    college: resultData.college || '',
-                    year: resultData.year || '',
-                    department: resultData.department || '',
-                    test_id: resultData.assessmentID || '',
-                    test_name: resultData.assessmentName || 'Unknown Coding Assessment',
-                    score: resultData.score || 0,
-                    total_questions: resultData.totalQuestions || 0,
-                    correct_answers: resultData.correctAnswers || 0,
-                    incorrect_answers: resultData.incorrectAnswers || 0,
-                    percentage: resultData.percentage ? (resultData.percentage / 100) : 0,
-                    partial_score: partialScore,
-                    full_score: fullScore,
-                    status: resultData.status || 'submitted',
-                    time_taken: resultData.timeTaken || 0,
-                    time_started: resultData.timeStartedISO || new Date().toISOString(),
-                    time_ended: resultData.timeEndedISO || new Date().toISOString(),
-                    submitted_at: resultData.submittedAtISO || new Date().toISOString(),
-                    auto_submitted: resultData.autoSubmitted || false,
-                    auto_submit_reason: resultData.autoSubmitReason || '',
-                    violation_count: resultData.violationCount || 0,
-                    language_used: resultData.languageUsed || '',
-                    execution_stats: resultData.executionStats || {},
-                    violations: resultData.violations || [],
-                    total_marks: resultData.totalMarks || 0,
-                    coding: resultData.coding || [],
-                    updated_at: new Date().toISOString()
-                }, {
-                    onConflict: 'email,test_id'
-                });
-
-            if (error) {
-                console.warn('[CodingAssessmentService] Supabase coding_results upload failed. Continuing...', error);
-            }
-
-            // Also upsert into unified assessment_results table
-            try {
-                const { error: arErr } = await safeUpsert('assessment_results', {
-                        type: 'coding',
-                        test_id: resultData.assessmentID || '',
-                        test_name: resultData.assessmentName || 'Unknown Coding Assessment',
-                        roll_number: resultData.rollNumber || '',
-                        name: resultData.name || '',
-                        email: resultData.email || '',
-                        college: resultData.college || '',
-                        year: resultData.year || '',
-                        department: resultData.department || '',
-                        score: resultData.score || 0,
-                        total_questions: resultData.totalQuestions || 0,
-                        correct_answers: resultData.correctAnswers || 0,
-                        incorrect_answers: resultData.incorrectAnswers || 0,
-                        percentage: resultData.percentage ? (resultData.percentage / 100) : 0,
-                        partial_score: partialScore,
-                        full_score: fullScore,
-                        status: 'submitted',
-                        time_taken: resultData.timeTaken || 0,
-                        time_taken_formatted: CodingAssessmentService.formatTime(resultData.timeTaken || 0),
-                        time_started: resultData.timeStartedISO || new Date().toISOString(),
-                        time_ended: resultData.timeEndedISO || new Date().toISOString(),
-                        submitted_at: resultData.submittedAtISO || new Date().toISOString(),
-                        auto_submitted: resultData.autoSubmitted || false,
-                        auto_submit_reason: resultData.autoSubmitReason || '',
-                        violation_count: resultData.violationCount || 0,
-                        violations: resultData.violations || [],
-                        language_used: resultData.languageUsed || '',
-                        execution_stats: resultData.executionStats || {},
-                        total_marks: resultData.totalMarks || 0,
-                        coding: resultData.coding || [],
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'email,test_id,type' });
-                if (arErr) console.warn('[CodingAssessmentService] assessment_results upsert failed (non-blocking):', arErr.message);
-            } catch (arEx) {
-                console.warn('[CodingAssessmentService] assessment_results exception (non-blocking):', arEx.message);
-            }
-
-            return { success: true };
-        } catch (error) {
-            console.error('[CodingAssessmentService] Supabase exception:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
-    /**
-     * Complete multi-channel submission
+     * Complete submission (saves to Firestore)
      */
     static async submitCodingResult(resultData) {
         let firestoreOk = false;
-        let supabaseOk = false;
 
-        // 1. Try Firestore (best-effort, never blocks)
         try {
             await this.saveResultToFirestore(resultData);
             firestoreOk = true;
@@ -475,18 +359,7 @@ class CodingAssessmentService {
             console.warn('[CodingAssessmentService] Firestore submission failed (non-blocking):', err.message);
         }
 
-        // 2. Try Supabase (best-effort backup)
-        try {
-            await this.saveResultToSupabase(resultData);
-            supabaseOk = true;
-        } catch (err) {
-            console.warn('[CodingAssessmentService] Supabase backup failed:', err.message);
-        }
-
-        console.log(`[CodingAssessmentService] Submission channels — Firestore: ${firestoreOk}, Supabase: ${supabaseOk}`);
-
-        // Always succeed from the student's perspective — at least one channel is enough
-        return { success: true, firestoreOk, supabaseOk };
+        return { success: true, firestoreOk };
     }
 
     /**

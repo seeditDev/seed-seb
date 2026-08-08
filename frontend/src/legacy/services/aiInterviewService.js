@@ -1,4 +1,3 @@
-import { supabase } from '../supabaseClient';
 import axios from 'axios';
 
 // Question bank for local fallback simulation if no API key is provided
@@ -383,7 +382,7 @@ The JSON structure MUST match this exactly:
   },
 
   /**
-   * Saves the result record to Supabase database
+   * Saves the result record to local storage
    */
   async saveResults(user, domain, difficulty, company, scores, chatHistory, durationSeconds) {
     if (!user) throw new Error("User registration data is required to save results.");
@@ -403,35 +402,37 @@ The JSON structure MUST match this exactly:
       chatHistory: chatHistory.map(msg => ({ role: msg.role, content: msg.content }))
     };
 
-    const { data, error } = await supabase
-      .from('ai_interview_results')
-      .insert([
-        {
-          roll_number: rollNumber,
-          name: name,
-          email: email,
-          college: college,
-          year: year,
-          department: dept,
-          domain: domain,
-          difficulty: difficulty,
-          company: company,
-          score_technical: parseFloat(scores.score_technical || 0),
-          score_communication: parseFloat(scores.score_communication || 0),
-          score_problem_solving: parseFloat(scores.score_problem_solving || 0),
-          score_confidence: parseFloat(scores.score_confidence || 0),
-          score_overall: parseFloat(scores.score_overall || 0),
-          feedback: feedbackData,
-          duration_seconds: parseInt(durationSeconds || 0, 10)
-        }
-      ])
-      .select();
+    const record = {
+      id: Date.now().toString(),
+      created_at: new Date().toISOString(),
+      roll_number: rollNumber,
+      name: name,
+      email: email,
+      college: college,
+      year: year,
+      department: dept,
+      domain: domain,
+      difficulty: difficulty,
+      company: company,
+      score_technical: parseFloat(scores.score_technical || 0),
+      score_communication: parseFloat(scores.score_communication || 0),
+      score_problem_solving: parseFloat(scores.score_problem_solving || 0),
+      score_confidence: parseFloat(scores.score_confidence || 0),
+      score_overall: parseFloat(scores.score_overall || 0),
+      feedback: feedbackData,
+      duration_seconds: parseInt(durationSeconds || 0, 10)
+    };
 
-    if (error) {
-      console.error("Supabase insert error:", error);
-      throw error;
+    try {
+      const key = `ai_interview_results_${email}`;
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      existing.unshift(record);
+      localStorage.setItem(key, JSON.stringify(existing));
+    } catch (e) {
+      console.warn('[aiInterviewService] Failed to save result to localStorage:', e);
     }
-    return data;
+
+    return [record];
   },
 
   /**
@@ -439,16 +440,12 @@ The JSON structure MUST match this exactly:
    */
   async fetchAttempts(email) {
     if (!email) return [];
-    const { data, error } = await supabase
-      .from('ai_interview_results')
-      .select('*')
-      .eq('email', email)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error("Supabase select error:", error);
+    try {
+      const key = `ai_interview_results_${email}`;
+      return JSON.parse(localStorage.getItem(key) || '[]');
+    } catch (e) {
+      console.warn('[aiInterviewService] Failed to fetch attempts from localStorage:', e);
       return [];
     }
-    return data || [];
   }
 };
