@@ -279,7 +279,7 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
             <img src="/SEED_Logo.png" alt="SEED-IT" className="seb-lock__logo" />
           </div>
           <div className="seb-lock__badge">
-            🛡️ SEED-IT Academic & Assessment Security Portal
+            SEED-IT Academic & Assessment Security Portal
           </div>
           <h1 className="seb-lock__title">SEED-SEB Secure Exam Environment</h1>
           <p className="seb-lock__subtitle">
@@ -291,9 +291,9 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
           <div className="seb-lock__actions">
             <button
               className="seb-btn seb-btn--primary"
-              onClick={onEnableWebAccess}
+              onClick={() => window.open("https://www.seedit.site", "_blank")}
             >
-              🚀 Go to Web Portal
+              Go to Web Portal
             </button>
             <a
               className="seb-btn seb-btn--secondary"
@@ -301,23 +301,23 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              💻 Download SEED-SEB (.exe)
+              Download SEED-SEB (.exe)
             </a>
           </div>
 
           <div className="seb-lock__grid">
             <div className="seb-lock__feature">
-              <span className="seb-lock__feature-icon">📹</span>
+              <span className="seb-lock__feature-icon"><img src="/video-camera.png" alt="AI Camera Proctoring" /></span>
               <h4>AI Camera Proctoring</h4>
               <p>Real-time Face-API detection & multi-person alert tracking.</p>
             </div>
             <div className="seb-lock__feature">
-              <span className="seb-lock__feature-icon">⚡</span>
+              <span className="seb-lock__feature-icon"><img src="/code-editor.png" alt="Code Sandbox & Practice" /></span>
               <h4>Code Sandbox & Practice</h4>
               <p>Multi-language IDE supporting Java, Python, C++, SQL & DSA.</p>
             </div>
             <div className="seb-lock__feature">
-              <span className="seb-lock__feature-icon">🎙️</span>
+              <span className="seb-lock__feature-icon"><img src="/microphone.png" alt="Spoken English AI" /></span>
               <h4>Spoken English AI</h4>
               <p>CEFR audio evaluation & real-time pronunciation scoring.</p>
             </div>
