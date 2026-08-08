@@ -283,6 +283,7 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
           </p>
         </div>
 
+        <div className="seb-lock__card">
           <div className="seb-lock__actions">
             <a 
               className="seb-btn seb-btn--primary" 
