@@ -32,8 +32,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [currentTheme, setCurrentTheme] = useState(() => {
-    // Default to 'LeetCode Dark Mode' for entire application
-    return localStorage.getItem('portal_theme') || 'leetcode';
+    return localStorage.getItem('portal_theme') || 'leetcode-dark';
   });
 
   useEffect(() => {

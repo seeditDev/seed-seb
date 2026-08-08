@@ -83,7 +83,7 @@ const StudentDashboard = () => {
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'bw';
+    return localStorage.getItem('portal_theme') || 'leetcode-dark';
   });
   const [apiKeysList, setApiKeysList] = useState(() => {
     try {
@@ -2277,6 +2277,18 @@ const StudentDashboard = () => {
 
   const renderSettings = () => {
     const themes = [
+      {
+        id: 'leetcode-dark',
+        name: 'LeetCode Dark Mode (Default)',
+        desc: 'Official LeetCode dark mode with signature orange highlights and clean dark panels.',
+        preview: ['#1a1a1a', '#282828', '#ffa116']
+      },
+      {
+        id: 'leetcode-light',
+        name: 'LeetCode Light Mode',
+        desc: 'Official LeetCode light mode with crisp typography and warm brand accents.',
+        preview: ['#f7f8fa', '#ffffff', '#ffa116']
+      },
       {
         id: 'dark',
         name: 'Midnight Space (Dark)',
