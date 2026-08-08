@@ -575,7 +575,8 @@ const ProctoringEngine = ({
 
   // Single-frame detection helper (used in scheduled sequences)
   const detectFrame = useCallback(async () => {
-    if (!isTestActive || !videoRef.current || !streamRef.current) {
+    const track = streamRef.current?.getVideoTracks()?.[0] || window.cameraStream?.getVideoTracks()?.[0];
+    if (!isTestActive || !videoRef.current || !streamRef.current || !track || !track.enabled || track.readyState !== 'live') {
       return { violationType: null, faceCount: 0 };
     }
     if (detectionInProgressRef.current) {

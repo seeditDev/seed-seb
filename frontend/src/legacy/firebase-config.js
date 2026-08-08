@@ -51,12 +51,8 @@ export function ensureAnonymousAuth() {
                     finish(user);
                     return;
                 }
-                signInAnonymously(auth).catch((err) => {
-                    // Anonymous sign-in must be enabled in the Firebase console.
-                    console.error('[firebase] Anonymous sign-in failed:', err?.code || err);
-                    unsubscribe();
-                    finish(null);
-                });
+                unsubscribe();
+                finish(null);
             },
             (err) => {
                 console.error('[firebase] Auth state error:', err?.code || err);

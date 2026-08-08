@@ -364,7 +364,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const isLocked = lockedQuestions.includes(questionIndex);
 
   return (
-    <div className="mcq-test-content" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
+    <div className="mcq-test-content" style={{ height: '100vh', maxHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0f172a', overflow: 'hidden' }}>
 
       {/* Submit Confirmation Overlay */}
       {showSubmitConfirm && (
@@ -457,9 +457,9 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
         </div>
       </div>
 
-      <div className="mcq-workspace-layout" style={{ flex: 1, overflow: 'hidden', display: 'flex', gap: 0 }}>
+      <div className="mcq-workspace-layout" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', gap: 0 }}>
         {/* Main question area */}
-        <div className="mcq-workspace-main" style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+        <div className="mcq-workspace-main" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 28px 80px 28px' }}>
           {showReview ? (
             <div className="mcq-review-container">
               <h3 style={{ color: '#f8fafc', marginBottom: '20px' }}>Review Your Answers</h3>
@@ -1671,7 +1671,7 @@ const MultiSectionAssessment = () => {
         <ProctoringEngine
           studentID={user.Email}
           testID={assessment.id}
-          isTestActive={currentSecIdx >= 0 && !examFinished}
+          isTestActive={currentSecIdx >= 0 && secStarted && !examFinished && sectionCountdown === null}
           maxViolations={maxViolations}
           onReady={handleProctorReady}
           onViolationUpdate={handleProctorViolationUpdate}
@@ -1682,7 +1682,7 @@ const MultiSectionAssessment = () => {
         <AudioProctoringEngine
           studentID={user.Email}
           testID={assessment.id}
-          isTestActive={currentSecIdx >= 0 && !examFinished}
+          isTestActive={currentSecIdx >= 0 && secStarted && !examFinished && sectionCountdown === null}
           maxViolations={maxAudioViolations}
           onReady={handleAudioProctorReady}
           onViolationUpdate={handleAudioProctorViolationUpdate}
