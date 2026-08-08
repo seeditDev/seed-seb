@@ -2279,9 +2279,9 @@ const StudentDashboard = () => {
     const themes = [
       {
         id: 'professionalism',
-        name: 'Professionalism (LeetCode Light)',
-        desc: 'Official LeetCode light mode with crisp JetBrains Mono typography, clean borders, and warm brand accents. (Default)',
-        preview: ['#f7f8fa', '#ffffff', '#ffa116']
+        name: 'Professionalism',
+        desc: 'Pristine, high-contrast light mode design system with clean card layouts and crisp typography. (Default)',
+        preview: ['#f8f9fa', '#ffffff', '#2563eb']
       },
       {
         id: 'dark',
@@ -2316,7 +2316,7 @@ const StudentDashboard = () => {
       {
         id: 'bw',
         name: 'Monochrome Minimalist (B&W)',
-        desc: 'High-contrast, clean black & white theme. (Default)',
+        desc: 'High-contrast, clean black & white theme.',
         preview: ['#ffffff', '#000000', '#000000']
       }
     ];

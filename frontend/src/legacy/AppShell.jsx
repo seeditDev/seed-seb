@@ -283,14 +283,19 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
           </p>
         </div>
 
-        <div className="seb-lock__card">
           <div className="seb-lock__actions">
-            <button className="seb-btn seb-btn--primary" onClick={onEnableWebAccess}>
-              🚀 Launch Web Portal
-            </button>
+            <a 
+              className="seb-btn seb-btn--primary" 
+              href="https://www.seedit.site"
+              onClick={(e) => {
+                onEnableWebAccess();
+              }}
+            >
+              🚀 Go to Web Portal
+            </a>
             <a
               className="seb-btn seb-btn--secondary"
-              href="https://github.com/seeditDev/seed-seb/releases"
+              href="https://github.com/seeditDev/SEED-SEB-APP/releases/tag/SEED-SEB-APP"
               target="_blank"
               rel="noopener noreferrer"
             >

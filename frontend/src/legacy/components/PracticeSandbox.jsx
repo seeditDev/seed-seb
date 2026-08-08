@@ -1058,7 +1058,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
               key={questionId}
               height="100%"
               language={MONACO_LANG_MAP[language] || 'cpp'}
-              theme={['professionalism', 'leetcode-light', 'light', 'red-light', 'bw'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
+              theme={!['dark', 'crimson', 'emerald'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
               value={code}
               onChange={(val) => setCode(val || '')}
               onMount={(editor) => {

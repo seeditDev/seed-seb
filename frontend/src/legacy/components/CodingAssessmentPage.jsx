@@ -2534,7 +2534,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
                                     value={codeMap[`${currentQuestion.id}_${language}`] || ""}
                                     onChange={handleCodeChange}
-                                    theme={['professionalism', 'leetcode-light', 'light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
+                                    theme={!['dark', 'crimson', 'emerald'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
                                     options={{
                                         fontSize: 14,
                                         fontFamily: "'JetBrains Mono', Courier, monospace",
