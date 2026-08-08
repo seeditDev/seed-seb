@@ -112,16 +112,32 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
   const ids = Array.from(new Set(assessmentIds.filter(Boolean).map(String)));
   if (ids.length === 0) return {};
 
+  const map = {};
+  ids.forEach((id) => { map[id] = false; });
+
+  // 0. Merge from local storage completion list
+  const localKey = `completed_assessments_${tenant.email.toLowerCase()}`;
+  try {
+    const localList = JSON.parse(localStorage.getItem(localKey) || '[]');
+    if (Array.isArray(localList)) {
+      localList.forEach((id) => {
+        if (id in map) map[id] = true;
+      });
+    }
+  } catch (_) {}
+
   if (!options.force) {
     const cached = readCompletionCache(tenant.email);
     if (cached) {
       const covered = ids.every((id) => id in cached);
-      if (covered) return cached;
+      if (covered) {
+        Object.keys(cached).forEach((id) => {
+          if (cached[id]) map[id] = true;
+        });
+        return { ...cached, ...map };
+      }
     }
   }
-
-  const map = {};
-  ids.forEach((id) => { map[id] = false; });
 
   // 1. Fast path — denormalised completion list on the user doc (1 read).
   let denormalisedComplete = false;
@@ -135,7 +151,9 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
       denormalisedComplete = userSnap.data()?.completionIndexComplete === true;
     }
   } catch (e) {
-    console.warn('[attemptStatusService] user completion index unavailable:', e?.message);
+    if (e?.code !== 'permission-denied') {
+      console.warn('[attemptStatusService] user completion index unavailable:', e?.message);
+    }
   }
 
   // 2. Bounded fallback for ids the index does not vouch for yet.
@@ -157,6 +175,7 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
 /**
  * Record completion on the student's user document so the dashboard never has
  * to fan out per-assessment reads again. Written transactionally at submission.
+ * Always persists locally to localStorage so permissions or network issues never lose progress.
  */
 export async function markAssessmentCompleted(userData, assessmentId) {
   if (!assessmentId) return false;
@@ -168,6 +187,20 @@ export async function markAssessmentCompleted(userData, assessmentId) {
     return false;
   }
 
+  // 1. ALWAYS update local cache FIRST (localStorage + sessionStorage)
+  const localKey = `completed_assessments_${tenant.email.toLowerCase()}`;
+  try {
+    const localList = JSON.parse(localStorage.getItem(localKey) || '[]');
+    if (Array.isArray(localList) && !localList.includes(assessmentId)) {
+      localList.push(assessmentId);
+      localStorage.setItem(localKey, JSON.stringify(localList));
+    }
+  } catch (_) {}
+
+  const cached = readCompletionCache(tenant.email) || {};
+  writeCompletionCache(tenant.email, { ...cached, [assessmentId]: true });
+
+  // 2. Try updating Firestore remote user document
   const ref = doc(db, 'users', tenant.email);
   try {
     await runTransaction(db, async (tx) => {
@@ -189,8 +222,9 @@ export async function markAssessmentCompleted(userData, assessmentId) {
       );
     });
   } catch (e) {
-    // Transaction contention / rules — fall back to a non-atomic arrayUnion.
-    console.warn('[attemptStatusService] transaction failed, using arrayUnion:', e?.message);
+    if (e?.code !== 'permission-denied') {
+      console.warn('[attemptStatusService] transaction failed, using arrayUnion:', e?.message);
+    }
     try {
       await setDoc(
         ref,
@@ -202,14 +236,14 @@ export async function markAssessmentCompleted(userData, assessmentId) {
         { merge: true }
       );
     } catch (e2) {
-      console.warn('[attemptStatusService] completion index write failed:', e2?.message);
-      return false;
+      if (e2?.code === 'permission-denied' || e2?.message?.includes('permission') || e2?.message?.includes('403')) {
+        console.info('[attemptStatusService] Firestore rules restricted remote write for', tenant.email, '- completion saved locally.');
+      } else {
+        console.warn('[attemptStatusService] completion index write failed:', e2?.message);
+      }
     }
   }
 
-  // Keep the local cache honest instead of waiting for the TTL.
-  const cached = readCompletionCache(tenant.email);
-  if (cached) writeCompletionCache(tenant.email, { ...cached, [assessmentId]: true });
   return true;
 }
 
