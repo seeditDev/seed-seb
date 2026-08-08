@@ -82,6 +82,8 @@ const StudentDashboard = () => {
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [userPremiumState, setUserPremiumState] = useState(null);
   const [currentTheme, setCurrentTheme] = useState(() => {
     return localStorage.getItem('portal_theme') || 'professionalism';
   });
@@ -1562,7 +1564,7 @@ const StudentDashboard = () => {
   };
 
   const renderProfile = () => {
-    const isPremium = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium;
+    const isPremium = userPremiumState !== null ? userPremiumState : (user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 'Yes' || !!user?.isPremium);
 
     const getCompletedCourses = () => {
       const badges = [];
@@ -1721,9 +1723,22 @@ const StudentDashboard = () => {
                 </div>
                 <div className="profile-meta-title">
                   <h2>{name}</h2>
-                  <span className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}>
-                    {isPremium ? <><FaStar style={{ marginRight: '4px' }} /> Premium Edition</> : 'Standard Edition'}
-                  </span>
+                  <button
+                    type="button"
+                    className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}
+                    onClick={() => setShowPremiumModal(true)}
+                    style={{
+                      cursor: 'pointer',
+                      border: 'none',
+                      outline: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                    title="Click to view Premium Edition details"
+                  >
+                    {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium Edition</> : <><FaCrown style={{ color: '#fbbf24' }} /> Upgrade to Premium</>}
+                  </button>
                 </div>
               </div>
 
@@ -1899,9 +1914,22 @@ const StudentDashboard = () => {
               </div>
               <div className="profile-meta-title">
                 <h2>{name}</h2>
-                <span className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}>
-                  {isPremium ? <><FaStar style={{ marginRight: '4px' }} /> Premium Edition</> : 'Standard Edition'}
-                </span>
+                <button
+                  type="button"
+                  className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}
+                  onClick={() => setShowPremiumModal(true)}
+                  style={{
+                    cursor: 'pointer',
+                    border: 'none',
+                    outline: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  title="Click to view Premium Edition details"
+                >
+                  {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium Edition</> : <><FaCrown style={{ color: '#fbbf24' }} /> Upgrade to Premium</>}
+                </button>
               </div>
             </div>
 
@@ -2172,6 +2200,151 @@ const StudentDashboard = () => {
           </div>
         )}
 
+        {/* Premium Upgrade & Status Modal */}
+        {showPremiumModal && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '24px',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '32px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              color: 'var(--text-main)',
+              position: 'relative'
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowPremiumModal(false)}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '20px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '20px',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(234, 88, 12, 0.2))',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  color: '#f59e0b',
+                  fontSize: '28px'
+                }}>
+                  <FaCrown />
+                </div>
+                <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '0 0 8px 0' }}>
+                  SEED-IT Premium Edition
+                </h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+                  {isPremium ? 'Your student profile has active Premium Edition access.' : 'Unlock full academic & competitive coding features.'}
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '20px' }}>⚡</span>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '14px' }}>Unlimited AI Mock Interviews</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Real-time voice & coding feedback with Gemini AI</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '20px' }}>📹</span>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '14px' }}>AI Camera Proctoring Sandbox</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Anti-cheat detection with face monitoring</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '20px' }}>🎙️</span>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '14px' }}>Spoken English CEFR Evaluator</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Pronunciation, grammar & fluency scorecard</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                {!isPremium ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rawAuth = localStorage.getItem('auth_data');
+                      if (rawAuth) {
+                        try {
+                          const parsed = JSON.parse(rawAuth);
+                          parsed.Premium = true;
+                          parsed.isPremium = true;
+                          localStorage.setItem('auth_data', JSON.stringify(parsed));
+                        } catch (e) {}
+                      }
+                      setUserPremiumState(true);
+                      setShowPremiumModal(false);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: '#ffffff',
+                      fontWeight: '700',
+                      fontSize: '15px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
+                    }}
+                  >
+                    🚀 Activate Premium Edition Now
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowPremiumModal(false)}
+                    style={{
+                      flex: 1,
+                      padding: '14px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      color: '#ffffff',
+                      fontWeight: '700',
+                      fontSize: '15px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ✓ Premium Access Active
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     );
   };
@@ -2281,7 +2454,7 @@ const StudentDashboard = () => {
         id: 'professionalism',
         name: 'Professionalism',
         desc: 'Pristine, high-contrast light mode design system with clean card layouts and crisp typography. (Default)',
-        preview: ['#fafafa', '#ffffff', '#007aff']
+        preview: ['#f8f9fa', '#ffffff', '#2563eb']
       },
       {
         id: 'dark',
