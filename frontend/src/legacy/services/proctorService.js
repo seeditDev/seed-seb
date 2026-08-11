@@ -103,14 +103,12 @@ class ProctorService {
         }, { merge: true }).catch(() => {});
       }
 
-      // v1 legacy non-blocking fallback
-      const sanitizedStudentID = studentID.replace(/[^a-zA-Z0-9]/g, '_');
-      const sanitizedTestID = testID.replace(/[^a-zA-Z0-9]/g, '_');
-      const legacyRef = collection(db, 'proctor_logs', sanitizedStudentID, sanitizedTestID);
-      addDoc(legacyRef, { ...logData, studentID, testID }).catch(() => {});
+      // NOTE: Legacy proctor_logs write removed — blocked by Firestore rules.
+      // All proctoring events are written to proctoringLogs/{attemptId}/events/ (v2).
 
       console.log('[ProctorService] Proctor event logged (v2):', attemptId, docRef.id);
       return docRef.id;
+
     } catch (error) {
       console.error('[ProctorService] Error logging proctor event:', error);
       this.saveUnsyncedLog(studentID, testID, eventData);
