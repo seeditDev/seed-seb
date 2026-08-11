@@ -1,107 +1,329 @@
 {
   "questionId": "Q2924",
-  "title": "Fombinatorial",
-  "slug": "fombinatorial",
+  "title": "Determine Champion II",
+  "slug": "find-champion-ii",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
-    "difficulty": "Hard",
+    "category": "Graphs",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Combinatorics",
-      "Modular Arithmetic",
-      "Math"
+      "graph"
     ],
     "companyTags": [],
     "topicTags": [
-      "Mathematics"
-    ]
+      "graph"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You are given a function f which is defined as :\n\n\r\n\n\n\n\nYour task is to find the value of  **f(N) / ( f(r)*f(N-r) )**\n\n . As it will be a large number output it modulo **M**.",
+    "problemStatement": "There are `n` teams numbered from `0` to `n - 1` in a tournament; each team is also a node in a **DAG**.\n\nYou receive the integer `n` and a **0-indexed** 2D integer array `edges` of length `m` representing the **DAG**, where `edges[i] = [ui, vi]` indicates that there is a directed edge from team `ui` to team `vi` in the graph.\n\nA directed edge from `a` to `b` in the graph means that team `a` is **stronger** than team `b` and team `b` is **weaker** than team `a`.\n\nTeam `a` will be the **champion** of the tournament if there is no team `b` that is **stronger** than team `a`.\n\nOutput *the team that will be the **champion** of the tournament if there is a **unique** champion, otherwise, output* `-1`*.*\n\n**Notes**\n\n* A **cycle** is a series of nodes `a1, a2, ..., an, an+1` such that node `a1` is the same node as node `an+1`, the nodes `a1, a2, ..., an` are distinct, and there is a directed edge from the node `ai` to node `ai+1` for every `i` in the range `[1, n]`.\n* A **DAG** is a directed graph that does not have any **cycle**.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2023/10/19/graph-3.png)\n\n```\nInput: n = 3, edges = [[0,1],[1,2]]\nOutput: 0\nExplanation: Team 1 is weaker than team 0. Team 2 is weaker than team 1. So the champion is team 0.\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2023/10/19/graph-4.png)\n\n```\nInput: n = 4, edges = [[0,2],[1,3],[1,2]]\nOutput: -1\nExplanation: Team 2 is weaker than team 0 and team 1. Team 3 is weaker than team 1. But team 1 and team 0 are not weaker than any other teams. So the answer is -1.\n```\n\n**Constraints:**\n\n* `1 <= n <= 100`\n* `m == edges.length`\n* `0 <= m <= n * (n - 1) / 2`\n* `edges[i].length == 2`\n* `0 <= edge[i][j] <= n - 1`\n* `edges[i][0] != edges[i][1]`\n* The input is generated such that if team `a` is stronger than team `b`, team `b` is not stronger than team `a`.\n* The input is generated such that if team `a` is stronger than team `b` and team `b` is stronger than team `c`, then team `a` is stronger than team `c`.",
     "constraints": [
-      "2 \u2264 N \u2264 10^5",
-      "1 \u2264 M \u2264 10^9",
-      "2 \u2264 Sum of N over all test cases \u2264 5*10^5",
-      "2 \u2264 Sum of Q over all test cases \u2264 10^2",
-      "1 < r < N"
+      "None"
     ],
-    "inputFormat": "The first line contains the number of test cases T. Each test case consists of three space-separated integers N, M, and Q on the first line, followed by Q lines, each containing an integer r.",
-    "outputFormat": "For each test case, output Q lines, each containing the result of f(N) / (f(r) * f(N-r)) modulo M.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "1\n5 24 2\n2\n3",
-        "output": "8\n8",
-        "explanation": "For the first query, f(5) / (f(2) * f(3)) = (5! / (2! * 3!)) = (120 / (2 * 6)) = 10. However, we need to take the result modulo 24, which gives us 10 % 24 = 10. But since 10 is not the result given in the sample output, we can assume that the function f is not the standard factorial function, but rather a function that gives the result of the combination formula. So, f(5) / (f(2) * f(3)) = (5! / (2! * 3!)) = (120 / (2 * 6)) = 10, and 10 % 24 = 10, but the result given is 8, which means that the function f is actually (n! / (r! * (n-r)!)) % M, and the result of this function for the given inputs is 8."
+        "type": "reg",
+        "input": "n = 3, edges = [[0,1],[1,2]]",
+        "output": "0",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n10 100 3\n3\n4\n5",
-        "output": "120\n210\n252",
-        "explanation": "For the first query, f(10) / (f(3) * f(7)) = (10! / (3! * 7!)) = (3628800 / (6 * 5040)) = 120. For the second query, f(10) / (f(4) * f(6)) = (10! / (4! * 6!)) = (3628800 / (24 * 720)) = 210. For the third query, f(10) / (f(5) * f(5)) = (10! / (5! * 5!)) = (3628800 / (120 * 120)) = 252."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n20 1000 2\n10\n15",
-        "output": "16796\n15504",
-        "explanation": "For the first query, f(20) / (f(10) * f(10)) = (20! / (10! * 10!)) = (2432902008176640000 / (3628800 * 3628800)) = 16796. For the second query, f(20) / (f(15) * f(5)) = (20! / (15! * 5!)) = (2432902008176640000 / (1307674368000 * 120)) = 15504."
+        "type": "reg",
+        "input": "n = 4, edges = [[0,2],[1,3],[1,2]]",
+        "output": "-1",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n2 1 1\n1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n100000 1000000000 1\n50000",
-        "expectedOutput": "49999500001",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n10 10 1\n5",
-        "expectedOutput": "6",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n20 1000 2\n10\n15",
-        "expectedOutput": "16796\n15504",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "2\n5 24 2\n2\n3\n10 100 3\n3\n4\n5",
-        "expectedOutput": "8\n8\n120\n210\n252",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -112,18 +334,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The problem can be solved by using the formula for combinations: f(N) / (f(r) * f(N-r)) = (N! / (r! * (N-r)!)). To avoid overflow, we can use modular arithmetic to calculate the factorials and the combination. We can also use the property of modular arithmetic that (a * b) % M = ((a % M) * (b % M)) % M to avoid overflow.",
-    "timeComplexity": "O(T * Q * N) per test case, O(T * Q * N) total. Precomputation is not required.",
-    "spaceComplexity": "O(1) \u2014 the dominant structure is a constant amount of space.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n\nlong long factorial(int n, int M) {\n    long long result = 1;\n    for (int i = 2; i <= n; i++) {\n        result = (result * i) % M;\n    }\n    return result;\n}\n\nlong long power(long long a, long long b, int M) {\n    long long result = 1;\n    while (b > 0) {\n        if (b & 1) {\n            result = (result * a) % M;\n        }\n        a = (a * a) % M;\n        b >>= 1;\n    }\n    return result;\n}\n\nlong long modInverse(long long a, int M) {\n    return power(a, M - 2, M);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M, Q;\n        scanf(\"%d %d %d\", &N, &M, &Q);\n        for (int i = 0; i < Q; i++) {\n            int r;\n            scanf(\"%d\", &r);\n            long long fN = factorial(N, M);\n            long long fr = factorial(r, M);\n            long long fNr = factorial(N - r, M);\n            long long result = (fN * modInverse((fr * fNr) % M, M)) % M;\n            printf(\"%lld\\n\", result);\n        }\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\nusing namespace std;\n\nlong long factorial(int n, int M) {\n    long long result = 1;\n    for (int i = 2; i <= n; i++) {\n        result = (result * i) % M;\n    }\n    return result;\n}\n\nlong long power(long long a, long long b, int M) {\n    long long result = 1;\n    while (b > 0) {\n        if (b & 1) {\n            result = (result * a) % M;\n        }\n        a = (a * a) % M;\n        b >>= 1;\n    }\n    return result;\n}\n\nlong long modInverse(long long a, int M) {\n    return power(a, M - 2, M);\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M, Q;\n        cin >> N >> M >> Q;\n        for (int i = 0; i < Q; i++) {\n            int r;\n            cin >> r;\n            long long fN = factorial(N, M);\n            long long fr = factorial(r, M);\n            long long fNr = factorial(N - r, M);\n            long long result = (fN * modInverse((fr * fNr) % M, M)) % M;\n            cout << result << endl;\n        }\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static long factorial(int n, int M) {\n        long result = 1;\n        for (int i = 2; i <= n; i++) {\n            result = (result * i) % M;\n        }\n        return result;\n    }\n\n    public static long power(long a, long b, int M) {\n        long result = 1;\n        while (b > 0) {\n            if (b % 2 == 1) {\n                result = (result * a) % M;\n            }\n            a = (a * a) % M;\n            b >>= 1;\n        }\n        return result;\n    }\n\n    public static long modInverse(long a, int M) {\n        return power(a, M - 2, M);\n    }\n\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int T = scanner.nextInt();\n        while (T-- > 0) {\n            int N = scanner.nextInt();\n            int M = scanner.nextInt();\n            int Q = scanner.nextInt();\n            for (int i = 0; i < Q; i++) {\n                int r = scanner.nextInt();\n                long fN = factorial(N, M);\n                long fr = factorial(r, M);\n                long fNr = factorial(N - r, M);\n                long result = (fN * modInverse((fr * fNr) % M, M)) % M;\n                System.out.println(result);\n            }\n        }\n    }\n}",
-      "Python3": "def factorial(n, M):\n    result = 1\n    for i in range(2, n + 1):\n        result = (result * i) % M\n    return result\n\n\ndef power(a, b, M):\n    result = 1\n    while b > 0:\n        if b % 2 == 1:\n            result = (result * a) % M\n        a = (a * a) % M\n        b >>= 1\n    return result\n\n\ndef modInverse(a, M):\n    return power(a, M - 2, M)\n\nimport sys\nT = int(sys.stdin.readline())\nfor _ in range(T):\n    N, M, Q = map(int, sys.stdin.readline().split())\n    for _ in range(Q):\n        r = int(sys.stdin.readline())\n        fN = factorial(N, M)\n        fr = factorial(r, M)\n        fNr = factorial(N - r, M)\n        result = (fN * modInverse((fr * fNr) % M, M)) % M\n        print(result)",
-      "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction factorial(n, M) {\n    let result = 1;\n    for (let i = 2; i <= n; i++) {\n        result = (result * i) % M;\n    }\n    return result;\n}\n\nfunction power(a, b, M) {\n    let result = 1;\n    while (b > 0) {\n        if (b % 2 === 1) {\n            result = (result * a) % M;\n        }\n        a = (a * a) % M;\n        b = b >> 1;\n    }\n    return result;\n}\n\nfunction modInverse(a, M) {\n    return power(a, M - 2, M);\n}\n\nlet T = parseInt(input[idx++]);\nwhile (T-- > 0) {\n    let [N, M, Q] = input[idx++].split(' ').map(Number);\n    for (let i = 0; i < Q; i++) {\n        let r = parseInt(input[idx++]);\n        let fN = factorial(N, M);\n        let fr = factorial(r, M);\n        let fNr = factorial(N - r, M);\n        let result = (fN * modInverse((fr * fNr) % M, M)) % M;\n        console.log(result);\n    }\n}"
+      "Python3": "class Solution(object):\n    def findChampion(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: int\n        \"\"\"\n        lookup = [False]*n\n        for u, v in edges:\n            lookup[v] = True\n        result = -1\n        for u in range(n):\n            if lookup[u]:\n                continue\n            if result != -1:\n                return -1\n            result = u\n        return result\n\n\n# Time:  O(n)\n# Space: O(n)\n# graph, hash table"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int findChampion(int n, vector<vector<int>>& edges) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int findChampion(int n, int[][] edges) {\n        \n    }\n}",
+    "Python3": "class Solution(object):\n    def findChampion(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: int\n        \"\"\"\n        lookup = [False]*n\n        for u, v in edges:\n            lookup[v] = True\n        result = -1\n        for u in range(n):\n            if lookup[u]:\n                continue\n            if result != -1:\n                return -1\n            result = u\n        return result\n\n\n# Time:  O(n)\n# Space: O(n)\n# graph, hash table",
+    "Python": "class Solution(object):\n    def findChampion(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number} n\n * @param {number[][]} edges\n * @return {number}\n */\nvar findChampion = function(n, edges) {\n    \n};",
+    "TypeScript": "function findChampion(n: number, edges: number[][]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int FindChampion(int n, int[][] edges) {\n        \n    }\n}",
+    "C": "int findChampion(int n, int** edges, int edgesSize, int* edgesColSize) {\n    \n}",
+    "Go": "func findChampion(n int, edges [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun findChampion(n: Int, edges: Array<IntArray>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func findChampion(_ n: Int, _ edges: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn find_champion(n: i32, edges: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer} n\n# @param {Integer[][]} edges\n# @return {Integer}\ndef find_champion(n, edges)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer $n\n     * @param Integer[][] $edges\n     * @return Integer\n     */\n    function findChampion($n, $edges) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int findChampion(int n, List<List<int>> edges) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def findChampion(n: Int, edges: Array[Array[Int]]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec find_champion(n :: integer, edges :: [[integer]]) :: integer\n  def find_champion(n, edges) do\n    \n  end\nend",
+    "Erlang": "-spec find_champion(N :: integer(), Edges :: [[integer()]]) -> integer().\nfind_champion(N, Edges) ->\n  .",
+    "Racket": "(define/contract (find-champion n edges)\n  (-> exact-integer? (listof (listof exact-integer?)) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "findChampion",
+    "params": [
+      {
+        "type": "integer",
+        "name": "n"
+      },
+      {
+        "type": "integer[][]",
+        "name": "edges"
+      }
+    ]
+  },
+  "verified": false
 }

@@ -1,11 +1,10 @@
 {
   "questionId": "Q16",
-  "title": "3Sum Closest",
+  "title": "3Sum Closest Problem",
   "slug": "3sum-closest",
-  "version": 1,
+  "version": 5,
   "createdAt": "2026-07-09",
-  "updatedAt": "2026-07-09",
-  "QBCategory": "LCD",
+  "updatedAt": "2026-07-24",
   "metadata": {
     "category": "Arrays",
     "difficulty": "Medium",
@@ -13,187 +12,331 @@
     "tags": [
       "array",
       "two-pointers",
-      "sorting"
+      "sorting",
+      "randomized-tests"
     ],
     "companyTags": [],
     "topicTags": [
       "array",
       "two-pointers",
-      "sorting"
+      "sorting",
+      "testing"
     ],
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Given an integer array `nums` of length `n` and an integer `target`, find three integers at **distinct indices** in `nums` such that the sum is closest to `target`.\n\nReturn *the sum of the three integers*.\n\nYou may assume that each input would have exactly one solution.\n\n**Example 1:**\n\n```\nInput: nums = [-1,2,1,-4], target = 1\nOutput: 2\nExplanation: The sum that is closest to the target is 2. (-1 + 2 + 1 = 2).\n```\n\n**Example 2:**\n\n```\nInput: nums = [0,0,0], target = 1\nOutput: 0\nExplanation: The sum that is closest to the target is 0. (0 + 0 + 0 = 0).\n```\n\n**Constraints:**\n\n* `3 <= nums.length <= 501`\n* `-1000 <= nums[i] <= 1000`\n* `-10^4 <= target <= 10^4`",
+    "problemStatement": "With an integer array `nums` of length `n` and an integer `target`, find three integers in `nums` at distinct indices such that the sum is closest to `target`. Output the sum of the three integers.\n\nYou may assume that each input has exactly one unique answer. Design an algorithm that runs in \\(O(n^2)\\) time on average and uses \\(O(1)\\) extra auxiliary space (excluding the space required for sorting and the output). A standard approach is to sort the array and use a two-pointer scan for each fixed first element.",
     "constraints": [
       "3 <= nums.length <= 501",
       "-1000 <= nums[i] <= 1000",
-      "-10^4 <= target <= 10^4"
+      "-10^4 <= target <= 10^4",
+      "Expected time complexity: O(n^2); expected extra auxiliary space: O(1) (excluding output and sorting overhead)."
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [[-1,2,1,-4], 1]",
+    "outputFormat": "Single line: JSON-serialised return value (integer)",
+    "notes": [
+      "Sort the array first to enable the two-pointer technique and simple duplicate handling.",
+      "For each index i (first element), use two pointers l and r on the suffix to search for the pair that makes the sum closest to target - nums[i].",
+      "Track the best (closest) sum seen so far and update when a closer sum is found. Early exit if you find an exact match equal to target."
+    ],
     "sampleTestCases": [
       {
         "id": "sample_1",
+        "type": "reg",
         "input": "[[-1,2,1,-4],1]",
         "output": "2",
-        "explanation": "The sum that is closest to the target is 2. (-1 + 2 + 1 = 2)."
+        "explanation": "The sum that is closest to the target is 2: (-1 + 2 + 1 = 2)."
       },
       {
         "id": "sample_2",
+        "type": "reg",
         "input": "[[0,0,0],1]",
         "output": "0",
-        "explanation": "The sum that is closest to the target is 0. (0 + 0 + 0 = 0)."
+        "explanation": "The sum that is closest to the target is 0: (0 + 0 + 0 = 0)."
       }
     ]
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Minimum array size",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "Minimum valid length",
         "input": "[[-1, 2, 1], 1]",
         "expectedOutput": "2",
-        "weight": 2
+        "weight": 4
       },
       {
-        "id": "tc_2",
-        "label": "Maximum array size",
-        "input": "[[-1000, -999, -998, -997, -996, -995, -994, -993, -992, -991, -990, -989, -988, -987, -986, -985, -984, -983, -982, -981, -980, -979, -978, -977, -976, -975, -974, -973, -972, -971, -970, -969, -968, -967, -966, -965, -964, -963, -962, -961, -960, -959, -958, -957, -956, -955, -954, -953, -952, -951, -950, -949, -948, -947, -946, -945, -944, -943, -942, -941, -940, -939, -938, -937, -936, -935, -934, -933, -932, -931, -930, -929, -928, -927, -926, -925, -924, -923, -922, -921, -920, -919, -918, -917, -916, -915, -914, -913, -912, -911, -910, -909, -908, -907, -906, -905, -904, -903, -902, -901, -900, -899, -898, -897, -896, -895, -894, -893, -892, -891, -890, -889, -888, -887, -886, -885, -884, -883, -882, -881, -880, -879, -878, -877, -876, -875, -874, -873, -872, -871, -870, -869, -868, -867, -866, -865, -864, -863, -862, -861, -860, -859, -858, -857, -856, -855, -854, -853, -852, -851, -850, -849, -848, -847, -846, -845, -844, -843, -842, -841, -840, -839, -838, -837, -836, -835, -834, -833, -832, -831, -830, -829, -828, -827, -826, -825, -824, -823, -822, -821, -820, -819, -818, -817, -816, -815, -814, -813, -812, -811, -810, -809, -808, -807, -806, -805, -804, -803, -802, -801, -800, -799, -798, -797, -796, -795, -794, -793, -792, -791, -790, -789, -788, -787, -786, -785, -784, -783, -782, -781, -780, -779, -778, -777, -776, -775, -774, -773, -772, -771, -770, -769, -768, -767, -766, -765, -764, -763, -762, -761, -760, -759, -758, -757, -756, -755, -754, -753, -752, -751, -750, -749, -748, -747, -746, -745, -744, -743, -742, -741, -740, -739, -738, -737, -736, -735, -734, -733, -732, -731, -730, -729, -728, -727, -726, -725, -724, -723, -722, -721, -720, -719, -718, -717, -716, -715, -714, -713, -712, -711, -710, -709, -708, -707, -706, -705, -704, -703, -702, -701, -700, -699, -698, -697, -696, -695, -694, -693, -692, -691, -690, -689, -688, -687, -686, -685, -684, -683, -682, -681, -680, -679, -678, -677, -676, -675, -674, -673, -672, -671, -670, -669, -668, -667, -666, -665, -664, -663, -662, -661, -660, -659, -658, -657, -656, -655, -654, -653, -652, -651, -650, -649, -648, -647, -646, -645, -644, -643, -642, -641, -640, -639, -638, -637, -636, -635, -634, -633, -632, -631, -630, -629, -628, -627, -626, -625, -624, -623, -622, -621, -620, -619, -618, -617, -616, -615, -614, -613, -612, -611, -610, -609, -608, -607, -606, -605, -604, -603, -602, -601, -600, -599, -598, -597, -596, -595, -594, -593, -592, -591, -590, -589, -588, -587, -586, -585, -584, -583, -582, -581, -580, -579, -578, -577, -576, -575, -574, -573, -572, -571, -570, -569, -568, -567, -566, -565, -564, -563, -562, -561, -560, -559, -558, -557, -556, -555, -554, -553, -552, -551, -550, -549, -548, -547, -546, -545, -544, -543, -542, -541, -540, -539, -538, -537, -536, -535, -534, -533, -532, -531, -530, -529, -528, -527, -526, -525, -524, -523, -522, -521, -520, -519, -518, -517, -516, -515, -514, -513, -512, -511, -510, -509, -508, -507, -506, -505, -504, -503, -502, -501, -500], 1]",
-        "expectedOutput": "-1503",
-        "weight": 2
-      },
-      {
-        "id": "tc_3",
-        "label": "Single element",
-        "input": "[[1], 1]",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "All zeros many elements",
+        "input": "[[0,0,0,0,0,0,0,0,0,0], 1]",
         "expectedOutput": "0",
-        "weight": 2
+        "weight": 4
       },
       {
-        "id": "tc_4",
-        "label": "Two elements",
-        "input": "[[1, 2], 1]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_5",
-        "label": "All elements same",
-        "input": "[[1, 1, 1], 1]",
-        "expectedOutput": "3",
-        "weight": 2
-      },
-      {
-        "id": "tc_6",
-        "label": "Strictly increasing",
-        "input": "[[1, 2, 3], 1]",
+        "id": "tc_03",
+        "type": "reg",
+        "label": "Simple positive triple",
+        "input": "[[1,2,3], 6]",
         "expectedOutput": "6",
-        "weight": 2
+        "weight": 4
       },
       {
-        "id": "tc_7",
-        "label": "Strictly decreasing",
-        "input": "[[3, 2, 1], 1]",
-        "expectedOutput": "6",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "Simple negative triple",
+        "input": "[[-3,-2,-1], -6]",
+        "expectedOutput": "-6",
+        "weight": 4
       },
       {
-        "id": "tc_8",
-        "label": "Random order",
-        "input": "[[3, 1, 2], 1]",
-        "expectedOutput": "6",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "Mixed small set (example)",
+        "input": "[[-1,2,1,-4], 1]",
+        "expectedOutput": "2",
+        "weight": 4
       },
       {
-        "id": "tc_9",
-        "label": "Large positive values",
-        "input": "[[1000, 999, 998], 1]",
-        "expectedOutput": "2997",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "label": "Large negative values",
-        "input": "[[-1000, -999, -998], 1]",
-        "expectedOutput": "-2997",
-        "weight": 2
-      },
-      {
-        "id": "tc_11",
-        "label": "Zero values",
-        "input": "[[0, 0, 0, 0, 0], 0]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_12",
-        "label": "Duplicate values",
-        "input": "[[1, 1, 1, 1, 1], 3]",
+        "id": "tc_06",
+        "type": "reg",
+        "label": "Duplicates heavy",
+        "input": "[[1,1,1,1,1,1], 3]",
         "expectedOutput": "3",
         "weight": 4
       },
       {
-        "id": "tc_13",
-        "label": "Mixed positive/negative",
-        "input": "[[-10, 10, -5, 5, 0], 0]",
+        "id": "tc_07",
+        "type": "reg",
+        "label": "Large positives",
+        "input": "[[1000,999,998,500], 2500]",
+        "expectedOutput": "2997",
+        "weight": 4
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "Large negatives",
+        "input": "[[-1000,-999,-998,-500], -2500]",
+        "expectedOutput": "-2997",
+        "weight": 4
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "Target between sums",
+        "input": "[[-10, -5, 0, 5, 10], 1]",
         "expectedOutput": "0",
-        "weight": 2
+        "weight": 4
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "Closest at beginning",
+        "input": "[[-1, 2, 1, -4, 5], -1]",
+        "expectedOutput": "-1",
+        "weight": 4
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "Closest at end",
+        "input": "[[-10, -5, 0, 5, 10], 15]",
+        "expectedOutput": "15",
+        "weight": 4
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "Many small numbers with unique closest",
+        "input": "[[-2,-1,0,1,2,3], 2]",
+        "expectedOutput": "2",
+        "weight": 4
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "Edge magnitude values",
+        "input": "[[1000, -500, -500, 0], 1]",
+        "expectedOutput": "0",
+        "weight": 4
       },
       {
         "id": "tc_14",
-        "label": "Answer at beginning",
-        "input": "[[-1, 2, 1, -4, 5], -1]",
-        "expectedOutput": "-1",
-        "weight": 2
+        "type": "reg",
+        "label": "No exact match but close negative",
+        "input": "[[-7, -3, -2, -1, 0, 1, 2], -5]",
+        "expectedOutput": "-6",
+        "weight": 4
       },
       {
         "id": "tc_15",
-        "label": "Answer at middle",
-        "input": "[[-10, -5, 0, 5, 10], 0]",
-        "expectedOutput": "0",
-        "weight": 2
+        "type": "reg",
+        "label": "No exact match but close positive",
+        "input": "[[4, 1, -1, 2, -2], 3]",
+        "expectedOutput": "3",
+        "weight": 4
       },
       {
         "id": "tc_16",
-        "label": "Answer at end",
-        "input": "[[-10, -5, 0, 5, 10], 15]",
-        "expectedOutput": "15",
-        "weight": 2
+        "type": "reg",
+        "label": "Many duplicates with one different",
+        "input": "[[0,0,0,0,1], 2]",
+        "expectedOutput": "1",
+        "weight": 4
       },
       {
         "id": "tc_17",
-        "label": "Answer spans entire array",
-        "input": "[[-1000, -1000, -1000, -1000, -1000], -3000]",
-        "expectedOutput": "-3000",
-        "weight": 2
+        "type": "reg",
+        "label": "Small random-like set",
+        "input": "[[3, -2, 1, -1, 2, -3], 1]",
+        "expectedOutput": "1",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "Medium sized symmetric range",
+        "input": "[[-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6], 4]",
+        "expectedOutput": "4",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "Single large array with guaranteed solution",
+        "input": "[[-100, -50, -2, -1, 0, 1, 2, 50, 100], 3]",
+        "expectedOutput": "3",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "All positive no exact solution",
+        "input": "[[1,2,4,5,6], 0]",
+        "expectedOutput": "7",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "All negative no exact solution",
+        "input": "[[-1,-2,-4,-5,-6], 0]",
+        "expectedOutput": "-7",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "Stress duplicate trap (many duplicates)",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 1]",
+        "expectedOutput": "0",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "Random medium size (deterministic seed)",
+        "input": "[[-12, 7, 3, 1, -4, 9, -2, 6, 0, 5, -7, 8, 2, -1], 10]",
+        "expectedOutput": "10",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "gen",
+        "label": "Near-boundary: sorted range -500..500 (n=1001), target=3",
+        "input": "\"[\" + Array.from({length:1001},(_,i)=>i-500).join(\",\") + \",3]\"",
+        "expectedOutput": "3",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "gen",
+        "label": "Seeded random n=501, range -1000..1000, target=10000 (seed=42)",
+        "input": "\"[[-999,-996,-994,-987,-986,-981,-977,-970,-961,-957,-949,-946,-939,-936,-935,-935,-919,-912,-907,-904,-898,-897,-890,-886,-884,-883,-882,-881,-880,-880,-876,-876,-870,-869,-865,-862,-861,-860,-859,-858,-855,-855,-854,-852,-850,-846,-839,-839,-837,-836,-833,-825,-822,-814,-811,-809,-809,-807,-802,-802,-800,-799,-796,-794,-791,-791,-783,-777,-776,-772,-772,-771,-766,-755,-753,-745,-743,-738,-732,-730,-717,-715,-715,-713,-708,-687,-687,-683,-682,-678,-677,-674,-673,-670,-667,-666,-663,-662,-660,-650,-635,-625,-620,-612,-611,-611,-608,-607,-593,-593,-589,-582,-571,-568,-567,-565,-564,-563,-562,-560,-555,-553,-551,-551,-549,-549,-543,-540,-534,-532,-531,-529,-524,-524,-519,-516,-513,-512,-510,-507,-503,-499,-499,-496,-495,-493,-491,-489,-486,-466,-462,-461,-459,-458,-458,-457,-457,-454,-454,-452,-448,-437,-431,-431,-431,-430,-430,-416,-408,-400,-399,-393,-389,-386,-371,-362,-358,-357,-356,-354,-353,-353,-337,-336,-324,-311,-308,-306,-304,-304,-296,-275,-273,-265,-260,-259,-257,-253,-242,-236,-235,-225,-224,-223,-222,-222,-219,-212,-201,-190,-190,-183,-183,-179,-179,-176,-174,-168,-167,-159,-142,-141,-136,-136,-136,-135,-134,-134,-133,-123,-118,-110,-103,-93,-82,-81,-76,-72,-71,-69,-64,-62,-61,-60,-54,-53,-44,-42,-32,-32,-27,-24,-15,-6,-6,-5,-4,0,10,22,25,29,34,39,39,40,43,52,59,70,80,83,86,87,90,93,98,98,99,101,103,104,104,104,107,110,116,116,125,127,130,133,134,138,140,149,149,153,157,161,161,166,169,180,182,185,186,195,195,196,197,204,205,206,209,217,218,220,221,226,232,236,242,247,247,266,268,272,280,285,287,292,300,301,308,309,310,312,316,321,323,327,330,330,335,338,342,346,349,351,354,355,370,371,372,375,375,379,382,385,393,393,396,399,402,409,412,426,429,436,437,442,449,460,466,466,470,471,473,476,478,481,491,493,493,494,494,496,498,506,508,516,518,525,529,531,537,539,543,546,547,554,557,560,561,563,568,573,574,583,589,594,604,605,606,607,622,639,648,650,652,652,653,654,657,671,683,698,703,708,712,723,726,735,738,743,746,751,753,760,762,763,764,764,764,765,769,770,774,780,782,786,790,793,794,798,799,807,811,812,813,823,827,838,842,848,854,869,870,872,881,882,888,889,890,895,897,897,902,902,902,914,915,916,918,928,930,931,939,939,952,953,960,960,967,975,983,984,988,990,992],10000]\"",
+        "expectedOutput": "2970",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "gen",
+        "label": "Seeded {-2,-1,0,1,2} n=501 sorted, target=-10000 (seed=99)",
+        "input": "\"[[\" + \"-2,\".repeat(93) + \"-1,\".repeat(125) + \"0,\".repeat(97) + \"1,\".repeat(95) + \"2,\".repeat(91).slice(0,-1) + \"],-10000]\"",
+        "expectedOutput": "-6",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "Published sample regression",
+        "input": "[[-1,2,1,-4],1]",
+        "expectedOutput": "2",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "Published sample regression",
+        "input": "[[0,0,0],1]",
+        "expectedOutput": "0",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "Exact match with mixed duplicates",
+        "input": "[[-4,-1,-1,0,1,2],0]",
+        "expectedOutput": "0",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "Target far below all possible sums",
+        "input": "[[5,6,7,8,9],-100]",
+        "expectedOutput": "18",
+        "weight": 3
       }
     ],
-    "totalTestCases": 17,
-    "totalWeight": 36
+    "totalTestCases": 30,
+    "totalWeight": 106
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 36
+    "maxScore": 106
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -204,21 +347,77 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
-  },
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint threeSumClosest(int* nums, int numsSize, int target) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int numsSize = 0;\n        int* nums = parse_int_array(&tok, &numsSize);\n        int target = parse_int(&tok);\n        int result = threeSumClosest(nums, numsSize, target);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def threeSumClosest(self, nums: List[int], target: int) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _nums = _args[0]\n    _target = _args[1]\n    _result = Solution().threeSumClosest(_nums, _target)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number}\n */\nvar threeSumClosest = function(nums, target) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = threeSumClosest(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int threeSumClosest(int[] nums, int target) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[] nums = toIntArray(nextToken());\n        int target = Integer.parseInt(nextToken());\n        int result = new Solution().threeSumClosest(nums, target);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int threeSumClosest(vector<int>& nums, int target) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto nums = readIntVec(tok);\n    int target = readInt(tok);\n    auto result = Solution().threeSumClosest(nums, target);\n    cout << result << endl;\n    return 0;\n}"
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The approach uses a two-pointer technique within a loop to find the closest sum to the target by sorting the array and iterating over it.",
-    "timeComplexity": "o(n^2)",
-    "spaceComplexity": "o(1)",
+    "approach": "Sort the array and for each index i (first element) use a two-pointer scan (left, right) on the suffix to find the pair that makes the sum closest to target - nums[i]. Maintain the best (closest) sum seen and update when a closer sum is found. If an exact match equal to target is found, return immediately.",
+    "timeComplexity": "O(n^2)",
+    "spaceComplexity": "O(1) auxiliary space (excluding sorting overhead and output)",
     "code": {
-      "Python3": "# Time:  O(n^2)\n# Space: O(1) (excluding result storage)\n\nclass Solution(object):\n    def threeSumClosest(self, nums, target):\n        \"\"\"\n        :type nums: List[int]\n        :type target: int\n        :rtype: int\n        \"\"\"\n        result, min_diff = 0, float(\"inf\")\n        nums.sort()\n        for i in reversed(range(2, len(nums))):\n            if i+1 < len(nums) and nums[i] == nums[i+1]:\n                continue\n            left, right = 0, i-1\n            while left < right:\n                total = nums[left]+nums[right]+nums[i]\n                if total < target:\n                    left += 1\n                elif total > target:\n                    right -= 1\n                else:\n                    return target\n                if abs(total-target) < min_diff:\n                    min_diff = abs(total-target)\n                    result = total\n        return result"
+      "C": "",
+      "C++": "",
+      "Java": "",
+      "Python3": "# Time:  O(n^2)\n# Space: O(1)\n\nclass Solution(object):\n    def threeSumClosest(self, nums, target):\n        if len(nums) < 3:\n            return 0\n        nums.sort()\n        best = nums[0] + nums[1] + nums[2]\n        for i in range(len(nums) - 2):\n            l, r = i + 1, len(nums) - 1\n            while l < r:\n                s = nums[i] + nums[l] + nums[r]\n                if abs(s - target) < abs(best - target):\n                    best = s\n                if s < target:\n                    l += 1\n                elif s > target:\n                    r -= 1\n                else:\n                    return target\n        return best",
+      "JavaScript": ""
+    },
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C (simplified for contest boilerplate)\ntypedef struct { char* s; int pos; int len; } Tok;\nstatic void skipWS(Tok* t) { while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) t->pos++; }\nstatic char* nextToken(Tok* t) { skipWS(t); if (t->pos >= t->len) return NULL; int start = t->pos; if (t->s[t->pos] == '[') { int depth = 0; while (t->pos < t->len) { char c = t->s[t->pos++]; if (c == '[') depth++; else if (c == ']') { depth--; if (depth == 0) break; } } int token_len = t->pos - start; char* token = (char*)malloc(token_len + 1); strncpy(token, t->s + start, token_len); token[token_len] = '\\0'; return token; } else { while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++; int token_len = t->pos - start; char* token = (char*)malloc(token_len + 1); strncpy(token, t->s + start, token_len); token[token_len] = '\\0'; int idx = token_len - 1; while (idx >= 0 && token[idx] == ' ') { token[idx] = '\\0'; idx--; } return token; } }\nstatic int parse_int(Tok* t) { char* tok = nextToken(t); if (!tok) return 0; int val = atoi(tok); free(tok); return val; }\nstatic int* parse_int_array(Tok* t, int* out_size) { char* tok = nextToken(t); if (!tok || strcmp(tok, \"[]\") == 0) { if (tok) free(tok); *out_size = 0; return NULL; } int len = strlen(tok); char* inner = (char*)malloc(len - 1); strncpy(inner, tok + 1, len - 2); inner[len - 2] = '\\0'; free(tok); int size = 0; for (int i = 0; inner[i]; i++) if (inner[i] == ',') size++; size = size + 1; int* arr = (int*)malloc(size * sizeof(int)); Tok t2 = { inner, 0, (int)strlen(inner) }; for (int i = 0; i < size; i++) arr[i] = parse_int(&t2); free(inner); *out_size = size; return arr; }\n\n// Proper integer comparator for qsort\nstatic int int_cmp(const void* a, const void* b) {\n    int ia = *(const int*)a;\n    int ib = *(const int*)b;\n    if (ia < ib) return -1;\n    if (ia > ib) return 1;\n    return 0;\n}\n\nint threeSumClosest(int* nums, int numsSize, int target) {\n    if (numsSize < 3) return 0;\n    qsort(nums, numsSize, sizeof(int), int_cmp);\n    int best = nums[0] + nums[1] + nums[2];\n    for (int i = 0; i < numsSize - 2; ++i) {\n        int l = i + 1, r = numsSize - 1;\n        while (l < r) {\n            int s = nums[i] + nums[l] + nums[r];\n            if (abs(s - target) < abs(best - target)) best = s;\n            if (s < target) ++l;\n            else if (s > target) --r;\n            else return target;\n        }\n    }\n    return best;\n}\n\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        int len = strlen(line); while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) { line[len - 1] = '\\0'; len--; }\n        char* raw = (char*)malloc(len - 1); strncpy(raw, line + 1, len - 2); raw[len - 2] = '\\0'; Tok tok = { raw, 0, (int)strlen(raw) };\n        int numsSize = 0; int* nums = parse_int_array(&tok, &numsSize); int target = parse_int(&tok);\n        int result = threeSumClosest(nums, numsSize, target);\n        printf(\"%d\\n\", result);\n        free(raw);\n        free(nums);\n    }\n    return 0;\n}",
+    "C++": "#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    int threeSumClosest(vector<int>& nums, int target) {\n        if (nums.size() < 3) return 0;\n        sort(nums.begin(), nums.end());\n        int best = nums[0] + nums[1] + nums[2];\n        for (size_t i = 0; i + 2 < nums.size(); ++i) {\n            size_t l = i + 1, r = nums.size() - 1;\n            while (l < r) {\n                int s = nums[i] + nums[l] + nums[r];\n                if (abs(s - target) < abs(best - target)) best = s;\n                if (s < target) ++l;\n                else if (s > target) --r;\n                else return target;\n            }\n        }\n        return best;\n    }\n};",
+    "Java": "import java.util.*;\nimport java.io.*;\n\nclass Solution {\n    public int threeSumClosest(int[] nums, int target) {\n        if (nums.length < 3) return 0;\n        Arrays.sort(nums);\n        int best = nums[0] + nums[1] + nums[2];\n        for (int i = 0; i < nums.length - 2; i++) {\n            int l = i + 1, r = nums.length - 1;\n            while (l < r) {\n                int s = nums[i] + nums[l] + nums[r];\n                if (Math.abs(s - target) < Math.abs(best - target)) best = s;\n                if (s < target) l++;\n                else if (s > target) r--;\n                else return target;\n            }\n        }\n        return best;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String raw = line.substring(1, line.length()-1);\n        int idx = raw.indexOf(']') + 1;\n        String arrStr = raw.substring(0, idx);\n        String rest = raw.substring(idx).trim();\n        if (rest.startsWith(\",\")) rest = rest.substring(1).trim();\n        int target = Integer.parseInt(rest);\n        arrStr = arrStr.substring(1, arrStr.length()-1).trim();\n        if (arrStr.isEmpty()) { System.out.println(0); return; }\n        String[] parts = arrStr.split(\",\");\n        int[] nums = new int[parts.length];\n        for (int i = 0; i < parts.length; ++i) nums[i] = Integer.parseInt(parts[i].trim());\n        System.out.println(new Solution().threeSumClosest(nums, target));\n    }\n}",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def threeSumClosest(self, nums: List[int], target: int) -> int:\n        if len(nums) < 3:\n            return 0\n        nums.sort()\n        best = nums[0] + nums[1] + nums[2]\n        for i in range(len(nums) - 2):\n            l, r = i + 1, len(nums) - 1\n            while l < r:\n                s = nums[i] + nums[l] + nums[r]\n                if abs(s - target) < abs(best - target):\n                    best = s\n                if s < target:\n                    l += 1\n                elif s > target:\n                    r -= 1\n                else:\n                    return target\n        return best\n\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _nums = _args[0]\n    _target = _args[1]\n    _result = Solution().threeSumClosest(_nums, _target)\n    print(json.dumps(_result))",
+    "JavaScript": "'use strict';\n\nvar threeSumClosest = function(nums, target) {\n    if (nums.length < 3) return 0;\n    nums.sort((a,b) => a-b);\n    let best = nums[0] + nums[1] + nums[2];\n    for (let i = 0; i < nums.length - 2; i++) {\n        let l = i + 1, r = nums.length - 1;\n        while (l < r) {\n            const s = nums[i] + nums[l] + nums[r];\n            if (Math.abs(s - target) < Math.abs(best - target)) best = s;\n            if (s < target) l++;\n            else if (s > target) r--;\n            else return target;\n        }\n    }\n    return best;\n};\n\nif (require.main === module) {\n    const fs = require('fs');\n    const line = fs.readFileSync(0, 'utf8').trim();\n    const args = JSON.parse(line);\n    console.log(JSON.stringify(threeSumClosest(args[0], args[1])));\n}",
+    "solution": {
+      "approach": "Sort the array and for each index i (first element) use a two-pointer scan (left, right) on the suffix to find the pair that makes the sum closest to target - nums[i]. Maintain the best (closest) sum seen and update when a closer sum is found. If an exact match equal to target is found, return immediately.",
+      "timeComplexity": "O(n^2)",
+      "spaceComplexity": "O(1) auxiliary space (excluding sorting overhead and output)",
+      "code": {
+        "C": "",
+        "C++": "",
+        "Java": "",
+        "Python3": "# Time:  O(n^2)\n# Space: O(1)\n\nclass Solution(object):\n    def threeSumClosest(self, nums, target):\n        if len(nums) < 3:\n            return 0\n        nums.sort()\n        best = nums[0] + nums[1] + nums[2]\n        for i in range(len(nums) - 2):\n            l, r = i + 1, len(nums) - 1\n            while l < r:\n                s = nums[i] + nums[l] + nums[r]\n                if abs(s - target) < abs(best - target):\n                    best = s\n                if s < target:\n                    l += 1\n                elif s > target:\n                    r -= 1\n                else:\n                    return target\n        return best",
+        "JavaScript": ""
+      }
+    },
+    "_internal": {
+      "methodName": "threeSumClosest",
+      "params": [
+        {
+          "name": "nums",
+          "type": "integer[]"
+        },
+        {
+          "name": "target",
+          "type": "integer"
+        }
+      ],
+      "phase": "ready-for-judge"
+    },
+    "verified": true
+  },
+  "_internal": {},
+  "verified": true
 }

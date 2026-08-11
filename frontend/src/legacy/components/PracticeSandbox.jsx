@@ -4,7 +4,8 @@ import Editor from '@monaco-editor/react';
 import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import desktopBridge from '../utils/desktopBridge';
 import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBankService';
-import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus } from '../services/codingProgressService';
+import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, trackQuestionTimeSpent, trackDailyActivity } from '../services/codingProgressService';
+import { saveSolution } from '../services/userSolutionsService';
 import { getAuthData } from '../utils/storageUtils';
 import '../styles/PracticeSandbox.css';
 
@@ -671,12 +672,50 @@ const isCodeBlankOrEmpty = (codeStr) => {
 
       // Save progress (currentCode already captured at start of try block)
       if (email) {
+        const authData = getAuthData();
+        const uid = authData?.uid || authData?.UID || email;
+        const nowMs = Date.now();
+        const questionOpenedAt = window._practiceQuestionOpenedAt || nowMs;
+        const timeSpentMs = nowMs - questionOpenedAt;
+
         if (score === 100) {
           await markQuestionSolved(email, questionId, language, score, currentCode);
           setSolvedIds(prev => [...new Set([...prev, questionId])]);
+
+          // LeetCode-style: store accepted solution in Firestore
+          await saveSolution(uid, {
+            questionId,
+            questionTitle: question?.title || question?.name || questionId,
+            language,
+            code: currentCode,
+            status: 'accepted',
+            testsPassed: passedCount,
+            testsTotal: testCases.length,
+            executionTimeMs: 0,
+            isPractice: true,
+          });
         } else {
           await markQuestionAttempted(email, questionId, language, score, currentCode);
+
+          // Store wrong-answer submission too
+          await saveSolution(uid, {
+            questionId,
+            questionTitle: question?.title || question?.name || questionId,
+            language,
+            code: currentCode,
+            status: score > 0 ? 'partial' : 'wrong_answer',
+            testsPassed: passedCount,
+            testsTotal: testCases.length,
+            executionTimeMs: 0,
+            isPractice: true,
+          });
         }
+
+        // Track time + daily activity
+        await trackQuestionTimeSpent(uid, questionId, timeSpentMs);
+        await trackDailyActivity(uid, { questionsAttempted: 1, timeSpentMs });
+        window._practiceQuestionOpenedAt = nowMs; // reset timer for next attempt
+
         setProblemDetails(prev => ({
           ...prev,
           [questionId]: {

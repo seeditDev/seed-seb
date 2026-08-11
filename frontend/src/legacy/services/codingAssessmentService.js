@@ -1,6 +1,7 @@
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import timeService from './timeService';
+import { writeTenantResult, buildTenantResultPayload } from './tenantResultsService';
 
 
 class CodingAssessmentService {
@@ -16,78 +17,123 @@ class CodingAssessmentService {
     }
 
     /**
-     * Canonical Firestore path for a coding assessment result.
-     * AssessmentResults/{assessmentID}/colleges/{college}/years/{year}/students/{email}
+     * v2 Canonical Firestore path (single write, no dual paths).
+     * assessmentResults/{assessmentId}/students/{userId}
      */
-    static canonicalPath(assessmentID, college, year, email) {
-        return `AssessmentResults/${assessmentID}/colleges/${college}/years/${year}/students/${email}`;
+    static canonicalPath(assessmentId, userId) {
+        return `assessmentResults/${assessmentId}/students/${userId}`;
     }
 
     /**
-     * Legacy student-centric path (kept for backward compat / duplicate-detection).
+     * v1 legacy paths — READ-ONLY for 30-day backward compat.
      */
+    static legacyV1Path(assessmentID, college, year, email) {
+        return `AssessmentResults/${assessmentID}/colleges/${college}/years/${year}/students/${email}`;
+    }
     static legacyPath(college, year, department, email, assessmentID) {
         return `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results/${assessmentID}`;
     }
 
     /**
-     * Atomic canonical + legacy write.
-     *
-     * BUG FIXED (P0 divergent results): each write path issued two sequential
-     * `setDoc` calls with the legacy one wrapped in a silent try/catch, so a
-     * dropped connection between them left the two copies of an attempt holding
-     * different scores. A batch commits both or neither, in one round trip.
+     * Write result to the single canonical v2 path.
+     * Also mirrors a summary to users/{userId}/assessmentAttempts/{assessmentId}.
      */
-    static async writeBothPaths(payload, { assessmentID, college, year, department, email }) {
-        const canonPath = this.canonicalPath(assessmentID, college, year, email);
-        const batch = writeBatch(db);
-        batch.set(doc(db, canonPath), payload, { merge: true });
-        if (college && year && department && email && assessmentID) {
-            batch.set(doc(db, this.legacyPath(college, year, department, email, assessmentID)), payload, { merge: true });
+    static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
+        const canonRef = doc(db, this.canonicalPath(assessmentId, userId));
+        await setDoc(canonRef, payload, { merge: true });
+
+        // ── Denormalized tenant result for staff reports (non-blocking) ──
+        try {
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const tenantId = payload.tenantId || userProfile?.tenantId || authData?.tenantId || authData?.College || '';
+            if (tenantId && assessmentId) {
+                const tenantPayload = buildTenantResultPayload(authData, {
+                    ...payload,
+                    assessmentId,
+                    sourceRef: this.canonicalPath(assessmentId, userId),
+                });
+                writeTenantResult(tenantId, tenantPayload).catch(() => {});
+            }
+        } catch (_) {}
+
+        if (userId) {
+            try {
+                const mirrorRef = doc(db, `users/${userId}/assessmentAttempts/${assessmentId}`);
+                await setDoc(mirrorRef, {
+                    assessmentId,
+                    type: payload.type || 'coding',
+                    title: payload.testName || payload.assessmentTitle || '',
+                    tenantId: payload.tenantId || userProfile?.tenantId || '',
+                    startedAt: payload.timeStarted || payload.startedAt || null,
+                    startedAtISO: payload.timeStartedISO || payload.startedAtISO || '',
+                    submittedAt: payload.submittedAt || null,
+                    submittedAtISO: payload.submittedAtISO || '',
+                    status: payload.status || 'submitted',
+                    totalScore: payload.score || payload.totalScore || 0,
+                    maxScore: payload.totalMarks || payload.maxScore || 0,
+                    percentage: payload.percentage || 0,
+                    resultRef: `assessmentResults/${assessmentId}/students/${userId}`,
+                }, { merge: true });
+            } catch (_) {}
         }
-        await batch.commit();
-        return canonPath;
+
+        return this.canonicalPath(assessmentId, userId);
     }
 
     /**
-     * Check if student has already completed the coding assessment
-     * Reads from canonical AssessmentResults path, falls back to legacy path.
+     * @deprecated Use writeCanonicalResult instead.
+     * Shim for call sites that pass (payload, { assessmentID, college, year, department, email }).
+     */
+    static async writeBothPaths(payload, { assessmentID, college, year, department, email }) {
+        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        const userId = authData.uid || email.replace(/[@.]/g, '_');
+        return this.writeCanonicalResult(
+            { ...payload, college, year, department },
+            { assessmentId: assessmentID, userId, userProfile: authData }
+        );
+    }
+
+    /**
+     * Check if student has already completed the coding assessment.
+     * Checks v2 path first, then v1 legacy paths.
      */
     static async checkExistingAttempt(email, assessmentID, college, year, department) {
         try {
             if (!navigator.onLine) {
-                console.warn('[CodingAssessmentService] Client is offline, cannot check existing attempt');
+                console.warn('[CodingAssessmentService] Client is offline');
                 return { exists: false, data: null, completed: false, offline: true };
             }
 
-            // 1. Try canonical path first
-            const canonPath = this.canonicalPath(assessmentID, college, year, email);
-            const canonRef = doc(db, canonPath);
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const userId = authData.uid || email.replace(/[@.]/g, '_');
+
+            // 1. Try v2 canonical path first
             try {
-                const canonSnap = await getDoc(canonRef);
-                if (canonSnap.exists()) {
-                    const data = canonSnap.data();
+                const v2Ref = doc(db, this.canonicalPath(assessmentID, userId));
+                const v2Snap = await getDoc(v2Ref);
+                if (v2Snap.exists()) {
+                    const data = v2Snap.data();
                     return {
                         exists: true,
-                        data: data,
+                        data,
                         completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
                     };
                 }
-            } catch (e) { /* fall through to legacy */ }
+            } catch (e) { /* fall through */ }
 
-            // 2. Fall back to legacy path
-            const legPath = this.legacyPath(college, year, department, email, assessmentID);
-            const legRef = doc(db, legPath);
-            const legSnap = await getDoc(legRef);
-
-            if (legSnap.exists()) {
-                const data = legSnap.data();
-                return {
-                    exists: true,
-                    data: data,
-                    completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
-                };
-            }
+            // 2. Fall back to v1 old canonical path
+            try {
+                const v1Ref = doc(db, this.legacyV1Path(assessmentID, college, year, email));
+                const v1Snap = await getDoc(v1Ref);
+                if (v1Snap.exists()) {
+                    const data = v1Snap.data();
+                    return {
+                        exists: true,
+                        data,
+                        completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
+                    };
+                }
+            } catch (e) { /* fall through */ }
 
             return { exists: false, data: null, completed: false };
         } catch (error) {
@@ -382,8 +428,10 @@ class CodingAssessmentService {
                 codeMap
             } = progressData;
 
-            // Check canonical path to ensure we don't overwrite completed status
-            const canonPath = this.canonicalPath(assessmentID, college, year, email);
+            // Derive userId the same way as writeCanonicalResult / checkExistingAttempt
+            const authDataSync = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const userId = authDataSync.uid || email.replace(/[@.]/g, '_');
+            const canonPath = this.canonicalPath(assessmentID, userId);
             const canonRef = doc(db, canonPath);
             try {
                 const docSnap = await getDoc(canonRef);

@@ -1,108 +1,316 @@
 {
   "questionId": "Q1206",
-  "title": "Greed Island Bomber",
-  "slug": "greed-island-bomber",
+  "title": "Design Skiplist Problem",
+  "slug": "design-skiplist",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-05",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Graphs",
+    "category": "Linked List",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Graphs",
-      "Bridges",
-      "Tarjan's algorithm",
-      "Connectivity",
-      "DFS"
+      "linked-list",
+      "design"
     ],
     "companyTags": [],
     "topicTags": [
-      "Graphs"
-    ]
+      "linked-list",
+      "design"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Genthru has observed that all the NNN cities on greed island have good trade relations with each other. He deduces that the reason for this is that there exists a route between any pair of cities on greed island. Being a villain he wants to sever the trade relation between at least one pair of cities, so he decides to destroy exactly 1 road among the existing MMM roads. You have to determine the exact number of roads that Genthru could destroy such that it results in there being no route between at least 1 pair of cities.\n\nInput:\nFirst line will contain TTT, number of testcases. Then the testcases follow.\nNext line contains the number of cities NNN and the number of roads MMM.\nNext MMM lines contain 2 integers aia_iai\u200b and bib_ibi\u200b indicating that there exists a road between aia_iai\u200b and bib_ibi\u200b. (1\u2264i\u2264M1 \\leq i \\leq M1\u2264i\u2264M,  1\u2264ai\u2264N1 \\leq a_i \\leq N1\u2264ai\u200b\u2264N, 1\u2264bi\u2264N1 \\leq b_i \\leq N1\u2264bi\u200b\u2264N)\nOutput:For each testcase, output in a single line the number of roads that Genthru could destroy.",
+    "problemStatement": "Design a **Skiplist** without using any built-in libraries.\n\nA **skiplist** is a data structure that takes `O(log(n))` time to add, erase and search. Comparing with treap and red-black tree which has the same function and performance, the code length of Skiplist can be comparatively short and the idea behind Skiplists is just simple linked lists.\n\nAs an example, we have a Skiplist containing `[30,40,50,60,70,90]` and we want to add `80` and `45` into it. The Skiplist works this way:\n\n![](https://assets.leetcode.com/uploads/2019/09/27/1506_skiplist.gif)  \nArtyom Kalinin [CC BY-SA 3.0], via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Skip_list_add_element-en.gif \"Artyom Kalinin [CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)], via Wikimedia Commons\")\n\nYou can see there are many layers in the Skiplist. Each layer is a sorted linked list. With the help of the top layers, add, erase and search can be faster than `O(n)`. It can be proven that the average time complexity for each operation is `O(log(n))` and space complexity is `O(n)`.\n\nSee more about Skiplist: <https://en.wikipedia.org/wiki/Skip_list>\n\nCreate an implementation of the `Skiplist` class:\n\n* `Skiplist()` Initializes the object of the skiplist.\n* `bool search(int target)` Returns `true` if the integer `target` exists in the Skiplist or `false` otherwise.\n* `void add(int num)` Inserts the value `num` into the SkipList.\n* `bool erase(int num)` Removes the value `num` from the Skiplist and returns `true`. If `num` does not exist in the Skiplist, do nothing and output `false`. If there exist multiple `num` values, removing any one of them is fine.\n\nKeep in mind that duplicates may exist in the Skiplist, your code needs to handle this situation.\n\n**Example 1:**\n\n```\nInput\n[\"Skiplist\", \"add\", \"add\", \"add\", \"search\", \"add\", \"search\", \"erase\", \"erase\", \"search\"]\n[[], [1], [2], [3], [0], [4], [1], [0], [1], [1]]\nOutput\n[null, null, null, null, false, null, true, false, true, false]\n\nExplanation\nSkiplist skiplist = new Skiplist();\nskiplist.add(1);\nskiplist.add(2);\nskiplist.add(3);\nskiplist.search(0); // return False\nskiplist.add(4);\nskiplist.search(1); // return True\nskiplist.erase(0);  // return False, 0 is not in skiplist.\nskiplist.erase(1);  // return True\nskiplist.search(1); // return False, 1 has already been erased.\n```\n\n**Constraints:**\n\n* `0 <= num, target <= 2 * 104`\n* At most `5 * 104` calls will be made to `search`, `add`, and `erase`.",
     "constraints": [
-      "1 \u2264 T \u2264 100",
-      "1 \u2264 N \u2264 1000",
-      "N\u20111 \u2264 M \u2264 N\u00b7(N\u20111)/2",
-      "1 \u2264 a, b \u2264 N"
+      "None"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Then T test cases follow. Each test case starts with two integers N and M \u2014 the number of cities and the number of roads. Then M lines follow, each containing two integers a and b (1\u2011based) denoting an undirected road between cities a and b.",
-    "outputFormat": "For each test case, output a single integer \u2014 the number of roads whose removal disconnects the graph (i.e., the number of bridges). If the given graph is not connected, output 0.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "2\n6 6\n1 2\n1 3\n2 3\n1 4\n4 5\n4 6\n3 3\n1 2\n1 3\n2 3",
-        "output": "3\n0",
-        "explanation": "First graph is connected; its bridges are edges (1,4), (4,5) and (4,6) \u2192 3. Second graph is a triangle, no bridges \u2192 0."
-      },
-      {
-        "id": "sample_2",
-        "input": "1\n3 3\n1 2\n2 3\n1 3",
-        "output": "0",
-        "explanation": "Complete graph of three vertices has no bridge."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n2 1\n1 2",
-        "output": "1",
-        "explanation": "The only edge connects the two cities; removing it disconnects the graph, so the answer is 1."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "Case 2",
-        "input": "1\n1 0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Case 3",
-        "input": "1\n1 0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Case 4",
-        "input": "1\n1 0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Case 5",
-        "input": "1\n1 0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -113,18 +321,63 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The graph is undirected. An edge is a bridge if its removal increases the number of connected components. Using a single depth\u2011first search we compute discovery times (tin) and low\u2011link values (low). For an edge (v, to) where v is the DFS parent of to, the edge is a bridge iff low[to] > tin[v]. The algorithm runs in O(N+M) per test case. If the original graph has more than one connected component we output 0 because the condition is already satisfied without removing any edge.",
-    "timeComplexity": "O(N + M) per test case, O(total N + total M) for the whole input.",
-    "spaceComplexity": "O(N + M) for adjacency lists and auxiliary arrays.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n\n#define MAXN 1005\n#define MAXM 1000000  // enough for 2 * N*(N-1)/2 when N=1000\n\ntypedef struct Edge {int to; struct Edge* next;} Edge;\nEdge edges[MAXM];\nEdge* head[MAXN];\nint edgeCnt;\n\nvoid addEdge(int u, int v) {\n    edges[edgeCnt].to = v;\n    edges[edgeCnt].next = head[u];\n    head[u] = &edges[edgeCnt++];\n    edges[edgeCnt].to = u;\n    edges[edgeCnt].next = head[v];\n    head[v] = &edges[edgeCnt++];\n}\n\nint timer;\nint tin[MAXN];\nint low[MAXN];\nint visited[MAXN];\nint bridges;\n\nvoid dfs(int v, int p) {\n    visited[v] = 1;\n    tin[v] = low[v] = ++timer;\n    for (Edge* e = head[v]; e; e = e->next) {\n        int to = e->to;\n        if (to == p) continue;\n        if (visited[to]) {\n            if (tin[to] < low[v]) low[v] = tin[to];\n        } else {\n            dfs(to, v);\n            if (low[to] < low[v]) low[v] = low[to];\n            if (low[to] > tin[v]) bridges++;\n        }\n    }\n}\n\nint main() {\n    int T; scanf(\"%d\", &T);\n    while (T--) {\n        int N, M; scanf(\"%d %d\", &N, &M);\n        for (int i = 1; i <= N; ++i) head[i] = NULL;\n        edgeCnt = 0;\n        for (int i = 0; i < M; ++i) {\n            int a, b; scanf(\"%d %d\", &a, &b);\n            addEdge(a, b);\n        }\n        for (int i = 1; i <= N; ++i) visited[i] = 0;\n        timer = 0; bridges = 0;\n        int components = 0;\n        for (int i = 1; i <= N; ++i) {\n            if (!visited[i]) {\n                components++;\n                dfs(i, -1);\n            }\n        }\n        if (components == 1) printf(\"%d\\n\", bridges);\n        else printf(\"0\\n\");\n    }\n    return 0;\n}",
-      "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main(){\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int T;cin>>T;\n    while(T--){\n        int N,M;cin>>N>>M;\n        vector<vector<int>> g(N+1);\n        for(int i=0;i<M;++i){int a,b;cin>>a>>b;g[a].push_back(b);g[b].push_back(a);}        \n        vector<int> tin(N+1,0), low(N+1,0), visited(N+1,0);\n        int timer=0, bridges=0, components=0;\n        function<void(int,int)> dfs=[&](int v,int p){\n            visited[v]=1; tin[v]=low[v]=++timer;\n            for(int to:g[v]){\n                if(to==p) continue;\n                if(visited[to]) low[v]=min(low[v],tin[to]);\n                else{\n                    dfs(to,v);\n                    low[v]=min(low[v],low[to]);\n                    if(low[to]>tin[v]) ++bridges;\n                }\n            }\n        };\n        for(int i=1;i<=N;++i) if(!visited[i]){components++; dfs(i,-1);}        \n        if(components==1) cout<<bridges<<\"\\n\"; else cout<<0<<\"\\n\";\n    }\n    return 0;\n}",
-      "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    static class FastScanner {\n        private final BufferedInputStream in = new BufferedInputStream(System.in);\n        private final byte[] buffer = new byte[1 << 16];\n        private int ptr = 0, len = 0;\n        private int readByte() throws IOException {\n            if (ptr >= len) {\n                len = in.read(buffer);\n                ptr = 0;\n                if (len <= 0) return -1;\n            }\n            return buffer[ptr++];\n        }\n        int nextInt() throws IOException {\n            int c, sign = 1, val = 0;\n            do { c = readByte(); } while (c <= ' ');\n            if (c == '-') { sign = -1; c = readByte(); }\n            while (c > ' ') { val = val * 10 + (c - '0'); c = readByte(); }\n            return val * sign;\n        }\n    }\n    static int timer, bridges;\n    static int[] tin, low, visited;\n    static List<Integer>[] g;\n    static void dfs(int v, int p){\n        visited[v]=1; tin[v]=low[v]=++timer;\n        for(int to: g[v]){\n            if(to==p) continue;\n            if(visited[to]==1){\n                low[v]=Math.min(low[v], tin[to]);\n            }else{\n                dfs(to, v);\n                low[v]=Math.min(low[v], low[to]);\n                if(low[to]>tin[v]) bridges++;\n            }\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        FastScanner fs = new FastScanner();\n        int T = fs.nextInt();\n        StringBuilder sb = new StringBuilder();\n        while(T-- > 0){\n            int N = fs.nextInt();\n            int M = fs.nextInt();\n            g = new ArrayList[N+1];\n            for(int i=1;i<=N;i++) g[i]=new ArrayList<>();\n            for(int i=0;i<M;i++){\n                int a = fs.nextInt();\n                int b = fs.nextInt();\n                g[a].add(b);\n                g[b].add(a);\n            }\n            tin = new int[N+1];\n            low = new int[N+1];\n            visited = new int[N+1];\n            timer = 0; bridges = 0; int components = 0;\n            for(int i=1;i<=N;i++) if(visited[i]==0){\n                components++;\n                dfs(i, -1);\n            }\n            if(components==1) sb.append(bridges).append('\\n');\n            else sb.append(0).append('\\n');\n        }\n        System.out.print(sb.toString());\n    }\n}",
-      "Python3": "import sys\nsys.setrecursionlimit(1000000)\n\ndef solve():\n    data = sys.stdin.buffer.read().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it)); M = int(next(it))\n        g = [[] for _ in range(N+1)]\n        for _ in range(M):\n            a = int(next(it)); b = int(next(it))\n            g[a].append(b); g[b].append(a)\n        tin = [0]*(N+1)\n        low = [0]*(N+1)\n        visited = [0]*(N+1)\n        timer = 0\n        bridges = 0\n        def dfs(v, p):\n            nonlocal timer, bridges\n            visited[v] = 1\n            timer += 1\n            tin[v] = low[v] = timer\n            for to in g[v]:\n                if to == p:\n                    continue\n                if visited[to]:\n                    low[v] = min(low[v], tin[to])\n                else:\n                    dfs(to, v)\n                    low[v] = min(low[v], low[to])\n                    if low[to] > tin[v]:\n                        bridges += 1\n        components = 0\n        for i in range(1, N+1):\n            if not visited[i]:\n                components += 1\n                dfs(i, -1)\n        out_lines.append(str(bridges if components == 1 else 0))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()\n",
-      "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nfunction nextInt(){return Number(input[idx++]);}\nconst T = nextInt();\nlet results = [];\nfor(let tc=0; tc<T; ++tc){\n  const N = nextInt();\n  const M = nextInt();\n  const g = Array.from({length:N+1},()=>[]);\n  for(let i=0;i<M;++i){\n    const a = nextInt();\n    const b = nextInt();\n    g[a].push(b);\n    g[b].push(a);\n  }\n  const tin = new Array(N+1).fill(0);\n  const low = new Array(N+1).fill(0);\n  const visited = new Array(N+1).fill(false);\n  let timer = 0, bridges = 0, components = 0;\n  function dfs(v, p){\n    visited[v] = true;\n    tin[v] = low[v] = ++timer;\n    for(const to of g[v]){\n      if(to===p) continue;\n      if(visited[to]){\n        low[v] = Math.min(low[v], tin[to]);\n      }else{\n        dfs(to, v);\n        low[v] = Math.min(low[v], low[to]);\n        if(low[to] > tin[v]) bridges++;\n      }\n    }\n  }\n  for(let i=1;i<=N;++i){\n    if(!visited[i]){components++; dfs(i, -1);}\n  }\n  results.push(components===1 ? bridges : 0);\n}\nconsole.log(results.join('\\n'));\n"
+      "Python3": "# Time:  O(logn) on average for each operation\n# Space: O(n)\n\n# see proof in references:\n# 1. https://kunigami.blog/2012/09/25/skip-lists-in-python/\n# 2. https://opendatastructures.org/ods-cpp/4_4_Analysis_Skiplists.html\n# 3. https://brilliant.org/wiki/skip-lists/\nimport random\n\n\nclass SkipNode(object):\n    def __init__(self, level=0, num=None):\n        self.num = num\n        self.nexts = [None]*level\n\n\nclass Skiplist(object):\n    P_NUMERATOR, P_DENOMINATOR = 1, 2  # P = 1/4 in redis implementation\n    MAX_LEVEL = 32  # enough for 2^32 elements\n\n    def __init__(self):\n        self.__head = SkipNode()\n        self.__len = 0\n\n    def search(self, target):\n        \"\"\"\n        :type target: int\n        :rtype: bool\n        \"\"\"\n        return True if self.__find(target, self.__find_prev_nodes(target)) else False\n        \n    def add(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: None\n        \"\"\"\n        node = SkipNode(self.__random_level(), num)\n        if len(self.__head.nexts) < len(node.nexts): \n            self.__head.nexts.extend([None]*(len(node.nexts)-len(self.__head.nexts)))\n        prevs = self.__find_prev_nodes(num)\n        for i in range(len(node.nexts)):\n            node.nexts[i] = prevs[i].nexts[i]\n            prevs[i].nexts[i] = node\n        self.__len += 1\n\n    def erase(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: bool\n        \"\"\"\n        prevs = self.__find_prev_nodes(num)\n        curr = self.__find(num, prevs)\n        if not curr:\n            return False\n        self.__len -= 1   \n        for i in reversed(range(len(curr.nexts))):\n            prevs[i].nexts[i] = curr.nexts[i]\n            if not self.__head.nexts[i]:\n                self.__head.nexts.pop()\n        return True\n    \n    def __find(self, num, prevs):\n        if prevs:\n            candidate = prevs[0].nexts[0]\n            if candidate and candidate.num == num:\n                return candidate\n        return None\n\n    def __find_prev_nodes(self, num):\n        prevs = [None]*len(self.__head.nexts)\n        curr = self.__head\n        for i in reversed(range(len(self.__head.nexts))):\n            while curr.nexts[i] and curr.nexts[i].num < num:\n                curr = curr.nexts[i]\n            prevs[i] = curr\n        return prevs\n\n    def __random_level(self):\n        level = 1\n        while random.randint(1, Skiplist.P_DENOMINATOR) <= Skiplist.P_NUMERATOR and \\\n              level < Skiplist.MAX_LEVEL:\n            level += 1\n        return level\n\n    def __len__(self):\n        return self.__len\n    \n    def __str__(self):\n        result = []\n        for i in reversed(range(len(self.__head.nexts))):\n            result.append([])\n            curr = self.__head.nexts[i]\n            while curr:\n                result[-1].append(str(curr.num))\n                curr = curr.nexts[i]\n        return \"\\n\".join(map(lambda x: \"->\".join(x), result))"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Skiplist {\npublic:\n    Skiplist() {\n        \n    }\n    \n    bool search(int target) {\n        \n    }\n    \n    void add(int num) {\n        \n    }\n    \n    bool erase(int num) {\n        \n    }\n};\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * Skiplist* obj = new Skiplist();\n * bool param_1 = obj->search(target);\n * obj->add(num);\n * bool param_3 = obj->erase(num);\n */",
+    "Java": "class Skiplist {\n\n    public Skiplist() {\n        \n    }\n    \n    public boolean search(int target) {\n        \n    }\n    \n    public void add(int num) {\n        \n    }\n    \n    public boolean erase(int num) {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * Skiplist obj = new Skiplist();\n * boolean param_1 = obj.search(target);\n * obj.add(num);\n * boolean param_3 = obj.erase(num);\n */",
+    "Python3": "# Time:  O(logn) on average for each operation\n# Space: O(n)\n\n# see proof in references:\n# 1. https://kunigami.blog/2012/09/25/skip-lists-in-python/\n# 2. https://opendatastructures.org/ods-cpp/4_4_Analysis_Skiplists.html\n# 3. https://brilliant.org/wiki/skip-lists/\nimport random\n\n\nclass SkipNode(object):\n    def __init__(self, level=0, num=None):\n        self.num = num\n        self.nexts = [None]*level\n\n\nclass Skiplist(object):\n    P_NUMERATOR, P_DENOMINATOR = 1, 2  # P = 1/4 in redis implementation\n    MAX_LEVEL = 32  # enough for 2^32 elements\n\n    def __init__(self):\n        self.__head = SkipNode()\n        self.__len = 0\n\n    def search(self, target):\n        \"\"\"\n        :type target: int\n        :rtype: bool\n        \"\"\"\n        return True if self.__find(target, self.__find_prev_nodes(target)) else False\n        \n    def add(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: None\n        \"\"\"\n        node = SkipNode(self.__random_level(), num)\n        if len(self.__head.nexts) < len(node.nexts): \n            self.__head.nexts.extend([None]*(len(node.nexts)-len(self.__head.nexts)))\n        prevs = self.__find_prev_nodes(num)\n        for i in range(len(node.nexts)):\n            node.nexts[i] = prevs[i].nexts[i]\n            prevs[i].nexts[i] = node\n        self.__len += 1\n\n    def erase(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: bool\n        \"\"\"\n        prevs = self.__find_prev_nodes(num)\n        curr = self.__find(num, prevs)\n        if not curr:\n            return False\n        self.__len -= 1   \n        for i in reversed(range(len(curr.nexts))):\n            prevs[i].nexts[i] = curr.nexts[i]\n            if not self.__head.nexts[i]:\n                self.__head.nexts.pop()\n        return True\n    \n    def __find(self, num, prevs):\n        if prevs:\n            candidate = prevs[0].nexts[0]\n            if candidate and candidate.num == num:\n                return candidate\n        return None\n\n    def __find_prev_nodes(self, num):\n        prevs = [None]*len(self.__head.nexts)\n        curr = self.__head\n        for i in reversed(range(len(self.__head.nexts))):\n            while curr.nexts[i] and curr.nexts[i].num < num:\n                curr = curr.nexts[i]\n            prevs[i] = curr\n        return prevs\n\n    def __random_level(self):\n        level = 1\n        while random.randint(1, Skiplist.P_DENOMINATOR) <= Skiplist.P_NUMERATOR and \\\n              level < Skiplist.MAX_LEVEL:\n            level += 1\n        return level\n\n    def __len__(self):\n        return self.__len\n    \n    def __str__(self):\n        result = []\n        for i in reversed(range(len(self.__head.nexts))):\n            result.append([])\n            curr = self.__head.nexts[i]\n            while curr:\n                result[-1].append(str(curr.num))\n                curr = curr.nexts[i]\n        return \"\\n\".join(map(lambda x: \"->\".join(x), result))",
+    "Python": "class Skiplist(object):\n\n    def __init__(self):\n        \n\n    def search(self, target):\n        \"\"\"\n        :type target: int\n        :rtype: bool\n        \"\"\"\n        \n\n    def add(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: None\n        \"\"\"\n        \n\n    def erase(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: bool\n        \"\"\"\n        \n\n\n# Your Skiplist object will be instantiated and called as such:\n# obj = Skiplist()\n# param_1 = obj.search(target)\n# obj.add(num)\n# param_3 = obj.erase(num)",
+    "JavaScript": "\nvar Skiplist = function() {\n    \n};\n\n/** \n * @param {number} target\n * @return {boolean}\n */\nSkiplist.prototype.search = function(target) {\n    \n};\n\n/** \n * @param {number} num\n * @return {void}\n */\nSkiplist.prototype.add = function(num) {\n    \n};\n\n/** \n * @param {number} num\n * @return {boolean}\n */\nSkiplist.prototype.erase = function(num) {\n    \n};\n\n/** \n * Your Skiplist object will be instantiated and called as such:\n * var obj = new Skiplist()\n * var param_1 = obj.search(target)\n * obj.add(num)\n * var param_3 = obj.erase(num)\n */",
+    "TypeScript": "class Skiplist {\n    constructor() {\n        \n    }\n\n    search(target: number): boolean {\n        \n    }\n\n    add(num: number): void {\n        \n    }\n\n    erase(num: number): boolean {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * var obj = new Skiplist()\n * var param_1 = obj.search(target)\n * obj.add(num)\n * var param_3 = obj.erase(num)\n */",
+    "C#": "public class Skiplist {\n\n    public Skiplist() {\n        \n    }\n    \n    public bool Search(int target) {\n        \n    }\n    \n    public void Add(int num) {\n        \n    }\n    \n    public bool Erase(int num) {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * Skiplist obj = new Skiplist();\n * bool param_1 = obj.Search(target);\n * obj.Add(num);\n * bool param_3 = obj.Erase(num);\n */",
+    "C": "\n\n\ntypedef struct {\n    \n} Skiplist;\n\n\nSkiplist* skiplistCreate() {\n    \n}\n\nbool skiplistSearch(Skiplist* obj, int target) {\n    \n}\n\nvoid skiplistAdd(Skiplist* obj, int num) {\n    \n}\n\nbool skiplistErase(Skiplist* obj, int num) {\n    \n}\n\nvoid skiplistFree(Skiplist* obj) {\n    \n}\n\n/**\n * Your Skiplist struct will be instantiated and called as such:\n * Skiplist* obj = skiplistCreate();\n * bool param_1 = skiplistSearch(obj, target);\n \n * skiplistAdd(obj, num);\n \n * bool param_3 = skiplistErase(obj, num);\n \n * skiplistFree(obj);\n*/",
+    "Go": "type Skiplist struct {\n    \n}\n\n\nfunc Constructor() Skiplist {\n    \n}\n\n\nfunc (this *Skiplist) Search(target int) bool {\n    \n}\n\n\nfunc (this *Skiplist) Add(num int)  {\n    \n}\n\n\nfunc (this *Skiplist) Erase(num int) bool {\n    \n}\n\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * obj := Constructor();\n * param_1 := obj.Search(target);\n * obj.Add(num);\n * param_3 := obj.Erase(num);\n */",
+    "Kotlin": "class Skiplist() {\n\n    fun search(target: Int): Boolean {\n        \n    }\n\n    fun add(num: Int) {\n        \n    }\n\n    fun erase(num: Int): Boolean {\n        \n    }\n\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * var obj = Skiplist()\n * var param_1 = obj.search(target)\n * obj.add(num)\n * var param_3 = obj.erase(num)\n */",
+    "Swift": "\nclass Skiplist {\n\n    init() {\n        \n    }\n    \n    func search(_ target: Int) -> Bool {\n        \n    }\n    \n    func add(_ num: Int) {\n        \n    }\n    \n    func erase(_ num: Int) -> Bool {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * let obj = Skiplist()\n * let ret_1: Bool = obj.search(target)\n * obj.add(num)\n * let ret_3: Bool = obj.erase(num)\n */",
+    "Rust": "struct Skiplist {\n\n}\n\n\n/** \n * `&self` means the method takes an immutable reference.\n * If you need a mutable reference, change it to `&mut self` instead.\n */\nimpl Skiplist {\n\n    fn new() -> Self {\n        \n    }\n    \n    fn search(&self, target: i32) -> bool {\n        \n    }\n    \n    fn add(&self, num: i32) {\n        \n    }\n    \n    fn erase(&self, num: i32) -> bool {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * let obj = Skiplist::new();\n * let ret_1: bool = obj.search(target);\n * obj.add(num);\n * let ret_3: bool = obj.erase(num);\n */",
+    "Ruby": "class Skiplist\n    def initialize()\n        \n    end\n\n\n=begin\n    :type target: Integer\n    :rtype: Boolean\n=end\n    def search(target)\n        \n    end\n\n\n=begin\n    :type num: Integer\n    :rtype: Void\n=end\n    def add(num)\n        \n    end\n\n\n=begin\n    :type num: Integer\n    :rtype: Boolean\n=end\n    def erase(num)\n        \n    end\n\n\nend\n\n# Your Skiplist object will be instantiated and called as such:\n# obj = Skiplist.new()\n# param_1 = obj.search(target)\n# obj.add(num)\n# param_3 = obj.erase(num)",
+    "PHP": "class Skiplist {\n    /**\n     */\n    function __construct() {\n        \n    }\n  \n    /**\n     * @param Integer $target\n     * @return Boolean\n     */\n    function search($target) {\n        \n    }\n  \n    /**\n     * @param Integer $num\n     * @return NULL\n     */\n    function add($num) {\n        \n    }\n  \n    /**\n     * @param Integer $num\n     * @return Boolean\n     */\n    function erase($num) {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * $obj = Skiplist();\n * $ret_1 = $obj->search($target);\n * $obj->add($num);\n * $ret_3 = $obj->erase($num);\n */",
+    "Dart": "class Skiplist {\n\n  Skiplist() {\n    \n  }\n  \n  bool search(int target) {\n    \n  }\n  \n  void add(int num) {\n    \n  }\n  \n  bool erase(int num) {\n    \n  }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * Skiplist obj = Skiplist();\n * bool param1 = obj.search(target);\n * obj.add(num);\n * bool param3 = obj.erase(num);\n */",
+    "Scala": "class Skiplist() {\n\n    def search(target: Int): Boolean = {\n        \n    }\n\n    def add(num: Int): Unit = {\n        \n    }\n\n    def erase(num: Int): Boolean = {\n        \n    }\n\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * val obj = new Skiplist()\n * val param_1 = obj.search(target)\n * obj.add(num)\n * val param_3 = obj.erase(num)\n */",
+    "Elixir": "defmodule Skiplist do\n  @spec init_() :: any\n  def init_() do\n    \n  end\n\n  @spec search(target :: integer) :: boolean\n  def search(target) do\n    \n  end\n\n  @spec add(num :: integer) :: any\n  def add(num) do\n    \n  end\n\n  @spec erase(num :: integer) :: boolean\n  def erase(num) do\n    \n  end\nend\n\n# Your functions will be called as such:\n# Skiplist.init_()\n# param_1 = Skiplist.search(target)\n# Skiplist.add(num)\n# param_3 = Skiplist.erase(num)\n\n# Skiplist.init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Erlang": "-spec skiplist_init_() -> any().\nskiplist_init_() ->\n  .\n\n-spec skiplist_search(Target :: integer()) -> boolean().\nskiplist_search(Target) ->\n  .\n\n-spec skiplist_add(Num :: integer()) -> any().\nskiplist_add(Num) ->\n  .\n\n-spec skiplist_erase(Num :: integer()) -> boolean().\nskiplist_erase(Num) ->\n  .\n\n\n%% Your functions will be called as such:\n%% skiplist_init_(),\n%% Param_1 = skiplist_search(Target),\n%% skiplist_add(Num),\n%% Param_3 = skiplist_erase(Num),\n\n%% skiplist_init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Racket": "(define skiplist%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; search : exact-integer? -> boolean?\n    (define/public (search target)\n      )\n    ; add : exact-integer? -> void?\n    (define/public (add num)\n      )\n    ; erase : exact-integer? -> boolean?\n    (define/public (erase num)\n      )))\n\n;; Your skiplist% object will be instantiated and called as such:\n;; (define obj (new skiplist%))\n;; (define param_1 (send obj search target))\n;; (send obj add num)\n;; (define param_3 (send obj erase num))"
+  },
+  "_internal": {
+    "methodName": "",
+    "params": []
+  },
+  "verified": false
 }

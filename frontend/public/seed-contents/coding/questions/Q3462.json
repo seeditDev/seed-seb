@@ -1,97 +1,322 @@
 {
   "questionId": "Q3462",
-  "title": "Persistent oak",
-  "slug": "persistent-oak",
+  "title": "Largest Sum With at Most K Elements",
+  "slug": "maximum-sum-with-at-most-k-elements",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Graphs",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Tree",
-      "Graphs",
-      "DFS",
-      "Persistent Data Structure"
+      "array",
+      "greedy",
+      "sorting",
+      "heap-priority-queue",
+      "matrix"
     ],
     "companyTags": [],
     "topicTags": [
-      "Trees"
-    ]
+      "array",
+      "greedy",
+      "sorting",
+      "heap-priority-queue",
+      "matrix"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Chef has a huge and beautiful tree in his garden (an oak, not the kind of tree you just thought of), so quite often he just sits inside and looks at this wonderful oak through the window.\n\nWhen observing the tree for a long time Chef sees that even an oak has a life. A bunch of cute green acorns may grow on some branches, which in turn may cause some branches to fall down due to not being able to hold all the weight. A bird may sit down on a branch causing all the acorns to fall down from this branch, from the branches growing out of this branch, and from all the branches growing out of them, and so on... In other words, it really looks like the oak is alive.\n\nThe tree has a trunk (once again, a wooden trunk is meant here) and **n** branches. Every branch grows either out of the trunk or out of another branch. We will say that branch **B** is below branch **A** if there exists a sequence of branches **C1, C2, ..., Ck** such that **C1 = A; Ck = B** and **Ci + 1** grows out of **Ci** for all **1** \u2264 **i** &lt; **k**. Every branch has a maximum weight **w** it can hold \u2015 in case a branch plus all the branches below it have more than **w** acorns overall, the branch (together with all the branches below it and all the acorns on them) falls down. The branch which falls is the 'deepest' branch. That is, once some acorns have grown on a branch, then, if this branch cannot handle the weight, it falls. Else, if the branch on which this branch grows cannot handle the weight, that branch falls, and so on. This happens sequentially, and so once a branch has fallen, none of the branches above it fall in the same moment, and at most one branch would fall after any particular event. Also, the trunk is super strong, and hence can carry any amount of weight.\n \n\nOh, and just one more thing \u2015 the tree is persistent, so it is quite hard for Chef to remember all the states of the oak, can you help him with this? Chef will tell you everything he notices about the tree, but you should answer what exactly the last event resulted into.",
+    "problemStatement": "You receive a 2D integer matrix `grid` of size `n x m`, an integer array `limits` of length `n`, and an integer `k`. The task is to find the **largest sum** of **no more than** `k` elements from the matrix `grid` such that:\n\n* The number of elements taken from the `ith` row of `grid` does not exceed `limits[i]`.\n\nOutput the **largest sum**.\n\n**Example 1:**\n\n**Input:** grid = [[1,2],[3,4]], limits = [1,2], k = 2\n\n**Output:** 7\n\n**Explanation:**\n\n* From the second row, we can take no more than 2 elements. The elements taken are 4 and 3.\n* The largest possible sum of no more than 2 selected elements is `4 + 3 = 7`.\n\n**Example 2:**\n\n**Input:** grid = [[5,3,7],[8,2,6]], limits = [2,2], k = 3\n\n**Output:** 21\n\n**Explanation:**\n\n* From the first row, we can take no more than 2 elements. The element taken is 7.\n* From the second row, we can take no more than 2 elements. The elements taken are 8 and 6.\n* The largest possible sum of no more than 3 selected elements is `7 + 8 + 6 = 21`.\n\n**Constraints:**\n\n* `n == grid.length == limits.length`\n* `m == grid[i].length`\n* `1 <= n, m <= 500`\n* `0 <= grid[i][j] <= 105`\n* `0 <= limits[i] <= m`\n* `0 <= k <= min(n * m, sum(limits))`",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "1 \u2264 n, m \u2264 105",
-      "0 \u2264 pv < v",
-      "0 \u2264 wv, x \u2264 107",
-      "1 \u2264 u \u2264 n",
-      "0 \u2264 state < m"
+      "None"
     ],
-    "inputFormat": "The first line of the input contains an integer T denoting the number of test cases. For each test case, the first line of input contains two integers n and m \u2014 the number of branches the oak has and the number of events Chef has to tell you about. The branches are numbered from 1 to n. The v-th of the following n lines contains 2 integers \u2014 pv and wv. If pv = 0, then branch v grows out of the trunk, otherwise it grows out of branch pv. wv is the maximum weight branch v can hold. The i-th of the following m lines describes the i-th event Chef has observed.",
-    "outputFormat": "For each event print the value Chef asked you about on a separate line.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "1\n5 6\n0 5\n1 3\n0 2\n3 1\n3 4\n0 1 5 5\n0 1 4 1\n2 1 5 2\n2 2 3\n4 1 5 2\n3 1 1 7",
-        "output": "5\n0\n3\n1\n0\n1",
-        "explanation": "Explanation:\nExample event 1. Branch 5 can hold at most 4 acorns, so after 5 have grown there, it immediately falls down. Notice that the branch 3 doesn't fall down (even though it also can't hold 5 acorns), because the branch 5 no longer grows out of it. We output 5 as this branch has fallen down and create a state of the oak with index 1 having branch 5 fallen and having no acorns in the other four branches.\nExample event 2. We take the state 0 as the base, so we once again have branch 5 on the tree. One acorn has grown at the branch 4. No branch has fallen as every one can hold at least one acorn, thus we print 0. Resulting state after this event (with index 2) has all five branches and one acorn on branch 4.\nExample event 3. We take the state 2 as the base, which is the resulting state after previous event. After two acorns have grown on the branch 5, we have one acorn on branch 4 and two acorns on branch 5. Both these branches are below branch 3 which can hold at most two acorns, so as a result branch 3 falls down. The resulting state (with index 3) has only two branches left ? 1 and 2 with no acorns on them.\nExample event 4. We once again take the state 2 as the base, but this time remove all the acorns from branch 3 and from all the branches below it (4 and 5). Branch 5 had no acorns and branch 4 had one acorn on it (that has grown during event 2), so we print 1 as the total number of acorns fallen. The resulting state (with index 4) has the full tree (no branches have fallen) with no acorns. So, the state 4 is basically equivalent to the state 0.\nExample event 5. This event is similar to event 3. The only difference is that the base state (4 for this event) doesn't contain any acorns. So branch 3 has only two acorns below it after this event and doesn't fall down.\n\nExample event 6. We take state 3 as the base, it has only two branches ? 1 and 2 without any acorns. Seven acorns grow on the branch 1 causing this branch to fall down (as it can hold only up to 5 acorns). The resulting state after this event contains just plain trunk without a single branch (as a consequence it would be impossible to use this state in any future events as a base state)."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Case 1",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "Case 2",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Case 3",
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Case 4",
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Case 5",
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -102,18 +327,76 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use a tree data structure to represent the branches of the oak. We will also use a persistent data structure to keep track of the state of the oak after each event. For each event, we will perform a depth-first search (DFS) on the tree to find the branch that falls down or to count the number of acorns that fall down.",
-    "timeComplexity": "O(T * m * n) \u2014 where T is the number of test cases, m is the number of events, and n is the number of branches. The DFS operation takes O(n) time, and we perform it for each event.",
-    "spaceComplexity": "O(T * m * n) \u2014 we need to store the state of the oak after each event, which requires O(n) space. We also need to store the tree data structure, which requires O(n) space.",
     "code": {
-      "C": "// COMPLETE, COMPILABLE C code\n// Uses correct I/O\n// Handles all T test cases\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#define MAX_N 105\n#define MAX_M 105\n// Define the structure for a branch\ntypedef struct Branch {\n    int parent;\n    int weight;\n    int acorns;\n    struct Branch* children;\n} Branch;\n// Function to create a new branch\nBranch* createBranch(int parent, int weight) {\n    Branch* branch = (Branch*) malloc(sizeof(Branch));\n    branch->parent = parent;\n    branch->weight = weight;\n    branch->acorns = 0;\n    branch->children = NULL;\n    return branch;\n}\n// Function to add a child to a branch\nvoid addChild(Branch* parent, Branch* child) {\n    // Add child to the end of the children list\n    if (parent->children == NULL) {\n        parent->children = child;\n    } else {\n        Branch* current = parent->children;\n        while (current->children != NULL) {\n            current = current->children;\n        }\n        current->children = child;\n    }\n}\n// Function to perform DFS on the tree\nint dfs(Branch* branch, int* state) {\n    // If the branch has fallen, return 0\n    if (branch->weight < branch->acorns) {\n        return branch->acorns;\n    }\n    // Recursively visit all children\n    Branch* current = branch->children;\n    while (current != NULL) {\n        int fallen = dfs(current, state);\n        if (fallen > 0) {\n            // If a child has fallen, update the state and return\n            *state = 1;\n            return fallen;\n        }\n        current = current->children;\n    }\n    return 0;\n}\n// Function to handle an event\nvoid handleEvent(Branch** branches, int n, int m, int state, int type, int u, int x) {\n    // If the event is of type 1, add acorns to the branch\n    if (type == 1) {\n        branches[u]->acorns += x;\n        // Perform DFS to find the branch that falls down\n        int fallen = dfs(branches[u], &state);\n        if (fallen > 0) {\n            printf(\"%d\\n\", u);\n        } else {\n            printf(\"0\\n\");\n        }\n    } else if (type == 2) {\n        // If the event is of type 2, count the number of acorns that fall down\n        int count = 0;\n        Branch* current = branches[u]->children;\n        while (current != NULL) {\n            count += current->acorns;\n            current = current->children;\n        }\n        printf(\"%d\\n\", count);\n    }\n}\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    for (int t = 0; t < T; t++) {\n        int n, m;\n        scanf(\"%d %d\", &n, &m);\n        Branch** branches = (Branch**) malloc(n * sizeof(Branch*));\n        for (int i = 0; i < n; i++) {\n            int parent, weight;\n            scanf(\"%d %d\", &parent, &weight);\n            branches[i] = createBranch(parent, weight);\n        }\n        for (int i = 0; i < n; i++) {\n            if (branches[i]->parent > 0) {\n                addChild(branches[branches[i]->parent - 1], branches[i]);\n            }\n        }\n        for (int i = 0; i < m; i++) {\n            int state, type, u, x;\n            scanf(\"%d %d\", &state, &type);\n            if (type == 1) {\n                scanf(\"%d %d\", &u, &x);\n                handleEvent(branches, n, m, state, type, u - 1, x);\n            } else if (type == 2) {\n                scanf(\"%d\", &u);\n                handleEvent(branches, n, m, state, type, u - 1, 0);\n            }\n        }\n        free(branches);\n    }\n    return 0;\n}",
-      "C++": "// COMPLETE, COMPILABLE C++ code\n// Uses correct I/O\n// Handles all T test cases\n#include <iostream>\n#include <vector>\nusing namespace std;\n#define MAX_N 105\n#define MAX_M 105\n// Define the structure for a branch\nstruct Branch {\n    int parent;\n    int weight;\n    int acorns;\n    vector<Branch*> children;\n};\n// Function to create a new branch\nBranch* createBranch(int parent, int weight) {\n    Branch* branch = new Branch;\n    branch->parent = parent;\n    branch->weight = weight;\n    branch->acorns = 0;\n    return branch;\n}\n// Function to add a child to a branch\nvoid addChild(Branch* parent, Branch* child) {\n    parent->children.push_back(child);\n}\n// Function to perform DFS on the tree\nint dfs(Branch* branch, int* state) {\n    // If the branch has fallen, return 0\n    if (branch->weight < branch->acorns) {\n        return branch->acorns;\n    }\n    // Recursively visit all children\n    for (Branch* child : branch->children) {\n        int fallen = dfs(child, state);\n        if (fallen > 0) {\n            // If a child has fallen, update the state and return\n            *state = 1;\n            return fallen;\n        }\n    }\n    return 0;\n}\n// Function to handle an event\nvoid handleEvent(Branch** branches, int n, int m, int state, int type, int u, int x) {\n    // If the event is of type 1, add acorns to the branch\n    if (type == 1) {\n        branches[u]->acorns += x;\n        // Perform DFS to find the branch that falls down\n        int fallen = dfs(branches[u], &state);\n        if (fallen > 0) {\n            cout << u + 1 << endl;\n        } else {\n            cout << 0 << endl;\n        }\n    } else if (type == 2) {\n        // If the event is of type 2, count the number of acorns that fall down\n        int count = 0;\n        for (Branch* child : branches[u]->children) {\n            count += child->acorns;\n        }\n        cout << count << endl;\n    }\n}\nint main() {\n    int T;\n    cin >> T;\n    for (int t = 0; t < T; t++) {\n        int n, m;\n        cin >> n >> m;\n        Branch** branches = new Branch*[n];\n        for (int i = 0; i < n; i++) {\n            int parent, weight;\n            cin >> parent >> weight;\n            branches[i] = createBranch(parent, weight);\n        }\n        for (int i = 0; i < n; i++) {\n            if (branches[i]->parent > 0) {\n                addChild(branches[branches[i]->parent - 1], branches[i]);\n            }\n        }\n        for (int i = 0; i < m; i++) {\n            int state, type, u, x;\n            cin >> state >> type;\n            if (type == 1) {\n                cin >> u >> x;\n                handleEvent(branches, n, m, state, type, u - 1, x);\n            } else if (type == 2) {\n                cin >> u;\n                handleEvent(branches, n, m, state, type, u - 1, 0);\n            }\n        }\n        delete[] branches;\n    }\n    return 0;\n}",
-      "Java": "// COMPLETE, COMPILABLE Java code\n// Class MUST be named Main\n// Uses correct I/O\nimport java.util.ArrayList;\nimport java.util.Scanner;\npublic class Main {\n    static class Branch {\n        int parent;\n        int weight;\n        int acorns;\n        ArrayList<Branch> children;\n        public Branch(int parent, int weight) {\n            this.parent = parent;\n            this.weight = weight;\n            this.acorns = 0;\n            this.children = new ArrayList<>();\n        }\n    }\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int T = scanner.nextInt();\n        for (int t = 0; t < T; t++) {\n            int n = scanner.nextInt();\n            int m = scanner.nextInt();\n            Branch[] branches = new Branch[n];\n            for (int i = 0; i < n; i++) {\n                int parent = scanner.nextInt();\n                int weight = scanner.nextInt();\n                branches[i] = new Branch(parent, weight);\n            }\n            for (int i = 0; i < n; i++) {\n                if (branches[i].parent > 0) {\n                    branches[branches[i].parent - 1].children.add(branches[i]);\n                }\n            }\n            for (int i = 0; i < m; i++) {\n                int state = scanner.nextInt();\n                int type = scanner.nextInt();\n                if (type == 1) {\n                    int u = scanner.nextInt();\n                    int x = scanner.nextInt();\n                    handleEvent(branches, n, m, state, type, u - 1, x);\n                } else if (type == 2) {\n                    int u = scanner.nextInt();\n                    handleEvent(branches, n, m, state, type, u - 1, 0);\n                }\n            }\n        }\n    }\n    public static void handleEvent(Branch[] branches, int n, int m, int state, int type, int u, int x) {\n        // If the event is of type 1, add acorns to the branch\n        if (type == 1) {\n            branches[u].acorns += x;\n            // Perform DFS to find the branch that falls down\n            int fallen = dfs(branches[u], state);\n            if (fallen > 0) {\n                System.out.println(u + 1);\n            } else {\n                System.out.println(0);\n            }\n        } else if (type == 2) {\n            // If the event is of type 2, count the number of acorns that fall down\n            int count = 0;\n            for (Branch child : branches[u].children) {\n                count += child.acorns;\n            }\n            System.out.println(count);\n        }\n    }\n    public static int dfs(Branch branch, int state) {\n        // If the branch has fallen, return 0\n        if (branch.weight < branch.acorns) {\n            return branch.acorns;\n        }\n        // Recursively visit all children\n        for (Branch child : branch.children) {\n            int fallen = dfs(child, state);\n            if (fallen > 0) {\n                // If a child has fallen, update the state and return\n                state = 1;\n                return fallen;\n            }\n        }\n        return 0;\n    }\n}",
-      "Python3": "# COMPLETE, RUNNABLE Python3 code\n# Uses input() or sys.stdin\n# Handles all T test cases\nimport sys\ninput = sys.stdin.readline\nclass Branch:\n    def __init__(self, parent, weight):\n        self.parent = parent\n        self.weight = weight\n        self.acorns = 0\n        self.children = []\n    def add_child(self, child):\n        self.children.append(child)\n    def dfs(self, state):\n        # If the branch has fallen, return 0\n        if self.weight < self.acorns:\n            return self.acorns\n        # Recursively visit all children\n        for child in self.children:\n            fallen = child.dfs(state)\n            if fallen > 0:\n                # If a child has fallen, update the state and return\n                state[0] = 1\n                return fallen\n        return 0\n    def handle_event(self, type, x):\n        # If the event is of type 1, add acorns to the branch\n        if type == 1:\n            self.acorns += x\n            # Perform DFS to find the branch that falls down\n            fallen = self.dfs([0])\n            if fallen > 0:\n                print(self.parent + 1)\n            else:\n                print(0)\n        elif type == 2:\n            # If the event is of type 2, count the number of acorns that fall down\n            count = 0\n            for child in self.children:\n                count += child.acorns\n            print(count)\nT = int(input())\nfor t in range(T):\n    n, m = map(int, input().split())\n    branches = [None] * n\n    for i in range(n):\n        parent, weight = map(int, input().split())\n        branches[i] = Branch(parent, weight)\n    for i in range(n):\n        if branches[i].parent > 0:\n            branches[branches[i].parent - 1].add_child(branches[i])\n    for i in range(m):\n        state, type = map(int, input().split())\n        if type == 1:\n            u, x = map(int, input().split())\n            branches[u - 1].handle_event(type, x)\n        elif type == 2:\n            u = int(input())\n            branches[u - 1].handle_event(type, 0)\n",
-      "JavaScript": ""
+      "Python3": "# Time:  O(n * m)\n# Space: O(1)\n\nimport random\n\n\n# greedy, quick select\nclass Solution(object):\n    def maxSum(self, grid, limits, k):\n        \"\"\"\n        :type grid: List[List[int]]\n        :type limits: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        def nth_element(nums, n, compare=lambda a, b: a < b):\n            def tri_partition(nums, left, right, target, compare):\n                mid = left\n                while mid <= right:\n                    if nums[mid] == target:\n                        mid += 1\n                    elif compare(nums[mid], target):\n                        nums[left], nums[mid] = nums[mid], nums[left]\n                        left += 1\n                        mid += 1\n                    else:\n                        nums[mid], nums[right] = nums[right], nums[mid]\n                        right -= 1\n                return left, right\n\n            left, right = 0, len(nums)-1\n            while left <= right:\n                pivot_idx = random.randint(left, right)\n                pivot_left, pivot_right = tri_partition(nums, left, right, nums[pivot_idx], compare)\n                if pivot_left <= n <= pivot_right:\n                    return\n                elif pivot_left > n:\n                    right = pivot_left-1\n                else:  # pivot_right < n.\n                    left = pivot_right+1\n\n        candidates = []\n        for i in range(len(grid)):\n            cnt = min(k, limits[i])\n            nth_element(grid[i], cnt-1, lambda a, b: a > b)\n            for j in range(cnt):\n                candidates.append(grid[i][j])\n        nth_element(candidates, k-1, lambda a, b: a > b)\n        return sum(candidates[i] for i in range(k))"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    long long maxSum(vector<vector<int>>& grid, vector<int>& limits, int k) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public long maxSum(int[][] grid, int[] limits, int k) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n * m)\n# Space: O(1)\n\nimport random\n\n\n# greedy, quick select\nclass Solution(object):\n    def maxSum(self, grid, limits, k):\n        \"\"\"\n        :type grid: List[List[int]]\n        :type limits: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        def nth_element(nums, n, compare=lambda a, b: a < b):\n            def tri_partition(nums, left, right, target, compare):\n                mid = left\n                while mid <= right:\n                    if nums[mid] == target:\n                        mid += 1\n                    elif compare(nums[mid], target):\n                        nums[left], nums[mid] = nums[mid], nums[left]\n                        left += 1\n                        mid += 1\n                    else:\n                        nums[mid], nums[right] = nums[right], nums[mid]\n                        right -= 1\n                return left, right\n\n            left, right = 0, len(nums)-1\n            while left <= right:\n                pivot_idx = random.randint(left, right)\n                pivot_left, pivot_right = tri_partition(nums, left, right, nums[pivot_idx], compare)\n                if pivot_left <= n <= pivot_right:\n                    return\n                elif pivot_left > n:\n                    right = pivot_left-1\n                else:  # pivot_right < n.\n                    left = pivot_right+1\n\n        candidates = []\n        for i in range(len(grid)):\n            cnt = min(k, limits[i])\n            nth_element(grid[i], cnt-1, lambda a, b: a > b)\n            for j in range(cnt):\n                candidates.append(grid[i][j])\n        nth_element(candidates, k-1, lambda a, b: a > b)\n        return sum(candidates[i] for i in range(k))",
+    "Python": "class Solution(object):\n    def maxSum(self, grid, limits, k):\n        \"\"\"\n        :type grid: List[List[int]]\n        :type limits: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} grid\n * @param {number[]} limits\n * @param {number} k\n * @return {number}\n */\nvar maxSum = function(grid, limits, k) {\n    \n};",
+    "TypeScript": "function maxSum(grid: number[][], limits: number[], k: number): number {\n    \n};",
+    "C#": "public class Solution {\n    public long MaxSum(int[][] grid, int[] limits, int k) {\n        \n    }\n}",
+    "C": "long long maxSum(int** grid, int gridSize, int* gridColSize, int* limits, int limitsSize, int k) {\n    \n}",
+    "Go": "func maxSum(grid [][]int, limits []int, k int) int64 {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maxSum(grid: Array<IntArray>, limits: IntArray, k: Int): Long {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maxSum(_ grid: [[Int]], _ limits: [Int], _ k: Int) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn max_sum(grid: Vec<Vec<i32>>, limits: Vec<i32>, k: i32) -> i64 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} grid\n# @param {Integer[]} limits\n# @param {Integer} k\n# @return {Integer}\ndef max_sum(grid, limits, k)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $grid\n     * @param Integer[] $limits\n     * @param Integer $k\n     * @return Integer\n     */\n    function maxSum($grid, $limits, $k) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int maxSum(List<List<int>> grid, List<int> limits, int k) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maxSum(grid: Array[Array[Int]], limits: Array[Int], k: Int): Long = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec max_sum(grid :: [[integer]], limits :: [integer], k :: integer) :: integer\n  def max_sum(grid, limits, k) do\n    \n  end\nend",
+    "Erlang": "-spec max_sum(Grid :: [[integer()]], Limits :: [integer()], K :: integer()) -> integer().\nmax_sum(Grid, Limits, K) ->\n  .",
+    "Racket": "(define/contract (max-sum grid limits k)\n  (-> (listof (listof exact-integer?)) (listof exact-integer?) exact-integer? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "maxSum",
+    "params": [
+      {
+        "name": "grid",
+        "type": "integer[][]"
+      },
+      {
+        "type": "integer[]",
+        "name": "limits"
+      },
+      {
+        "type": "integer",
+        "name": "k"
+      }
+    ]
+  },
+  "verified": false
 }

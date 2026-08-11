@@ -1,309 +1,344 @@
 {
   "questionId": "Q2",
-  "title": "Add Two Numbers",
-  "slug": "add-two-numbers",
-  "version": 1,
+  "title": "Add Reverse-Digit Lists Problem",
+  "slug": "add-reverse-digit-lists",
+  "version": 4,
   "createdAt": "2026-07-09",
-  "updatedAt": "2026-07-10",
-  "QBCategory": "LCD",
+  "updatedAt": "2026-07-24",
   "metadata": {
-    "category": "Recursion",
+    "category": "Linked List",
     "difficulty": "Medium",
     "isPremium": false,
     "tags": [
       "linked-list",
       "math",
-      "recursion"
+      "simulation"
     ],
     "companyTags": [],
     "topicTags": [
       "linked-list",
-      "math",
-      "recursion"
+      "math"
     ],
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You are given two **non-empty** linked lists representing two non-negative integers. The digits are stored in **reverse order**, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list.\n\nYou may assume the two numbers do not contain any leading zero, except the number 0 itself.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2020/10/02/addtwonumber1.jpg)\n\n```\nInput: l1 = [2,4,3], l2 = [5,6,4]\nOutput: [7,0,8]\nExplanation: 342 + 465 = 807.\n```\n\n**Example 2:**\n\n```\nInput: l1 = [0], l2 = [0]\nOutput: [0]\n```\n\n**Example 3:**\n\n```\nInput: l1 = [9,9,9,9,9,9,9], l2 = [9,9,9,9]\nOutput: [8,9,9,9,0,0,0,1]\n```\n\n**Constraints:**\n\n* The number of nodes in each linked list is in the range `[1, 100]`.\n* `0 <= Node.val <= 9`\n* It is guaranteed that the list represents a number that does not have leading zeros.",
+    "problemStatement": "You receive two non-empty linked lists that encode non-negative integers. Each node stores one decimal digit, and the least significant digit appears first. Add the represented integers and output a newly constructed linked list in the same least-significant-digit-first order.\n\nNeither input has a leading zero unless it represents zero itself. Each node value is in [0, 9].\n\nFor the supplied JSON interface, each list is written as an array of its node values. As an example, [2,4,3] represents 342. Aim for O(max(n, m)) time and O(1) extra space, excluding the returned list.",
     "constraints": [
-      "The number of nodes in each linked list is in the range [1, 100].",
+      "1 <= number of nodes in each list <= 100",
       "0 <= Node.val <= 9",
-      "It is guaranteed that the list represents a number that does not have leading zeros."
+      "The lists represent non-negative integers without leading zeros (except the number 0 itself)"
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
+    "inputFormat": "Single line: JSON array of two lists: [l1, l2]. Example: [[2,4,3],[5,6,4]]",
+    "outputFormat": "Single line: JSON-serialized list representing the resulting linked list, e.g. [7,0,8]",
+    "notes": [
+      "Return the result as a list of digits in reverse order.",
+      "Preferred approach: iterate both lists, add digits with carry, append new nodes to result list."
+    ],
     "sampleTestCases": [
       {
         "id": "sample_1",
+        "type": "reg",
         "input": "[[2,4,3],[5,6,4]]",
         "output": "[7,0,8]",
-        "explanation": "342 + 465 = 807."
+        "explanation": "342 + 465 = 807, represented in reverse order as [7,0,8]."
       },
       {
         "id": "sample_2",
+        "type": "reg",
         "input": "[[0],[0]]",
         "output": "[0]",
-        "explanation": ""
+        "explanation": "Both lists represent 0. Sum is 0."
       },
       {
         "id": "sample_3",
+        "type": "reg",
         "input": "[[9,9,9,9,9,9,9],[9,9,9,9]]",
         "output": "[8,9,9,9,0,0,0,1]",
-        "explanation": ""
+        "explanation": "9,999,999 + 9,999 = 10,009,998 → reverse digits [8,9,9,9,0,0,0,1]."
       }
     ]
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Single element",
-        "input": "[[1], [2]]",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "Single element small sum",
+        "input": "[[1],[2]]",
         "expectedOutput": "[3]",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "Single solution exists",
-        "input": "[[1, 2, 3], [4, 5, 6]]",
-        "expectedOutput": "[5, 7, 9]",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "Different lengths, no carry",
+        "input": "[[2,4,3],[5,6]]",
+        "expectedOutput": "[7,0,4]",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Multiple solutions exist",
-        "input": "[[9, 9], [1]]",
-        "expectedOutput": "[0, 0, 1]",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "Simple carry propagation",
+        "input": "[[9,9,9],[1]]",
+        "expectedOutput": "[0,0,0,1]",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Maximum branching factor",
-        "input": "[[9, 9, 9, 9, 9], [9, 9, 9, 9, 9]]",
-        "expectedOutput": "[8, 9, 9, 9, 9, 1]",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "Equal length with carry at each digit",
+        "input": "[[5,5,5],[5,5,5]]",
+        "expectedOutput": "[0,1,1,1]",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Duplicate values in input",
-        "input": "[[1, 1, 1], [1, 1, 1]]",
-        "expectedOutput": "[2, 2, 2]",
-        "weight": 4
+        "id": "tc_05",
+        "type": "reg",
+        "label": "Zeros and single non-zero",
+        "input": "[[0],[9]]",
+        "expectedOutput": "[9]",
+        "weight": 3
       },
       {
-        "id": "tc_6",
-        "label": "Deep recursion required",
-        "input": "[[9, 9, 9, 9, 9, 9, 9, 9, 9], [1]]",
-        "expectedOutput": "[0, 0, 0, 0, 0, 0, 0, 0, 0, 1]",
-        "weight": 2
+        "id": "tc_06",
+        "type": "reg",
+        "label": "Leading carry extends result length",
+        "input": "[[9,9,9,9,9],[1]]",
+        "expectedOutput": "[0,0,0,0,0,1]",
+        "weight": 3
       },
       {
-        "id": "tc_7",
-        "label": "Answer at first branch",
-        "input": "[[0], [0]]",
+        "id": "tc_07",
+        "type": "reg",
+        "label": "Both single-digit zeros",
+        "input": "[[0],[0]]",
         "expectedOutput": "[0]",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_8",
-        "label": "Answer at last branch",
-        "input": "[[9, 9, 9, 9, 9, 9, 9, 9, 9], [9, 9, 9, 9, 9, 9, 9, 9, 9]]",
-        "expectedOutput": "[8, 9, 9, 9, 9, 9, 9, 9, 9, 1]",
-        "weight": 2
+        "id": "tc_08",
+        "type": "reg",
+        "label": "Many small digits no carry",
+        "input": "[[1,2,3,4,5],[0,0,0,0,0]]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "weight": 3
       },
       {
-        "id": "tc_9",
-        "label": "Carry propagation across longer list",
-        "input": "[[9, 9, 9], [1]]",
-        "expectedOutput": "[0, 0, 0, 1]",
-        "weight": 2
+        "id": "tc_09",
+        "type": "reg",
+        "label": "Alternating carries",
+        "input": "[[9,1],[1,9]]",
+        "expectedOutput": "[0,1,1]",
+        "weight": 3
       },
       {
         "id": "tc_10",
-        "label": "Equal length with carry at each digit",
-        "input": "[[5, 5, 5], [5, 5, 5]]",
-        "expectedOutput": "[0, 1, 1, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Different lengths with trailing zeros",
+        "input": "[[1,0,0,0,1],[9,9,9]]",
+        "expectedOutput": "[0,0,0,1,1]",
+        "weight": 3
       },
       {
         "id": "tc_11",
-        "label": "Different lengths without carry",
-        "input": "[[1, 2, 3, 4, 5], [9, 8]]",
-        "expectedOutput": "[0, 1, 4, 4, 5]",
-        "weight": 2
+        "type": "reg",
+        "label": "Mixed digits with repeated carry boundaries",
+        "input": "[[1,2,3,4,5,6,7,8,9,0],[0,9,8,7,6,5,4,3,2,1]]",
+        "expectedOutput": "[1,1,2,2,2,2,2,2,2,2]",
+        "weight": 3
       },
       {
         "id": "tc_12",
-        "label": "Cross carry with symmetric digits",
-        "input": "[[9, 1], [1, 9]]",
-        "expectedOutput": "[0, 1, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Many carries across zeros",
+        "input": "[[0,0,0,0,0,0,1],[9,9,9,9,9,9]]",
+        "expectedOutput": "[9,9,9,9,9,9,1]",
+        "weight": 3
       },
       {
         "id": "tc_13",
-        "label": "Maximum length stress test (10 digits all 9s)",
-        "input": "[[9, 9, 9, 9, 9, 9, 9, 9, 9, 9], [9, 9, 9, 9, 9, 9, 9, 9, 9, 9]]",
-        "expectedOutput": "[8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1]",
-        "weight": 10
+        "type": "reg",
+        "label": "All nines equal length",
+        "input": "[[9,9,9,9,9,9,9],[9,9,9,9,9,9,9]]",
+        "expectedOutput": "[8,9,9,9,9,9,9,1]",
+        "weight": 3
       },
       {
         "id": "tc_14",
-        "label": "Zero and non-zero single digit",
-        "input": "[[0], [1]]",
-        "expectedOutput": "[1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Different lengths, carry stops early",
+        "input": "[[5,5,5,5,5],[5,5,5]]",
+        "expectedOutput": "[0,1,1,6,5]",
+        "weight": 3
       },
       {
         "id": "tc_15",
-        "label": "Carry propagation across many zeros",
-        "input": "[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]]",
-        "expectedOutput": "[9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Zeros in middle with carry",
+        "input": "[[0,0,1],[0,0,9]]",
+        "expectedOutput": "[0,0,0,1]",
+        "weight": 3
       },
       {
         "id": "tc_16",
-        "label": "Equal length with final carry",
-        "input": "[[5, 5], [5, 5]]",
-        "expectedOutput": "[0, 1, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Pair with zero and positive",
+        "input": "[[0,5],[5]]",
+        "expectedOutput": "[5,5]",
+        "weight": 3
       },
       {
         "id": "tc_17",
-        "label": "Different lengths, no final carry",
-        "input": "[[2, 4, 3], [5, 6]]",
-        "expectedOutput": "[7, 0, 4]",
-        "weight": 2
+        "type": "reg",
+        "label": "Mixed digits with internal carries",
+        "input": "[[2,4,3],[5,6,4]]",
+        "expectedOutput": "[7,0,8]",
+        "weight": 3
       },
       {
         "id": "tc_18",
-        "label": "Zero plus non-zero",
-        "input": "[[0], [9]]",
-        "expectedOutput": "[9]",
-        "weight": 2
+        "type": "reg",
+        "label": "Many zeros and single high digit",
+        "input": "[[0,0,0,0,1],[0,0,0,0,9]]",
+        "expectedOutput": "[0,0,0,0,0,1]",
+        "weight": 3
       },
       {
         "id": "tc_19",
-        "label": "Long chain of nines plus one",
-        "input": "[[9, 9, 9, 9, 9], [1]]",
-        "expectedOutput": "[0, 0, 0, 0, 0, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Carry with different lengths",
+        "input": "[[7,8],[5]]",
+        "expectedOutput": "[2,9]",
+        "weight": 3
       },
       {
         "id": "tc_20",
-        "label": "Zeros in lower digits with carry",
-        "input": "[[0, 0, 1], [0, 0, 9]]",
-        "expectedOutput": "[0, 0, 0, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Small lists with multiple carries",
+        "input": "[[6,7,8],[4,3,2]]",
+        "expectedOutput": "[0,1,1,1]",
+        "weight": 3
       },
       {
         "id": "tc_21",
-        "label": "Long carry chain with 15 nines and one",
-        "input": "[[9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9], [1]]",
-        "expectedOutput": "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Single long addend",
+        "input": "[[1,0,0,0,0,0,0,0,0,0],[9]]",
+        "expectedOutput": "[0,1,0,0,0,0,0,0,0,0]",
+        "weight": 3
       },
       {
         "id": "tc_22",
-        "label": "Two 15-digit numbers with mixed digits",
-        "input": "[[1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5], [5, 4, 3, 2, 1, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1]]",
-        "expectedOutput": "[6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 6, 6, 6, 6, 6]",
-        "weight": 2
+        "type": "reg",
+        "label": "Alternating zeros and nines",
+        "input": "[[9,0,9,0,9],[1,0,1,0,1]]",
+        "expectedOutput": "[0,1,0,1,0,1]",
+        "weight": 3
       },
       {
         "id": "tc_23",
-        "label": "Different lengths with zeros in middle",
-        "input": "[[0, 0, 0, 1], [9, 9, 9]]",
-        "expectedOutput": "[9, 9, 9, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Edge: one list is zero",
+        "input": "[[0],[1,2,3,4]]",
+        "expectedOutput": "[1,2,3,4]",
+        "weight": 3
       },
       {
         "id": "tc_24",
-        "label": "Equal length fives producing extra carry digit",
-        "input": "[[5, 5, 5, 5], [5, 5, 5, 5]]",
-        "expectedOutput": "[0, 1, 1, 1, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Edge: both long with sparse carries",
+        "input": "[[1,0,0,9,0,0,1],[9,9,0,0,0,1,0]]",
+        "expectedOutput": "[0,0,1,9,0,1,1]",
+        "weight": 3
       },
       {
         "id": "tc_25",
-        "label": "Numbers with many zeros and non-zero most significant",
-        "input": "[[0, 0, 0, 0, 1], [0, 0, 0, 0, 2]]",
-        "expectedOutput": "[0, 0, 0, 0, 3]",
-        "weight": 2
+        "type": "reg",
+        "label": "Random mid-size with unique carry pattern",
+        "input": "[[3,7,4,5,9],[6,2,5,4,0]]",
+        "expectedOutput": "[9,9,9,9,9]",
+        "weight": 3
       },
       {
         "id": "tc_26",
-        "label": "Carry propagation across 14 nines with final 8 plus 2",
-        "input": "[[9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8], [2]]",
-        "expectedOutput": "[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]",
-        "weight": 2
+        "type": "reg",
+        "label": "Two-digit carry chain",
+        "input": "[[9,8,9],[1,1,0]]",
+        "expectedOutput": "[0,0,0,1]",
+        "weight": 3
       },
       {
         "id": "tc_27",
-        "label": "Long carry propagation with single digit",
-        "input": "[[9, 9, 9, 9, 9, 9], [1]]",
-        "expectedOutput": "[0, 0, 0, 0, 0, 0, 1]",
-        "weight": 2
+        "type": "gen",
+        "label": "Near maximum length, sparse digits",
+        "input": "\"[[\" + \"1,\".repeat(98) + \"1],[9]]\"",
+        "expectedOutput": "\"[0,2,\" + \"1,\".repeat(96) + \"1]\"",
+        "weight": 3
       },
       {
         "id": "tc_28",
-        "label": "Equal length all nines",
-        "input": "[[9, 9, 9, 9, 9, 9, 9], [9, 9, 9, 9, 9, 9, 9]]",
-        "expectedOutput": "[8, 9, 9, 9, 9, 9, 9, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Carry produces new most significant digit",
+        "input": "[[5,5,5,5],[5,5,5,5]]",
+        "expectedOutput": "[0,1,1,1,1]",
+        "weight": 3
       },
       {
         "id": "tc_29",
-        "label": "Different lengths with zeros in middle",
-        "input": "[[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9], [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1]]",
-        "expectedOutput": "[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]",
-        "weight": 2
+        "type": "reg",
+        "label": "Small lists no carry",
+        "input": "[[2,3],[4,5]]",
+        "expectedOutput": "[6,8]",
+        "weight": 3
       },
       {
         "id": "tc_30",
-        "label": "Different lengths, carry stops early",
-        "input": "[[5, 5, 5, 5, 5], [5, 5, 5]]",
-        "expectedOutput": "[0, 1, 1, 6, 5]",
-        "weight": 2
+        "type": "gen",
+        "label": "Max length random-like pattern",
+        "input": "\"[[\" + \"9,0,1,2,3,4,5,6,7,8,\".repeat(10).slice(0,-1) + \"],[1]]\"",
+        "expectedOutput": "\"[0,1,1,2,3,4,5,6,7,8,\" + \"9,0,1,2,3,4,5,6,7,8,\".repeat(9).slice(0,-1) + \"]\"",
+        "weight": 4
       }
     ],
     "totalTestCases": 30,
-    "totalWeight": 70
+    "totalWeight": 91
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      4
     ],
-    "maxScore": 70
+    "maxScore": 91
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -314,36 +349,101 @@
       "Java",
       "Python3",
       "JavaScript"
+    ],
+    "notes": [
+      "All hidden test cases are concrete and use arrays of digits in least-significant-digit-first order.",
+      "The checker compares the returned list of digits (order matters).",
+      "Expected outputs must match one valid representation; inputs are constructed so exactly one valid result exists for each test case."
     ]
-  },
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for singly-linked list.\n * struct ListNode {\n *     int val;\n *     struct ListNode *next;\n * };\n */\nstruct ListNode* addTwoNumbers(struct ListNode* l1, struct ListNode* l2) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        // TODO: unpack logic for listnode l1\n        // TODO: unpack logic for listnode l2\n        int result = addTwoNumbers(l1, l2);\n        printf(\"/* Unknown return type formatting */\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\nclass ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val; self.next = next\n    @staticmethod\n    def from_list(lst):\n        if not lst: return None\n        h = ListNode(lst[0]); c = h\n        for v in lst[1:]:\n            c.next = ListNode(v); c = c.next\n        return h\n    def to_list(self):\n        r=[]; c=self\n        while c: r.append(c.val); c=c.next\n        return r\n\nclass TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val=val; self.left=left; self.right=right\n    @staticmethod\n    def from_list(lst):\n        if not lst: return None\n        root=TreeNode(lst[0]); q=[root]; i=1\n        while q and i<len(lst):\n            c=q.pop(0)\n            if i<len(lst) and lst[i] is not None:\n                c.left=TreeNode(lst[i]); q.append(c.left)\n            i+=1\n            if i<len(lst) and lst[i] is not None:\n                c.right=TreeNode(lst[i]); q.append(c.right)\n            i+=1\n        return root\n    def to_list(self):\n        if not self: return []\n        r=[]; q=[self]\n        while q:\n            c=q.pop(0)\n            if c: r.append(c.val); q.append(c.left); q.append(c.right)\n            else: r.append(None)\n        while r and r[-1] is None: r.pop()\n        return r\n\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Definition for singly-linked list.\n# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\nclass Solution:\n    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _l1 = ListNode.from_list(_args[0])\n    _l2 = ListNode.from_list(_args[1])\n    _result = Solution().addTwoNumbers(_l1, _l2)\n    _result = _result.to_list() if _result else []\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for singly-linked list.\n * function ListNode(val, next) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.next = (next===undefined ? null : next)\n * }\n */\n/**\n * @param {ListNode} l1\n * @param {ListNode} l2\n * @return {ListNode}\n */\nvar addTwoNumbers = function(l1, l2) {\n    \n    return null;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = addTwoNumbers(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\n/**\n * Definition for singly-linked list.\n * public class ListNode {\n *     int val;\n *     ListNode next;\n *     ListNode() {}\n *     ListNode(int val) { this.val = val; }\n *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }\n * }\n */\nclass Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        \n        return null;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        // TODO: parse ListNode for l1\n        // TODO: parse ListNode for l2\n        ListNode result = new Solution().addTwoNumbers(l1, l2);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for singly-linked list.\n * struct ListNode {\n *     int val;\n *     ListNode *next;\n *     ListNode() : val(0), next(nullptr) {}\n *     ListNode(int x) : val(x), next(nullptr) {}\n *     ListNode(int x, ListNode *next) : val(x), next(next) {}\n * };\n */\nclass Solution {\npublic:\n    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {\n        \n        return nullptr;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    /* TODO: parse ListNode* for l1 */\n    /* TODO: parse ListNode* for l2 */\n    auto result = Solution().addTwoNumbers(l1, l2);\n    cout << result << endl;\n    return 0;\n}"
   },
   "solution": {
-    "approach": "The approach uses a dummy node to simplify the code and a carry variable to handle the overflow when adding two numbers, iterating through both linked lists.",
-    "timeComplexity": "O(n)",
-    "spaceComplexity": "O(n)",
+    "approach": "Iterative addition with carry: use a dummy head for the result list, iterate while either input list has nodes or carry is non-zero, sum corresponding digits plus carry, create a new node with sum % 10, update carry = sum // 10, advance pointers. Return dummy.next. This is a single-pass algorithm over the longer list.",
+    "timeComplexity": "O(max(n, m)) where n and m are the lengths of the input lists",
+    "spaceComplexity": "O(max(n, m) + 1) for the output list (excluding input), O(1) extra auxiliary space",
     "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(1) (excluding result storage)\n\nclass ListNode(object):\n    def __init__(self, x):\n        self.val = x\n        self.next = None\n\n\nclass Solution(object):\n    def addTwoNumbers(self, l1, l2):\n        \"\"\"\n        :type l1: ListNode\n        :type l2: ListNode\n        :rtype: ListNode\n        \"\"\"\n        dummy = ListNode(0)\n        current, carry = dummy, 0\n\n        while l1 or l2:\n            val = carry\n            if l1:\n                val += l1.val\n                l1 = l1.next\n            if l2:\n                val += l2.val\n                l2 = l2.next\n            carry, val = divmod(val, 10)\n            current.next = ListNode(val)\n            current = current.next\n\n        if carry == 1:\n            current.next = ListNode(1)\n\n        return dummy.next"
+      "C": "",
+      "C++": "",
+      "Java": "",
+      "Python3": "",
+      "JavaScript": ""
+    },
+    "notes": [
+      "Do not attempt to convert the entire lists to integers when lengths approach the constraint limits; use digit-by-digit addition to avoid overflow and to meet time/space requirements.",
+      "Carefully handle carry propagation when one list is longer than the other."
+    ],
+    "editorial": {
+      "bruteForce": {
+        "description": "Convert both lists to integers (by iterating and building the numeric value), add them, then convert the sum back into a reversed-digit list. This approach is simple but fails for very large numbers and violates the O(1) auxiliary space requirement if big-integer libraries are used.",
+        "complexity": "Time O(n + m) for conversion plus conversion back; Space O(n + m) for big integer representation."
+      },
+      "better": {
+        "description": "Simulate addition digit-by-digit using arrays or stacks: push digits of both lists into stacks, pop and add with carry to build the result. This uses O(n + m) extra space for stacks.",
+        "complexity": "Time O(n + m); Space O(n + m)."
+      },
+      "optimal": {
+        "description": "Single-pass iterative addition using a dummy head and constant auxiliary space (excluding output). At each step read digits (or 0 if list exhausted), compute sum and carry, append node with sum % 10.",
+        "complexity": "Time O(max(n, m)); Space O(max(n, m)) for output only."
+      }
     }
   },
-  "_internal": {
-    "methodName": "addTwoNumbers",
-    "params": [
-      {
-        "name": "l1",
-        "type": "ListNode",
-        "dealloc": false
-      },
-      {
-        "name": "l2",
-        "type": "ListNode",
-        "dealloc": false
+  "hints": [
+    "Iterate both lists simultaneously and maintain a carry variable.",
+    "Use a dummy head node to simplify result list construction.",
+    "When one list is shorter, treat missing digits as zero and continue processing until both lists and carry are exhausted."
+  ],
+  "followUps": [
+    "How would you modify the solution if digits were stored most-significant-digit-first?",
+    "Can you implement the addition in-place by reusing nodes from the longer input list (if allowed)?"
+  ],
+  "learningObjectives": [
+    "Linked list traversal and construction",
+    "Digit-by-digit arithmetic and carry propagation",
+    "Designing single-pass algorithms with constant auxiliary space"
+  ],
+  "similarProblems": [
+    "Add Two Numbers II (most-significant-digit-first)",
+    "Plus One (array of digits)",
+    "Sum of Two Integers represented as linked lists"
+  ],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "20 min",
+  "recommendedAfter": [
+    "Reverse Linked List"
+  ],
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n\n// Define ListNode\ntypedef struct ListNode {\n    int val;\n    struct ListNode* next;\n} ListNode;\n\n// Helper to create a new node\nListNode* newNode(int v) {\n    ListNode* n = (ListNode*)malloc(sizeof(ListNode));\n    n->val = v; n->next = NULL; return n;\n}\n\n// Implement addTwoNumbers: returns head of new list\nListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {\n    ListNode dummy; dummy.next = NULL;\n    ListNode* cur = &dummy;\n    int carry = 0;\n    while (l1 != NULL || l2 != NULL || carry) {\n        int x = l1 ? l1->val : 0;\n        int y = l2 ? l2->val : 0;\n        int sum = x + y + carry;\n        carry = sum / 10;\n        cur->next = newNode(sum % 10);\n        cur = cur->next;\n        if (l1) l1 = l1->next;\n        if (l2) l2 = l2->next;\n    }\n    return dummy.next;\n}\n\nint main() { return 0; }",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct ListNode {\n    int val; ListNode* next; ListNode(int x): val(x), next(nullptr) {}\n};\n\nListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {\n    ListNode dummy(0);\n    ListNode* cur = &dummy;\n    int carry = 0;\n    while (l1 || l2 || carry) {\n        int x = l1 ? l1->val : 0;\n        int y = l2 ? l2->val : 0;\n        int sum = x + y + carry;\n        carry = sum / 10;\n        cur->next = new ListNode(sum % 10);\n        cur = cur->next;\n        if (l1) l1 = l1->next;\n        if (l2) l2 = l2->next;\n    }\n    return dummy.next;\n}\n\nint main() { return 0; }",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass ListNode {\n    int val;\n    ListNode next;\n    ListNode() {}\n    ListNode(int val) { this.val = val; }\n    ListNode(int val, ListNode next) { this.val = val; this.next = next; }\n}\n\nclass Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        ListNode dummy = new ListNode(0);\n        ListNode cur = dummy;\n        int carry = 0;\n        while (l1 != null || l2 != null || carry != 0) {\n            int x = (l1 != null) ? l1.val : 0;\n            int y = (l2 != null) ? l2.val : 0;\n            int sum = x + y + carry;\n            carry = sum / 10;\n            cur.next = new ListNode(sum % 10);\n            cur = cur.next;\n            if (l1 != null) l1 = l1.next;\n            if (l2 != null) l2 = l2.next;\n        }\n        return dummy.next;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Judge harness will provide input as JSON arrays: [l1, l2]\n    }\n}",
+    "Python3": "import sys, json\n\nclass ListNode:\n    def __init__(self, x=0, next=None):\n        self.val = x\n        self.next = next\n\nclass Solution:\n    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:\n        dummy = ListNode(0)\n        cur = dummy\n        carry = 0\n        p, q = l1, l2\n        while p is not None or q is not None or carry:\n            x = p.val if p else 0\n            y = q.val if q else 0\n            total = x + y + carry\n            carry = total // 10\n            cur.next = ListNode(total % 10)\n            cur = cur.next\n            if p: p = p.next\n            if q: q = q.next\n        return dummy.next\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    l1_vals, l2_vals = args[0], args[1]\n    def build(vals):\n        head = None\n        cur = None\n        for v in vals:\n            node = ListNode(v)\n            if not head:\n                head = node\n                cur = node\n            else:\n                cur.next = node\n                cur = cur.next\n        return head\n    def to_list(node):\n        out = []\n        while node:\n            out.append(node.val)\n            node = node.next\n        return out\n    l1 = build(l1_vals)\n    l2 = build(l2_vals)\n    res = Solution().addTwoNumbers(l1, l2)\n    print(json.dumps(to_list(res)))",
+    "JavaScript": "'use strict';\nconst rl = require('readline');\nconst reader = rl.createInterface({ input: process.stdin });\nfunction ListNode(val, next) { this.val = (val===undefined?0:val); this.next = (next===undefined?null:next); }\n\nfunction addTwoNumbers(l1, l2) {\n    const dummy = new ListNode(0);\n    let cur = dummy;\n    let p = l1, q = l2;\n    let carry = 0;\n    while (p !== null || q !== null || carry !== 0) {\n        const x = p ? p.val : 0;\n        const y = q ? q.val : 0;\n        const sum = x + y + carry;\n        carry = Math.floor(sum / 10);\n        cur.next = new ListNode(sum % 10);\n        cur = cur.next;\n        if (p) p = p.next;\n        if (q) q = q.next;\n    }\n    return dummy.next;\n}\n\nreader.on('line', line => {\n    const args = JSON.parse(line.trim());\n    const a = args[0], b = args[1];\n    function build(arr) {\n        if (!arr.length) return null;\n        let head = new ListNode(arr[0]);\n        let cur = head;\n        for (let i = 1; i < arr.length; i++) { cur.next = new ListNode(arr[i]); cur = cur.next; }\n        return head;\n    }\n    function toArray(node) { const out = []; while (node) { out.push(node.val); node = node.next; } return out; }\n    const l1 = build(a), l2 = build(b);\n    const res = addTwoNumbers(l1, l2);\n    console.log(JSON.stringify(toArray(res)));\n    reader.close();\n});",
+    "solution": {
+      "approach": "Iterative addition with carry: use a dummy head for the result list, iterate while either input list has nodes or carry is non-zero, sum corresponding digits plus carry, create a new node with sum % 10, update carry = sum // 10, advance pointers. Return dummy.next. This is a single-pass algorithm over the longer list.",
+      "timeComplexity": "O(max(n, m)) where n and m are the lengths of the input lists",
+      "spaceComplexity": "O(max(n, m) + 1) for the output list (excluding input), O(1) extra auxiliary space",
+      "code": {
+        "C": "",
+        "C++": "",
+        "Java": "",
+        "Python3": "",
+        "JavaScript": ""
       }
-    ]
-  }
+    },
+    "_internal": {
+      "methodName": "addTwoNumbers",
+      "params": [
+        {
+          "name": "l1",
+          "type": "ListNode"
+        },
+        {
+          "name": "l2",
+          "type": "ListNode"
+        }
+      ],
+      "phase": "ready-for-judge"
+    },
+    "verified": true
+  },
+  "_internal": {},
+  "verified": true
 }

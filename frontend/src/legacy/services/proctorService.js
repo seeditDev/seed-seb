@@ -50,49 +50,74 @@ class ProctorService {
   }
 
   /**
-   * Log proctor event to Firestore
-   * @param {string} studentID - Student email/ID
-   * @param {string} testID - Test ID
+   * Log proctor event to Firestore.
+   * v2 path: proctoringLogs/{attemptId}/events/{eventId}
+   * where attemptId = {assessmentId}_{userId}
+   * @param {string} studentID - Student UID or email
+   * @param {string} testID - Assessment ID
    * @param {object} eventData - Event data
    * @returns {Promise<string>} Document ID
    */
   static async logProctorEvent(studentID, testID, eventData) {
     try {
-      const { eventType, severity, misbehaviorCount, snapshotUrl, timestamp } = eventData;
+      const { eventType, severity, misbehaviorCount, snapshotUrl, timestamp, sectionId } = eventData;
 
-      // Create document path: proctor_logs/{studentID}/{testID}/{timestamp}
-      const sanitizedStudentID = studentID.replace(/[^a-zA-Z0-9]/g, '_');
-      const sanitizedTestID = testID.replace(/[^a-zA-Z0-9]/g, '_');
+      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+      const userId = authData.uid || studentID.replace(/[@.]/g, '_');
+      const attemptId = `${testID}_${userId}`;
       const eventTimestamp = timestamp || new Date().toISOString();
-      const sanitizedTimestamp = eventTimestamp.replace(/[^a-zA-Z0-9]/g, '_');
 
       const logData = {
-        studentID: studentID,
-        testID: testID,
-        eventType: eventType, // 'no_face' | 'multiple_faces' | 'looking_away'
-        severity: severity || 1,
-        misbehaviorCount: misbehaviorCount || 0,
-        snapshotUrl: snapshotUrl || null,
+        type: eventType,             // "face-not-detected" | "multiple-faces" | "audio-spike" | "tab-switch"
+        severity: severity || 'low', // "info" | "low" | "medium" | "high"
         timestamp: serverTimestamp(),
         timestampISO: eventTimestamp,
-        createdAt: serverTimestamp()
+        sectionId: sectionId || null,
+        snapshotUrl: snapshotUrl || null,
+        metadata: {
+          confidence: eventData.confidence || null,
+          faceCount: eventData.faceCount || null,
+          misbehaviorCount: misbehaviorCount || 0,
+        },
+        // Legacy fields for backward compat
+        studentID,
+        testID,
+        eventType,
+        createdAt: serverTimestamp(),
       };
 
-      // Use collection reference with path segments
-      const logRef = collection(db, 'proctor_logs', sanitizedStudentID, sanitizedTestID);
-      const docRef = await addDoc(logRef, logData);
+      // v2: proctoringLogs/{attemptId}/events/{eventId}
+      const v2Ref = collection(db, 'proctoringLogs', attemptId, 'events');
+      const docRef = await addDoc(v2Ref, logData);
 
-      console.log('[ProctorService] Proctor event logged:', docRef.id);
+      // Ensure the parent proctoringLogs doc exists with metadata
+      const { doc: docFn, setDoc: setDocFn, getDoc: getDocFn } = await import('firebase/firestore');
+      const parentRef = docFn(db, 'proctoringLogs', attemptId);
+      const parentSnap = await getDocFn(parentRef);
+      if (!parentSnap.exists()) {
+        setDocFn(parentRef, {
+          userId,
+          assessmentId: testID,
+          tenantId: authData.tenantId || '',
+          createdAt: serverTimestamp(),
+        }, { merge: true }).catch(() => {});
+      }
+
+      // v1 legacy non-blocking fallback
+      const sanitizedStudentID = studentID.replace(/[^a-zA-Z0-9]/g, '_');
+      const sanitizedTestID = testID.replace(/[^a-zA-Z0-9]/g, '_');
+      const legacyRef = collection(db, 'proctor_logs', sanitizedStudentID, sanitizedTestID);
+      addDoc(legacyRef, { ...logData, studentID, testID }).catch(() => {});
+
+      console.log('[ProctorService] Proctor event logged (v2):', attemptId, docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('[ProctorService] Error logging proctor event:', error);
-      
-      // Save to localStorage for retry
       this.saveUnsyncedLog(studentID, testID, eventData);
-      
       throw error;
     }
   }
+
 
   /**
    * Save unsynced snapshot to localStorage

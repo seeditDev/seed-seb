@@ -1,98 +1,324 @@
 {
   "questionId": "Q2296",
-  "title": "Time of collisions",
-  "slug": "time-of-collisions",
+  "title": "Design a Text Editor Problem",
+  "slug": "design-a-text-editor",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-05",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Implementation",
+    "category": "Strings",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Prefix Sums",
-      "Small Range Values",
-      "Rational Arithmetic",
-      "Sorting",
-      "Implementation",
-      "Two Pointers"
+      "linked-list",
+      "string",
+      "stack",
+      "design",
+      "simulation",
+      "doubly-linked-list"
     ],
     "companyTags": [],
     "topicTags": [
-      "Ad-hoc & Implementation"
-    ]
+      "linked-list",
+      "string",
+      "stack",
+      "design",
+      "simulation",
+      "doubly-linked-list"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Identical small balls are located on a straight line and can move along this line only. Each ball moves with a constant velocity, but velocities of different balls may be different. When two balls meet, a perfectly elastic collision occurs. It's a common-known physical fact that when two equal-mass physical bodies, say **A** and **B**, collide perfectly elastically, they swap their velocities. That is, **A**'s new velocity is **B**'s old velocity and **B**'s new velocity is **A**'s old velocity. Your task is to find the sum of all moments of time when collisions occur. If three or more balls collide at the same moment of time in the same place then the following will occur. Let the collision involves **k &gt;= 3** balls then you should consider this collision as simultaneous **k*(k-1)/2** collisions. It means that you should count the moment of time of this collision **k*(k-1)/2** times in you answer. The new velocities of these balls after all collisions have occurred will be as follows: the **1**-st and **k**-th balls swap their velocities, **2**-nd and **k-1**-th balls swap their velocities and so on. Explicitly, for each **i** between **1** and **k/2** balls **i** and **k+1-i** swap their velocities. Here we enumerate balls in order they were on the line in the moment of time just before the collision.",
+    "problemStatement": "Design a text editor with a cursor that can do the following:\n\n* **Add** text to where the cursor is.\n* **Delete** text from where the cursor is (simulating the backspace key).\n* **Move** the cursor either left or right.\n\nWhen deleting text, only characters to the left of the cursor will be deleted. The cursor will also remain within the actual text and cannot be moved beyond it. More formally, we have that `0 <= cursor.position <= currentText.length` always holds.\n\nCreate an implementation of the `TextEditor` class:\n\n* `TextEditor()` Initializes the object with empty text.\n* `void addText(string text)` Appends `text` to where the cursor is. The cursor ends to the right of `text`.\n* `int deleteText(int k)` Deletes `k` characters to the left of the cursor. Returns the number of characters actually deleted.\n* `string cursorLeft(int k)` Moves the cursor to the left `k` times. Returns the last `min(10, len)` characters to the left of the cursor, where `len` is the number of characters to the left of the cursor.\n* `string cursorRight(int k)` Moves the cursor to the right `k` times. Returns the last `min(10, len)` characters to the left of the cursor, where `len` is the number of characters to the left of the cursor.\n\n**Example 1:**\n\n```\nInput\n[\"TextEditor\", \"addText\", \"deleteText\", \"addText\", \"cursorRight\", \"cursorLeft\", \"deleteText\", \"cursorLeft\", \"cursorRight\"]\n[[], [\"leetcode\"], [4], [\"practice\"], [3], [8], [10], [2], [6]]\nOutput\n[null, null, 4, null, \"etpractice\", \"leet\", 4, \"\", \"practi\"]\n\nExplanation\nTextEditor textEditor = new TextEditor(); // The current text is \"|\". (The '|' character represents the cursor)\ntextEditor.addText(\"leetcode\"); // The current text is \"leetcode|\".\ntextEditor.deleteText(4); // return 4\n                          // The current text is \"leet|\". \n                          // 4 characters were deleted.\ntextEditor.addText(\"practice\"); // The current text is \"leetpractice|\". \ntextEditor.cursorRight(3); // return \"etpractice\"\n                           // The current text is \"leetpractice|\". \n                           // The cursor cannot be moved beyond the actual text and thus did not move.\n                           // \"etpractice\" is the last 10 characters to the left of the cursor.\ntextEditor.cursorLeft(8); // return \"leet\"\n                          // The current text is \"leet|practice\".\n                          // \"leet\" is the last min(10, 4) = 4 characters to the left of the cursor.\ntextEditor.deleteText(10); // return 4\n                           // The current text is \"|practice\".\n                           // Only 4 characters were deleted.\ntextEditor.cursorLeft(2); // return \"\"\n                          // The current text is \"|practice\".\n                          // The cursor cannot be moved beyond the actual text and thus did not move. \n                          // \"\" is the last min(10, 0) = 0 characters to the left of the cursor.\ntextEditor.cursorRight(6); // return \"practi\"\n                           // The current text is \"practi|ce\".\n                           // \"practi\" is the last min(10, 6) = 6 characters to the left of the cursor.\n```\n\n**Constraints:**\n\n* `1 <= text.length, k <= 40`\n* `text` is composed of lowercase English letters.\n* At most `2 * 104` calls **in total** will be made to `addText`, `deleteText`, `cursorLeft` and `cursorRight`.\n\n**Follow-up:** Could you find a solution with time complexity of `O(k)` per call?",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "1 \u2264 N \u2264 50000",
-      "|xi| \u2264 1000000",
-      "|vi| \u2264 20",
-      "All xi are distinct"
+      "None"
     ],
-    "inputFormat": "First line contains an integer T (1 \u2264 T \u2264 10) \u2013 the number of test cases. Each test case starts with an integer N (1 \u2264 N \u2264 50000) \u2013 the number of balls. Then N lines follow, each containing two integers xi and vi \u2013 the starting coordinate and the velocity of a ball. All xi are distinct.",
-    "outputFormat": "For each test case output a single line. If the number of collisions is infinite print \"INF\". Otherwise print the sum of all collision moments. The sum is rational; print it as an integer, or as a reduced fraction P/Q if it is less than 1, or as a mixed number A P/Q (A is the integer part, P/Q the reduced fractional part, P < Q).",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "",
-        "output": "Input:\n3\n2\n-1 1\n1 -1\n2\n0 1\n1 -1\n3\n-1 1\n2 -1\n3 -5\n\nOutput:\n1\n1/2\n2 5/12",
-        "explanation": ""
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Case 1",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "Case 2",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Case 3",
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Case 4",
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Case 5",
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -103,14 +329,63 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "Because all balls have equal mass, a perfectly elastic collision is equivalent to the two balls passing through each other while keeping their velocities. Therefore a collision between balls i and j occurs exactly once iff their trajectories intersect, i.e. (xi - xj)*(vi - vj) < 0. The collision time is t = (xj - xi) / (vi - vj) (the denominator is positive). The required answer is the sum of t over all such pairs.\n\nVelocities are bounded to the range [-20,20] (41 possible values). After sorting the balls by their initial coordinate we sweep from left to right. While scanning we maintain for each velocity v the number of already\u2011seen balls cnt[v] and the sum of their positions sumPos[v]. When we encounter a ball (xj, vj) we need to add the contribution of every earlier ball with a higher velocity vi > vj:\n    contribution = (cnt[vi] * xj - sumPos[vi]) / (vi - vj).\nSumming these contributions for all vi > vj gives the total added by the current ball. The overall complexity is O(N\u00b7V) with V = 41, well within the limits.\n\nThe total sum is a rational number. We keep it as a GMP rational (mpq_t) which automatically stores the numerator and denominator in reduced form. After processing a test case we output the rational according to the required format. An infinite number of collisions can only happen if two balls start at the same position with the same velocity, which is impossible because all xi are distinct, so the \"INF\" case never occurs for valid input.",
-    "timeComplexity": "O(N \u00b7 V) per test case, where V = 41 (the number of possible velocities).",
-    "spaceComplexity": "O(V) additional space for the count and position\u2011sum arrays, plus O(1) for the rational accumulator.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdint.h>\n#include <gmp.h>\n\ntypedef struct {\n    int x;\n    int v;\n} Ball;\n\nint cmpBall(const void *a, const void *b) {\n    const Ball *ba = (const Ball *)a;\n    const Ball *bb = (const Ball *)b;\n    return (ba->x < bb->x) ? -1 : (ba->x > bb->x);\n}\n\nint main() {\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        Ball *arr = (Ball *)malloc(sizeof(Ball) * N);\n        for (int i = 0; i < N; ++i) {\n            scanf(\"%d %d\", &arr[i].x, &arr[i].v);\n        }\n        qsort(arr, N, sizeof(Ball), cmpBall);\n\n        // cnt and sumPos for velocities -20..20 mapped to 0..40\n        int64_t cnt[41] = {0};\n        int64_t sumPos[41] = {0};\n\n        mpq_t total;\n        mpq_init(total);\n        mpq_set_ui(total, 0, 1);\n\n        for (int i = 0; i < N; ++i) {\n            int xj = arr[i].x;\n            int vj = arr[i].v;\n            int idxj = vj + 20; // shift to 0..40\n            for (int vi = vj + 1; vi <= 20; ++vi) {\n                int idxi = vi + 20;\n                if (cnt[idxi] == 0) continue;\n                int64_t numerator = cnt[idxi] * (int64_t)xj - sumPos[idxi];\n                int64_t denominator = vi - vj; // positive\n                // term = numerator / denominator\n                mpq_t term;\n                mpq_init(term);\n                mpq_set_si(term, numerator, denominator);\n                mpq_canonicalize(term);\n                mpq_add(total, total, term);\n                mpq_clear(term);\n            }\n            // update structures with current ball\n            cnt[idxj]++;\n            sumPos[idxj] += xj;\n        }\n\n        // Output total\n        mpz_t num, den;\n        mpz_init(num);\n        mpz_init(den);\n        mpq_get_num(num, total);\n        mpq_get_den(den, total);\n\n        // Ensure denominator positive (GMP guarantees it)\n        if (mpz_cmp_ui(den, 1) == 0) {\n            // integer\n            gmp_printf(\"%Zd\\n\", num);\n        } else if (mpz_cmpabs(num, den) < 0) {\n            // proper fraction\n            gmp_printf(\"%Zd/%Zd\\n\", num, den);\n        } else {\n            // mixed number A P/Q\n            mpz_t A, P;\n            mpz_init(A);\n            mpz_init(P);\n            mpz_fdiv_qr(A, P, num, den); // floor division, both positive\n            gmp_printf(\"%Zd %Zd/%Zd\\n\", A, P, den);\n            mpz_clear(A);\n            mpz_clear(P);\n        }\n\n        mpz_clear(num);\n        mpz_clear(den);\n        mpq_clear(total);\n        free(arr);\n    }\n    return 0;\n}\n"
+      "Python3": "# Time:  ctor:        O(1)\n#        addText:     O(l)\n#        deleteText:  O(k)\n#        cursorLeft:  O(k)\n#        cursorRight: O(k)\n# Space: O(n)\n\n# design, stack\nclass TextEditor(object):\n\n    def __init__(self):\n        self.__LAST_COUNT = 10\n        self.__left = []\n        self.__right = []\n\n    def addText(self, text):\n        \"\"\"\n        :type text: str\n        :rtype: None\n        \"\"\"\n        for x in text:\n            self.__left.append(x)\n\n    def deleteText(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: int\n        \"\"\"\n        return self.__move(k, self.__left, None)\n\n    def cursorLeft(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: str\n        \"\"\"\n        self.__move(k, self.__left, self.__right)\n        return self.__last_characters()\n\n    def cursorRight(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: str\n        \"\"\"\n        self.__move(k, self.__right, self.__left)\n        return self.__last_characters()\n\n    def __move(self, k, src, dst):\n        cnt = min(k, len(src))\n        for _ in range(cnt):\n            if dst is not None:\n                dst.append(src[-1])\n            src.pop()\n        return cnt\n\n    def __last_characters(self):\n        return \"\".join(self.__left[-self.__LAST_COUNT:])"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class TextEditor {\npublic:\n    TextEditor() {\n        \n    }\n    \n    void addText(string text) {\n        \n    }\n    \n    int deleteText(int k) {\n        \n    }\n    \n    string cursorLeft(int k) {\n        \n    }\n    \n    string cursorRight(int k) {\n        \n    }\n};\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * TextEditor* obj = new TextEditor();\n * obj->addText(text);\n * int param_2 = obj->deleteText(k);\n * string param_3 = obj->cursorLeft(k);\n * string param_4 = obj->cursorRight(k);\n */",
+    "Java": "class TextEditor {\n\n    public TextEditor() {\n        \n    }\n    \n    public void addText(String text) {\n        \n    }\n    \n    public int deleteText(int k) {\n        \n    }\n    \n    public String cursorLeft(int k) {\n        \n    }\n    \n    public String cursorRight(int k) {\n        \n    }\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * TextEditor obj = new TextEditor();\n * obj.addText(text);\n * int param_2 = obj.deleteText(k);\n * String param_3 = obj.cursorLeft(k);\n * String param_4 = obj.cursorRight(k);\n */",
+    "Python3": "# Time:  ctor:        O(1)\n#        addText:     O(l)\n#        deleteText:  O(k)\n#        cursorLeft:  O(k)\n#        cursorRight: O(k)\n# Space: O(n)\n\n# design, stack\nclass TextEditor(object):\n\n    def __init__(self):\n        self.__LAST_COUNT = 10\n        self.__left = []\n        self.__right = []\n\n    def addText(self, text):\n        \"\"\"\n        :type text: str\n        :rtype: None\n        \"\"\"\n        for x in text:\n            self.__left.append(x)\n\n    def deleteText(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: int\n        \"\"\"\n        return self.__move(k, self.__left, None)\n\n    def cursorLeft(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: str\n        \"\"\"\n        self.__move(k, self.__left, self.__right)\n        return self.__last_characters()\n\n    def cursorRight(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: str\n        \"\"\"\n        self.__move(k, self.__right, self.__left)\n        return self.__last_characters()\n\n    def __move(self, k, src, dst):\n        cnt = min(k, len(src))\n        for _ in range(cnt):\n            if dst is not None:\n                dst.append(src[-1])\n            src.pop()\n        return cnt\n\n    def __last_characters(self):\n        return \"\".join(self.__left[-self.__LAST_COUNT:])",
+    "Python": "class TextEditor(object):\n\n    def __init__(self):\n        \n\n    def addText(self, text):\n        \"\"\"\n        :type text: str\n        :rtype: None\n        \"\"\"\n        \n\n    def deleteText(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: int\n        \"\"\"\n        \n\n    def cursorLeft(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: str\n        \"\"\"\n        \n\n    def cursorRight(self, k):\n        \"\"\"\n        :type k: int\n        :rtype: str\n        \"\"\"\n        \n\n\n# Your TextEditor object will be instantiated and called as such:\n# obj = TextEditor()\n# obj.addText(text)\n# param_2 = obj.deleteText(k)\n# param_3 = obj.cursorLeft(k)\n# param_4 = obj.cursorRight(k)",
+    "JavaScript": "\nvar TextEditor = function() {\n    \n};\n\n/** \n * @param {string} text\n * @return {void}\n */\nTextEditor.prototype.addText = function(text) {\n    \n};\n\n/** \n * @param {number} k\n * @return {number}\n */\nTextEditor.prototype.deleteText = function(k) {\n    \n};\n\n/** \n * @param {number} k\n * @return {string}\n */\nTextEditor.prototype.cursorLeft = function(k) {\n    \n};\n\n/** \n * @param {number} k\n * @return {string}\n */\nTextEditor.prototype.cursorRight = function(k) {\n    \n};\n\n/** \n * Your TextEditor object will be instantiated and called as such:\n * var obj = new TextEditor()\n * obj.addText(text)\n * var param_2 = obj.deleteText(k)\n * var param_3 = obj.cursorLeft(k)\n * var param_4 = obj.cursorRight(k)\n */",
+    "TypeScript": "class TextEditor {\n    constructor() {\n        \n    }\n\n    addText(text: string): void {\n        \n    }\n\n    deleteText(k: number): number {\n        \n    }\n\n    cursorLeft(k: number): string {\n        \n    }\n\n    cursorRight(k: number): string {\n        \n    }\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * var obj = new TextEditor()\n * obj.addText(text)\n * var param_2 = obj.deleteText(k)\n * var param_3 = obj.cursorLeft(k)\n * var param_4 = obj.cursorRight(k)\n */",
+    "C#": "public class TextEditor {\n\n    public TextEditor() {\n        \n    }\n    \n    public void AddText(string text) {\n        \n    }\n    \n    public int DeleteText(int k) {\n        \n    }\n    \n    public string CursorLeft(int k) {\n        \n    }\n    \n    public string CursorRight(int k) {\n        \n    }\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * TextEditor obj = new TextEditor();\n * obj.AddText(text);\n * int param_2 = obj.DeleteText(k);\n * string param_3 = obj.CursorLeft(k);\n * string param_4 = obj.CursorRight(k);\n */",
+    "C": "\n\n\ntypedef struct {\n    \n} TextEditor;\n\n\nTextEditor* textEditorCreate() {\n    \n}\n\nvoid textEditorAddText(TextEditor* obj, char* text) {\n    \n}\n\nint textEditorDeleteText(TextEditor* obj, int k) {\n    \n}\n\nchar* textEditorCursorLeft(TextEditor* obj, int k) {\n    \n}\n\nchar* textEditorCursorRight(TextEditor* obj, int k) {\n    \n}\n\nvoid textEditorFree(TextEditor* obj) {\n    \n}\n\n/**\n * Your TextEditor struct will be instantiated and called as such:\n * TextEditor* obj = textEditorCreate();\n * textEditorAddText(obj, text);\n \n * int param_2 = textEditorDeleteText(obj, k);\n \n * char* param_3 = textEditorCursorLeft(obj, k);\n \n * char* param_4 = textEditorCursorRight(obj, k);\n \n * textEditorFree(obj);\n*/",
+    "Go": "type TextEditor struct {\n    \n}\n\n\nfunc Constructor() TextEditor {\n    \n}\n\n\nfunc (this *TextEditor) AddText(text string)  {\n    \n}\n\n\nfunc (this *TextEditor) DeleteText(k int) int {\n    \n}\n\n\nfunc (this *TextEditor) CursorLeft(k int) string {\n    \n}\n\n\nfunc (this *TextEditor) CursorRight(k int) string {\n    \n}\n\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * obj := Constructor();\n * obj.AddText(text);\n * param_2 := obj.DeleteText(k);\n * param_3 := obj.CursorLeft(k);\n * param_4 := obj.CursorRight(k);\n */",
+    "Kotlin": "class TextEditor() {\n\n    fun addText(text: String) {\n        \n    }\n\n    fun deleteText(k: Int): Int {\n        \n    }\n\n    fun cursorLeft(k: Int): String {\n        \n    }\n\n    fun cursorRight(k: Int): String {\n        \n    }\n\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * var obj = TextEditor()\n * obj.addText(text)\n * var param_2 = obj.deleteText(k)\n * var param_3 = obj.cursorLeft(k)\n * var param_4 = obj.cursorRight(k)\n */",
+    "Swift": "\nclass TextEditor {\n\n    init() {\n        \n    }\n    \n    func addText(_ text: String) {\n        \n    }\n    \n    func deleteText(_ k: Int) -> Int {\n        \n    }\n    \n    func cursorLeft(_ k: Int) -> String {\n        \n    }\n    \n    func cursorRight(_ k: Int) -> String {\n        \n    }\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * let obj = TextEditor()\n * obj.addText(text)\n * let ret_2: Int = obj.deleteText(k)\n * let ret_3: String = obj.cursorLeft(k)\n * let ret_4: String = obj.cursorRight(k)\n */",
+    "Rust": "struct TextEditor {\n\n}\n\n\n/** \n * `&self` means the method takes an immutable reference.\n * If you need a mutable reference, change it to `&mut self` instead.\n */\nimpl TextEditor {\n\n    fn new() -> Self {\n        \n    }\n    \n    fn add_text(&self, text: String) {\n        \n    }\n    \n    fn delete_text(&self, k: i32) -> i32 {\n        \n    }\n    \n    fn cursor_left(&self, k: i32) -> String {\n        \n    }\n    \n    fn cursor_right(&self, k: i32) -> String {\n        \n    }\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * let obj = TextEditor::new();\n * obj.add_text(text);\n * let ret_2: i32 = obj.delete_text(k);\n * let ret_3: String = obj.cursor_left(k);\n * let ret_4: String = obj.cursor_right(k);\n */",
+    "Ruby": "class TextEditor\n    def initialize()\n        \n    end\n\n\n=begin\n    :type text: String\n    :rtype: Void\n=end\n    def add_text(text)\n        \n    end\n\n\n=begin\n    :type k: Integer\n    :rtype: Integer\n=end\n    def delete_text(k)\n        \n    end\n\n\n=begin\n    :type k: Integer\n    :rtype: String\n=end\n    def cursor_left(k)\n        \n    end\n\n\n=begin\n    :type k: Integer\n    :rtype: String\n=end\n    def cursor_right(k)\n        \n    end\n\n\nend\n\n# Your TextEditor object will be instantiated and called as such:\n# obj = TextEditor.new()\n# obj.add_text(text)\n# param_2 = obj.delete_text(k)\n# param_3 = obj.cursor_left(k)\n# param_4 = obj.cursor_right(k)",
+    "PHP": "class TextEditor {\n    /**\n     */\n    function __construct() {\n        \n    }\n  \n    /**\n     * @param String $text\n     * @return NULL\n     */\n    function addText($text) {\n        \n    }\n  \n    /**\n     * @param Integer $k\n     * @return Integer\n     */\n    function deleteText($k) {\n        \n    }\n  \n    /**\n     * @param Integer $k\n     * @return String\n     */\n    function cursorLeft($k) {\n        \n    }\n  \n    /**\n     * @param Integer $k\n     * @return String\n     */\n    function cursorRight($k) {\n        \n    }\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * $obj = TextEditor();\n * $obj->addText($text);\n * $ret_2 = $obj->deleteText($k);\n * $ret_3 = $obj->cursorLeft($k);\n * $ret_4 = $obj->cursorRight($k);\n */",
+    "Dart": "class TextEditor {\n\n  TextEditor() {\n    \n  }\n  \n  void addText(String text) {\n    \n  }\n  \n  int deleteText(int k) {\n    \n  }\n  \n  String cursorLeft(int k) {\n    \n  }\n  \n  String cursorRight(int k) {\n    \n  }\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * TextEditor obj = TextEditor();\n * obj.addText(text);\n * int param2 = obj.deleteText(k);\n * String param3 = obj.cursorLeft(k);\n * String param4 = obj.cursorRight(k);\n */",
+    "Scala": "class TextEditor() {\n\n    def addText(text: String): Unit = {\n        \n    }\n\n    def deleteText(k: Int): Int = {\n        \n    }\n\n    def cursorLeft(k: Int): String = {\n        \n    }\n\n    def cursorRight(k: Int): String = {\n        \n    }\n\n}\n\n/**\n * Your TextEditor object will be instantiated and called as such:\n * val obj = new TextEditor()\n * obj.addText(text)\n * val param_2 = obj.deleteText(k)\n * val param_3 = obj.cursorLeft(k)\n * val param_4 = obj.cursorRight(k)\n */",
+    "Elixir": "defmodule TextEditor do\n  @spec init_() :: any\n  def init_() do\n    \n  end\n\n  @spec add_text(text :: String.t) :: any\n  def add_text(text) do\n    \n  end\n\n  @spec delete_text(k :: integer) :: integer\n  def delete_text(k) do\n    \n  end\n\n  @spec cursor_left(k :: integer) :: String.t\n  def cursor_left(k) do\n    \n  end\n\n  @spec cursor_right(k :: integer) :: String.t\n  def cursor_right(k) do\n    \n  end\nend\n\n# Your functions will be called as such:\n# TextEditor.init_()\n# TextEditor.add_text(text)\n# param_2 = TextEditor.delete_text(k)\n# param_3 = TextEditor.cursor_left(k)\n# param_4 = TextEditor.cursor_right(k)\n\n# TextEditor.init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Erlang": "-spec text_editor_init_() -> any().\ntext_editor_init_() ->\n  .\n\n-spec text_editor_add_text(Text :: unicode:unicode_binary()) -> any().\ntext_editor_add_text(Text) ->\n  .\n\n-spec text_editor_delete_text(K :: integer()) -> integer().\ntext_editor_delete_text(K) ->\n  .\n\n-spec text_editor_cursor_left(K :: integer()) -> unicode:unicode_binary().\ntext_editor_cursor_left(K) ->\n  .\n\n-spec text_editor_cursor_right(K :: integer()) -> unicode:unicode_binary().\ntext_editor_cursor_right(K) ->\n  .\n\n\n%% Your functions will be called as such:\n%% text_editor_init_(),\n%% text_editor_add_text(Text),\n%% Param_2 = text_editor_delete_text(K),\n%% Param_3 = text_editor_cursor_left(K),\n%% Param_4 = text_editor_cursor_right(K),\n\n%% text_editor_init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Racket": "(define text-editor%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; add-text : string? -> void?\n    (define/public (add-text text)\n      )\n    ; delete-text : exact-integer? -> exact-integer?\n    (define/public (delete-text k)\n      )\n    ; cursor-left : exact-integer? -> string?\n    (define/public (cursor-left k)\n      )\n    ; cursor-right : exact-integer? -> string?\n    (define/public (cursor-right k)\n      )))\n\n;; Your text-editor% object will be instantiated and called as such:\n;; (define obj (new text-editor%))\n;; (send obj add-text text)\n;; (define param_2 (send obj delete-text k))\n;; (define param_3 (send obj cursor-left k))\n;; (define param_4 (send obj cursor-right k))"
+  },
+  "_internal": {
+    "methodName": "",
+    "params": []
+  },
+  "verified": false
 }

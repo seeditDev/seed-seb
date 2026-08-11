@@ -1,106 +1,333 @@
 {
   "questionId": "Q1801",
-  "title": "Chef Finds Safe States",
-  "slug": "chef-finds-safe-states",
+  "title": "Count of Orders in the Backlog",
+  "slug": "number-of-orders-in-the-backlog",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Graphs",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Graph Traversal",
-      "Graphs",
-      "BFS"
+      "array",
+      "heap-priority-queue",
+      "simulation"
     ],
     "companyTags": [],
     "topicTags": [
-      "Graphs"
-    ]
+      "array",
+      "heap-priority-queue",
+      "simulation"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Chef has a directed graph consisting of nnn nodes, numbered from 000 to n\u22121n-1n\u22121. Each node may have edges directing to other nodes, forming paths through the graph. \n\nChef wants to find all the nodes from which every possible path eventually leads to a terminal node \u2014 a node with no outgoing edges \u2014 or another safe node. Such nodes are called \"safe nodes\" because starting from them, Chef will never get stuck in a cycle.\n\nHelp Chef by identifying all these safe nodes in the graph. Chef needs the list of safe nodes sorted in ascending order so that he can analyze his graph efficiently.\n\nFunction DeclarationFunction NamefindSafeNodesfindSafeNodesfindSafeNodes - This function identifies all nodes in a directed graph that are eventually safe, meaning no path starting from these nodes leads to a cycle.\n\nParameters\ndirectedGraphdirectedGraphdirectedGraph : A list where each element represents a node and contains an array of integers indicating the nodes it directs to.\nThe graph is represented as an adjacency list with node indices ranging from 000 to graphNodeCount\u22121graphNodeCount - 1graphNodeCount\u22121.\nReturn Value\nReturns an array containing all safe nodes in ascending order.\nEach element represents a node index that is eventually safe.\nThe output list is sorted in ascending order.\nConstraints\n1\u2264n\u22641041 \\leq n \\leq 10^41\u2264n\u2264104\n0\u2264directedGraph[i].size()\u2264n0 \\leq \\text{directedGraph}[i].\\text{size}() \\leq n0\u2264directedGraph[i].size()\u2264n\n0\u2264directedGraph[i][j]\u2264n\u221210 \\leq \\text{directedGraph}[i][j] \\leq n - 10\u2264directedGraph[i][j]\u2264n\u22121\nEach `directedGraph[i]` is sorted in strictly increasing order.\nThe graph may contain self-loops.\nThe total number of edges in the graph is in the range [1,4\u00d7104][1, 4 \\times 10^4][1,4\u00d7104].\n\nInput Format\n\nThe first line contains an integer TTT \u2014 number of test cases:\nFor each test case:\nThe first line contains an integer nnn \u2014 number of nodes.\nThe next nnn lines describe the graph:\nEach line contains the adjacency list of node i in the format: \n\n[u1 v1] \n\n[u2 v2] \n\n...\n\n\nOutput Format\nPrint all safe nodes of the first test case only, in ascending order, separated by spaces.",
+    "problemStatement": "You receive a 2D integer array `orders`, where each `orders[i] = [pricei, amounti, orderTypei]` denotes that `amounti`orders have been placed of type `orderTypei` at the price `pricei`. The `orderTypei` is:\n\n* `0` if it is a batch of `buy` orders, or\n* `1` if it is a batch of `sell` orders.\n\nKeep in mind that `orders[i]` represents a batch of `amounti` independent orders with the same price and order type. All orders represented by `orders[i]` will be placed before all orders represented by `orders[i+1]` for all valid `i`.\n\nThere is a **backlog** that is composed of orders that have not been executed. The backlog is initially empty. When an order is placed, the following happens:\n\n* If the order is a `buy` order, you look at the `sell` order with the **smallest** price in the backlog. If that `sell` order's price is **smaller than or equal to** the current `buy` order's price, they will match and be executed, and that `sell` order will be removed from the backlog. Else, the `buy` order is added to the backlog.\n* Vice versa, if the order is a `sell` order, you look at the `buy` order with the **largest** price in the backlog. If that `buy` order's price is **larger than or equal to** the current `sell` order's price, they will match and be executed, and that `buy` order will be removed from the backlog. Else, the `sell` order is added to the backlog.\n\nOutput *the total **amount** of orders in the backlog after placing all the orders from the input*. Since this number can be large, output it **modulo** `109 + 7`.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/03/11/ex1.png)\n\n```\n\r\nInput: orders = [[10,5,0],[15,2,1],[25,1,1],[30,4,0]]\r\nOutput: 6\r\nExplanation: Here is what happens with the orders:\r\n- 5 orders of type buy with price 10 are placed. There are no sell orders, so the 5 orders are added to the backlog.\r\n- 2 orders of type sell with price 15 are placed. There are no buy orders with prices larger than or equal to 15, so the 2 orders are added to the backlog.\r\n- 1 order of type sell with price 25 is placed. There are no buy orders with prices larger than or equal to 25 in the backlog, so this order is added to the backlog.\r\n- 4 orders of type buy with price 30 are placed. The first 2 orders are matched with the 2 sell orders of the least price, which is 15 and these 2 sell orders are removed from the backlog. The 3rd order is matched with the sell order of the least price, which is 25 and this sell order is removed from the backlog. Then, there are no more sell orders in the backlog, so the 4th order is added to the backlog.\r\nFinally, the backlog has 5 buy orders with price 10, and 1 buy order with price 30. So the total number of orders in the backlog is 6.\r\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/03/11/ex2.png)\n\n```\n\r\nInput: orders = [[7,1000000000,1],[15,3,0],[5,999999995,0],[5,1,1]]\r\nOutput: 999999984\r\nExplanation: Here is what happens with the orders:\r\n- 109 orders of type sell with price 7 are placed. There are no buy orders, so the 109 orders are added to the backlog.\r\n- 3 orders of type buy with price 15 are placed. They are matched with the 3 sell orders with the least price which is 7, and those 3 sell orders are removed from the backlog.\r\n- 999999995 orders of type buy with price 5 are placed. The least price of a sell order is 7, so the 999999995 orders are added to the backlog.\r\n- 1 order of type sell with price 5 is placed. It is matched with the buy order of the highest price, which is 5, and that buy order is removed from the backlog.\r\nFinally, the backlog has (1000000000-3) sell orders with price 7, and (999999995-1) buy orders with price 5. So the total number of orders = 1999999991, which is equal to 999999984 % (109 + 7).\r\n```\n\n**Constraints:**\n\n* `1 <= orders.length <= 105`\n* `orders[i].length == 3`\n* `1 <= pricei, amounti <= 109`\n* `orderTypei` is either `0` or `1`.",
     "constraints": [
-      "1 <= T <= 10^4",
-      "1 <= n <= 10^4",
-      "0 <= directedGraph[i].size() <= n",
-      "0 <= directedGraph[i][j] <= n - 1"
+      "None"
     ],
-    "inputFormat": "First line contains T, the number of test cases. Each test case contains a single integer n, the number of nodes in the graph. The next n lines describe the graph: each line contains the adjacency list of node i in the format: [u1, v1] [u2, v2] ...",
-    "outputFormat": "For each test case, print all safe nodes of the graph in ascending order, separated by spaces.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "1\n4\n0 1\n1 2\n2 3\n3",
-        "output": "0 1 2 3",
-        "explanation": "All nodes are safe because they can reach the terminal node 3."
+        "type": "reg",
+        "input": "orders = [[10,5,0],[15,2,1],[25,1,1],[30,4,0]]",
+        "output": "6",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n5\n0 1\n1 2\n2 3\n3 4\n4",
-        "output": "0 1 2 3 4",
-        "explanation": "All nodes are safe because they can reach the terminal node 4."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n3\n0 1\n1 2\n2 0",
-        "output": "",
-        "explanation": "No nodes are safe because they are all part of a cycle."
+        "type": "reg",
+        "input": "orders = [[7,1000000000,1],[15,3,0],[5,999999995,0],[5,1,1]]",
+        "output": "999999984",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1\n0",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n10\n0 1\n1 2\n2 3\n3 4\n4 5\n5 6\n6 7\n7 8\n8 9\n9",
-        "expectedOutput": "0 1 2 3 4 5 6 7 8 9",
-        "weight": 2
-      },
-      {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n5\n0 0\n1 1\n2 2\n3 3\n4 4",
-        "expectedOutput": "0 1 2 3 4",
-        "weight": 2
-      },
-      {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n5\n0 1\n1 2\n2 3\n3 4\n4 0",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "1\n10\n0 1\n1 2\n2 3\n3 4\n4 5\n5 6\n6 7\n7 8\n8 9\n9 0",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +338,65 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to identify terminal nodes (nodes with no outgoing edges) and then perform a BFS traversal from each terminal node to mark all reachable nodes as safe. This approach works because a node is safe if and only if it can reach a terminal node. The time complexity is O(T * (n + m)) where n is the number of nodes and m is the number of edges, and the space complexity is O(n) for storing the safe nodes.",
-    "timeComplexity": "O(T * (n + m))",
-    "spaceComplexity": "O(n)",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n#define MAX_NODES 10000\n\n// Structure to represent a graph\ntypedef struct {\n    int numNodes;\n    int** adjLists;\n} Graph;\n\n// Function to create a graph\nGraph* createGraph(int numNodes) {\n    Graph* graph = (Graph*) malloc(sizeof(Graph));\n    graph->numNodes = numNodes;\n    graph->adjLists = (int**) malloc(numNodes * sizeof(int*));\n    for (int i = 0; i < numNodes; i++) {\n        graph->adjLists[i] = NULL;\n    }\n    return graph;\n}\n\n// Function to add an edge to the graph\nvoid addEdge(Graph* graph, int src, int dest) {\n    int* newList = (int*) malloc(2 * sizeof(int));\n    newList[0] = dest;\n    newList[1] = -1; // sentinel value to mark end of list\n    if (graph->adjLists[src] == NULL) {\n        graph->adjLists[src] = newList;\n    } else {\n        int* current = graph->adjLists[src];\n        while (current[1] != -1) {\n            current += 2;\n        }\n        current[1] = dest;\n    }\n}\n\n// Function to find safe nodes in the graph\nvoid findSafeNodes(Graph* graph) {\n    bool* safe = (bool*) malloc(graph->numNodes * sizeof(bool));\n    for (int i = 0; i < graph->numNodes; i++) {\n        safe[i] = false;\n    }\n    // Mark terminal nodes as safe\n    for (int i = 0; i < graph->numNodes; i++) {\n        if (graph->adjLists[i] == NULL) {\n            safe[i] = true;\n        }\n    }\n    // Perform BFS traversal from each terminal node\n    for (int i = 0; i < graph->numNodes; i++) {\n        if (safe[i]) {\n            int* queue = (int*) malloc(graph->numNodes * sizeof(int));\n            int front = 0, rear = 0;\n            queue[rear++] = i;\n            while (front < rear) {\n                int node = queue[front++];\n                int* adjList = graph->adjLists[node];\n                while (adjList != NULL && adjList[0] != -1) {\n                    int neighbor = adjList[0];\n                    if (!safe[neighbor]) {\n                        safe[neighbor] = true;\n                        queue[rear++] = neighbor;\n                    }\n                    adjList += 2;\n                }\n            }\n            free(queue);\n        }\n    }\n    // Print safe nodes\n    for (int i = 0; i < graph->numNodes; i++) {\n        if (safe[i]) {\n            printf(\"%d \", i);\n        }\n    }\n    printf(\"\\n\");\n    free(safe);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int n;\n        scanf(\"%d\", &n);\n        Graph* graph = createGraph(n);\n        for (int i = 0; i < n; i++) {\n            int numEdges;\n            scanf(\"%d\", &numEdges);\n            for (int j = 0; j < numEdges; j++) {\n                int dest;\n                scanf(\"%d\", &dest);\n                addEdge(graph, i, dest);\n            }\n        }\n        findSafeNodes(graph);\n        // Free graph memory\n        for (int i = 0; i < n; i++) {\n            free(graph->adjLists[i]);\n        }\n        free(graph->adjLists);\n        free(graph);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <vector>\n#include <queue>\nusing namespace std;\n\n// Structure to represent a graph\nstruct Graph {\n    int numNodes;\n    vector<vector<int>> adjLists;\n};\n\n// Function to create a graph\nGraph createGraph(int numNodes) {\n    Graph graph;\n    graph.numNodes = numNodes;\n    graph.adjLists.resize(numNodes);\n    return graph;\n}\n\n// Function to add an edge to the graph\nvoid addEdge(Graph& graph, int src, int dest) {\n    graph.adjLists[src].push_back(dest);\n}\n\n// Function to find safe nodes in the graph\nvoid findSafeNodes(Graph& graph) {\n    vector<bool> safe(graph.numNodes, false);\n    // Mark terminal nodes as safe\n    for (int i = 0; i < graph.numNodes; i++) {\n        if (graph.adjLists[i].empty()) {\n            safe[i] = true;\n        }\n    }\n    // Perform BFS traversal from each terminal node\n    for (int i = 0; i < graph.numNodes; i++) {\n        if (safe[i]) {\n            queue<int> q;\n            q.push(i);\n            while (!q.empty()) {\n                int node = q.front();\n                q.pop();\n                for (int neighbor : graph.adjLists[node]) {\n                    if (!safe[neighbor]) {\n                        safe[neighbor] = true;\n                        q.push(neighbor);\n                    }\n                }\n            }\n        }\n    }\n    // Print safe nodes\n    for (int i = 0; i < graph.numNodes; i++) {\n        if (safe[i]) {\n            cout << i << \" \";\n        }\n    }\n    cout << endl;\n}\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int n;\n        cin >> n;\n        Graph graph = createGraph(n);\n        for (int i = 0; i < n; i++) {\n            int numEdges;\n            cin >> numEdges;\n            for (int j = 0; j < numEdges; j++) {\n                int dest;\n                cin >> dest;\n                addEdge(graph, i, dest);\n            }\n        }\n        findSafeNodes(graph);\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\nimport java.util.Queue;\nimport java.util.LinkedList;\npublic class Main {\n    // Structure to represent a graph\n    static class Graph {\n        int numNodes;\n        int[][] adjLists;\n        Graph(int numNodes) {\n            this.numNodes = numNodes;\n            adjLists = new int[numNodes][];\n        }\n    }\n\n    // Function to create a graph\n    static Graph createGraph(int numNodes) {\n        return new Graph(numNodes);\n    }\n\n    // Function to add an edge to the graph\n    static void addEdge(Graph graph, int src, int dest) {\n        int[] newList = new int[1];\n        newList[0] = dest;\n        if (graph.adjLists[src] == null) {\n            graph.adjLists[src] = newList;\n        } else {\n            int[] current = graph.adjLists[src];\n            int[] newList2 = new int[current.length + 1];\n            System.arraycopy(current, 0, newList2, 0, current.length);\n            newList2[current.length] = dest;\n            graph.adjLists[src] = newList2;\n        }\n    }\n\n    // Function to find safe nodes in the graph\n    static void findSafeNodes(Graph graph) {\n        boolean[] safe = new boolean[graph.numNodes];\n        // Mark terminal nodes as safe\n        for (int i = 0; i < graph.numNodes; i++) {\n            if (graph.adjLists[i] == null) {\n                safe[i] = true;\n            }\n        }\n        // Perform BFS traversal from each terminal node\n        for (int i = 0; i < graph.numNodes; i++) {\n            if (safe[i]) {\n                Queue<Integer> q = new LinkedList<>();\n                q.add(i);\n                while (!q.isEmpty()) {\n                    int node = q.poll();\n                    if (graph.adjLists[node] != null) {\n                        for (int neighbor : graph.adjLists[node]) {\n                            if (!safe[neighbor]) {\n                                safe[neighbor] = true;\n                                q.add(neighbor);\n                            }\n                        }\n                    }\n                }\n            }\n        }\n        // Print safe nodes\n        for (int i = 0; i < graph.numNodes; i++) {\n            if (safe[i]) {\n                System.out.print(i + \" \");\n            }\n        }\n        System.out.println();\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int n = sc.nextInt();\n            Graph graph = createGraph(n);\n            for (int i = 0; i < n; i++) {\n                int numEdges = sc.nextInt();\n                for (int j = 0; j < numEdges; j++) {\n                    int dest = sc.nextInt();\n                    addEdge(graph, i, dest);\n                }\n            }\n            findSafeNodes(graph);\n        }\n    }\n}",
-      "Python3": "from collections import deque\n\n# Structure to represent a graph\nclass Graph:\n    def __init__(self, numNodes):\n        self.numNodes = numNodes\n        self.adjLists = [[] for _ in range(numNodes)]\n\n# Function to create a graph\ndef createGraph(numNodes):\n    return Graph(numNodes)\n\n# Function to add an edge to the graph\ndef addEdge(graph, src, dest):\n    graph.adjLists[src].append(dest)\n\n# Function to find safe nodes in the graph\ndef findSafeNodes(graph):\n    safe = [False] * graph.numNodes\n    # Mark terminal nodes as safe\n    for i in range(graph.numNodes):\n        if not graph.adjLists[i]:\n            safe[i] = True\n    # Perform BFS traversal from each terminal node\n    for i in range(graph.numNodes):\n        if safe[i]:\n            q = deque([i])\n            while q:\n                node = q.popleft()\n                for neighbor in graph.adjLists[node]:\n                    if not safe[neighbor]:\n                        safe[neighbor] = True\n                        q.append(neighbor)\n    # Print safe nodes\n    for i in range(graph.numNodes):\n        if safe[i]:\n            print(i, end=\" \")\n    print()\n\n# Read input\nT = int(input())\nwhile T > 0:\n    n = int(input())\n    graph = createGraph(n)\n    for i in range(n):\n        numEdges = int(input())\n        for j in range(numEdges):\n            dest = int(input())\n            addEdge(graph, i, dest)\n    findSafeNodes(graph)\n    T -= 1",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\n// Structure to represent a graph\nclass Graph {\n    constructor(numNodes) {\n        this.numNodes = numNodes;\n        this.adjLists = Array(numNodes).fill().map(() => []);\n    }\n}\n\n// Function to create a graph\nfunction createGraph(numNodes) {\n    return new Graph(numNodes);\n}\n\n// Function to add an edge to the graph\nfunction addEdge(graph, src, dest) {\n    graph.adjLists[src].push(dest);\n}\n\n// Function to find safe nodes in the graph\nfunction findSafeNodes(graph) {\n    const safe = Array(graph.numNodes).fill(false);\n    // Mark terminal nodes as safe\n    for (let i = 0; i < graph.numNodes; i++) {\n        if (graph.adjLists[i].length === 0) {\n            safe[i] = true;\n        }\n    }\n    // Perform BFS traversal from each terminal node\n    for (let i = 0; i < graph.numNodes; i++) {\n        if (safe[i]) {\n            const q = [i];\n            while (q.length > 0) {\n                const node = q.shift();\n                for (const neighbor of graph.adjLists[node]) {\n                    if (!safe[neighbor]) {\n                        safe[neighbor] = true;\n                        q.push(neighbor);\n                    }\n                }\n            }\n        }\n    }\n    // Print safe nodes\n    for (let i = 0; i < graph.numNodes; i++) {\n        if (safe[i]) {\n            process.stdout.write(`${i} `);\n        }\n    }\n    process.stdout.write('\\n');\n}\n\n// Read input\nlet T = parseInt(lines[idx++]);\nwhile (T > 0) {\n    const n = parseInt(lines[idx++]);\n    const graph = createGraph(n);\n    for (let i = 0; i < n; i++) {\n        const numEdges = parseInt(lines[idx++]);\n        for (let j = 0; j < numEdges; j++) {\n            const dest = parseInt(lines[idx++]);\n            addEdge(graph, i, dest);\n        }\n    }\n    findSafeNodes(graph);\n    T--;\n}"
+      "Python3": "# Time:  O(nlogn)\n# Space: O(n)\n\nimport heapq\n\n\nclass Solution(object):\n    def getNumberOfBacklogOrders(self, orders):\n        \"\"\"\n        :type orders: List[List[int]]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9 + 7\n        buy, sell  = [], []  # max_heap, min_heap\n        for p, a, t in orders:\n            if t == 0:\n                heapq.heappush(buy, [-p, a])\n            else:\n                heapq.heappush(sell, [p, a])\n            while sell and buy and sell[0][0] <= -buy[0][0]:\n                k = min(buy[0][1], sell[0][1])\n                tmp = heapq.heappop(buy)\n                tmp[1] -= k\n                if tmp[1]:\n                    heapq.heappush(buy, tmp)\n                tmp = heapq.heappop(sell)\n                tmp[1] -= k\n                if tmp[1]:\n                    heapq.heappush(sell, tmp)\n        return reduce(lambda x, y: (x+y) % MOD, (a for _, a in buy + sell))"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int getNumberOfBacklogOrders(vector<vector<int>>& orders) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int getNumberOfBacklogOrders(int[][] orders) {\n        \n    }\n}",
+    "Python3": "# Time:  O(nlogn)\n# Space: O(n)\n\nimport heapq\n\n\nclass Solution(object):\n    def getNumberOfBacklogOrders(self, orders):\n        \"\"\"\n        :type orders: List[List[int]]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9 + 7\n        buy, sell  = [], []  # max_heap, min_heap\n        for p, a, t in orders:\n            if t == 0:\n                heapq.heappush(buy, [-p, a])\n            else:\n                heapq.heappush(sell, [p, a])\n            while sell and buy and sell[0][0] <= -buy[0][0]:\n                k = min(buy[0][1], sell[0][1])\n                tmp = heapq.heappop(buy)\n                tmp[1] -= k\n                if tmp[1]:\n                    heapq.heappush(buy, tmp)\n                tmp = heapq.heappop(sell)\n                tmp[1] -= k\n                if tmp[1]:\n                    heapq.heappush(sell, tmp)\n        return reduce(lambda x, y: (x+y) % MOD, (a for _, a in buy + sell))",
+    "Python": "class Solution(object):\n    def getNumberOfBacklogOrders(self, orders):\n        \"\"\"\n        :type orders: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} orders\n * @return {number}\n */\nvar getNumberOfBacklogOrders = function(orders) {\n    \n};",
+    "TypeScript": "function getNumberOfBacklogOrders(orders: number[][]): number {\n\n};",
+    "C#": "public class Solution {\n    public int GetNumberOfBacklogOrders(int[][] orders) {\n        \n    }\n}",
+    "C": "\n\nint getNumberOfBacklogOrders(int** orders, int ordersSize, int* ordersColSize){\n\n}",
+    "Go": "func getNumberOfBacklogOrders(orders [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun getNumberOfBacklogOrders(orders: Array<IntArray>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func getNumberOfBacklogOrders(_ orders: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn get_number_of_backlog_orders(orders: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} orders\n# @return {Integer}\ndef get_number_of_backlog_orders(orders)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $orders\n     * @return Integer\n     */\n    function getNumberOfBacklogOrders($orders) {\n        \n    }\n}",
+    "Scala": "object Solution {\n    def getNumberOfBacklogOrders(orders: Array[Array[Int]]): Int = {\n        \n    }\n}",
+    "Racket": "(define/contract (get-number-of-backlog-orders orders)\n  (-> (listof (listof exact-integer?)) exact-integer?)\n\n  )"
+  },
+  "_internal": {
+    "methodName": "getNumberOfBacklogOrders",
+    "params": [
+      {
+        "name": "orders",
+        "type": "integer[][]"
+      }
+    ]
+  },
+  "verified": false
 }

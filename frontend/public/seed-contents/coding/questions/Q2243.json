@@ -1,107 +1,331 @@
 {
   "questionId": "Q2243",
-  "title": "Backup Functions",
-  "slug": "backup-functions",
+  "title": "Compute Digit Sum of a String",
+  "slug": "calculate-digit-sum-of-a-string",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Graphs",
-    "difficulty": "Hard",
+    "category": "Strings",
+    "difficulty": "Easy",
     "isPremium": false,
     "tags": [
-      "Maximum Weighted Matching",
-      "Graphs",
-      "Graph Algorithm"
+      "string",
+      "simulation"
     ],
     "companyTags": [],
     "topicTags": [
-      "Graphs"
-    ]
+      "string",
+      "simulation"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "One unavoidable problem with running a restaurant is that occasionally a menu item cannot be prepared. This can be caused by a variety of reasons such as missing ingredients or malfunctioning equipment.\n\n\n\nThere is an additional problem with such situations. A customer who has spent many minutes deciding between menu items can get quite annoyed when they place the order and the server tells them the item is not available. To mitigate this effect, the Chef declares that all servers must have what he calls a \"backup function\". This is a function f from menu items to menu items. For each menu item x, f(x) is an alternative menu item that the server may suggest to the customer in the event the customer requests menu item x when x is not available.\n\n\n\nOf course, if a given item is not available then some other items make better suggestions than others. So, for some pairs of items x and y the Chef has determined a numeric value describing the effectiveness of the assignment f(x) = y. Higher values indicate the proposed substitute is similar to the original and lower values indicate the proposed substitute is not very similar to the original. Such effectiveness values are symmetric meaning that if the effectiveness of assignment f(x) = y is v, then the effectiveness of the assignment f(y) = x is also v.\n\n\n\nYou will be given a list of pairs of menu items. Each such pair will come with an associated effectiveness value. You are to compute a backup function f from these pairs. However, there is one additional constraint. For personal reasons, the Chef is opposed to using two items as backups for each other. Thus, for any two menu items x and y, it cannot be that f(x) = y and f(y) = x. Your goal is to compute a backup function of maximum possible quality. The quality of the backup function is simply defined as the sum of the effectiveness values of the assignments f(a) for each item a.",
+    "problemStatement": "You receive a string `s` consisting of digits and an integer `k`.\n\nA **round** can be completed if the length of `s` is greater than `k`. In one round, do the following:\n\n1. **Divide** `s` into **consecutive groups** of size `k` such that the first `k` characters are in the first group, the next `k` characters are in the second group, and so on. **Note** that the size of the last group can be smaller than `k`.\n2. **Replace** each group of `s` with a string representing the sum of all its digits. As an example, `\"346\"` is replaced with `\"13\"` because `3 + 4 + 6 = 13`.\n3. **Merge** consecutive groups together to form a new string. If the length of the string is greater than `k`, repeat from step `1`.\n\nOutput `s` *after all rounds have been completed*.\n\n**Example 1:**\n\n```\nInput: s = \"11111222223\", k = 3\nOutput: \"135\"\nExplanation: \n- For the first round, we divide s into groups of size 3: \"111\", \"112\", \"222\", and \"23\".\n  ​​​​​Then we calculate the digit sum of each group: 1 + 1 + 1 = 3, 1 + 1 + 2 = 4, 2 + 2 + 2 = 6, and 2 + 3 = 5. \n  So, s becomes \"3\" + \"4\" + \"6\" + \"5\" = \"3465\" after the first round.\n- For the second round, we divide s into \"346\" and \"5\".\n  Then we calculate the digit sum of each group: 3 + 4 + 6 = 13, 5 = 5. \n  So, s becomes \"13\" + \"5\" = \"135\" after second round. \nNow, s.length <= k, so we return \"135\" as the answer.\n```\n\n**Example 2:**\n\n```\nInput: s = \"00000000\", k = 3\nOutput: \"000\"\nExplanation: \nWe divide s into \"000\", \"000\", and \"00\".\nThen we calculate the digit sum of each group: 0 + 0 + 0 = 0, 0 + 0 + 0 = 0, and 0 + 0 = 0. \ns becomes \"0\" + \"0\" + \"0\" = \"000\", whose length is equal to k, so we return \"000\".\n```\n\n**Constraints:**\n\n* `1 <= s.length <= 100`\n* `2 <= k <= 100`\n* `s` is composed of digits only.",
     "constraints": [
-      "1 \u2264 T \u2264 30",
-      "3 \u2264 N \u2264 10,000",
-      "3 \u2264 M \u2264 50,000",
-      "1 \u2264 a < b \u2264 N",
-      "|v| \u2264 100,000"
+      "None"
     ],
-    "inputFormat": "The first line contains T, the number of test cases. Each test case begins with two integers N and M where 3 \u2264 N \u2264 10,000 and 3 \u2264 M \u2264 50,000. N is the number of items in the menu, and M is the number of pairs of items with their associated effectiveness values. M lines follow, each containing three integers a, b, and v. Here 1 \u2264 a < b \u2264 N and |v| \u2264 100,000. Such a triple indicates that f(a) = b or f(b) = a (but not both) may be used in a backup function.",
-    "outputFormat": "For each test case, print the maximum possible quality of a backup function f that does not assign any pair of items to each other. If no backup function can be constructed from the given input pairs, then simply output 'impossible'.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "3\n3 3\n1 2 1\n2 3 2\n1 3 3\n6 7\n1 2 0\n1 3 0\n1 4 0\n2 3 0\n2 4 0\n3 4 0\n5 6 0\n4 6\n1 2 1\n1 3 -2\n2 3 4\n1 4 -8\n2 4 16\n3 4 -32",
-        "output": "6\nimpossible\n19",
-        "explanation": "For the first test case, the maximum weighted matching is {1, 2}, {2, 3}, {3, 1} with a total weight of 6. For the second test case, there is no possible matching. For the third test case, the maximum weighted matching is {1, 2}, {2, 3}, {3, 1}, {4, 2} with a total weight of 19."
+        "type": "reg",
+        "input": "s = \"11111222223\", k = 3",
+        "output": "\"135\"",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n4 6\n1 2 1\n1 3 2\n1 4 3\n2 3 4\n2 4 5\n3 4 6",
-        "output": "21",
-        "explanation": "The maximum weighted matching is {1, 4}, {2, 3} with a total weight of 21."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n5 10\n1 2 1\n1 3 2\n1 4 3\n1 5 4\n2 3 5\n2 4 6\n2 5 7\n3 4 8\n3 5 9",
-        "output": "impossible",
-        "explanation": "There is no possible matching for this test case."
+        "type": "reg",
+        "input": "s = \"00000000\", k = 3",
+        "output": "\"000\"",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n3 3\n1 2 1\n2 3 2\n1 3 3",
-        "expectedOutput": "6",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n10000 50000\n1 2 100000\n1 3 99999\n1 4 99998\n1 5 99997\n1 6 99996\n1 7 99995\n1 8 99994\n1 9 99993\n1 10 99992",
-        "expectedOutput": "impossible",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n5 10\n1 2 0\n1 3 0\n1 4 0\n1 5 0\n2 3 0\n2 4 0\n2 5 0\n3 4 0\n3 5 0",
-        "expectedOutput": "impossible",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n5 10\n1 2 1\n1 3 2\n1 4 3\n1 5 4\n2 3 5\n2 4 6\n2 5 7\n3 4 8\n3 5 9",
-        "expectedOutput": "impossible",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "10\n3 3\n1 2 1\n2 3 2\n1 3 3\n6 7\n1 2 0\n1 3 0\n1 4 0\n2 3 0\n2 4 0\n3 4 0\n5 6 0\n4 6\n1 2 1\n1 3 -2\n2 3 4\n1 4 -8\n2 4 16\n3 4 -32\n4 6\n1 2 1\n1 3 2\n1 4 3\n2 3 4\n2 4 5\n3 4 6",
-        "expectedOutput": "6\nimpossible\n19\n21\nimpossible",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -112,18 +336,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use a maximum weighted matching algorithm in a graph. The graph is constructed by considering each menu item as a node and each pair of items with their effectiveness value as an edge. The maximum weighted matching algorithm will find the maximum weight matching in the graph such that no two edges share a common vertex. This matching represents the backup function with the maximum possible quality.",
-    "timeComplexity": "O(M log M) per test case due to sorting the edges, and O(T * M log M) total.",
-    "spaceComplexity": "O(N + M) for storing the graph and the matching.",
     "code": {
-      "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#define MAX_N 10000\n#define MAX_M 50000\nstruct Edge {\n    int a, b, v;\n};\nint compare(const void *a, const void *b) {\n    struct Edge *e1 = (struct Edge *)a;\n    struct Edge *e2 = (struct Edge *)b;\n    return e2->v - e1->v;\n}\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M;\n        scanf(\"%d %d\", &N, &M);\n        struct Edge edges[M];\n        for (int i = 0; i < M; i++) {\n            scanf(\"%d %d %d\", &edges[i].a, &edges[i].b, &edges[i].v);\n        }\n        qsort(edges, M, sizeof(struct Edge), compare);\n        int backup[N + 1];\n        memset(backup, -1, sizeof(backup));\n        int quality = 0;\n        for (int i = 0; i < M; i++) {\n            if (backup[edges[i].a] == -1 && backup[edges[i].b] == -1) {\n                backup[edges[i].a] = edges[i].b;\n                backup[edges[i].b] = edges[i].a;\n                quality += edges[i].v;\n            }\n        }\n        if (quality == 0) {\n            printf(\"impossible\\n\");\n        } else {\n            printf(\"%d\\n\", quality);\n        }\n    }\n    return 0;\n}",
-      "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\n#include <algorithm>\nusing namespace std;\n#define MAX_N 10000\n#define MAX_M 50000\nstruct Edge {\n    int a, b, v;\n};\nbool compare(const Edge &e1, const Edge &e2) {\n    return e2.v > e1.v;\n}\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M;\n        cin >> N >> M;\n        Edge edges[M];\n        for (int i = 0; i < M; i++) {\n            cin >> edges[i].a >> edges[i].b >> edges[i].v;\n        }\n        sort(edges, edges + M, compare);\n        int backup[N + 1];\n        fill(backup, backup + N + 1, -1);\n        int quality = 0;\n        for (int i = 0; i < M; i++) {\n            if (backup[edges[i].a] == -1 && backup[edges[i].b] == -1) {\n                backup[edges[i].a] = edges[i].b;\n                backup[edges[i].b] = edges[i].a;\n                quality += edges[i].v;\n            }\n        }\n        if (quality == 0) {\n            cout << \"impossible\" << endl;\n        } else {\n            cout << quality << endl;\n        }\n    }\n    return 0;\n}",
-      "Java": "// COMPLETE, COMPILABLE Java code\nimport java.util.Arrays;\nimport java.util.Scanner;\npublic class Main {\n    static class Edge implements Comparable<Edge> {\n        int a, b, v;\n        public Edge(int a, int b, int v) {\n            this.a = a;\n            this.b = b;\n            this.v = v;\n        }\n        @Override\n        public int compareTo(Edge o) {\n            return o.v - v;\n        }\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int N = sc.nextInt();\n            int M = sc.nextInt();\n            Edge[] edges = new Edge[M];\n            for (int i = 0; i < M; i++) {\n                edges[i] = new Edge(sc.nextInt(), sc.nextInt(), sc.nextInt());\n            }\n            Arrays.sort(edges);\n            int[] backup = new int[N + 1];\n            Arrays.fill(backup, -1);\n            int quality = 0;\n            for (int i = 0; i < M; i++) {\n                if (backup[edges[i].a] == -1 && backup[edges[i].b] == -1) {\n                    backup[edges[i].a] = edges[i].b;\n                    backup[edges[i].b] = edges[i].a;\n                    quality += edges[i].v;\n                }\n            }\n            if (quality == 0) {\n                System.out.println(\"impossible\");\n            } else {\n                System.out.println(quality);\n            }\n        }\n    }\n}",
-      "Python3": "# COMPLETE, RUNNABLE Python3 code\nimport sys\ninput = sys.stdin.readline\nT = int(input())\nfor _ in range(T):\n    N, M = map(int, input().split())\n    edges = []\n    for _ in range(M):\n        a, b, v = map(int, input().split())\n        edges.append((a, b, v))\n    edges.sort(key=lambda x: x[2], reverse=True)\n    backup = [-1] * (N + 1)\n    quality = 0\n    for a, b, v in edges:\n        if backup[a] == -1 and backup[b] == -1:\n            backup[a] = b\n            backup[b] = a\n            quality += v\n    if quality == 0:\n        print('impossible')\n    else:\n        print(quality)",
-      "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => input[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, M] = readline().split(' ').map(Number);\n    const edges = [];\n    for (let j = 0; j < M; j++) {\n        const [a, b, v] = readline().split(' ').map(Number);\n        edges.push([a, b, v]);\n    }\n    edges.sort((a, b) => b[2] - a[2]);\n    const backup = new Array(N + 1).fill(-1);\n    let quality = 0;\n    for (const [a, b, v] of edges) {\n        if (backup[a] === -1 && backup[b] === -1) {\n            backup[a] = b;\n            backup[b] = a;\n            quality += v;\n        }\n    }\n    if (quality === 0) {\n        console.log('impossible');\n    } else {\n        console.log(quality);\n    }\n}"
+      "Python3": "# Time:  O(n + n * (log10(9k)/k) + ... + k)\n#      = O((n - (log10(9k)/k)*k)/(1-log10(9k)/k))\n#      = O(n / (1-log10(9k)/k)) = O(n) for k >= 2\n# Space: O(n)\n\n# simulation\nclass Solution(object):\n    def digitSum(self, s, k):\n        \"\"\"\n        :type s: str\n        :type k: int\n        :rtype: str\n        \"\"\"\n        while len(s) > k:\n            s = \"\".join(map(str, (sum(map(int, s[i:i+k])) for i in range(0, len(s), k))))\n        return s"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    string digitSum(string s, int k) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public String digitSum(String s, int k) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n + n * (log10(9k)/k) + ... + k)\n#      = O((n - (log10(9k)/k)*k)/(1-log10(9k)/k))\n#      = O(n / (1-log10(9k)/k)) = O(n) for k >= 2\n# Space: O(n)\n\n# simulation\nclass Solution(object):\n    def digitSum(self, s, k):\n        \"\"\"\n        :type s: str\n        :type k: int\n        :rtype: str\n        \"\"\"\n        while len(s) > k:\n            s = \"\".join(map(str, (sum(map(int, s[i:i+k])) for i in range(0, len(s), k))))\n        return s",
+    "Python": "class Solution(object):\n    def digitSum(self, s, k):\n        \"\"\"\n        :type s: str\n        :type k: int\n        :rtype: str\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {string} s\n * @param {number} k\n * @return {string}\n */\nvar digitSum = function(s, k) {\n    \n};",
+    "TypeScript": "function digitSum(s: string, k: number): string {\n    \n};",
+    "C#": "public class Solution {\n    public string DigitSum(string s, int k) {\n        \n    }\n}",
+    "C": "char* digitSum(char* s, int k) {\n    \n}",
+    "Go": "func digitSum(s string, k int) string {\n    \n}",
+    "Kotlin": "class Solution {\n    fun digitSum(s: String, k: Int): String {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func digitSum(_ s: String, _ k: Int) -> String {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn digit_sum(s: String, k: i32) -> String {\n        \n    }\n}",
+    "Ruby": "# @param {String} s\n# @param {Integer} k\n# @return {String}\ndef digit_sum(s, k)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param String $s\n     * @param Integer $k\n     * @return String\n     */\n    function digitSum($s, $k) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  String digitSum(String s, int k) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def digitSum(s: String, k: Int): String = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec digit_sum(s :: String.t, k :: integer) :: String.t\n  def digit_sum(s, k) do\n    \n  end\nend",
+    "Erlang": "-spec digit_sum(S :: unicode:unicode_binary(), K :: integer()) -> unicode:unicode_binary().\ndigit_sum(S, K) ->\n  .",
+    "Racket": "(define/contract (digit-sum s k)\n  (-> string? exact-integer? string?)\n  )"
+  },
+  "_internal": {
+    "methodName": "digitSum",
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "type": "integer",
+        "name": "k"
+      }
+    ]
+  },
+  "verified": false
 }

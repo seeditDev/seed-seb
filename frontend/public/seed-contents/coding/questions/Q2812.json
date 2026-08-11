@@ -1,93 +1,346 @@
 {
   "questionId": "Q2812",
-  "title": "Garden Game",
-  "slug": "garden-game",
+  "title": "Determine the Safest Path in a Grid",
+  "slug": "find-the-safest-path-in-a-grid",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
+    "category": "Arrays",
     "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Modular Arithmetic",
-      "Cycles",
-      "Math"
+      "array",
+      "binary-search",
+      "breadth-first-search",
+      "union-find",
+      "heap-priority-queue",
+      "matrix"
     ],
     "companyTags": [],
     "topicTags": [
-      "Mathematics"
-    ]
+      "array",
+      "binary-search",
+      "breadth-first-search",
+      "union-find",
+      "heap-priority-queue",
+      "matrix"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "All bandits are afraid of Sheriff. Sheriff constantly fights crime, but when bandits lay low, he gets bored and starts to entertain himself. \n\nThis time Sheriff gathered all the bandits in his garden and ordered them to line up. After the whistle all bandits should change the order in which they stand. \n\nSheriff gave all the bandits numbers from 1 to N. For each place **i** he determined the **unique** position **j**. After whistling the bandit  staying on position **i** should run to the **j**-th position. Sheriff loved seeing how the bandits move around, and he continued whistling until the evening. He finished the game only when he noticed that the bandits are in the same order in which they were standing originally.\n\nNow the Sheriff asks the question: How many times has he whistled?\n\n&nbsp;",
+    "problemStatement": "You receive a **0-indexed** 2D matrix `grid` of size `n x n`, where `(r, c)` represents:\n\n* A cell containing a thief if `grid[r][c] = 1`\n* An empty cell if `grid[r][c] = 0`\n\nYou are initially positioned at cell `(0, 0)`. In one move, you can move to any adjacent cell in the grid, including cells containing thieves.\n\nThe **safeness factor** of a path on the grid is defined as the **smallest** manhattan distance from any cell in the path to any thief in the grid.\n\nOutput *the **largest safeness factor** of all paths leading to cell* `(n - 1, n - 1)`*.*\n\nAn **adjacent** cell of cell `(r, c)`, is one of the cells `(r, c + 1)`, `(r, c - 1)`, `(r + 1, c)` and `(r - 1, c)` if it exists.\n\nThe **Manhattan distance** between two cells `(a, b)` and `(x, y)` is equal to `|a - x| + |b - y|`, where `|val|` denotes the absolute value of val.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2023/07/02/example1.png)\n\n```\nInput: grid = [[1,0,0],[0,0,0],[0,0,1]]\nOutput: 0\nExplanation: All paths from (0, 0) to (n - 1, n - 1) go through the thieves in cells (0, 0) and (n - 1, n - 1).\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2023/07/02/example2.png)\n\n```\nInput: grid = [[0,0,1],[0,0,0],[0,0,0]]\nOutput: 2\nExplanation: The path depicted in the picture above has a safeness factor of 2 since:\n- The closest cell of the path to the thief at cell (0, 2) is cell (0, 0). The distance between them is | 0 - 0 | + | 0 - 2 | = 2.\nIt can be shown that there are no other paths with a higher safeness factor.\n```\n\n**Example 3:**\n\n![](https://assets.leetcode.com/uploads/2023/07/02/example3.png)\n\n```\nInput: grid = [[0,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,0]]\nOutput: 2\nExplanation: The path depicted in the picture above has a safeness factor of 2 since:\n- The closest cell of the path to the thief at cell (0, 3) is cell (1, 2). The distance between them is | 0 - 1 | + | 3 - 2 | = 2.\n- The closest cell of the path to the thief at cell (3, 0) is cell (3, 2). The distance between them is | 3 - 3 | + | 0 - 2 | = 2.\nIt can be shown that there are no other paths with a higher safeness factor.\n```\n\n**Constraints:**\n\n* `1 <= grid.length == n <= 400`\n* `grid[i].length == n`\n* `grid[i][j]` is either `0` or `1`.\n* There is no fewer than one thief in the `grid`.",
     "constraints": [
-      "1 <= T <= 5",
-      "1 <= N <= 100000",
-      "All Ai are distinct numbers from 1 to N"
+      "None"
     ],
-    "inputFormat": "The first line contains T, the number of test cases. Each test case contains two lines. The first line of each test case contains a single integer N, the number of bandits. The second line contains N space-separated integers A1, A2, ..., AN, where Ai denotes the position the bandit at position i should move to after the whistle.",
-    "outputFormat": "For each test case, print the number of times the sheriff had to whistle to get the bandits back to their original positions, modulo 10^9 + 7.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "2\n3\n1 2 3\n5\n2 3 1 5 4",
-        "output": "1\n6",
-        "explanation": "Explanation: Example case 2. The bandits' positions are: 0. 1 2 3 4 5, 1. 3 1 2 5 4, 2. 2 3 1 4 5, 3. 1 2 3 5 4, 4. 3 1 2 4 5, 5. 2 3 1 5 4, 6. 1 2 3 4 5."
+        "type": "reg",
+        "input": "grid = [[1,0,0],[0,0,0],[0,0,1]]",
+        "output": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0,0,1],[0,0,0],[0,0,0]]",
+        "output": "2",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[0,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,0]]",
+        "output": "2",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1\n1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n100000\n100000 99999 99998 ... 2 1",
-        "expectedOutput": "100000",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n5\n1 1 1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n10\n10 9 8 7 6 5 4 3 2 1",
-        "expectedOutput": "10",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "5\n3\n1 2 3\n5\n2 3 1 5 4\n10\n10 9 8 7 6 5 4 3 2 1\n15\n15 14 13 12 11 10 9 8 7 6 5 4 3 2 1\n20\n20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1",
-        "expectedOutput": "1\n6\n10\n15\n20",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -98,18 +351,68 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The problem can be solved by finding the length of each cycle in the permutation and then calculating the least common multiple (LCM) of these cycle lengths. The LCM gives the number of whistles needed to get the bandits back to their original positions. We use modular arithmetic to avoid overflow.",
-    "timeComplexity": "O(N) per test case, O(T * N) total. The time complexity is linear because we visit each bandit once to find the cycle lengths.",
-    "spaceComplexity": "O(N) \u2014 we need to store the visited array and the permutation.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#define MOD 1000000007\n\nint gcd(int a, int b) {\n    if (b == 0) return a;\n    return gcd(b, a % b);\n}\n\nint lcm(int a, int b) {\n    return (a * b) / gcd(a, b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int* A = (int*)malloc(N * sizeof(int));\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n            A[i]--;\n        }\n        int* visited = (int*)malloc(N * sizeof(int));\n        for(int i = 0; i < N; i++) visited[i] = 0;\n        int result = 1;\n        for (int i = 0; i < N; i++) {\n            if (!visited[i]) {\n                int cycleLength = 0;\n                int j = i;\n                while (!visited[j]) {\n                    visited[j] = 1;\n                    j = A[j];\n                    cycleLength++;\n                }\n                result = (long long)lcm(result, cycleLength) % MOD;\n            }\n        }\n        printf(\"%d\\n\", result);\n        free(A);\n        free(visited);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <vector>\n#define MOD 1000000007\nusing namespace std;\n\nint gcd(int a, int b) {\n    if (b == 0) return a;\n    return gcd(b, a % b);\n}\n\nint lcm(int a, int b) {\n    return (a * b) / gcd(a, b);\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        vector<int> A(N);\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n            A[i]--;\n        }\n        vector<int> visited(N, 0);\n        int result = 1;\n        for (int i = 0; i < N; i++) {\n            if (!visited[i]) {\n                int cycleLength = 0;\n                int j = i;\n                while (!visited[j]) {\n                    visited[j] = 1;\n                    j = A[j];\n                    cycleLength++;\n                }\n                result = (long long)lcm(result, cycleLength) % MOD;\n            }\n        }\n        cout << result << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int N = sc.nextInt();\n            int[] A = new int[N];\n            for (int i = 0; i < N; i++) {\n                A[i] = sc.nextInt() - 1;\n            }\n            boolean[] visited = new boolean[N];\n            int result = 1;\n            for (int i = 0; i < N; i++) {\n                if (!visited[i]) {\n                    int cycleLength = 0;\n                    int j = i;\n                    while (!visited[j]) {\n                        visited[j] = true;\n                        j = A[j];\n                        cycleLength++;\n                    }\n                    result = (int)((long)lcm(result, cycleLength) % 1000000007);\n                }\n            }\n            System.out.println(result);\n        }\n    }\n    public static int gcd(int a, int b) {\n        if (b == 0) return a;\n        return gcd(b, a % b);\n    }\n    public static int lcm(int a, int b) {\n        return (a * b) / gcd(a, b);\n    }\n}",
-      "Python3": "import sys\nMOD = 1000000007\ndef gcd(a, b):\n    if b == 0: return a\n    return gcd(b, a % b)\ndef lcm(a, b):\n    return (a * b) // gcd(a, b)\nfor _ in range(int(input())):\n    N = int(input())\n    A = list(map(lambda x: int(x) - 1, input().split()))\n    visited = [False] * N\n    result = 1\n    for i in range(N):\n        if not visited[i]:\n            cycleLength = 0\n            j = i\n            while not visited[j]:\n                visited[j] = True\n                j = A[j]\n                cycleLength += 1\n            result = (lcm(result, cycleLength)) % MOD\n    print(result)",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst MOD = 1000000007;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfunction gcd(a, b) {\n    if (b == 0) return a;\n    return gcd(b, a % b);\n}\nfunction lcm(a, b) {\n    return (a * b) / gcd(a, b);\n}\nfor (let i = 0; i < T; i++) {\n    const N = parseInt(readline());\n    const A = readline().split(' ').map(x => parseInt(x) - 1);\n    const visited = new Array(N).fill(false);\n    let result = 1;\n    for (let j = 0; j < N; j++) {\n        if (!visited[j]) {\n            let cycleLength = 0;\n            let k = j;\n            while (!visited[k]) {\n                visited[k] = true;\n                k = A[k];\n                cycleLength++;\n            }\n            result = (lcm(result, cycleLength)) % MOD;\n        }\n    }\n    console.log(result);\n}"
+      "Python3": "# Time:  O(n^2)\n# Space: O(n^2)\n\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, n):\n        self.set = range(n)\n        self.rank = [0]*n\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        return True\n\n\n# bfs, bucket sort, union find\nclass Solution(object):\n    def maximumSafenessFactor(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        DIRECTIONS = ((1, 0), (0, 1), (-1, 0), (0, -1))\n        def bfs():\n            dist = [[0 if grid[r][c] == 1 else -1 for c in range(len(grid[0]))] for r in range(len(grid))]\n            q = [(r, c) for r in range(len(grid)) for c in range(len(grid[0])) if grid[r][c]]\n            d = 0\n            while q:\n                new_q = []\n                for r, c in q:\n                    for dr, dc in DIRECTIONS:\n                        nr, nc = r+dr, c+dc\n                        if not (0 <= nr < len(dist) and 0 <= nc < len(dist[0]) and dist[nr][nc] == -1):\n                            continue\n                        dist[nr][nc] = d+1\n                        new_q.append((nr, nc))\n                q = new_q\n                d += 1\n            return dist\n\n        dist = bfs()\n        buckets = [[] for _ in range((len(grid)-1)+(len(grid[0])-1)+1)]\n        for r in range(len(grid)):\n            for c in range(len(grid[0])):\n                buckets[dist[r][c]].append((r, c))\n        lookup = [[False]*len(grid[0]) for _ in range(len(grid))]\n        uf = UnionFind(len(grid)*len(grid[0]))\n        for d in reversed(range(len(buckets))):\n            for r, c in buckets[d]:\n                for dr, dc in DIRECTIONS:\n                    nr, nc = r+dr, c+dc\n                    if not (0 <= nr < len(dist) and 0 <= nc < len(dist[0]) and lookup[nr][nc] == True):\n                        continue\n                    uf.union_set(nr*len(grid[0])+nc, r*len(grid[0])+c)\n                lookup[r][c] = True\n            if uf.find_set(0*len(grid[0])+0) == uf.find_set((len(grid)-1)*len(grid[0])+(len(grid[0])-1)):\n                break\n        return d"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int maximumSafenessFactor(vector<vector<int>>& grid) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int maximumSafenessFactor(List<List<Integer>> grid) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n^2)\n# Space: O(n^2)\n\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, n):\n        self.set = range(n)\n        self.rank = [0]*n\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        return True\n\n\n# bfs, bucket sort, union find\nclass Solution(object):\n    def maximumSafenessFactor(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        DIRECTIONS = ((1, 0), (0, 1), (-1, 0), (0, -1))\n        def bfs():\n            dist = [[0 if grid[r][c] == 1 else -1 for c in range(len(grid[0]))] for r in range(len(grid))]\n            q = [(r, c) for r in range(len(grid)) for c in range(len(grid[0])) if grid[r][c]]\n            d = 0\n            while q:\n                new_q = []\n                for r, c in q:\n                    for dr, dc in DIRECTIONS:\n                        nr, nc = r+dr, c+dc\n                        if not (0 <= nr < len(dist) and 0 <= nc < len(dist[0]) and dist[nr][nc] == -1):\n                            continue\n                        dist[nr][nc] = d+1\n                        new_q.append((nr, nc))\n                q = new_q\n                d += 1\n            return dist\n\n        dist = bfs()\n        buckets = [[] for _ in range((len(grid)-1)+(len(grid[0])-1)+1)]\n        for r in range(len(grid)):\n            for c in range(len(grid[0])):\n                buckets[dist[r][c]].append((r, c))\n        lookup = [[False]*len(grid[0]) for _ in range(len(grid))]\n        uf = UnionFind(len(grid)*len(grid[0]))\n        for d in reversed(range(len(buckets))):\n            for r, c in buckets[d]:\n                for dr, dc in DIRECTIONS:\n                    nr, nc = r+dr, c+dc\n                    if not (0 <= nr < len(dist) and 0 <= nc < len(dist[0]) and lookup[nr][nc] == True):\n                        continue\n                    uf.union_set(nr*len(grid[0])+nc, r*len(grid[0])+c)\n                lookup[r][c] = True\n            if uf.find_set(0*len(grid[0])+0) == uf.find_set((len(grid)-1)*len(grid[0])+(len(grid[0])-1)):\n                break\n        return d",
+    "Python": "class Solution(object):\n    def maximumSafenessFactor(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar maximumSafenessFactor = function(grid) {\n    \n};",
+    "TypeScript": "function maximumSafenessFactor(grid: number[][]): number {\n\n};",
+    "C#": "public class Solution {\n    public int MaximumSafenessFactor(IList<IList<int>> grid) {\n        \n    }\n}",
+    "C": "int maximumSafenessFactor(int** grid, int gridSize, int* gridColSize){\n\n}",
+    "Go": "func maximumSafenessFactor(grid [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maximumSafenessFactor(grid: List<List<Int>>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maximumSafenessFactor(_ grid: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn maximum_safeness_factor(grid: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} grid\n# @return {Integer}\ndef maximum_safeness_factor(grid)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $grid\n     * @return Integer\n     */\n    function maximumSafenessFactor($grid) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int maximumSafenessFactor(List<List<int>> grid) {\n\n  }\n}",
+    "Scala": "object Solution {\n    def maximumSafenessFactor(grid: List[List[Int]]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec maximum_safeness_factor(grid :: [[integer]]) :: integer\n  def maximum_safeness_factor(grid) do\n\n  end\nend",
+    "Erlang": "-spec maximum_safeness_factor(Grid :: [[integer()]]) -> integer().\nmaximum_safeness_factor(Grid) ->\n  .",
+    "Racket": "(define/contract (maximum-safeness-factor grid)\n  (-> (listof (listof exact-integer?)) exact-integer?)\n\n  )"
+  },
+  "_internal": {
+    "methodName": "maximumSafenessFactor",
+    "params": [
+      {
+        "name": "grid",
+        "type": "list<list<integer>>"
+      }
+    ]
+  },
+  "verified": false
 }

@@ -1,105 +1,335 @@
 {
   "questionId": "Q2858",
-  "title": "Sereja and Equality",
-  "slug": "sereja-and-equality",
+  "title": "Smallest Edge Reversals So Every Node Is Reachable",
+  "slug": "minimum-edge-reversals-so-every-node-is-reachable",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Arrays",
+    "category": "Searching",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Arrays",
-      "Prefix Sum",
-      "Modular Arithmetic"
+      "dynamic-programming",
+      "depth-first-search",
+      "breadth-first-search",
+      "graph"
     ],
     "companyTags": [],
     "topicTags": [
-      "Combinatorics & Probability"
-    ]
+      "dynamic-programming",
+      "depth-first-search",
+      "breadth-first-search",
+      "graph"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Sereja call two arrays **A** and **B** with length **n** almost equal if for every **i (1 &lt;= i &lt;= n) CA(A[i]) = CB(B[i])**. **CX[x]** equal to number of index **j (1 &lt;=j &lt;= n)** such that **X[j] &lt; x**.\n\n&nbsp;\n\n**P1****P2****F(P1, P2)****(l,r) (1 &lt;= l &lt;= r &lt;= n)****P1[l..r]****P2[l..r]****P1[l..r]****E**&nbsp;\n\n**F(P1,P2)****P1, P2****n**&nbsp;",
+    "problemStatement": "There is a **simple directed graph** with `n` nodes labeled from `0` to `n - 1`. The graph would form a **tree** if its edges were bi-directional.\n\nYou receive an integer `n` and a **2D** integer array `edges`, where `edges[i] = [ui, vi]` represents a **directed edge** going from node `ui` to node `vi`.\n\nAn **edge reversal** changes the direction of an edge, i.e., a directed edge going from node `ui` to node `vi` becomes a directed edge going from node `vi` to node `ui`.\n\nFor every node `i` in the range `[0, n - 1]`, your task is to **independently** calculate the **smallest** number of **edge reversals** required so it is possible to reach any other node starting from node `i` through a **sequence** of **directed edges**.\n\nOutput *an integer array* `answer`*, where* `answer[i]` *is the* ***smallest** number of **edge reversals** required so it is possible to reach any other node starting from node* `i` *through a **sequence** of **directed edges**.*\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2023/08/26/image-20230826221104-3.png)\n\n```\nInput: n = 4, edges = [[2,0],[2,1],[1,3]]\nOutput: [1,1,0,2]\nExplanation: The image above shows the graph formed by the edges.\nFor node 0: after reversing the edge [2,0], it is possible to reach any other node starting from node 0.\nSo, answer[0] = 1.\nFor node 1: after reversing the edge [2,1], it is possible to reach any other node starting from node 1.\nSo, answer[1] = 1.\nFor node 2: it is already possible to reach any other node starting from node 2.\nSo, answer[2] = 0.\nFor node 3: after reversing the edges [1,3] and [2,1], it is possible to reach any other node starting from node 3.\nSo, answer[3] = 2.\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2023/08/26/image-20230826225541-2.png)\n\n```\nInput: n = 3, edges = [[1,2],[2,0]]\nOutput: [2,0,1]\nExplanation: The image above shows the graph formed by the edges.\nFor node 0: after reversing the edges [2,0] and [1,2], it is possible to reach any other node starting from node 0.\nSo, answer[0] = 2.\nFor node 1: it is already possible to reach any other node starting from node 1.\nSo, answer[1] = 0.\nFor node 2: after reversing the edge [1, 2], it is possible to reach any other node starting from node 2.\nSo, answer[2] = 1.\n```\n\n**Constraints:**\n\n* `2 <= n <= 105`\n* `edges.length == n - 1`\n* `edges[i].length == 2`\n* `0 <= ui == edges[i][0] < n`\n* `0 <= vi == edges[i][1] < n`\n* `ui != vi`\n* The input is generated such that if the edges were bi-directional, the graph would be a tree.",
     "constraints": [
-      "1 <= T <= 10000",
-      "1 <= n <= 500",
-      "1 <= E <= 1000000"
+      "None"
     ],
-    "inputFormat": "First line contains T, the number of test cases. Each test case contains two lines. The first line contains two integers n and E, where n is the length of the arrays A and B, and E is the number of operations. The second line contains n integers representing the array A, followed by n integers representing the array B.",
-    "outputFormat": "For each test case, output the result of the function F(P1, P2) modulo 1000000007 (10^9+7).",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "1\n2 2\n2 1\n2 0",
-        "output": "1",
-        "explanation": "For the first test case, the arrays A and B are [2, 1] and [2, 0] respectively. The values of CA(A[i]) and CB(B[i]) are [1, 0] and [1, 0] respectively. Therefore, the result of F(P1, P2) is 2, which is equal to 2 modulo 1000000007 (10^9+7)."
+        "type": "reg",
+        "input": "n = 4, edges = [[2,0],[2,1],[1,3]]",
+        "output": "[1,1,0,2]",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n3 3\n1 2 3\n3 2 1",
-        "output": "0",
-        "explanation": "For the second test case, the arrays A and B are [1, 2, 3] and [3, 2, 1] respectively. The values of CA(A[i]) and CB(B[i]) are [0, 1, 2] and [2, 1, 0] respectively. Therefore, the result of F(P1, P2) is 0."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n4 4\n1 2 3 4\n4 3 2 1",
-        "output": "0",
-        "explanation": "For the third test case, the arrays A and B are [1, 2, 3, 4] and [4, 3, 2, 1] respectively. The values of CA(A[i]) and CB(B[i]) are [0, 1, 2, 3] and [3, 2, 1, 0] respectively. Therefore, the result of F(P1, P2) is 0."
+        "type": "reg",
+        "input": "n = 3, edges = [[1,2],[2,0]]",
+        "output": "[2,0,1]",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1\n1\n1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n500 1000000\n1 2 3 4 5",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n5 5\n1 1 1 1 1\n1 1 1 1 1",
-        "expectedOutput": "5",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n5 5\n5 4 3 2 1\n1 2 3 4 5",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "10\n5 5\n1 2 3 4 5\n5 4 3 2 1\n5 5\n1 1 1 1 1\n1 1 1 1 1\n5 5\n5 4 3 2 1\n1 2 3 4 5",
-        "expectedOutput": "0\n5\n0\n0\n0\n0\n0\n0\n0\n0\n0",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -110,18 +340,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to calculate the CA and CB arrays for each test case. Then, compare the corresponding elements of the two arrays and count the number of matches. The result is the count modulo 1000000007.",
-    "timeComplexity": "O(T * n^2) per test case, O(T * n^2) total.",
-    "spaceComplexity": "O(n) \u2014 the dominant structure is the arrays A, B, CA, and CB.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#define MOD 1000000007\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint calculate_CA(int *A, int n, int i) {\n    int CA = 0;\n    for (int j = 0; j < n; j++) {\n        if (A[j] < A[i]) {\n            CA++;\n        }\n    }\n    return CA;\n}\n\nint calculate_CB(int *B, int n, int i) {\n    int CB = 0;\n    for (int j = 0; j < n; j++) {\n        if (B[j] < B[i]) {\n            CB++;\n        }\n    }\n    return CB;\n}\n\nint calculate_F(int *P1, int *P2, int n) {\n    int result = 0;\n    for (int i = 0; i < n; i++) {\n        if (P1[i] == P2[i]) {\n            result++;\n        }\n    }\n    return result % MOD;\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    for (int t = 0; t < T; t++) {\n        int n, E;\n        scanf(\"%d %d\", &n, &E);\n        int *A = (int*)malloc(n * sizeof(int));\n        int *B = (int*)malloc(n * sizeof(int));\n        for (int i = 0; i < n; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        for (int i = 0; i < n; i++) {\n            scanf(\"%d\", &B[i]);\n        }\n        int *P1 = (int*)malloc(n * sizeof(int));\n        int *P2 = (int*)malloc(n * sizeof(int));\n        for (int i = 0; i < n; i++) {\n            P1[i] = calculate_CA(A, n, i);\n            P2[i] = calculate_CB(B, n, i);\n        }\n        printf(\"%d\\n\", calculate_F(P1, P2, n));\n        free(A);\n        free(B);\n        free(P1);\n        free(P2);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <vector>\n#include <algorithm>\nusing namespace std;\n#define MOD 1000000007\n\nint calculate_CA(vector<int> &A, int n, int i) {\n    int CA = 0;\n    for (int j = 0; j < n; j++) {\n        if (A[j] < A[i]) {\n            CA++;\n        }\n    }\n    return CA;\n}\n\nint calculate_CB(vector<int> &B, int n, int i) {\n    int CB = 0;\n    for (int j = 0; j < n; j++) {\n        if (B[j] < B[i]) {\n            CB++;\n        }\n    }\n    return CB;\n}\n\nint calculate_F(vector<int> &P1, vector<int> &P2, int n) {\n    int result = 0;\n    for (int i = 0; i < n; i++) {\n        if (P1[i] == P2[i]) {\n            result++;\n        }\n    }\n    return result % MOD;\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    for (int t = 0; t < T; t++) {\n        int n, E;\n        cin >> n >> E;\n        vector<int> A(n);\n        vector<int> B(n);\n        for (int i = 0; i < n; i++) {\n            cin >> A[i];\n        }\n        for (int i = 0; i < n; i++) {\n            cin >> B[i];\n        }\n        vector<int> P1(n);\n        vector<int> P2(n);\n        for (int i = 0; i < n; i++) {\n            P1[i] = calculate_CA(A, n, i);\n            P2[i] = calculate_CB(B, n, i);\n        }\n        cout << calculate_F(P1, P2, n) << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    static final int MOD = 1000000007;\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int T = scanner.nextInt();\n        for (int t = 0; t < T; t++) {\n            int n = scanner.nextInt();\n            int E = scanner.nextInt();\n            int[] A = new int[n];\n            int[] B = new int[n];\n            for (int i = 0; i < n; i++) {\n                A[i] = scanner.nextInt();\n            }\n            for (int i = 0; i < n; i++) {\n                B[i] = scanner.nextInt();\n            }\n            int[] P1 = new int[n];\n            int[] P2 = new int[n];\n            for (int i = 0; i < n; i++) {\n                P1[i] = calculate_CA(A, n, i);\n                P2[i] = calculate_CB(B, n, i);\n            }\n            System.out.println(calculate_F(P1, P2, n));\n        }\n    }\n    public static int calculate_CA(int[] A, int n, int i) {\n        int CA = 0;\n        for (int j = 0; j < n; j++) {\n            if (A[j] < A[i]) {\n                CA++;\n            }\n        }\n        return CA;\n    }\n    public static int calculate_CB(int[] B, int n, int i) {\n        int CB = 0;\n        for (int j = 0; j < n; j++) {\n            if (B[j] < B[i]) {\n                CB++;\n            }\n        }\n        return CB;\n    }\n    public static int calculate_F(int[] P1, int[] P2, int n) {\n        int result = 0;\n        for (int i = 0; i < n; i++) {\n            if (P1[i] == P2[i]) {\n                result++;\n            }\n        }\n        return result % MOD;\n    }\n}",
-      "Python3": "MOD = 1000000007\n\ndef calculate_CA(A, n, i):\n    CA = 0\n    for j in range(n):\n        if A[j] < A[i]:\n            CA += 1\n    return CA\n\ndef calculate_CB(B, n, i):\n    CB = 0\n    for j in range(n):\n        if B[j] < B[i]:\n            CB += 1\n    return CB\n\ndef calculate_F(P1, P2, n):\n    result = 0\n    for i in range(n):\n        if P1[i] == P2[i]:\n            result += 1\n    return result % MOD\n\nt = int(input())\nfor _ in range(t):\n    n, E = map(int, input().split())\n    A = list(map(int, input().split()))[:n]\n    B = list(map(int, input().split()))[:n]\n    P1 = [calculate_CA(A, n, i) for i in range(n)]\n    P2 = [calculate_CB(B, n, i) for i in range(n)]\n    print(calculate_F(P1, P2, n))",
-      "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst MOD = 1000000007;\n\nfunction calculate_CA(A, n, i) {\n    let CA = 0;\n    for (let j = 0; j < n; j++) {\n        if (A[j] < A[i]) {\n            CA++;\n        }\n    }\n    return CA;\n}\n\nfunction calculate_CB(B, n, i) {\n    let CB = 0;\n    for (let j = 0; j < n; j++) {\n        if (B[j] < B[i]) {\n            CB++;\n        }\n    }\n    return CB;\n}\n\nfunction calculate_F(P1, P2, n) {\n    let result = 0;\n    for (let i = 0; i < n; i++) {\n        if (P1[i] === P2[i]) {\n            result++;\n        }\n    }\n    return result % MOD;\n}\n\nlet T = parseInt(input[idx++]);\nfor (let t = 0; t < T; t++) {\n    let [n, E] = input[idx++].split(' ').map(Number);\n    let A = input[idx++].split(' ').map(Number).slice(0, n);\n    let B = input[idx++].split(' ').map(Number).slice(0, n);\n    let P1 = new Array(n).fill(0).map((_, i) => calculate_CA(A, n, i));\n    let P2 = new Array(n).fill(0).map((_, i) => calculate_CB(B, n, i));\n    console.log(calculate_F(P1, P2, n));\n}"
+      "Python3": "# Time:  O(n)\n# Space: O(n)\n\n# iterative dfs, tree dp\nclass Solution(object):\n    def minEdgeReversals(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        def iter_dfs1():\n            result = 0\n            stk = [(0, -1)]\n            while stk:\n                u, p = stk.pop()\n                for v in adj[u].iterkeys():\n                    if v == p:\n                        continue\n                    result += adj[u][v]\n                    stk.append((v, u))\n            return result\n\n        def iter_dfs2(curr):\n            result = [-1]*n\n            stk = [(0, curr)]\n            while stk:\n                u, curr = stk.pop()\n                result[u] = curr\n                for v in adj[u].iterkeys():\n                    if result[v] == -1:\n                        stk.append((v, curr-adj[u][v]+adj[v][u]))\n            return result\n    \n        adj = collections.defaultdict(dict)\n        for u, v in edges:\n            adj[u][v] = 0\n            adj[v][u] = 1\n        return iter_dfs2(iter_dfs1())"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    vector<int> minEdgeReversals(int n, vector<vector<int>>& edges) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int[] minEdgeReversals(int n, int[][] edges) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n)\n# Space: O(n)\n\n# iterative dfs, tree dp\nclass Solution(object):\n    def minEdgeReversals(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        def iter_dfs1():\n            result = 0\n            stk = [(0, -1)]\n            while stk:\n                u, p = stk.pop()\n                for v in adj[u].iterkeys():\n                    if v == p:\n                        continue\n                    result += adj[u][v]\n                    stk.append((v, u))\n            return result\n\n        def iter_dfs2(curr):\n            result = [-1]*n\n            stk = [(0, curr)]\n            while stk:\n                u, curr = stk.pop()\n                result[u] = curr\n                for v in adj[u].iterkeys():\n                    if result[v] == -1:\n                        stk.append((v, curr-adj[u][v]+adj[v][u]))\n            return result\n    \n        adj = collections.defaultdict(dict)\n        for u, v in edges:\n            adj[u][v] = 0\n            adj[v][u] = 1\n        return iter_dfs2(iter_dfs1())",
+    "Python": "class Solution(object):\n    def minEdgeReversals(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number} n\n * @param {number[][]} edges\n * @return {number[]}\n */\nvar minEdgeReversals = function(n, edges) {\n    \n};",
+    "TypeScript": "function minEdgeReversals(n: number, edges: number[][]): number[] {\n    \n};",
+    "C#": "public class Solution {\n    public int[] MinEdgeReversals(int n, int[][] edges) {\n        \n    }\n}",
+    "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* minEdgeReversals(int n, int** edges, int edgesSize, int* edgesColSize, int* returnSize) {\n    \n}",
+    "Go": "func minEdgeReversals(n int, edges [][]int) []int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun minEdgeReversals(n: Int, edges: Array<IntArray>): IntArray {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func minEdgeReversals(_ n: Int, _ edges: [[Int]]) -> [Int] {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn min_edge_reversals(n: i32, edges: Vec<Vec<i32>>) -> Vec<i32> {\n        \n    }\n}",
+    "Ruby": "# @param {Integer} n\n# @param {Integer[][]} edges\n# @return {Integer[]}\ndef min_edge_reversals(n, edges)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer $n\n     * @param Integer[][] $edges\n     * @return Integer[]\n     */\n    function minEdgeReversals($n, $edges) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  List<int> minEdgeReversals(int n, List<List<int>> edges) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def minEdgeReversals(n: Int, edges: Array[Array[Int]]): Array[Int] = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec min_edge_reversals(n :: integer, edges :: [[integer]]) :: [integer]\n  def min_edge_reversals(n, edges) do\n    \n  end\nend",
+    "Erlang": "-spec min_edge_reversals(N :: integer(), Edges :: [[integer()]]) -> [integer()].\nmin_edge_reversals(N, Edges) ->\n  .",
+    "Racket": "(define/contract (min-edge-reversals n edges)\n  (-> exact-integer? (listof (listof exact-integer?)) (listof exact-integer?))\n  )"
+  },
+  "_internal": {
+    "methodName": "minEdgeReversals",
+    "params": [
+      {
+        "name": "n",
+        "type": "integer"
+      },
+      {
+        "type": "integer[][]",
+        "name": "edges"
+      }
+    ]
+  },
+  "verified": false
 }

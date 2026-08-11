@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as GuestRouteImport } from './routes/guest'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
@@ -32,6 +33,11 @@ const IndexRoute = IndexRouteImport.update({
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestRoute = GuestRouteImport.update({
+  id: '/guest',
+  path: '/guest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomeRoute = HomeRouteImport.update({
@@ -104,6 +110,7 @@ const StudentPracticeCourseCourseIdQuestionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/student/dashboard': typeof StudentDashboardRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/student/dashboard': typeof StudentDashboardRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/student/dashboard': typeof StudentDashboardRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/guest'
     | '/home'
     | '/login'
     | '/student/dashboard'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/guest'
     | '/home'
     | '/login'
     | '/student/dashboard'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/guest'
     | '/home'
     | '/login'
     | '/student/dashboard'
@@ -204,6 +216,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  GuestRoute: typeof GuestRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guest': {
+      id: '/guest'
+      path: '/guest'
+      fullPath: '/guest'
+      preLoaderRoute: typeof GuestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/home': {
@@ -324,6 +344,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  GuestRoute: GuestRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   StudentDashboardRoute: StudentDashboardRoute,

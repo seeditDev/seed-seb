@@ -1,103 +1,333 @@
 {
   "questionId": "Q1210",
-  "title": "Longest AND Subarray",
-  "slug": "longest-and-subarray",
+  "title": "Smallest Moves to Reach Target with Rotations",
+  "slug": "minimum-moves-to-reach-target-with-rotations",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-06",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
-    "difficulty": "Medium",
+    "category": "Arrays",
+    "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Bit Manipulation",
-      "Math"
+      "array",
+      "breadth-first-search",
+      "matrix"
     ],
     "companyTags": [],
     "topicTags": [
-      "Bit Manipulation"
-    ]
+      "array",
+      "breadth-first-search",
+      "matrix"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You are given an integer NNN. Consider the sequence containing the integers 1,2,\u2026,N1, 2, \\dots, N1,2,\u2026,N in increasing order (each exactly once). Find the length of the longest subarray in this sequence such that the bitwise AND of all elements in the subarray is **positive**.\n\n\nInput Format\n\nThe first line contains TTT denoting the number of test cases. Then the test cases follow.\nEach test case contains a single integer NNN on a single line.\n\n\nOutput Format\nFor each test case, output on a single line the length of the longest subarray that satisfy the given property.",
+    "problemStatement": "In an `n*n` grid, there is a snake that spans 2 cells and starts moving from the top left corner at `(0, 0)` and `(0, 1)`. The grid has empty cells represented by zeros and blocked cells represented by ones. The snake wants to reach the lower right corner at `(n-1, n-2)` and `(n-1, n-1)`.\n\nIn one move the snake can:\n\n* Move one cell to the right if there are no blocked cells there. This move keeps the horizontal/vertical position of the snake as it is.\n* Move down one cell if there are no blocked cells there. This move keeps the horizontal/vertical position of the snake as it is.\n* Rotate clockwise if it's in a horizontal position and the two cells under it are both empty. In that case the snake moves from `(r, c)` and `(r, c+1)` to `(r, c)` and `(r+1, c)`.  \n  ![](https://assets.leetcode.com/uploads/2019/09/24/image-2.png)\n* Rotate counterclockwise if it's in a vertical position and the two cells to its right are both empty. In that case the snake moves from `(r, c)` and `(r+1, c)` to `(r, c)` and `(r, c+1)`.  \n  ![](https://assets.leetcode.com/uploads/2019/09/24/image-1.png)\n\nOutput the smallest number of moves to reach the target.\n\nIf there is no way to reach the target, output `-1`.\n\n**Example 1:**\n\n**![](https://assets.leetcode.com/uploads/2019/09/24/image.png)**\n\n```\nInput: grid = [[0,0,0,0,0,1],\n               [1,1,0,0,1,0],\n               [0,0,0,0,1,1],\n               [0,0,1,0,1,0],\n               [0,1,1,0,0,0],\n               [0,1,1,0,0,0]]\nOutput: 11\nExplanation:\nOne possible solution is [right, right, rotate clockwise, right, down, down, down, down, rotate counterclockwise, right, down].\n```\n\n**Example 2:**\n\n```\nInput: grid = [[0,0,1,1,1,1],\n               [0,0,0,0,1,1],\n               [1,1,0,0,0,1],\n               [1,1,1,0,0,1],\n               [1,1,1,0,0,1],\n               [1,1,1,0,0,0]]\nOutput: 9\n```\n\n**Constraints:**\n\n* `2 <= n <= 100`\n* `0 <= grid[i][j] <= 1`\n* It is guaranteed that the snake starts at empty cells.",
     "constraints": [
-      "1 <= T <= 100000",
-      "1 <= N <= 1000000000"
+      "None"
     ],
-    "inputFormat": "First line contains T, the number of test cases. Each test case contains a single integer N.",
-    "outputFormat": "For each test case, print the length of the longest subarray that satisfy the given property.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "5\n1\n2\n3\n4\n7",
-        "output": "1\n1\n2\n2\n4",
-        "explanation": "For N=1 the only subarray is [1] (AND=1). For N=2 any subarray longer than 1 contains 1 whose AND becomes 0, so answer 1. For N=3 the subarray [2,3] has AND=2, length 2. For N=4 the best is [2,3] (AND=2) length 2. For N=7 the interval [4,7] has all numbers with the 3rd bit set, AND=4, length 4."
+        "type": "reg",
+        "input": "grid = [[0,0,0,0,0,1],\n               [1,1,0,0,1,0],\n               [0,0,0,0,1,1],\n               [0,0,1,0,1,0],\n               [0,1,1,0,0,0],\n               [0,1,1,0,0,0]]",
+        "output": "11",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "3\n5\n8\n10",
-        "output": "2\n4\n4",
-        "explanation": "N=5: p=4, len1=2, len2=2, answer 2 (subarray [4,5]). N=8: p=8, len1=1, len2=4, answer 4 (subarray [4,7]). N=10: p=8, len1=3, len2=4, answer 4 (subarray [8,11] truncated to [8,10] gives length 3 but the interval [4,7] of length 4 still has positive AND, so answer 4)."
-      },
-      {
-        "id": "sample_3",
-        "input": "2\n15\n1000000000",
-        "output": "8\n463129089",
-        "explanation": "N=15: p=8, len1=8, len2=4, answer 8 (subarray [8,15]). N=1e9: p=536870912, len1=463129089, len2=268435456, answer 463129089."
+        "type": "reg",
+        "input": "grid = [[0,0,1,1,1,1],\n               [0,0,0,0,1,1],\n               [1,1,0,0,0,1],\n               [1,1,1,0,0,1],\n               [1,1,1,0,0,1],\n               [1,1,1,0,0,0]]",
+        "output": "9",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n1000000000",
-        "expectedOutput": "463129089",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n2",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n3",
-        "expectedOutput": "2",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "5\n1\n2\n3\n4\n7",
-        "expectedOutput": "1\n1\n2\n2\n4",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -108,18 +338,64 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to find the highest power of two less than or equal to N. This is because any subarray with a length greater than this power of two will have at least one pair of numbers whose bitwise AND is zero. We can use bitwise operations to find this power of two efficiently.",
-    "timeComplexity": "O(log N) per test case, O(T log N) total.",
-    "spaceComplexity": "O(1) \u2014 constant space.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdint.h>\nstatic inline uint32_t highestPowerOfTwo(uint32_t n){return 1u << (31 - __builtin_clz(n));}\nint main(){int T; if(scanf(\"%d\",&T)!=1) return 0; while(T--){uint32_t N; scanf(\"%u\",&N); uint32_t p=highestPowerOfTwo(N); uint32_t len1=N-p+1; uint32_t len2=p/2; printf(\"%u\\n\", len1>len2?len1:len2);} return 0; }",
-      "C++": "#include <bits/stdc++.h>\nusing namespace std;\nstatic inline unsigned int highestPowerOfTwo(unsigned int n){return 1u << (31 - __builtin_clz(n));}\nint main(){ios::sync_with_stdio(false);cin.tie(NULL);int T; if(!(cin>>T)) return 0; while(T--){unsigned int N;cin>>N; unsigned int p=highestPowerOfTwo(N); unsigned int len1=N-p+1; unsigned int len2=p/2; cout<<max(len1,len2)<<'\\n';} return 0; }",
-      "Java": "import java.io.*;\nimport java.util.*;\npublic class Main{\n    private static long highestPowerOfTwo(long n){int msb=63-Long.numberOfLeadingZeros(n);return 1L<<msb;}\n    public static void main(String[] args) throws Exception{\n        BufferedReader br=new BufferedReader(new InputStreamReader(System.in));\n        StringBuilder sb=new StringBuilder();\n        int T=Integer.parseInt(br.readLine().trim());\n        for(int i=0;i<T;i++){\n            long N=Long.parseLong(br.readLine().trim());\n            long p=highestPowerOfTwo(N);\n            long len1=N-p+1;\n            long len2=p/2;\n            sb.append(Math.max(len1,len2)).append('\\n');\n        }\n        System.out.print(sb.toString());\n    }\n}",
-      "Python3": "import sys\ndef highest_power_of_two(n):\n    return 1 << (n.bit_length()-1)\n\ndef solve():\n    data=sys.stdin.read().strip().split()\n    if not data:\n        return\n    it=iter(data)\n    T=int(next(it))\n    out=[]\n    for _ in range(T):\n        N=int(next(it))\n        p=highest_power_of_two(N)\n        len1=N-p+1\n        len2=p//2\n        out.append(str(max(len1,len2)))\n    sys.stdout.write('\\n'.join(out))\nif __name__=='__main__':\n    solve()",
-      "JavaScript": "const fs=require('fs');\nconst input=fs.readFileSync(0,'utf-8').trim().split(/\\s+/);\nlet idx=0;\nconst T=Number(input[idx++]);\nlet res=[];\nfunction highestPowerOfTwo(n){return 1 << (31-Math.clz32(n));}\nfor(let t=0;t<T;t++){\n  const N=Number(input[idx++]);\n  const p=highestPowerOfTwo(N);\n  const len1=N-p+1;\n  const len2=p/2;\n  res.push(String(len1>len2?len1:len2));\n}\nconsole.log(res.join('\\n'));"
+      "Python3": "# Time:  O(n)\n# Space: O(n)\n\nclass Solution(object):\n    def minimumMoves(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        level, q, lookup = 0, [(0, 0, False)], set()\n        while q:\n            next_q = []\n            for r, c, is_vertical in q:\n                if (r, c, is_vertical) in lookup:\n                    continue\n                if (r, c, is_vertical) == (len(grid)-1, len(grid)-2, False):\n                    return level\n                lookup.add((r, c, is_vertical))\n                if not is_vertical:\n                    if c+2 != len(grid[0]) and grid[r][c+2] == 0:\n                        next_q.append((r, c+1, is_vertical))\n                    if r+1 != len(grid) and grid[r+1][c] == 0 and grid[r+1][c+1] == 0:\n                        next_q.append((r+1, c, is_vertical))\n                        next_q.append((r, c, not is_vertical))\n                else:\n                    if r+2 != len(grid) and grid[r+2][c] == 0:\n                        next_q.append((r+1, c, is_vertical))\n                    if c+1 != len(grid) and grid[r][c+1] == 0 and grid[r+1][c+1] == 0:\n                        next_q.append((r, c+1, is_vertical))\n                        next_q.append((r, c, not is_vertical))\n            q = next_q\n            level += 1\n        return -1"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int minimumMoves(vector<vector<int>>& grid) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int minimumMoves(int[][] grid) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n)\n# Space: O(n)\n\nclass Solution(object):\n    def minimumMoves(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        level, q, lookup = 0, [(0, 0, False)], set()\n        while q:\n            next_q = []\n            for r, c, is_vertical in q:\n                if (r, c, is_vertical) in lookup:\n                    continue\n                if (r, c, is_vertical) == (len(grid)-1, len(grid)-2, False):\n                    return level\n                lookup.add((r, c, is_vertical))\n                if not is_vertical:\n                    if c+2 != len(grid[0]) and grid[r][c+2] == 0:\n                        next_q.append((r, c+1, is_vertical))\n                    if r+1 != len(grid) and grid[r+1][c] == 0 and grid[r+1][c+1] == 0:\n                        next_q.append((r+1, c, is_vertical))\n                        next_q.append((r, c, not is_vertical))\n                else:\n                    if r+2 != len(grid) and grid[r+2][c] == 0:\n                        next_q.append((r+1, c, is_vertical))\n                    if c+1 != len(grid) and grid[r][c+1] == 0 and grid[r+1][c+1] == 0:\n                        next_q.append((r, c+1, is_vertical))\n                        next_q.append((r, c, not is_vertical))\n            q = next_q\n            level += 1\n        return -1",
+    "Python": "class Solution(object):\n    def minimumMoves(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar minimumMoves = function(grid) {\n    \n};",
+    "TypeScript": "function minimumMoves(grid: number[][]): number {\n\n};",
+    "C#": "public class Solution {\n    public int MinimumMoves(int[][] grid) {\n        \n    }\n}",
+    "C": "\n\nint minimumMoves(int** grid, int gridSize, int* gridColSize){\n\n}",
+    "Go": "func minimumMoves(grid [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun minimumMoves(grid: Array<IntArray>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func minimumMoves(_ grid: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn minimum_moves(grid: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} grid\n# @return {Integer}\ndef minimum_moves(grid)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $grid\n     * @return Integer\n     */\n    function minimumMoves($grid) {\n        \n    }\n}",
+    "Scala": "object Solution {\n    def minimumMoves(grid: Array[Array[Int]]): Int = {\n        \n    }\n}"
+  },
+  "_internal": {
+    "methodName": "minimumMoves",
+    "params": [
+      {
+        "name": "grid",
+        "type": "integer[][]"
+      }
+    ]
+  },
+  "verified": false
 }

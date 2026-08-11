@@ -1,0 +1,207 @@
+rules_version = '2';
+
+// ============================================================================
+// SECURITY POSTURE
+// ----------------------------------------------------------------------------
+// Previous version of this file granted `allow read, write: if true` on every
+// assessment, attempt, contest and tracking path, plus a catch-all
+// `match /{document=**} { allow read: if true; }`. With the (necessarily
+// public) web API key, anyone could read every student's results and overwrite
+// any score from outside the app. The desktop/PyQt wrapper does not change
+// this: Firestore is reached over the public internet, so the rules are the
+// only enforcement point.
+//
+// This version:
+//   * requires an authenticated session (anonymous auth, see
+//     src/firebase-config.js -> ensureAnonymousAuth) on every path;
+//   * removes the catch-all read and the `{path=**}/users` collection-group
+//     read that exposed every user document in the project;
+//   * validates document shape and score bounds on write;
+//   * makes a submitted attempt immutable — scores can no longer be rewritten
+//     after submission, which was the main tampering vector;
+//   * keeps deletes denied everywhere for clients.
+//
+// Administrative reads/writes (dashboards, exports, grading overrides) must go
+// through the Admin SDK on the server, which bypasses these rules.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // An attempt is locked once it has been submitted/completed.
+    function isFinalised(data) {
+      return data.get('completed', false) == true
+          || data.get('submitted', false) == true
+          || data.get('status', '') == 'submitted';
+    }
+
+    // Scores must be sane numbers; blocks `score: 999999` style tampering.
+    function scoresWellFormed(data) {
+      return (!('score' in data) || (data.score is number && data.score >= 0 && data.score <= 100000))
+          && (!('totalScore' in data) || (data.totalScore is number && data.totalScore >= 0 && data.totalScore <= 100000))
+          && (!('percentage' in data) || (data.percentage is number && data.percentage >= 0 && data.percentage <= 100))
+          && (!('correctAnswers' in data) || (data.correctAnswers is number && data.correctAnswers >= 0))
+          && (!('totalQuestions' in data) || (data.totalQuestions is number && data.totalQuestions >= 0))
+          && (!('correctAnswers' in data && 'totalQuestions' in data)
+              || data.correctAnswers <= data.totalQuestions);
+    }
+
+    // Documents must stay small — stops the DB being used as free storage.
+    function reasonableSize() {
+      return request.resource.data.keys().size() <= 120;
+    }
+
+    function validResult(email) {
+      return scoresWellFormed(incoming())
+          && reasonableSize()
+          && incoming().get('email', email) == email;
+    }
+
+    // A finalised attempt may not be edited. An in-progress attempt may be
+    // updated, but the identity fields are pinned.
+    function allowResultUpdate(email) {
+      return !isFinalised(existing())
+          && validResult(email)
+          && incoming().get('email', existing().get('email', email)) == existing().get('email', email);
+    }
+
+    // ---------- student-scoped results (legacy, student-centric) ----------
+    // colleges/{college}/years/{year}/departments/{dept}/students/{email}/{kind}/{testID}
+    match /colleges/{college}/years/{year}/departments/{dept}/students/{email}/mcq_results/{testID} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && validResult(email);
+      allow update: if isSignedIn() && allowResultUpdate(email);
+      allow delete: if false;
+    }
+
+    match /colleges/{college}/years/{year}/departments/{dept}/students/{email}/coding_results/{testID} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && validResult(email);
+      allow update: if isSignedIn() && allowResultUpdate(email);
+      allow delete: if false;
+    }
+
+    match /colleges/{college}/years/{year}/departments/{dept}/students/{email}/sea_results/{testID} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && validResult(email);
+      allow update: if isSignedIn() && allowResultUpdate(email);
+      allow delete: if false;
+    }
+
+    // Student profile documents (roster). Clients read; only the server writes.
+    match /colleges/{college}/years/{year}/departments/{dept}/students/{email} {
+      allow get, list: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---------- unified, assessment-centric results ----------
+    // AssessmentResults/{testID}/colleges/{college}/years/{year}/students/{email}
+    match /AssessmentResults/{testID}/colleges/{college}/years/{year}/students/{email} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && validResult(email);
+      allow update: if isSignedIn() && allowResultUpdate(email);
+      allow delete: if false;
+    }
+
+    // ---------- live-user presence ----------
+    // LiveUsers/{date}/colleges/{college}/years/{year}/users/{email}
+    // Heartbeat documents: tiny, self-describing, and never readable in bulk by
+    // clients (the homepage counter uses an aggregate count, not a fan-out).
+    match /LiveUsers/{date}/colleges/{college}/years/{year}/users/{email} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn()
+                            && request.resource.data.keys().size() <= 20
+                            && incoming().get('email', email) == email;
+      allow delete: if false;
+    }
+
+    // ---------- user attempt documents ----------
+    match /users/{email} {
+      allow get: if isSignedIn();
+      allow list: if false; // no enumerating the whole user table
+      allow create, update: if isSignedIn()
+                            && reasonableSize()
+                            && incoming().get('email', email) == email;
+      allow delete: if false;
+    }
+
+    match /users/{email}/codingAttempts/{challengeId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && validResult(email);
+      allow update: if isSignedIn() && allowResultUpdate(email);
+      allow delete: if false;
+    }
+
+    match /users/{email}/contestAttempts/{contestId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && validResult(email);
+      allow update: if isSignedIn() && allowResultUpdate(email);
+      allow delete: if false;
+    }
+
+    match /users/{email}/multiSectionAttempts/{assessmentId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && validResult(email);
+      allow update: if isSignedIn() && allowResultUpdate(email);
+      allow delete: if false;
+    }
+
+    match /codingProgress/{email} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create, update: if isSignedIn() && reasonableSize();
+      allow delete: if false;
+    }
+
+    // ---------- content catalogues (read-only to clients) ----------
+    // Questions, test cases and expected answers live here. Clients must never
+    // write them, and answer keys should be stripped server-side where possible.
+    match /codingChallenges/{challengeId} {
+      allow get, list: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /contests/{contestId} {
+      allow get, list: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /assessments/{assessmentId} {
+      allow get, list: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---------- live-user collection group ----------
+    // The homepage "students online" counter runs a collectionGroup('users')
+    // aggregate count. Collection-group queries are matched by a wildcard rule,
+    // so this is scoped as tightly as the rules language allows: authenticated
+    // list only, no single-document get, no writes. The only `users`
+    // subcollections in the project are the LiveUsers heartbeat documents,
+    // which carry presence data and no scores.
+    match /{path=**}/users/{userDoc} {
+      allow list: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---------- default deny ----------
+    // No catch-all read. Any new collection is closed until a rule is written
+    // for it, which is the behaviour we want for an exam platform.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

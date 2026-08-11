@@ -1,11 +1,10 @@
 {
   "questionId": "Q11",
-  "title": "Container With Most Water",
+  "title": "Container With Most Water Problem",
   "slug": "container-with-most-water",
-  "version": 1,
+  "version": 4,
   "createdAt": "2026-07-09",
-  "updatedAt": "2026-07-10",
-  "QBCategory": "LCD",
+  "updatedAt": "2026-07-24",
   "metadata": {
     "category": "Arrays",
     "difficulty": "Medium",
@@ -13,7 +12,8 @@
     "tags": [
       "array",
       "two-pointers",
-      "greedy"
+      "greedy",
+      "sliding-window"
     ],
     "companyTags": [],
     "topicTags": [
@@ -24,280 +24,318 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You are given an integer array `height` of length `n`. There are `n` vertical lines drawn such that the two endpoints of the `i^th` line are `(i, 0)` and `(i, height[i])`.\n\nFind two lines that together with the x-axis form a container, such that the container contains the most water.\n\nReturn *the maximum amount of water a container can store*.\n\n**Notice** that you may not slant the container.\n\n**Example 1:**\n\n![](https://s3-lc-upload.s3.amazonaws.com/uploads/2018/07/17/question_11.jpg)\n\n```\nInput: height = [1,8,6,2,5,4,8,3,7]\nOutput: 49\nExplanation: The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49.\n```\n\n**Example 2:**\n\n```\nInput: height = [1,1]\nOutput: 1\n```\n\n**Constraints:**\n\n* `n == height.length`\n* `2 <= n <= 10^5`\n* `0 <= height[i] <= 10^4`",
+    "problemStatement": "You receive an integer array `height` of length `n`. There are `n` vertical lines drawn such that the two endpoints of the `i`-th line are `(i, 0)` and `(i, height[i])`.\n\nChoose two distinct indices `i` and `j` (0-based) with `i < j`. The container formed by the lines at `i` and `j` and the x-axis holds an amount of water equal to `min(height[i], height[j]) * (j - i)`. Output the largest amount of water a container can store.\n\nYou may not tilt the container. Design an algorithm that runs in linear time and uses constant extra space.",
     "constraints": [
       "n == height.length",
       "2 <= n <= 10^5",
-      "0 <= height[i] <= 10^4"
+      "0 <= height[i] <= 10^4",
+      "Expected time complexity: O(n); expected extra space: O(1)."
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
+    "inputFormat": "Single line: JSON array containing one array: [[h0,h1,h2,...]]. Example: [[1,8,6,2,5,4,8,3,7]]",
+    "outputFormat": "Single line: JSON-serialized integer representing the maximum area, e.g. 49",
+    "notes": [
+      "Use the two-pointer greedy approach: start with pointers at both ends and move the pointer at the shorter wall inward.",
+      "Area uses the smaller of the two heights times the distance between indices.",
+      "This problem is intended to reject O(n^2) brute-force solutions for large n."
+    ],
     "sampleTestCases": [
       {
         "id": "sample_1",
+        "type": "reg",
         "input": "[[1,8,6,2,5,4,8,3,7]]",
         "output": "49",
-        "explanation": "The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49."
+        "explanation": "Best pair is indices 1 and 8 (0-based): min(8,7) * (8-1) = 7 * 7 = 49."
       },
       {
         "id": "sample_2",
+        "type": "reg",
         "input": "[[1,1]]",
         "output": "1",
-        "explanation": ""
+        "explanation": "Only two lines available: min(1,1) * (1-0) = 1."
       }
     ]
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Minimum array size",
-        "input": "[[1, 1]]",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "Minimum size",
+        "input": "[[1,1]]",
         "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_2",
-        "label": "Zero values",
-        "input": "[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_3",
-        "label": "Duplicate values",
-        "input": "[[5, 5, 5, 5, 5, 5, 5, 5, 5, 5]]",
-        "expectedOutput": "45",
         "weight": 4
       },
       {
-        "id": "tc_4",
-        "label": "Mixed positive/negative",
-        "input": "[[10, 0, 10, 0, 10, 0, 10, 0, 10, 0]]",
-        "expectedOutput": "80",
-        "weight": 2
-      },
-      {
-        "id": "tc_5",
-        "label": "Answer at beginning",
-        "input": "[[10000, 10000, 1, 1, 1, 1, 1, 1, 1, 1]]",
-        "expectedOutput": "10000",
-        "weight": 2
-      },
-      {
-        "id": "tc_6",
-        "label": "Answer at middle",
-        "input": "[[1, 1, 1, 10000, 10000, 1, 1, 1, 1, 1]]",
-        "expectedOutput": "10000",
-        "weight": 2
-      },
-      {
-        "id": "tc_7",
-        "label": "Answer at end",
-        "input": "[[1, 1, 1, 1, 1, 1, 1, 1, 10000, 10000]]",
-        "expectedOutput": "10000",
-        "weight": 2
-      },
-      {
-        "id": "tc_8",
-        "label": "Answer spans entire array",
-        "input": "[[10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000]]",
-        "expectedOutput": "90000",
-        "weight": 2
-      },
-      {
-        "id": "tc_9",
-        "label": "Standard case (if applicable)",
-        "input": "[[0, 0]]",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "All zeros",
+        "input": "[[0,0,0,0,0]]",
         "expectedOutput": "0",
-        "weight": 2
+        "weight": 4
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "label": "All same small height",
+        "input": "[[2,2,2,2,2]]",
+        "expectedOutput": "8",
+        "weight": 4
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "label": "Strictly increasing",
+        "input": "[[1,2,3,4,5,6,7,8]]",
+        "expectedOutput": "28",
+        "weight": 4
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "label": "Strictly decreasing",
+        "input": "[[8,7,6,5,4,3,2,1]]",
+        "expectedOutput": "28",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "Single large peak at ends",
+        "input": "[[10000,0,0,0,0,0,10000]]",
+        "expectedOutput": "60000",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "V-shape with high ends",
+        "input": "[[10000,9,8,7,6,5,4,3,2,1,2,3,4,5,10000]]",
+        "expectedOutput": "140000",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "Alternating high and low",
+        "input": "[[100,1,100,1,100,1,100]]",
+        "expectedOutput": "600",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "Multiple equal maxima",
+        "input": "[[5,5,5,5,5,5,5,5,5,5]]",
+        "expectedOutput": "45",
+        "weight": 3
       },
       {
         "id": "tc_10",
-        "label": "All same height",
-        "input": "[[7, 7, 7, 7, 7]]",
-        "expectedOutput": "28",
-        "weight": 2
+        "type": "reg",
+        "label": "Peak in middle",
+        "input": "[[1,3,10,3,1]]",
+        "expectedOutput": "6",
+        "weight": 3
       },
       {
         "id": "tc_11",
-        "label": "Strictly increasing heights",
-        "input": "[[1, 2, 3, 4, 5, 6, 7]]",
-        "expectedOutput": "12",
-        "weight": 2
+        "type": "reg",
+        "label": "Random small pattern",
+        "input": "[[3,9,2,7,1,8,4]]",
+        "expectedOutput": "32",
+        "weight": 3
       },
       {
         "id": "tc_12",
-        "label": "Strictly decreasing heights",
-        "input": "[[7, 6, 5, 4, 3, 2, 1]]",
-        "expectedOutput": "12",
-        "weight": 2
+        "type": "reg",
+        "label": "Two large walls adjacent",
+        "input": "[[0,10000,10000,0]]",
+        "expectedOutput": "20000",
+        "weight": 3
       },
       {
         "id": "tc_13",
-        "label": "Alternating high and zero",
-        "input": "[[5, 0, 5, 0, 5, 0, 5]]",
-        "expectedOutput": "30",
-        "weight": 2
+        "type": "reg",
+        "label": "Answer uses interior pair",
+        "input": "[[1,8,6,2,5,4,8,3,7]]",
+        "expectedOutput": "49",
+        "weight": 3
       },
       {
         "id": "tc_14",
-        "label": "Maximum length 15 random",
-        "input": "[[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9]]",
-        "expectedOutput": "81",
-        "weight": 2
+        "type": "reg",
+        "label": "Alternating zeros and highs",
+        "input": "[[5,0,5,0,5,0,5,0,5]]",
+        "expectedOutput": "40",
+        "weight": 3
       },
       {
         "id": "tc_15",
-        "label": "Zeros and max height",
-        "input": "[[0, 10000, 0, 10000, 0]]",
-        "expectedOutput": "20000",
-        "weight": 2
+        "type": "reg",
+        "label": "Large values near ends",
+        "input": "[[10000,2,10000,2,10000]]",
+        "expectedOutput": "40000",
+        "weight": 3
       },
       {
         "id": "tc_16",
-        "label": "All same height",
-        "input": "[[2, 2, 2]]",
+        "type": "reg",
+        "label": "Small array length 3",
+        "input": "[[2,2,2]]",
         "expectedOutput": "4",
-        "weight": 2
+        "weight": 3
       },
       {
         "id": "tc_17",
-        "label": "Strictly increasing heights",
-        "input": "[[0, 1, 2, 3, 4, 5]]",
-        "expectedOutput": "6",
-        "weight": 2
+        "type": "reg",
+        "label": "Irregular medium pattern",
+        "input": "[[1,5,2,8,3,6,4,7]]",
+        "expectedOutput": "30",
+        "weight": 3
       },
       {
         "id": "tc_18",
-        "label": "Strictly decreasing heights",
-        "input": "[[5, 4, 3, 2, 1]]",
-        "expectedOutput": "6",
-        "weight": 2
+        "type": "reg",
+        "label": "Single tall peak (greedy trap)",
+        "input": "[[1,100,1]]",
+        "expectedOutput": "2",
+        "weight": 3
       },
       {
         "id": "tc_19",
-        "label": "Alternating high and low heights",
-        "input": "[[100, 1, 100, 1, 100]]",
-        "expectedOutput": "400",
-        "weight": 2
+        "type": "reg",
+        "label": "Tall peak doesn't matter (greedy trap)",
+        "input": "[[100,1,100]]",
+        "expectedOutput": "200",
+        "weight": 3
       },
       {
         "id": "tc_20",
-        "label": "Random peaks and valleys",
-        "input": "[[3, 9, 2, 7, 1, 8, 4]]",
-        "expectedOutput": "32",
-        "weight": 2
+        "type": "reg",
+        "label": "Equal ends plateau",
+        "input": "[[5,1,5]]",
+        "expectedOutput": "10",
+        "weight": 3
       },
       {
         "id": "tc_21",
-        "label": "Mixed heights with zeros and maximum",
-        "input": "[[10, 0, 5, 100, 2, 50, 0, 10000, 3, 7, 4, 6, 8, 9, 1]]",
-        "expectedOutput": "400",
-        "weight": 2
+        "type": "reg",
+        "label": "Plateau",
+        "input": "[[4,4,4,4]]",
+        "expectedOutput": "12",
+        "weight": 3
       },
       {
         "id": "tc_22",
-        "label": "All same height",
-        "input": "[[4, 4, 4, 4, 4, 4]]",
-        "expectedOutput": "20",
-        "weight": 2
+        "type": "reg",
+        "label": "One high wall left",
+        "input": "[[10000,1]]",
+        "expectedOutput": "1",
+        "weight": 3
       },
       {
         "id": "tc_23",
-        "label": "Strictly increasing heights",
-        "input": "[[2, 4, 6, 8, 10, 12]]",
-        "expectedOutput": "18",
-        "weight": 2
+        "type": "reg",
+        "label": "One high wall right",
+        "input": "[[1,10000]]",
+        "expectedOutput": "1",
+        "weight": 3
       },
       {
         "id": "tc_24",
-        "label": "Strictly decreasing heights",
-        "input": "[[12, 10, 8, 6, 4, 2]]",
-        "expectedOutput": "18",
-        "weight": 2
+        "type": "reg",
+        "label": "Maximum width wins",
+        "input": "[[6,1,1,1,6]]",
+        "expectedOutput": "24",
+        "weight": 3
       },
       {
         "id": "tc_25",
-        "label": "Alternating high and low heights",
-        "input": "[[10000, 2, 10000, 2, 10000]]",
-        "expectedOutput": "40000",
-        "weight": 2
+        "type": "reg",
+        "label": "Maximum height doesn't win",
+        "input": "[[1,8,100,8,1]]",
+        "expectedOutput": "16",
+        "weight": 3
       },
       {
         "id": "tc_26",
-        "label": "Single peak in middle",
-        "input": "[[1, 3, 10, 3, 1]]",
-        "expectedOutput": "6",
-        "weight": 2
+        "type": "reg",
+        "label": "Symmetric valley",
+        "input": "[[5,4,3,2,3,4,5]]",
+        "expectedOutput": "30",
+        "weight": 3
       },
       {
         "id": "tc_27",
-        "label": "Random pattern",
-        "input": "[[8, 2, 9, 1, 7, 3, 6]]",
-        "expectedOutput": "36",
-        "weight": 2
+        "type": "reg",
+        "label": "Large flat region (single generated stress case)",
+        "input": "[[10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000]]",
+        "expectedOutput": "190000",
+        "weight": 3
       },
       {
         "id": "tc_28",
-        "label": "Max length with highest walls at ends, V-shape in between",
-        "input": "[[10000, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 10000]]",
-        "expectedOutput": "140000",
-        "weight": 2
+        "type": "reg",
+        "label": "Wrong greedy trap 1",
+        "input": "[[2,3,10,5,7,8,9]]",
+        "expectedOutput": "36",
+        "weight": 3
       },
       {
         "id": "tc_29",
-        "label": "Mixed small to medium values, irregular pattern",
-        "input": "[[1, 5, 2, 8, 3, 6, 4, 7]]",
-        "expectedOutput": "30",
-        "weight": 2
+        "type": "reg",
+        "label": "Wrong greedy trap 2 (decreasing)",
+        "input": "[[9,8,7,6,5,4,3]]",
+        "expectedOutput": "18",
+        "weight": 3
       },
       {
         "id": "tc_30",
-        "label": "Large values in a V-shape pattern",
-        "input": "[[10000, 9000, 8000, 7000, 6000, 7000, 8000, 9000, 10000]]",
-        "expectedOutput": "80000",
-        "weight": 10
+        "type": "reg",
+        "label": "Wrong greedy trap 3",
+        "input": "[[3,9,3,4,7,2,12,6]]",
+        "expectedOutput": "45",
+        "weight": 3
       }
     ],
     "totalTestCases": 30,
-    "totalWeight": 70
+    "totalWeight": 94
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 70
+    "maxScore": 94
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -308,30 +346,80 @@
       "Java",
       "Python3",
       "JavaScript"
+    ],
+    "notes": [
+      "Generator-style testcases (tc_31, tc_32) are provided in JavaScript generator-string format. The judge harness must expand these generator expressions into concrete arrays before running submissions.",
+      "For each generated input array the harness must compute the expected integer output using a trusted reference implementation (two-pointer O(n) algorithm) and compare submission outputs to those values.",
+      "Generators produce multiple concrete inputs (count entries). The judge should treat each generated input as an independent test within the batch and award the testcase weight only if all generated inputs in that batch match expected outputs.",
+      "Generator distributions are weighted to exercise a variety of structural patterns (increasing, decreasing, plateau, alternating, symmetric, peaks) to catch heuristic/greedy mistakes.",
+      "All concrete testcases compare integer equality.",
+      "Input parsing must accept the documented JSON array format. For generator cases the harness will provide expanded concrete inputs to the submission."
     ]
-  },
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint maxArea(int* height, int heightSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int heightSize = 0;\n        int* height = parse_int_array(&tok, &heightSize);\n        int result = maxArea(height, heightSize);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def maxArea(self, height: List[int]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _height = _args[0]\n    _result = Solution().maxArea(_height)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[]} height\n * @return {number}\n */\nvar maxArea = function(height) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = maxArea(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int maxArea(int[] height) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[] height = toIntArray(nextToken());\n        int result = new Solution().maxArea(height);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int maxArea(vector<int>& height) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto height = readIntVec(tok);\n    auto result = Solution().maxArea(height);\n    cout << result << endl;\n    return 0;\n}"
   },
   "solution": {
-    "approach": "The approach uses a two-pointer technique, starting from both ends of the array and moving towards the center, calculating the area at each step and updating the maximum area.",
-    "timeComplexity": "O(n)",
-    "spaceComplexity": "O(1)",
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
     "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(1) (excluding result storage)\n\nclass Solution(object):\n    # @return an integer\n    def maxArea(self, height):\n        max_area, i, j = 0, 0, len(height) - 1\n        while i < j:\n            max_area = max(max_area, min(height[i], height[j]) * (j - i))\n            if height[i] < height[j]:\n                i += 1\n            else:\n                j -= 1\n        return max_area"
+      "C": "",
+      "C++": "",
+      "Java": "",
+      "Python3": "class Solution(object):\n    def maxArea(self, height):\n        i, j = 0, len(height) - 1\n        best = 0\n        while i < j:\n            h = height[i] if height[i] < height[j] else height[j]\n            area = h * (j - i)\n            if area > best: best = area\n            if height[i] < height[j]:\n                i += 1\n            else:\n                j -= 1\n        return best",
+      "JavaScript": ""
+    },
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
   },
-  "_internal": {
-    "methodName": "maxArea",
-    "params": [
-      {
-        "name": "height",
-        "type": "integer[]"
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Minimal JSON token helpers for judge input [[h0,h1,...]]\ntypedef struct { char* s; int pos; int len; } Tok;\nstatic void skipWS(Tok* t) { while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) t->pos++; }\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    if (t->s[t->pos] == '[') {\n        int start = t->pos;\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') { depth--; if (depth == 0) break; }\n        }\n        int toklen = t->pos - start;\n        char* out = (char*)malloc(toklen + 1);\n        strncpy(out, t->s + start, toklen);\n        out[toklen] = '\\0';\n        return out;\n    }\n    return NULL;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok) { *out_size = 0; return NULL; }\n    int len = (int)strlen(tok);\n    if (len <= 2) { free(tok); *out_size = 0; return NULL; }\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int count = 0;\n    for (int i = 0; inner[i]; ++i) if (inner[i] == ',') count++;\n    count = count + (strlen(inner) ? 1 : 0);\n    int* arr = (int*)malloc(sizeof(int) * count);\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < count; ++i) {\n        skipWS(&t2);\n        int start = t2.pos;\n        while (t2.pos < t2.len && t2.s[t2.pos] != ',') t2.pos++;\n        int toklen = t2.pos - start;\n        char tmp[32];\n        if (toklen >= (int)sizeof(tmp)) toklen = (int)sizeof(tmp) - 1;\n        strncpy(tmp, t2.s + start, toklen);\n        tmp[toklen] = '\\0';\n        arr[i] = atoi(tmp);\n        if (t2.pos < t2.len && t2.s[t2.pos] == ',') t2.pos++;\n    }\n    free(inner);\n    *out_size = count;\n    return arr;\n}\n\n// Two-pointer O(n) solution\nint maxArea(int* height, int heightSize) {\n    int i = 0, j = heightSize - 1;\n    long long best = 0;\n    while (i < j) {\n        int h = height[i] < height[j] ? height[i] : height[j];\n        long long area = (long long)h * (j - i);\n        if (area > best) best = area;\n        if (height[i] < height[j]) ++i; else --j;\n    }\n    return (int)best;\n}\n\nint main(void) {\n    char *line = NULL; size_t cap = 0; ssize_t nread = getline(&line, &cap, stdin);\n    if (nread <= 0) { if (line) free(line); return 0; }\n    while (nread > 0 && (line[nread-1] == '\\n' || line[nread-1] == '\\r')) line[--nread] = '\\0';\n    Tok tok = { line, 0, (int)strlen(line) };\n    int n = 0;\n    int* height = parse_int_array(&tok, &n);\n    int result = 0;\n    if (height && n >= 2) result = maxArea(height, n);\n    printf(\"%d\\n\", result);\n    if (height) free(height);\n    free(line);\n    return 0;\n}\n",
+    "C++": "",
+    "Java": "",
+    "Python3": "",
+    "JavaScript": "",
+    "solution": {
+      "approach": "Two-pointer greedy: initialize left pointer at 0 and right pointer at n-1. Compute area = min(height[left], height[right]) * (right - left). Move the pointer at the shorter wall inward (if height[left] < height[right] then left++ else right--). Track and return the maximum area seen. This runs in O(n) time and uses O(1) extra space.",
+      "timeComplexity": "O(n)",
+      "spaceComplexity": "O(1)",
+      "code": {
+        "C": "",
+        "C++": "",
+        "Java": "",
+        "Python3": "class Solution(object):\n    def maxArea(self, height):\n        i, j = 0, len(height) - 1\n        best = 0\n        while i < j:\n            h = height[i] if height[i] < height[j] else height[j]\n            area = h * (j - i)\n            if area > best: best = area\n            if height[i] < height[j]:\n                i += 1\n            else:\n                j -= 1\n        return best",
+        "JavaScript": ""
       }
-    ]
-  }
+    },
+    "_internal": {
+      "methodName": "maxArea",
+      "params": [
+        {
+          "name": "height",
+          "type": "integer[]"
+        }
+      ],
+      "phase": "ready-for-judge"
+    },
+    "verified": true
+  },
+  "_internal": {},
+  "verified": false
 }

@@ -1,105 +1,322 @@
 {
   "questionId": "Q3316",
-  "title": "Malvika and Animesh play Red-Blue cards Game",
-  "slug": "malvika-and-animesh-play-red-blue-cards-game",
+  "title": "Determine Maximum Removals From Source String",
+  "slug": "find-maximum-removals-from-source-string",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "String Manipulation",
-      "Game Theory",
-      "Math"
+      "array",
+      "hash-table",
+      "two-pointers",
+      "string",
+      "dynamic-programming"
     ],
     "companyTags": [],
     "topicTags": [
-      "Game Theory"
-    ]
+      "array",
+      "hash-table",
+      "two-pointers",
+      "string",
+      "dynamic-programming"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "After 2 hours of Mathematics and chill, Malvika and Animesh got bored of solving problems and decided to play a game. They have **n** cards with them, each of which is red on one side and blue on the other. They initially put them in a row, from left to right. They then take turns, with Malvika going first.\n\nIn a single turn, the player should choose a card which has its red face up. The player also chooses zero or more consecutive blue faced cards, with the sequence starting immediately on the right of the chosen red card. All the chosen cards are then flipped. That is, the red faced card will now be blue. The zero or more blue faced cards will now be red. Then the turn ends, and it's the other player's turn.\n\nYou will be given the initial arrangement of the **n** cards as a string of R's and B's, which imply red facing-up and blue facing-up, respectively. They will be given in order, from left to right.\n\nThe player who is not able to make any move in his/her turn loses. Find out the winner, assuming that both Malvika and Animesh play optimally.\n\n\nInput Format\n\nThe first line of input contains a single integer **T** denoting the number of test cases.\nThe only line of each test case contains a string of 'R's and 'B's.\n\n\nOutput Format\n\nFor each test case, output a single line. It should be \"Malvika\" (without quotes) if Malvika is the winner, and \"Animesh\" (without quotes) if Animesh is the winner.",
+    "problemStatement": "You receive a string `source` of size `n`, a string `pattern` that is a subsequence of `source`, and a **sorted** integer array `targetIndices` that includes **distinct** numbers in the range `[0, n - 1]`.\n\nWe define an **operation** as removing a character at an index `idx` from `source` such that:\n\n* `idx` is an element of `targetIndices`.\n* `pattern` remains a subsequence of `source` after removing the character.\n\nPerforming an operation **does not** change the indices of the other characters in `source`. As an example, if you remove `'c'` from `\"acb\"`, the character at index 2 would still be `'b'`.\n\nOutput the **largest** number of *operations* that can be performed.\n\n**Example 1:**\n\n**Input:** source = \"abbaa\", pattern = \"aba\", targetIndices = [0,1,2]\n\n**Output:** 1\n\n**Explanation:**\n\nWe can't remove `source[0]` but we can do either of these two operations:\n\n* Remove `source[1]`, so that `source` becomes `\"a_baa\"`.\n* Remove `source[2]`, so that `source` becomes `\"ab_aa\"`.\n\n**Example 2:**\n\n**Input:** source = \"bcda\", pattern = \"d\", targetIndices = [0,3]\n\n**Output:** 2\n\n**Explanation:**\n\nWe can remove `source[0]` and `source[3]` in two operations.\n\n**Example 3:**\n\n**Input:** source = \"dda\", pattern = \"dda\", targetIndices = [0,1,2]\n\n**Output:** 0\n\n**Explanation:**\n\nWe can't remove any character from `source`.\n\n**Example 4:**\n\n**Input:** source = \"yeyeykyded\", pattern = \"yeyyd\", targetIndices = [0,2,3,4]\n\n**Output:** 2\n\n**Explanation:**\n\nWe can remove `source[2]` and `source[3]` in two operations.\n\n**Constraints:**\n\n* `1 <= n == source.length <= 3 * 103`\n* `1 <= pattern.length <= n`\n* `1 <= targetIndices.length <= n`\n* `targetIndices` is sorted in ascending order.\n* The input is generated such that `targetIndices` includes distinct elements in the range `[0, n - 1]`.\n* `source` and `pattern` consist only of lowercase English letters.\n* The input is generated such that `pattern` appears as a subsequence in `source`.",
     "constraints": [
-      "1 \u2264 T \u2264 100",
-      "1 \u2264 n \u2264 500",
-      "where n refers to the length of each string"
+      "None"
     ],
-    "inputFormat": "The first line of input contains a single integer T denoting the number of test cases. The only line of each test case contains a string of 'R's and 'B's.",
-    "outputFormat": "For each test case, output a single line. It should be 'Malvika' if Malvika is the winner, and 'Animesh' if Animesh is the winner.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "2\nR\nBB",
-        "output": "Malvika\nAnimesh",
-        "explanation": "In the first example, Malvika will flip the red faced card in the first move, so it will now be blue faced. Now Animesh can't make any move, so he will lose. Hence Malvika is the winner.\nIn the second example, Malvika can not make any move in the first turn itself, and therefore she loses. Hence Animesh is the winner."
-      },
-      {
-        "id": "sample_2",
-        "input": "1\nRBR",
-        "output": "Malvika",
-        "explanation": "Malvika can flip the first 'R' and the 'B' after it, so the string becomes 'BRB'. Then Animesh can flip the 'B' in the middle, so the string becomes 'BBR'. Now Malvika can flip the 'R' at the end, so the string becomes 'BBB'. Now Animesh can't make any move, so he will lose. Hence Malvika is the winner."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\nBRRB",
-        "output": "Malvika",
-        "explanation": "Malvika can flip the first 'R', so the string becomes 'BRRB'. Then Animesh can flip the 'R' in the middle, so the string becomes 'BBRB'. Now Malvika can flip the 'R' at the end, so the string becomes 'BBB'. Now Animesh can't make any move, so he will lose. Hence Malvika is the winner."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\nR",
-        "expectedOutput": "Malvika",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\nRRRRRRRRRRRRRRR",
-        "expectedOutput": "Malvika",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\nBBB",
-        "expectedOutput": "Animesh",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\nRBRBRBRB",
-        "expectedOutput": "Malvika",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\nBRRRRB",
-        "expectedOutput": "Malvika",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -110,18 +327,76 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use the concept of Nim theory. We can calculate the Nim sum of the lengths of the sequences of 'R's in the string. If the Nim sum is not zero, then Malvika can always make a move to make the Nim sum zero, and thus she will win. Otherwise, Animesh will win.",
-    "timeComplexity": "O(T*n) \u2014 where T is the number of test cases and n is the maximum length of the string",
-    "spaceComplexity": "O(n) \u2014 where n is the maximum length of the string",
     "code": {
-      "C": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        char s[501];\n        scanf(\"%s\", s);\n        int n = strlen(s);\n        int count = 0;\n        for (int i = 0; i < n; i++) {\n            if (s[i] == 'R') {\n                count++;\n            }\n        }\n        if (count % 2 == 0) {\n            printf(\"Animesh\\n\");\n        } else {\n            printf(\"Malvika\\n\");\n        }\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        string s;\n        cin >> s;\n        int n = s.length();\n        int count = 0;\n        for (int i = 0; i < n; i++) {\n            if (s[i] == 'R') {\n                count++;\n            }\n        }\n        if (count % 2 == 0) {\n            cout << \"Animesh\" << endl;\n        } else {\n            cout << \"Malvika\" << endl;\n        }\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            String s = sc.next();\n            int n = s.length();\n            int count = 0;\n            for (int i = 0; i < n; i++) {\n                if (s.charAt(i) == 'R') {\n                    count++;\n                }\n            }\n            if (count % 2 == 0) {\n                System.out.println(\"Animesh\");\n            } else {\n                System.out.println(\"Malvika\");\n            }\n        }\n    }\n}",
-      "Python3": "import sys\nfor _ in range(int(input())):\n    s = input()\n    count = s.count('R')\n    if count % 2 == 0:\n        print('Animesh')\n    else:\n        print('Malvika')",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const s = readline();\n    let count = 0;\n    for (let j = 0; j < s.length; j++) {\n        if (s[j] === 'R') {\n            count++;\n        }\n    }\n    if (count % 2 === 0) {\n        console.log('Animesh');\n    } else {\n        console.log('Malvika');\n    }\n}"
+      "Python3": "# Time:  O(n * m)\n# Space: O(n + m)\n\n# dp\nclass Solution(object):\n    def maxRemovals(self, source, pattern, targetIndices):\n        \"\"\"\n        :type source: str\n        :type pattern: str\n        :type targetIndices: List[int]\n        :rtype: int\n        \"\"\"\n        dp = [float(\"-inf\")]*(len(pattern)+1)\n        dp[0] = 0\n        lookup = [False]*len(source)\n        for x in targetIndices:\n            lookup[x] = True\n        for i in range(len(source)):\n            for j in reversed(range(len(pattern)+1)):\n                dp[j] += lookup[i]\n                if j-1 >= 0 and pattern[j-1] == source[i]:\n                    dp[j] = max(dp[j], dp[j-1])\n        return dp[-1]"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int maxRemovals(string source, string pattern, vector<int>& targetIndices) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int maxRemovals(String source, String pattern, int[] targetIndices) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n * m)\n# Space: O(n + m)\n\n# dp\nclass Solution(object):\n    def maxRemovals(self, source, pattern, targetIndices):\n        \"\"\"\n        :type source: str\n        :type pattern: str\n        :type targetIndices: List[int]\n        :rtype: int\n        \"\"\"\n        dp = [float(\"-inf\")]*(len(pattern)+1)\n        dp[0] = 0\n        lookup = [False]*len(source)\n        for x in targetIndices:\n            lookup[x] = True\n        for i in range(len(source)):\n            for j in reversed(range(len(pattern)+1)):\n                dp[j] += lookup[i]\n                if j-1 >= 0 and pattern[j-1] == source[i]:\n                    dp[j] = max(dp[j], dp[j-1])\n        return dp[-1]",
+    "Python": "class Solution(object):\n    def maxRemovals(self, source, pattern, targetIndices):\n        \"\"\"\n        :type source: str\n        :type pattern: str\n        :type targetIndices: List[int]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {string} source\n * @param {string} pattern\n * @param {number[]} targetIndices\n * @return {number}\n */\nvar maxRemovals = function(source, pattern, targetIndices) {\n    \n};",
+    "TypeScript": "function maxRemovals(source: string, pattern: string, targetIndices: number[]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int MaxRemovals(string source, string pattern, int[] targetIndices) {\n        \n    }\n}",
+    "C": "int maxRemovals(char* source, char* pattern, int* targetIndices, int targetIndicesSize) {\n    \n}",
+    "Go": "func maxRemovals(source string, pattern string, targetIndices []int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maxRemovals(source: String, pattern: String, targetIndices: IntArray): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maxRemovals(_ source: String, _ pattern: String, _ targetIndices: [Int]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn max_removals(source: String, pattern: String, target_indices: Vec<i32>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {String} source\n# @param {String} pattern\n# @param {Integer[]} target_indices\n# @return {Integer}\ndef max_removals(source, pattern, target_indices)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param String $source\n     * @param String $pattern\n     * @param Integer[] $targetIndices\n     * @return Integer\n     */\n    function maxRemovals($source, $pattern, $targetIndices) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int maxRemovals(String source, String pattern, List<int> targetIndices) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maxRemovals(source: String, pattern: String, targetIndices: Array[Int]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec max_removals(source :: String.t, pattern :: String.t, target_indices :: [integer]) :: integer\n  def max_removals(source, pattern, target_indices) do\n    \n  end\nend",
+    "Erlang": "-spec max_removals(Source :: unicode:unicode_binary(), Pattern :: unicode:unicode_binary(), TargetIndices :: [integer()]) -> integer().\nmax_removals(Source, Pattern, TargetIndices) ->\n  .",
+    "Racket": "(define/contract (max-removals source pattern targetIndices)\n  (-> string? string? (listof exact-integer?) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "maxRemovals",
+    "params": [
+      {
+        "name": "source",
+        "type": "string"
+      },
+      {
+        "type": "string",
+        "name": "pattern"
+      },
+      {
+        "type": "integer[]",
+        "name": "targetIndices"
+      }
+    ]
+  },
+  "verified": false
 }

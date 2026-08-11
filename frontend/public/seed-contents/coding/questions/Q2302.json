@@ -1,106 +1,335 @@
 {
   "questionId": "Q2302",
-  "title": "Icing Crowns",
-  "slug": "icing-crowns",
+  "title": "Calculate the Count of Subarrays With Score Less Than K",
+  "slug": "count-subarrays-with-score-less-than-k",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
+    "category": "Arrays",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Math",
-      "Convex Hull",
-      "Geometry",
-      "Polygon Area"
+      "array",
+      "binary-search",
+      "sliding-window",
+      "prefix-sum"
     ],
     "companyTags": [],
     "topicTags": [
-      "Dynamic Programming"
-    ]
+      "array",
+      "binary-search",
+      "sliding-window",
+      "prefix-sum"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "The Chef has been asked to decorate a birthday cake for a little child. The parents of the child requested that he draw a crown out of icing on the cake. The Chef has already added some icing blossoms and now it is time to add the crown. If we imagine the blossoms as being points on the x-y plane, he draws this crown according to the following rules. For a point p, we will let x(p) and y(p) denote the x and y coordinates of p, respectively.\n\n\n\n1) The crown is a polygon defined by a sequence of an odd number of points (i.e. icing blossoms) p1, p2, ..., pk. The polygon has line segments from pi to pi+1 for each 1 \u2264 i &lt; k as well as a line segment from pk to p1. If we translate the points so that p1 is at the origin and then rotate the points about the origin so that pk lies on the positive x axis, then x(pi) &lt; x(pi+1) for each 1 \u2264 i &lt; k and y(pi) &gt; 0 for each 1 &lt; i &lt; k.\nFurthermore, for any index 1 &lt; i \u2264 k we have that y(pi) &gt; y(pi-1) if i is even and y(pi) &lt; y(pi-1) if i is odd. To paraphrase, after translating and rotating the points we have that the x coordinates of the points are strictly increasing, the y coordinates of all but the two endpoints are strictly positive, and the difference between y coordinates of successive points alternates between positive and negative.\n\n\n\n2)\nNo blossoms may be contained strictly in the interior of the crown.\n\n\n\nYou can find some pictures of crowns following the sample data for this problem.\n\n\n\nSubject to these restrictions, the Chef wants to draw the crown with the largest possible area. Thankfully, his job is made slightly simpler since no three blossoms are collinear.",
+    "problemStatement": "The **score** of an array is defined as the **product** of its sum and its length.\n\n* As an example, the score of `[1, 2, 3, 4, 5]` is `(1 + 2 + 3 + 4 + 5) * 5 = 75`.\n\nWith a positive integer array `nums` and an integer `k`, output *the **number of non-empty subarrays** of* `nums` *whose score is **strictly less** than* `k`.\n\nA **subarray** is a contiguous sequence of elements within an array.\n\n**Example 1:**\n\n```\nInput: nums = [2,1,4,3,5], k = 10\nOutput: 6\nExplanation:\nThe 6 subarrays having scores less than 10 are:\n- [2] with score 2 * 1 = 2.\n- [1] with score 1 * 1 = 1.\n- [4] with score 4 * 1 = 4.\n- [3] with score 3 * 1 = 3. \n- [5] with score 5 * 1 = 5.\n- [2,1] with score (2 + 1) * 2 = 6.\nNote that subarrays such as [1,4] and [4,3,5] are not considered because their scores are 10 and 36 respectively, while we need scores strictly less than 10.\n```\n\n**Example 2:**\n\n```\nInput: nums = [1,1,1], k = 5\nOutput: 5\nExplanation:\nEvery subarray except [1,1,1] has a score less than 5.\n[1,1,1] has a score (1 + 1 + 1) * 3 = 9, which is greater than 5.\nThus, there are 5 subarrays having scores less than 5.\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 105`\n* `1 <= nums[i] <= 105`\n* `1 <= k <= 1015`",
     "constraints": [
-      "1 <= T <= 20",
-      "3 <= N <= 50",
-      "-10000 <= X, Y <= 10000"
+      "None"
     ],
-    "inputFormat": "The first line contains T, the number of test cases. Each test case begins with an integer N, between 3 and 50, indicating the number of blossoms. Then N lines follow, each containing two integers X and Y describing the location of a blossom.",
-    "outputFormat": "For each test case, print the largest possible area of a crown drawn according to the restrictions above, rounded to one decimal place.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "4\n4\n0 0\n0 1\n1 0\n1 1\n6\n0 0\n10 0\n3 1\n8 6\n1 7\n4 7\n5\n-4 10\n-10 -1\n-2 3\n8 4\n0 5\n7\n2 -6\n6 3\n10 8\n-3 -9\n9 2\n0 0\n-9 -9",
-        "output": "0.5\n36.5\n57.0\n66.5",
-        "explanation": "The output is the largest possible area of a crown drawn according to the restrictions above."
+        "type": "reg",
+        "input": "nums = [2,1,4,3,5], k = 10",
+        "output": "6",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n5\n0 0\n0 1\n1 0\n1 1\n2 2",
-        "output": "2.0",
-        "explanation": "The largest possible area of a crown is 2.0"
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n4\n0 0\n0 1\n1 0\n1 1",
-        "output": "0.5",
-        "explanation": "The largest possible area of a crown is 0.5"
+        "type": "reg",
+        "input": "nums = [1,1,1], k = 5",
+        "output": "5",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n3\n0 0\n0 1\n1 0",
-        "expectedOutput": "0.5",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n50\n-10000 10000\n10000 10000\n-10000 -10000\n10000 -10000",
-        "expectedOutput": "200000000.0",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n5\n0 0\n0 0\n0 0\n0 0\n0 0",
-        "expectedOutput": "0.0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n4\n0 0\n0 1\n1 1\n1 0",
-        "expectedOutput": "0.5",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "10\n10\n0 0\n0 1\n1 0\n1 1\n2 2\n3 3\n4 4\n5 5\n6 6\n7 7\n8 8\n9 9",
-        "expectedOutput": "40.5",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +340,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use the concept of convex hull and the Shoelace formula to calculate the area of a polygon. We need to find the convex hull of the given points and then calculate the area of the resulting polygon. The key insight here is to understand the properties of the convex hull and how it relates to the area of the polygon.",
-    "timeComplexity": "O(N log N) per test case, O(T * N log N) total. The time complexity is dominated by the convex hull algorithm.",
-    "spaceComplexity": "O(N) \u2014 the dominant structure is the array of points.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <math.h>\n#define PI 3.14159265358979323846\n#define MAX_N 50\n\nint compare(const void *a, const void *b) {\n    int *x = (int *)a;\n    int *y = (int *)b;\n    if (x[1] == y[1])\n        return x[0] - y[0];\n    return x[1] - y[1];\n}\n\ndouble calculate_area(int *x, int *y, int n) {\n    double area = 0.0;\n    for (int i = 0; i < n; i++) {\n        int j = (i + 1) % n;\n        area += (x[i] * y[j] - x[j] * y[i]);\n    }\n    return fabs(area) / 2.0;\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int x[MAX_N], y[MAX_N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d %d\", &x[i], &y[i]);\n        }\n        double max_area = 0.0;\n        for (int i = 0; i < N; i++) {\n            for (int j = i + 1; j < N; j++) {\n                int temp_x[MAX_N], temp_y[MAX_N];\n                int temp_n = 0;\n                for (int k = 0; k < N; k++) {\n                    if (k != i && k != j) {\n                        temp_x[temp_n] = x[k];\n                        temp_y[temp_n] = y[k];\n                        temp_n++;\n                    }\n                }\n                double area = calculate_area(temp_x, temp_y, temp_n);\n                if (area > max_area) {\n                    max_area = area;\n                }\n            }\n        }\n        printf(\"%.1f\\n\", max_area);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <cmath>\nusing namespace std;\n\ndouble calculate_area(vector<int> x, vector<int> y) {\n    double area = 0.0;\n    for (int i = 0; i < x.size(); i++) {\n        int j = (i + 1) % x.size();\n        area += (x[i] * y[j] - x[j] * y[i]);\n    }\n    return fabs(area) / 2.0;\n}\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        vector<int> x(N), y(N);\n        for (int i = 0; i < N; i++) {\n            cin >> x[i] >> y[i];\n        }\n        double max_area = 0.0;\n        for (int i = 0; i < N; i++) {\n            for (int j = i + 1; j < N; j++) {\n                vector<int> temp_x, temp_y;\n                for (int k = 0; k < N; k++) {\n                    if (k != i && k != j) {\n                        temp_x.push_back(x[k]);\n                        temp_y.push_back(y[k]);\n                    }\n                }\n                double area = calculate_area(temp_x, temp_y);\n                if (area > max_area) {\n                    max_area = area;\n                }\n            }\n        }\n        cout << fixed << setprecision(1) << max_area << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static double calculate_area(int[] x, int[] y) {\n        double area = 0.0;\n        for (int i = 0; i < x.length; i++) {\n            int j = (i + 1) % x.length;\n            area += (x[i] * y[j] - x[j] * y[i]);\n        }\n        return Math.abs(area) / 2.0;\n    }\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int T = scanner.nextInt();\n        while (T-- > 0) {\n            int N = scanner.nextInt();\n            int[] x = new int[N], y = new int[N];\n            for (int i = 0; i < N; i++) {\n                x[i] = scanner.nextInt();\n                y[i] = scanner.nextInt();\n            }\n            double max_area = 0.0;\n            for (int i = 0; i < N; i++) {\n                for (int j = i + 1; j < N; j++) {\n                    int[] temp_x = new int[N - 2], temp_y = new int[N - 2];\n                    int temp_n = 0;\n                    for (int k = 0; k < N; k++) {\n                        if (k != i && k != j) {\n                            temp_x[temp_n] = x[k];\n                            temp_y[temp_n] = y[k];\n                            temp_n++;\n                        }\n                    }\n                    double area = calculate_area(temp_x, temp_y);\n                    if (area > max_area) {\n                        max_area = area;\n                    }\n                }\n            }\n            System.out.printf(\"%.1f\\n\", max_area);\n        }\n    }\n}",
-      "Python3": "import math\n\ndef calculate_area(x, y):\n    area = 0.0\n    for i in range(len(x)):\n        j = (i + 1) % len(x)\n        area += (x[i] * y[j] - x[j] * y[i])\n    return abs(area) / 2.0\n\ndef main():\n    T = int(input())\n    while T > 0:\n        N = int(input())\n        x = [0] * N\n        y = [0] * N\n        for i in range(N):\n            x[i], y[i] = map(int, input().split())\n        max_area = 0.0\n        for i in range(N):\n            for j in range(i + 1, N):\n                temp_x = [x[k] for k in range(N) if k != i and k != j]\n                temp_y = [y[k] for k in range(N) if k != i and k != j]\n                area = calculate_area(temp_x, temp_y)\n                if area > max_area:\n                    max_area = area\n        print(f\"{max_area:.1f}\")\n        T -= 1\n\ndef solve():\n    main()\nsolve()",
-      "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nfunction nextLine() {\n    return input[idx++];\n}\nfunction nextInt() {\n    return parseInt(nextLine());\n}\nfunction nextInts() {\n    return nextLine().split(' ').map(x => parseInt(x));\n}\nfunction calculate_area(x, y) {\n    let area = 0.0;\n    for (let i = 0; i < x.length; i++) {\n        let j = (i + 1) % x.length;\n        area += (x[i] * y[j] - x[j] * y[i]);\n    }\n    return Math.abs(area) / 2.0;\n}\nlet T = nextInt();\nwhile (T-- > 0) {\n    let N = nextInt();\n    let x = new Array(N), y = new Array(N);\n    for (let i = 0; i < N; i++) {\n        let temp = nextInts();\n        x[i] = temp[0];\n        y[i] = temp[1];\n    }\n    let max_area = 0.0;\n    for (let i = 0; i < N; i++) {\n        for (let j = i + 1; j < N; j++) {\n            let temp_x = [], temp_y = [];\n            for (let k = 0; k < N; k++) {\n                if (k != i && k != j) {\n                    temp_x.push(x[k]);\n                    temp_y.push(y[k]);\n                }\n            }\n            let area = calculate_area(temp_x, temp_y);\n            if (area > max_area) {\n                max_area = area;\n            }\n        }\n    }\n    console.log(max_area.toFixed(1));\n}"
+      "Python3": "# Time:  O(n)\n# Space: O(1)\n\n# sliding window, two pointers\nclass Solution(object):\n    def countSubarrays(self, nums, k):\n        \"\"\"\n        :type nums: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        result = total = left = 0\n        for right in range(len(nums)):\n            total += nums[right]\n            while total*(right-left+1) >= k:\n                total -= nums[left]\n                left += 1\n            result += right-left+1\n        return result"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    long long countSubarrays(vector<int>& nums, long long k) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public long countSubarrays(int[] nums, long k) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n)\n# Space: O(1)\n\n# sliding window, two pointers\nclass Solution(object):\n    def countSubarrays(self, nums, k):\n        \"\"\"\n        :type nums: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        result = total = left = 0\n        for right in range(len(nums)):\n            total += nums[right]\n            while total*(right-left+1) >= k:\n                total -= nums[left]\n                left += 1\n            result += right-left+1\n        return result",
+    "Python": "class Solution(object):\n    def countSubarrays(self, nums, k):\n        \"\"\"\n        :type nums: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[]} nums\n * @param {number} k\n * @return {number}\n */\nvar countSubarrays = function(nums, k) {\n    \n};",
+    "TypeScript": "function countSubarrays(nums: number[], k: number): number {\n    \n};",
+    "C#": "public class Solution {\n    public long CountSubarrays(int[] nums, long k) {\n        \n    }\n}",
+    "C": "long long countSubarrays(int* nums, int numsSize, long long k) {\n    \n}",
+    "Go": "func countSubarrays(nums []int, k int64) int64 {\n    \n}",
+    "Kotlin": "class Solution {\n    fun countSubarrays(nums: IntArray, k: Long): Long {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func countSubarrays(_ nums: [Int], _ k: Int) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn count_subarrays(nums: Vec<i32>, k: i64) -> i64 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[]} nums\n# @param {Integer} k\n# @return {Integer}\ndef count_subarrays(nums, k)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[] $nums\n     * @param Integer $k\n     * @return Integer\n     */\n    function countSubarrays($nums, $k) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int countSubarrays(List<int> nums, int k) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def countSubarrays(nums: Array[Int], k: Long): Long = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec count_subarrays(nums :: [integer], k :: integer) :: integer\n  def count_subarrays(nums, k) do\n    \n  end\nend",
+    "Erlang": "-spec count_subarrays(Nums :: [integer()], K :: integer()) -> integer().\ncount_subarrays(Nums, K) ->\n  .",
+    "Racket": "(define/contract (count-subarrays nums k)\n  (-> (listof exact-integer?) exact-integer? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "countSubarrays",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      },
+      {
+        "type": "long",
+        "name": "k"
+      }
+    ]
+  },
+  "verified": false
 }

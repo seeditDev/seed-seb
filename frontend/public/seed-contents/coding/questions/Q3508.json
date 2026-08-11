@@ -1,96 +1,324 @@
 {
   "questionId": "Q3508",
-  "title": "Path by a Castle",
-  "slug": "path-by-a-castle",
+  "title": "Implement Router Problem",
+  "slug": "implement-router",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Lazy Path",
-      "Distance Calculation",
-      "Math",
-      "Quadrilateral",
-      "Geometry"
+      "array",
+      "hash-table",
+      "binary-search",
+      "design",
+      "queue",
+      "ordered-set"
     ],
     "companyTags": [],
     "topicTags": [
-      "Graphs"
-    ]
+      "array",
+      "hash-table",
+      "binary-search",
+      "design",
+      "queue",
+      "ordered-set"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Jared and Payton are on the 2D plane, at locations **(xa, ya)** and **(xb, yb)**, respectively. They want to meet, but Payton is lazy and doesn't want to move. So Jared wants to walk to Payton's location. But Jared is also lazy, so he wants to do it with the shortest distance possible.\n\nUnfortunately, a castle stands in their way. The castle is an enclosure of walls whose shape is the quadrilateral with vertices **(x1, y1)**,  **(x2, y2)**,  **(x3, y3)** and  **(x4, y4)**, in that order. The walls themselves are infinitely thin, but Jared is not allowed to cross it, or even get near them by a distance of **10-100**.\n\nWhat is the shortest distance that Jared can take to get to Payton's location?",
+    "problemStatement": "Design a data structure that can efficiently manage data packets in a network router. Each data packet is composed of the following attributes:\n\n* `source`: A unique identifier for the machine that generated the packet.\n* `destination`: A unique identifier for the target machine.\n* `timestamp`: The time at which the packet arrived at the router.\n\nCreate an implementation of the `Router` class:\n\n`Router(int memoryLimit)`: Initializes the Router object with a fixed memory limit.\n\n* `memoryLimit` is the **largest** number of packets the router can store at any given time.\n* If adding a new packet would exceed this limit, the **oldest** packet must be removed to free up space.\n\n`bool addPacket(int source, int destination, int timestamp)`: Adds a packet with the given attributes to the router.\n\n* A packet is considered a duplicate if another packet with the same `source`, `destination`, and `timestamp` already exists in the router.\n* Output `true` if the packet is successfully added (i.e., it is not a duplicate); otherwise output `false`.\n\n`int[] forwardPacket()`: Forwards the next packet in FIFO (First In First Out) order.\n\n* Remove the packet from storage.\n* Output the packet as an array `[source, destination, timestamp]`.\n* If there are no packets to forward, output an empty array.\n\n`int getCount(int destination, int startTime, int endTime)`:\n\n* Returns the number of packets currently stored in the router (i.e., not yet forwarded) that have the specified destination and have timestamps in the inclusive range `[startTime, endTime]`.\n\n**Note** that queries for `addPacket` will be made in non-decreasing order of `timestamp`.\n\n**Example 1:**\n\n**Input:**  \n[\"Router\", \"addPacket\", \"addPacket\", \"addPacket\", \"addPacket\", \"addPacket\", \"forwardPacket\", \"addPacket\", \"getCount\"]  \n[[3], [1, 4, 90], [2, 5, 90], [1, 4, 90], [3, 5, 95], [4, 5, 105], [], [5, 2, 110], [5, 100, 110]]\n\n**Output:**  \n[null, true, true, false, true, true, [2, 5, 90], true, 1]\n\n**Explanation**\n\nRouter router = new Router(3); // Initialize Router with memoryLimit of 3.  \nrouter.addPacket(1, 4, 90); // Packet is added. Output True.  \nrouter.addPacket(2, 5, 90); // Packet is added. Output True.  \nrouter.addPacket(1, 4, 90); // This is a duplicate packet. Output False.  \nrouter.addPacket(3, 5, 95); // Packet is added. Output True  \nrouter.addPacket(4, 5, 105); // Packet is added, `[1, 4, 90]` is removed as number of packets exceeds memoryLimit. Output True.  \nrouter.forwardPacket(); // Output `[2, 5, 90]` and remove it from router.  \nrouter.addPacket(5, 2, 110); // Packet is added. Output True.  \nrouter.getCount(5, 100, 110); // The only packet with destination 5 and timestamp in the inclusive range `[100, 110]` is `[4, 5, 105]`. Output 1.\n\n**Example 2:**\n\n**Input:**  \n[\"Router\", \"addPacket\", \"forwardPacket\", \"forwardPacket\"]  \n[[2], [7, 4, 90], [], []]\n\n**Output:**  \n[null, true, [7, 4, 90], []]\n\n**Explanation**\n\nRouter router = new Router(2); // Initialize `Router` with `memoryLimit` of 2.  \nrouter.addPacket(7, 4, 90); // Output True.  \nrouter.forwardPacket(); // Output `[7, 4, 90]`.  \nrouter.forwardPacket(); // There are no packets left, output `[]`.\n\n**Constraints:**\n\n* `2 <= memoryLimit <= 105`\n* `1 <= source, destination <= 2 * 105`\n* `1 <= timestamp <= 109`\n* `1 <= startTime <= endTime <= 109`\n* At most `105` calls will be made to `addPacket`, `forwardPacket`, and `getCount` methods altogether.\n* queries for `addPacket` will be made in non-decreasing order of `timestamp`.",
     "constraints": [
-      "1 \u2264 T \u2264 10^5",
-      "The absolute values of the coordinates are at most 10^5",
-      "Jared and Payton are initially at least a distance of 10^-100 from the walls",
-      "The walls form a simple, valid quadrilateral without straight angles"
+      "None"
     ],
-    "inputFormat": "The first line of input contains an integer T denoting the number of test cases. The description of T test cases follows. The first line of each test case contains four integers, xa, ya, xb, and yb, separated by single spaces. The ith line in the next four lines contains two integers, xi and yi, separated by a space.",
-    "outputFormat": "For each test case, output a single line containing a single real number: the answer to the problem. If there is no path at all, print -1. Your answer will be considered correct if it is within a relative error of 10-6 from the correct answer.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "3\n0 -4 0 4\n2 2\n2 -2\n-2 -2\n-2 2\n0 0 0 4\n2 2\n-2 2\n-2 -2\n2 -2\n-1 3 1 3\n-2 0\n0 4\n2 0\n0 11",
-        "output": "9.6568542495\n-1\n2.82842712475",
-        "explanation": "The first test case has two shortest paths: either go by the left or right of the castle walls. The second test case has no path. The third test case has a direct path."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n0 0 1 1\n0 0\n1 0\n1 1\n0 1",
-        "expectedOutput": "1.41421356237",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n-100 -100 100 100\n-100 -100\n100 -100\n100 100\n-100 100",
-        "expectedOutput": "282.842712475",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n0 0 0 0\n0 0\n0 0\n0 0\n0 0",
-        "expectedOutput": "0.00000000000",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\n1 1 2 2\n0 0\n2 0\n2 2\n0 2",
-        "expectedOutput": "1.41421356237",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\n-1 -1 1 1\n-1 -1\n1 -1\n1 1\n-1 1",
-        "expectedOutput": "2.82842712475",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -101,18 +329,63 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use the concept of geometry and distance calculation. We need to calculate the shortest distance between two points (xa, ya) and (xb, yb) while avoiding a quadrilateral with vertices (x1, y1), (x2, y2), (x3, y3), and (x4, y4). We can use the concept of convex hull to find the shortest path.",
-    "timeComplexity": "O(T * (number of points in the quadrilateral)) \u2014 explain: per query is O(number of points in the quadrilateral), total is O(T * number of points in the quadrilateral)",
-    "spaceComplexity": "O(1) \u2014 explain: we only need a constant amount of space to store the coordinates and the distance",
     "code": {
-      "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\n#include <math.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        double xa, ya, xb, yb;\n        scanf(\"%lf %lf %lf %lf\", &xa, &ya, &xb, &yb);\n        double x1, y1, x2, y2, x3, y3, x4, y4;\n        scanf(\"%lf %lf\", &x1, &y1);\n        scanf(\"%lf %lf\", &x2, &y2);\n        scanf(\"%lf %lf\", &x3, &y3);\n        scanf(\"%lf %lf\", &x4, &y4);\n        // calculate the shortest distance\n        double distance = calculateDistance(xa, ya, xb, yb, x1, y1, x2, y2, x3, y3, x4, y4);\n        printf(\"%.6f\\n\", distance);\n    }\n    return 0;\n}\n",
-      "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\n#include <cmath>\nusing namespace std;\ndouble calculateDistance(double xa, double ya, double xb, double yb, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {\n    // calculate the shortest distance\n}\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        double xa, ya, xb, yb;\n        cin >> xa >> ya >> xb >> yb;\n        double x1, y1, x2, y2, x3, y3, x4, y4;\n        cin >> x1 >> y1 >> x2 >> y2 >> x3 >> y3 >> x4 >> y4;\n        double distance = calculateDistance(xa, ya, xb, yb, x1, y1, x2, y2, x3, y3, x4, y4);\n        cout << fixed << setprecision(6) << distance << endl;\n    }\n    return 0;\n}\n",
-      "Java": "// COMPLETE, COMPILABLE Java code\nimport java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            double xa = sc.nextDouble();\n            double ya = sc.nextDouble();\n            double xb = sc.nextDouble();\n            double yb = sc.nextDouble();\n            double x1 = sc.nextDouble();\n            double y1 = sc.nextDouble();\n            double x2 = sc.nextDouble();\n            double y2 = sc.nextDouble();\n            double x3 = sc.nextDouble();\n            double y3 = sc.nextDouble();\n            double x4 = sc.nextDouble();\n            double y4 = sc.nextDouble();\n            double distance = calculateDistance(xa, ya, xb, yb, x1, y1, x2, y2, x3, y3, x4, y4);\n            System.out.printf(\"%.6f\\n\", distance);\n        }\n    }\n    public static double calculateDistance(double xa, double ya, double xb, double yb, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {\n        // calculate the shortest distance\n    }\n}\n",
-      "Python3": "# COMPLETE, RUNNABLE Python3 code\nimport math\nT = int(input())\nfor _ in range(T):\n    xa, ya, xb, yb = map(float, input().split())\n    x1, y1 = map(float, input().split())\n    x2, y2 = map(float, input().split())\n    x3, y3 = map(float, input().split())\n    x4, y4 = map(float, input().split())\n    distance = calculateDistance(xa, ya, xb, yb, x1, y1, x2, y2, x3, y3, x4, y4)\n    print(\"{:.6f}\".format(distance))\n\ndef calculateDistance(xa, ya, xb, yb, x1, y1, x2, y2, x3, y3, x4, y4):\n    # calculate the shortest distance\n",
-      "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [xa, ya, xb, yb] = readline().split(' ').map(Number);\n    const [x1, y1] = readline().split(' ').map(Number);\n    const [x2, y2] = readline().split(' ').map(Number);\n    const [x3, y3] = readline().split(' ').map(Number);\n    const [x4, y4] = readline().split(' ').map(Number);\n    const distance = calculateDistance(xa, ya, xb, yb, x1, y1, x2, y2, x3, y3, x4, y4);\n    console.log(distance.toFixed(6));\n}\nfunction calculateDistance(xa, ya, xb, yb, x1, y1, x2, y2, x3, y3, x4, y4) {\n    // calculate the shortest distance\n}\n"
+      "Python3": "# Time:  ctor:          O(1)\n#        addPacket:     O(logn)\n#        forwardPacket: O(logn)\n#        getCount:      O(logn)\n# Space: O(n)\n\nimport collections\nfrom sortedcontainers import SortedList\n\n\n# queue, sorted list\nclass Router(object):\n\n    def __init__(self, memoryLimit):\n        \"\"\"\n        :type memoryLimit: int\n        \"\"\"\n        self.__size = memoryLimit\n        self.__q = collections.deque()\n        self.__lookup = collections.defaultdict(SortedList)\n\n\n    def addPacket(self, source, destination, timestamp):\n        \"\"\"\n        :type source: int\n        :type destination: int\n        :type timestamp: int\n        :rtype: bool\n        \"\"\"\n        if (timestamp, source) in self.__lookup[destination]:\n            return False\n        self.__lookup[destination].add((timestamp, source))\n        if len(self.__q) == self.__size:\n            s, d, t = self.__q.popleft()\n            self.__lookup[d].remove((t, s))\n        self.__q.append((source, destination, timestamp))\n        return True\n\n    def forwardPacket(self):\n        \"\"\"\n        :rtype: List[int]\n        \"\"\"\n        if not self.__q:\n            return []\n        s, d, t = self.__q.popleft()\n        self.__lookup[d].remove((t, s))\n        return [s, d, t]\n\n    def getCount(self, destination, startTime, endTime):\n        \"\"\"\n        :type destination: int\n        :type startTime: int\n        :type endTime: int\n        :rtype: int\n        \"\"\"\n        return self.__lookup[destination].bisect_left((endTime+1, 0))-self.__lookup[destination].bisect_left((startTime, 0))"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Router {\npublic:\n    Router(int memoryLimit) {\n        \n    }\n    \n    bool addPacket(int source, int destination, int timestamp) {\n        \n    }\n    \n    vector<int> forwardPacket() {\n        \n    }\n    \n    int getCount(int destination, int startTime, int endTime) {\n        \n    }\n};\n\n/**\n * Your Router object will be instantiated and called as such:\n * Router* obj = new Router(memoryLimit);\n * bool param_1 = obj->addPacket(source,destination,timestamp);\n * vector<int> param_2 = obj->forwardPacket();\n * int param_3 = obj->getCount(destination,startTime,endTime);\n */",
+    "Java": "class Router {\n\n    public Router(int memoryLimit) {\n        \n    }\n    \n    public boolean addPacket(int source, int destination, int timestamp) {\n        \n    }\n    \n    public int[] forwardPacket() {\n        \n    }\n    \n    public int getCount(int destination, int startTime, int endTime) {\n        \n    }\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * Router obj = new Router(memoryLimit);\n * boolean param_1 = obj.addPacket(source,destination,timestamp);\n * int[] param_2 = obj.forwardPacket();\n * int param_3 = obj.getCount(destination,startTime,endTime);\n */",
+    "Python3": "# Time:  ctor:          O(1)\n#        addPacket:     O(logn)\n#        forwardPacket: O(logn)\n#        getCount:      O(logn)\n# Space: O(n)\n\nimport collections\nfrom sortedcontainers import SortedList\n\n\n# queue, sorted list\nclass Router(object):\n\n    def __init__(self, memoryLimit):\n        \"\"\"\n        :type memoryLimit: int\n        \"\"\"\n        self.__size = memoryLimit\n        self.__q = collections.deque()\n        self.__lookup = collections.defaultdict(SortedList)\n\n\n    def addPacket(self, source, destination, timestamp):\n        \"\"\"\n        :type source: int\n        :type destination: int\n        :type timestamp: int\n        :rtype: bool\n        \"\"\"\n        if (timestamp, source) in self.__lookup[destination]:\n            return False\n        self.__lookup[destination].add((timestamp, source))\n        if len(self.__q) == self.__size:\n            s, d, t = self.__q.popleft()\n            self.__lookup[d].remove((t, s))\n        self.__q.append((source, destination, timestamp))\n        return True\n\n    def forwardPacket(self):\n        \"\"\"\n        :rtype: List[int]\n        \"\"\"\n        if not self.__q:\n            return []\n        s, d, t = self.__q.popleft()\n        self.__lookup[d].remove((t, s))\n        return [s, d, t]\n\n    def getCount(self, destination, startTime, endTime):\n        \"\"\"\n        :type destination: int\n        :type startTime: int\n        :type endTime: int\n        :rtype: int\n        \"\"\"\n        return self.__lookup[destination].bisect_left((endTime+1, 0))-self.__lookup[destination].bisect_left((startTime, 0))",
+    "Python": "class Router(object):\n\n    def __init__(self, memoryLimit):\n        \"\"\"\n        :type memoryLimit: int\n        \"\"\"\n        \n\n    def addPacket(self, source, destination, timestamp):\n        \"\"\"\n        :type source: int\n        :type destination: int\n        :type timestamp: int\n        :rtype: bool\n        \"\"\"\n        \n\n    def forwardPacket(self):\n        \"\"\"\n        :rtype: List[int]\n        \"\"\"\n        \n\n    def getCount(self, destination, startTime, endTime):\n        \"\"\"\n        :type destination: int\n        :type startTime: int\n        :type endTime: int\n        :rtype: int\n        \"\"\"\n        \n\n\n# Your Router object will be instantiated and called as such:\n# obj = Router(memoryLimit)\n# param_1 = obj.addPacket(source,destination,timestamp)\n# param_2 = obj.forwardPacket()\n# param_3 = obj.getCount(destination,startTime,endTime)",
+    "JavaScript": "/**\n * @param {number} memoryLimit\n */\nvar Router = function(memoryLimit) {\n    \n};\n\n/** \n * @param {number} source \n * @param {number} destination \n * @param {number} timestamp\n * @return {boolean}\n */\nRouter.prototype.addPacket = function(source, destination, timestamp) {\n    \n};\n\n/**\n * @return {number[]}\n */\nRouter.prototype.forwardPacket = function() {\n    \n};\n\n/** \n * @param {number} destination \n * @param {number} startTime \n * @param {number} endTime\n * @return {number}\n */\nRouter.prototype.getCount = function(destination, startTime, endTime) {\n    \n};\n\n/** \n * Your Router object will be instantiated and called as such:\n * var obj = new Router(memoryLimit)\n * var param_1 = obj.addPacket(source,destination,timestamp)\n * var param_2 = obj.forwardPacket()\n * var param_3 = obj.getCount(destination,startTime,endTime)\n */",
+    "TypeScript": "class Router {\n    constructor(memoryLimit: number) {\n        \n    }\n\n    addPacket(source: number, destination: number, timestamp: number): boolean {\n        \n    }\n\n    forwardPacket(): number[] {\n        \n    }\n\n    getCount(destination: number, startTime: number, endTime: number): number {\n        \n    }\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * var obj = new Router(memoryLimit)\n * var param_1 = obj.addPacket(source,destination,timestamp)\n * var param_2 = obj.forwardPacket()\n * var param_3 = obj.getCount(destination,startTime,endTime)\n */",
+    "C#": "public class Router {\n\n    public Router(int memoryLimit) {\n        \n    }\n    \n    public bool AddPacket(int source, int destination, int timestamp) {\n        \n    }\n    \n    public int[] ForwardPacket() {\n        \n    }\n    \n    public int GetCount(int destination, int startTime, int endTime) {\n        \n    }\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * Router obj = new Router(memoryLimit);\n * bool param_1 = obj.AddPacket(source,destination,timestamp);\n * int[] param_2 = obj.ForwardPacket();\n * int param_3 = obj.GetCount(destination,startTime,endTime);\n */",
+    "C": "\n\n\ntypedef struct {\n    \n} Router;\n\n\nRouter* routerCreate(int memoryLimit) {\n    \n}\n\nbool routerAddPacket(Router* obj, int source, int destination, int timestamp) {\n    \n}\n\nint* routerForwardPacket(Router* obj, int* retSize) {\n    \n}\n\nint routerGetCount(Router* obj, int destination, int startTime, int endTime) {\n    \n}\n\nvoid routerFree(Router* obj) {\n    \n}\n\n/**\n * Your Router struct will be instantiated and called as such:\n * Router* obj = routerCreate(memoryLimit);\n * bool param_1 = routerAddPacket(obj, source, destination, timestamp);\n \n * int* param_2 = routerForwardPacket(obj, retSize);\n \n * int param_3 = routerGetCount(obj, destination, startTime, endTime);\n \n * routerFree(obj);\n*/",
+    "Go": "type Router struct {\n    \n}\n\n\nfunc Constructor(memoryLimit int) Router {\n    \n}\n\n\nfunc (this *Router) AddPacket(source int, destination int, timestamp int) bool {\n    \n}\n\n\nfunc (this *Router) ForwardPacket() []int {\n    \n}\n\n\nfunc (this *Router) GetCount(destination int, startTime int, endTime int) int {\n    \n}\n\n\n/**\n * Your Router object will be instantiated and called as such:\n * obj := Constructor(memoryLimit);\n * param_1 := obj.AddPacket(source,destination,timestamp);\n * param_2 := obj.ForwardPacket();\n * param_3 := obj.GetCount(destination,startTime,endTime);\n */",
+    "Kotlin": "class Router(memoryLimit: Int) {\n\n    fun addPacket(source: Int, destination: Int, timestamp: Int): Boolean {\n        \n    }\n\n    fun forwardPacket(): IntArray {\n        \n    }\n\n    fun getCount(destination: Int, startTime: Int, endTime: Int): Int {\n        \n    }\n\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * var obj = Router(memoryLimit)\n * var param_1 = obj.addPacket(source,destination,timestamp)\n * var param_2 = obj.forwardPacket()\n * var param_3 = obj.getCount(destination,startTime,endTime)\n */",
+    "Swift": "\nclass Router {\n\n    init(_ memoryLimit: Int) {\n        \n    }\n    \n    func addPacket(_ source: Int, _ destination: Int, _ timestamp: Int) -> Bool {\n        \n    }\n    \n    func forwardPacket() -> [Int] {\n        \n    }\n    \n    func getCount(_ destination: Int, _ startTime: Int, _ endTime: Int) -> Int {\n        \n    }\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * let obj = Router(memoryLimit)\n * let ret_1: Bool = obj.addPacket(source, destination, timestamp)\n * let ret_2: [Int] = obj.forwardPacket()\n * let ret_3: Int = obj.getCount(destination, startTime, endTime)\n */",
+    "Rust": "struct Router {\n\n}\n\n\n/** \n * `&self` means the method takes an immutable reference.\n * If you need a mutable reference, change it to `&mut self` instead.\n */\nimpl Router {\n\n    fn new(memoryLimit: i32) -> Self {\n        \n    }\n    \n    fn add_packet(&self, source: i32, destination: i32, timestamp: i32) -> bool {\n        \n    }\n    \n    fn forward_packet(&self) -> Vec<i32> {\n        \n    }\n    \n    fn get_count(&self, destination: i32, start_time: i32, end_time: i32) -> i32 {\n        \n    }\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * let obj = Router::new(memoryLimit);\n * let ret_1: bool = obj.add_packet(source, destination, timestamp);\n * let ret_2: Vec<i32> = obj.forward_packet();\n * let ret_3: i32 = obj.get_count(destination, startTime, endTime);\n */",
+    "Ruby": "class Router\n\n=begin\n    :type memory_limit: Integer\n=end\n    def initialize(memory_limit)\n        \n    end\n\n\n=begin\n    :type source: Integer\n    :type destination: Integer\n    :type timestamp: Integer\n    :rtype: Boolean\n=end\n    def add_packet(source, destination, timestamp)\n        \n    end\n\n\n=begin\n    :rtype: Integer[]\n=end\n    def forward_packet()\n        \n    end\n\n\n=begin\n    :type destination: Integer\n    :type start_time: Integer\n    :type end_time: Integer\n    :rtype: Integer\n=end\n    def get_count(destination, start_time, end_time)\n        \n    end\n\n\nend\n\n# Your Router object will be instantiated and called as such:\n# obj = Router.new(memory_limit)\n# param_1 = obj.add_packet(source, destination, timestamp)\n# param_2 = obj.forward_packet()\n# param_3 = obj.get_count(destination, start_time, end_time)",
+    "PHP": "class Router {\n    /**\n     * @param Integer $memoryLimit\n     */\n    function __construct($memoryLimit) {\n        \n    }\n  \n    /**\n     * @param Integer $source\n     * @param Integer $destination\n     * @param Integer $timestamp\n     * @return Boolean\n     */\n    function addPacket($source, $destination, $timestamp) {\n        \n    }\n  \n    /**\n     * @return Integer[]\n     */\n    function forwardPacket() {\n        \n    }\n  \n    /**\n     * @param Integer $destination\n     * @param Integer $startTime\n     * @param Integer $endTime\n     * @return Integer\n     */\n    function getCount($destination, $startTime, $endTime) {\n        \n    }\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * $obj = Router($memoryLimit);\n * $ret_1 = $obj->addPacket($source, $destination, $timestamp);\n * $ret_2 = $obj->forwardPacket();\n * $ret_3 = $obj->getCount($destination, $startTime, $endTime);\n */",
+    "Dart": "class Router {\n\n  Router(int memoryLimit) {\n    \n  }\n  \n  bool addPacket(int source, int destination, int timestamp) {\n    \n  }\n  \n  List<int> forwardPacket() {\n    \n  }\n  \n  int getCount(int destination, int startTime, int endTime) {\n    \n  }\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * Router obj = Router(memoryLimit);\n * bool param1 = obj.addPacket(source,destination,timestamp);\n * List<int> param2 = obj.forwardPacket();\n * int param3 = obj.getCount(destination,startTime,endTime);\n */",
+    "Scala": "class Router(_memoryLimit: Int) {\n\n    def addPacket(source: Int, destination: Int, timestamp: Int): Boolean = {\n        \n    }\n\n    def forwardPacket(): Array[Int] = {\n        \n    }\n\n    def getCount(destination: Int, startTime: Int, endTime: Int): Int = {\n        \n    }\n\n}\n\n/**\n * Your Router object will be instantiated and called as such:\n * val obj = new Router(memoryLimit)\n * val param_1 = obj.addPacket(source,destination,timestamp)\n * val param_2 = obj.forwardPacket()\n * val param_3 = obj.getCount(destination,startTime,endTime)\n */",
+    "Elixir": "defmodule Router do\n  @spec init_(memory_limit :: integer) :: any\n  def init_(memory_limit) do\n    \n  end\n\n  @spec add_packet(source :: integer, destination :: integer, timestamp :: integer) :: boolean\n  def add_packet(source, destination, timestamp) do\n    \n  end\n\n  @spec forward_packet() :: [integer]\n  def forward_packet() do\n    \n  end\n\n  @spec get_count(destination :: integer, start_time :: integer, end_time :: integer) :: integer\n  def get_count(destination, start_time, end_time) do\n    \n  end\nend\n\n# Your functions will be called as such:\n# Router.init_(memory_limit)\n# param_1 = Router.add_packet(source, destination, timestamp)\n# param_2 = Router.forward_packet()\n# param_3 = Router.get_count(destination, start_time, end_time)\n\n# Router.init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Erlang": "-spec router_init_(MemoryLimit :: integer()) -> any().\nrouter_init_(MemoryLimit) ->\n  .\n\n-spec router_add_packet(Source :: integer(), Destination :: integer(), Timestamp :: integer()) -> boolean().\nrouter_add_packet(Source, Destination, Timestamp) ->\n  .\n\n-spec router_forward_packet() -> [integer()].\nrouter_forward_packet() ->\n  .\n\n-spec router_get_count(Destination :: integer(), StartTime :: integer(), EndTime :: integer()) -> integer().\nrouter_get_count(Destination, StartTime, EndTime) ->\n  .\n\n\n%% Your functions will be called as such:\n%% router_init_(MemoryLimit),\n%% Param_1 = router_add_packet(Source, Destination, Timestamp),\n%% Param_2 = router_forward_packet(),\n%% Param_3 = router_get_count(Destination, StartTime, EndTime),\n\n%% router_init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Racket": "(define router%\n  (class object%\n    (super-new)\n    \n    ; memory-limit : exact-integer?\n    (init-field\n      memory-limit)\n    \n    ; add-packet : exact-integer? exact-integer? exact-integer? -> boolean?\n    (define/public (add-packet source destination timestamp)\n      )\n    ; forward-packet : -> (listof exact-integer?)\n    (define/public (forward-packet)\n      )\n    ; get-count : exact-integer? exact-integer? exact-integer? -> exact-integer?\n    (define/public (get-count destination start-time end-time)\n      )))\n\n;; Your router% object will be instantiated and called as such:\n;; (define obj (new router% [memory-limit memory-limit]))\n;; (define param_1 (send obj add-packet source destination timestamp))\n;; (define param_2 (send obj forward-packet))\n;; (define param_3 (send obj get-count destination start-time end-time))"
+  },
+  "_internal": {
+    "methodName": "",
+    "params": []
+  },
+  "verified": false
 }

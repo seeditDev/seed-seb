@@ -1,106 +1,322 @@
 {
   "questionId": "Q2397",
-  "title": "Restore the Recipe",
-  "slug": "restore-the-recipe",
+  "title": "Largest Rows Covered by Columns",
+  "slug": "maximum-rows-covered-by-columns",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Gaussian Elimination",
-      "Linear Equations",
-      "Math"
+      "array",
+      "backtracking",
+      "bit-manipulation",
+      "matrix",
+      "enumeration"
     ],
     "companyTags": [],
     "topicTags": [
-      "Graphs"
-    ]
+      "array",
+      "backtracking",
+      "bit-manipulation",
+      "matrix",
+      "enumeration"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Chef has had a recipe. He had written it as a sequence of **N** integer numbers **A[1], A[2], ..., A[N]**. To be on the safe side, he decided to write out **M** triples of numbers, where **i**-th triple is composed of three numbers **Xi**, **Yi** and **Zi**. It means that the sum of numbers in the recipe from **Xi**-th to **Yi**-th is equal to **Zi**. In other words, **A[Xi] +  A[Xi + 1] + ... + A[Yi] = Zi**. Unfortunately, the recipe has been recently lost. So Chef needs to restore his recipe using these **M** triples. Your task is to help him.",
+    "problemStatement": "You receive an `m x n` binary matrix `matrix` and an integer `numSelect`.\n\nYour goal is to select exactly `numSelect` **distinct** columns from `matrix` such that you cover as many rows as possible.\n\nA row is considered **covered** if all the `1`'s in that row are also part of a column that you have selected. If a row does not have any `1`s, it is also considered covered.\n\nMore formally, let us consider `selected = {c1, c2, ...., cnumSelect}` as the set of columns selected by you. A row `i` is **covered** by `selected` if:\n\n* For each cell where `matrix[i][j] == 1`, the column `j` is in `selected`.\n* Or, no cell in row `i` has a value of `1`.\n\nOutput the **largest** number of rows that can be **covered** by a set of `numSelect` columns.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2022/07/14/rowscovered.png)\n\n**Input:** matrix = [[0,0,0],[1,0,1],[0,1,1],[0,0,1]], numSelect = 2\n\n**Output:** 3\n\n**Explanation:**\n\nOne possible way to cover 3 rows is shown in the diagram above.  \nWe choose s = {0, 2}.  \n- Row 0 is covered because it has no occurrences of 1.  \n- Row 1 is covered because the columns with value 1, i.e. 0 and 2 are present in s.  \n- Row 2 is not covered because matrix[2][1] == 1 but 1 is not present in s.  \n- Row 3 is covered because matrix[2][2] == 1 and 2 is present in s.  \nThus, we can cover three rows.  \nKeep in mind that s = {1, 2} will also cover 3 rows, but it can be shown that no more than three rows can be covered.\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2022/07/14/rowscovered2.png)\n\n**Input:** matrix = [[1],[0]], numSelect = 1\n\n**Output:** 2\n\n**Explanation:**\n\nSelecting the only column will result in both rows being covered since the entire matrix is selected.\n\n**Constraints:**\n\n* `m == matrix.length`\n* `n == matrix[i].length`\n* `1 <= m, n <= 12`\n* `matrix[i][j]` is either `0` or `1`.\n* `1 <= numSelect <= n`",
     "constraints": [
-      "2 \u2264 N \u2264 65536",
-      "1 \u2264 M \u2264 200000",
-      "1 \u2264 Xi \u2264 Yi \u2264 N",
-      "|Zi| \u2264 10^9"
+      "None"
     ],
-    "inputFormat": "First line contains two space-separated integers N and M, where N is the number of integers in the recipe and M is the number of triples. Then M lines follow, each containing three space-separated integers Xi, Yi, and Zi.",
-    "outputFormat": "If there is a solution, output N space-separated integers - the sequence that you have restored. If there are several solutions, you can output any of them. However, any number in the output should be no more than 10^14 by its absolute value. If it is impossible to restore the sequence, output '-1' without quotes.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "4 4\n1 2 3\n2 3 1\n3 4 -2\n1 4 1",
-        "output": "1 2 -1 -1",
-        "explanation": "Explanation: The given equations are: A[1] + A[2] = 3, A[2] + A[3] = 1, A[3] + A[4] = -2, A[1] + A[2] + A[3] + A[4] = 1. By solving these equations, we get A[1] = 1, A[2] = 2, A[3] = -1, A[4] = -1."
-      },
-      {
-        "id": "sample_2",
-        "input": "5 3\n1 3 4\n4 5 6\n1 5 9",
-        "output": "-1",
-        "explanation": "Explanation: The given equations are: A[1] + A[2] + A[3] = 4, A[4] + A[5] = 6, A[1] + A[2] + A[3] + A[4] + A[5] = 9. By adding the first two equations, we get A[1] + A[2] + A[3] + A[4] + A[5] = 10, which contradicts the third equation. Therefore, there is no solution."
-      },
-      {
-        "id": "sample_3",
-        "input": "2 2\n1 2 3\n1 2 3",
-        "output": "1 2",
-        "explanation": "Explanation: The given equations are: A[1] + A[2] = 3, A[1] + A[2] = 3. By solving these equations, we get A[1] = 1, A[2] = 2."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Case 1",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "Case 2",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Case 3",
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Case 4",
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Case 5",
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +327,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The problem can be solved by representing the given equations as a system of linear equations and then solving it using Gaussian Elimination. The key insight is to recognize that the equations can be represented as a matrix equation Ax = b, where A is the matrix of coefficients, x is the vector of unknowns, and b is the vector of constants.",
-    "timeComplexity": "O(N^3) per test case, O(T * N^3) total. The time complexity is cubic because we are using Gaussian Elimination to solve the system of linear equations.",
-    "spaceComplexity": "O(N^2) \u2014 the dominant structure is the matrix A.",
     "code": {
-      "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\n#include <stdlib.h>\n#include <math.h>\n#define MAXN 65536\n#define MAXM 200000\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M;\n        scanf(\"%d %d\", &N, &M);\n        int **A = (int **)malloc(N * sizeof(int *));\n        for (int i = 0; i < N; i++) {\n            A[i] = (int *)malloc(M * sizeof(int));\n        }\n        int *b = (int *)malloc(M * sizeof(int));\n        for (int i = 0; i < M; i++) {\n            int Xi, Yi, Zi;\n            scanf(\"%d %d %d\", &Xi, &Yi, &Zi);\n            for (int j = Xi - 1; j < Yi; j++) {\n                A[j][i] = 1;\n            }\n            b[i] = Zi;\n        }\n        // Gaussian Elimination\n        for (int i = 0; i < N; i++) {\n            int maxEl = abs(A[i][i]);\n            int maxRow = i;\n            for (int k = i + 1; k < N; k++) {\n                if (abs(A[k][i]) > maxEl) {\n                    maxEl = abs(A[k][i]);\n                    maxRow = k;\n                }\n            }\n            // Swap maximum row with current row\n            for (int j = 0; j < M; j++) {\n                int tmp = A[maxRow][j];\n                A[maxRow][j] = A[i][j];\n                A[i][j] = tmp;\n            }\n            int tmp = b[maxRow];\n            b[maxRow] = b[i];\n            b[i] = tmp;\n            // Make all rows below this one 0 in current column\n            for (int k = i + 1; k < N; k++) {\n                int c = -A[k][i] / A[i][i];\n                for (int j = 0; j < M; j++) {\n                    if (i == j) {\n                        A[k][j] = 0;\n                    } else {\n                        A[k][j] += c * A[i][j];\n                    }\n                }\n                b[k] += c * b[i];\n            }\n        }\n        // Solve equation Ax=b for an upper triangular matrix A\n        int *x = (int *)malloc(N * sizeof(int));\n        for (int i = N - 1; i >= 0; i--) {\n            x[i] = b[i];\n            for (int k = i + 1; k < N; k++) {\n                x[i] -= A[i][k] * x[k];\n            }\n            x[i] /= A[i][i];\n        }\n        // Print solution\n        for (int i = 0; i < N; i++) {\n            printf(\"%d \", x[i]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}",
-      "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\n#include <vector>\nusing namespace std;\n#define MAXN 65536\n#define MAXM 200000\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M;\n        cin >> N >> M;\n        vector<vector<int>> A(N, vector<int>(M, 0));\n        vector<int> b(M, 0);\n        for (int i = 0; i < M; i++) {\n            int Xi, Yi, Zi;\n            cin >> Xi >> Yi >> Zi;\n            for (int j = Xi - 1; j < Yi; j++) {\n                A[j][i] = 1;\n            }\n            b[i] = Zi;\n        }\n        // Gaussian Elimination\n        for (int i = 0; i < N; i++) {\n            int maxEl = abs(A[i][i]);\n            int maxRow = i;\n            for (int k = i + 1; k < N; k++) {\n                if (abs(A[k][i]) > maxEl) {\n                    maxEl = abs(A[k][i]);\n                    maxRow = k;\n                }\n            }\n            // Swap maximum row with current row\n            for (int j = 0; j < M; j++) {\n                int tmp = A[maxRow][j];\n                A[maxRow][j] = A[i][j];\n                A[i][j] = tmp;\n            }\n            int tmp = b[maxRow];\n            b[maxRow] = b[i];\n            b[i] = tmp;\n            // Make all rows below this one 0 in current column\n            for (int k = i + 1; k < N; k++) {\n                int c = -A[k][i] / A[i][i];\n                for (int j = 0; j < M; j++) {\n                    if (i == j) {\n                        A[k][j] = 0;\n                    } else {\n                        A[k][j] += c * A[i][j];\n                    }\n                }\n                b[k] += c * b[i];\n            }\n        }\n        // Solve equation Ax=b for an upper triangular matrix A\n        vector<int> x(N, 0);\n        for (int i = N - 1; i >= 0; i--) {\n            x[i] = b[i];\n            for (int k = i + 1; k < N; k++) {\n                x[i] -= A[i][k] * x[k];\n            }\n            x[i] /= A[i][i];\n        }\n        // Print solution\n        for (int i = 0; i < N; i++) {\n            cout << x[i] << \" \";\n        }\n        cout << endl;\n    }\n    return 0;\n}",
-      "Java": "// COMPLETE, COMPILABLE Java code\nimport java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int T = scanner.nextInt();\n        while (T-- > 0) {\n            int N = scanner.nextInt();\n            int M = scanner.nextInt();\n            int[][] A = new int[N][M];\n            int[] b = new int[M];\n            for (int i = 0; i < M; i++) {\n                int Xi = scanner.nextInt();\n                int Yi = scanner.nextInt();\n                int Zi = scanner.nextInt();\n                for (int j = Xi - 1; j < Yi; j++) {\n                    A[j][i] = 1;\n                }\n                b[i] = Zi;\n            }\n            // Gaussian Elimination\n            for (int i = 0; i < N; i++) {\n                int maxEl = Math.abs(A[i][i]);\n                int maxRow = i;\n                for (int k = i + 1; k < N; k++) {\n                    if (Math.abs(A[k][i]) > maxEl) {\n                        maxEl = Math.abs(A[k][i]);\n                        maxRow = k;\n                    }\n                }\n                // Swap maximum row with current row\n                for (int j = 0; j < M; j++) {\n                    int tmp = A[maxRow][j];\n                    A[maxRow][j] = A[i][j];\n                    A[i][j] = tmp;\n                }\n                int tmp = b[maxRow];\n                b[maxRow] = b[i];\n                b[i] = tmp;\n                // Make all rows below this one 0 in current column\n                for (int k = i + 1; k < N; k++) {\n                    int c = -A[k][i] / A[i][i];\n                    for (int j = 0; j < M; j++) {\n                        if (i == j) {\n                            A[k][j] = 0;\n                        } else {\n                            A[k][j] += c * A[i][j];\n                        }\n                    }\n                    b[k] += c * b[i];\n                }\n            }\n            // Solve equation Ax=b for an upper triangular matrix A\n            int[] x = new int[N];\n            for (int i = N - 1; i >= 0; i--) {\n                x[i] = b[i];\n                for (int k = i + 1; k < N; k++) {\n                    x[i] -= A[i][k] * x[k];\n                }\n                x[i] /= A[i][i];\n            }\n            // Print solution\n            for (int i = 0; i < N; i++) {\n                System.out.print(x[i] + \" \");\n            }\n            System.out.println();\n        }\n    }\n}",
-      "Python3": "# COMPLETE, RUNNABLE Python3 code\nimport sys\nT = int(sys.stdin.readline())\nfor _ in range(T):\n    N, M = map(int, sys.stdin.readline().split())\n    A = [[0 for _ in range(M)] for _ in range(N)]\n    b = [0 for _ in range(M)]\n    for i in range(M):\n        Xi, Yi, Zi = map(int, sys.stdin.readline().split())\n        for j in range(Xi - 1, Yi):\n            A[j][i] = 1\n        b[i] = Zi\n    # Gaussian Elimination\n    for i in range(N):\n        maxEl = abs(A[i][i])\n        maxRow = i\n        for k in range(i + 1, N):\n            if abs(A[k][i]) > maxEl:\n                maxEl = abs(A[k][i])\n                maxRow = k\n        # Swap maximum row with current row\n        for j in range(M):\n            A[maxRow][j], A[i][j] = A[i][j], A[maxRow][j]\n        b[maxRow], b[i] = b[i], b[maxRow]\n        # Make all rows below this one 0 in current column\n        for k in range(i + 1, N):\n            c = -A[k][i] / A[i][i]\n            for j in range(M):\n                if i == j:\n                    A[k][j] = 0\n                else:\n                    A[k][j] += c * A[i][j]\n            b[k] += c * b[i]\n    # Solve equation Ax=b for an upper triangular matrix A\n    x = [0 for _ in range(N)]\n    for i in range(N - 1, -1, -1):\n        x[i] = b[i]\n        for k in range(i + 1, N):\n            x[i] -= A[i][k] * x[k]\n        x[i] /= A[i][i]\n    # Print solution\n    print(' '.join(map(str, x)))",
-      "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\nconst readline = () => lines[i++];\nconst T = parseInt(readline());\nfor (let t = 0; t < T; t++) {\n    const [N, M] = readline().split(' ').map(Number);\n    const A = Array(N).fill(0).map(() => Array(M).fill(0));\n    const b = Array(M).fill(0);\n    for (let i = 0; i < M; i++) {\n        const [Xi, Yi, Zi] = readline().split(' ').map(Number);\n        for (let j = Xi - 1; j < Yi; j++) {\n            A[j][i] = 1;\n        }\n        b[i] = Zi;\n    }\n    // Gaussian Elimination\n    for (let i = 0; i < N; i++) {\n        let maxEl = Math.abs(A[i][i]);\n        let maxRow = i;\n        for (let k = i + 1; k < N; k++) {\n            if (Math.abs(A[k][i]) > maxEl) {\n                maxEl = Math.abs(A[k][i]);\n                maxRow = k;\n            }\n        }\n        // Swap maximum row with current row\n        for (let j = 0; j < M; j++) {\n            [A[maxRow][j], A[i][j]] = [A[i][j], A[maxRow][j]];\n        }\n        [b[maxRow], b[i]] = [b[i], b[maxRow]];\n        // Make all rows below this one 0 in current column\n        for (let k = i + 1; k < N; k++) {\n            const c = -A[k][i] / A[i][i];\n            for (let j = 0; j < M; j++) {\n                if (i === j) {\n                    A[k][j] = 0;\n                } else {\n                    A[k][j] += c * A[i][j];\n                }\n            }\n            b[k] += c * b[i];\n        }\n    }\n    // Solve equation Ax=b for an upper triangular matrix A\n    const x = Array(N).fill(0);\n    for (let i = N - 1; i >= 0; i--) {\n        x[i] = b[i];\n        for (let k = i + 1; k < N; k++) {\n            x[i] -= A[i][k] * x[k];\n        }\n        x[i] /= A[i][i];\n    }\n    // Print solution\n    console.log(x.join(' '));\n}"
+      "Python3": "# Time:  O(m * n + m * C(n, k))\n# Space: O(m)\n\n# bitmasks, hakmem-175\nclass Solution(object):\n    def maximumRows(self, matrix, numSelect):\n        \"\"\"\n        :type matrix: List[List[int]]\n        :type numSelect: int\n        :rtype: int\n        \"\"\"\n        def next_popcount(n):  # reference: https://massivealgorithms.blogspot.com/2014/06/hakmem-item-175.html\n            lowest_bit = n&-n\n            left_bits = n+lowest_bit\n            changed_bits = n^left_bits\n            right_bits = (changed_bits//lowest_bit)>>2\n            return left_bits|right_bits\n\n        masks = [reduce(lambda m, c: m|(matrix[r][-1-c]<<c), range(len(matrix[0])), 0) for r in range(len(matrix))]\n        result = 0\n        mask = (1<<numSelect)-1\n        while mask < 1<<len(matrix[0]):\n            result = max(result, sum((m&mask) == m for m in masks))\n            mask = next_popcount(mask)\n        return result"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int maximumRows(vector<vector<int>>& matrix, int numSelect) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int maximumRows(int[][] matrix, int numSelect) {\n        \n    }\n}",
+    "Python3": "# Time:  O(m * n + m * C(n, k))\n# Space: O(m)\n\n# bitmasks, hakmem-175\nclass Solution(object):\n    def maximumRows(self, matrix, numSelect):\n        \"\"\"\n        :type matrix: List[List[int]]\n        :type numSelect: int\n        :rtype: int\n        \"\"\"\n        def next_popcount(n):  # reference: https://massivealgorithms.blogspot.com/2014/06/hakmem-item-175.html\n            lowest_bit = n&-n\n            left_bits = n+lowest_bit\n            changed_bits = n^left_bits\n            right_bits = (changed_bits//lowest_bit)>>2\n            return left_bits|right_bits\n\n        masks = [reduce(lambda m, c: m|(matrix[r][-1-c]<<c), range(len(matrix[0])), 0) for r in range(len(matrix))]\n        result = 0\n        mask = (1<<numSelect)-1\n        while mask < 1<<len(matrix[0]):\n            result = max(result, sum((m&mask) == m for m in masks))\n            mask = next_popcount(mask)\n        return result",
+    "Python": "class Solution(object):\n    def maximumRows(self, matrix, numSelect):\n        \"\"\"\n        :type matrix: List[List[int]]\n        :type numSelect: int\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} matrix\n * @param {number} numSelect\n * @return {number}\n */\nvar maximumRows = function(matrix, numSelect) {\n    \n};",
+    "TypeScript": "function maximumRows(matrix: number[][], numSelect: number): number {\n    \n};",
+    "C#": "public class Solution {\n    public int MaximumRows(int[][] matrix, int numSelect) {\n        \n    }\n}",
+    "C": "int maximumRows(int** matrix, int matrixSize, int* matrixColSize, int numSelect) {\n    \n}",
+    "Go": "func maximumRows(matrix [][]int, numSelect int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maximumRows(matrix: Array<IntArray>, numSelect: Int): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maximumRows(_ matrix: [[Int]], _ numSelect: Int) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn maximum_rows(matrix: Vec<Vec<i32>>, num_select: i32) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} matrix\n# @param {Integer} num_select\n# @return {Integer}\ndef maximum_rows(matrix, num_select)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $matrix\n     * @param Integer $numSelect\n     * @return Integer\n     */\n    function maximumRows($matrix, $numSelect) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int maximumRows(List<List<int>> matrix, int numSelect) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maximumRows(matrix: Array[Array[Int]], numSelect: Int): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec maximum_rows(matrix :: [[integer]], num_select :: integer) :: integer\n  def maximum_rows(matrix, num_select) do\n    \n  end\nend",
+    "Erlang": "-spec maximum_rows(Matrix :: [[integer()]], NumSelect :: integer()) -> integer().\nmaximum_rows(Matrix, NumSelect) ->\n  .",
+    "Racket": "(define/contract (maximum-rows matrix numSelect)\n  (-> (listof (listof exact-integer?)) exact-integer? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "maximumRows",
+    "params": [
+      {
+        "name": "matrix",
+        "type": "integer[][]"
+      },
+      {
+        "type": "integer",
+        "name": "numSelect"
+      }
+    ]
+  },
+  "verified": false
 }

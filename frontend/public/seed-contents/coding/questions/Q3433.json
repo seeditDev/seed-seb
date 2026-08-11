@@ -1,93 +1,320 @@
 {
   "questionId": "Q3433",
-  "title": "Math Hatter",
-  "slug": "math-hatter",
+  "title": "Calculate the Count of Mentions Per User",
+  "slug": "count-mentions-per-user",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Dynamic Programming",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Combinatorics",
-      "Modular Arithmetic",
-      "Dynamic Programming"
+      "array",
+      "math",
+      "sorting",
+      "simulation"
     ],
     "companyTags": [],
     "topicTags": [
-      "Dynamic Programming"
-    ]
+      "array",
+      "math",
+      "sorting",
+      "simulation"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "The education system of Wonderland was designed by the great psychologist Math Hatter. In Wonderland there are **n** kids attending school. For simplicity they are numbered from **1** to **n**. \nMath Hatter noticed that all of them are very smart, so he measured their Intellectual Quotient (IQ), it turned out that no two students had the same IQ and that all IQs were integers in the range from **1** to **n**.\n\n\nIn the Math Hatter's education system, one kid can be the teacher of many other kids, and also be the pupil of many others.\n\nLet **j** be the smallest integer greater than **i** such that the IQ of kid **j** is greater than the IQ of kid **i**, the pupils of kid **i** are all the kids numbered from **i + 1** to **j - 1**. If no such **j** exist we consider **j** to be equal to **n + 1**, note that kid number **i** will not have any pupils when **j = i + 1** or when **i = n**.\n\n\nMath hatter doesn't remember the IQ of each kid, however he remembers their number of pupils. Using this information Math Hatter is trying to recover the IQ of each kid. Help him calculating the number of IQ assignations that he can find. As the answer could be large, output it modulo **109 + 7**.",
+    "problemStatement": "You receive an integer `numberOfUsers` representing the total number of users and an array `events` of size `n x 3`.\n\nEach `events[i]` can be either of the following two types:\n\n1. **Message Event:** `[\"MESSAGE\", \"timestampi\", \"mentions_stringi\"]`\n   * This event indicates that a set of users was mentioned in a message at `timestampi`.\n   * The `mentions_stringi` string can contain one of the following tokens:\n     + `id<number>`: where `<number>` is an integer in range `[0,numberOfUsers - 1]`. There can be **multiple** ids separated by a single whitespace and may contain duplicates. This can mention even the offline users.\n     + `ALL`: mentions **all** users.\n     + `HERE`: mentions all **online** users.\n2. **Offline Event:** `[\"OFFLINE\", \"timestampi\", \"idi\"]`\n   * This event indicates that the user `idi` had become offline at `timestampi` for **60 time units**. The user will automatically be online again at time `timestampi + 60`.\n\nOutput an array `mentions` where `mentions[i]` represents the number of mentions the user with id `i` has across all `MESSAGE` events.\n\nAll users are initially online, and if a user goes offline or comes back online, their status change is processed *before* handling any message event that occurs at the same timestamp.\n\n**Note** that a user can be mentioned **multiple** times in a **single** message event, and each mention should be counted **separately**.\n\n**Example 1:**\n\n**Input:** numberOfUsers = 2, events = [[\"MESSAGE\",\"10\",\"id1 id0\"],[\"OFFLINE\",\"11\",\"0\"],[\"MESSAGE\",\"71\",\"HERE\"]]\n\n**Output:** [2,2]\n\n**Explanation:**\n\nAt the beginning, all users are online.\n\nAt timestamp 10, `id1` and `id0` are mentioned. `mentions = [1,1]`\n\nAt timestamp 11, `id0` goes **offline.**\n\nAt timestamp 71, `id0` comes back **online** and `\"HERE\"` is mentioned. `mentions = [2,2]`\n\n**Example 2:**\n\n**Input:** numberOfUsers = 2, events = [[\"MESSAGE\",\"10\",\"id1 id0\"],[\"OFFLINE\",\"11\",\"0\"],[\"MESSAGE\",\"12\",\"ALL\"]]\n\n**Output:** [2,2]\n\n**Explanation:**\n\nAt the beginning, all users are online.\n\nAt timestamp 10, `id1` and `id0` are mentioned. `mentions = [1,1]`\n\nAt timestamp 11, `id0` goes **offline.**\n\nAt timestamp 12, `\"ALL\"` is mentioned. This includes offline users, so both `id0` and `id1` are mentioned. `mentions = [2,2]`\n\n**Example 3:**\n\n**Input:** numberOfUsers = 2, events = [[\"OFFLINE\",\"10\",\"0\"],[\"MESSAGE\",\"12\",\"HERE\"]]\n\n**Output:** [0,1]\n\n**Explanation:**\n\nAt the beginning, all users are online.\n\nAt timestamp 10, `id0` goes **offline.**\n\nAt timestamp 12, `\"HERE\"` is mentioned. Because `id0` is still offline, they will not be mentioned. `mentions = [0,1]`\n\n**Constraints:**\n\n* `1 <= numberOfUsers <= 100`\n* `1 <= events.length <= 100`\n* `events[i].length == 3`\n* `events[i][0]` will be one of `MESSAGE` or `OFFLINE`.\n* `1 <= int(events[i][1]) <= 105`\n* The number of `id<number>` mentions in any `\"MESSAGE\"` event is between `1` and `100`.\n* `0 <= <number> <= numberOfUsers - 1`\n* It is **guaranteed** that the user id referenced in the `OFFLINE` event is **online** at the time the event occurs.",
     "constraints": [
-      "1 <= T <= 10^5",
-      "1 <= n <= 10^5",
-      "0 <= ci < n"
+      "None"
     ],
-    "inputFormat": "The first line of the input contains one integer T, the number of test cases. Each test case consists of two lines. The first line contains one integer n, the number of kids, the second line contains n space separated integers ci denoting the number of pupils of kid i.",
-    "outputFormat": "For each test case, output the answer to the problem modulo 10^9 + 7.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "2\n4\n0 2 1 0\n4\n0 2 1 1",
-        "output": "3\n0",
-        "explanation": "For the first test case, there are three possible assignments of IQs: [1, 4, 3, 2], [2, 4, 3, 1], and [3, 4, 2, 1]. For the second test case, there are no possible assignments because the last student cannot have one pupil."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1\n0",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n100000\n0 1 2 3 4 5 6 7 8 9 10 11 12 13 14",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n5\n0 2 1 0 0",
-        "expectedOutput": "2",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\n10\n0 2 1 0 0 1 2 0 0 0",
-        "expectedOutput": "5",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\n15\n0 2 1 0 0 1 2 0 0 0 1 2 0 0 0",
-        "expectedOutput": "10",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -98,18 +325,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use dynamic programming to calculate the number of ways to assign IQs to the kids. We start by initializing a DP array where dp[i] represents the number of ways to assign IQs to the first i kids. We then iterate over each kid and update the DP array based on the number of pupils for each kid. We use modular arithmetic to avoid overflow.",
-    "timeComplexity": "O(T * n) \u2014 where T is the number of test cases and n is the number of kids in each test case.",
-    "spaceComplexity": "O(n) \u2014 where n is the number of kids in each test case.",
     "code": {
-      "C": "#include <stdio.h>\n#define MOD 1000000007\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int n;\n        scanf(\"%d\", &n);\n        int ci[n];\n        for (int i = 0; i < n; i++) {\n            scanf(\"%d\", &ci[i]);\n        }\n        long long dp[n + 1];\n        dp[0] = 1;\n        for (int i = 0; i < n; i++) {\n            if (ci[i] == 0) {\n                dp[i + 1] = dp[i];\n            } else {\n                dp[i + ci[i] + 1] = (dp[i + ci[i] + 1] + dp[i]) % MOD;\n            }\n        }\n        printf(\"%lld\\n\", dp[n]);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#define MOD 1000000007\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int n;\n        cin >> n;\n        int ci[n];\n        for (int i = 0; i < n; i++) {\n            cin >> ci[i];\n        }\n        long long dp[n + 1];\n        dp[0] = 1;\n        for (int i = 0; i < n; i++) {\n            if (ci[i] == 0) {\n                dp[i + 1] = dp[i];\n            } else {\n                dp[i + ci[i] + 1] = (dp[i + ci[i] + 1] + dp[i]) % MOD;\n            }\n        }\n        cout << dp[n] << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int n = sc.nextInt();\n            int[] ci = new int[n];\n            for (int i = 0; i < n; i++) {\n                ci[i] = sc.nextInt();\n            }\n            long[] dp = new long[n + 1];\n            dp[0] = 1;\n            for (int i = 0; i < n; i++) {\n                if (ci[i] == 0) {\n                    dp[i + 1] = dp[i];\n                } else {\n                    dp[i + ci[i] + 1] = (dp[i + ci[i] + 1] + dp[i]) % 1000000007;\n                }\n            }\n            System.out.println(dp[n]);\n        }\n    }\n}",
-      "Python3": "MOD = 1000000007\nfor _ in range(int(input())):\n    n = int(input())\n    ci = list(map(int, input().split()))\n    dp = [0] * (n + 1)\n    dp[0] = 1\n    for i in range(n):\n        if ci[i] == 0:\n            dp[i + 1] = dp[i]\n        else:\n            dp[i + ci[i] + 1] = (dp[i + ci[i] + 1] + dp[i]) % MOD\n    print(dp[n])",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst MOD = 1000000007;\nconst T = parseInt(lines[idx++]);\nfor (let t = 0; t < T; t++) {\n    const n = parseInt(lines[idx++]);\n    const ci = lines[idx++].trim().split(' ').map(Number);\n    const dp = new Array(n + 1).fill(0);\n    dp[0] = 1;\n    for (let i = 0; i < n; i++) {\n        if (ci[i] === 0) {\n            dp[i + 1] = dp[i];\n        } else {\n            dp[i + ci[i] + 1] = (dp[i + ci[i] + 1] + dp[i]) % MOD;\n        }\n    }\n    console.log(dp[n]);\n}"
+      "Python3": "# Time:  O(eloge + e * n), e = len(events)\n# Space: O(e + n)\n\n# simulation\nclass Solution(object):\n    def countMentions(self, numberOfUsers, events):\n        \"\"\"\n        :type numberOfUsers: int\n        :type events: List[List[str]]\n        :rtype: List[int]\n        \"\"\"\n        result = [0]*numberOfUsers\n        lookup = [1]*numberOfUsers\n        events.sort(key=lambda x: (int(x[1]), x[0] == \"MESSAGE\"))\n        for m, t, s in events:                  \n            if m == \"OFFLINE\":\n                lookup[int(s)] = int(t)+60\n                continue\n            if s == \"ALL\":\n                for i in range(len(lookup)):\n                    result[i] += 1\n            elif s == \"HERE\":\n                for i in range(len(lookup)):\n                    if lookup[i] <= int(t):\n                        result[i] += 1\n            else:\n                for idx in s.split():\n                    result[int(idx[2:])] += 1\n        return result"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    vector<int> countMentions(int numberOfUsers, vector<vector<string>>& events) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int[] countMentions(int numberOfUsers, List<List<String>> events) {\n        \n    }\n}",
+    "Python3": "# Time:  O(eloge + e * n), e = len(events)\n# Space: O(e + n)\n\n# simulation\nclass Solution(object):\n    def countMentions(self, numberOfUsers, events):\n        \"\"\"\n        :type numberOfUsers: int\n        :type events: List[List[str]]\n        :rtype: List[int]\n        \"\"\"\n        result = [0]*numberOfUsers\n        lookup = [1]*numberOfUsers\n        events.sort(key=lambda x: (int(x[1]), x[0] == \"MESSAGE\"))\n        for m, t, s in events:                  \n            if m == \"OFFLINE\":\n                lookup[int(s)] = int(t)+60\n                continue\n            if s == \"ALL\":\n                for i in range(len(lookup)):\n                    result[i] += 1\n            elif s == \"HERE\":\n                for i in range(len(lookup)):\n                    if lookup[i] <= int(t):\n                        result[i] += 1\n            else:\n                for idx in s.split():\n                    result[int(idx[2:])] += 1\n        return result",
+    "Python": "class Solution(object):\n    def countMentions(self, numberOfUsers, events):\n        \"\"\"\n        :type numberOfUsers: int\n        :type events: List[List[str]]\n        :rtype: List[int]\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number} numberOfUsers\n * @param {string[][]} events\n * @return {number[]}\n */\nvar countMentions = function(numberOfUsers, events) {\n    \n};",
+    "TypeScript": "function countMentions(numberOfUsers: number, events: string[][]): number[] {\n    \n};",
+    "C#": "public class Solution {\n    public int[] CountMentions(int numberOfUsers, IList<IList<string>> events) {\n        \n    }\n}",
+    "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* countMentions(int numberOfUsers, char*** events, int eventsSize, int* eventsColSize, int* returnSize) {\n    \n}",
+    "Go": "func countMentions(numberOfUsers int, events [][]string) []int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun countMentions(numberOfUsers: Int, events: List<List<String>>): IntArray {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func countMentions(_ numberOfUsers: Int, _ events: [[String]]) -> [Int] {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn count_mentions(number_of_users: i32, events: Vec<Vec<String>>) -> Vec<i32> {\n        \n    }\n}",
+    "Ruby": "# @param {Integer} number_of_users\n# @param {String[][]} events\n# @return {Integer[]}\ndef count_mentions(number_of_users, events)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer $numberOfUsers\n     * @param String[][] $events\n     * @return Integer[]\n     */\n    function countMentions($numberOfUsers, $events) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  List<int> countMentions(int numberOfUsers, List<List<String>> events) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def countMentions(numberOfUsers: Int, events: List[List[String]]): Array[Int] = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec count_mentions(number_of_users :: integer, events :: [[String.t]]) :: [integer]\n  def count_mentions(number_of_users, events) do\n    \n  end\nend",
+    "Erlang": "-spec count_mentions(NumberOfUsers :: integer(), Events :: [[unicode:unicode_binary()]]) -> [integer()].\ncount_mentions(NumberOfUsers, Events) ->\n  .",
+    "Racket": "(define/contract (count-mentions numberOfUsers events)\n  (-> exact-integer? (listof (listof string?)) (listof exact-integer?))\n  )"
+  },
+  "_internal": {
+    "methodName": "countMentions",
+    "params": [
+      {
+        "name": "numberOfUsers",
+        "type": "integer"
+      },
+      {
+        "type": "list<list<string>>",
+        "name": "events"
+      }
+    ]
+  },
+  "verified": false
 }

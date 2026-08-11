@@ -1,93 +1,324 @@
 {
   "questionId": "Q3559",
-  "title": "Robots of Robin",
-  "slug": "robots-of-robin",
+  "title": "Count of Ways to Assign Edge Weights II",
+  "slug": "number-of-ways-to-assign-edge-weights-ii",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Graphs",
+    "category": "Arrays",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "DFS",
-      "Graphs",
-      "BFS",
-      "Grid"
+      "array",
+      "math",
+      "dynamic-programming",
+      "bit-manipulation",
+      "tree",
+      "depth-first-search"
     ],
     "companyTags": [],
     "topicTags": [
-      "Constructive Algorithms"
-    ]
+      "array",
+      "math",
+      "dynamic-programming",
+      "bit-manipulation",
+      "tree",
+      "depth-first-search"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Robin is a robot builder. His robots are specialized to do only one thing: move from A to B.\n\nToday he's testing out the three new robots he has just built. The testing will happen in an **R \u00d7 C** rectangular grid. Some of the cells will be empty, and the remaining cells will contain obstacles. A robot can be in any empty cell and can face either north, south, east or west.\n\nSince Robin's robots specialize in movement, there are three kinds of commands that his robots can execute:\n\n\n**[F]**: move forward one cell.\n**[R]**: turn right then move forward one cell.\n**[L]**: turn left then move forward one cell.\nNote that a robot cannot go to a cell with an obstacle; if it does, it explodes.\n\nUnfortunately, not all robots can execute all the commands above. Here are the names of the three robots, and their capabilities:\n\n\n**Bob**, which can only use the commands **[F]**, **[R]** and **[L]**.\n**Rob**, which can only use the commands **[F]** and **[R]**.\n**Lob**, which can only use the commands **[F]** and **[L]**.\nNaturally, this makes some of the cells unreachable from robots, depending on where they start. For example, consider the following layout:\n\n\n\nHere, the flag represents the starting point of the robots. In this layout, Bob, Rob and Lob can only visit **39**, **37** and **31** distinct cells, respectively:\n\n\n\nFor Robin's test, he needs a layout with the following requirements:\n\n\nThe length and width of the grid is between **1** and **20** cells, inclusive.\nThe boundary cells of the grid must be filled with obstacles. (So that no robot can go off the grid.)\nThere exists exactly one starting point.\nThe number of distinct cells that Bob can reach from the starting point is **B**.\nThe number of distinct cells that Rob can reach from the starting point is **R**.\nThe number of distinct cells that Lob can reach from the starting point is **L**.\nA robot must start at the starting point, but can face any direction at the beginning. Also, the starting point is considered reachable from the starting point.\n\nUnfortunately, Robin found out that it's not so straightforward to find a layout satisfying all the requirements above. Please help Robin solve this problem! (Or, if you're Robin himself, solve this problem!)\n\n\nInput Format\nThe first line of input contains an integer **T** denoting the number of test cases. The description of **T** test cases follows.\n\n\nEach test case consists of a single line containing three integers **B**, **R** and **L** separated by single spaces.\n\n\n\nOutput Format\nFor each test case, first output a single line containing two integers **R** and **C**, separated by a single space. Then output **R** lines, each containing **C** characters, describing the grid. Each character must either be `.` (an empty cell), `#` (a cell with an obstacle) or `S` (the starting point, which is also an empty cell).\n\n\nIf it's impossible to construct any such grid, just output `-1 -1` in a single line.",
+    "problemStatement": "There is an undirected tree with `n` nodes labeled from 1 to `n`, rooted at node 1. The tree is represented by a 2D integer array `edges` of length `n - 1`, where `edges[i] = [ui, vi]` indicates that there is an edge between nodes `ui` and `vi`.\n\nAt the beginning, all edges have a weight of 0. You must assign each edge a weight of either **1** or **2**.\n\nThe **cost** of a path between any two nodes `u` and `v` is the total weight of all edges in the path connecting them.\n\nYou receive a 2D integer array `queries`. For each `queries[i] = [ui, vi]`, determine the number of ways to assign weights to edges **in the path** such that the cost of the path between `ui` and `vi` is **odd**.\n\nOutput an array `answer`, where `answer[i]` is the number of valid assignments for `queries[i]`.\n\nSince the answer may be large, apply **modulo** `109 + 7` to each `answer[i]`.\n\n**Note:** For each query, disregard all edges **not** in the path between node `ui` and `vi`.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2025/03/23/screenshot-2025-03-24-at-060006.png)\n\n**Input:** edges = [[1,2]], queries = [[1,1],[1,2]]\n\n**Output:** [0,1]\n\n**Explanation:**\n\n* Query `[1,1]`: The path from Node 1 to itself is composed of no edges, so the cost is 0. Thus, the number of valid assignments is 0.\n* Query `[1,2]`: The path from Node 1 to Node 2 is composed of one edge (`1 → 2`). Assigning weight 1 makes the cost odd, while 2 makes it even. Thus, the number of valid assignments is 1.\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2025/03/23/screenshot-2025-03-24-at-055820.png)\n\n**Input:** edges = [[1,2],[1,3],[3,4],[3,5]], queries = [[1,4],[3,4],[2,5]]\n\n**Output:** [2,1,4]\n\n**Explanation:**\n\n* Query `[1,4]`: The path from Node 1 to Node 4 is composed of two edges (`1 → 3` and `3 → 4`). Assigning weights (1,2) or (2,1) results in an odd cost. Thus, the number of valid assignments is 2.\n* Query `[3,4]`: The path from Node 3 to Node 4 is composed of one edge (`3 → 4`). Assigning weight 1 makes the cost odd, while 2 makes it even. Thus, the number of valid assignments is 1.\n* Query `[2,5]`: The path from Node 2 to Node 5 is composed of three edges (`2 → 1, 1 → 3`, and `3 → 5`). Assigning (1,2,2), (2,1,2), (2,2,1), or (1,1,1) makes the cost odd. Thus, the number of valid assignments is 4.\n\n**Constraints:**\n\n* `2 <= n <= 105`\n* `edges.length == n - 1`\n* `edges[i] == [ui, vi]`\n* `1 <= queries.length <= 105`\n* `queries[i] == [ui, vi]`\n* `1 <= ui, vi <= n`\n* `edges` represents a valid tree.",
     "constraints": [
-      "1 <= T <= 30000",
-      "1 <= B, R, L <= 64"
+      "None"
     ],
-    "inputFormat": "The first line of input contains an integer T denoting the number of test cases. Each test case consists of a single line containing three integers B, R, and L separated by single spaces.",
-    "outputFormat": "For each test case, first output a single line containing two integers R and C, separated by a single space. Then output R lines, each containing C characters, describing the grid. Each character must either be `.` (an empty cell), `#` (a cell with an obstacle) or `S` (the starting point, which is also an empty cell). If it's impossible to construct any such grid, just output `-1 -1` in a single line.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "1\n39 37 31",
-        "output": "9 10\n##########\n#........#\n#..#..#..#\n#.#.#.#..#\n#.#...####\n#..##.#..#\n#....S...#\n###...####\n##########",
-        "explanation": "This layout represents the example given in the problem statement."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1 1",
-        "expectedOutput": "-1 -1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n64 64 64",
-        "expectedOutput": "-1 -1",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n10 10 10",
-        "expectedOutput": "-1 -1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\n20 20 20",
-        "expectedOutput": "-1 -1",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\n30 30 30",
-        "expectedOutput": "-1 -1",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -98,18 +329,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we need to construct a grid that satisfies the given conditions. We can use a breadth-first search (BFS) or depth-first search (DFS) algorithm to explore the grid and ensure that the number of distinct cells that each robot can reach matches the given values. We need to consider the capabilities of each robot and the obstacles in the grid to determine the reachable cells.",
-    "timeComplexity": "O(T * (B + R + L)) \u2014 the time complexity is proportional to the number of test cases and the sum of the number of distinct cells that each robot can reach.",
-    "spaceComplexity": "O(R * C) \u2014 the space complexity is proportional to the size of the grid.",
     "code": {
-      "C": "// COMPLETE, COMPILABLE C code\n// Uses correct I/O\n// Handles all T test cases\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\n#define MAX_R 20\n#define MAX_C 20\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int B, R, L;\n        scanf(\"%d %d %d\", &B, &R, &L);\n        // Construct the grid and output the result\n    }\n    return 0;\n}",
-      "C++": "// COMPLETE, COMPILABLE C++ code\n// Uses correct I/O\n// Handles all T test cases\n#include <iostream>\n#include <vector>\n#include <queue>\nusing namespace std;\n\nconst int MAX_R = 20;\nconst int MAX_C = 20;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int B, R, L;\n        cin >> B >> R >> L;\n        // Construct the grid and output the result\n    }\n    return 0;\n}",
-      "Java": "// COMPLETE, COMPILABLE Java code\n// Class MUST be named Main\n// Uses correct I/O\npublic class Main {\n    public static void main(String[] args) {\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int B = sc.nextInt();\n            int R = sc.nextInt();\n            int L = sc.nextInt();\n            // Construct the grid and output the result\n        }\n    }\n}",
-      "Python3": "# COMPLETE, RUNNABLE Python3 code\n# Uses input() or sys.stdin\n# Handles all T test cases\nimport sys\n\nT = int(input())\nwhile T > 0:\n    B, R, L = map(int, input().split())\n    # Construct the grid and output the result\n    T -= 1",
-      "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\n// Uses fs.readFileSync(0,'utf-8') \u2014 NEVER readline()\n// Handles all T test cases\nconst fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction nextInt() {\n    return parseInt(lines[idx++]);\n}\n\nfunction nextLine() {\n    return lines[idx++];\n}\n\nlet T = nextInt();\nwhile (T-- > 0) {\n    let [B, R, L] = nextLine().split(' ').map(Number);\n    // Construct the grid and output the result\n}"
+      "Python3": "# Time:  O(n + q)\n# Space: O(n + q)\n\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, n):\n        self.set = range(n)\n        self.rank = [0]*n\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        return True\n\n\n# iterative dfs, Tarjan's Offline LCA Algorithm, combinatorics\nclass Solution(object):\n    def assignEdgeWeights(self, edges, queries):\n        \"\"\"\n        :type edges: List[List[int]]\n        :type queries: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        MOD = 10**9+7\n        def iter_dfs():\n            lookup = [False]*len(adj)\n            lookup2 = [[] for _ in range(len(adj))]\n            for i, q in enumerate(queries):\n                for x in q:\n                    lookup2[x-1].append(i)\n            uf = UnionFind(len(adj))\n            ancestor = range(len(adj))\n            dist = [0]*len(adj)\n            result = [0]*len(queries)\n            stk = [(1, (0,))]\n            while stk:\n                step, args = stk.pop()\n                if step == 1:\n                    u = args[0]\n                    for i in lookup2[u]:\n                        if queries[i][0] == queries[i][1]:\n                            continue\n                        result[i] += dist[u]\n                        for x in queries[i]:\n                            if lookup[x-1]:\n                                result[i] -= 2*dist[ancestor[uf.find_set(x-1)]]\n                    lookup[u] = True\n                    stk.append((2, (u, 0)))\n                elif step == 2:\n                    u, i = args\n                    if i == len(adj[u]):\n                        continue\n                    v = adj[u][i]\n                    stk.append((2, (u, i+1)))\n                    if lookup[v]:\n                        continue\n                    dist[v] = dist[u]+1\n                    stk.append((3, (v, u)))\n                    stk.append((1, (v, u)))\n                elif step == 3:\n                    v, u = args\n                    uf.union_set(v, u)\n                    ancestor[uf.find_set(u)] = u                    \n            return result\n\n        adj = [[] for _ in range(len(edges)+1)]\n        for u, v in edges:\n            adj[u-1].append(v-1)\n            adj[v-1].append(u-1)\n        result = iter_dfs()\n        POW2 = [1]*(len(adj)-1)\n        for i in range(len(POW2)-1):\n            POW2[i+1] = (POW2[i]*2)%MOD\n        return [POW2[x-1] if x-1 >= 0 else 0 for x in result]"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    vector<int> assignEdgeWeights(vector<vector<int>>& edges, vector<vector<int>>& queries) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int[] assignEdgeWeights(int[][] edges, int[][] queries) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n + q)\n# Space: O(n + q)\n\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, n):\n        self.set = range(n)\n        self.rank = [0]*n\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        return True\n\n\n# iterative dfs, Tarjan's Offline LCA Algorithm, combinatorics\nclass Solution(object):\n    def assignEdgeWeights(self, edges, queries):\n        \"\"\"\n        :type edges: List[List[int]]\n        :type queries: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        MOD = 10**9+7\n        def iter_dfs():\n            lookup = [False]*len(adj)\n            lookup2 = [[] for _ in range(len(adj))]\n            for i, q in enumerate(queries):\n                for x in q:\n                    lookup2[x-1].append(i)\n            uf = UnionFind(len(adj))\n            ancestor = range(len(adj))\n            dist = [0]*len(adj)\n            result = [0]*len(queries)\n            stk = [(1, (0,))]\n            while stk:\n                step, args = stk.pop()\n                if step == 1:\n                    u = args[0]\n                    for i in lookup2[u]:\n                        if queries[i][0] == queries[i][1]:\n                            continue\n                        result[i] += dist[u]\n                        for x in queries[i]:\n                            if lookup[x-1]:\n                                result[i] -= 2*dist[ancestor[uf.find_set(x-1)]]\n                    lookup[u] = True\n                    stk.append((2, (u, 0)))\n                elif step == 2:\n                    u, i = args\n                    if i == len(adj[u]):\n                        continue\n                    v = adj[u][i]\n                    stk.append((2, (u, i+1)))\n                    if lookup[v]:\n                        continue\n                    dist[v] = dist[u]+1\n                    stk.append((3, (v, u)))\n                    stk.append((1, (v, u)))\n                elif step == 3:\n                    v, u = args\n                    uf.union_set(v, u)\n                    ancestor[uf.find_set(u)] = u                    \n            return result\n\n        adj = [[] for _ in range(len(edges)+1)]\n        for u, v in edges:\n            adj[u-1].append(v-1)\n            adj[v-1].append(u-1)\n        result = iter_dfs()\n        POW2 = [1]*(len(adj)-1)\n        for i in range(len(POW2)-1):\n            POW2[i+1] = (POW2[i]*2)%MOD\n        return [POW2[x-1] if x-1 >= 0 else 0 for x in result]",
+    "Python": "class Solution(object):\n    def assignEdgeWeights(self, edges, queries):\n        \"\"\"\n        :type edges: List[List[int]]\n        :type queries: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} edges\n * @param {number[][]} queries\n * @return {number[]}\n */\nvar assignEdgeWeights = function(edges, queries) {\n    \n};",
+    "TypeScript": "function assignEdgeWeights(edges: number[][], queries: number[][]): number[] {\n    \n};",
+    "C#": "public class Solution {\n    public int[] AssignEdgeWeights(int[][] edges, int[][] queries) {\n        \n    }\n}",
+    "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* assignEdgeWeights(int** edges, int edgesSize, int* edgesColSize, int** queries, int queriesSize, int* queriesColSize, int* returnSize) {\n    \n}",
+    "Go": "func assignEdgeWeights(edges [][]int, queries [][]int) []int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun assignEdgeWeights(edges: Array<IntArray>, queries: Array<IntArray>): IntArray {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func assignEdgeWeights(_ edges: [[Int]], _ queries: [[Int]]) -> [Int] {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn assign_edge_weights(edges: Vec<Vec<i32>>, queries: Vec<Vec<i32>>) -> Vec<i32> {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} edges\n# @param {Integer[][]} queries\n# @return {Integer[]}\ndef assign_edge_weights(edges, queries)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $edges\n     * @param Integer[][] $queries\n     * @return Integer[]\n     */\n    function assignEdgeWeights($edges, $queries) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  List<int> assignEdgeWeights(List<List<int>> edges, List<List<int>> queries) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def assignEdgeWeights(edges: Array[Array[Int]], queries: Array[Array[Int]]): Array[Int] = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec assign_edge_weights(edges :: [[integer]], queries :: [[integer]]) :: [integer]\n  def assign_edge_weights(edges, queries) do\n    \n  end\nend",
+    "Erlang": "-spec assign_edge_weights(Edges :: [[integer()]], Queries :: [[integer()]]) -> [integer()].\nassign_edge_weights(Edges, Queries) ->\n  .",
+    "Racket": "(define/contract (assign-edge-weights edges queries)\n  (-> (listof (listof exact-integer?)) (listof (listof exact-integer?)) (listof exact-integer?))\n  )"
+  },
+  "_internal": {
+    "methodName": "assignEdgeWeights",
+    "params": [
+      {
+        "name": "edges",
+        "type": "integer[][]"
+      },
+      {
+        "type": "integer[][]",
+        "name": "queries"
+      }
+    ]
+  },
+  "verified": false
 }

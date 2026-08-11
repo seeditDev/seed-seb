@@ -1,95 +1,318 @@
 {
   "questionId": "Q3538",
-  "title": "Zeroes VII",
-  "slug": "zeroes-vii",
+  "title": "Combine Operations for Minimum Travel Time",
+  "slug": "merge-operations-for-minimum-travel-time",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
+    "category": "Arrays",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Prime Numbers",
-      "Factorial",
-      "Math",
-      "Number Theory"
+      "array",
+      "dynamic-programming",
+      "prefix-sum"
     ],
     "companyTags": [],
     "topicTags": [
-      "Mathematics"
-    ]
+      "array",
+      "dynamic-programming",
+      "prefix-sum"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Factorial ( n ) or ( n! ) is defined as below:\n\nn!=1\u00d72\u00d73\u00d7\u22ef\u00d7nn! = 1 \\times 2 \\times 3 \\times \\dots \\times nn!=1\u00d72\u00d73\u00d7\u22ef\u00d7nFor example, ( 7! = 1 \\times 2 \\times 3 \\times 4 \\times 5 \\times 6 \\times 7 = 5040 ). Now, if we prime factorize a factorial, we will be able to find the frequency of each prime in it. For example, ( 7! = 5040 = 2^4 \\times 3^2 \\times 5 \\times 7 ). So there are exactly four ( 2 )'s, two ( 3 )'s, one ( 5 ), and one ( 7 ) in ( 7! ). For factorials of large numbers, prime-factorization is not a good idea, and there are many better ways to find out the frequency of prime numbers in factorials of large numbers.\n\nNow consider 15 numbers ( 1!, 2!, 3!, 4!, 5!, 6!, 7!, 8!, 9!, 10!, 11!, 12!, 13!, 14!, 15! ) and a set of consecutive prime numbers ( {3, 5, 7, 11, 13} ) (2nd, 3rd, 4th, 5th, and 6th) and an integer ( 2 ) (The frequency). You are asked to find how many of these numbers have one prime from the set of primes exactly two times. The answer will be ( 9 ), and these 9 numbers are shown below:\n\nValuePrimes that are present exactly 2 times6!37!38!310!511!512!513!514!5, 715!7In this problem, you are asked to solve a generalized version of this problem. Given a set of factorials of consecutive numbers ( F ), a set of consecutive prime numbers ( P ), and an integer ( t ), your job is to find out how many of the numbers in ( F ) contain any one of the prime numbers from set ( P ) exactly ( t ) times. But if more than one prime from ( P ) is present exactly ( t ) times in some number, it is ok.\n\n\nInput Format\nThe first line contains a positive integer ( C (0 &lt; C &lt; 51) ) which denotes the total number of test cases to follow. Each of the next ( C ) lines consists of input for a single test case. Each line contains five positive integers ( \\text{low}, \\text{high} (0 &lt; \\text{low} &lt; \\text{high} \\leq 2 \\times 10^{16}) ), ( \\text{plow}, \\text{phigh} (0 &lt; \\text{plow} &lt; \\text{phigh} \\leq 3000000) ), and ( t (0 &lt; t \\leq 300000) ). These numbers denote that you have to deal with the set of factorial of consecutive numbers ( \\text{low}!, (\\text{low}+1)!, (\\text{low}+2)!, \\dots, (\\text{high}-1)!, \\text{high}! ) and a set of primes ( P ) which contains ( P_{\\text{plow}}, P_{\\text{plow}+1}, \\dots, P_{\\text{phigh}} ). Primes are numbered starting from ( 1 ), so ( P_1 ) is actually ( 2 ), ( P_2 = 3 ), ( P_3 = 5 ), ( P_4 = 7 ), ( P_5 = 11 ), etc. You will have to find how many of these factorials contain one or more primes from this set ( P ) exactly ( t ) times.\n\n\n\nOutput Format\nFor each test case, produce one line of output. This line contains an integer ( M ), which denotes how many of the numbers ( \\text{low}!, (\\text{low}+1)!, (\\text{low}+2)!, \\dots, (\\text{high}-1)!, \\text{high}! ) contain at least one prime from set ( P ) exactly ( t ) times.",
+    "problemStatement": "You receive a straight road of length `l` km, an integer `n`, an integer `k`**,** and **two** integer arrays, `position` and `time`, each of length `n`.\n\nThe array `position` lists the positions (in km) of signs in **strictly** increasing order (with `position[0] = 0` and `position[n - 1] = l`).\n\nEach `time[i]` represents the time (in minutes) required to travel 1 km between `position[i]` and `position[i + 1]`.\n\nYou **must** perform **exactly** `k` merge operations. In one merge, you can choose any **two** adjacent signs at indices `i` and `i + 1` (with `i > 0` and `i + 1 < n`) and:\n\n* Update the sign at index `i + 1` so that its time becomes `time[i] + time[i + 1]`.\n* Remove the sign at index `i`.\n\nOutput the **smallest** **total** **travel time** (in minutes) to travel from 0 to `l` after **exactly** `k` merges.\n\n**Example 1:**\n\n**Input:** l = 10, n = 4, k = 1, position = [0,3,8,10], time = [5,8,3,6]\n\n**Output:** 62\n\n**Explanation:**\n\n* Merge the signs at indices 1 and 2. Remove the sign at index 1, and change the time at index 2 to `8 + 3 = 11`.\n* After the merge:\n  + `position` array: `[0, 8, 10]`\n  + `time` array: `[5, 11, 6]`\n* | Segment | Distance (km) | Time per km (min) | Segment Travel Time (min) |\n  | --- | --- | --- | --- |\n  | 0 → 8 | 8 | 5 | 8 × 5 = 40 |\n  | 8 → 10 | 2 | 11 | 2 × 11 = 22 |\n* Total Travel Time: `40 + 22 = 62`, which is the smallest possible time after exactly 1 merge.\n\n**Example 2:**\n\n**Input:** l = 5, n = 5, k = 1, position = [0,1,2,3,5], time = [8,3,9,3,3]\n\n**Output:** 34\n\n**Explanation:**\n\n* Merge the signs at indices 1 and 2. Remove the sign at index 1, and change the time at index 2 to `3 + 9 = 12`.\n* After the merge:\n  + `position` array: `[0, 2, 3, 5]`\n  + `time` array: `[8, 12, 3, 3]`\n* | Segment | Distance (km) | Time per km (min) | Segment Travel Time (min) |\n  | --- | --- | --- | --- |\n  | 0 → 2 | 2 | 8 | 2 × 8 = 16 |\n  | 2 → 3 | 1 | 12 | 1 × 12 = 12 |\n  | 3 → 5 | 2 | 3 | 2 × 3 = 6 |\n* Total Travel Time: `16 + 12 + 6 = 34`**,** which is the smallest possible time after exactly 1 merge.\n\n**Constraints:**\n\n* `1 <= l <= 105`\n* `2 <= n <= min(l + 1, 50)`\n* `0 <= k <= min(n - 2, 10)`\n* `position.length == n`\n* `position[0] = 0` and `position[n - 1] = l`\n* `position` is sorted in strictly increasing order.\n* `time.length == n`\n* `1 <= time[i] <= 100​`\n* `1 <= sum(time) <= 100`​​​​​​",
     "constraints": [
-      "0 < C < 51",
-      "0 < low < high \u2264 2 \u00d7 10^16",
-      "0 < plow < phigh \u2264 3000000",
-      "0 < t \u2264 300000"
+      "None"
     ],
-    "inputFormat": "The first line contains a positive integer C, which denotes the total number of test cases to follow. Each of the next C lines consists of input for a single test case. Each line contains five positive integers: low, high (0 < low < high \u2264 2 \u00d7 10^16), plow, phigh (0 < plow < phigh \u2264 3000000), and t (0 < t \u2264 300000).",
-    "outputFormat": "For each test case, produce one line of output. This line contains an integer M, which denotes how many of the numbers (low!, (low+1)!, (low+2)!, ..., (high-1)!, high!) contain at least one prime from set P exactly t times.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "2\n10 20 1 5 3\n10 20 1 5 6",
-        "output": "5\n3",
-        "explanation": "For the first test case, the factorials from (10!) to (20!) are considered, and the primes (2, 3, 5, 7, 11) are checked for frequency (3). The output is (5), meaning that 5 of these factorials contain at least one of these primes exactly 3 times.\nFor the second test case, the same factorials and primes are considered, but the frequency checked is (6). The output is (3), meaning that 3 of these factorials contain at least one of these primes exactly 6 times."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1 1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n20000000000000000 20000000000000000 3000000 3000000 300000",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n10 10 1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\n10 20 1 5 3",
-        "expectedOutput": "5",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\n10 20 1 5 6",
-        "expectedOutput": "3",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -100,18 +323,84 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we need to calculate the prime factorization of each factorial from low! to high!. We can use the concept of Legendre's formula to find the highest power of a prime p that divides n!. We will iterate over each prime from plow to phigh and calculate the highest power of the prime that divides each factorial. If the power is equal to t, we increment the count.",
-    "timeComplexity": "O(C * (high - low) * (phigh - plow)) \u2014 explain: per query is O((high - low) * (phigh - plow)), total is O(C * (high - low) * (phigh - plow))",
-    "spaceComplexity": "O(1) \u2014 explain: we only use a constant amount of space to store the count and the current prime",
     "code": {
-      "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\n#include <math.h>\n\nlong long legendre(long long n, long long p) {\n    long long result = 0;\n    long long i = p;\n    while (i <= n) {\n        result += n / i;\n        i *= p;\n    }\n    return result;\n}\n\nint main() {\n    int C;\n    scanf(\"%d\", &C);\n    while (C--) {\n        long long low, high, plow, phigh, t;\n        scanf(\"%lld %lld %lld %lld %lld\", &low, &high, &plow, &phigh, &t);\n        int count = 0;\n        for (long long i = low; i <= high; i++) {\n            int found = 0;\n            for (long long j = plow; j <= phigh; j++) {\n                long long prime = j;\n                // calculate the jth prime number\n                long long p = 2;\n                int k = 1;\n                while (k < j) {\n                    p++;\n                    while (p % 2 == 0 || p % 3 == 0 || p % 5 == 0 || p % 7 == 0) {\n                        p++;\n                    }\n                    k++;\n                }\n                if (legendre(i, p) == t) {\n                    found = 1;\n                    break;\n                }\n            }\n            if (found) {\n                count++;\n            }\n        }\n        printf(\"%d\\n\", count);\n    }\n    return 0;\n}",
-      "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\n#include <cmath>\nusing namespace std;\n\nlong long legendre(long long n, long long p) {\n    long long result = 0;\n    long long i = p;\n    while (i <= n) {\n        result += n / i;\n        i *= p;\n    }\n    return result;\n}\n\nint main() {\n    int C;\n    cin >> C;\n    while (C--) {\n        long long low, high, plow, phigh, t;\n        cin >> low >> high >> plow >> phigh >> t;\n        int count = 0;\n        for (long long i = low; i <= high; i++) {\n            int found = 0;\n            for (long long j = plow; j <= phigh; j++) {\n                long long prime = j;\n                // calculate the jth prime number\n                long long p = 2;\n                int k = 1;\n                while (k < j) {\n                    p++;\n                    while (p % 2 == 0 || p % 3 == 0 || p % 5 == 0 || p % 7 == 0) {\n                        p++;\n                    }\n                    k++;\n                }\n                if (legendre(i, p) == t) {\n                    found = 1;\n                    break;\n                }\n            }\n            if (found) {\n                count++;\n            }\n        }\n        cout << count << endl;\n    }\n    return 0;\n}",
-      "Java": "// COMPLETE, COMPILABLE Java code\nimport java.util.Scanner;\npublic class Main {\n    public static long legendre(long n, long p) {\n        long result = 0;\n        long i = p;\n        while (i <= n) {\n            result += n / i;\n            i *= p;\n        }\n        return result;\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int C = sc.nextInt();\n        while (C-- > 0) {\n            long low = sc.nextLong();\n            long high = sc.nextLong();\n            long plow = sc.nextLong();\n            long phigh = sc.nextLong();\n            long t = sc.nextLong();\n            int count = 0;\n            for (long i = low; i <= high; i++) {\n                int found = 0;\n                for (long j = plow; j <= phigh; j++) {\n                    long prime = j;\n                    // calculate the jth prime number\n                    long p = 2;\n                    int k = 1;\n                    while (k < j) {\n                        p++;\n                        while (p % 2 == 0 || p % 3 == 0 || p % 5 == 0 || p % 7 == 0) {\n                            p++;\n                        }\n                        k++;\n                    }\n                    if (legendre(i, p) == t) {\n                        found = 1;\n                        break;\n                    }\n                }\n                if (found > 0) {\n                    count++;\n                }\n            }\n            System.out.println(count);\n        }\n    }\n}",
-      "Python3": "# COMPLETE, RUNNABLE Python3 code\nimport math\n\ndef legendre(n, p):\n    result = 0\n    i = p\n    while i <= n:\n        result += n // i\n        i *= p\n    return result\n\ndef main():\n    C = int(input())\n    for _ in range(C):\n        low, high, plow, phigh, t = map(int, input().split())\n        count = 0\n        for i in range(low, high + 1):\n            found = False\n            for j in range(plow, phigh + 1):\n                prime = j\n                # calculate the jth prime number\n                p = 2\n                k = 1\n                while k < j:\n                    p += 1\n                    while p % 2 == 0 or p % 3 == 0 or p % 5 == 0 or p % 7 == 0:\n                        p += 1\n                    k += 1\n                if legendre(i, p) == t:\n                    found = True\n                    break\n            if found:\n                count += 1\n        print(count)\n\nif __name__ == '__main__':\n    main()",
-      "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction legendre(n, p) {\n    let result = 0;\n    let i = p;\n    while (i <= n) {\n        result += Math.floor(n / i);\n        i *= p;\n    }\n    return result;\n}\n\nfunction main() {\n    let C = parseInt(lines[idx++]);\n    while (C-- > 0) {\n        let [low, high, plow, phigh, t] = lines[idx++].split(' ').map(Number);\n        let count = 0;\n        for (let i = low; i <= high; i++) {\n            let found = false;\n            for (let j = plow; j <= phigh; j++) {\n                let prime = j;\n                // calculate the jth prime number\n                let p = 2;\n                let k = 1;\n                while (k < j) {\n                    p++;\n                    while (p % 2 == 0 || p % 3 == 0 || p % 5 == 0 || p % 7 == 0) {\n                        p++;\n                    }\n                    k++;\n                }\n                if (legendre(i, p) == t) {\n                    found = true;\n                    break;\n                }\n            }\n            if (found) {\n                count++;\n            }\n        }\n        console.log(count);\n    }\n}\n\nmain();"
+      "Python3": "# Time:  O((n - k) * k^3)\n# Space: O(k^2)\n\nimport collections\n\n\n# prefix sum, dp\nclass Solution(object):\n    def minTravelTime(self, l, n, k, position, time):\n        \"\"\"\n        :type l: int\n        :type n: int\n        :type k: int\n        :type position: List[int]\n        :type time: List[int]\n        :rtype: int\n        \"\"\"\n        prefix = [0]*(n+1)\n        for i in range(n):\n            prefix[i+1] = prefix[i]+time[i]\n        dp = collections.defaultdict(lambda: collections.defaultdict(lambda: float(\"inf\")))\n        dp[0][time[0]] = 0\n        for cnt in range(2, (n-k)+1):\n            new_dp = collections.defaultdict(lambda: collections.defaultdict(lambda: float(\"inf\")))\n            for i in range(cnt-1, (cnt-1)+(k+1)):\n                for j in range(cnt-2, i):\n                    for t, c in dp[j].iteritems():\n                        new_dp[i][prefix[i+1]-prefix[j+1]] = min(new_dp[i][prefix[i+1]-prefix[j+1]], (position[i]-position[j])*t+c)\n            dp = new_dp\n        return min(dp[n-1].itervalues())"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int minTravelTime(int l, int n, int k, vector<int>& position, vector<int>& time) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int minTravelTime(int l, int n, int k, int[] position, int[] time) {\n        \n    }\n}",
+    "Python3": "# Time:  O((n - k) * k^3)\n# Space: O(k^2)\n\nimport collections\n\n\n# prefix sum, dp\nclass Solution(object):\n    def minTravelTime(self, l, n, k, position, time):\n        \"\"\"\n        :type l: int\n        :type n: int\n        :type k: int\n        :type position: List[int]\n        :type time: List[int]\n        :rtype: int\n        \"\"\"\n        prefix = [0]*(n+1)\n        for i in range(n):\n            prefix[i+1] = prefix[i]+time[i]\n        dp = collections.defaultdict(lambda: collections.defaultdict(lambda: float(\"inf\")))\n        dp[0][time[0]] = 0\n        for cnt in range(2, (n-k)+1):\n            new_dp = collections.defaultdict(lambda: collections.defaultdict(lambda: float(\"inf\")))\n            for i in range(cnt-1, (cnt-1)+(k+1)):\n                for j in range(cnt-2, i):\n                    for t, c in dp[j].iteritems():\n                        new_dp[i][prefix[i+1]-prefix[j+1]] = min(new_dp[i][prefix[i+1]-prefix[j+1]], (position[i]-position[j])*t+c)\n            dp = new_dp\n        return min(dp[n-1].itervalues())",
+    "Python": "class Solution(object):\n    def minTravelTime(self, l, n, k, position, time):\n        \"\"\"\n        :type l: int\n        :type n: int\n        :type k: int\n        :type position: List[int]\n        :type time: List[int]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number} l\n * @param {number} n\n * @param {number} k\n * @param {number[]} position\n * @param {number[]} time\n * @return {number}\n */\nvar minTravelTime = function(l, n, k, position, time) {\n    \n};",
+    "TypeScript": "function minTravelTime(l: number, n: number, k: number, position: number[], time: number[]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int MinTravelTime(int l, int n, int k, int[] position, int[] time) {\n        \n    }\n}",
+    "C": "int minTravelTime(int l, int n, int k, int* position, int positionSize, int* time, int timeSize) {\n    \n}",
+    "Go": "func minTravelTime(l int, n int, k int, position []int, time []int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun minTravelTime(l: Int, n: Int, k: Int, position: IntArray, time: IntArray): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func minTravelTime(_ l: Int, _ n: Int, _ k: Int, _ position: [Int], _ time: [Int]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn min_travel_time(l: i32, n: i32, k: i32, position: Vec<i32>, time: Vec<i32>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer} l\n# @param {Integer} n\n# @param {Integer} k\n# @param {Integer[]} position\n# @param {Integer[]} time\n# @return {Integer}\ndef min_travel_time(l, n, k, position, time)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer $l\n     * @param Integer $n\n     * @param Integer $k\n     * @param Integer[] $position\n     * @param Integer[] $time\n     * @return Integer\n     */\n    function minTravelTime($l, $n, $k, $position, $time) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int minTravelTime(int l, int n, int k, List<int> position, List<int> time) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def minTravelTime(l: Int, n: Int, k: Int, position: Array[Int], time: Array[Int]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec min_travel_time(l :: integer, n :: integer, k :: integer, position :: [integer], time :: [integer]) :: integer\n  def min_travel_time(l, n, k, position, time) do\n    \n  end\nend",
+    "Erlang": "-spec min_travel_time(L :: integer(), N :: integer(), K :: integer(), Position :: [integer()], Time :: [integer()]) -> integer().\nmin_travel_time(L, N, K, Position, Time) ->\n  .",
+    "Racket": "(define/contract (min-travel-time l n k position time)\n  (-> exact-integer? exact-integer? exact-integer? (listof exact-integer?) (listof exact-integer?) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "minTravelTime",
+    "params": [
+      {
+        "name": "l",
+        "type": "integer"
+      },
+      {
+        "type": "integer",
+        "name": "n"
+      },
+      {
+        "type": "integer",
+        "name": "k"
+      },
+      {
+        "type": "integer[]",
+        "name": "position"
+      },
+      {
+        "type": "integer[]",
+        "name": "time"
+      }
+    ]
+  },
+  "verified": false
 }

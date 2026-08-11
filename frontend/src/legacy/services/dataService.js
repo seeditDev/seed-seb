@@ -1,491 +1,571 @@
-import { API_ENDPOINTS, CACHE_CONFIG, FILE_TYPES } from '../config/constants';
+/**
+ * dataService.js — SEED-IT Platform (v2 — Firestore migration)
+ *
+ * All user data, credentials, and access control now come from Firebase
+ * Firestore and Firebase Auth. GitHub fetches remain ONLY for practice
+ * content (seed-contents repo), handled by contentApi / codingQuestionBankService.
+ */
+
+import {
+    auth,
+    db,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+} from '../firebase-config';
+import {
+    doc,
+    getDoc,
+    collection,
+    query,
+    where,
+    getDocs,
+    updateDoc,
+    serverTimestamp,
+    Timestamp,
+} from 'firebase/firestore';
+import { COLLECTIONS, ROLES } from '../config/constants';
 import { cacheManager } from '../utils/cacheManager';
-import timeService from './timeService';
 import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
 
+// ────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Convert a Firebase Auth user + Firestore profile into a unified auth_data
+ * object that the rest of the app reads from localStorage.
+ */
+function buildAuthData(firebaseUser, profile) {
+    return {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: profile?.displayName || firebaseUser.displayName || '',
+        photoUrl: profile?.photoUrl || firebaseUser.photoURL || '',
+        role: profile?.role || ROLES.STUDENT,
+        tenantId: profile?.tenantId || '',
+        cohortId: profile?.cohortId || '',
+        department: profile?.department || '',
+        year: profile?.year || '',
+        college: profile?.college || '',
+        rollNumber: profile?.rollNumber || '',
+        // Legacy fields kept for backward compat
+        Name: profile?.displayName || '',
+        Email: firebaseUser.email,
+        College: profile?.college || '',
+        Year: profile?.year || '',
+        Department: profile?.department || '',
+        isAuthenticated: true,
+    };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Auth
+// ────────────────────────────────────────────────────────────────────────────
+
 class DataService {
-    static async fetchWithCache(url, cacheKey) {
+    /**
+     * Sign in with Firebase Auth (email + password).
+     * Reads the user profile from Firestore users/{userId}.
+     * Returns the unified auth_data object on success, null on failure.
+     */
+    static async validateCredentials(email, password /*, role (ignored — role from Firestore) */) {
         try {
-            // Check cache first
-            const cachedData = cacheManager.getLocalCache(cacheKey);
-            if (cachedData) {
-                return cachedData;
-            }
+            // 1. Firebase Auth sign-in
+            const credential = await signInWithEmailAndPassword(auth, email, password);
+            const firebaseUser = credential.user;
 
-            // Fetch from GitHub if not in cache
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
+            // 2. Read Firestore profile
+            const profile = await DataService.getUserProfile(firebaseUser.uid);
 
-            // Cache the new data
-            cacheManager.setLocalCache(cacheKey, data);
-            return data;
-        } catch (error) {
-            console.error('Fetch error:', error);
-            throw error;
-        }
-    }
-
-    static async fetchWithFallback(localUrl, githubApiUrl, githubUrl, cacheKey) {
-        try {
-            // Check cache first
-            const cachedData = cacheManager.getLocalCache(cacheKey);
-            if (cachedData) {
-                console.log('[DataService] Returning cached data for:', cacheKey);
-                return cachedData;
-            }
-
-            // Try local first
+            // 3. Update lastLoginAt
             try {
-                console.log('[DataService] Trying local fetch:', localUrl);
-                const localResponse = await fetch(localUrl);
-                if (localResponse.ok) {
-                    console.log('[DataService] Local fetch successful');
-                    const data = await localResponse.json();
-                    cacheManager.setLocalCache(cacheKey, data);
-                    return data;
-                }
-                console.log('[DataService] Local fetch failed, trying raw GitHub CDN');
-            } catch (localError) {
-                console.log('[DataService] Local fetch error:', localError);
+                await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
+                    lastLoginAt: serverTimestamp(),
+                });
+            } catch (_) {
+                // Non-fatal
             }
 
-            // Try raw GitHub URL (unlimited rate-limits) with timestamp cache-busting
-            try {
-                const cacheBustedUrl = `${githubUrl}?t=${timeService.now()}`;
-                console.log('[DataService] Attempting raw GitHub CDN fetch:', cacheBustedUrl);
-                const rawResponse = await fetch(cacheBustedUrl);
-                if (rawResponse.ok) {
-                    console.log('[DataService] Raw GitHub CDN fetch successful');
-                    const data = await rawResponse.json();
-                    cacheManager.setLocalCache(cacheKey, data);
-                    return data;
-                }
-                console.log('[DataService] Raw GitHub CDN fetch failed, trying GitHub API');
-            } catch (rawError) {
-                console.log('[DataService] Raw GitHub CDN error:', rawError);
-            }
-
-            // Authenticated fallback via the server-side content proxy.
-            // SECURITY: the GitHub PAT is no longer bundled into the client.
-            try {
-                console.log('[DataService] Attempting proxied content fetch');
-                const parsedData = await fetchContentJSON(githubApiUrl, { localFirst: false, repo: CONTENT_REPOS.SEEDDB });
-                if (parsedData !== undefined) {
-                    cacheManager.setLocalCache(cacheKey, parsedData);
-                    return parsedData;
-                }
-            } catch (apiError) {
-                console.log('[DataService] Proxied content fetch error:', apiError?.message);
-            }
-
-            // Try local public folder fallback
-            try {
-                console.log('[DataService] Trying local fallback fetch:', localUrl);
-                const localResponse = await fetch(localUrl);
-                if (localResponse.ok) {
-                    console.log('[DataService] Local fallback fetch successful');
-                    const data = await localResponse.json();
-                    cacheManager.setLocalCache(cacheKey, data);
-                    return data;
-                }
-            } catch (localError) {
-                console.log('[DataService] Local fallback error:', localError);
-            }
-
-            throw new Error('All fetch attempts failed');
+            const authData = buildAuthData(firebaseUser, profile);
+            localStorage.setItem('auth_data', JSON.stringify(authData));
+            return authData;
         } catch (error) {
-            console.error('[DataService] All fetch attempts failed:', error);
-            throw error;
-        }
-    }
-
-    static async getCollegeData(college, fileType, year) {
-        // Simple cache key formation
-        const cacheKey = `${CACHE_CONFIG.PREFIX[fileType.toUpperCase()]}${college}_${year || 'all'}`;
-        
-        if (!college) {
-            throw new Error('College parameter is required');
-        }
-        
-        if (!fileType) {
-            throw new Error('File type parameter is required');
-        }
-        
-        // For access files, year is required
-        if (fileType === FILE_TYPES.ACCESS && !year) {
-            throw new Error('Year parameter is required for access data');
-        }
-        
-        const urls = {
-            local: API_ENDPOINTS.LOCAL.getCollegeData(college, year, fileType),
-            githubApi: API_ENDPOINTS.GITHUB_API.getCollegeData(college, year, fileType),
-            github: API_ENDPOINTS.GITHUB.getCollegeData(college, year, fileType)
-        };
-
-        console.log(`[DataService] Fetching ${fileType} data for college: ${college}, year: ${year || 'all'}, URLs:`, urls);
-        return await this.fetchWithFallback(urls.local, urls.githubApi, urls.github, cacheKey);
-    }
-
-    static async getUserCredentials(role = 'student') {
-        const url = role === 'student' ? API_ENDPOINTS.LOCAL.STAFF_PASSWORD : API_ENDPOINTS.LOCAL.STAFF_PASSWORD;
-        const githubApiUrl = role === 'student' ? API_ENDPOINTS.GITHUB_API.STAFF_PASSWORD : API_ENDPOINTS.GITHUB_API.STAFF_PASSWORD;
-        const githubUrl = role === 'student' ? API_ENDPOINTS.GITHUB.STAFF_PASSWORD : API_ENDPOINTS.GITHUB.STAFF_PASSWORD;
-        const cacheKey = `credentials_${role}`;
-        return await this.fetchWithFallback(url, githubApiUrl, githubUrl, cacheKey);
-    }
-
-    static async validateCredentials(email, password, role, college, year) {
-        try {
-            console.log(`[DataService] Validating credentials for:`, {
-                email,
-                role,
-                college: college || 'N/A',
-                year: year || 'N/A'
-            });
-
-            if (role.toLowerCase() === 'staff') {
-                console.log(`[DataService] Staff login - Fetching from staff endpoints`);
-                const staffData = await this.fetchWithFallback(
-                    API_ENDPOINTS.LOCAL.STAFF_PASSWORD,
-                    API_ENDPOINTS.GITHUB_API.STAFF_PASSWORD,
-                    API_ENDPOINTS.GITHUB.STAFF_PASSWORD,
-                    'staff_credentials'
-                );
-                
-                console.log(`[DataService] Staff data received:`, staffData);
-                const staffMember = staffData.find(s => s.Email === email && s.Password === password);
-                console.log(`[DataService] Staff validation result:`, staffMember ? 'Found' : 'Not Found');
-                
-                if (!staffMember) return null;
-
-                return {
-                    ...staffMember,
-                    isAuthenticated: true
-                };
-            } else {
-                console.log(`[DataService] Student login - Fetching profiles for college: ${college}, year: ${year}`);
-                const profiles = await this.getCollegeData(college, FILE_TYPES.PROFILES, year);
-                console.log(`[DataService] Profiles received:`, profiles);
-                
-                const userProfile = profiles.find(p => p.Email === email);
-                console.log(`[DataService] Student profile found:`, userProfile ? 'Yes' : 'No');
-                
-                if (!userProfile || userProfile.Password !== password) {
-                    console.log(`[DataService] Student validation failed:`, {
-                        profileFound: !!userProfile,
-                        passwordMatch: userProfile ? userProfile.Password === password : false
-                    });
-                    return null;
-                }
-
-                console.log(`[DataService] Student validation successful for: ${email}`);
-                return {
-                    ...userProfile,
-                    isAuthenticated: true
-                };
-            }
-        } catch (error) {
-            console.error('Validation error:', error);
-            throw error;
-        }
-    }
-
-    static async getUserScores(email, college) {
-        try {
-            // Get current auth_data to get the year
-            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-            const year = authData.Year; // Get year from auth_data
-            
-            const scores = await this.getCollegeData(college, FILE_TYPES.SCORES, year);
-            const userScores = scores.find(s => s["Hackerrank Mail"] === email) || null;
-            
-            if (userScores) {
-                // Update auth_data with scores
-                const updatedAuthData = {
-                    ...authData,
-                    scores: userScores
-                };
-                
-                // Store updated auth_data
-                localStorage.setItem("auth_data", JSON.stringify(updatedAuthData));
-            }
-            
-            return userScores;
-        } catch (error) {
-            console.error('Error fetching scores:', error);
+            console.error('[DataService] validateCredentials error:', error?.code || error);
             return null;
         }
     }
 
-    static async getAccessControl() {
+    /**
+     * Sign out the current Firebase Auth user.
+     */
+    static async signOut() {
         try {
-            const cacheKey = 'access_control_data';
-            const urls = {
-                local: API_ENDPOINTS.LOCAL.ACCESS_CONTROL,
-                githubApi: API_ENDPOINTS.GITHUB_API.ACCESS_CONTROL,
-                github: API_ENDPOINTS.GITHUB.ACCESS_CONTROL
-            };
-
-            console.log('[DataService] Fetching fresh access control data from network...');
-            // Fetch with a temp cache key to bypass immediate cache return
-            const data = await this.fetchWithFallback(urls.local, urls.githubApi, urls.github, 'access_control_data_temp');
-            
-            // Save fresh data to local cache
-            cacheManager.setLocalCache(cacheKey, data);
-            return data;
+            await signOut(auth);
         } catch (error) {
-            console.warn('[DataService] Network fetch failed, falling back to cache:', error.message);
-            const cachedData = cacheManager.getLocalCache('access_control_data');
-            if (cachedData) {
-                return cachedData;
-            }
-            throw error;
+            console.error('[DataService] signOut error:', error);
+        }
+        localStorage.removeItem('auth_data');
+    }
+
+    /**
+     * Subscribe to auth state changes.
+     * Returns the unsubscribe function.
+     */
+    static onAuthStateChanged(callback) {
+        return onAuthStateChanged(auth, callback);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // User Profile (Firestore)
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Read users/{userId} from Firestore.
+     * Returns null if not found.
+     */
+    static async getUserProfile(userId) {
+        try {
+            const snap = await getDoc(doc(db, COLLECTIONS.USERS, userId));
+            return snap.exists() ? snap.data() : null;
+        } catch (error) {
+            console.error('[DataService] getUserProfile error:', error);
+            return null;
         }
     }
 
+    /**
+     * Get the user's Firestore profile using their email as the lookup key.
+     * Falls back to querying by email field if UID lookup fails.
+     */
+    static async getUserProfileByEmail(email) {
+        try {
+            const q = query(
+                collection(db, COLLECTIONS.USERS),
+                where('email', '==', email)
+            );
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                return { id: snap.docs[0].id, ...snap.docs[0].data() };
+            }
+            return null;
+        } catch (error) {
+            console.error('[DataService] getUserProfileByEmail error:', error);
+            return null;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Tenant & Access Control (Firestore)
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Read tenants/{tenantId} from Firestore.
+     */
+    static async getTenant(tenantId) {
+        try {
+            const snap = await getDoc(doc(db, COLLECTIONS.TENANTS, tenantId));
+            return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        } catch (error) {
+            console.error('[DataService] getTenant error:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Read tenants/{tenantId}/cohorts/{cohortId} from Firestore.
+     */
+    static async getTenantCohort(tenantId, cohortId) {
+        try {
+            const snap = await getDoc(
+                doc(db, COLLECTIONS.TENANTS, tenantId, 'cohorts', cohortId)
+            );
+            return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        } catch (error) {
+            console.error('[DataService] getTenantCohort error:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get access data for the current user from Firestore.
+     * Returns cohort info with allowedModules (courseId::seriesId::testId keys).
+     */
     static async getUserAccess(email, college) {
         try {
-            console.log('[DataService] getUserAccess called with email:', email, 'college:', college);
-            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-            const year = authData.Year;
-            const department = authData.Department;
-            
-            if (!year || !department) {
-                console.error('[DataService] Missing year or department in auth data');
-                throw new Error('Year and department information is missing. Please log in again.');
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const { tenantId, cohortId, year, department } = authData;
+
+            if (!tenantId || !cohortId) {
+                throw new Error('User profile is missing tenantId/cohortId. Please log in again.');
             }
 
-            let accessControl;
-            try {
-                // Fetch fresh access control rules from network
-                accessControl = await this.getAccessControl();
-            } catch (fetchErr) {
-                console.warn('[DataService] Failed to fetch fresh access control, using cached access info:', fetchErr.message);
-                if (authData.access) {
-                    return authData.access;
-                }
-                throw fetchErr;
-            }
-
-            const departmentAccess = accessControl?.access_control?.colleges?.[college]?.[year]?.[department];
-            
-            if (!departmentAccess) {
-                console.error('[DataService] No access configuration found for:', { college, year, department });
+            const cohort = await DataService.getTenantCohort(tenantId, cohortId);
+            if (!cohort) {
                 throw new Error('No access configuration found for your department. Please contact support.');
             }
 
-            // Check batch dates
-            const now = timeService.getNow();
-            const batchStart = new Date(departmentAccess.batch_start);
-            const batchEnd = new Date(departmentAccess.batch_end);
-
-            if (now < batchStart) {
-                throw new Error(`Your batch access will begin on ${batchStart.toLocaleDateString()}`);
-            }
-            if (now > batchEnd) {
-                throw new Error(`Your batch access ended on ${batchEnd.toLocaleDateString()}`);
-            }
-
-            // Create access object
             const accessData = {
                 user_info: {
-                    email,
-                    year,
-                    department,
-                    college,
-                    batch_start: departmentAccess.batch_start,
-                    batch_end: departmentAccess.batch_end
+                    email: authData.email,
+                    year: year || cohort.year,
+                    department: department || cohort.department,
+                    college: college || authData.college,
+                    batch_start: cohort.batchStart || null,
+                    batch_end: cohort.batchEnd || null,
                 },
-                allowed_modules: departmentAccess.allowed_modules,
-                assessment_controls: departmentAccess.assessment_controls || {}
+                allowed_modules: cohort.allowedModules || [],
+                assessment_controls: cohort.assessmentControls || {},
             };
 
-            // Store in auth_data
-            const updatedAuthData = {
-                ...authData,
-                access: accessData
-            };
-            localStorage.setItem("auth_data", JSON.stringify(updatedAuthData));
-
+            const updatedAuthData = { ...authData, access: accessData };
+            localStorage.setItem('auth_data', JSON.stringify(updatedAuthData));
             return accessData;
         } catch (error) {
-            console.error('[DataService] Error in getUserAccess:', error);
+            console.error('[DataService] getUserAccess error:', error);
             throw error;
         }
     }
 
-    static async checkModuleAccess(moduleId) {
+    /**
+     * PRIMARY DASHBOARD METHOD (v3).
+     * Fetches all TestDocs for the current user from the new courses schema.
+     * Returns a flat array of TestDoc objects enriched with courseTitle + seriesTitle.
+     * 
+     * Uses: courses/{courseId}/series/{seriesId}/tests/{testId}
+     * Keys from: tenants/{tenantId}/cohorts/{cohortId}.allowedModules
+     * Format: "courseId::seriesId::testId"
+     */
+    static async getAllowedTestDocs() {
         try {
-            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-            const accessData = authData.access;
+            const { getAllowedTests } = await import('../../lib/firestore/courses');
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const { tenantId, cohortId, college } = authData;
 
-            if (!accessData?.allowed_modules) {
-                return false;
+            // ── Primary path: cohort allowedModules from courses schema ───────────
+            if (tenantId && cohortId) {
+                const cohort = await DataService.getTenantCohort(tenantId, cohortId);
+                const allowedModules = cohort?.allowedModules || [];
+                if (allowedModules.length > 0) {
+                    return await getAllowedTests(allowedModules);
+                }
             }
 
-            return accessData.allowed_modules.includes(moduleId);
+            // ── Fallback: read all tests from tenantCourses/{college}/tests ───────
+            // Used when student was provisioned before cohort/allowedModules were set,
+            // or when tenantCourses is the primary assignment mechanism.
+            const effectiveTenant = tenantId || college || '';
+            if (effectiveTenant) {
+                const { collection: col, getDocs: gd, getFirestore } = await import('firebase/firestore');
+                const { app } = await import('../firebase-config');
+                const db2 = getFirestore(app);
+                const snap = await gd(col(db2, 'tenantCourses', effectiveTenant, 'tests'));
+                return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            }
+
+            return [];
+        } catch (err) {
+            console.error('[DataService] getAllowedTestDocs error:', err);
+            return [];
+        }
+    }
+
+    /**
+     * Legacy getAccessControl — kept for call sites that haven't migrated.
+     * New code should call getAllowedTestDocs() instead.
+     * Now reads from courses schema; falls back to empty assessments.
+     */
+    static async getAccessControl() {
+        try {
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const { College, Year, Department, college, year, department, tenantId, cohortId } = authData;
+
+            const targetCollege = College || college || tenantId || 'DEFAULT';
+            const targetYear = Year || year || cohortId || 'DEFAULT';
+            const targetDept = Department || department || 'ALL';
+
+            // Fetch allowedModules from cohort (new courseId::seriesId::testId keys)
+            let allowedModules = [];
+            if (tenantId && cohortId) {
+                const cohort = await DataService.getTenantCohort(tenantId, cohortId);
+                if (cohort) allowedModules = cohort.allowedModules || [];
+            }
+
+            // Load static practice content index
+            let coursesData = {};
+            try {
+                const localRes = await fetch('/seed-contents/courses.json');
+                if (localRes.ok) {
+                    coursesData = await localRes.json();
+                } else {
+                    const rawRes = await fetch('https://raw.githubusercontent.com/seeditDev/seed-contents/main/courses.json');
+                    if (rawRes.ok) coursesData = await rawRes.json();
+                }
+            } catch (_) {}
+
+            // Ensure assessments section exists
+            if (!coursesData.assessments) {
+                coursesData.assessments = { title: 'Assessments', isAssessment: true, modules: {} };
+            }
+            if (!coursesData.assessments.modules) {
+                coursesData.assessments.modules = {};
+            }
+
+            return {
+                access_control: {
+                    colleges: {
+                        [targetCollege]: {
+                            [targetYear]: {
+                                [targetDept]: { allowed_modules: allowedModules }
+                            }
+                        }
+                    }
+                },
+                courses: coursesData
+            };
         } catch (error) {
-            console.error('[DataService] Error checking module access:', error);
+            console.error('[DataService] getAccessControl error:', error);
+            return { access_control: { colleges: {} }, courses: {} };
+        }
+    }
+
+
+    /**
+     * Check if a specific module is in the user's allowed_modules list.
+     */
+    static async checkModuleAccess(moduleId) {
+        try {
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const allowed = authData?.access?.allowed_modules;
+            if (!allowed) return false;
+            return allowed.includes(moduleId);
+        } catch {
             return false;
         }
     }
 
+    /**
+     * Check if the user can access a specific assessment.
+     * Now reads from assessments/{assessmentId} in Firestore.
+     */
     static async checkAssessmentAccess(assessmentId) {
         try {
-            const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-            const accessData = authData.access;
+            const snap = await getDoc(doc(db, COLLECTIONS.ASSESSMENTS, assessmentId));
+            if (!snap.exists()) {
+                return { allowed: false, reason: 'Assessment not found' };
+            }
+            const assessment = snap.data();
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
 
-            if (!accessData?.assessment_controls?.[assessmentId]) {
-                return { allowed: false, reason: 'Assessment not configured' };
+            // Tenant check
+            if (assessment.tenantId && assessment.tenantId !== authData.tenantId) {
+                return { allowed: false, reason: 'Assessment not available for your institution' };
             }
 
-            const assessment = accessData.assessment_controls[assessmentId];
-            const now = timeService.getNow();
-            const startTime = new Date(assessment.start_time);
-            const endTime = new Date(assessment.end_time);
-
-            if (assessment.status !== 'scheduled') {
-                return { allowed: false, reason: `Assessment ${assessment.status}` };
+            // Status check
+            if (assessment.status !== 'active') {
+                return { allowed: false, reason: `Assessment is ${assessment.status}` };
             }
+
+            const now = new Date();
+            const startTime = assessment.scheduledStart?.toDate ? assessment.scheduledStart.toDate() : new Date(assessment.scheduledStart);
+            const endTime = assessment.scheduledEnd?.toDate ? assessment.scheduledEnd.toDate() : new Date(assessment.scheduledEnd);
 
             if (now < startTime) {
-                return { 
-                    allowed: false, 
+                return {
+                    allowed: false,
                     reason: `Assessment starts at ${startTime.toLocaleString()}`,
                     startTime,
                     endTime,
-                    duration: assessment.duration_minutes
+                    duration: assessment.durationMinutes,
                 };
             }
 
             if (now > endTime) {
-                return { 
-                    allowed: false, 
-                    reason: `Assessment ended at ${endTime.toLocaleString()}` 
-                };
+                return { allowed: false, reason: `Assessment ended at ${endTime.toLocaleString()}` };
             }
 
-            return { 
+            return {
                 allowed: true,
                 startTime,
                 endTime,
-                duration: assessment.duration_minutes,
-                attemptsAllowed: assessment.attempts_allowed
+                duration: assessment.durationMinutes,
+                totalMarks: assessment.totalMarks,
             };
         } catch (error) {
-            console.error('[DataService] Error checking assessment access:', error);
+            console.error('[DataService] checkAssessmentAccess error:', error);
             return { allowed: false, reason: 'Error checking assessment access' };
         }
     }
 
-    static async getPortalLinks() {
+    // ────────────────────────────────────────────────────────────────────────
+    // Assessments (Firestore)
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Get all active assessments for the current user's tenant.
+     */
+    static async getActiveAssessments(tenantId) {
         try {
-            console.log('getPortalLinks called');
-            
-            // First check if we have portal links in sessionStorage (preferred approach)
-            const portalLinksData = sessionStorage.getItem("portal_links");
-            if (portalLinksData) {
-                try {
-                    const storedLinks = JSON.parse(portalLinksData);
-                    console.log('Returning portal links from sessionStorage');
-                    return storedLinks;
-                } catch (e) {
-                    console.error('Error parsing portal links from sessionStorage:', e);
-                    // If JSON parsing fails, we'll continue to check other sources
-                }
-            }
-            
-            // Check localStorage for backward compatibility
-            const localStorageLinks = localStorage.getItem("portal_links");
-            if (localStorageLinks) {
-                try {
-                    const parsedLinks = JSON.parse(localStorageLinks);
-                    console.log('Found portal links in localStorage, migrating to sessionStorage');
-                    // Migrate to sessionStorage
-                    sessionStorage.setItem("portal_links", localStorageLinks);
-                    // Remove from localStorage since we're transitioning
-                    localStorage.removeItem("portal_links");
-                    console.log('Migrated portal links from localStorage to sessionStorage');
-                    return parsedLinks;
-                } catch (e) {
-                    console.error('Error parsing portal links from localStorage:', e);
-                }
-            }
-            
-            // For backward compatibility, check the cache system
-            // This will be removed in future versions (after v2.0)
-            const legacyCacheKey = 'portal_links';
-            const cachedLinks = cacheManager.getLocalCache(legacyCacheKey);
-            if (cachedLinks) {
-                console.log('Found portal links in legacy cache system with key:', legacyCacheKey);
-                
-                // Migrate to the sessionStorage approach
-                sessionStorage.setItem("portal_links", JSON.stringify(cachedLinks));
-                console.log('Migrated portal links to sessionStorage');
-                
-                // Clear the old cache to avoid duplication
-                cacheManager.clearCache(legacyCacheKey);
-                console.log('Cleared legacy cache entry');
-                
-                return cachedLinks;
-            }
-            
-            // If not found in any cache, fetch from server
-            console.log('No cached portal links found, fetching from server');
-            const url = 'https://raw.githubusercontent.com/seeditDev/SEEDDB/main/portalLinks/portalLinks.json';
-            console.log('Fetching portal links from URL:', url);
-            
-            let links = null;
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    links = await response.json();
-                }
-            } catch (err) {
-                console.warn('Failed to fetch remote portal links:', err);
-            }
-
-            if (!links) {
-                try {
-                    const localUrl = '/SEEDDB/portalLinks/portalLinks.json';
-                    console.log('Trying local fallback for portal links:', localUrl);
-                    const response = await fetch(localUrl);
-                    if (response.ok) {
-                        links = await response.json();
-                    }
-                } catch (localErr) {
-                    console.error('Failed local fallback for portal links:', localErr);
-                }
-            }
-
-            if (!links) {
-                throw new Error('Failed to fetch portal links from all sources');
-            }
-            console.log('Portal links received:', links);
-            
-            // Store in sessionStorage
-            sessionStorage.setItem("portal_links", JSON.stringify(links));
-            console.log('Stored portal links in sessionStorage');
-            
-            return links;
+            const q = query(
+                collection(db, COLLECTIONS.ASSESSMENTS),
+                where('tenantId', '==', tenantId),
+                where('status', '==', 'active')
+            );
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
         } catch (error) {
-            console.error('Error in getPortalLinks:', error);
-            throw error; // Re-throw the error to be handled by the calling function
+            console.error('[DataService] getActiveAssessments error:', error);
+            return [];
         }
     }
 
+    /**
+     * Get assessment definition including its sections.
+     */
+    static async getAssessment(assessmentId) {
+        try {
+            const snap = await getDoc(doc(db, COLLECTIONS.ASSESSMENTS, assessmentId));
+            if (!snap.exists()) return null;
+
+            const data = { id: snap.id, ...snap.data() };
+
+            // Load sections subcollection
+            const sectionsSnap = await getDocs(
+                collection(db, COLLECTIONS.ASSESSMENTS, assessmentId, 'sections')
+            );
+            data.sections = sectionsSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            return data;
+        } catch (error) {
+            console.error('[DataService] getAssessment error:', error);
+            return null;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // User's Assessment Attempts (Firestore)
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Get all assessment attempts for a user.
+     * Reads from users/{userId}/assessmentAttempts subcollection.
+     */
+    static async getAssessmentAttempts(userId) {
+        try {
+            const snap = await getDocs(
+                collection(db, COLLECTIONS.USERS, userId, 'assessmentAttempts')
+            );
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (error) {
+            console.error('[DataService] getAssessmentAttempts error:', error);
+            return [];
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Portal Links (Firestore or static fallback)
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Get portal links from Firestore systemConfig/portalLinks.
+     * Falls back to the GitHub CDN if Firestore doesn't have the doc.
+     */
+    static async getPortalLinks() {
+        try {
+            const sessionData = sessionStorage.getItem('portal_links');
+            if (sessionData) {
+                return JSON.parse(sessionData);
+            }
+
+            // Try Firestore systemConfig
+            try {
+                const snap = await getDoc(doc(db, COLLECTIONS.SYSTEM_CONFIG, 'portalLinks'));
+                if (snap.exists()) {
+                    const links = snap.data();
+                    sessionStorage.setItem('portal_links', JSON.stringify(links));
+                    return links;
+                }
+            } catch (_) {
+                // Fall through to CDN
+            }
+
+            // Fallback: raw GitHub CDN
+            const url = 'https://raw.githubusercontent.com/seeditDev/SEEDDB/main/portalLinks/portalLinks.json';
+            const response = await fetch(url);
+            if (response.ok) {
+                const links = await response.json();
+                sessionStorage.setItem('portal_links', JSON.stringify(links));
+                return links;
+            }
+
+            throw new Error('Failed to fetch portal links from all sources');
+        } catch (error) {
+            console.error('[DataService] getPortalLinks error:', error);
+            throw error;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Legacy compatibility shims
+    // (kept so callers that still reference old method names don't break)
+    // ────────────────────────────────────────────────────────────────────────
+
+    /** @deprecated Use getUserProfile(uid) instead */
     static async getUserData(email) {
         const cacheKey = `auth_${email}`;
         return cacheManager.getLocalCache(cacheKey);
     }
 
+    /** @deprecated Use signOut() instead */
     static clearUserData(email) {
         const cacheKey = `auth_${email}`;
         cacheManager.clearCache(cacheKey);
     }
+
+    /**
+     * fetchWithFallback — ONLY used for seed-contents (practice articles).
+     * Do NOT add SEEDDB URLs here.
+     */
+    static async fetchWithFallback(localUrl, githubApiUrl, githubUrl, cacheKey) {
+        try {
+            const cachedData = cacheManager.getLocalCache(cacheKey);
+            if (cachedData) return cachedData;
+
+            try {
+                const localResponse = await fetch(localUrl);
+                if (localResponse.ok) {
+                    const data = await localResponse.json();
+                    cacheManager.setLocalCache(cacheKey, data);
+                    return data;
+                }
+            } catch (_) {}
+
+            try {
+                const rawResponse = await fetch(`${githubUrl}?t=${Date.now()}`);
+                if (rawResponse.ok) {
+                    const data = await rawResponse.json();
+                    cacheManager.setLocalCache(cacheKey, data);
+                    return data;
+                }
+            } catch (_) {}
+
+            try {
+                const parsedData = await fetchContentJSON(githubApiUrl, { localFirst: false, repo: CONTENT_REPOS.SEED_CONTENTS });
+                if (parsedData !== undefined) {
+                    cacheManager.setLocalCache(cacheKey, parsedData);
+                    return parsedData;
+                }
+            } catch (_) {}
+
+            throw new Error('All fetch attempts failed');
+        } catch (error) {
+            console.error('[DataService] fetchWithFallback failed:', error);
+            throw error;
+        }
+    }
 }
 
-export default DataService; 
+export default DataService;

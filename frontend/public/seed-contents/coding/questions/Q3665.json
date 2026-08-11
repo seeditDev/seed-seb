@@ -1,94 +1,318 @@
 {
   "questionId": "Q3665",
-  "title": "Sticks",
-  "slug": "sticks",
+  "title": "Twisted Mirror Path Count Problem",
+  "slug": "twisted-mirror-path-count",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Greedy",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Rectangle Formation",
-      "Sorting",
-      "Greedy"
+      "array",
+      "dynamic-programming",
+      "matrix"
     ],
     "companyTags": [],
     "topicTags": [
-      "Data Structures"
-    ]
+      "array",
+      "dynamic-programming",
+      "matrix"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Chef and his little brother are playing with sticks. Initially, Chef has NNN sticks with lengths A1,A2,\u2026,ANA_1, A_2, \\dots, A_NA1\u200b,A2\u200b,\u2026,AN\u200b. He should give his little brother at least KKK of these sticks. Afterwards, Chef's brother should choose four sticks and use them to form a rectangle (a square is also a rectangle). Chef does not want his brother to break any of the sticks, so each of the chosen sticks should be one side of the rectangle.\n\nChef's little brother wants the rectangle he makes to have the maximum possible area, while Chef wants it to have the minimum possible area. Therefore, Chef wants to choose the sticks to give his brother in such a way that they cannot be used to form a rectangle; if it's impossible, then he wants to choose the sticks in such a way that the maximum area of a rectangle his little brother can form is minimum possible.\n\nCan you find the area of the resulting rectangle (or determine that it won't be possible to form any) if both Chef and his little brother play optimally?",
+    "problemStatement": "With an `m x n` binary grid `grid` where:\n\n* `grid[i][j] == 0` represents an empty cell, and\n* `grid[i][j] == 1` represents a mirror.\n\nA robot starts at the top-left corner of the grid `(0, 0)` and wants to reach the bottom-right corner `(m - 1, n - 1)`. It can move only **right** or **down**. If the robot attempts to move into a mirror cell, it is **reflected** before entering that cell:\n\n* If it tries to move **right** into a mirror, it is turned **down** and moved into the cell directly below the mirror.\n* If it tries to move **down** into a mirror, it is turned **right** and moved into the cell directly to the right of the mirror.\n\nIf this reflection would cause the robot to move outside the `grid` boundaries, the path is considered invalid and should not be counted.\n\nOutput the number of unique valid paths from `(0, 0)` to `(m - 1, n - 1)`.\n\nSince the answer may be very large, output it **modulo** `109 + 7`.\n\n**Note**: If a reflection moves the robot into a mirror cell, the robot is immediately reflected again based on the direction it used to enter that mirror: if it entered while moving right, it will be turned down; if it entered while moving down, it will be turned right. This process will continue until either the last cell is reached, the robot moves out of bounds or the robot moves to a non-mirror cell.\n\n**Example 1:**\n\n**Input:** grid = [[0,1,0],[0,0,1],[1,0,0]]\n\n**Output:** 5\n\n**Explanation:**\n\n| Number | Full Path |\n| --- | --- |\n| 1 | (0, 0) → (0, 1) [M] → (1, 1) → (1, 2) [M] → (2, 2) |\n| 2 | (0, 0) → (0, 1) [M] → (1, 1) → (2, 1) → (2, 2) |\n| 3 | (0, 0) → (1, 0) → (1, 1) → (1, 2) [M] → (2, 2) |\n| 4 | (0, 0) → (1, 0) → (1, 1) → (2, 1) → (2, 2) |\n| 5 | (0, 0) → (1, 0) → (2, 0) [M] → (2, 1) → (2, 2) |\n\n* `[M]` indicates the robot attempted to enter a mirror cell and instead reflected.\n\n**Example 2:**\n\n**Input:** grid = [[0,0],[0,0]]\n\n**Output:** 2\n\n**Explanation:**\n\n| Number | Full Path |\n| --- | --- |\n| 1 | (0, 0) → (0, 1) → (1, 1) |\n| 2 | (0, 0) → (1, 0) → (1, 1) |\n\n**Example 3:**\n\n**Input:** grid = [[0,1,1],[1,1,0]]\n\n**Output:** 1\n\n**Explanation:**\n\n| Number | Full Path |\n| --- | --- |\n| 1 | (0, 0) → (0, 1) [M] → (1, 1) [M] → (1, 2) |\n\n`(0, 0) → (1, 0) [M] → (1, 1) [M] → (2, 1)` goes out of bounds, so it is invalid.\n\n**Constraints:**\n\n* `m == grid.length`\n* `n == grid[i].length`\n* `2 <= m, n <= 500`\n* `grid[i][j]` is either `0` or `1`.\n* `grid[0][0] == grid[m - 1][n - 1] == 0`",
     "constraints": [
-      "1 <= T <= 100",
-      "1 <= N <= 10^5",
-      "0 <= K <= N",
-      "1 <= Ai <= 10^9"
+      "None"
     ],
-    "inputFormat": "The first line of the input contains a single integer T denoting the number of test cases. The description of T test cases follows. The first line of each test case contains two space-separated integers N and K. The second line contains N space-separated integers A1, A2, \u2026, AN.",
-    "outputFormat": "For each test case, print a single line containing one integer \u2014 the area of the resulting rectangle or -1 if Chef can give his brother sticks that cannot be used to form any rectangle.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "2\n7 6\n1 2 3 1 2 2 1\n5 4\n1 2 1 2 3",
-        "output": "2\n-1",
-        "explanation": "Explanation: Example case 1: Chef should give his brother all sticks except one. Regardless of the length of that one stick, Chef's brother can choose sticks with lengths 1, 2, 1, 2 to create a rectangle with area 1 * 2 = 2. Example case 2: If Chef gives his brother sticks with lengths 2, 1, 2, 3, then there is no way to form a rectangle."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n4 4\n1 1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n10 10\n1 2 3 4 5 6 7 8 9 10",
-        "expectedOutput": "-1",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n5 5\n1 1 1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\n7 6\n1 2 3 1 2 2 1",
-        "expectedOutput": "2",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\n5 4\n1 2 1 2 3",
-        "expectedOutput": "-1",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -99,18 +323,68 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we first sort the array of stick lengths in ascending order. Then, we try to find the maximum possible area of a rectangle that can be formed using the given sticks. We do this by iterating over the sorted array and checking for pairs of sticks with the same length. If we find such a pair, we calculate the area of the rectangle that can be formed using these sticks and update our answer accordingly. If we cannot find any such pair, we return -1 as it is not possible to form a rectangle.",
-    "timeComplexity": "O(T * N log N) \u2014 due to sorting the array of stick lengths for each test case",
-    "spaceComplexity": "O(N) \u2014 for storing the sorted array of stick lengths",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, K;\n        scanf(\"%d %d\", &N, &K);\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        qsort(A, N, sizeof(int), compare);\n        int maxArea = -1;\n        for (int i = 0; i < N - 1; i++) {\n            if (A[i] == A[i + 1]) {\n                maxArea = A[i] * A[i + 1];\n                break;\n            }\n        }\n        printf(\"%d\\n\", maxArea);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, K;\n        cin >> N >> K;\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        sort(A, A + N);\n        int maxArea = -1;\n        for (int i = 0; i < N - 1; i++) {\n            if (A[i] == A[i + 1]) {\n                maxArea = A[i] * A[i + 1];\n                break;\n            }\n        }\n        cout << maxArea << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Arrays;\nimport java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int N = sc.nextInt();\n            int K = sc.nextInt();\n            int[] A = new int[N];\n            for (int i = 0; i < N; i++) {\n                A[i] = sc.nextInt();\n            }\n            Arrays.sort(A);\n            int maxArea = -1;\n            for (int i = 0; i < N - 1; i++) {\n                if (A[i] == A[i + 1]) {\n                    maxArea = A[i] * A[i + 1];\n                    break;\n                }\n            }\n            System.out.println(maxArea);\n        }\n    }\n}",
-      "Python3": "import sys\n\nT = int(input())\nfor _ in range(T):\n    N, K = map(int, input().split())\n    A = sorted(map(int, input().split()))\n    maxArea = -1\n    for i in range(N - 1):\n        if A[i] == A[i + 1]:\n            maxArea = A[i] * A[i + 1]\n            break\n    print(maxArea)",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction nextInt() {\n    return parseInt(lines[idx++]);\n}\n\nfunction nextIntArray() {\n    return lines[idx++].split(' ').map(x => parseInt(x));\n}\n\nlet T = nextInt();\nwhile (T-- > 0) {\n    let [N, K] = nextIntArray();\n    let A = nextIntArray().sort((a, b) => a - b);\n    let maxArea = -1;\n    for (let i = 0; i < N - 1; i++) {\n        if (A[i] === A[i + 1]) {\n            maxArea = A[i] * A[i + 1];\n            break;\n        }\n    }\n    console.log(maxArea);\n}"
+      "Python3": "# Time:  O(m * n)\n# Space: O(min(m, n))\n\n# dp\nclass Solution(object):\n    def uniquePaths(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        def get(r, c):\n            return grid[r][c] if len(grid) > len(grid[0]) else grid[c][r]\n\n        dp = [[0]*2 for _ in range(min(len(grid), len(grid[0]))+1)]\n        dp[1] = [1]*2\n        for r in range(max(len(grid), len(grid[0]))):\n            for c in range(len(dp)-1):\n                if get(r, c):\n                    dp[c+1] = [dp[c+1][1], dp[c][0]]\n                else:\n                    dp[c+1] = [(dp[c+1][1]+dp[c][0])%MOD]*2\n        return dp[-1][0]"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int uniquePaths(vector<vector<int>>& grid) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int uniquePaths(int[][] grid) {\n        \n    }\n}",
+    "Python3": "# Time:  O(m * n)\n# Space: O(min(m, n))\n\n# dp\nclass Solution(object):\n    def uniquePaths(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        def get(r, c):\n            return grid[r][c] if len(grid) > len(grid[0]) else grid[c][r]\n\n        dp = [[0]*2 for _ in range(min(len(grid), len(grid[0]))+1)]\n        dp[1] = [1]*2\n        for r in range(max(len(grid), len(grid[0]))):\n            for c in range(len(dp)-1):\n                if get(r, c):\n                    dp[c+1] = [dp[c+1][1], dp[c][0]]\n                else:\n                    dp[c+1] = [(dp[c+1][1]+dp[c][0])%MOD]*2\n        return dp[-1][0]",
+    "Python": "class Solution(object):\n    def uniquePaths(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar uniquePaths = function(grid) {\n    \n};",
+    "TypeScript": "function uniquePaths(grid: number[][]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int UniquePaths(int[][] grid) {\n        \n    }\n}",
+    "C": "int uniquePaths(int** grid, int gridSize, int* gridColSize) {\n    \n}",
+    "Go": "func uniquePaths(grid [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun uniquePaths(grid: Array<IntArray>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func uniquePaths(_ grid: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn unique_paths(grid: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} grid\n# @return {Integer}\ndef unique_paths(grid)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $grid\n     * @return Integer\n     */\n    function uniquePaths($grid) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int uniquePaths(List<List<int>> grid) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def uniquePaths(grid: Array[Array[Int]]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec unique_paths(grid :: [[integer]]) :: integer\n  def unique_paths(grid) do\n    \n  end\nend",
+    "Erlang": "-spec unique_paths(Grid :: [[integer()]]) -> integer().\nunique_paths(Grid) ->\n  .",
+    "Racket": "(define/contract (unique-paths grid)\n  (-> (listof (listof exact-integer?)) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "uniquePaths",
+    "params": [
+      {
+        "name": "grid",
+        "type": "integer[][]"
+      }
+    ]
+  },
+  "verified": false
 }

@@ -1,96 +1,318 @@
 {
   "questionId": "Q3372",
-  "title": "Tree Labelling",
-  "slug": "tree-labelling",
+  "title": "Maximize the Number of Target Nodes After Connecting Trees I Problem",
+  "slug": "maximize-the-number-of-target-nodes-after-connecting-trees-i",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Dynamic Programming",
-    "difficulty": "Hard",
+    "category": "Searching",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Graph Theory",
-      "Modular Arithmetic",
-      "Dynamic Programming",
-      "Tree Labeling"
+      "tree",
+      "depth-first-search",
+      "breadth-first-search"
     ],
     "companyTags": [],
     "topicTags": [
-      "Dynamic Programming"
-    ]
+      "tree",
+      "depth-first-search",
+      "breadth-first-search"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Chef likes to play with trees a lot, so his best friend Smurf has given him a tree **T** consisting of **N** nodes numbered from **1** to **N**. \n\nSmurf asked him to count the number of ways to assign an integer in the range **[1, M]** to each of the nodes of the tree such that the absolute difference between the integers assigned to any pair of adjacent nodes is greater or equal than **K** (i. e **\u2265 K**). Since this number can be huge, Chef only needs to find it modulo **109 + 7 (1000000007)**\n\nOf course this task is tough for our little chef and he cannot solve it without your help. Can you help him?",
+    "problemStatement": "There exist two **undirected** trees with `n` and `m` nodes, with **distinct** labels in ranges `[0, n - 1]` and `[0, m - 1]`, respectively.\n\nYou receive two 2D integer arrays `edges1` and `edges2` of lengths `n - 1` and `m - 1`, respectively, where `edges1[i] = [ai, bi]` indicates that there is an edge between nodes `ai` and `bi` in the first tree and `edges2[i] = [ui, vi]` indicates that there is an edge between nodes `ui` and `vi` in the second tree. You are also given an integer `k`.\n\nNode `u` is **target** to node `v` if the number of edges on the path from `u` to `v` is less than or equal to `k`. **Note** that a node is *always* **target** to itself.\n\nOutput an array of `n` integers `answer`, where `answer[i]` is the **largest** possible number of nodes **target** to node `i` of the first tree if you have to connect one node from the first tree to another node in the second tree.\n\n**Note** that queries are independent from each other. That is, for every query you will remove the added edge before proceeding to the next query.\n\n**Example 1:**\n\n**Input:** edges1 = [[0,1],[0,2],[2,3],[2,4]], edges2 = [[0,1],[0,2],[0,3],[2,7],[1,4],[4,5],[4,6]], k = 2\n\n**Output:** [9,7,9,8,8]\n\n**Explanation:**\n\n* For `i = 0`, connect node 0 from the first tree to node 0 from the second tree.\n* For `i = 1`, connect node 1 from the first tree to node 0 from the second tree.\n* For `i = 2`, connect node 2 from the first tree to node 4 from the second tree.\n* For `i = 3`, connect node 3 from the first tree to node 4 from the second tree.\n* For `i = 4`, connect node 4 from the first tree to node 4 from the second tree.\n\n![](https://assets.leetcode.com/uploads/2024/09/24/3982-1.png)\n\n**Example 2:**\n\n**Input:** edges1 = [[0,1],[0,2],[0,3],[0,4]], edges2 = [[0,1],[1,2],[2,3]], k = 1\n\n**Output:** [6,3,3,3,3]\n\n**Explanation:**\n\nFor every `i`, connect node `i` of the first tree with any node of the second tree.\n\n![](https://assets.leetcode.com/uploads/2024/09/24/3928-2.png)\n\n**Constraints:**\n\n* `2 <= n, m <= 1000`\n* `edges1.length == n - 1`\n* `edges2.length == m - 1`\n* `edges1[i].length == edges2[i].length == 2`\n* `edges1[i] = [ai, bi]`\n* `0 <= ai, bi < n`\n* `edges2[i] = [ui, vi]`\n* `0 <= ui, vi < m`\n* The input is generated such that `edges1` and `edges2` represent valid trees.\n* `0 <= k <= 1000`",
     "constraints": [
-      "1 \u2264 T \u2264 50",
-      "1 \u2264 N \u2264 100",
-      "0 \u2264 K \u2264 100",
-      "1 \u2264 M \u2264 10^9",
-      "Subtasks: Subtask 1 (20 pts): 1 \u2264 M \u2264 10^2, Subtask 2 (30 pts): 1 \u2264 M \u2264 10^4, Subtask 3 (50 pts): 1 \u2264 M \u2264 10^9"
+      "None"
     ],
-    "inputFormat": "The first line of input contains a single integer T denoting the number of test cases. The first line of each test case contains three space-separated integers denoting N, M, and K, denoting the number of nodes in the tree and the values of M and K respectively. The following (N-1) lines of each test case contain two space-separated integers u and v denoting that there is an edge between the nodes u and v.",
-    "outputFormat": "For each test case, print the answer in a separate line, which is the number of ways to assign an integer in the range [1, M] to each of the nodes of the tree such that the absolute difference between the integers assigned to any pair of adjacent nodes is greater or equal than K (i.e., \u2265 K), modulo 10^9 + 7 (1000000007).",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "3\n2 2 0\n1 2\n3 3 2\n1 3\n1 2\n3 3 1\n1 2\n2 3",
-        "output": "4\n2\n12",
-        "explanation": "For the first test case, there are 4 ways to assign labels: (1, 1), (1, 2), (2, 1), and (2, 2). For the second test case, there are 2 ways to assign labels: (1, 3) and (3, 1). For the third test case, there are 12 ways to assign labels: (1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3), (3, 1), (3, 2), (3, 3), (1, 2), (2, 1), (2, 3)."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1 0",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n100 100 0",
-        "expectedOutput": "10000",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n2 2 1",
-        "expectedOutput": "2",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\n3 3 1",
-        "expectedOutput": "6",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\n4 4 1",
-        "expectedOutput": "24",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -101,18 +323,76 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use dynamic programming to calculate the number of ways to assign labels to each node in the tree. We start by initializing a DP array for each node, where dp[i][j] represents the number of ways to assign label j to node i. We then iterate over each node and its neighbors, updating the DP array based on the given conditions. Finally, we calculate the total number of ways to assign labels to all nodes and return the result modulo 10^9 + 7.",
-    "timeComplexity": "O(T * N * M) \u2014 where T is the number of test cases, N is the number of nodes in the tree, and M is the maximum label value. The time complexity is dominated by the nested loops over the nodes and labels.",
-    "spaceComplexity": "O(N * M) \u2014 where N is the number of nodes in the tree and M is the maximum label value. The space complexity is dominated by the DP array.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#define MOD 1000000007\n\nint** createDP(int N, int M) {\n    int** dp = (int**)malloc(N * sizeof(int*));\n    for (int i = 0; i < N; i++) {\n        dp[i] = (int*)malloc(M * sizeof(int));\n    }\n    return dp;\n}\n\nvoid freeDP(int** dp, int N) {\n    for (int i = 0; i < N; i++) {\n        free(dp[i]);\n    }\n    free(dp);\n}\n\nint solve(int N, int M, int K, int** edges) {\n    int** dp = createDP(N, M);\n    // Initialize DP array\n    for (int i = 0; i < N; i++) {\n        for (int j = 0; j < M; j++) {\n            dp[i][j] = 1;\n        }\n    }\n    // Update DP array based on edges\n    for (int i = 0; i < N - 1; i++) {\n        int u = edges[i][0] - 1;\n        int v = edges[i][1] - 1;\n        for (int j = 0; j < M; j++) {\n            for (int k = 0; k < M; k++) {\n                if (abs(j - k) >= K) {\n                    dp[v][k] = (dp[v][k] + dp[u][j]) % MOD;\n                }\n            }\n        }\n    }\n    // Calculate total number of ways\n    int total = 0;\n    for (int i = 0; i < M; i++) {\n        total = (total + dp[N - 1][i]) % MOD;\n    }\n    freeDP(dp, N);\n    return total;\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    for (int t = 0; t < T; t++) {\n        int N, M, K;\n        scanf(\"%d %d %d\", &N, &M, &K);\n        int** edges = (int**)malloc((N - 1) * sizeof(int*));\n        for (int i = 0; i < N - 1; i++) {\n            edges[i] = (int*)malloc(2 * sizeof(int));\n            scanf(\"%d %d\", &edges[i][0], &edges[i][1]);\n        }\n        int result = solve(N, M, K, edges);\n        printf(\"%d\\n\", result);\n        for (int i = 0; i < N - 1; i++) {\n            free(edges[i]);\n        }\n        free(edges);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <vector>\nusing namespace std;\n#define MOD 1000000007\n\ntypedef vector<vector<int>> Graph;\n\ntypedef vector<vector<long long>> DP;\n\nDP createDP(int N, int M) {\n    DP dp(N, vector<long long>(M, 0));\n    return dp;\n}\n\nlong long solve(int N, int M, int K, Graph& edges) {\n    DP dp = createDP(N, M);\n    // Initialize DP array\n    for (int i = 0; i < N; i++) {\n        for (int j = 0; j < M; j++) {\n            dp[i][j] = 1;\n        }\n    }\n    // Update DP array based on edges\n    for (int i = 0; i < N - 1; i++) {\n        int u = edges[i][0] - 1;\n        int v = edges[i][1] - 1;\n        for (int j = 0; j < M; j++) {\n            for (int k = 0; k < M; k++) {\n                if (abs(j - k) >= K) {\n                    dp[v][k] = (dp[v][k] + dp[u][j]) % MOD;\n                }\n            }\n        }\n    }\n    // Calculate total number of ways\n    long long total = 0;\n    for (int i = 0; i < M; i++) {\n        total = (total + dp[N - 1][i]) % MOD;\n    }\n    return total;\n}\n\nint main() {\n    int T;\n    cin >> T;\n    for (int t = 0; t < T; t++) {\n        int N, M, K;\n        cin >> N >> M >> K;\n        Graph edges(N - 1, vector<int>(2, 0));\n        for (int i = 0; i < N - 1; i++) {\n            cin >> edges[i][0] >> edges[i][1];\n        }\n        long long result = solve(N, M, K, edges);\n        cout << result << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    static final int MOD = 1000000007;\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        for (int t = 0; t < T; t++) {\n            int N = sc.nextInt();\n            int M = sc.nextInt();\n            int K = sc.nextInt();\n            int[][] edges = new int[N - 1][2];\n            for (int i = 0; i < N - 1; i++) {\n                edges[i][0] = sc.nextInt();\n                edges[i][1] = sc.nextInt();\n            }\n            long result = solve(N, M, K, edges);\n            System.out.println(result);\n        }\n    }\n    public static long solve(int N, int M, int K, int[][] edges) {\n        long[][] dp = new long[N][M];\n        // Initialize DP array\n        for (int i = 0; i < N; i++) {\n            for (int j = 0; j < M; j++) {\n                dp[i][j] = 1;\n            }\n        }\n        // Update DP array based on edges\n        for (int i = 0; i < N - 1; i++) {\n            int u = edges[i][0] - 1;\n            int v = edges[i][1] - 1;\n            for (int j = 0; j < M; j++) {\n                for (int k = 0; k < M; k++) {\n                    if (Math.abs(j - k) >= K) {\n                        dp[v][k] = (dp[v][k] + dp[u][j]) % MOD;\n                    }\n                }\n            }\n        }\n        // Calculate total number of ways\n        long total = 0;\n        for (int i = 0; i < M; i++) {\n            total = (total + dp[N - 1][i]) % MOD;\n        }\n        return total;\n    }\n}",
-      "Python3": "def solve(N, M, K, edges):\n    MOD = 1000000007\n    dp = [[1] * M for _ in range(N)]\n    # Update DP array based on edges\n    for u, v in edges:\n        for j in range(M):\n            for k in range(M):\n                if abs(j - k) >= K:\n                    dp[v - 1][k] = (dp[v - 1][k] + dp[u - 1][j]) % MOD\n    # Calculate total number of ways\n    total = sum(dp[-1]) % MOD\n    return total\n\nt = int(input())\nfor _ in range(t):\n    N, M, K = map(int, input().split())\n    edges = [list(map(int, input().split())) for _ in range(N - 1)]\n    result = solve(N, M, K, edges)\n    print(result)",
-      "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readLine = () => input[idx++];\nconst readInt = () => parseInt(readLine());\nconst readInts = () => readLine().split(' ').map(x => parseInt(x));\n\nconst MOD = 1000000007;\nconst solve = (N, M, K, edges) => {\n    const dp = Array(N).fill(0).map(() => Array(M).fill(1));\n    // Update DP array based on edges\n    for (const [u, v] of edges) {\n        for (let j = 0; j < M; j++) {\n            for (let k = 0; k < M; k++) {\n                if (Math.abs(j - k) >= K) {\n                    dp[v - 1][k] = (dp[v - 1][k] + dp[u - 1][j]) % MOD;\n                }\n            }\n        }\n    }\n    // Calculate total number of ways\n    let total = 0;\n    for (let i = 0; i < M; i++) {\n        total = (total + dp[N - 1][i]) % MOD;\n    }\n    return total;\n};\n\nconst t = readInt();\nfor (let i = 0; i < t; i++) {\n    const [N, M, K] = readInts();\n    const edges = [];\n    for (let j = 0; j < N - 1; j++) {\n        edges.push(readInts());\n    }\n    const result = solve(N, M, K, edges);\n    console.log(result);\n}"
+      "Python3": "# Time:  O(nlogn + mlogm)\n# Space: O(n + m)\n\n# dfs, centroid decomposition, prefix sum\nclass Solution(object):\n    def maxTargetNodes(self, edges1, edges2, k):\n        \"\"\"\n        :type edges1: List[List[int]]\n        :type edges2: List[List[int]]\n        :type k: int\n        :rtype: List[int]\n        \"\"\"\n        def centroid_decomposition(adj, k):\n            def dfs(u):\n                # https://usaco.guide/plat/centroid\n                def find_subtree_size(u, p):\n                    sizes[u] = 1\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        sizes[u] += find_subtree_size(v, u)\n                    return sizes[u]\n\n                def find_centroid(u, p):\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        if sizes[v]*2 > n:\n                            return find_centroid(v, u)\n                    return u\n\n                def count(u, p, d):\n                    if d > k:\n                        return\n                    if d-1 == len(cnt):\n                        cnt.append(0)\n                    cnt[d-1] += 1\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        count(v, u, d+1)\n\n                def update(u, p, d):\n                    if d > k:\n                        return\n                    result[u] += total[min(k-d, len(total)-1)]-curr[min(k-d, len(curr)-1)]\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        update(v, u, d+1)\n\n                find_subtree_size(u, -1)\n                n = sizes[u]\n                u = find_centroid(u, -1)\n                lookup[u] = True\n                max_d = 0\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    cnt = []\n                    count(v, u, 0+1)\n                    prefix[v].append(0)\n                    for d in range(len(cnt)):\n                        prefix[v].append(prefix[v][-1]+cnt[d])\n                    max_d = max(max_d, len(cnt))\n                total = [1]*(max_d+1)\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    for d in range(len(total)):\n                        total[d] += prefix[v][min(d, len(prefix[v])-1)]\n                result[u] += total[min(k, len(total)-1)]\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    curr, prefix[v] = prefix[v], []\n                    update(v, u, 0+1)\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    dfs(v)\n\n            result = [0]*len(adj)\n            sizes = [0]*len(adj)\n            lookup = [False]*len(adj)\n            prefix = [[] for _ in range(len(adj))]\n            if k >= 0:\n                dfs(0)\n            return result\n\n        def find_adj(edges):\n            adj = [[] for _ in range(len(edges)+1)]\n            for u, v in edges:\n                adj[u].append(v)\n                adj[v].append(u)\n            return adj\n\n        adj2 = find_adj(edges2)\n        mx = max(centroid_decomposition(adj2, k-1))\n        adj1 = find_adj(edges1)\n        return [mx+x for x in centroid_decomposition(adj1, k)]"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    vector<int> maxTargetNodes(vector<vector<int>>& edges1, vector<vector<int>>& edges2, int k) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int[] maxTargetNodes(int[][] edges1, int[][] edges2, int k) {\n        \n    }\n}",
+    "Python3": "# Time:  O(nlogn + mlogm)\n# Space: O(n + m)\n\n# dfs, centroid decomposition, prefix sum\nclass Solution(object):\n    def maxTargetNodes(self, edges1, edges2, k):\n        \"\"\"\n        :type edges1: List[List[int]]\n        :type edges2: List[List[int]]\n        :type k: int\n        :rtype: List[int]\n        \"\"\"\n        def centroid_decomposition(adj, k):\n            def dfs(u):\n                # https://usaco.guide/plat/centroid\n                def find_subtree_size(u, p):\n                    sizes[u] = 1\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        sizes[u] += find_subtree_size(v, u)\n                    return sizes[u]\n\n                def find_centroid(u, p):\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        if sizes[v]*2 > n:\n                            return find_centroid(v, u)\n                    return u\n\n                def count(u, p, d):\n                    if d > k:\n                        return\n                    if d-1 == len(cnt):\n                        cnt.append(0)\n                    cnt[d-1] += 1\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        count(v, u, d+1)\n\n                def update(u, p, d):\n                    if d > k:\n                        return\n                    result[u] += total[min(k-d, len(total)-1)]-curr[min(k-d, len(curr)-1)]\n                    for v in adj[u]:\n                        if v == p or lookup[v]:\n                            continue\n                        update(v, u, d+1)\n\n                find_subtree_size(u, -1)\n                n = sizes[u]\n                u = find_centroid(u, -1)\n                lookup[u] = True\n                max_d = 0\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    cnt = []\n                    count(v, u, 0+1)\n                    prefix[v].append(0)\n                    for d in range(len(cnt)):\n                        prefix[v].append(prefix[v][-1]+cnt[d])\n                    max_d = max(max_d, len(cnt))\n                total = [1]*(max_d+1)\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    for d in range(len(total)):\n                        total[d] += prefix[v][min(d, len(prefix[v])-1)]\n                result[u] += total[min(k, len(total)-1)]\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    curr, prefix[v] = prefix[v], []\n                    update(v, u, 0+1)\n                for v in adj[u]:\n                    if lookup[v]:\n                        continue\n                    dfs(v)\n\n            result = [0]*len(adj)\n            sizes = [0]*len(adj)\n            lookup = [False]*len(adj)\n            prefix = [[] for _ in range(len(adj))]\n            if k >= 0:\n                dfs(0)\n            return result\n\n        def find_adj(edges):\n            adj = [[] for _ in range(len(edges)+1)]\n            for u, v in edges:\n                adj[u].append(v)\n                adj[v].append(u)\n            return adj\n\n        adj2 = find_adj(edges2)\n        mx = max(centroid_decomposition(adj2, k-1))\n        adj1 = find_adj(edges1)\n        return [mx+x for x in centroid_decomposition(adj1, k)]",
+    "Python": "class Solution(object):\n    def maxTargetNodes(self, edges1, edges2, k):\n        \"\"\"\n        :type edges1: List[List[int]]\n        :type edges2: List[List[int]]\n        :type k: int\n        :rtype: List[int]\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} edges1\n * @param {number[][]} edges2\n * @param {number} k\n * @return {number[]}\n */\nvar maxTargetNodes = function(edges1, edges2, k) {\n    \n};",
+    "TypeScript": "function maxTargetNodes(edges1: number[][], edges2: number[][], k: number): number[] {\n    \n};",
+    "C#": "public class Solution {\n    public int[] MaxTargetNodes(int[][] edges1, int[][] edges2, int k) {\n        \n    }\n}",
+    "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* maxTargetNodes(int** edges1, int edges1Size, int* edges1ColSize, int** edges2, int edges2Size, int* edges2ColSize, int k, int* returnSize) {\n    \n}",
+    "Go": "func maxTargetNodes(edges1 [][]int, edges2 [][]int, k int) []int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maxTargetNodes(edges1: Array<IntArray>, edges2: Array<IntArray>, k: Int): IntArray {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maxTargetNodes(_ edges1: [[Int]], _ edges2: [[Int]], _ k: Int) -> [Int] {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn max_target_nodes(edges1: Vec<Vec<i32>>, edges2: Vec<Vec<i32>>, k: i32) -> Vec<i32> {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} edges1\n# @param {Integer[][]} edges2\n# @param {Integer} k\n# @return {Integer[]}\ndef max_target_nodes(edges1, edges2, k)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $edges1\n     * @param Integer[][] $edges2\n     * @param Integer $k\n     * @return Integer[]\n     */\n    function maxTargetNodes($edges1, $edges2, $k) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  List<int> maxTargetNodes(List<List<int>> edges1, List<List<int>> edges2, int k) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maxTargetNodes(edges1: Array[Array[Int]], edges2: Array[Array[Int]], k: Int): Array[Int] = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec max_target_nodes(edges1 :: [[integer]], edges2 :: [[integer]], k :: integer) :: [integer]\n  def max_target_nodes(edges1, edges2, k) do\n    \n  end\nend",
+    "Erlang": "-spec max_target_nodes(Edges1 :: [[integer()]], Edges2 :: [[integer()]], K :: integer()) -> [integer()].\nmax_target_nodes(Edges1, Edges2, K) ->\n  .",
+    "Racket": "(define/contract (max-target-nodes edges1 edges2 k)\n  (-> (listof (listof exact-integer?)) (listof (listof exact-integer?)) exact-integer? (listof exact-integer?))\n  )"
+  },
+  "_internal": {
+    "methodName": "maxTargetNodes",
+    "params": [
+      {
+        "name": "edges1",
+        "type": "integer[][]"
+      },
+      {
+        "type": "integer[][]",
+        "name": "edges2"
+      },
+      {
+        "type": "integer",
+        "name": "k"
+      }
+    ]
+  },
+  "verified": false
 }

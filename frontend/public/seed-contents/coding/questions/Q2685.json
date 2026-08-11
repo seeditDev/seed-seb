@@ -1,106 +1,335 @@
 {
   "questionId": "Q2685",
-  "title": "Online Shopping",
-  "slug": "online-shopping",
+  "title": "Calculate the Count of the Number of Complete Components",
+  "slug": "count-the-number-of-complete-components",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Dynamic Programming",
-    "difficulty": "Hard",
+    "category": "Searching",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Shopping",
-      "Discounts",
-      "Dynamic Programming"
+      "depth-first-search",
+      "breadth-first-search",
+      "union-find",
+      "graph"
     ],
     "companyTags": [],
     "topicTags": [
-      "Dynamic Programming"
-    ]
+      "depth-first-search",
+      "breadth-first-search",
+      "union-find",
+      "graph"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Alice likes to shop online. The main reason is that she gets a lot of discounts! There are **M** online shops from where she purchases her items. The prices of the same item vary in both the shops. She needs to buy **N** items in all. And each she can buy each item in any one of the shops. All the shops offer certain discounts. If she buys the ith item in one shop, she gets a discount coupon for the i+1th item in the same shop. But if she purchases the i+1th item from a different shop, she cannot use the discount coupon.\n For example, if she buys the ith item in Shop j and gets a discount of **X** rupees. Let the price of i+1th item be **Y** rupees in shop j and **Z** rupees in shop k. If she purchases the i+1th item from shop j she can use the discount coupon and hence, will have to pay **Y-X** rupees. If she purchases the i+1th item from shop k she cannot use the discount coupon and hence, will have to pay **Z** rupees.\n**Note:** If the discount given is more than price of the item in the shop, i.e. if **Y-X** &lt; 0, the item is given free but she does NOT get any money back.\n\nAlice wants to spend as less as possible and wants your help. She starts buying from item 1 and goes on till item N in that order. Your task is simple. Tell her the least amount to spend to get all the **N** items.\n\nInput:**T**\n**N****M****N****M**jthithithjth\n**N****M**jthithithjth\n\nOutput:**N**",
+    "problemStatement": "You receive an integer `n`. There is an **undirected** graph with `n` vertices, numbered from `0` to `n - 1`. You receive a 2D integer array `edges` where `edges[i] = [ai, bi]` denotes that there exists an **undirected** edge connecting vertices `ai` and `bi`.\n\nOutput *the number of **complete connected components** of the graph*.\n\nA **connected component** is a subgraph of a graph in which there exists a path between any two vertices, and no vertex of the subgraph shares an edge with a vertex outside of the subgraph.\n\nA connected component is said to be **complete** if there exists an edge between every pair of its vertices.\n\n**Example 1:**\n\n**![](https://assets.leetcode.com/uploads/2023/04/11/screenshot-from-2023-04-11-23-31-23.png)**\n\n```\nInput: n = 6, edges = [[0,1],[0,2],[1,2],[3,4]]\nOutput: 3\nExplanation: From the picture above, one can see that all of the components of this graph are complete.\n```\n\n**Example 2:**\n\n**![](https://assets.leetcode.com/uploads/2023/04/11/screenshot-from-2023-04-11-23-32-00.png)**\n\n```\nInput: n = 6, edges = [[0,1],[0,2],[1,2],[3,4],[3,5]]\nOutput: 1\nExplanation: The component containing vertices 0, 1, and 2 is complete since there is an edge between every pair of two vertices. On the other hand, the component containing vertices 3, 4, and 5 is not complete since there is no edge between vertices 4 and 5. Thus, the number of complete components in this graph is 1.\n```\n\n**Constraints:**\n\n* `1 <= n <= 50`\n* `0 <= edges.length <= n * (n - 1) / 2`\n* `edges[i].length == 2`\n* `0 <= ai, bi <= n - 1`\n* `ai != bi`\n* There are no repeated edges.",
     "constraints": [
-      "1 <= T <= 10",
-      "2 <= N, M <= 100000",
-      "0 <= Prices, Discounts <= 1000000",
-      "1 <= T * N * M <= 1000000"
+      "None"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case starts with two integers N and M, where N is the number of items and M is the number of shops. Then, for each item, there are M lines, each containing the price and discount of the item in a shop.",
-    "outputFormat": "For each test case, print the minimum amount Alice needs to spend to buy all N items.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "2\n2 2\n3 4\n1 2\n0 1\n2 4\n1 2 3 4\n4 3 2 1\n2 3 2 1\n1 2 1 1",
-        "output": "3\n2",
-        "explanation": "For the first test case, Alice can buy the first item from shop 1 for 3 rupees and the second item from shop 1 for 0 rupees (using the discount coupon). For the second test case, Alice can buy the first item from shop 1 for 1 rupee and the second item from shop 1 for 1 rupee."
+        "type": "reg",
+        "input": "n = 6, edges = [[0,1],[0,2],[1,2],[3,4]]",
+        "output": "3",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n3 3\n10 5\n20 10\n30 15\n5 0\n15 5\n25 10\n10 0\n20 5\n30 10",
-        "output": "65",
-        "explanation": "For this test case, Alice can buy the first item from shop 1 for 10 rupees, the second item from shop 2 for 15 rupees, and the third item from shop 3 for 40 rupees."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n2 2\n100 50\n200 100\n50 0\n150 50",
-        "output": "200",
-        "explanation": "For this test case, Alice can buy the first item from shop 1 for 100 rupees and the second item from shop 1 for 100 rupees (using the discount coupon)."
+        "type": "reg",
+        "input": "n = 6, edges = [[0,1],[0,2],[1,2],[3,4],[3,5]]",
+        "output": "1",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1\n10 5",
-        "expectedOutput": "10",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n100000 100000\n1000000 1000000\n1000000 1000000\n1000000 1000000",
-        "expectedOutput": "3000000000",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n2 2\n0 0\n0 0\n0 0\n0 0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n2 2\n1000000 1000000\n1000000 1000000\n1000000 1000000\n1000000 1000000",
-        "expectedOutput": "2000000",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "10\n10 10\n100 50\n200 100\n300 150\n400 200\n500 250\n600 300\n700 350\n800 400\n900 450\n1000 500\n100 50\n200 100\n300 150\n400 200\n500 250\n600 300\n700 350\n800 400\n900 450\n1000 500",
-        "expectedOutput": "15500",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +340,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "This problem can be solved using dynamic programming. The idea is to maintain a 2D array dp where dp[i][j] represents the minimum amount Alice needs to spend to buy the first i items with the last item bought from shop j. We iterate over each item and for each item, we iterate over each shop. For each shop, we calculate the minimum amount Alice needs to spend to buy the current item from that shop by considering two cases: either she buys the current item from the same shop as the previous item or from a different shop. We update dp[i][j] with the minimum of these two cases.",
-    "timeComplexity": "O(T * N * M) per test case, O(T * N * M) total.",
-    "spaceComplexity": "O(N * M) \u2014 the dominant structure is the dp array.",
     "code": {
-      "C": "#include <stdio.h>\n#include <limits.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M;\n        scanf(\"%d %d\", &N, &M);\n        int prices[N][M], discounts[N][M];\n        for (int i = 0; i < N; i++) {\n            for (int j = 0; j < M; j++) {\n                scanf(\"%d %d\", &prices[i][j], &discounts[i][j]);\n            }\n        }\n        int dp[N][M];\n        for (int i = 0; i < M; i++) {\n            dp[0][i] = prices[0][i];\n        }\n        for (int i = 1; i < N; i++) {\n            for (int j = 0; j < M; j++) {\n                int min = INT_MAX;\n                for (int k = 0; k < M; k++) {\n                    int cost = dp[i - 1][k] + (k == j ? (prices[i][j] - discounts[i - 1][k]) > 0 ? (prices[i][j] - discounts[i - 1][k]) : 0 : prices[i][j]);\n                    if (cost < min) {\n                        min = cost;\n                    }\n                }\n                dp[i][j] = min;\n            }\n        }\n        int min = INT_MAX;\n        for (int i = 0; i < M; i++) {\n            if (dp[N - 1][i] < min) {\n                min = dp[N - 1][i];\n            }\n        }\n        printf(\"%d\\n\", min);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <limits>\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M;\n        cin >> N >> M;\n        int prices[N][M], discounts[N][M];\n        for (int i = 0; i < N; i++) {\n            for (int j = 0; j < M; j++) {\n                cin >> prices[i][j] >> discounts[i][j];\n            }\n        }\n        int dp[N][M];\n        for (int i = 0; i < M; i++) {\n            dp[0][i] = prices[0][i];\n        }\n        for (int i = 1; i < N; i++) {\n            for (int j = 0; j < M; j++) {\n                int min = numeric_limits<int>::max();\n                for (int k = 0; k < M; k++) {\n                    int cost = dp[i - 1][k] + (k == j ? (prices[i][j] - discounts[i - 1][k]) > 0 ? (prices[i][j] - discounts[i - 1][k]) : 0 : prices[i][j]);\n                    if (cost < min) {\n                        min = cost;\n                    }\n                }\n                dp[i][j] = min;\n            }\n        }\n        int min = numeric_limits<int>::max();\n        for (int i = 0; i < M; i++) {\n            if (dp[N - 1][i] < min) {\n                min = dp[N - 1][i];\n            }\n        }\n        cout << min << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int N = sc.nextInt();\n            int M = sc.nextInt();\n            int[][] prices = new int[N][M];\n            int[][] discounts = new int[N][M];\n            for (int i = 0; i < N; i++) {\n                for (int j = 0; j < M; j++) {\n                    prices[i][j] = sc.nextInt();\n                    discounts[i][j] = sc.nextInt();\n                }\n            }\n            int[][] dp = new int[N][M];\n            for (int i = 0; i < M; i++) {\n                dp[0][i] = prices[0][i];\n            }\n            for (int i = 1; i < N; i++) {\n                for (int j = 0; j < M; j++) {\n                    int min = Integer.MAX_VALUE;\n                    for (int k = 0; k < M; k++) {\n                        int cost = dp[i - 1][k] + (k == j ? (prices[i][j] - discounts[i - 1][k]) > 0 ? (prices[i][j] - discounts[i - 1][k]) : 0 : prices[i][j]);\n                        if (cost < min) {\n                            min = cost;\n                        }\n                    }\n                    dp[i][j] = min;\n                }\n            }\n            int min = Integer.MAX_VALUE;\n            for (int i = 0; i < M; i++) {\n                if (dp[N - 1][i] < min) {\n                    min = dp[N - 1][i];\n                }\n            }\n            System.out.println(min);\n        }\n    }\n}",
-      "Python3": "import sys\ninput = sys.stdin.readline\nT = int(input())\nfor _ in range(T):\n    N, M = map(int, input().split())\n    prices = [[0 for _ in range(M)] for _ in range(N)]\n    discounts = [[0 for _ in range(M)] for _ in range(N)]\n    for i in range(N):\n        for j in range(M):\n            prices[i][j], discounts[i][j] = map(int, input().split())\n    dp = [[0 for _ in range(M)] for _ in range(N)]\n    for i in range(M):\n        dp[0][i] = prices[0][i]\n    for i in range(1, N):\n        for j in range(M):\n            min_val = float('inf')\n            for k in range(M):\n                cost = dp[i - 1][k] + (prices[i][j] - discounts[i - 1][k] if k == j and prices[i][j] - discounts[i - 1][k] > 0 else prices[i][j])\n                if cost < min_val:\n                    min_val = cost\n            dp[i][j] = min_val\n    min_val = float('inf')\n    for i in range(M):\n        if dp[N - 1][i] < min_val:\n            min_val = dp[N - 1][i]\n    print(min_val)",
-      "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => input[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, M] = readline().split(' ').map(Number);\n    const prices = Array(N).fill(0).map(() => Array(M).fill(0));\n    const discounts = Array(N).fill(0).map(() => Array(M).fill(0));\n    for (let j = 0; j < N; j++) {\n        const line = readline().split(' ').map(Number);\n        for (let k = 0; k < M; k++) {\n            prices[j][k] = line[k * 2];\n            discounts[j][k] = line[k * 2 + 1];\n        }\n    }\n    const dp = Array(N).fill(0).map(() => Array(M).fill(0));\n    for (let j = 0; j < M; j++) {\n        dp[0][j] = prices[0][j];\n    }\n    for (let j = 1; j < N; j++) {\n        for (let k = 0; k < M; k++) {\n            let min = Infinity;\n            for (let l = 0; l < M; l++) {\n                const cost = dp[j - 1][l] + (k === l ? (prices[j][k] - discounts[j - 1][l]) > 0 ? (prices[j][k] - discounts[j - 1][l]) : 0 : prices[j][k]);\n                if (cost < min) {\n                    min = cost;\n                }\n            }\n            dp[j][k] = min;\n        }\n    }\n    let min = Infinity;\n    for (let j = 0; j < M; j++) {\n        if (dp[N - 1][j] < min) {\n            min = dp[N - 1][j];\n        }\n    }\n    console.log(min);\n}"
+      "Python3": "# Time:  O(n)\n# Space: O(n)\n\n# bfs\nclass Solution(object):\n    def countCompleteComponents(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: int\n        \"\"\"\n        def bfs(u):\n            if lookup[u]:\n                return False\n            v_cnt = e_cnt = 0\n            lookup[u] = True\n            q = [u]\n            while q:\n                new_q = []\n                v_cnt += len(q)\n                for u in q:\n                    e_cnt += len(adj[u])\n                    for v in adj[u]:\n                        if lookup[v]:\n                            continue\n                        lookup[v] = True\n                        new_q.append(v)\n                q = new_q\n            return v_cnt*(v_cnt-1) == e_cnt\n\n        adj = [[] for _ in range(n)]\n        for u, v in edges:\n            adj[u].append(v)\n            adj[v].append(u)\n        lookup = [False]*n\n        return sum(bfs(u) for u in range(n) if not lookup[u])"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int countCompleteComponents(int n, vector<vector<int>>& edges) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int countCompleteComponents(int n, int[][] edges) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n)\n# Space: O(n)\n\n# bfs\nclass Solution(object):\n    def countCompleteComponents(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: int\n        \"\"\"\n        def bfs(u):\n            if lookup[u]:\n                return False\n            v_cnt = e_cnt = 0\n            lookup[u] = True\n            q = [u]\n            while q:\n                new_q = []\n                v_cnt += len(q)\n                for u in q:\n                    e_cnt += len(adj[u])\n                    for v in adj[u]:\n                        if lookup[v]:\n                            continue\n                        lookup[v] = True\n                        new_q.append(v)\n                q = new_q\n            return v_cnt*(v_cnt-1) == e_cnt\n\n        adj = [[] for _ in range(n)]\n        for u, v in edges:\n            adj[u].append(v)\n            adj[v].append(u)\n        lookup = [False]*n\n        return sum(bfs(u) for u in range(n) if not lookup[u])",
+    "Python": "class Solution(object):\n    def countCompleteComponents(self, n, edges):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number} n\n * @param {number[][]} edges\n * @return {number}\n */\nvar countCompleteComponents = function(n, edges) {\n    \n};",
+    "TypeScript": "function countCompleteComponents(n: number, edges: number[][]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int CountCompleteComponents(int n, int[][] edges) {\n        \n    }\n}",
+    "C": "int countCompleteComponents(int n, int** edges, int edgesSize, int* edgesColSize) {\n    \n}",
+    "Go": "func countCompleteComponents(n int, edges [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun countCompleteComponents(n: Int, edges: Array<IntArray>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func countCompleteComponents(_ n: Int, _ edges: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn count_complete_components(n: i32, edges: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer} n\n# @param {Integer[][]} edges\n# @return {Integer}\ndef count_complete_components(n, edges)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer $n\n     * @param Integer[][] $edges\n     * @return Integer\n     */\n    function countCompleteComponents($n, $edges) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int countCompleteComponents(int n, List<List<int>> edges) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def countCompleteComponents(n: Int, edges: Array[Array[Int]]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec count_complete_components(n :: integer, edges :: [[integer]]) :: integer\n  def count_complete_components(n, edges) do\n    \n  end\nend",
+    "Erlang": "-spec count_complete_components(N :: integer(), Edges :: [[integer()]]) -> integer().\ncount_complete_components(N, Edges) ->\n  .",
+    "Racket": "(define/contract (count-complete-components n edges)\n  (-> exact-integer? (listof (listof exact-integer?)) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "countCompleteComponents",
+    "params": [
+      {
+        "name": "n",
+        "type": "integer"
+      },
+      {
+        "type": "integer[][]",
+        "name": "edges"
+      }
+    ]
+  },
+  "verified": false
 }

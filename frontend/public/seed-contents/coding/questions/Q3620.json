@@ -1,101 +1,326 @@
 {
   "questionId": "Q3620",
-  "title": "Stable market",
-  "slug": "stable-market",
+  "title": "Network Recovery Pathways Problem",
+  "slug": "network-recovery-pathways",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
     "category": "Arrays",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Stock Prices",
-      "Stable Blocks",
-      "Arrays"
+      "array",
+      "binary-search",
+      "dynamic-programming",
+      "graph",
+      "topological-sort",
+      "heap-priority-queue",
+      "shortest-path"
     ],
     "companyTags": [],
     "topicTags": [
-      "Data Structures"
-    ]
+      "array",
+      "binary-search",
+      "dynamic-programming",
+      "graph",
+      "topological-sort",
+      "heap-priority-queue",
+      "shortest-path"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Sometimes, the stability of a stock market is at least as important as rapid price changes.\n\nLet a **stable block** be a maximal consecutive block of days with same stock prices.\n\nMoreover, let a **stable block of order K** be a stable block of length **at least K**.\n\nFor example, if stock prices for 7 consecutive days are: 20, 10, 10, 7, 7, 7, 10, then there are 4 stable blocks there: [20], [10, 10], [7, 7, 7] and [10]. Moreover, there are:\n\n\n\n\n0 stable blocks of order 4 or higher\n1 stable block of order 3: [7, 7, 7]\n2 stable block of order 2: [10, 10], [7, 7, 7]\n4 stable block of order 1: [20], [10, 10], [7, 7, 7] and [10]\n\n\nGiven historical prices of a stock across **N** days, the goal is to answer **Q** customers' questions.\n\nThe **i**-th question contains three integers **Li, Ri** and **Ki**. It asks for the number of stable blocks of order **Ki**, if only the stock prices of the days in the range **Li, Ri** are considered.",
+    "problemStatement": "You receive a directed acyclic graph of `n` nodes numbered from 0 to `n − 1`. This is represented by a 2D array `edges` of length `m`, where `edges[i] = [ui, vi, costi]` indicates a one‑way communication from node `ui` to node `vi` with a recovery cost of `costi`.\n\nSome nodes may be offline. You receive a boolean array `online` where `online[i] = true` means node `i` is online. Nodes 0 and `n − 1` are always online.\n\nA path from 0 to `n − 1` is **valid** if:\n\n* All intermediate nodes on the path are online.\n* The total recovery cost of all edges on the path does not exceed `k`.\n\nFor each valid path, define its **score** as the smallest edge‑cost along that path.\n\nOutput the **largest** path score (i.e., the largest **smallest**-edge cost) among all valid paths. If no valid path exists, output -1.\n\n**Example 1:**\n\n**Input:** edges = [[0,1,5],[1,3,10],[0,2,3],[2,3,4]], online = [true,true,true,true], k = 10\n\n**Output:** 3\n\n**Explanation:**\n\n![](https://assets.leetcode.com/uploads/2025/06/06/graph-10.png)\n\n* The graph has two possible routes from node 0 to node 3:\n\n  1. Path `0 → 1 → 3`\n\n     + Total cost = `5 + 10 = 15`, which exceeds k (`15 > 10`), so this path is invalid.\n  2. Path `0 → 2 → 3`\n\n     + Total cost = `3 + 4 = 7 <= k`, so this path is valid.\n     + The smallest edge‐cost along this path is `min(3, 4) = 3`.\n* There are no other valid paths. Hence, the largest among all valid path‐scores is 3.\n\n**Example 2:**\n\n**Input:** edges = [[0,1,7],[1,4,5],[0,2,6],[2,3,6],[3,4,2],[2,4,6]], online = [true,true,true,false,true], k = 12\n\n**Output:** 6\n\n**Explanation:**\n\n![](https://assets.leetcode.com/uploads/2025/06/06/graph-11.png)\n\n* Node 3 is offline, so any path passing through 3 is invalid.\n* Consider the remaining routes from 0 to 4:\n\n  1. Path `0 → 1 → 4`\n\n     + Total cost = `7 + 5 = 12 <= k`, so this path is valid.\n     + The smallest edge‐cost along this path is `min(7, 5) = 5`.\n  2. Path `0 → 2 → 3 → 4`\n\n     + Node 3 is offline, so this path is invalid regardless of cost.\n  3. Path `0 → 2 → 4`\n\n     + Total cost = `6 + 6 = 12 <= k`, so this path is valid.\n     + The smallest edge‐cost along this path is `min(6, 6) = 6`.\n* Among the two valid paths, their scores are 5 and 6. Therefore, the answer is 6.\n\n**Constraints:**\n\n* `n == online.length`\n* `2 <= n <= 5 * 104`\n* `0 <= m == edges.length <=` `min(105, n * (n - 1) / 2)`\n* `edges[i] = [ui, vi, costi]`\n* `0 <= ui, vi < n`\n* `ui != vi`\n* `0 <= costi <= 109`\n* `0 <= k <= 5 * 1013`\n* `online[i]` is either `true` or `false`, and both `online[0]` and `online[n − 1]` are `true`.\n* The given graph is a directed acyclic graph.",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "1 \u2264 N, Q \u2264 10^5",
-      "1 \u2264 Ai \u2264 10^6",
-      "1 \u2264 Li \u2264 Ri \u2264 N",
-      "1 \u2264 Ki \u2264 Ri - Li + 1"
+      "None"
     ],
-    "inputFormat": "The first line contains a single integer T, denoting the number of test cases to handle. After that, the description of T test cases follows. The first line of each test case contains two space-separated integers N and Q, denoting respectively, the number of days for which the stock prices are given, and the number of questions to answer. The second line contains N space-separated integers A1, A2, ..., AN, where Ai denotes the price of the stock on the i-th day. Q lines follow. In the i-th of them, there are three space-separated integers Li, Ri, and Ki denoting the i-th query.",
-    "outputFormat": "For each test case, print answers to all queries in the test case, one per line.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "2\n8 5\n20 10 10 10 7 7 7 10\n2 6 2\n3 6 2\n3 6 3\n3 8 3\n3 8 1\n3 2\n27 27 27\n1 3 1\n2 2 1",
-        "output": "2\n2\n0\n1\n3\n1\n1",
-        "explanation": "Explanation: There are two test cases to handle. Test case #1: There are 8 days for which prices are given and 5 queries to handle. The first query asks for the number of stable blocks of order 2 in range [2, 6], which corresponds to prices 10 10 10 7 7. The answer is 2 because there are two such blocks: 10 10 10 and 7 7."
-      },
-      {
-        "id": "sample_2",
-        "input": "1\n5 2\n1 2 3 4 5\n1 5 1\n2 4 2",
-        "output": "5\n1",
-        "explanation": "Explanation: There is one test case to handle. There are 5 days for which prices are given and 2 queries to handle. The first query asks for the number of stable blocks of order 1 in range [1, 5], which corresponds to prices 1 2 3 4 5. The answer is 5 because there are 5 stable blocks of order 1: 1, 2, 3, 4, 5."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1\n1\n1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n100000 100000\n1 1 1 1 1 1 1 1 1 1\n1 100000 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n5 2\n1 1 1 1 1\n1 5 1\n1 5 5",
-        "expectedOutput": "1\n1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Case 4",
-        "input": "1\n1 1\n1\n1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Case 5",
-        "input": "1\n1 1\n1\n1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -106,18 +331,76 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can iterate over the array of stock prices and find all stable blocks. Then, for each query, we can count the number of stable blocks of order Ki in the range [Li, Ri].",
-    "timeComplexity": "O(T * (N + Q * N)) \u2014 because for each test case, we iterate over the array of stock prices and for each query, we iterate over the range [Li, Ri].",
-    "spaceComplexity": "O(N) \u2014 because we need to store the array of stock prices.",
     "code": {
-      "C": "#include <stdio.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, Q;\n        scanf(\"%d %d\", &N, &Q);\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        while (Q--) {\n            int Li, Ri, Ki;\n            scanf(\"%d %d %d\", &Li, &Ri, &Ki);\n            int count = 0;\n            for (int i = Li - 1; i < Ri; i++) {\n                int j = i;\n                while (j + 1 < Ri && A[j] == A[j + 1]) {\n                    j++;\n                }\n                if (j - i + 1 >= Ki) {\n                    count++;\n                }\n                i = j;\n            }\n            printf(\"%d\\n\", count);\n        }\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, Q;\n        cin >> N >> Q;\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        while (Q--) {\n            int Li, Ri, Ki;\n            cin >> Li >> Ri >> Ki;\n            int count = 0;\n            for (int i = Li - 1; i < Ri; i++) {\n                int j = i;\n                while (j + 1 < Ri && A[j] == A[j + 1]) {\n                    j++;\n                }\n                if (j - i + 1 >= Ki) {\n                    count++;\n                }\n                i = j;\n            }\n            cout << count << endl;\n        }\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int N = sc.nextInt();\n            int Q = sc.nextInt();\n            int[] A = new int[N];\n            for (int i = 0; i < N; i++) {\n                A[i] = sc.nextInt();\n            }\n            while (Q-- > 0) {\n                int Li = sc.nextInt();\n                int Ri = sc.nextInt();\n                int Ki = sc.nextInt();\n                int count = 0;\n                for (int i = Li - 1; i < Ri; i++) {\n                    int j = i;\n                    while (j + 1 < Ri && A[j] == A[j + 1]) {\n                        j++;\n                    }\n                    if (j - i + 1 >= Ki) {\n                        count++;\n                    }\n                    i = j;\n                }\n                System.out.println(count);\n            }\n        }\n    }\n}",
-      "Python3": "import sys\ninput = sys.stdin.readline\nT = int(input())\nwhile T > 0:\n    N, Q = map(int, input().split())\n    A = list(map(int, input().split()))\n    while Q > 0:\n        Li, Ri, Ki = map(int, input().split())\n        count = 0\n        for i in range(Li - 1, Ri):\n            j = i\n            while j + 1 < Ri and A[j] == A[j + 1]:\n                j += 1\n            if j - i + 1 >= Ki:\n                count += 1\n            i = j\n        print(count)\n        Q -= 1\n    T -= 1",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, Q] = readline().split(' ').map(Number);\n    const A = readline().split(' ').map(Number);\n    for (let j = 0; j < Q; j++) {\n        const [Li, Ri, Ki] = readline().split(' ').map(Number);\n        let count = 0;\n        for (let k = Li - 1; k < Ri; k++) {\n            let l = k;\n            while (l + 1 < Ri && A[l] === A[l + 1]) {\n                l++;\n            }\n            if (l - k + 1 >= Ki) {\n                count++;\n            }\n            k = l;\n        }\n        console.log(count);\n    }\n}"
+      "Python3": "# Time:  O((n + e) * logr), r = max(e[2] for e in edges)\n# Space: O(n + e)\n\n# binary search, topological sort, dp\nclass Solution(object):\n    def findMaxPathScore(self, edges, online, k):\n        \"\"\"\n        :type edges: List[List[int]]\n        :type online: List[bool]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        INF = float(\"inf\")\n        def binary_search_right(left, right, check):\n            while left <= right:\n                mid = left+(right-left)//2\n                if not check(mid):\n                    right = mid-1\n                else:\n                    left = mid+1\n            return right\n\n        def topological_sort():\n            in_degree = [0]*len(adj)\n            for u in range(len(adj)):\n                for v, _ in adj[u]:\n                    in_degree[v] += 1\n            result = []\n            q = [u for u in range(len(adj)) if not in_degree[u]]\n            while q:\n                new_q = []\n                for u in q:\n                    result.append(u)\n                    for v, _ in adj[u]:\n                        in_degree[v] -= 1\n                        if in_degree[v]:\n                            continue\n                        new_q.append(v)\n                q = new_q\n            return result\n\n        def check(x):\n            dist = [INF]*len(adj)\n            dist[0] = 0\n            for u in order:\n                if dist[u] == INF:\n                    continue\n                for v, c in adj[u]:\n                    if not (c >= x and online[v]):\n                        continue\n                    dist[v] = min(dist[v], dist[u]+c)\n            return dist[-1] <= k\n\n        adj = [[] for _ in range(len(online))]\n        for u, v, c in edges:\n            adj[u].append((v, c))\n        order = topological_sort()\n        left, right = INF, 0\n        for u in range(len(adj)):\n            for _, c in adj[u]:\n                left = min(left, c)\n                right = max(right, c)\n        result = binary_search_right(left, right, check)\n        return result if result >= left else -1"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int findMaxPathScore(vector<vector<int>>& edges, vector<bool>& online, long long k) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int findMaxPathScore(int[][] edges, boolean[] online, long k) {\n        \n    }\n}",
+    "Python3": "# Time:  O((n + e) * logr), r = max(e[2] for e in edges)\n# Space: O(n + e)\n\n# binary search, topological sort, dp\nclass Solution(object):\n    def findMaxPathScore(self, edges, online, k):\n        \"\"\"\n        :type edges: List[List[int]]\n        :type online: List[bool]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        INF = float(\"inf\")\n        def binary_search_right(left, right, check):\n            while left <= right:\n                mid = left+(right-left)//2\n                if not check(mid):\n                    right = mid-1\n                else:\n                    left = mid+1\n            return right\n\n        def topological_sort():\n            in_degree = [0]*len(adj)\n            for u in range(len(adj)):\n                for v, _ in adj[u]:\n                    in_degree[v] += 1\n            result = []\n            q = [u for u in range(len(adj)) if not in_degree[u]]\n            while q:\n                new_q = []\n                for u in q:\n                    result.append(u)\n                    for v, _ in adj[u]:\n                        in_degree[v] -= 1\n                        if in_degree[v]:\n                            continue\n                        new_q.append(v)\n                q = new_q\n            return result\n\n        def check(x):\n            dist = [INF]*len(adj)\n            dist[0] = 0\n            for u in order:\n                if dist[u] == INF:\n                    continue\n                for v, c in adj[u]:\n                    if not (c >= x and online[v]):\n                        continue\n                    dist[v] = min(dist[v], dist[u]+c)\n            return dist[-1] <= k\n\n        adj = [[] for _ in range(len(online))]\n        for u, v, c in edges:\n            adj[u].append((v, c))\n        order = topological_sort()\n        left, right = INF, 0\n        for u in range(len(adj)):\n            for _, c in adj[u]:\n                left = min(left, c)\n                right = max(right, c)\n        result = binary_search_right(left, right, check)\n        return result if result >= left else -1",
+    "Python": "class Solution(object):\n    def findMaxPathScore(self, edges, online, k):\n        \"\"\"\n        :type edges: List[List[int]]\n        :type online: List[bool]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} edges\n * @param {boolean[]} online\n * @param {number} k\n * @return {number}\n */\nvar findMaxPathScore = function(edges, online, k) {\n    \n};",
+    "TypeScript": "function findMaxPathScore(edges: number[][], online: boolean[], k: number): number {\n    \n};",
+    "C#": "public class Solution {\n    public int FindMaxPathScore(int[][] edges, bool[] online, long k) {\n        \n    }\n}",
+    "C": "int findMaxPathScore(int** edges, int edgesSize, int* edgesColSize, bool* online, int onlineSize, long long k) {\n    \n}",
+    "Go": "func findMaxPathScore(edges [][]int, online []bool, k int64) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun findMaxPathScore(edges: Array<IntArray>, online: BooleanArray, k: Long): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func findMaxPathScore(_ edges: [[Int]], _ online: [Bool], _ k: Int) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn find_max_path_score(edges: Vec<Vec<i32>>, online: Vec<bool>, k: i64) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} edges\n# @param {Boolean[]} online\n# @param {Integer} k\n# @return {Integer}\ndef find_max_path_score(edges, online, k)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $edges\n     * @param Boolean[] $online\n     * @param Integer $k\n     * @return Integer\n     */\n    function findMaxPathScore($edges, $online, $k) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int findMaxPathScore(List<List<int>> edges, List<bool> online, int k) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def findMaxPathScore(edges: Array[Array[Int]], online: Array[Boolean], k: Long): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec find_max_path_score(edges :: [[integer]], online :: [boolean], k :: integer) :: integer\n  def find_max_path_score(edges, online, k) do\n    \n  end\nend",
+    "Erlang": "-spec find_max_path_score(Edges :: [[integer()]], Online :: [boolean()], K :: integer()) -> integer().\nfind_max_path_score(Edges, Online, K) ->\n  .",
+    "Racket": "(define/contract (find-max-path-score edges online k)\n  (-> (listof (listof exact-integer?)) (listof boolean?) exact-integer? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "findMaxPathScore",
+    "params": [
+      {
+        "name": "edges",
+        "type": "integer[][]"
+      },
+      {
+        "type": "boolean[]",
+        "name": "online"
+      },
+      {
+        "type": "long",
+        "name": "k"
+      }
+    ]
+  },
+  "verified": false
 }

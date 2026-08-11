@@ -7,6 +7,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from '../router-compat';
+import { toast } from 'sonner';
 import {
   FaClock, FaCheckCircle, FaLock, FaBookOpen, FaCode,
   FaArrowLeft, FaArrowRight, FaBookmark,
@@ -16,7 +17,8 @@ import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
 import { db } from '../firebase-config';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
+import { writeTenantResult, buildTenantResultPayload } from '../services/tenantResultsService';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
@@ -28,6 +30,15 @@ import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
 import { requireTenant, resolveTenant } from '../utils/tenant';
+import {
+  startAssessmentSession,
+  markSectionStarted,
+  saveSessionProgress,
+  markSectionCompleted,
+  completeAssessmentSession,
+  oneThirdSaveThreshold,
+} from '../services/assessmentSessionService';
+import { markAssessmentCompleted, invalidateCompletionCache } from '../services/attemptStatusService';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -664,6 +675,9 @@ const MultiSectionAssessment = () => {
   const [sectionData, setSectionData] = useState({});
   const [examResults, setExamResults] = useState({});
   const [examFinished, setExamFinished] = useState(false);
+  // 15-sec relaxation between sections: null = not showing, number = countdown value
+  const [relaxationCountdown, setRelaxationCountdown] = useState(null);
+  const [relaxationNextIdx, setRelaxationNextIdx] = useState(-1);
   const [isVisualProctorReady, setIsVisualProctorReady] = useState(false);
   const [isAudioProctorReady, setIsAudioProctorReady] = useState(false);
   const [proctoringData, setProctoringData] = useState({
@@ -815,13 +829,37 @@ const MultiSectionAssessment = () => {
 
       const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
-      const docPath = `AssessmentResults/${effectiveAssessment.id}/colleges/${college}/years/${year}/students/${effectiveUser.Email}`;
-      setDoc(doc(db, docPath), attemptData, { merge: true })
-        .then(() => console.log('[MSA] Final result saved to Firestore'))
+      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+      const userId = authData.uid || effectiveUser.uid || effectiveUser.Email.replace(/[@.]/g, '_');
+
+      const v2DocPath = `assessmentResults/${effectiveAssessment.id}/students/${userId}`;
+      setDoc(doc(db, v2DocPath), attemptData, { merge: true })
+        .then(() => {
+          console.log('[MSA] Final result saved to Firestore v2 path');
+          // ── Write denormalized tenant result (non-blocking) ──
+          const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+          const tenantId = college || authData?.tenantId || '';
+          if (tenantId) {
+            const tenantPayload = buildTenantResultPayload(authData, {
+              ...rawAttemptData,
+              assessmentId: effectiveAssessment.id,
+              assessmentName: effectiveAssessment.name,
+              type: 'multisection',
+              score: totalScore,
+              totalMarks: totalMarksSum,
+              percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+              timeTakenSeconds: timeTaken,
+              violationCount: totalViolations,
+              sourceRef: v2DocPath,
+            });
+            writeTenantResult(tenantId, tenantPayload).catch(() => {});
+          }
+        })
         .catch(e => console.error('[MSA] Firestore final save failed:', e));
 
-      setDoc(doc(db, 'users', effectiveUser.Email, 'contestAttempts', effectiveAssessment.id), attemptData, { merge: true })
-        .catch(e => console.error('[MSA] Student-centric save failed:', e));
+      setDoc(doc(db, 'users', userId, 'assessmentAttempts', effectiveAssessment.id), attemptData, { merge: true })
+        .catch(e => console.error('[MSA] Student assessmentAttempts mirror save failed:', e));
+
 
       safeUpsert('mcq_results', {
         roll_number: effectiveUser['Roll Number'] || '',
@@ -914,6 +952,31 @@ const MultiSectionAssessment = () => {
     setExamFinished(true);
     sessionStorage.removeItem('multisectionAssessmentData');
     localStorage.removeItem(`msaProgress_${effectiveAssessment?.id}`);
+
+    // ── Mark attempt completed (Firestore session + completion index) ──
+    completeAssessmentSession(effectiveUser, effectiveAssessment?.id, { autoSubmitted: true, reason: reason || 'proctoring_violations' }).catch(() => {});
+    markAssessmentCompleted(effectiveUser, effectiveAssessment?.id).catch(() => {});
+    if (effectiveUser?.Email) invalidateCompletionCache(effectiveUser.Email);
+
+    // ── Course progress tracking (non-fatal) ──
+    try {
+      const courseCtx = JSON.parse(sessionStorage.getItem('msaCourseCtx') || '{}');
+      if (courseCtx.courseId && courseCtx.seriesId) {
+        import('../services/mcqService').then(({ default: MCQService }) => {
+          const totalScore = Object.values(examResults || {}).reduce((s, sec) => s + (sec.score || 0), 0);
+          MCQService.markCourseProgress({
+            uid: effectiveUser?.uid || effectiveUser?.UID || '',
+            courseId: courseCtx.courseId,
+            seriesId: courseCtx.seriesId,
+            testId: courseCtx.testId || effectiveAssessment?.id || '',
+            score: totalScore,
+            maxScore: courseCtx.totalMarks || 100,
+          }).catch(() => {});
+        }).catch(() => {});
+        sessionStorage.removeItem('msaCourseCtx');
+      }
+    } catch (_) { /* non-fatal */ }
+
 
     // Clear MCQ, Coding, and proctoring temporary workspace details
     const keysToRemove = [];
@@ -1102,7 +1165,11 @@ const MultiSectionAssessment = () => {
       });
     }
 
-    loadAllSections(assessmentData);
+    loadAllSections(assessmentData).then(() => {
+      // Start Firestore-backed session AFTER sections are loaded
+      const slug = sessionStorage.getItem('msaSlug') || assessmentData.id || '';
+      startAssessmentSession(authData, assessmentData, slug).catch(() => {});
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1174,7 +1241,8 @@ const MultiSectionAssessment = () => {
     try {
       await Promise.all(
         (exam.sections || []).map(async (sec) => {
-          let fetchUrl = sec.url || '';
+          // Firestore stores the section's CDN URL in cdnUrl (not url)
+          let fetchUrl = sec.cdnUrl || sec.url || '';
           if (!fetchUrl || !fetchUrl.endsWith('.json')) {
             fetchUrl = sec.type === 'mcq'
               ? `/seed-contents/mcq/testbank/${slugify(sec.name)}.json`
@@ -1194,38 +1262,92 @@ const MultiSectionAssessment = () => {
           else if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
 
           const githubUrl = `https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cleanPath}`;
+          const seedDbUrl = `https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cleanPath}`;
           const localUrl = `/seed-contents/${cleanPath}`;
 
-          try {
-            let res = await fetch(githubUrl, { cache: 'no-store' });
-            if (!res.ok) {
-              res = await fetch(localUrl);
-              if (!res.ok) throw new Error('Local fetch also failed');
-            }
+          const fetchViaGitHubAPI = async (repo, path) => {
+            const pat = import.meta.env?.VITE_GITHUB_PAT;
+            const headers = { Accept: 'application/vnd.github.v3+json' };
+            if (pat) headers['Authorization'] = `token ${pat}`;
+            const res = await fetch(`https://api.github.com/repos/seeditDev/${repo}/contents/${path}`, { headers });
+            if (!res.ok) return null;
             const data = await res.json();
-            if (sec.type === 'coding') {
-              let ids = [];
-              if (Array.isArray(data.questionIds)) {
-                ids = data.questionIds;
-              } else if (Array.isArray(data.questions)) {
-                ids = data.questions.map(q => typeof q === 'string' ? q : (q.id || q.questionId));
-              }
+            if (!data.content) return null;
+            return JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
+          };
 
-              if (ids.length > 0) {
-                try {
-                  const resolved = await fetchQuestionsForContest(ids);
-                  data.questions = resolved.map(normalizeQuestion);
-                } catch (resErr) {
-                  console.error('[MSA] Failed to resolve questions from bank:', resErr);
+          const processData = async (data, secType, secSectionId) => {
+              // ── MCQ: questions already embedded in slug JSON ──
+              // Normalize field names: slug uses { question, options, correctAnswer }
+              if (secType === 'mcq') {
+                data.questions = (data.questions || []).map(q => ({
+                  ...q,
+                  text: q.question || q.text || '',     // ensure .text field
+                  question: q.question || q.text || '', // keep .question field
+                  options: q.options || [],
+                  correctAnswer: q.correctAnswer || q.answer || '',
+                }));
+              } else if (secType === 'coding') {
+                // Prefer challenges array (has cdnUrl) over plain questionIds
+                let questionRefs = [];
+                if (Array.isArray(data.challenges) && data.challenges.length > 0) {
+                  questionRefs = data.challenges; // [{id, cdnUrl, title, ...}]
+                } else if (Array.isArray(data.questionIds)) {
+                  questionRefs = data.questionIds; // plain string IDs
+                } else if (Array.isArray(data.questions) && data.questions.length > 0 && typeof data.questions[0] === 'string') {
+                  questionRefs = data.questions; // old format: ["Q0.319","Q0.339"]
+                }
+
+                if (questionRefs.length > 0) {
+                  try {
+                    const resolved = await fetchQuestionsForContest(questionRefs);
+                    data.questions = resolved.map(normalizeQuestion);
+                  } catch (resErr) {
+                    console.error('[MSA] Failed to resolve coding questions:', resErr);
+                    data.questions = [];
+                  }
+                } else if (Array.isArray(data.questions) && data.questions.length > 0 && typeof data.questions[0] === 'object') {
+                  data.questions = data.questions.map(normalizeQuestion);
+                } else {
                   data.questions = [];
                 }
-              } else if (Array.isArray(data.questions)) {
-                data.questions = data.questions.map(normalizeQuestion);
-              } else {
-                data.questions = [];
+              }
+              loaded[secSectionId] = data;
+          };
+
+          try {
+            // 1st: full cdnUrl direct (if stored as absolute URL)
+            if (fetchUrl.startsWith('https://')) {
+              const res = await fetch(`${fetchUrl}?_t=${Date.now()}`, { cache: 'no-store' });
+              if (res.ok) {
+                const data = await res.json();
+                await processData(data, sec.type, sec.sectionId || sec.name);
+                return;
               }
             }
-            loaded[sec.sectionId] = data;
+            // 2nd: seed-contents CDN
+            let res = await fetch(`${githubUrl}?_t=${Date.now()}`, { cache: 'no-store' });
+            if (!res.ok) res = await fetch(`${seedDbUrl}?_t=${Date.now()}`, { cache: 'no-store' });
+            if (!res.ok) {
+              // 3rd: authenticated GitHub API with VITE_GITHUB_PAT
+              let apiData = await fetchViaGitHubAPI('seed-contents', cleanPath);
+              if (!apiData) apiData = await fetchViaGitHubAPI('SEEDDB', cleanPath);
+              if (apiData) {
+                await processData(apiData, sec.type, sec.sectionId);
+              } else {
+                // 4th: local fallback
+                const localRes = await fetch(localUrl);
+                if (localRes.ok) {
+                  const data = await localRes.json();
+                  await processData(data, sec.type, sec.sectionId);
+                } else {
+                  throw new Error(`Cannot load section "${sec.name}" from any source`);
+                }
+              }
+              return;
+            }
+            const data = await res.json();
+            await processData(data, sec.type, sec.sectionId);
           } catch (e) {
             console.error(`[MSA] Failed to load section "${sec.name}":`, e);
           }
@@ -1259,12 +1381,63 @@ const MultiSectionAssessment = () => {
   // ── Handle timer expiry (outside the state updater)
   useEffect(() => {
     if (secStarted && secTimer === 0) {
+      toast('⏰ Time up! Submitting section…', { icon: '⏰', duration: 3000 });
       autoSubmitSection();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secTimer, secStarted]);
 
+  // ── 1/3-time Firestore progress save (fires once per section, non-fatal)
+  const oneThirdSavedRef = useRef(false);
+  const sectionTotalTimerRef = useRef(0);
+  useEffect(() => {
+    // Reset when section changes
+    oneThirdSavedRef.current = false;
+    if (assessment?.sections?.[currentSecIdx]) {
+      sectionTotalTimerRef.current = (assessment.sections[currentSecIdx].duration_minutes || 30) * 60;
+    }
+  }, [currentSecIdx, assessment]);
+
+  useEffect(() => {
+    if (!secStarted || oneThirdSavedRef.current) return;
+    const totalSecs = sectionTotalTimerRef.current;
+    if (totalSecs <= 0) return;
+    const saveAt = oneThirdSaveThreshold(totalSecs); // fires when 1/3 time remains
+    if (secTimer <= saveAt && secTimer > 0) {
+      oneThirdSavedRef.current = true;
+      const activeSec = assessment?.sections?.[currentSecIdx];
+      if (!activeSec || !user?.Email) return;
+      const sectionId = activeSec.sectionId || activeSec.name;
+      // Read current MCQ answers from localStorage (MCQSectionView persists them there)
+      let savedAnswers = {};
+      try {
+        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        const stateKey = `msa_active_mcq_state_${assessment.id}_${sectionId}`;
+        const raw = localStorage.getItem(stateKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          savedAnswers = parsed.answers || {};
+        }
+        saveSessionProgress(authData, assessment.id, sectionId, savedAnswers, secTimer).catch(() => {});
+      } catch (_) { /* non-fatal */ }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secTimer, secStarted]);
+
   const countdownWaitRef = useRef(0);
+
+  // ── Relaxation countdown between sections (15 seconds)
+  useEffect(() => {
+    if (relaxationCountdown === null) return;
+    if (relaxationCountdown <= 0) {
+      setRelaxationCountdown(null);
+      handleStartSection(relaxationNextIdx);
+      return;
+    }
+    const t = setTimeout(() => setRelaxationCountdown(prev => (prev ?? 1) - 1), 1000);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relaxationCountdown]);
 
   // ── Pre-section countdown
   useEffect(() => {
@@ -1311,6 +1484,23 @@ const MultiSectionAssessment = () => {
     submittingSecIdxRef.current = -1;
     sectionStartTimesRef.current[idx] = new Date().toISOString();
     setCurrentSecIdx(idx);
+
+    // ── Firestore: mark section started ──
+    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    if (assessment?.sections?.[idx] && authData?.Email) {
+      const sec = assessment.sections[idx];
+      markSectionStarted(authData, assessment.id, {
+        sectionId: sec.sectionId || sec.id || sec.name,
+        name:      sec.name || '',
+        secIdx:    idx,
+        durationMinutes: sec.duration_minutes || 30,
+      }).catch(() => {});
+
+      // Store coding section start time for CodingAssessmentPage timing
+      if (sec.type === 'coding') {
+        sessionStorage.setItem('codingSecStartTime', new Date().toISOString());
+      }
+    }
 
     if (idx === 0) {
       // Section 0: initial prelaunch check for camera/mic resources
@@ -1365,6 +1555,12 @@ const MultiSectionAssessment = () => {
     setSecStarted(false);
     clearInterval(timerRef.current);
 
+    // ── Firestore: mark section completed ──
+    const authDataSec = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    if (authDataSec?.Email && assessment?.id) {
+      markSectionCompleted(authDataSec, assessment.id, activeSection.sectionId || activeSection.name).catch(() => {});
+    }
+
     const nextIdx = currentSecIdx + 1;
     const totalSections = (assessment.sections || []).length;
 
@@ -1388,19 +1584,28 @@ const MultiSectionAssessment = () => {
       }
       if (user?.Email && tenant.valid) {
         const { college, year } = tenant;
-        setDoc(doc(db, `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`), {
-          email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-          college, year, department: user.Department || '',
-          testID: assessment.id, testName: assessment.name,
-          assessmentId: assessment.id, assessmentName: assessment.name,
-          type: 'multisection', status: 'partial',
-          sectionsCompleted: currentSecIdx + 1, totalSections,
-          sections: updatedResults, lastUpdatedAt: serverTimestamp(),
-          lastUpdatedAtISO: new Date().toISOString()
-        }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
+      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+      const userId = authData.uid || user.uid || user.Email.replace(/[@.]/g, '_');
+
+      setDoc(doc(db, `assessmentResults/${assessment.id}/students/${userId}`), {
+        userId, email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
+        tenantId: authData.tenantId || college, cohortId: authData.cohortId || year,
+        testID: assessment.id, testName: assessment.name,
+        assessmentId: assessment.id, assessmentName: assessment.name,
+        type: 'multisection', status: 'partial',
+        sectionsCompleted: currentSecIdx + 1, totalSections,
+        sections: updatedResults, lastUpdatedAt: serverTimestamp(),
+        lastUpdatedAtISO: new Date().toISOString()
+      }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
+
       }
 
-      handleStartSection(nextIdx);
+      // ── 15-second inter-section relaxation ──
+      const nextSec = assessment.sections[nextIdx];
+      toast.success(`✅ Section submitted! Next: "${nextSec?.name || `Section ${nextIdx + 1}`}" starts in 15 seconds.`, { duration: 5000 });
+      setRelaxationNextIdx(nextIdx);
+      setRelaxationCountdown(15);
+      // handleStartSection(nextIdx) is called by the relaxation countdown useEffect
     } else {
       // All sections done — final submission
       // See autoSubmitEntireExam: never substitute a tenant, skip the write.
@@ -1504,22 +1709,35 @@ const MultiSectionAssessment = () => {
 
         const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
-        const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${user.Email}`;
-        setDoc(doc(db, docPath), attemptData, { merge: true })
-          .then(() => console.log('[MSA] Final result saved to Firestore'))
+        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        const userId = authData.uid || user.uid || user.Email.replace(/[@.]/g, '_');
+
+        const v2DocPath = `assessmentResults/${assessment.id}/students/${userId}`;
+        setDoc(doc(db, v2DocPath), attemptData, { merge: true })
+          .then(() => console.log('[MSA] Final result saved to Firestore v2 path'))
           .catch(e => console.error('[MSA] Firestore final save failed:', e));
 
-        setDoc(doc(db, 'users', user.Email, 'contestAttempts', assessment.id), attemptData, { merge: true })
-          .catch(e => console.error('[MSA] Student-centric save failed:', e));
+        setDoc(doc(db, 'users', userId, 'assessmentAttempts', assessment.id), attemptData, { merge: true })
+          .catch(e => console.error('[MSA] Student assessmentAttempts mirror save failed:', e));
+
       }
 
       setExamFinished(true);
+      toast.success('🎉 Assessment submitted! Returning to dashboard…', { duration: 4000 });
+      setTimeout(() => {
+        navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+      }, 4000);
       if (assessment?.id) {
         localStorage.setItem(`msaCompleted_${assessment.id}`, 'true');
       }
       sessionStorage.removeItem('multisectionAssessmentData');
       localStorage.removeItem(`msaProgress_${assessment?.id}`);
       localStorage.removeItem(`msaActiveAssessment_${assessment?.id}`);
+
+      // ── Mark attempt fully completed (Firestore session + completion index) ──
+      completeAssessmentSession(user, assessment?.id).catch(() => {});
+      markAssessmentCompleted(user, assessment?.id).catch(() => {});
+      if (user?.Email) invalidateCompletionCache(user.Email);
 
       // Clear MCQ, Coding, and proctoring temporary workspace details
       const keysToRemove = [];
@@ -1545,7 +1763,7 @@ const MultiSectionAssessment = () => {
       window.history.replaceState(null, '', '/student/dashboard');
       const handleForward = () => {
         window.history.pushState(null, '', '/student/dashboard');
-        navigate('/student/dashboard', { replace: true });
+        navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
       };
       window.addEventListener('popstate', handleForward);
       return () => window.removeEventListener('popstate', handleForward);
@@ -1575,7 +1793,7 @@ const MultiSectionAssessment = () => {
         <button
           onClick={() => {
             window.history.replaceState(null, '', '/student/dashboard');
-            navigate('/student/dashboard', { replace: true });
+            navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
           }}
           style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.1rem', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
         >
@@ -1586,6 +1804,33 @@ const MultiSectionAssessment = () => {
   }
 
   const activeSection = currentSecIdx >= 0 ? assessment.sections?.[currentSecIdx] : null;
+
+  // ── Inter-section relaxation screen (15-second countdown)
+  if (relaxationCountdown !== null) {
+    const nextSec = assessment.sections?.[relaxationNextIdx];
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ textAlign: 'center', padding: '48px', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', maxWidth: '520px', width: '90%' }}>
+          <FaCheckCircle style={{ color: '#10b981', fontSize: '4rem', marginBottom: '20px' }} />
+          <h2 style={{ color: '#f1f5f9', fontSize: '1.8rem', fontWeight: '700', margin: '0 0 12px' }}>Section Submitted!</h2>
+          <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px' }}>
+            Next section: <strong style={{ color: '#e2e8f0' }}>{nextSec?.name || `Section ${relaxationNextIdx + 1}`}</strong>
+          </p>
+          <div style={{ width: '100px', height: '100px', borderRadius: '50%', border: '4px solid rgba(99,102,241,0.3)', borderTop: '4px solid #6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', animation: 'spin 1s linear infinite' }}>
+            <span style={{ fontSize: '2.4rem', fontWeight: '800', color: '#6366f1' }}>{relaxationCountdown}</span>
+          </div>
+          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Starting automatically in {relaxationCountdown} second{relaxationCountdown !== 1 ? 's' : ''}&hellip;</p>
+          <button
+            onClick={() => { setRelaxationCountdown(0); }}
+            style={{ marginTop: '20px', background: 'rgba(99,102,241,0.2)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', padding: '10px 24px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem' }}
+          >
+            Start Now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const activeSecData = activeSection ? sectionData[activeSection.sectionId] : null;
 
   // ── Active section view (MCQ or Coding)

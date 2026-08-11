@@ -1,107 +1,329 @@
 {
   "questionId": "Q2220",
-  "title": "Genetics",
-  "slug": "genetics",
+  "title": "Smallest Bit Flips to Convert Number",
+  "slug": "minimum-bit-flips-to-convert-number",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Strings",
-    "difficulty": "Hard",
+    "category": "Bit Manipulation",
+    "difficulty": "Easy",
     "isPremium": false,
     "tags": [
-      "Persistent Data Structures",
-      "String Manipulation",
-      "Strings"
+      "bit-manipulation"
     ],
     "companyTags": [],
     "topicTags": [
-      "Data Structures"
-    ]
+      "bit-manipulation"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Genetic engineering is fun. The scientists have gathered several DNAs and want to create something new out of those. Each DNAs can be represented as a sequence of bases A, G, T, C. Let DNA[a..b] be the subsequence of DNA starting from index a finishing in b inclusive, and DNA[a..] be the subsequence of DNA starting from index a to the end. Scientist can perform the following operations on the DNAs:\n\n\ncross operation \u2013 they take DNA1 and DNA2 and numbers k1 and k2. Then two new DNAs are created: DNA3 = DNA1[1..k1]+DNA2[k2+1..] and DNA4 = DNA2[1..k2]+DNA1[k1+1..].\nmutate operation \u2013 they take a DNA, number k and one of the bases. Then they replace the base in position k in DNA with that base.\nalso they need to know certain characteristics of those DNAs. So they can perform count operation \u2013 they take DNA and numbers k1 and k2 (k1 &lt;= k2). This operation should return the number of A, G, T, C bases in DNA[k1..k2].\n\nThe initial DNAs are numbered from 1 to n, where n is the amount of those DNAs. The new DNAs created in the cross operations are numbered with consecutive integers. You are to write a program to help scientists perform those operations.",
+    "problemStatement": "A **bit flip** of a number `x` is choosing a bit in the binary representation of `x` and **flipping** it from either `0` to `1` or `1` to `0`.\n\n* As an example, for `x = 7`, the binary representation is `111` and we may choose any bit (including any leading zeros not shown) and flip it. We can flip the first bit from the right to get `110`, flip the second bit from the right to get `101`, flip the fifth bit from the right (a leading zero) to get `10111`, etc.\n\nWith two integers `start` and `goal`, output *the **smallest** number of **bit flips** to convert* `start` *to* `goal`.\n\n**Example 1:**\n\n```\nInput: start = 10, goal = 7\nOutput: 3\nExplanation: The binary representation of 10 and 7 are 1010 and 0111 respectively. We can convert 10 to 7 in 3 steps:\n- Flip the first bit from the right: 1010 -> 1011.\n- Flip the third bit from the right: 1011 -> 1111.\n- Flip the fourth bit from the right: 1111 -> 0111.\nIt can be shown we cannot convert 10 to 7 in less than 3 steps. Hence, we return 3.\n```\n\n**Example 2:**\n\n```\nInput: start = 3, goal = 4\nOutput: 3\nExplanation: The binary representation of 3 and 4 are 011 and 100 respectively. We can convert 3 to 4 in 3 steps:\n- Flip the first bit from the right: 011 -> 010.\n- Flip the second bit from the right: 010 -> 000.\n- Flip the third bit from the right: 000 -> 100.\nIt can be shown we cannot convert 3 to 4 in less than 3 steps. Hence, we return 3.\n```\n\n**Constraints:**\n\n* `0 <= start, goal <= 109`\n\n**Note:** This question is the same as [461: Hamming Distance.](https://leetcode.com/problems/hamming-distance/description/)",
     "constraints": [
-      "1 \u2264 n \u2264 20",
-      "1 \u2264 q \u2264 30000",
-      "Length of each initial DNA \u2264 30000",
-      "Length of any DNA after a CROSS \u2264 2\u00b710^9",
-      "Total number of different DNAs \u2264 10000"
+      "None"
     ],
-    "inputFormat": "First line contains an integer n, the number of initial DNA strings. Each of the next n lines contains a string consisting only of characters A, G, T, C. The following line contains an integer q, the number of operations. Each of the next q lines describes an operation in one of the following forms: CROSS id1 id2 k1 k2, MUTATE id k base, or COUNT id k1 k2.",
-    "outputFormat": "For each COUNT operation, print a single line with four integers \u2013 the amounts of bases A, G, T, and C in the requested substring, separated by a single space.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "2\nCTCGC\nTGCGG\n5\nMUTATE 1 2 A\nCOUNT 2 2 4\nMUTATE 2 1 G\nCROSS 2 1 1 5\nCOUNT 4 3 6",
-        "output": "0 2 0 1\n0 2 0 2",
-        "explanation": "The first COUNT operation returns the counts of A, G, T, and C in the substring of DNA 2 from index 2 to 4. The second COUNT operation returns the counts of A, G, T, and C in the substring of DNA 4 from index 3 to 6."
+        "type": "reg",
+        "input": "start = 10, goal = 7",
+        "output": "3",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\nATCG\n3\nCOUNT 1 1 4\nMUTATE 1 2 G\nCOUNT 1 1 4",
-        "output": "1 1 1 1\n1 1 1 1",
-        "explanation": "The first COUNT operation returns the counts of A, G, T, and C in the substring of DNA 1 from index 1 to 4. The MUTATE operation replaces the base at index 2 of DNA 1 with G. The second COUNT operation returns the counts of A, G, T, and C in the substring of DNA 1 from index 1 to 4 after the mutation."
-      },
-      {
-        "id": "sample_3",
-        "input": "2\nATCG\nATGC\n2\nCROSS 1 2 2 2\nCOUNT 3 1 4",
-        "output": "1 1 1 1",
-        "explanation": "The CROSS operation creates a new DNA string by combining the substrings of DNA 1 and DNA 2. The COUNT operation returns the counts of A, G, T, and C in the substring of the new DNA string from index 1 to 4."
+        "type": "reg",
+        "input": "start = 3, goal = 4",
+        "output": "3",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\nA\n1\nCOUNT 1 1 1",
-        "expectedOutput": "1 0 0 0",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "20\nATCGATCGATCGATCGATCG\nATCGATCGATCGATCGATCG\n30000\nMUTATE 1 1 A\nMUTATE 2 1 A\nCROSS 1 2 1 30000\nCOUNT 3 1 30000",
-        "expectedOutput": "15000 15000 0 0",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\nAAAAAAAA\n3\nCOUNT 1 1 8\nMUTATE 1 2 A\nCOUNT 1 1 8",
-        "expectedOutput": "8 0 0 0\n8 0 0 0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "2\nATCG\nATGC\n2\nCROSS 1 2 2 2\nCOUNT 3 1 4",
-        "expectedOutput": "1 1 1 1",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "10\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\nATCGATCGAT\n100\nMUTATE 1 1 A\nMUTATE 2 1 A\nCROSS 1 2 1 10\nCOUNT 3 1 10\nMUTATE 3 1 A\nCOUNT 3 1 10",
-        "expectedOutput": "10 0 0 0\n10 0 0 0",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -112,18 +334,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The problem can be solved using a persistent data structure, such as a persistent binary search tree or a rope data structure, to efficiently store and manipulate the DNA strings. Each operation can be performed by creating a new version of the affected DNA string, without modifying the original string.",
-    "timeComplexity": "O(q log n) per test case, where n is the number of initial DNA strings. The time complexity is dominated by the split and merge operations in the persistent data structure.",
-    "spaceComplexity": "O(n + q) \u2013 the space complexity is dominated by the storage of the initial DNA strings and the new DNA strings created during the operations.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <time.h>\n\ntypedef struct Node {\n    char ch;               // A,G,T,C\n    int pr;                // priority\n    int sz;                // subtree size\n    int cnt[4];            // counts of A,G,T,C in subtree\n    struct Node *l, *r;    // children\n} Node;\n\n// ... (rest of the C code remains the same)",
-      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\n\ntypedef struct Node {\n    char ch;               // A,G,T,C\n    int pr;                // priority\n    int sz;                // subtree size\n    int cnt[4];            // counts of A,G,T,C in subtree\n    Node *l, *r;    // children\n} Node;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    // ... (rest of the C++ code remains the same)",
-      "Java": "import java.io.BufferedReader;\nimport java.io.InputStreamReader;\nimport java.util.StringTokenizer;\n\nclass Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        // ... (rest of the Java code remains the same)",
-      "Python3": "import sys\n\nclass Node:\n    def __init__(self, ch):\n        self.ch = ch\n        self.pr = None\n        self.sz = 1\n        self.cnt = [0, 0, 0, 0]\n        self.l = None\n        self.r = None\n\n# ... (rest of the Python code remains the same)",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\n\nclass Node {\n    constructor(ch) {\n        this.ch = ch;\n        this.pr = null;\n        this.sz = 1;\n        this.cnt = [0, 0, 0, 0];\n        this.l = null;\n        this.r = null;\n    }\n}\n// ... (rest of the JavaScript code remains the same)"
+      "Python3": "# Time:  O(logn)\n# Space: O(1)\n\n# bit manipulation\nclass Solution(object):\n    def minBitFlips(self, start, goal):\n        \"\"\"\n        :type start: int\n        :type goal: int\n        :rtype: int\n        \"\"\"\n        return bin(start^goal).count('1')"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int minBitFlips(int start, int goal) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int minBitFlips(int start, int goal) {\n        \n    }\n}",
+    "Python3": "# Time:  O(logn)\n# Space: O(1)\n\n# bit manipulation\nclass Solution(object):\n    def minBitFlips(self, start, goal):\n        \"\"\"\n        :type start: int\n        :type goal: int\n        :rtype: int\n        \"\"\"\n        return bin(start^goal).count('1')",
+    "Python": "class Solution(object):\n    def minBitFlips(self, start, goal):\n        \"\"\"\n        :type start: int\n        :type goal: int\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number} start\n * @param {number} goal\n * @return {number}\n */\nvar minBitFlips = function(start, goal) {\n    \n};",
+    "TypeScript": "function minBitFlips(start: number, goal: number): number {\n    \n};",
+    "C#": "public class Solution {\n    public int MinBitFlips(int start, int goal) {\n        \n    }\n}",
+    "C": "int minBitFlips(int start, int goal) {\n    \n}",
+    "Go": "func minBitFlips(start int, goal int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun minBitFlips(start: Int, goal: Int): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func minBitFlips(_ start: Int, _ goal: Int) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn min_bit_flips(start: i32, goal: i32) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer} start\n# @param {Integer} goal\n# @return {Integer}\ndef min_bit_flips(start, goal)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer $start\n     * @param Integer $goal\n     * @return Integer\n     */\n    function minBitFlips($start, $goal) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int minBitFlips(int start, int goal) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def minBitFlips(start: Int, goal: Int): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec min_bit_flips(start :: integer, goal :: integer) :: integer\n  def min_bit_flips(start, goal) do\n    \n  end\nend",
+    "Erlang": "-spec min_bit_flips(Start :: integer(), Goal :: integer()) -> integer().\nmin_bit_flips(Start, Goal) ->\n  .",
+    "Racket": "(define/contract (min-bit-flips start goal)\n  (-> exact-integer? exact-integer? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "minBitFlips",
+    "params": [
+      {
+        "name": "start",
+        "type": "integer"
+      },
+      {
+        "type": "integer",
+        "name": "goal"
+      }
+    ]
+  },
+  "verified": false
 }

@@ -1,11 +1,10 @@
 {
   "questionId": "Q10",
-  "title": "Regular Expression Matching",
-  "slug": "regular-expression-matching",
-  "version": 1,
+  "title": "Full-String Dot-Star Matcher Problem",
+  "slug": "full-string-dot-star-matcher",
+  "version": 5,
   "createdAt": "2026-07-09",
-  "updatedAt": "2026-07-09",
-  "QBCategory": "LCD",
+  "updatedAt": "2026-07-24",
   "metadata": {
     "category": "Strings",
     "difficulty": "Hard",
@@ -13,331 +12,326 @@
     "tags": [
       "string",
       "dynamic-programming",
-      "recursion"
+      "recursion",
+      "regex",
+      "pattern-matching"
     ],
     "companyTags": [],
     "topicTags": [
       "string",
       "dynamic-programming",
-      "recursion"
+      "recursion",
+      "pattern-matching"
     ],
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Given an input string `s` and a pattern `p`, implement regular expression matching with support for `'.'` and `'*'` where:\n\n* `'.'` Matches any single character.​​​​\n* `'*'` Matches zero or more of the preceding element.\n\nReturn a boolean indicating whether the matching covers the entire input string (not partial).\n\n**Example 1:**\n\n```\nInput: s = \"aa\", p = \"a\"\nOutput: false\nExplanation: \"a\" does not match the entire string \"aa\".\n```\n\n**Example 2:**\n\n```\nInput: s = \"aa\", p = \"a*\"\nOutput: true\nExplanation: '*' means zero or more of the preceding element, 'a'. Therefore, by repeating 'a' once, it becomes \"aa\".\n```\n\n**Example 3:**\n\n```\nInput: s = \"ab\", p = \".*\"\nOutput: true\nExplanation: \".*\" means \"zero or more (*) of any character (.)\".\n```\n\n**Constraints:**\n\n* `1 <= s.length <= 23`\n* `1 <= p.length <= 20`\n* `s` contains only lowercase English letters.\n* `p` contains only lowercase English letters, `'.'`, and `'*'`.\n* It is guaranteed for each appearance of the character `'*'`, there will be a previous valid character to match.",
+    "problemStatement": "With an input string `s` and a pattern `p`, implement regular-expression-style matching with support for `.` and `*` where:\n\n- `.` Matches any single character.\n- `*` Matches zero or more of the preceding element (the element is either a lowercase letter or `.`).\n\nThe match must cover the **entire** input string (not partial). Every `*` in `p` is guaranteed to have a valid preceding element. Output `true` if `p` matches the whole string `s`, otherwise output `false`.\n\nExamples of semantics to keep in mind:\n- `a*` can match `\"\"`, `\"a\"`, `\"aa\"`, `\"aaa\"`, etc.\n- `.` matches exactly one character.\n- `.*` matches any sequence of characters (including the empty sequence).\n\nDesign an algorithm that runs in O of S times O of P and uses O of P space in the straightforward DP formulation (or O of P space with rolling DP).",
     "constraints": [
-      "1 <= s.length <= 23",
-      "1 <= p.length <= 20",
-      "s contains only lowercase English letters.",
-      "p contains only lowercase English letters, '.', and '*'.",
-      "It is guaranteed for each appearance of the character '*', there will be a previous valid character to match."
+      "0 <= s.length <= 23",
+      "0 <= p.length <= 20",
+      "s contains only lowercase English letters (a-z).",
+      "p contains only lowercase English letters (a-z), '.' and '*'.",
+      "Every '*' has a valid preceding element.",
+      "Expected optimal time complexity: O(|s| * |p|). Expected auxiliary space: O(|s| * |p|) for full DP or O(|p|) with rolling DP."
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
+    "inputFormat": "Single line: JSON array of two strings: [s, p]. Example: [\"aa\",\"a*\"]",
+    "outputFormat": "Single line: JSON-serialized boolean: true or false",
+    "notes": [
+      "The pattern must match the entire string `s` from start to end.",
+      "A `*` always modifies the immediately preceding element only.",
+      "Patterns like `a*b*c*` can match the empty string.",
+      "Be careful with indexing when checking `p[j+1]` — always check bounds first."
+    ],
     "sampleTestCases": [
       {
         "id": "sample_1",
+        "type": "reg",
         "input": "[\"aa\",\"a\"]",
         "output": "false",
-        "explanation": "\"a\" does not match the entire string \"aa\"."
+        "explanation": "Pattern `a` matches exactly one 'a', but `s` has two characters; full-string match fails."
       },
       {
         "id": "sample_2",
+        "type": "reg",
         "input": "[\"aa\",\"a*\"]",
         "output": "true",
-        "explanation": "'*' means zero or more of the preceding element, 'a'. Therefore, by repeating 'a' once, it becomes \"aa\"."
+        "explanation": "`a*` can match two 'a' characters, so the entire string is matched."
       },
       {
         "id": "sample_3",
+        "type": "reg",
         "input": "[\"ab\",\".*\"]",
         "output": "true",
-        "explanation": "\".*\" means \"zero or more (*) of any character (.)\"."
+        "explanation": "`.` matches any single character and `*` allows repetition; `.*` can match the whole string."
       }
     ]
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Length 1",
-        "input": "[\"a\", \"a\"]",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "Single char exact match",
+        "input": "[\"a\",\"a\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "Length 2",
-        "input": "[\"ab\", \"ab\"]",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "Two char exact match",
+        "input": "[\"ab\",\"ab\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Maximum length",
-        "input": "[\"abcdefghijklmnopqrst\", \".*\"]",
+        "id": "tc_03",
+        "type": "reg",
+        "label": "Dot matches single",
+        "input": "[\"a\",\".\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Same characters",
-        "input": "[\"aaaaaaaaaaaaaaaaaaaa\", \"a*\"]",
+        "id": "tc_04",
+        "type": "reg",
+        "label": "Star zero occurrences",
+        "input": "[\"b\",\"a*b\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Mixed uppercase/lowercase",
-        "input": "[\"aBcDeFgHiJkLmNoPqRsT\", \".*\"]",
+        "id": "tc_05",
+        "type": "reg",
+        "label": "Star multiple occurrences",
+        "input": "[\"aaa\",\"a*\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_6",
-        "label": "Symbols",
-        "input": "[\"!@#$%^&*()_+-={}:<>?,./\", \".*\"]",
+        "id": "tc_06",
+        "type": "reg",
+        "label": "Dot-star full match",
+        "input": "[\"abc\",\".*\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_7",
-        "label": "Palindrome",
-        "input": "[\"madam\", \".*\"]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_8",
-        "label": "No match",
-        "input": "[\"abc\", \"def\"]",
+        "id": "tc_07",
+        "type": "reg",
+        "label": "Dot-star partial fail",
+        "input": "[\"abc\",\".*d\"]",
         "expectedOutput": "false",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_9",
-        "label": "Repeated substring",
-        "input": "[\"aaaaaa\", \"a*\"]",
+        "id": "tc_08",
+        "type": "reg",
+        "label": "Complex pattern with stars (true)",
+        "input": "[\"aab\",\"c*a*b\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "Complex pattern with stars (false)",
+        "input": "[\"mississippi\",\"mis*is*p*.\"]",
+        "expectedOutput": "false",
+        "weight": 3
       },
       {
         "id": "tc_10",
-        "label": "Alternating characters",
-        "input": "[\"ababab\", \"ab*\"]",
+        "type": "reg",
+        "label": "Overlapping stars and dots",
+        "input": "[\"ab\",\".*c\"]",
         "expectedOutput": "false",
-        "weight": 2
+        "weight": 3
       },
       {
         "id": "tc_11",
-        "label": "Prefix match",
-        "input": "[\"abc\", \"a.*\"]",
+        "type": "reg",
+        "label": "Pattern with trailing star",
+        "input": "[\"a\",\"ab*\"]",
         "expectedOutput": "true",
-        "weight": 2
+        "weight": 3
       },
       {
         "id": "tc_12",
-        "label": "Suffix match",
-        "input": "[\"abc\", \".*c\"]",
-        "expectedOutput": "true",
-        "weight": 2
+        "type": "reg",
+        "label": "Pattern longer than string",
+        "input": "[\"a\",\"..\"]",
+        "expectedOutput": "false",
+        "weight": 3
       },
       {
         "id": "tc_13",
-        "label": "Entire string is the answer",
-        "input": "[\"abc\", \".*\"]",
-        "expectedOutput": "true",
-        "weight": 2
+        "type": "reg",
+        "label": "Repeated star groups (false)",
+        "input": "[\"abababab\",\"ab*\"]",
+        "expectedOutput": "false",
+        "weight": 3
       },
       {
         "id": "tc_14",
-        "label": "Two-character alphabet stress",
-        "input": "[\"ababababababababab\", \"ab*\"]",
-        "expectedOutput": "false",
-        "weight": 10
+        "type": "reg",
+        "label": "Multiple star groups (true)",
+        "input": "[\"aaaaaaaaaaaaab\",\"a*a*a*a*a*a*a*a*a*b\"]",
+        "expectedOutput": "true",
+        "weight": 3
       },
       {
         "id": "tc_15",
-        "label": "Regular Expression Match - s='aa' p='a'",
-        "input": "[\"aa\", \"a\"]",
-        "expectedOutput": "false",
-        "weight": 2
+        "type": "reg",
+        "label": "Star matches empty sequence",
+        "input": "[\"\",\"a*\"]",
+        "expectedOutput": "true",
+        "weight": 3
       },
       {
         "id": "tc_16",
-        "label": "Regular Expression Match - s='aa' p='a*'",
-        "input": "[\"aa\", \"a*\"]",
-        "expectedOutput": "true",
-        "weight": 2
+        "type": "reg",
+        "label": "Empty pattern non-empty string",
+        "input": "[\"a\",\"\"]",
+        "expectedOutput": "false",
+        "weight": 3
       },
       {
         "id": "tc_17",
-        "label": "Regular Expression Match - s='ab' p='.*'",
-        "input": "[\"ab\", \".*\"]",
+        "type": "reg",
+        "label": "Multiple dots exact length",
+        "input": "[\"abc\",\"...\"]",
         "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_18",
-        "label": "Regular Expression Match - s='aab' p='c*a*b'",
-        "input": "[\"aab\", \"c*a*b\"]",
+        "type": "reg",
+        "label": "Star after dot",
+        "input": "[\"abcd\",\".*d\"]",
         "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_19",
-        "label": "Regular Expression Match - s='mississippi' p='mis*is*p*.'",
-        "input": "[\"mississippi\", \"mis*is*p*.\"]",
-        "expectedOutput": "false",
+        "type": "reg",
+        "label": "Ambiguous star usage",
+        "input": "[\"aaa\",\"a*a\"]",
+        "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_20",
-        "label": "Regular Expression Match - s='mississippi' p='mis*is*ip*.'",
-        "input": "[\"mississippi\", \"mis*is*ip*.\"]",
+        "type": "reg",
+        "label": "Long string with many stars (stress)",
+        "input": "[\"aaaaaaaaaaaa\",\"a*a*a*a*a*a*a*a*a*a*\"]",
         "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_21",
-        "label": "Regular Expression Match - s='aaa' p='ab*a*c*a'",
-        "input": "[\"aaa\", \"ab*a*c*a\"]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_22",
-        "label": "Regular Expression Match - s='ab' p='.*c'",
-        "input": "[\"ab\", \".*c\"]",
+        "type": "reg",
+        "label": "Alternating pattern false",
+        "input": "[\"abababababababababab\",\"a*b*a*b*a*b*a*b*a*b*\"]",
         "expectedOutput": "false",
         "weight": 2
       },
       {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "Single dot literal",
+        "input": "[\".\",\".\"]",
+        "expectedOutput": "true",
+        "weight": 2
+      },
+      {
         "id": "tc_23",
-        "label": "Regular Expression Match - s='a' p='ab*'",
-        "input": "[\"a\", \"ab*\"]",
+        "type": "reg",
+        "label": "Pattern with optional char",
+        "input": "[\"ab\",\"abc*\"]",
         "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_24",
-        "label": "Regular Expression Match - s='a' p='.*..'",
-        "input": "[\"a\", \".*..\"]",
-        "expectedOutput": "false",
+        "type": "reg",
+        "label": "Pattern with trailing optional stars",
+        "input": "[\"ab\",\"ab.*c*\"]",
+        "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_25",
-        "label": "Regular Expression Match - s='ab' p='abc*'",
-        "input": "[\"ab\", \"abc*\"]",
+        "type": "reg",
+        "label": "Edge: single char vs star pattern",
+        "input": "[\"b\",\"a*b*\"]",
         "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_26",
-        "label": "Regular Expression Match - s='ab' p='ab.*c*'",
-        "input": "[\"ab\", \"ab.*c*\"]",
-        "expectedOutput": "true",
+        "type": "reg",
+        "label": "Edge: star consumes nothing",
+        "input": "[\"ab\",\"ab*c\"]",
+        "expectedOutput": "false",
         "weight": 2
       },
       {
         "id": "tc_27",
-        "label": "Regular Expression Match - s='aaa' p='a*a'",
-        "input": "[\"aaa\", \"a*a\"]",
-        "expectedOutput": "true",
+        "type": "reg",
+        "label": "Edge: many stars and dots (false)",
+        "input": "[\"aaaaaaaaaaaaab\",\"a*a*a*a*a*a*a*a*a*c\"]",
+        "expectedOutput": "false",
         "weight": 2
       },
       {
         "id": "tc_28",
-        "label": "Regular Expression Match - s='aaaaaaaaaaaaab' p='a*a*a*a*a*a*a*a*a*c'",
-        "input": "[\"aaaaaaaaaaaaab\", \"a*a*a*a*a*a*a*a*a*c\"]",
-        "expectedOutput": "false",
+        "type": "reg",
+        "label": "Max length string and dot-star",
+        "input": "[\"abcdefghijklmnopqrst\",\".*\"]",
+        "expectedOutput": "true",
         "weight": 2
       },
       {
         "id": "tc_29",
-        "label": "Regular Expression Match - s='aaaaaaaaaaaaab' p='a*a*a*a*a*a*a*a*a*b'",
-        "input": "[\"aaaaaaaaaaaaab\", \"a*a*a*a*a*a*a*a*a*b\"]",
-        "expectedOutput": "true",
+        "type": "reg",
+        "label": "Star-heavy pattern with no terminal match",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"a*a*a*a*a*a*a*a*a*a*b\"]",
+        "expectedOutput": "false",
         "weight": 2
       },
       {
         "id": "tc_30",
-        "label": "Regular Expression Match - s='aaaaaaaaaaaaaaaaaaaa' p='a*a*a*a*a*a*a*a*a*a*'",
-        "input": "[\"aaaaaaaaaaaaaaaaaaaa\", \"a*a*a*a*a*a*a*a*a*a*\"]",
+        "type": "reg",
+        "label": "Classic tricky pattern 1",
+        "input": "[\"aaa\",\"ab*a*c*a\"]",
         "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_31",
-        "label": "Regular Expression Match - s='abababababababababab' p='a*b*a*b*a*b*a*b*a*b*'",
-        "input": "[\"abababababababababab\", \"a*b*a*b*a*b*a*b*a*b*\"]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_32",
-        "label": "Regular Expression Match - s='.' p='.'",
-        "input": "[\".\", \".\"]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_33",
-        "label": "Regular Expression Match - s='abc' p='...'",
-        "input": "[\"abc\", \"...\"]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_34",
-        "label": "Regular Expression Match - s='abc' p='..'",
-        "input": "[\"abc\", \"..\"]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_35",
-        "label": "Regular Expression Match - s='abcd' p='.*d'",
-        "input": "[\"abcd\", \".*d\"]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_36",
-        "label": "Regular Expression Match - s='abcd' p='.*e'",
-        "input": "[\"abcd\", \".*e\"]",
-        "expectedOutput": "false",
         "weight": 2
       }
     ],
-    "totalTestCases": 36,
-    "totalWeight": 80
+    "totalTestCases": 30,
+    "totalWeight": 76
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
       2,
       2,
       2,
@@ -353,7 +347,7 @@
       2,
       2
     ],
-    "maxScore": 80
+    "maxScore": 76
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -364,21 +358,82 @@
       "Java",
       "Python3",
       "JavaScript"
+    ],
+    "notes": [
+      "Input is provided as a JSON array of two strings: [s, p].",
+      "Output must be exactly `true` or `false` (lowercase) on a single line.",
+      "All hidden test cases are concrete and use the documented JSON argument format.",
+      "The checker performs exact boolean comparison; order and formatting must match documented output."
     ]
   },
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nbool isMatch(char* s, char* p) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        char* s = parse_string(&tok);\n        char* p = parse_string(&tok);\n        bool result = isMatch(s, p);\n        printf(\"%s\\n\", result ? \"true\" : \"false\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def isMatch(self, s: str, p: str) -> bool:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _s = _args[0]\n    _p = _args[1]\n    _result = Solution().isMatch(_s, _p)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string} s\n * @param {string} p\n * @return {boolean}\n */\nvar isMatch = function(s, p) {\n    \n    return false;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = isMatch(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public boolean isMatch(String s, String p) {\n        \n        return false;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        String s = nextToken().replaceAll(\"^\\\"|\\\"$\", \"\");\n        String p = nextToken().replaceAll(\"^\\\"|\\\"$\", \"\");\n        boolean result = new Solution().isMatch(s, p);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    bool isMatch(string s, string p) {\n        \n        return false;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    string s = readStr(tok);\n    string p = readStr(tok);\n    auto result = Solution().isMatch(s, p);\n    cout << (result ? \"true\" : \"false\") << endl;\n    return 0;\n}"
-  },
   "solution": {
-    "approach": "The approach uses dynamic programming to track matches between the input string and the pattern, handling '.' and '*' characters according to their regular expression rules.",
-    "timeComplexity": "O(m * n)",
-    "spaceComplexity": "O(n)",
+    "approach": "Bottom-up dynamic programming (or recursion with memoization). Build a DP table where dp[i][j] indicates whether s[i:] matches p[j:]. Handle '*' by considering zero occurrences (skip two pattern chars) or one/more occurrences (consume one char from s and stay at the same pattern position).",
+    "timeComplexity": "O(|s| * |p|)",
+    "spaceComplexity": "O(|s| * |p|) for full DP; O(|p|) with rolling 1D DP",
     "code": {
-      "Python3": "# Time:  O(m * n)\n# Space: O(n)\n\nclass Solution(object):\n    # @return a boolean\n    def isMatch(self, s, p):\n        k = 3\n        result = [[False for j in range(len(p) + 1)] for i in range(k)]\n\n        result[0][0] = True\n        for i in range(2, len(p) + 1):\n            if p[i-1] == '*':\n                result[0][i] = result[0][i-2]\n\n        for i in range(1,len(s) + 1):\n            if i > 1:\n                result[0][0] = False\n            for j in range(1, len(p) + 1):\n                if p[j-1] != '*':\n                    result[i % k][j] = result[(i-1) % k][j-1] and (s[i-1] == p[j-1] or p[j-1] == '.')\n                else:\n                    result[i % k][j] = result[i % k][j-2] or (result[(i-1) % k][j] and (s[i-1] == p[j-2] or p[j-2] == '.'))\n\n        return result[len(s) % k][len(p)]"
+      "C": "",
+      "C++": "",
+      "Java": "",
+      "Python3": "def isMatch(s: str, p: str) -> bool:\n    m, n = len(s), len(p)\n    dp = [[False] * (n + 1) for _ in range(m + 1)]\n    dp[m][n] = True\n    for j in range(n - 2, -1, -1):\n        if p[j + 1] == '*':\n            dp[m][j] = dp[m][j + 2]\n    for i in range(m - 1, -1, -1):\n        for j in range(n - 1, -1, -1):\n            first_match = (p[j] == s[i] or p[j] == '.')\n            if j + 1 < n and p[j + 1] == '*':\n                dp[i][j] = dp[i][j + 2] or (first_match and dp[i + 1][j])\n            else:\n                dp[i][j] = first_match and dp[i + 1][j + 1]\n    return dp[0][0]",
+      "JavaScript": ""
+    },
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "Use dynamic programming or recursion with memoization. Treat `*` as a modifier for the preceding element (zero or more occurrences) and `.` as a single-character wildcard. Both bottom-up DP and top-down memoized recursion run in O(|s| * |p|) time.",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Minimal JSON token helpers for judge input [\"s\",\"p\"]\nstatic char* extract_string(const char* line, int* pos) {\n    int i = *pos;\n    while (line[i] && line[i] != '\"') i++;\n    if (!line[i]) return NULL;\n    i++; // skip opening quote\n    int start = i;\n    while (line[i] && line[i] != '\"') i++;\n    int len = i - start;\n    char* out = (char*)malloc(len + 1);\n    strncpy(out, line + start, len);\n    out[len] = '\\0';\n    if (line[i] == '\"') i++;\n    *pos = i;\n    return out;\n}\n\nbool isMatch(const char* s, const char* p) {\n    int m = (int)strlen(s);\n    int n = (int)strlen(p);\n    bool **dp = (bool**)malloc((m + 1) * sizeof(bool*));\n    for (int i = 0; i <= m; ++i) {\n        dp[i] = (bool*)calloc(n + 1, sizeof(bool));\n    }\n    dp[m][n] = true;\n    for (int j = n - 2; j >= 0; --j) if (p[j + 1] == '*') dp[m][j] = dp[m][j + 2];\n    for (int i = m - 1; i >= 0; --i) {\n        for (int j = n - 1; j >= 0; --j) {\n            bool firstMatch = (p[j] == '.' || p[j] == s[i]);\n            if (j + 1 < n && p[j + 1] == '*') dp[i][j] = dp[i][j + 2] || (firstMatch && dp[i + 1][j]);\n            else dp[i][j] = firstMatch && dp[i + 1][j + 1];\n        }\n    }\n    bool ans = dp[0][n];\n    for (int i = 0; i <= m; ++i) free(dp[i]);\n    free(dp);\n    return ans;\n}\n\nint main(void) {\n    char *line = NULL; size_t cap = 0; ssize_t nread = getline(&line, &cap, stdin);\n    if (nread <= 0) { if (line) free(line); return 0; }\n    int pos = 0;\n    char* s = extract_string(line, &pos);\n    char* p = extract_string(line, &pos);\n    bool res = isMatch(s ? s : \"\", p ? p : \"\");\n    printf(\"%s\\n\", res ? \"true\" : \"false\");\n    if (s) free(s); if (p) free(p); free(line);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nbool isMatch(const string &s, const string &p) {\n    int m = s.size(), n = p.size();\n    vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));\n    dp[m][n] = true;\n    for (int j = n - 2; j >= 0; --j) if (p[j + 1] == '*') dp[m][j] = dp[m][j + 2];\n    for (int i = m - 1; i >= 0; --i) {\n        for (int j = n - 1; j >= 0; --j) {\n            bool firstMatch = (p[j] == '.' || p[j] == s[i]);\n            if (j + 1 < n && p[j + 1] == '*') dp[i][j] = dp[i][j + 2] || (firstMatch && dp[i + 1][j]);\n            else dp[i][j] = firstMatch && dp[i + 1][j + 1];\n        }\n    }\n    return dp[0][0];\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    string line;\n    if (!getline(cin, line)) return 0;\n    // naive JSON parse for two strings\n    size_t p1 = line.find('\"');\n    size_t p2 = line.find('\"', p1 + 1);\n    string s = line.substr(p1 + 1, p2 - p1 - 1);\n    size_t q1 = line.find('\"', p2 + 1);\n    size_t q2 = line.find('\"', q1 + 1);\n    string p = line.substr(q1 + 1, q2 - q1 - 1);\n    cout << (isMatch(s, p) ? \"true\" : \"false\") << '\\n';\n    return 0;\n}",
+    "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static boolean isMatch(String s, String p) {\n        int m = s.length(), n = p.length();\n        boolean[][] dp = new boolean[m + 1][n + 1];\n        dp[m][n] = true;\n        for (int j = n - 2; j >= 0; --j) {\n            if (p.charAt(j + 1) == '*') dp[m][j] = dp[m][j + 2];\n        }\n        for (int i = m - 1; i >= 0; --i) {\n            for (int j = n - 1; j >= 0; --j) {\n                boolean firstMatch = (p.charAt(j) == '.' || p.charAt(j) == s.charAt(i));\n                if (j + 1 < n && p.charAt(j + 1) == '*') {\n                    dp[i][j] = dp[i][j + 2] || (firstMatch && dp[i + 1][j]);\n                } else {\n                    dp[i][j] = firstMatch && dp[i + 1][j + 1];\n                }\n            }\n        }\n        return dp[0][0];\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.isEmpty()) return;\n        // Expect JSON array [s, p]\n        String[] parts = line.replaceAll(\"^\\[|\\]$\", \"\").split(\",(?=\\\")\");\n        String s = parts[0].trim();\n        String p = parts[1].trim();\n        s = s.replaceAll(\"^\\\"|\\\"$\", \"\");\n        p = p.replaceAll(\"^\\\"|\\\"$\", \"\");\n        System.out.println(isMatch(s, p));\n    }\n}",
+    "Python3": "import sys, json\n\ndef isMatch(s: str, p: str) -> bool:\n    m, n = len(s), len(p)\n    dp = [[False] * (n + 1) for _ in range(m + 1)]\n    dp[m][n] = True\n    for j in range(n - 2, -1, -1):\n        if p[j + 1] == '*':\n            dp[m][j] = dp[m][j + 2]\n    for i in range(m - 1, -1, -1):\n        for j in range(n - 1, -1, -1):\n            first_match = (p[j] == s[i] or p[j] == '.')\n            if j + 1 < n and p[j + 1] == '*':\n                dp[i][j] = dp[i][j + 2] or (first_match and dp[i + 1][j])\n            else:\n                dp[i][j] = first_match and dp[i + 1][j + 1]\n    return dp[0][0]\n\nif __name__ == '__main__':\n    line = sys.stdin.readline()\n    if not line:\n        sys.exit(0)\n    s, p = json.loads(line)\n    print(str(isMatch(s, p)).lower())",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\nif (!input) process.exit(0);\nconst [s, p] = JSON.parse(input);\nfunction isMatch(s, p) {\n    const m = s.length, n = p.length;\n    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(false));\n    dp[m][n] = true;\n    for (let j = n - 2; j >= 0; --j) if (p[j + 1] === '*') dp[m][j] = dp[m][j + 2];\n    for (let i = m - 1; i >= 0; --i) {\n        for (let j = n - 1; j >= 0; --j) {\n            const firstMatch = (p[j] === '.' || p[j] === s[i]);\n            if (j + 1 < n && p[j + 1] === '*') {\n                dp[i][j] = dp[i][j + 2] || (firstMatch && dp[i + 1][j]);\n            } else {\n                dp[i][j] = firstMatch && dp[i + 1][j + 1];\n            }\n        }\n    }\n    return dp[0][0];\n}\nconsole.log(isMatch(s, p) ? 'true' : 'false');",
+    "solution": {
+      "approach": "Bottom-up dynamic programming (or recursion with memoization). Build a DP table where dp[i][j] indicates whether s[i:] matches p[j:]. Handle '*' by considering zero occurrences (skip two pattern chars) or one/more occurrences (consume one char from s and stay at the same pattern position).",
+      "timeComplexity": "O(|s| * |p|)",
+      "spaceComplexity": "O(|s| * |p|) for full DP; O(|p|) with rolling 1D DP",
+      "code": {
+        "C": "",
+        "C++": "",
+        "Java": "",
+        "Python3": "def isMatch(s: str, p: str) -> bool:\n    m, n = len(s), len(p)\n    dp = [[False] * (n + 1) for _ in range(m + 1)]\n    dp[m][n] = True\n    for j in range(n - 2, -1, -1):\n        if p[j + 1] == '*':\n            dp[m][j] = dp[m][j + 2]\n    for i in range(m - 1, -1, -1):\n        for j in range(n - 1, -1, -1):\n            first_match = (p[j] == s[i] or p[j] == '.')\n            if j + 1 < n and p[j + 1] == '*':\n                dp[i][j] = dp[i][j + 2] or (first_match and dp[i + 1][j])\n            else:\n                dp[i][j] = first_match and dp[i + 1][j + 1]\n    return dp[0][0]",
+        "JavaScript": ""
+      }
+    },
+    "_internal": {
+      "methodName": "isMatch",
+      "params": [
+        {
+          "name": "s",
+          "type": "string"
+        },
+        {
+          "name": "p",
+          "type": "string"
+        }
+      ],
+      "phase": "ready-for-judge"
+    },
+    "verified": true
+  },
+  "_internal": {},
+  "verified": true
 }

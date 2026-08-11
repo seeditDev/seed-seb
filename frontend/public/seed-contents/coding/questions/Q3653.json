@@ -1,105 +1,320 @@
 {
   "questionId": "Q3653",
-  "title": "Xenny and Coin Rankings",
-  "slug": "xenny-and-coin-rankings",
+  "title": "XOR After Range Multiplication Queries I Problem",
+  "slug": "xor-after-range-multiplication-queries-i",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
-    "difficulty": "Easy",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Sorting",
-      "Ranking",
-      "Geometry",
-      "Math"
+      "array",
+      "divide-and-conquer",
+      "simulation",
+      "prefix-sum"
     ],
     "companyTags": [],
     "topicTags": [
-      "Ad-hoc & Implementation"
-    ]
+      "array",
+      "divide-and-conquer",
+      "simulation",
+      "prefix-sum"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Xenny reverse-engineered all the binaries released by the International Security Agency (ISA)\nduring summer vacation just to pass time. As a reward, the ISA gave him infinite ByteCoins.\n\nOut of sheer boredom and a sense of purposelessness in life, Xenny decided to arrange the Coins on a 2-Dimensional Euclidean Plane.\nThe boredom was so strong that he arranged these coins in a specific pattern, as opposed to the usual, monotonous way of storing coins in a Piggy Bank.\n\nOn each integer co-ordinate (x, y) where x \u2265 0 and y \u2265 0, a single coin was placed. And each coin was assigned a rank. The following pattern was followed in the arrangement:\n\nLet's denote the co-ordinates of the kth coin by (xk, yk) and its rank by Rk.\n\n\n\n\nFor any 2 coins i, j:\n\n\n\n\nif **(xi + yi) &lt; (xj + yj) or ( (xi + yi) == (xj + yj) and xi &lt; xj)**\n\n\n\nthen **Ri &lt; Rj**. We sort all the coins by this comparison.\n\n\n\nThe index of the coin (C) in this sorted list of coins (1-indexed) is its rank.\n\n\nEach query is as follows: Given **(U, V)**. Among the coins that are lying on or inside the rectangle with\nits diagonal end-points being **(0, 0)** and **(U, V)**,\nwhich is the coin that has the maximum rank?",
+    "problemStatement": "You receive an integer array `nums` of length `n` and a 2D integer array `queries` of size `q`, where `queries[i] = [li, ri, ki, vi]`.\n\nFor each query, you must apply the following operations in order:\n\n* Set `idx = li`.\n* While `idx <= ri`:\n  + Update: `nums[idx] = (nums[idx] * vi) % (109 + 7)`\n  + Set `idx += ki`.\n\nOutput the **bitwise XOR** of all elements in `nums` after processing all queries.\n\n**Example 1:**\n\n**Input:** nums = [1,1,1], queries = [[0,2,1,4]]\n\n**Output:** 4\n\n**Explanation:**\n\n* A single query `[0, 2, 1, 4]` multiplies every element from index 0 through index 2 by 4.\n* The array changes from `[1, 1, 1]` to `[4, 4, 4]`.\n* The XOR of all elements is `4 ^ 4 ^ 4 = 4`.\n\n**Example 2:**\n\n**Input:** nums = [2,3,1,5,4], queries = [[1,4,2,3],[0,2,1,2]]\n\n**Output:** 31\n\n**Explanation:**\n\n* The first query `[1, 4, 2, 3]` multiplies the elements at indices 1 and 3 by 3, transforming the array to `[2, 9, 1, 15, 4]`.\n* The second query `[0, 2, 1, 2]` multiplies the elements at indices 0, 1, and 2 by 2, resulting in `[4, 18, 2, 15, 4]`.\n* Finally, the XOR of all elements is `4 ^ 18 ^ 2 ^ 15 ^ 4 = 31`.​​​​​​​**​​​​​​​**\n\n**Constraints:**\n\n* `1 <= n == nums.length <= 103`\n* `1 <= nums[i] <= 109`\n* `1 <= q == queries.length <= 103`\n* `queries[i] = [li, ri, ki, vi]`\n* `0 <= li <= ri < n`\n* `1 <= ki <= n`\n* `1 <= vi <= 105`",
     "constraints": [
-      "1 <= T <= 100",
-      "1 <= U, V <= 10^9"
+      "None"
     ],
-    "inputFormat": "The first line contains an integer, T - the number of testcases. Each testcase contains 2 space-separated integers: U, V.",
-    "outputFormat": "The index of the coin (C) in the sorted list of coins (1-indexed) that has the maximum rank among the coins that are lying on or inside the rectangle with its diagonal end-points being (0, 0) and (U, V).",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "1\n1 2",
-        "output": "9",
-        "explanation": "The coins are ranked as follows: (0, 0) - 1, (0, 1) - 2, (0, 2) - 3, (1, 0) - 4, (1, 1) - 5, (1, 2) - 6, (2, 0) - 7, (2, 1) - 8, (2, 2) - 9. The maximum rank within the rectangle is 9."
-      },
-      {
-        "id": "sample_2",
-        "input": "1\n2 1",
-        "output": "9",
-        "explanation": "The coins are ranked as follows: (0, 0) - 1, (0, 1) - 2, (1, 0) - 3, (1, 1) - 4, (2, 0) - 5, (0, 2) - 6, (1, 2) - 7, (2, 1) - 8, (2, 2) - 9. The maximum rank within the rectangle is 9."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n3 3",
-        "output": "36",
-        "explanation": "The coins are ranked as follows: (0, 0) - 1, (0, 1) - 2, (0, 2) - 3, (0, 3) - 4, (1, 0) - 5, (1, 1) - 6, (1, 2) - 7, (1, 3) - 8, (2, 0) - 9, (2, 1) - 10, (2, 2) - 11, (2, 3) - 12, (3, 0) - 13, (3, 1) - 14, (3, 2) - 15, (3, 3) - 16, (1, 4) - 17, (0, 4) - 18, (2, 4) - 19, (4, 0) - 20, (4, 1) - 21, (4, 2) - 22, (4, 3) - 23, (3, 4) - 24, (2, 4) - 25, (1, 4) - 26, (0, 4) - 27, (4, 4) - 28, (0, 5) - 29, (1, 5) - 30, (2, 5) - 31, (3, 5) - 32, (4, 5) - 33, (5, 0) - 34, (5, 1) - 35, (5, 2) - 36. The maximum rank within the rectangle is 36."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1",
-        "expectedOutput": "4",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n1000000000 1000000000",
-        "expectedOutput": "1000000000000000002",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "1\n0 0",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "1\n10 10",
-        "expectedOutput": "231",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "1\n100 100",
-        "expectedOutput": "20101",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -110,18 +325,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we need to understand the ranking pattern of the coins. The coins are ranked based on the sum of their x and y coordinates. If two coins have the same sum of x and y coordinates, they are ranked based on their x coordinates. We can use this pattern to find the maximum rank of the coins within the given rectangle.",
-    "timeComplexity": "O(1) - the time complexity is constant because we can directly calculate the maximum rank based on the given coordinates U and V.",
-    "spaceComplexity": "O(1) - the space complexity is constant because we only need to store a few variables to calculate the maximum rank.",
     "code": {
-      "C": "#include <stdio.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int U, V;\n        scanf(\"%d %d\", &U, &V);\n        printf(\"%lld\\n\", (long long)(U + V) * (U + V + 1) / 2);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int U, V;\n        cin >> U >> V;\n        cout << (long long)(U + V) * (U + V + 1) / 2 << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int U = sc.nextInt();\n            int V = sc.nextInt();\n            System.out.println((long)(U + V) * (U + V + 1) / 2);\n        }\n    }\n}",
-      "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    U, V = map(int, input().split())\n    print((U + V) * (U + V + 1) // 2)",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [U, V] = readline().split(' ').map(Number);\n    console.log((U + V) * (U + V + 1) / 2);\n}"
+      "Python3": "# Time:  O(qlogm + (q + n) * sqrt(n))\n# Space: O(n * sqrt(n))\n\nimport collections\n\n\n# sqrt decomposition, difference array, fast exponentiation\nclass Solution(object):\n    def xorAfterQueries(self, nums, queries):\n        \"\"\"\n        :type nums: List[int]\n        :type queries: List[List[int]]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        def inv(x):\n            return pow(x, MOD-2, MOD)\n\n        block_size = int(len(nums)**0.5)+1\n        diffs = collections.defaultdict(lambda: [1]*len(nums))\n        for l, r, k, v in queries:\n            if k <= block_size:\n                diffs[k][l] = (diffs[k][l]*v)%MOD\n                r += k-(r-l)%k\n                if r < len(nums):\n                    diffs[k][r] = (diffs[k][r]*inv(v))%MOD\n            else:\n                for i in range(l, r+1, k):\n                    nums[i] = (nums[i]*v)%MOD\n        for k, diff in diffs.iteritems():\n            for i in range(len(diff)):\n                if i-k >= 0:\n                    diff[i] = (diff[i]*diff[i-k])%MOD\n                nums[i] = (nums[i]*diff[i])%MOD\n        return reduce(lambda accu, x: accu^x, nums, 0)"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int xorAfterQueries(vector<int>& nums, vector<vector<int>>& queries) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int xorAfterQueries(int[] nums, int[][] queries) {\n        \n    }\n}",
+    "Python3": "# Time:  O(qlogm + (q + n) * sqrt(n))\n# Space: O(n * sqrt(n))\n\nimport collections\n\n\n# sqrt decomposition, difference array, fast exponentiation\nclass Solution(object):\n    def xorAfterQueries(self, nums, queries):\n        \"\"\"\n        :type nums: List[int]\n        :type queries: List[List[int]]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        def inv(x):\n            return pow(x, MOD-2, MOD)\n\n        block_size = int(len(nums)**0.5)+1\n        diffs = collections.defaultdict(lambda: [1]*len(nums))\n        for l, r, k, v in queries:\n            if k <= block_size:\n                diffs[k][l] = (diffs[k][l]*v)%MOD\n                r += k-(r-l)%k\n                if r < len(nums):\n                    diffs[k][r] = (diffs[k][r]*inv(v))%MOD\n            else:\n                for i in range(l, r+1, k):\n                    nums[i] = (nums[i]*v)%MOD\n        for k, diff in diffs.iteritems():\n            for i in range(len(diff)):\n                if i-k >= 0:\n                    diff[i] = (diff[i]*diff[i-k])%MOD\n                nums[i] = (nums[i]*diff[i])%MOD\n        return reduce(lambda accu, x: accu^x, nums, 0)",
+    "Python": "class Solution(object):\n    def xorAfterQueries(self, nums, queries):\n        \"\"\"\n        :type nums: List[int]\n        :type queries: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[]} nums\n * @param {number[][]} queries\n * @return {number}\n */\nvar xorAfterQueries = function(nums, queries) {\n    \n};",
+    "TypeScript": "function xorAfterQueries(nums: number[], queries: number[][]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int XorAfterQueries(int[] nums, int[][] queries) {\n        \n    }\n}",
+    "C": "int xorAfterQueries(int* nums, int numsSize, int** queries, int queriesSize, int* queriesColSize) {\n    \n}",
+    "Go": "func xorAfterQueries(nums []int, queries [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun xorAfterQueries(nums: IntArray, queries: Array<IntArray>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func xorAfterQueries(_ nums: [Int], _ queries: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn xor_after_queries(nums: Vec<i32>, queries: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[]} nums\n# @param {Integer[][]} queries\n# @return {Integer}\ndef xor_after_queries(nums, queries)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[] $nums\n     * @param Integer[][] $queries\n     * @return Integer\n     */\n    function xorAfterQueries($nums, $queries) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int xorAfterQueries(List<int> nums, List<List<int>> queries) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def xorAfterQueries(nums: Array[Int], queries: Array[Array[Int]]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec xor_after_queries(nums :: [integer], queries :: [[integer]]) :: integer\n  def xor_after_queries(nums, queries) do\n    \n  end\nend",
+    "Erlang": "-spec xor_after_queries(Nums :: [integer()], Queries :: [[integer()]]) -> integer().\nxor_after_queries(Nums, Queries) ->\n  .",
+    "Racket": "(define/contract (xor-after-queries nums queries)\n  (-> (listof exact-integer?) (listof (listof exact-integer?)) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "xorAfterQueries",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      },
+      {
+        "type": "integer[][]",
+        "name": "queries"
+      }
+    ]
+  },
+  "verified": false
 }

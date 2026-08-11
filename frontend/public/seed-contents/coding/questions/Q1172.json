@@ -1,106 +1,320 @@
 {
   "questionId": "Q1172",
-  "title": "Compilers and Parsers",
-  "slug": "compilers-and-parsers",
+  "title": "Dinner Plate Stacks Problem",
+  "slug": "dinner-plate-stacks",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-06",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Strings",
-    "difficulty": "Medium",
+    "category": "Stack",
+    "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Prefix Sum",
-      "Strings",
-      "String Validation"
+      "hash-table",
+      "stack",
+      "design",
+      "heap-priority-queue"
     ],
     "companyTags": [],
     "topicTags": [
-      "Stacks & Queues"
-    ]
+      "hash-table",
+      "stack",
+      "design",
+      "heap-priority-queue"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "For an expression to be valid, a \u201c&lt;\u201d symbol must always have a corresponding \u201c&gt;\u201d character somewhere (not necessary immediately) after it. Moreover, each \u201c&gt;\u201d symbol should correspond to exactly one \u201c&lt;\u201d symbol.\n\nSo, for instance, the instructions:\n\n`&lt;&gt;\n&lt;&gt;\n&lt;&gt;&lt;&gt;\n`are all valid. While:\n\n`&gt;&gt;\n&gt;&lt;&gt;&lt;\n`are not.\n\nGiven some expressions which represent some instructions to be analyzed, you should tell the length of the longest **prefix** of each of these expressions that is valid, or **0** if there's no such a prefix.",
+    "problemStatement": "You have an infinite number of stacks arranged in a row and numbered (left to right) from `0`, each of the stacks has the same largest capacity.\n\nCreate an implementation of the `DinnerPlates` class:\n\n* `DinnerPlates(int capacity)` Initializes the object with the largest capacity of the stacks `capacity`.\n* `void push(int val)` Pushes the given integer `val` into the leftmost stack with a size less than `capacity`.\n* `int pop()` Returns the value at the top of the rightmost non-empty stack and removes it from that stack, and returns `-1` if all the stacks are empty.\n* `int popAtStack(int index)` Returns the value at the top of the stack with the given index `index` and removes it from that stack or returns `-1` if the stack with that given index is empty.\n\n**Example 1:**\n\n```\nInput\n[\"DinnerPlates\", \"push\", \"push\", \"push\", \"push\", \"push\", \"popAtStack\", \"push\", \"push\", \"popAtStack\", \"popAtStack\", \"pop\", \"pop\", \"pop\", \"pop\", \"pop\"]\n[[2], [1], [2], [3], [4], [5], [0], [20], [21], [0], [2], [], [], [], [], []]\nOutput\n[null, null, null, null, null, null, 2, null, null, 20, 21, 5, 4, 3, 1, -1]\n\nExplanation: \nDinnerPlates D = DinnerPlates(2);  // Initialize with capacity = 2\nD.push(1);\nD.push(2);\nD.push(3);\nD.push(4);\nD.push(5);         // The stacks are now:  2  4\n                                           1  3  5\n                                           ﹈ ﹈ ﹈\nD.popAtStack(0);   // Returns 2.  The stacks are now:     4\n                                                       1  3  5\n                                                       ﹈ ﹈ ﹈\nD.push(20);        // The stacks are now: 20  4\n                                           1  3  5\n                                           ﹈ ﹈ ﹈\nD.push(21);        // The stacks are now: 20  4 21\n                                           1  3  5\n                                           ﹈ ﹈ ﹈\nD.popAtStack(0);   // Returns 20.  The stacks are now:     4 21\n                                                        1  3  5\n                                                        ﹈ ﹈ ﹈\nD.popAtStack(2);   // Returns 21.  The stacks are now:     4\n                                                        1  3  5\n                                                        ﹈ ﹈ ﹈ \nD.pop()            // Returns 5.  The stacks are now:      4\n                                                        1  3 \n                                                        ﹈ ﹈  \nD.pop()            // Returns 4.  The stacks are now:   1  3 \n                                                        ﹈ ﹈   \nD.pop()            // Returns 3.  The stacks are now:   1 \n                                                        ﹈   \nD.pop()            // Returns 1.  There are no stacks.\nD.pop()            // Returns -1.  There are still no stacks.\n```\n\n**Constraints:**\n\n* `1 <= capacity <= 2 * 104`\n* `1 <= val <= 2 * 104`\n* `0 <= index <= 105`\n* At most `2 * 105` calls will be made to `push`, `pop`, and `popAtStack`.",
     "constraints": [
-      "1 <= T <= 500",
-      "1 <= |S| <= 10^6",
-      "Sum of |S| over all test cases <= 5*10^6",
-      "S contains only characters '<' and '>'"
+      "None"
     ],
-    "inputFormat": "First line contains T, the number of test cases. Each test case contains a string S consisting only of characters '<' and '>'.",
-    "outputFormat": "For each test case, print the length of the longest prefix of S that forms a correct sequence where every '<' is matched with a later '>' and no '>' appears without a preceding unmatched '<'. If no such prefix exists, print 0.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "3\n<<>>\n<><>\n<>>>\n",
-        "output": "4\n4\n2\n",
-        "explanation": "For \"<<>>\" the whole string is balanced, length 4. \"<><>\" becomes balanced after each pair, final length 4. \"<>>>\" becomes balanced after the first two characters, then a stray '>' makes the prefix invalid, so longest valid prefix length is 2."
-      },
-      {
-        "id": "sample_2",
-        "input": "3\n>\n<><\n<<>>><\n",
-        "output": "0\n2\n4\n",
-        "explanation": "First string starts with '>' \u2013 no valid prefix. Second string \"<><\" returns to balance zero after the first two characters, so the longest valid prefix length is 2. Third string \"<<>>><\" is balanced up to the fourth character, after that an extra '>' breaks the sequence; longest valid prefix length is 4."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n<<<<>>>>\n",
-        "output": "8\n",
-        "explanation": "All eight characters form a correct sequence, therefore the answer is 8."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n<\n",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n<<<<>>>>\n",
-        "expectedOutput": "8",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n<<<<<<<<<<\n",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n<<>>>\n",
-        "expectedOutput": "4",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "3\n<<>>\n<><>\n<<>>><\n",
-        "expectedOutput": "4\n4\n4",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +325,63 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to maintain a balance counter that increments for each '<' and decrements for each '>'. The sequence is valid as long as the balance is non-negative. The algorithm iterates through the string, updating the balance and checking for validity. The time complexity is O(N) per test case, where N is the length of the string, because each character is visited once.",
-    "timeComplexity": "O(N) per test case, O(T*N) total, where N is the length of the string and T is the number of test cases.",
-    "spaceComplexity": "O(1) \u2014 the space used does not grow with the size of the input, only a constant amount of space is used to store the balance and the best prefix length.",
     "code": {
-      "C": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    while (T--) {\n        static char s[1000005];\n        scanf(\"%s\", s);\n        int len = strlen(s);\n        int balance = 0;\n        int best = 0;\n        for (int i = 0; i < len; ++i) {\n            if (s[i] == '<') {\n                ++balance;\n            } else { // s[i] == '>'\n                if (balance == 0) break;\n                --balance;\n            }\n            if (balance == 0) best = i + 1;\n        }\n        printf(\"%d\\n\", best);\n    }\n    return 0;\n}",
-      "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int T;\n    if (!(cin >> T)) return 0;\n    while (T--) {\n        string s;\n        cin >> s;\n        int balance = 0, best = 0;\n        for (int i = 0; i < (int)s.size(); ++i) {\n            if (s[i] == '<') ++balance;\n            else {\n                if (balance == 0) break;\n                --balance;\n            }\n            if (balance == 0) best = i + 1;\n        }\n        cout << best << '\\n';\n    }\n    return 0;\n}",
-      "Java": "import java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        int T = Integer.parseInt(br.readLine().trim());\n        StringBuilder out = new StringBuilder();\n        for (int t = 0; t < T; ++t) {\n            String s = br.readLine().trim();\n            int balance = 0, best = 0;\n            for (int i = 0; i < s.length(); ++i) {\n                char c = s.charAt(i);\n                if (c == '<') {\n                    ++balance;\n                } else { // c == '>'\n                    if (balance == 0) break;\n                    --balance;\n                }\n                if (balance == 0) best = i + 1;\n            }\n            out.append(best).append('\\n');\n        }\n        System.out.print(out.toString());\n    }\n}",
-      "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().splitlines()\n    if not data:\n        return\n    T = int(data[0])\n    out = []\n    for i in range(1, T + 1):\n        s = data[i].strip()\n        balance = 0\n        best = 0\n        for idx, ch in enumerate(s):\n            if ch == '<':\n                balance += 1\n            else:  # ch == '>'\n                if balance == 0:\n                    break\n                balance -= 1\n            if balance == 0:\n                best = idx + 1\n        out.append(str(best))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    main()",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst T = parseInt(lines[idx++], 10);\nlet results = [];\nfor (let t = 0; t < T; ++t) {\n  const s = (lines[idx++] || '').trim();\n  let balance = 0;\n  let best = 0;\n  for (let i = 0; i < s.length; ++i) {\n    const ch = s[i];\n    if (ch === '<') {\n      ++balance;\n    } else { // ch === '>'\n      if (balance === 0) break;\n      --balance;\n    }\n    if (balance === 0) best = i + 1;\n  }\n  results.push(String(best));\n}\nconsole.log(results.join('\\n'));"
+      "Python3": "# Time:  push: O(logn)\n#        pop:  O(1), amortized\n#        popAtStack: O(logn)\n# Space: O(n * c)\n\nimport heapq\n\n\nclass DinnerPlates(object):\n\n    def __init__(self, capacity):\n        \"\"\"\n        :type capacity: int\n        \"\"\"\n        self.__stks = []\n        self.__c = capacity\n        self.__min_heap = []\n\n    def push(self, val):\n        \"\"\"\n        :type val: int\n        :rtype: None\n        \"\"\"\n        if self.__min_heap:\n            l = heapq.heappop(self.__min_heap)\n            if l < len(self.__stks):\n                self.__stks[l].append(val)\n                return\n            self.__min_heap = []  # nothing is valid in min heap\n        if not self.__stks or len(self.__stks[-1]) == self.__c:\n            self.__stks.append([])\n        self.__stks[-1].append(val)\n\n    def pop(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        while self.__stks and not self.__stks[-1]:\n            self.__stks.pop()\n        if not self.__stks:\n            return -1\n        return self.__stks[-1].pop()\n\n    def popAtStack(self, index):\n        \"\"\"\n        :type index: int\n        :rtype: int\n        \"\"\"\n        if index >= len(self.__stks) or not self.__stks[index]:\n            return -1\n        heapq.heappush(self.__min_heap, index)\n        return self.__stks[index].pop()"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class DinnerPlates {\npublic:\n    DinnerPlates(int capacity) {\n        \n    }\n    \n    void push(int val) {\n        \n    }\n    \n    int pop() {\n        \n    }\n    \n    int popAtStack(int index) {\n        \n    }\n};\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * DinnerPlates* obj = new DinnerPlates(capacity);\n * obj->push(val);\n * int param_2 = obj->pop();\n * int param_3 = obj->popAtStack(index);\n */",
+    "Java": "class DinnerPlates {\n\n    public DinnerPlates(int capacity) {\n        \n    }\n    \n    public void push(int val) {\n        \n    }\n    \n    public int pop() {\n        \n    }\n    \n    public int popAtStack(int index) {\n        \n    }\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * DinnerPlates obj = new DinnerPlates(capacity);\n * obj.push(val);\n * int param_2 = obj.pop();\n * int param_3 = obj.popAtStack(index);\n */",
+    "Python3": "# Time:  push: O(logn)\n#        pop:  O(1), amortized\n#        popAtStack: O(logn)\n# Space: O(n * c)\n\nimport heapq\n\n\nclass DinnerPlates(object):\n\n    def __init__(self, capacity):\n        \"\"\"\n        :type capacity: int\n        \"\"\"\n        self.__stks = []\n        self.__c = capacity\n        self.__min_heap = []\n\n    def push(self, val):\n        \"\"\"\n        :type val: int\n        :rtype: None\n        \"\"\"\n        if self.__min_heap:\n            l = heapq.heappop(self.__min_heap)\n            if l < len(self.__stks):\n                self.__stks[l].append(val)\n                return\n            self.__min_heap = []  # nothing is valid in min heap\n        if not self.__stks or len(self.__stks[-1]) == self.__c:\n            self.__stks.append([])\n        self.__stks[-1].append(val)\n\n    def pop(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        while self.__stks and not self.__stks[-1]:\n            self.__stks.pop()\n        if not self.__stks:\n            return -1\n        return self.__stks[-1].pop()\n\n    def popAtStack(self, index):\n        \"\"\"\n        :type index: int\n        :rtype: int\n        \"\"\"\n        if index >= len(self.__stks) or not self.__stks[index]:\n            return -1\n        heapq.heappush(self.__min_heap, index)\n        return self.__stks[index].pop()",
+    "Python": "class DinnerPlates(object):\n\n    def __init__(self, capacity):\n        \"\"\"\n        :type capacity: int\n        \"\"\"\n        \n\n    def push(self, val):\n        \"\"\"\n        :type val: int\n        :rtype: None\n        \"\"\"\n        \n\n    def pop(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        \n\n    def popAtStack(self, index):\n        \"\"\"\n        :type index: int\n        :rtype: int\n        \"\"\"\n        \n\n\n# Your DinnerPlates object will be instantiated and called as such:\n# obj = DinnerPlates(capacity)\n# obj.push(val)\n# param_2 = obj.pop()\n# param_3 = obj.popAtStack(index)",
+    "JavaScript": "/**\n * @param {number} capacity\n */\nvar DinnerPlates = function(capacity) {\n    \n};\n\n/** \n * @param {number} val\n * @return {void}\n */\nDinnerPlates.prototype.push = function(val) {\n    \n};\n\n/**\n * @return {number}\n */\nDinnerPlates.prototype.pop = function() {\n    \n};\n\n/** \n * @param {number} index\n * @return {number}\n */\nDinnerPlates.prototype.popAtStack = function(index) {\n    \n};\n\n/** \n * Your DinnerPlates object will be instantiated and called as such:\n * var obj = new DinnerPlates(capacity)\n * obj.push(val)\n * var param_2 = obj.pop()\n * var param_3 = obj.popAtStack(index)\n */",
+    "TypeScript": "class DinnerPlates {\n    constructor(capacity: number) {\n        \n    }\n\n    push(val: number): void {\n        \n    }\n\n    pop(): number {\n        \n    }\n\n    popAtStack(index: number): number {\n        \n    }\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * var obj = new DinnerPlates(capacity)\n * obj.push(val)\n * var param_2 = obj.pop()\n * var param_3 = obj.popAtStack(index)\n */",
+    "C#": "public class DinnerPlates {\n\n    public DinnerPlates(int capacity) {\n        \n    }\n    \n    public void Push(int val) {\n        \n    }\n    \n    public int Pop() {\n        \n    }\n    \n    public int PopAtStack(int index) {\n        \n    }\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * DinnerPlates obj = new DinnerPlates(capacity);\n * obj.Push(val);\n * int param_2 = obj.Pop();\n * int param_3 = obj.PopAtStack(index);\n */",
+    "C": "\n\n\ntypedef struct {\n    \n} DinnerPlates;\n\n\nDinnerPlates* dinnerPlatesCreate(int capacity) {\n    \n}\n\nvoid dinnerPlatesPush(DinnerPlates* obj, int val) {\n    \n}\n\nint dinnerPlatesPop(DinnerPlates* obj) {\n    \n}\n\nint dinnerPlatesPopAtStack(DinnerPlates* obj, int index) {\n    \n}\n\nvoid dinnerPlatesFree(DinnerPlates* obj) {\n    \n}\n\n/**\n * Your DinnerPlates struct will be instantiated and called as such:\n * DinnerPlates* obj = dinnerPlatesCreate(capacity);\n * dinnerPlatesPush(obj, val);\n \n * int param_2 = dinnerPlatesPop(obj);\n \n * int param_3 = dinnerPlatesPopAtStack(obj, index);\n \n * dinnerPlatesFree(obj);\n*/",
+    "Go": "type DinnerPlates struct {\n    \n}\n\n\nfunc Constructor(capacity int) DinnerPlates {\n    \n}\n\n\nfunc (this *DinnerPlates) Push(val int)  {\n    \n}\n\n\nfunc (this *DinnerPlates) Pop() int {\n    \n}\n\n\nfunc (this *DinnerPlates) PopAtStack(index int) int {\n    \n}\n\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * obj := Constructor(capacity);\n * obj.Push(val);\n * param_2 := obj.Pop();\n * param_3 := obj.PopAtStack(index);\n */",
+    "Kotlin": "class DinnerPlates(capacity: Int) {\n\n    fun push(`val`: Int) {\n        \n    }\n\n    fun pop(): Int {\n        \n    }\n\n    fun popAtStack(index: Int): Int {\n        \n    }\n\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * var obj = DinnerPlates(capacity)\n * obj.push(`val`)\n * var param_2 = obj.pop()\n * var param_3 = obj.popAtStack(index)\n */",
+    "Swift": "\nclass DinnerPlates {\n\n    init(_ capacity: Int) {\n        \n    }\n    \n    func push(_ val: Int) {\n        \n    }\n    \n    func pop() -> Int {\n        \n    }\n    \n    func popAtStack(_ index: Int) -> Int {\n        \n    }\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * let obj = DinnerPlates(capacity)\n * obj.push(val)\n * let ret_2: Int = obj.pop()\n * let ret_3: Int = obj.popAtStack(index)\n */",
+    "Rust": "struct DinnerPlates {\n\n}\n\n\n/** \n * `&self` means the method takes an immutable reference.\n * If you need a mutable reference, change it to `&mut self` instead.\n */\nimpl DinnerPlates {\n\n    fn new(capacity: i32) -> Self {\n        \n    }\n    \n    fn push(&self, val: i32) {\n        \n    }\n    \n    fn pop(&self) -> i32 {\n        \n    }\n    \n    fn pop_at_stack(&self, index: i32) -> i32 {\n        \n    }\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * let obj = DinnerPlates::new(capacity);\n * obj.push(val);\n * let ret_2: i32 = obj.pop();\n * let ret_3: i32 = obj.pop_at_stack(index);\n */",
+    "Ruby": "class DinnerPlates\n\n=begin\n    :type capacity: Integer\n=end\n    def initialize(capacity)\n        \n    end\n\n\n=begin\n    :type val: Integer\n    :rtype: Void\n=end\n    def push(val)\n        \n    end\n\n\n=begin\n    :rtype: Integer\n=end\n    def pop()\n        \n    end\n\n\n=begin\n    :type index: Integer\n    :rtype: Integer\n=end\n    def pop_at_stack(index)\n        \n    end\n\n\nend\n\n# Your DinnerPlates object will be instantiated and called as such:\n# obj = DinnerPlates.new(capacity)\n# obj.push(val)\n# param_2 = obj.pop()\n# param_3 = obj.pop_at_stack(index)",
+    "PHP": "class DinnerPlates {\n    /**\n     * @param Integer $capacity\n     */\n    function __construct($capacity) {\n        \n    }\n  \n    /**\n     * @param Integer $val\n     * @return NULL\n     */\n    function push($val) {\n        \n    }\n  \n    /**\n     * @return Integer\n     */\n    function pop() {\n        \n    }\n  \n    /**\n     * @param Integer $index\n     * @return Integer\n     */\n    function popAtStack($index) {\n        \n    }\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * $obj = DinnerPlates($capacity);\n * $obj->push($val);\n * $ret_2 = $obj->pop();\n * $ret_3 = $obj->popAtStack($index);\n */",
+    "Dart": "class DinnerPlates {\n\n  DinnerPlates(int capacity) {\n    \n  }\n  \n  void push(int val) {\n    \n  }\n  \n  int pop() {\n    \n  }\n  \n  int popAtStack(int index) {\n    \n  }\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * DinnerPlates obj = DinnerPlates(capacity);\n * obj.push(val);\n * int param2 = obj.pop();\n * int param3 = obj.popAtStack(index);\n */",
+    "Scala": "class DinnerPlates(_capacity: Int) {\n\n    def push(`val`: Int): Unit = {\n        \n    }\n\n    def pop(): Int = {\n        \n    }\n\n    def popAtStack(index: Int): Int = {\n        \n    }\n\n}\n\n/**\n * Your DinnerPlates object will be instantiated and called as such:\n * val obj = new DinnerPlates(capacity)\n * obj.push(`val`)\n * val param_2 = obj.pop()\n * val param_3 = obj.popAtStack(index)\n */",
+    "Elixir": "defmodule DinnerPlates do\n  @spec init_(capacity :: integer) :: any\n  def init_(capacity) do\n    \n  end\n\n  @spec push(val :: integer) :: any\n  def push(val) do\n    \n  end\n\n  @spec pop() :: integer\n  def pop() do\n    \n  end\n\n  @spec pop_at_stack(index :: integer) :: integer\n  def pop_at_stack(index) do\n    \n  end\nend\n\n# Your functions will be called as such:\n# DinnerPlates.init_(capacity)\n# DinnerPlates.push(val)\n# param_2 = DinnerPlates.pop()\n# param_3 = DinnerPlates.pop_at_stack(index)\n\n# DinnerPlates.init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Erlang": "-spec dinner_plates_init_(Capacity :: integer()) -> any().\ndinner_plates_init_(Capacity) ->\n  .\n\n-spec dinner_plates_push(Val :: integer()) -> any().\ndinner_plates_push(Val) ->\n  .\n\n-spec dinner_plates_pop() -> integer().\ndinner_plates_pop() ->\n  .\n\n-spec dinner_plates_pop_at_stack(Index :: integer()) -> integer().\ndinner_plates_pop_at_stack(Index) ->\n  .\n\n\n%% Your functions will be called as such:\n%% dinner_plates_init_(Capacity),\n%% dinner_plates_push(Val),\n%% Param_2 = dinner_plates_pop(),\n%% Param_3 = dinner_plates_pop_at_stack(Index),\n\n%% dinner_plates_init_ will be called before every test case, in which you can do some necessary initializations.",
+    "Racket": "(define dinner-plates%\n  (class object%\n    (super-new)\n    \n    ; capacity : exact-integer?\n    (init-field\n      capacity)\n    \n    ; push : exact-integer? -> void?\n    (define/public (push val)\n      )\n    ; pop : -> exact-integer?\n    (define/public (pop)\n      )\n    ; pop-at-stack : exact-integer? -> exact-integer?\n    (define/public (pop-at-stack index)\n      )))\n\n;; Your dinner-plates% object will be instantiated and called as such:\n;; (define obj (new dinner-plates% [capacity capacity]))\n;; (send obj push val)\n;; (define param_2 (send obj pop))\n;; (define param_3 (send obj pop-at-stack index))"
+  },
+  "_internal": {
+    "methodName": "",
+    "params": []
+  },
+  "verified": false
 }

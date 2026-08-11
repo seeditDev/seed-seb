@@ -15,36 +15,142 @@ class MCQService {
         return { partialScore, fullScore };
     }
 
-    /** Canonical centralized Firestore path. */
-    static canonicalPath(testID, college, year, email) {
-        return `AssessmentResults/${testID}/colleges/${college}/years/${year}/students/${email}`;
-    }
-
-    /** Legacy student-centric path (kept for duplicate detection + backward compat). */
-    static legacyPath(college, year, department, email, testID) {
-        return `colleges/${college}/years/${year}/departments/${department}/students/${email}/mcq_results/${testID}`;
+    /**
+     * v2 Canonical Firestore path (single write, no dual paths).
+     * assessmentResults/{assessmentId}/students/{userId}
+     */
+    static canonicalPath(assessmentId, userId) {
+        return `assessmentResults/${assessmentId}/students/${userId}`;
     }
 
     /**
-     * Write the same payload to the canonical and legacy locations ATOMICALLY.
-     *
-     * BUG FIXED (P0 divergent results): every write path did
-     * `await setDoc(canonical)` followed by a separate `await setDoc(legacy)`
-     * wrapped in a swallow-everything try/catch. On a flaky exam-hall network
-     * the first write could land and the second fail silently, leaving the two
-     * copies of the same attempt with different scores — and the dashboard read
-     * whichever one it found first. A batch either commits both or neither, and
-     * it costs one round trip instead of two.
+     * Legacy v1 path — READ-ONLY backward compat for 30 days.
+     * Do NOT write to this path. Remove after grace period.
+     */
+    static legacyV1Path(testID, college, year, email) {
+        return `AssessmentResults/${testID}/colleges/${college}/years/${year}/students/${email}`;
+    }
+
+    /**
+     * Write result to the single canonical v2 path.
+     * Also writes a summary mirror to users/{userId}/assessmentAttempts/{assessmentId}.
+     */
+    static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
+        const canonRef = doc(db, this.canonicalPath(assessmentId, userId));
+        await setDoc(canonRef, payload, { merge: true });
+
+        // Mirror summary to user's assessmentAttempts subcollection
+        if (userId) {
+            try {
+                const mirrorRef = doc(db, `users/${userId}/assessmentAttempts/${assessmentId}`);
+                await setDoc(mirrorRef, {
+                    assessmentId,
+                    type: payload.type || 'mcq',
+                    title: payload.testName || payload.assessmentTitle || '',
+                    tenantId: payload.tenantId || userProfile?.tenantId || '',
+                    startedAt: payload.timeStarted || payload.startedAt || null,
+                    startedAtISO: payload.timeStartedISO || payload.startedAtISO || '',
+                    submittedAt: payload.submittedAt || null,
+                    submittedAtISO: payload.submittedAtISO || '',
+                    status: payload.status || 'submitted',
+                    totalScore: payload.score || payload.totalScore || 0,
+                    maxScore: payload.totalMarks || payload.maxScore || 0,
+                    percentage: payload.percentage || 0,
+                    resultRef: `assessmentResults/${assessmentId}/students/${userId}`,
+                }, { merge: true });
+            } catch (_) {
+                // Mirror failure is non-fatal
+            }
+        }
+
+        // Mark attempt in the completion index so dashboard shows ✓ Completed
+        try {
+            const { markAssessmentCompleted, invalidateCompletionCache } = await import('./attemptStatusService');
+            const email = userProfile?.email || userProfile?.Email || payload.email || '';
+            if (email) {
+                await markAssessmentCompleted(userProfile || { email }, assessmentId);
+                invalidateCompletionCache(email);
+            }
+        } catch (_) { /* non-fatal */ }
+
+        return this.canonicalPath(assessmentId, userId);
+    }
+
+    /**
+     * @deprecated Use writeCanonicalResult instead.
+     * Kept for call sites that haven't been updated yet.
      */
     static async writeBothPaths(payload, { testID, college, year, department, email }) {
-        const canonPath = this.canonicalPath(testID, college, year, email);
-        const batch = writeBatch(db);
-        batch.set(doc(db, canonPath), payload, { merge: true });
-        if (college && year && department && email && testID) {
-            batch.set(doc(db, this.legacyPath(college, year, department, email, testID)), payload, { merge: true });
+        // Get userId from auth_data
+        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        const userId = authData.uid || email.replace(/[@.]/g, '_');
+        return this.writeCanonicalResult(
+            { ...payload, college, year, department },
+            { assessmentId: testID, userId, userProfile: authData }
+        );
+    }
+
+    /**
+     * Write a guest result to assessmentResults/{testId}/guests/{guestId}.
+     * Called from guest assessment submissions — no Firebase Auth UID.
+     * @param {object} payload - Assessment result payload
+     * @param {string} testId - The Firestore testId from courses/.../tests/
+     * @param {object} guestSession - Guest session from localStorage (name, rollNo, college, etc.)
+     */
+    static async writeGuestResult(payload, testId, guestSession) {
+        try {
+            const guestId = guestSession.guestId || `guest_${Date.now()}`;
+            const guestRef = doc(db, `assessmentResults/${testId}/guests/${guestId}`);
+            await setDoc(guestRef, {
+                ...payload,
+                isGuest: true,
+                guestId,
+                name: guestSession.name || '',
+                rollNo: guestSession.rollNo || '',
+                college: guestSession.college || '',
+                department: guestSession.department || '',
+                year: guestSession.year || '',
+                email: guestSession.email || null,
+                assessmentCode: guestSession.assessmentCode || '',
+                courseId: guestSession.courseId || '',
+                seriesId: guestSession.seriesId || '',
+                submittedAt: serverTimestamp(),
+                status: 'submitted',
+            }, { merge: true });
+
+            // ── Lock re-attempts in localStorage ──────────────────────────────
+            // GuestPortal reads this key in step 3 to block the same guest from starting again.
+            try {
+                localStorage.setItem(`guest_done_${testId}_${guestId}`, 'true');
+                localStorage.removeItem('guest_session');
+            } catch (_) { /* non-fatal */ }
+
+            return `assessmentResults/${testId}/guests/${guestId}`;
+        } catch (err) {
+            console.error('[MCQService] writeGuestResult error:', err);
+            return null;
         }
-        await batch.commit();
-        return canonPath;
+    }
+
+    /**
+     * Mark course progress after a test submission.
+     * Non-fatal — does not throw. Call after any writeCanonicalResult or writeGuestResult.
+     * @param {object} params
+     * @param {string} params.uid - Firebase UID (null for guests — skipped)
+     * @param {string} params.courseId - From TestDoc
+     * @param {string} params.seriesId - From TestDoc
+     * @param {string} params.testId - From TestDoc
+     * @param {number} params.score
+     * @param {number} params.maxScore
+     */
+    static async markCourseProgress({ uid, courseId, seriesId, testId, score, maxScore }) {
+        if (!uid || courseId === '__legacy__') return;
+        try {
+            const { markTestComplete } = await import('../../lib/firestore/courseProgress');
+            await markTestComplete({ uid, courseId, seriesId, testId, score, maxScore });
+        } catch (err) {
+            console.warn('[MCQService] markCourseProgress error (non-fatal):', err);
+        }
     }
 
     /**
@@ -63,12 +169,15 @@ class MCQService {
                 return { exists: false, data: null, completed: false, offline: true };
             }
 
-            // 1. Try canonical AssessmentResults path first
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const userId = authData.uid || email.replace(/[@.]/g, '_');
+
+            // 1. Try v2 canonical path first
             try {
-                const canonRef = doc(db, this.canonicalPath(testID, college, year, email));
-                const canonSnap = await getDoc(canonRef);
-                if (canonSnap.exists()) {
-                    const data = canonSnap.data();
+                const v2Ref = doc(db, this.canonicalPath(testID, userId));
+                const v2Snap = await getDoc(v2Ref);
+                if (v2Snap.exists()) {
+                    const data = v2Snap.data();
                     return {
                         exists: true,
                         data,
@@ -77,17 +186,19 @@ class MCQService {
                 }
             } catch (e) { /* fall through to legacy */ }
 
-            // 2. Fall back to legacy student-centric path
-            const legRef = doc(db, this.legacyPath(college, year, department, email, testID));
-            const legSnap = await getDoc(legRef);
-            if (legSnap.exists()) {
-                const data = legSnap.data();
-                return {
-                    exists: true,
-                    data,
-                    completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
-                };
-            }
+            // 2. Fall back to v1 legacy path (read-only backward compat)
+            try {
+                const v1Ref = doc(db, this.legacyV1Path(testID, college, year, email));
+                const v1Snap = await getDoc(v1Ref);
+                if (v1Snap.exists()) {
+                    const data = v1Snap.data();
+                    return {
+                        exists: true,
+                        data,
+                        completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
+                    };
+                }
+            } catch (e) { /* ignore */ }
 
             return { exists: false, data: null, completed: false };
         } catch (error) {

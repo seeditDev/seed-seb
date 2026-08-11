@@ -403,6 +403,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     };
                 });
 
+                // ── Timing data (Bug 8: coding section time not tracked) ──
+                const sectionEndISO = new Date().toISOString();
+                const elapsedSecs = getElapsedSeconds();
+                const sectionStartISO = (() => {
+                    const stored = sessionStorage.getItem('codingSecStartTime');
+                    if (stored) return stored;
+                    const elapsedMs = elapsedSecs * 1000;
+                    return new Date(Date.now() - elapsedMs).toISOString();
+                })();
+                sessionStorage.removeItem('codingSecStartTime');
+
                 onSectionSubmit({
                     answers: allAnswers,
                     timeSpentPerQ: timeSpentPerQ,
@@ -412,7 +423,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     totalMarks: totalMaxWeight,
                     totalQuestions: questions.length,
                     autoSubmitted: reason ? true : false,
-                    tabViolation: reason === 'navigation' ? true : false
+                    tabViolation: reason === 'navigation' ? true : false,
+                    // Timing fields for reports and MSA section aggregation
+                    timeTaken: elapsedSecs,
+                    timeTakenSeconds: elapsedSecs,
+                    timeStartedISO: sectionStartISO,
+                    timeEndedISO: sectionEndISO,
                 });
             }
         } catch (err) {
@@ -1862,6 +1878,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             submitGuard.complete();
             // Denormalise completion so the dashboard needs no per-card reads.
             markAssessmentCompleted(user, currentAssessment.id);
+
+            // ── Course progress tracking ──
+            try {
+                const courseCtx = JSON.parse(localStorage.getItem('codingCourseCtx') || '{}');
+                if (courseCtx.courseId && courseCtx.seriesId) {
+                    import('../services/mcqService').then(({ default: MCQService }) => {
+                        const totalScore = Object.values(questionScores || {}).reduce((s, q) => s + (q.score || 0), 0);
+                        MCQService.markCourseProgress({
+                            uid: user?.uid || user?.UID || '',
+                            courseId: courseCtx.courseId,
+                            seriesId: courseCtx.seriesId,
+                            testId: courseCtx.testId || currentAssessment.id,
+                            score: totalScore,
+                            maxScore: courseCtx.totalMarks || 100,
+                        }).catch(() => {});
+                    }).catch(() => {});
+                }
+            } catch (_) { /* non-fatal */ }
         }
         flushThrottledWrites();
         localStorage.removeItem("codingAssessmentStartTime");
@@ -1870,6 +1904,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         localStorage.removeItem("codingAssessmentCode");
         localStorage.removeItem("codingCompilationCounts");
         localStorage.removeItem("codingQuestionSubmitTimes");
+        localStorage.removeItem("codingCourseCtx");
         clearAllProctorCache();
         
         setCurrentAssessment(null);

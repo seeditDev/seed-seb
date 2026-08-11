@@ -157,6 +157,63 @@ export const markQuestionAttempted = async (uid, questionId, language, score) =>
   return { success: true };
 };
 
+/**
+ * Track time spent on a specific question (accumulated across sessions).
+ * Called each time the student leaves a question or submits.
+ *
+ * @param {string} uid
+ * @param {string} questionId
+ * @param {number} timeSpentMs - Milliseconds spent in this session
+ */
+export const trackQuestionTimeSpent = async (uid, questionId, timeSpentMs) => {
+  if (!uid || !questionId || !timeSpentMs || timeSpentMs <= 0) return;
+  const local = getLocalProgress(uid);
+  const existing = local.problemDetails[questionId] || {};
+  local.problemDetails[questionId] = {
+    ...existing,
+    totalTimeMs: (existing.totalTimeMs || 0) + timeSpentMs,
+  };
+  saveLocalProgress(uid, local);
+  // Background sync
+  if (navigator.onLine) {
+    try {
+      await setDoc(doc(db, COLLECTION, uid), local, { merge: true });
+    } catch (_) {}
+  }
+};
+
+/**
+ * Record daily practice activity — questions attempted and time spent today.
+ * Called on each submission or significant practice action.
+ *
+ * @param {string} uid
+ * @param {{ questionsAttempted?: number, timeSpentMs?: number }} delta
+ */
+export const trackDailyActivity = async (uid, delta = {}) => {
+  if (!uid) return;
+  const local = getLocalProgress(uid);
+  if (!local.activityByDate) local.activityByDate = {};
+  const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+  const existing = local.activityByDate[today] || { questionsAttempted: 0, timeSpentMs: 0 };
+  local.activityByDate[today] = {
+    questionsAttempted: (existing.questionsAttempted || 0) + (delta.questionsAttempted || 0),
+    timeSpentMs:        (existing.timeSpentMs || 0)        + (delta.timeSpentMs || 0),
+  };
+  // Also update legacy activity map (hours) for backward compat with heatmap
+  if (!local.activity) local.activity = {};
+  if (!local.activity[today]) local.activity[today] = { hours: 0, problemsSolved: 0 };
+  local.activity[today].hours = Math.min(
+    24,
+    (local.activity[today].hours || 0) + (delta.timeSpentMs || 0) / 3_600_000
+  );
+  saveLocalProgress(uid, local);
+  if (navigator.onLine) {
+    try {
+      await setDoc(doc(db, COLLECTION, uid), local, { merge: true });
+    } catch (_) {}
+  }
+};
+
 // ── Sync Operations ────────────────────────────────────────────────────────────
 
 /**
@@ -278,9 +335,11 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
   
   saveLocalProgress(uid, local);
   
-  // Fire-and-forget sync
+  // Fire-and-forget sync — only if user is authenticated
   if (navigator.onLine) {
     try {
+      const { auth } = await import('../firebase-config');
+      if (!auth.currentUser) return { success: true }; // skip if not authenticated
       const docRef = doc(db, COLLECTION, uid);
       await setDoc(docRef, local, { merge: true });
     } catch (e) {

@@ -1,98 +1,322 @@
 {
   "questionId": "Q3337",
-  "title": "Chef and Dominating Subarrays",
-  "slug": "chef-and-dominating-subarrays",
+  "title": "Total Characters in String After Transformations II Problem",
+  "slug": "total-characters-in-string-after-transformations-ii",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Arrays",
+    "category": "Strings",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Sliding Window",
-      "Frequency Counting",
-      "Arrays"
+      "hash-table",
+      "math",
+      "string",
+      "dynamic-programming",
+      "counting"
     ],
     "companyTags": [],
     "topicTags": [
-      "Data Structures"
-    ]
+      "hash-table",
+      "math",
+      "string",
+      "dynamic-programming",
+      "counting"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Chef likes problems with arrays. Let's call an array **V** dominating if there exists a number **x** (the dominator) whose number of occurrences is strictly greater than half the size of the array (that is, floor(|**V**|/2)).\n\n\n\nFor example, the arrays {1, 2, 1} is dominating, with the number 1 being the dominator, since half the size of the array is 1, while the number 1 occurs twice. Similarly, the array {1, 1, 1, 2} is dominating. On the other hand, the arrays {1, 2, 3} and {1, 2, 2, 1} are not dominating.\n\n\nGiven an array **A** consisting of **N** positive integers, you need to help Chef find the number of subarrays of **A** which are dominating.",
+    "problemStatement": "You receive a string `s` consisting of lowercase English letters, an integer `t` representing the number of **transformations** to perform, and an array `nums` of size 26. In one **transformation**, every character in `s` is replaced according to the following rules:\n\n* Replace `s[i]` with the **next** `nums[s[i] - 'a']` consecutive characters in the alphabet. As an example, if `s[i] = 'a'` and `nums[0] = 3`, the character `'a'` transforms into the next 3 consecutive characters ahead of it, which results in `\"bcd\"`.\n* The transformation **wraps** around the alphabet if it exceeds `'z'`. As an example, if `s[i] = 'y'` and `nums[24] = 3`, the character `'y'` transforms into the next 3 consecutive characters ahead of it, which results in `\"zab\"`.\n\nOutput the length of the resulting string after **exactly** `t` transformations.\n\nSince the answer may be very large, output it **modulo** `109 + 7`.\n\n**Example 1:**\n\n**Input:** s = \"abcyy\", t = 2, nums = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2]\n\n**Output:** 7\n\n**Explanation:**\n\n* **First Transformation (t = 1):**\n\n  + `'a'` becomes `'b'` as `nums[0] == 1`\n  + `'b'` becomes `'c'` as `nums[1] == 1`\n  + `'c'` becomes `'d'` as `nums[2] == 1`\n  + `'y'` becomes `'z'` as `nums[24] == 1`\n  + `'y'` becomes `'z'` as `nums[24] == 1`\n  + String after the first transformation: `\"bcdzz\"`\n* **Second Transformation (t = 2):**\n\n  + `'b'` becomes `'c'` as `nums[1] == 1`\n  + `'c'` becomes `'d'` as `nums[2] == 1`\n  + `'d'` becomes `'e'` as `nums[3] == 1`\n  + `'z'` becomes `'ab'` as `nums[25] == 2`\n  + `'z'` becomes `'ab'` as `nums[25] == 2`\n  + String after the second transformation: `\"cdeabab\"`\n* **Final Length of the string:** The string is `\"cdeabab\"`, which has 7 characters.\n\n**Example 2:**\n\n**Input:** s = \"azbk\", t = 1, nums = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]\n\n**Output:** 8\n\n**Explanation:**\n\n* **First Transformation (t = 1):**\n\n  + `'a'` becomes `'bc'` as `nums[0] == 2`\n  + `'z'` becomes `'ab'` as `nums[25] == 2`\n  + `'b'` becomes `'cd'` as `nums[1] == 2`\n  + `'k'` becomes `'lm'` as `nums[10] == 2`\n  + String after the first transformation: `\"bcabcdlm\"`\n* **Final Length of the string:** The string is `\"bcabcdlm\"`, which has 8 characters.\n\n**Constraints:**\n\n* `1 <= s.length <= 105`\n* `s` consists only of lowercase English letters.\n* `1 <= t <= 109`\n* `nums.length == 26`\n* `1 <= nums[i] <= 25`",
     "constraints": [
-      "1 \u2264 N \u2264 5 \u00d7 10^5",
-      "1 \u2264 Ai \u2264 10^9"
+      "None"
     ],
-    "inputFormat": "The first line of input contains one integer N denoting the number of elements in the array A. The second line of input contains N space-separated integers denoting the array A.",
-    "outputFormat": "Output the number of subarrays of A which are dominating.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "5\n1 2 1 2 1",
-        "output": "9",
-        "explanation": "The dominating subarrays are A[1..1], A[2..2], A[3..3], A[4..4], A[5..5], A[1..3], A[2..4], A[3..5], A[1..5]."
-      },
-      {
-        "id": "sample_2",
-        "input": "7\n1 2 3 3 2 1 3",
-        "output": "11",
-        "explanation": "The dominating subarrays are A[1..1], A[2..2], A[3..3], A[4..4], A[5..5], A[6..6], A[7..7], A[3..4], A[2..4], A[3..5], A[3..7]."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "500000\n1 1 1 1 1 1 1 1 1 1",
-        "expectedOutput": "500000",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "edge case",
-        "input": "5\n1 1 1 1 1",
-        "expectedOutput": "15",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "general case 1",
-        "input": "10\n1 2 3 4 5 6 7 8 9 10",
-        "expectedOutput": "10",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "general case 2",
-        "input": "10\n1 1 1 1 1 1 1 1 1 1",
-        "expectedOutput": "55",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -103,18 +327,76 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we can use a sliding window approach along with frequency counting. For each possible subarray, we count the frequency of each element and check if there exists an element that occurs more than half the size of the subarray. If such an element exists, we increment our count of dominating subarrays.",
-    "timeComplexity": "O(N^2) \u2014 for each possible subarray, we are counting the frequency of elements.",
-    "spaceComplexity": "O(N) \u2014 for storing the frequency of elements in the subarray.",
     "code": {
-      "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\nint main() {\n    int N;\n    scanf(\"%d\", &N);\n    int A[N];\n    for (int i = 0; i < N; i++) {\n        scanf(\"%d\", &A[i]);\n    }\n    int count = 0;\n    for (int i = 0; i < N; i++) {\n        for (int j = i; j < N; j++) {\n            int freq[1000001] = {0};\n            for (int k = i; k <= j; k++) {\n                freq[A[k]]++;\n            }\n            int max_freq = 0;\n            for (int k = 1; k <= 1000000; k++) {\n                if (freq[k] > max_freq) {\n                    max_freq = freq[k];\n                }\n            }\n            if (max_freq > (j - i + 1) / 2) {\n                count++;\n            }\n        }\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}",
-      "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\nusing namespace std;\nint main() {\n    int N;\n    cin >> N;\n    int A[N];\n    for (int i = 0; i < N; i++) {\n        cin >> A[i];\n    }\n    int count = 0;\n    for (int i = 0; i < N; i++) {\n        for (int j = i; j < N; j++) {\n            int freq[1000001] = {0};\n            for (int k = i; k <= j; k++) {\n                freq[A[k]]++;\n            }\n            int max_freq = 0;\n            for (int k = 1; k <= 1000000; k++) {\n                if (freq[k] > max_freq) {\n                    max_freq = freq[k];\n                }\n            }\n            if (max_freq > (j - i + 1) / 2) {\n                count++;\n            }\n        }\n    }\n    cout << count << endl;\n    return 0;\n}",
-      "Java": "// COMPLETE, COMPILABLE Java code\nimport java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int N = sc.nextInt();\n        int[] A = new int[N];\n        for (int i = 0; i < N; i++) {\n            A[i] = sc.nextInt();\n        }\n        int count = 0;\n        for (int i = 0; i < N; i++) {\n            for (int j = i; j < N; j++) {\n                int[] freq = new int[1000001];\n                for (int k = i; k <= j; k++) {\n                    freq[A[k]]++;\n                }\n                int max_freq = 0;\n                for (int k = 1; k <= 1000000; k++) {\n                    if (freq[k] > max_freq) {\n                        max_freq = freq[k];\n                    }\n                }\n                if (max_freq > (j - i + 1) / 2) {\n                    count++;\n                }\n            }\n        }\n        System.out.println(count);\n    }\n}",
-      "Python3": "# COMPLETE, RUNNABLE Python3 code\nimport sys\ninput = sys.stdin.readline\nN = int(input())\nA = list(map(int, input().split()))\ncount = 0\nfor i in range(N):\n    for j in range(i, N):\n        freq = [0] * 1000001\n        for k in range(i, j + 1):\n            freq[A[k]] += 1\n        max_freq = max(freq[1:])\n        if max_freq > (j - i + 1) // 2:\n            count += 1\nprint(count)",
-      "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst input = () => lines[idx++];\nconst N = parseInt(input());\nconst A = input().split(' ').map(Number);\nlet count = 0;\nfor (let i = 0; i < N; i++) {\n    for (let j = i; j < N; j++) {\n        let freq = new Array(1000001).fill(0);\n        for (let k = i; k <= j; k++) {\n            freq[A[k]]++;\n        }\n        let max_freq = 0;\n        for (let k = 1; k <= 1000000; k++) {\n            if (freq[k] > max_freq) {\n                max_freq = freq[k];\n            }\n        }\n        if (max_freq > (j - i + 1) / 2) {\n            count++;\n        }\n    }\n}\nconsole.log(count);"
+      "Python3": "# Time:  O(n + 26^3 * logt)\n# Space: O(26^2)\n\nimport itertools\n\n\n# matrix fast exponentiation\nclass Solution(object):\n    def lengthAfterTransformations(self, s, t, nums):\n        \"\"\"\n        :type s: str\n        :type t: int\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        def matrix_mult(A, B):\n            ZB = zip(*B)\n            return [[sum(a*b % MOD for a, b in itertools.izip(row, col)) % MOD for col in ZB] for row in A]\n \n        def matrix_expo(A, K):\n            result = [[int(i == j) for j in range(len(A))] for i in range(len(A))]\n            while K:\n                if K % 2:\n                    result = matrix_mult(result, A)\n                A = matrix_mult(A, A)\n                K /= 2\n            return result\n\n        cnt = [0]*26\n        for x in s:\n            cnt[ord(x)-ord('a')] += 1\n        matrix = [[0]*26 for _ in range(26)]\n        for i in range(len(nums)):\n            for j in range(1, nums[i]+1):\n                matrix[i][(i+j)%26] = 1\n        matrix_pow_t = matrix_expo(matrix, t)\n        return reduce(lambda accu, x: (accu+x)%MOD, matrix_mult([cnt], matrix_pow_t)[0], 0)"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int lengthAfterTransformations(string s, int t, vector<int>& nums) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int lengthAfterTransformations(String s, int t, List<Integer> nums) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n + 26^3 * logt)\n# Space: O(26^2)\n\nimport itertools\n\n\n# matrix fast exponentiation\nclass Solution(object):\n    def lengthAfterTransformations(self, s, t, nums):\n        \"\"\"\n        :type s: str\n        :type t: int\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        def matrix_mult(A, B):\n            ZB = zip(*B)\n            return [[sum(a*b % MOD for a, b in itertools.izip(row, col)) % MOD for col in ZB] for row in A]\n \n        def matrix_expo(A, K):\n            result = [[int(i == j) for j in range(len(A))] for i in range(len(A))]\n            while K:\n                if K % 2:\n                    result = matrix_mult(result, A)\n                A = matrix_mult(A, A)\n                K /= 2\n            return result\n\n        cnt = [0]*26\n        for x in s:\n            cnt[ord(x)-ord('a')] += 1\n        matrix = [[0]*26 for _ in range(26)]\n        for i in range(len(nums)):\n            for j in range(1, nums[i]+1):\n                matrix[i][(i+j)%26] = 1\n        matrix_pow_t = matrix_expo(matrix, t)\n        return reduce(lambda accu, x: (accu+x)%MOD, matrix_mult([cnt], matrix_pow_t)[0], 0)",
+    "Python": "class Solution(object):\n    def lengthAfterTransformations(self, s, t, nums):\n        \"\"\"\n        :type s: str\n        :type t: int\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {string} s\n * @param {number} t\n * @param {number[]} nums\n * @return {number}\n */\nvar lengthAfterTransformations = function(s, t, nums) {\n    \n};",
+    "TypeScript": "function lengthAfterTransformations(s: string, t: number, nums: number[]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int LengthAfterTransformations(string s, int t, IList<int> nums) {\n        \n    }\n}",
+    "C": "int lengthAfterTransformations(char* s, int t, int* nums, int numsSize) {\n    \n}",
+    "Go": "func lengthAfterTransformations(s string, t int, nums []int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun lengthAfterTransformations(s: String, t: Int, nums: List<Int>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func lengthAfterTransformations(_ s: String, _ t: Int, _ nums: [Int]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn length_after_transformations(s: String, t: i32, nums: Vec<i32>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {String} s\n# @param {Integer} t\n# @param {Integer[]} nums\n# @return {Integer}\ndef length_after_transformations(s, t, nums)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param String $s\n     * @param Integer $t\n     * @param Integer[] $nums\n     * @return Integer\n     */\n    function lengthAfterTransformations($s, $t, $nums) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int lengthAfterTransformations(String s, int t, List<int> nums) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def lengthAfterTransformations(s: String, t: Int, nums: List[Int]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec length_after_transformations(s :: String.t, t :: integer, nums :: [integer]) :: integer\n  def length_after_transformations(s, t, nums) do\n    \n  end\nend",
+    "Erlang": "-spec length_after_transformations(S :: unicode:unicode_binary(), T :: integer(), Nums :: [integer()]) -> integer().\nlength_after_transformations(S, T, Nums) ->\n  .",
+    "Racket": "(define/contract (length-after-transformations s t nums)\n  (-> string? exact-integer? (listof exact-integer?) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "lengthAfterTransformations",
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "type": "integer",
+        "name": "t"
+      },
+      {
+        "type": "list<integer>",
+        "name": "nums"
+      }
+    ]
+  },
+  "verified": false
 }

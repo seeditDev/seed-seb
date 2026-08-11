@@ -1,105 +1,337 @@
 {
   "questionId": "Q2305",
-  "title": "Money Transformation",
-  "slug": "money-transformation",
+  "title": "Fair Distribution of Cookies Problem",
+  "slug": "fair-distribution-of-cookies",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Greedy",
+    "category": "Arrays",
     "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Greedy Algorithm",
-      "Money Transformation",
-      "Greedy"
+      "array",
+      "dynamic-programming",
+      "backtracking",
+      "bit-manipulation",
+      "bitmask"
     ],
     "companyTags": [],
     "topicTags": [
-      "Ad-hoc & Implementation"
-    ]
+      "array",
+      "dynamic-programming",
+      "backtracking",
+      "bit-manipulation",
+      "bitmask"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You are standing near a very strange machine. If you put **C** cents in the machine, the remaining money in your purse will transform in an unusual way. If you have **A** dollars and **B** cents remaining in your purse after depositing the **C** cents, then after the transformation you will have **B** dollars and **A** cents. You can repeat this procedure as many times as you want unless you don't have enough money for the machine. If at any point **C &gt; B** and **A &gt; 0**, then the machine will allow you to break one of the A dollars into **100** cents so you can place **C** cents in the machine. The machine will not allow you to exchange a dollar for **100** cents if **B &gt;= C**.\n\n\n \n\n\nOf course, you want to do this to maximize your profit. For example if **C=69** and you have **9** dollars and **77** cents then after you put **69** cents in the machine you will have **8** dollars and **9** cents (**9.77 --&gt; 9.08 --&gt; 8.09**). But I should warn you that you can't cheat. If you try to throw away **9** cents before the transformation (in order to obtain **99** dollars and **8** cents after), the machine will sense you are cheating and take away all of your money. You need to know how many times you should do this transformation in order to make a maximum profit. Since you are very busy man, you want to obtain the maximum possible profit in the minimum amount of time.",
+    "problemStatement": "You receive an integer array `cookies`, where `cookies[i]` denotes the number of cookies in the `ith` bag. You are also given an integer `k` that denotes the number of children to distribute **all** the bags of cookies to. All the cookies in the same bag must go to the same child and cannot be split up.\n\nThe **unfairness** of a distribution is defined as the **largest** **total** cookies obtained by a single child in the distribution.\n\nOutput *the **smallest** unfairness of all distributions*.\n\n**Example 1:**\n\n```\nInput: cookies = [8,15,10,20,8], k = 2\nOutput: 31\nExplanation: One optimal distribution is [8,15,8] and [10,20]\n- The 1st child receives [8,15,8] which has a total of 8 + 15 + 8 = 31 cookies.\n- The 2nd child receives [10,20] which has a total of 10 + 20 = 30 cookies.\nThe unfairness of the distribution is max(31,30) = 31.\nIt can be shown that there is no distribution with an unfairness less than 31.\n```\n\n**Example 2:**\n\n```\nInput: cookies = [6,1,3,2,2,4,1,2], k = 3\nOutput: 7\nExplanation: One optimal distribution is [6,1], [3,2,2], and [4,1,2]\n- The 1st child receives [6,1] which has a total of 6 + 1 = 7 cookies.\n- The 2nd child receives [3,2,2] which has a total of 3 + 2 + 2 = 7 cookies.\n- The 3rd child receives [4,1,2] which has a total of 4 + 1 + 2 = 7 cookies.\nThe unfairness of the distribution is max(7,7,7) = 7.\nIt can be shown that there is no distribution with an unfairness less than 7.\n```\n\n**Constraints:**\n\n* `2 <= cookies.length <= 8`\n* `1 <= cookies[i] <= 105`\n* `2 <= k <= cookies.length`",
     "constraints": [
-      "1 \u2264 T \u2264 40",
-      "0 \u2264 A, B, C < 100",
-      "The required answer is guaranteed to be less than 10,000"
+      "None"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case contains three non-negative integers A, B, and C separated by spaces. A is the number of dollars, B the number of cents you initially have, and C the number of cents the machine requires for one transformation.",
-    "outputFormat": "For each test case, output a single integer on its own line \u2013 the minimal number of transformations that yields the maximal possible amount of money (dollars + cents/100).",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "2\n9 77 69\n98 99 69",
-        "output": "4\n0",
-        "explanation": "First case: the sequence of states (dollars,cents) is 9,77 \u2192 8,9 \u2192 40,7 \u2192 38,39 \u2192 70,37 \u2192 68,69 \u2192 0,68. The maximal total amount (70.37) is reached after 4 transformations, so answer is 4. Second case: any transformation would not increase the total amount, the initial amount 98.99 is already maximal, thus answer 0."
+        "type": "reg",
+        "input": "cookies = [8,15,10,20,8], k = 2",
+        "output": "31",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n0 50 30",
-        "output": "0",
-        "explanation": "Only one transformation is possible: B\u2265C, so (0,50) \u2192 (20,0). Total goes from 0.50 to 0.20, which is smaller, but the maximal total is the initial one (0.50). Since we are asked for minimal steps achieving maximal profit, we output 0."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n5 0 99",
-        "output": "0",
-        "explanation": "Step1: B<C and A>0 \u2192 (5,0) \u2192 (1,4) after breaking a dollar and paying 99 cents. Total = 1.04. Step2: B<C again, A>0 \u2192 (1,4) \u2192 (5,0) back to start. The maximal total is 5.00 (initial), so answer is 0."
+        "type": "reg",
+        "input": "cookies = [6,1,3,2,2,4,1,2], k = 3",
+        "output": "7",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n0 0 0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n99 99 99",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n50 50 50",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n10 10 10",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "5\n1 1 1\n2 2 2\n3 3 3\n4 4 4\n5 5 5",
-        "expectedOutput": "0\n0\n0\n0\n0",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -110,18 +342,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to simulate the transformation process and keep track of the maximum amount of money achieved. We use a greedy approach to decide when to break a dollar into cents to maximize the profit. The algorithm iterates through the transformation process, updating the maximum amount of money and the minimum number of transformations required to achieve it.",
-    "timeComplexity": "O(T * 10000) per test case, O(T * 10000) total. The precomputation is done once for each test case.",
-    "spaceComplexity": "O(200 * 200) \u2014 the dominant structure is the visited array.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdbool.h>\n\nint main() {\n    int T; if (scanf(\"%d\", &T)!=1) return 0;\n    while (T--) {\n        int A, B, C; scanf(\"%d %d %d\", &A, &B, &C);\n        bool visited[200][200] = {false};\n        int step = 0;\n        int best = A*100 + B;\n        int answer = 0;\n        visited[A][B] = true;\n        while (1) {\n            int nextA, nextB;\n            if (B >= C) {\n                nextA = B - C;\n                nextB = A;\n            } else if (A > 0) {\n                nextA = B + 100 - C;\n                nextB = A - 1;\n            } else {\n                break;\n            }\n            step++;\n            int cur = nextA*100 + nextB;\n            if (cur > best) { best = cur; answer = step; }\n            if (visited[nextA][nextB]) break;\n            visited[nextA][nextB] = true;\n            A = nextA; B = nextB;\n        }\n        printf(\"%d\\n\", answer);\n    }\n    return 0;\n}\n",
-      "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main(){\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int T; if(!(cin>>T)) return 0;\n    while(T--){\n        int A,B,C; cin>>A>>B>>C;\n        vector<vector<char>> visited(200, vector<char>(200,0));\n        int step=0, best=A*100+B, answer=0;\n        visited[A][B]=1;\n        while(true){\n            int nextA,nextB;\n            if(B>=C){\n                nextA = B - C;\n                nextB = A;\n            }else if(A>0){\n                nextA = B + 100 - C;\n                nextB = A - 1;\n            }else break;\n            ++step;\n            int cur = nextA*100 + nextB;\n            if(cur>best){best=cur; answer=step;}\n            if(visited[nextA][nextB]) break;\n            visited[nextA][nextB]=1;\n            A=nextA; B=nextB;\n        }\n        cout<<answer<<\"\\n\";\n    }\n    return 0;\n}\n",
-      "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        StringTokenizer st = new StringTokenizer(br.readLine());\n        int T = Integer.parseInt(st.nextToken());\n        StringBuilder sb = new StringBuilder();\n        for (int tc = 0; tc < T; tc++) {\n            st = new StringTokenizer(br.readLine());\n            int A = Integer.parseInt(st.nextToken());\n            int B = Integer.parseInt(st.nextToken());\n            int C = Integer.parseInt(st.nextToken());\n            boolean[][] visited = new boolean[200][200];\n            int step = 0;\n            int best = A * 100 + B;\n            int answer = 0;\n            visited[A][B] = true;\n            while (true) {\n                int nextA, nextB;\n                if (B >= C) {\n                    nextA = B - C;\n                    nextB = A;\n                } else if (A > 0) {\n                    nextA = B + 100 - C;\n                    nextB = A - 1;\n                } else {\n                    break;\n                }\n                step++;\n                int cur = nextA * 100 + nextB;\n                if (cur > best) {\n                    best = cur;\n                    answer = step;\n                }\n                if (visited[nextA][nextB]) break;\n                visited[nextA][nextB] = true;\n                A = nextA;\n                B = nextB;\n            }\n            sb.append(answer).append('\\n');\n        }\n        System.out.print(sb.toString());\n    }\n}\n",
-      "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        A = int(next(it)); B = int(next(it)); C = int(next(it))\n        visited = [[False]*200 for _ in range(200)]\n        step = 0\n        best = A*100 + B\n        answer = 0\n        visited[A][B] = True\n        while True:\n            if B >= C:\n                nextA = B - C\n                nextB = A\n            elif A > 0:\n                nextA = B + 100 - C\n                nextB = A - 1\n            else:\n                break\n            step += 1\n            cur = nextA*100 + nextB\n            if cur > best:\n                best = cur\n                answer = step\n            if visited[nextA][nextB]:\n                break\n            visited[nextA][nextB] = True\n            A, B = nextA, nextB\n        out.append(str(answer))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    solve()\n",
-      "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nif (input.length === 0) process.exit(0);\nconst T = Number(input[idx++]);\nlet results = [];\nfor (let t = 0; t < T; t++) {\n  let A = Number(input[idx++]);\n  let B = Number(input[idx++]);\n  const C = Number(input[idx++]);\n  const visited = Array.from({ length: 200 }, () => Array(200).fill(false));\n  let step = 0;\n  let best = A * 100 + B;\n  let answer = 0;\n  visited[A][B] = true;\n  while (true) {\n    let nextA, nextB;\n    if (B >= C) {\n      nextA = B - C;\n      nextB = A;\n    } else if (A > 0) {\n      nextA = B + 100 - C;\n      nextB = A - 1;\n    } else {\n      break;\n    }\n    step++;\n    const cur = nextA * 100 + nextB;\n    if (cur > best) {\n      best = cur;\n      answer = step;\n    }\n    if (visited[nextA][nextB]) break;\n    visited[nextA][nextB] = true;\n    A = nextA; B = nextB;\n  }\n  results.push(String(answer));\n}\nconsole.log(results.join('\\n'));\n"
+      "Python3": "# Time:  O(k * 3^n)\n# Space: O(2^n)\n\n# dp, submask enumeration\nclass Solution(object):\n    def distributeCookies(self, cookies, k):\n        \"\"\"\n        :type cookies: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        total = [0]*(1<<len(cookies))\n        for mask in range(1<<len(cookies)):\n            total[mask] = sum(cookies[i] for i in range(len(cookies)) if mask&(1<<i))\n        dp = [[float(\"inf\")]*(1<<len(cookies)) for _ in range(2)]\n        dp[0][0] = 0\n        for i in range(k):\n            for mask in range(1<<len(cookies)):\n                submask = mask\n                while submask:\n                    dp[(i+1)%2][mask] = min(dp[(i+1)%2][mask], max(total[submask], dp[i%2][mask^submask]))\n                    submask = (submask-1)&mask\n        return dp[k%2][-1]"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int distributeCookies(vector<int>& cookies, int k) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int distributeCookies(int[] cookies, int k) {\n        \n    }\n}",
+    "Python3": "# Time:  O(k * 3^n)\n# Space: O(2^n)\n\n# dp, submask enumeration\nclass Solution(object):\n    def distributeCookies(self, cookies, k):\n        \"\"\"\n        :type cookies: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        total = [0]*(1<<len(cookies))\n        for mask in range(1<<len(cookies)):\n            total[mask] = sum(cookies[i] for i in range(len(cookies)) if mask&(1<<i))\n        dp = [[float(\"inf\")]*(1<<len(cookies)) for _ in range(2)]\n        dp[0][0] = 0\n        for i in range(k):\n            for mask in range(1<<len(cookies)):\n                submask = mask\n                while submask:\n                    dp[(i+1)%2][mask] = min(dp[(i+1)%2][mask], max(total[submask], dp[i%2][mask^submask]))\n                    submask = (submask-1)&mask\n        return dp[k%2][-1]",
+    "Python": "class Solution(object):\n    def distributeCookies(self, cookies, k):\n        \"\"\"\n        :type cookies: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[]} cookies\n * @param {number} k\n * @return {number}\n */\nvar distributeCookies = function(cookies, k) {\n    \n};",
+    "TypeScript": "function distributeCookies(cookies: number[], k: number): number {\n    \n};",
+    "C#": "public class Solution {\n    public int DistributeCookies(int[] cookies, int k) {\n        \n    }\n}",
+    "C": "int distributeCookies(int* cookies, int cookiesSize, int k) {\n    \n}",
+    "Go": "func distributeCookies(cookies []int, k int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun distributeCookies(cookies: IntArray, k: Int): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func distributeCookies(_ cookies: [Int], _ k: Int) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn distribute_cookies(cookies: Vec<i32>, k: i32) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[]} cookies\n# @param {Integer} k\n# @return {Integer}\ndef distribute_cookies(cookies, k)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[] $cookies\n     * @param Integer $k\n     * @return Integer\n     */\n    function distributeCookies($cookies, $k) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int distributeCookies(List<int> cookies, int k) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def distributeCookies(cookies: Array[Int], k: Int): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec distribute_cookies(cookies :: [integer], k :: integer) :: integer\n  def distribute_cookies(cookies, k) do\n    \n  end\nend",
+    "Erlang": "-spec distribute_cookies(Cookies :: [integer()], K :: integer()) -> integer().\ndistribute_cookies(Cookies, K) ->\n  .",
+    "Racket": "(define/contract (distribute-cookies cookies k)\n  (-> (listof exact-integer?) exact-integer? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "distributeCookies",
+    "params": [
+      {
+        "name": "cookies",
+        "type": "integer[]"
+      },
+      {
+        "type": "integer",
+        "name": "k"
+      }
+    ]
+  },
+  "verified": false
 }

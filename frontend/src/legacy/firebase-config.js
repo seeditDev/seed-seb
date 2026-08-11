@@ -1,7 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import {
+    getAuth,
+    signInAnonymously,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updateProfile,
+    sendPasswordResetEmail,
+} from 'firebase/auth';
+import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
     apiKey: "AIzaSyANO2d-RUXV0x5fvTjRT1UkpssP-T_Qz1Q",
@@ -17,6 +27,17 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
+export const rtdb = getDatabase(app);
+
+// Re-export auth helpers so services can import from a single place
+export {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updateProfile,
+    sendPasswordResetEmail,
+};
 
 /**
  * SECURITY (P0): the app previously carried no Firebase identity at all, which

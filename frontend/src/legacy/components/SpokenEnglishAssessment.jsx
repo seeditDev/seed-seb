@@ -508,44 +508,49 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       submittedAt: new Date().toISOString()
     };
 
-    // 1. Resilient Firestore Storage (Matching MCQ & Coding Platform Architecture)
+    // 1. Single Canonical v2 Firestore Path (assessmentResults/{testId}/students/{userId})
     try {
-      const college = currentUser?.College || currentUser?.college || 'SEEDIT';
-      const year = currentUser?.Year || currentUser?.year || '2K27';
-      const department = currentUser?.Department || currentUser?.department || 'CSE';
+      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+      const userId = authData.uid || currentUser?.uid || userEmail.replace(/[@.]/g, '_');
 
-      // Path A: Master Hierarchical AssessmentResults document
-      const docPath = `AssessmentResults/${testId}/colleges/${college}/years/${year}/students/${userEmail}`;
-      await setDoc(doc(db, docPath), {
+      const v2DocPath = `assessmentResults/${testId}/students/${userId}`;
+      await setDoc(doc(db, v2DocPath), {
         ...firestorePayload,
         completed: true,
+        status: 'submitted',
+        submittedAt: serverTimestamp(),
         lastUpdatedAt: serverTimestamp()
       }, { merge: true });
 
-      // Path B: Student-centric sea_results subcollection (matching mcq_results & coding_results)
-      const seaDocPath = `colleges/${college}/years/${year}/departments/${department}/students/${userEmail}/sea_results/${testId}`;
-      await setDoc(doc(db, seaDocPath), {
+      // Mirror summary to users/{userId}/assessmentAttempts/{testId}
+      await setDoc(doc(db, 'users', userId, 'assessmentAttempts', testId), {
         ...firestorePayload,
+        assessmentId: testId,
+        type: 'sea',
         completed: true,
+        status: 'submitted',
         lastUpdatedAt: serverTimestamp()
-      }, { merge: true });
-
-      // Path C: Student contestAttempts document
-      await setDoc(doc(db, 'users', userEmail, 'contestAttempts', testId), {
-        ...firestorePayload,
-        completed: true,
-        lastUpdatedAt: serverTimestamp()
-      }, { merge: true });
-
-      // Path D: Assessment attempts tracker doc
-      const attemptRef = doc(db, 'assessmentAttempts', docId);
-      await setDoc(attemptRef, {
-        ...attemptPayload,
-        timestamp: serverTimestamp()
       }, { merge: true });
     } catch (fireErr) {
       console.warn('[Firestore Storage] Notice:', fireErr);
     }
+
+    // ── Course progress tracking (non-fatal) ──
+    try {
+      const courseCtx = JSON.parse(sessionStorage.getItem('seaCourseCtx') || '{}');
+      if (courseCtx.courseId && courseCtx.seriesId) {
+        const { default: MCQService } = await import('../services/mcqService');
+        await MCQService.markCourseProgress({
+          uid: userId,
+          courseId: courseCtx.courseId,
+          seriesId: courseCtx.seriesId,
+          testId: courseCtx.testId || testId,
+          score: firestorePayload?.overallScore || 0,
+          maxScore: courseCtx.totalMarks || 100,
+        });
+        sessionStorage.removeItem('seaCourseCtx');
+      }
+    } catch (_) { /* non-fatal */ }
 
     setIsSubmitting(false);
     setStage('completed');

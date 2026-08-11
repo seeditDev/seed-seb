@@ -262,19 +262,40 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
         const loadData = async () => {
             try {
-                const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
-                if (!authData.Email) {
-                    navigate("/login");
+                // ── Determine user: guest session or registered auth ────────────
+                const guestRaw = localStorage.getItem('guest_session');
+                const guestSession = guestRaw ? JSON.parse(guestRaw) : null;
+                let authData = null;
+
+                if (guestSession?.isGuest) {
+                    // Synthesise a minimal user object that the engines expect
+                    const syntheticUser = {
+                        isGuest: true,
+                        guestId: guestSession.guestId,
+                        Email: guestSession.email || `${guestSession.guestId}@guest.seed`,
+                        Name: guestSession.name || 'Guest',
+                        'Roll Number': guestSession.rollNo || '',
+                        College: guestSession.college || '',
+                        Department: guestSession.department || '',
+                        Year: guestSession.year || '',
+                        guestSession,
+                    };
+                    setUser(syntheticUser);
+                    // Guest MCQ test data must be pending in mcqTestData
+                    const hasPending = localStorage.getItem('mcqTestData');
+                    if (!hasPending) { navigate('/guest'); return; }
+                    // Guests skip access control & attempt fetching
                     return;
                 }
+
+                // Registered user path
+                authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+                if (!authData.Email) { navigate('/login'); return; }
                 setUser(authData);
 
                 // Redirect to unified student dashboard if no active test session exists
                 const hasPending = localStorage.getItem('mcqTestData');
-                if (!hasPending) {
-                    navigate("/student/dashboard");
-                    return;
-                }
+                if (!hasPending) { navigate('/student/dashboard'); return; }
 
                 // Load access control
                 const accessControlData = await DataService.getAccessControl();
@@ -1334,14 +1355,21 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         setSubmissionStep('validating');
 
         try {
-            // New: Mark as completed/submitting in DB immediately to prevent refresh reattempts
-            await MCQService.markTestAsSubmitting(
-                user.Email,
-                currentTest.testInfo?.id || currentTest.id || 'unknown',
-                user.College,
-                user.Year,
-                user.Department
-            );
+            // ── Detect guest vs registered user once — used throughout this function ──
+            const guestSession = user?.isGuest ? user.guestSession : null;
+            if (guestSession) {
+                // For guests, skip markTestAsSubmitting (requires auth UID)
+                // Proceed straight to grading
+            } else {
+                // New: Mark as completed/submitting in DB immediately to prevent refresh reattempts
+                await MCQService.markTestAsSubmitting(
+                    user.Email,
+                    currentTest.testInfo?.id || currentTest.id || 'unknown',
+                    user.College,
+                    user.Year,
+                    user.Department
+                );
+            }
 
             // Step 1: Validating answers
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1422,6 +1450,27 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
             console.log('[MCQPage] Submitting result:', resultData);
 
+            // ── Guest path — write to guests subcollection ───────────────────────
+            if (guestSession) {
+                const testIdForGuest = currentTest.testInfo?.id || currentTest.id || 'unknown';
+                await MCQService.writeGuestResult(resultData, testIdForGuest, guestSession);
+                // Lock re-attempts (writeGuestResult sets localStorage, but double-stamp here)
+                try {
+                    localStorage.setItem(`guest_done_${testIdForGuest}_${guestSession.guestId}`, 'true');
+                    localStorage.removeItem('guest_session');
+                } catch (_) { /* non-fatal */ }
+                setSubmissionStep('submitted');
+                setCurrentTest(prev => ({ ...prev, submitted: true }));
+                setShowConfirmSubmit(false);
+                setShowReviewAnswers(false);
+                setSubmissionStatus('success');
+                submitGuard.complete();
+                clearTestSessionStorage();
+                setActiveTestSlug(null);
+                stopGlobalCameraStream();
+                return;
+            }
+
             // Submit to both Firestore and Google Sheets
             const submissionResult = await MCQService.submitMCQResult(resultData);
 
@@ -1446,6 +1495,21 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 submitGuard.complete();
                 // Denormalise completion so the dashboard needs no per-card reads.
                 await markAssessmentCompleted(user, currentTest.testInfo?.id || currentTest.id);
+
+                // ── Course progress tracking ──
+                try {
+                    const courseCtx = JSON.parse(localStorage.getItem('mcqTestCourseCtx') || '{}');
+                    if (courseCtx.courseId && courseCtx.seriesId) {
+                        await MCQService.markCourseProgress({
+                            uid: user.uid || user.UID || '',
+                            courseId: courseCtx.courseId,
+                            seriesId: courseCtx.seriesId,
+                            testId: courseCtx.testId || currentTest.testInfo?.id || currentTest.id,
+                            score: correctAnswers,
+                            maxScore: courseCtx.totalMarks || totalQuestions,
+                        });
+                    }
+                } catch (_) { /* non-fatal */ }
 
                 // Clear session storage on successful submission
                 clearTestSessionStorage();

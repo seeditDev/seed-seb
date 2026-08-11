@@ -1,106 +1,344 @@
 {
   "questionId": "Q2981",
-  "title": "Brackets",
-  "slug": "brackets",
+  "title": "Determine Longest Special Substring That Occurs Thrice I",
+  "slug": "find-longest-special-substring-that-occurs-thrice-i",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
     "category": "Strings",
-    "difficulty": "Easy",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "String Manipulation",
-      "Strings",
-      "Parentheses Sequence"
+      "hash-table",
+      "string",
+      "binary-search",
+      "sliding-window",
+      "counting"
     ],
     "companyTags": [],
     "topicTags": [
-      "Constructive Algorithms"
-    ]
+      "hash-table",
+      "string",
+      "binary-search",
+      "sliding-window",
+      "counting"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "A valid parentheses sequence is a non-empty string where each character is either '**(**' or '**)**', which satisfies the following constraint:\n\n\n\n\tYou can find a way to repeat erasing adjacent pairs of parentheses '**()**' until it becomes empty.\n\n\n\n\tFor example, '**(())**' and '**()((()()))**' are valid parentheses sequences, but '**)()(**' and '**(()**' are not.\n\n\n\n\tMike has a valid parentheses sequence. He really likes everything about his sequence, except the fact that it is quite long. So Mike has recently decided that he will replace his parentheses sequence with a new one in the near future. But not every valid parentheses sequence will satisfy him. To help you understand his requirements we'll introduce the pseudocode of function **F(S)**:\n\n\n\tFUNCTION F( S - a valid parentheses sequence )\n\tBEGIN\n\t\tbalance = 0\n\t\tmax_balance = 0\n\t\tFOR index FROM 1 TO LENGTH(S)\n\t\tBEGIN\n\t\t\tif S[index] == '(' then balance = balance + 1\n\t\t\tif S[index] == ')' then balance = balance - 1\n\t\t\tmax_balance = max( max_balance, balance )\n\t\tEND\n\t\tRETURN max_balance\n\tEND\n\n\tIn other words, **F(S)** is equal to the maximal balance over all prefixes of **S**.\n\n\n\n\tLet's denote **A** as Mike's current parentheses sequence, and **B** as a candidate for a new one. Mike is willing to replace **A** with **B** if **F(A)** is equal to **F(B)**. He would also like to choose **B** with the minimal possible length amongst ones satisfying the previous condition. If there are several such strings with the minimal possible length, then Mike will choose the least one lexicographically, considering '**(**' to be less than '**)**'.\n\n\n\n\tHelp Mike!",
+    "problemStatement": "You receive a string `s` that is composed of lowercase English letters.\n\nA string is called **special** if it is made up of only a single character. As an example, the string `\"abc\"` is not special, whereas the strings `\"ddd\"`, `\"zz\"`, and `\"f\"` are special.\n\nOutput *the length of the **longest special substring** of* `s` *which occurs **no fewer than thrice***, *or* `-1` *if no special substring occurs no fewer than thrice*.\n\nA **substring** is a contiguous **non-empty** sequence of characters within a string.\n\n**Example 1:**\n\n```\nInput: s = \"aaaa\"\nOutput: 2\nExplanation: The longest special substring which occurs thrice is \"aa\": substrings \"aaaa\", \"aaaa\", and \"aaaa\".\nIt can be shown that the maximum length achievable is 2.\n```\n\n**Example 2:**\n\n```\nInput: s = \"abcdef\"\nOutput: -1\nExplanation: There exists no special substring which occurs at least thrice. Hence return -1.\n```\n\n**Example 3:**\n\n```\nInput: s = \"abcaba\"\nOutput: 1\nExplanation: The longest special substring which occurs thrice is \"a\": substrings \"abcaba\", \"abcaba\", and \"abcaba\".\nIt can be shown that the maximum length achievable is 1.\n```\n\n**Constraints:**\n\n* `3 <= s.length <= 50`\n* `s` is composed of only lowercase English letters.",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "1 \u2264 |A| \u2264 100000",
-      "A only consists of the characters '(' and ')'",
-      "A is a valid parentheses sequence"
+      "None"
     ],
-    "inputFormat": "The first line contains T, the number of test cases. Each test case contains a string A denoting Mike's parentheses sequence.",
-    "outputFormat": "For each test case, print the valid parentheses sequence that should be chosen by Mike to replace A.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "1\n()((()()))",
-        "output": "((()))",
-        "explanation": "The maximal balance of the input string is 3, so the lexicographically smallest valid parentheses sequence with the same balance is '((()))'."
+        "type": "reg",
+        "input": "s = \"aaaa\"",
+        "output": "2",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n()()()",
-        "output": "()",
-        "explanation": "The maximal balance of the input string is 1, so the lexicographically smallest valid parentheses sequence with the same balance is '()'."
+        "type": "reg",
+        "input": "s = \"abcdef\"",
+        "output": "-1",
+        "explanation": ""
       },
       {
         "id": "sample_3",
-        "input": "1\n((()))",
-        "output": "((()))",
-        "explanation": "The maximal balance of the input string is 3, so the lexicographically smallest valid parentheses sequence with the same balance is '((()))'."
+        "type": "reg",
+        "input": "s = \"abcaba\"",
+        "output": "1",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n()",
-        "expectedOutput": "()",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n((((((((((()))))))))))",
-        "expectedOutput": "((((((((((()))))))))))",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n((((()))))",
-        "expectedOutput": "((((()))))",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n()()()()()",
-        "expectedOutput": "()",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "5\n()((()()))\n()()()\n((()))\n((((()))))\n()()()()()",
-        "expectedOutput": "((()))\n()\n((()))\n((((()))))\n()",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +349,68 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to calculate the maximal balance of the input string A, which is the maximum value of the balance at any point in the string. The balance is calculated by incrementing it for each '(' and decrementing it for each ')'. The lexicographically smallest valid parentheses sequence with the same balance is then constructed by printing '(' max_balance times followed by ')' max_balance times.",
-    "timeComplexity": "O(|A|) per test case, O(T*|A|) total.",
-    "spaceComplexity": "O(|A|) \u2014 for storing the input string A.",
     "code": {
-      "C": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        char A[100001];\n        scanf(\"%s\", A);\n        int balance = 0, max_balance = 0;\n        for (int i = 0; i < strlen(A); i++) {\n            if (A[i] == '(') balance++;\n            else balance--;\n            max_balance = (max_balance > balance) ? max_balance : balance;\n        }\n        for (int i = 0; i < max_balance; i++) printf(\"(\");\n        for (int i = 0; i < max_balance; i++) printf(\")\");\n        printf(\"\\n\");\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        string A;\n        cin >> A;\n        int balance = 0, max_balance = 0;\n        for (int i = 0; i < A.length(); i++) {\n            if (A[i] == '(') balance++;\n            else balance--;\n            max_balance = (max_balance > balance) ? max_balance : balance;\n        }\n        for (int i = 0; i < max_balance; i++) cout << '(';\n        for (int i = 0; i < max_balance; i++) cout << ')';\n        cout << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            String A = sc.next();\n            int balance = 0, max_balance = 0;\n            for (int i = 0; i < A.length(); i++) {\n                if (A.charAt(i) == '(') balance++;\n                else balance--;\n                max_balance = Math.max(max_balance, balance);\n            }\n            for (int i = 0; i < max_balance; i++) System.out.print('(');\n            for (int i = 0; i < max_balance; i++) System.out.print(')');\n            System.out.println();\n        }\n    }\n}",
-      "Python3": "import sys\n\nfor _ in range(int(input())):\n    A = input()\n    balance = 0\n    max_balance = 0\n    for char in A:\n        if char == '(': balance += 1\n        else: balance -= 1\n        max_balance = max(max_balance, balance)\n    print('(' * max_balance + ')' * max_balance)\n",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\n\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const A = readline();\n    let balance = 0, max_balance = 0;\n    for (let j = 0; j < A.length; j++) {\n        if (A[j] === '(') balance++;\n        else balance--;\n        max_balance = Math.max(max_balance, balance);\n    }\n    let result = '';\n    for (let j = 0; j < max_balance; j++) result += '(';\n    for (let j = 0; j < max_balance; j++) result += ')';\n    console.log(result);\n}"
+      "Python3": "# Time:  O(26 * 3 + n * 3)\n# Space: O(26 * 3)\n\n# string, hash table\nclass Solution(object):\n    def maximumLength(self, s):\n        \"\"\"\n        :type s: str\n        :rtype: int\n        \"\"\"\n        lookup = [[0]*3 for _ in range(26)]\n        result = cnt = 0\n        for i, c in enumerate(s):\n            cnt += 1\n            if i+1 != len(s) and s[i+1] == s[i]:\n                continue\n            curr = lookup[ord(c)-ord('a')]\n            for j in range(len(curr)):\n                if curr[j] < cnt:\n                    cnt, curr[j] = curr[j], cnt\n            cnt = 0\n            result = max(result, max(curr[0]-2, min(curr[0]-1, curr[1]), curr[2]))\n        return result if result else -1"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int maximumLength(string s) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int maximumLength(String s) {\n        \n    }\n}",
+    "Python3": "# Time:  O(26 * 3 + n * 3)\n# Space: O(26 * 3)\n\n# string, hash table\nclass Solution(object):\n    def maximumLength(self, s):\n        \"\"\"\n        :type s: str\n        :rtype: int\n        \"\"\"\n        lookup = [[0]*3 for _ in range(26)]\n        result = cnt = 0\n        for i, c in enumerate(s):\n            cnt += 1\n            if i+1 != len(s) and s[i+1] == s[i]:\n                continue\n            curr = lookup[ord(c)-ord('a')]\n            for j in range(len(curr)):\n                if curr[j] < cnt:\n                    cnt, curr[j] = curr[j], cnt\n            cnt = 0\n            result = max(result, max(curr[0]-2, min(curr[0]-1, curr[1]), curr[2]))\n        return result if result else -1",
+    "Python": "class Solution(object):\n    def maximumLength(self, s):\n        \"\"\"\n        :type s: str\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {string} s\n * @return {number}\n */\nvar maximumLength = function(s) {\n    \n};",
+    "TypeScript": "function maximumLength(s: string): number {\n    \n};",
+    "C#": "public class Solution {\n    public int MaximumLength(string s) {\n        \n    }\n}",
+    "C": "int maximumLength(char* s) {\n    \n}",
+    "Go": "func maximumLength(s string) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maximumLength(s: String): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maximumLength(_ s: String) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn maximum_length(s: String) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {String} s\n# @return {Integer}\ndef maximum_length(s)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param String $s\n     * @return Integer\n     */\n    function maximumLength($s) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int maximumLength(String s) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maximumLength(s: String): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec maximum_length(s :: String.t) :: integer\n  def maximum_length(s) do\n    \n  end\nend",
+    "Erlang": "-spec maximum_length(S :: unicode:unicode_binary()) -> integer().\nmaximum_length(S) ->\n  .",
+    "Racket": "(define/contract (maximum-length s)\n  (-> string? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "maximumLength",
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ]
+  },
+  "verified": false
 }

@@ -494,9 +494,49 @@ const StudentDashboard = () => {
   useEffect(() => {
     const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
     const userEmail = authData.Email || authData.email;
+    const userUid   = authData.uid   || authData.UID;
     if (userEmail || authData.Name) {
       setUser(authData);
       loadAssessments(authData);
+
+      // ── Force completion refresh when returning from an assessment ──
+      if (location.state?.justCompleted) {
+        const email = authData.Email || authData.email || '';
+        if (email) invalidateCompletionCache(email);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
+      // ── Firestore profile enrichment (background, non-blocking) ──
+      // Reads users/{uid} and merges fresh profile fields into user state
+      // so the profile tab always shows Firestore-authoritative data.
+      const enrichProfile = async () => {
+        const lookupId = userUid || userEmail?.replace(/[@.]/g, '_');
+        if (!lookupId) return;
+        try {
+          const profileSnap = await getDoc(doc(db, 'users', lookupId));
+          if (profileSnap.exists()) {
+            const p = profileSnap.data();
+            const enriched = {
+              ...authData,
+              Name:         p.name         || p.displayName  || authData.Name || '',
+              Email:        p.email         || userEmail      || '',
+              College:      p.college       || p.institution  || authData.College || '',
+              Department:   p.department    || p.dept         || authData.Department || '',
+              Year:         p.year          || p.graduationYear || authData.Year || '',
+              'Roll Number': p.rollNumber   || p.rollNo       || authData['Roll Number'] || '',
+              photoURL:     p.photoURL      || authData.photoURL || '',
+              tenantId:     p.tenantId      || authData.tenantId || '',
+              isPremium:    p.isPremium     ?? authData.isPremium ?? false,
+              uid:          p.uid           || userUid || lookupId,
+            };
+            setUser(enriched);
+            localStorage.setItem('auth_data', JSON.stringify(enriched));
+          }
+        } catch (enrichErr) {
+          console.warn('[Dashboard] Profile enrichment skipped:', enrichErr.message);
+        }
+      };
+      enrichProfile();
 
       // Load user API keys from Firestore
       if (userEmail) {
@@ -560,175 +600,102 @@ const StudentDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Fetch access control configurations
-      const accessControlData = await DataService.getAccessControl();
+      // ── NEW: fetch TestDocs directly from courses/{courseId}/series/{seriesId}/tests/{testId}
+      const testDocs = await DataService.getAllowedTestDocs();
 
-      const departmentAccess = accessControlData?.access_control?.colleges?.[userData.College]?.[userData.Year]?.[userData.Department];
-      if (!departmentAccess) {
-        setAssessments([]);
-        setFilteredAssessments([]);
-        setLoading(false);
-        return;
-      }
+      const isPremiumUser = userData?.Premium === true || userData?.Premium === 'true'
+        || userData?.isPremium === true;
 
-      const allowedModuleIds = departmentAccess.allowed_modules || [];
-      const isPremiumUser = userData?.Premium === true || userData?.Premium === 'true' || userData?.Premium === 1 || userData?.Premium === 'Yes' || !!userData?.isPremium;
-
-      // Helper to compile modules from direct course.modules and nested course.subcourses[subId].modules
-      const extractAllModules = (course) => {
-        if (!course) return {};
-        const modules = {};
-        if (course.modules) {
-          Object.entries(course.modules).forEach(([k, mod]) => {
-            modules[k] = { ...mod, seriesName: course.title || 'General Assessments', seriesKey: 'general', seriesDescription: course.description || '' };
-          });
-        }
-        if (course.subcourses) {
-          Object.entries(course.subcourses).forEach(([subId, sub]) => {
-            if (sub.modules) {
-              Object.entries(sub.modules).forEach(([k, mod]) => {
-                modules[k] = { ...mod, seriesName: sub.title || subId, seriesKey: subId, seriesDescription: sub.description || '' };
-              });
+      const combined = testDocs
+        .filter(t => !t.isPremium || isPremiumUser)
+        .map(t => {
+          // Normalise schedule from ISO strings → shape getScheduleStatus() expects
+          let schedule = null;
+          if (t.schedule?.start || t.schedule?.end) {
+            const s = t.schedule.start ? new Date(t.schedule.start) : null;
+            const e = t.schedule.end ? new Date(t.schedule.end) : null;
+            if (s || e) {
+              schedule = {
+                startDate: s ? s.toISOString().slice(0, 10) : '',
+                startTime: s ? s.toTimeString().slice(0, 8) : '',
+                endDate:   e ? e.toISOString().slice(0, 10) : '',
+                endTime:   e ? e.toTimeString().slice(0, 8) : '',
+              };
             }
-          });
-        }
-        return modules;
-      };
+          }
 
-      // 2. Parse MCQ and Coding Modules from all assessment-flagged courses
-      const mcqList = [];
-      const codingList = [];
+          // Derive type key used by launch wizard (spoken-english -> spoken_english)
+          const rawType = t.type || 'mcq';
+          const isMultiSection = rawType === 'msa';
+          const engineType = rawType === 'spoken-english' ? 'spoken_english'
+                           : rawType === 'msa'            ? 'MSA'
+                           : rawType; // 'mcq' | 'coding' | 'sea'
 
-      Object.entries(accessControlData?.courses || {}).forEach(([courseId, course]) => {
-        const isAssessment = !!course.isAssessment || courseId === 'assessments' || courseId === 'mcqs';
-        if (!isAssessment) return; // skip practice courses
+          return {
+            // ── identity ──
+            id:              t.id,
+            courseId:        t.courseId,
+            seriesId:        t.seriesId,
+            // ── display ──
+            name:            t.name,
+            seriesName:      t.seriesTitle || t.courseTitle || 'Assessments',
+            courseTitle:     t.courseTitle || '',
+            seriesKey:       t.seriesId,
+            difficulty:      t.difficulty || 'Medium',
+            // ── engine routing ──
+            type:            engineType,
+            isMultiSection,
+            slug:            t.assessmentId || t.id,
+            url:             t.cdnUrl || '',
+            cdnUrl:          t.cdnUrl || '',
+            // ── sections (MSA) ──
+            sections:        t.sections || [],
+            // ── timing ──
+            duration:        t.duration_minutes || 60,
+            schedule,
+            // ── access ──
+            passkey:         t.passkey || '',
+            isPremium:       t.isPremium,
+            guestEnabled:    t.guestEnabled,
+            // ── proctor ──
+            proctored:       t.proctored,
+            audioProctored:  t.audioProctored,
+            maxViolations:   t.maxViolations ?? 5,
+            maxAudioViolations: t.maxAudioViolations ?? 3,
+            // ── settings ──
+            settings:        t.settings,
+            display_order:   t.display_order ?? 999,
+            totalMarks:      t.totalMarks || 100,
+            // ── initially false, resolved below ──
+            completed:       false,
+          };
+        });
 
-        const courseModules = extractAllModules(course);
-        Object.entries(courseModules)
-          .filter(([key, module]) => {
-            const isPremiumModule = !!module.isPremium;
-            const premiumAccess = !isPremiumModule || isPremiumUser;
-            return allowedModuleIds.includes(module.id) && premiumAccess;
-          })
-          .forEach(([key, module]) => {
-            const derivedSlug = module.slug || slugify(module.id || module.name || key);
-
-            // Determine if it's MCQ or Coding. If module.type is 'mcq' or 'coding', use that.
-            // Fallback to courseId or prefix checking (e.g. prefix is 'MA' -> mcq, 'CA' -> coding)
-            let type = module.type;
-            if (!type) {
-              if (courseId === 'mcqs' || module.id?.startsWith('MA') || module.url?.includes('mcqs/') || module.url?.includes('/mcq/')) {
-                type = 'mcq';
-              } else {
-                type = 'coding';
-              }
-            }
-
-            let finalUrl = module.url || '';
-            if (finalUrl && !finalUrl.endsWith('.json')) {
-              const urlType = type === 'MSA' ? (courseId === 'mcqs' || module.id?.startsWith('MA') ? 'mcq' : 'coding') : type;
-              if (module.slug) {
-                finalUrl = `/${urlType}/testbank/${module.slug}.json`;
-              } else if (finalUrl.startsWith(`/student/${urlType}/`)) {
-                const slugFromUrl = finalUrl.split('/').filter(Boolean).pop();
-                finalUrl = `/${urlType}/testbank/${slugFromUrl}.json`;
-              } else {
-                finalUrl = `/${urlType}/testbank/${slugify(module.name || key)}.json`;
-              }
-            }
-
-            const item = {
-              key,
-              id: module.id,
-              name: module.name,
-              url: finalUrl,
-              passkey: module.passkey,
-              schedule: module.schedule,
-              difficulty: module.difficulty || 'Medium',
-              duration: module.duration_minutes || 60,
-              slug: derivedSlug,
-              type,
-              isMultiSection: !!module.isMultiSection || type === 'MSA',
-              sections: module.sections || [],
-              seriesName: module.seriesName || 'General Assessments',
-              seriesKey: module.seriesKey || 'general',
-              seriesDescription: module.seriesDescription || '',
-              proctored: module.proctored,
-              audioProctored: module.audioProctored,
-              maxViolations: module.maxViolations,
-              maxAudioViolations: module.maxAudioViolations,
-              display_order: typeof module.display_order === 'number' ? module.display_order : (typeof module.displayOrder === 'number' ? module.displayOrder : 9999),
-              questionIds: module.questionIds || (Array.isArray(module.questions) ? module.questions : []),
-              questions: Array.isArray(module.questions) ? module.questions.length : (typeof module.questions === 'number' ? module.questions : (module.questionIds?.length || 0))
-            };
-
-            const listType = type === 'coding' || (type === 'MSA' && courseId === 'assessments') ? 'coding' : 'mcq';
-            if (listType === 'coding') {
-              item.languages = module.languages || ["c", "cpp", "java", "python"];
-              codingList.push(item);
-            } else {
-              mcqList.push(item);
-            }
-          });
-      });
-
-      const combined = [...mcqList, ...codingList];
-
-      // Sort combined array based on availability status, display order, and date/time
+      // Sort: Active → Upcoming → Expired, then display_order, then schedule start
       combined.sort((a, b) => {
-        const statusPriority = { "Active": 0, "Upcoming": 1, "Expired": 2 };
-        const statusA = getScheduleStatus(a.schedule).status;
-        const statusB = getScheduleStatus(b.schedule).status;
-
-        const priorityA = statusPriority[statusA] ?? 99;
-        const priorityB = statusPriority[statusB] ?? 99;
-        if (priorityA !== priorityB) {
-          return priorityA - priorityB;
-        }
-
-        // Secondary sort: display_order (ascending)
-        const orderA = typeof a.display_order === 'number' ? a.display_order : 9999;
-        const orderB = typeof b.display_order === 'number' ? b.display_order : 9999;
-        if (orderA !== orderB) {
-          return orderA - orderB;
-        }
-
-        // Tertiary sort: startDate (ascending)
-        const dateA = a.schedule?.startDate || '';
-        const dateB = b.schedule?.startDate || '';
-        if (dateA !== dateB) {
-          return dateA.localeCompare(dateB);
-        }
-
-        // Quaternary sort: startTime (ascending)
-        const timeA = a.schedule?.startTime || '';
-        const timeB = b.schedule?.startTime || '';
-        return timeA.localeCompare(timeB);
+        const pri = { Active: 0, Upcoming: 1, Expired: 2 };
+        const sa = getScheduleStatus(a.schedule).status;
+        const sb = getScheduleStatus(b.schedule).status;
+        if (pri[sa] !== pri[sb]) return (pri[sa] ?? 99) - (pri[sb] ?? 99);
+        if (a.display_order !== b.display_order) return a.display_order - b.display_order;
+        return (a.schedule?.startDate || '').localeCompare(b.schedule?.startDate || '');
       });
 
-      // Resolve completion status for every card in a BOUNDED number of reads.
-      //
-      // BUG FIXED (P0 read amplification): this used to be a
-      // `Promise.all(combined.map(...))` where each item did its own getDoc /
-      // MCQService.checkExistingAttempt / CodingAssessmentService.checkExistingAttempt
-      // — and the spoken-English branch did up to three sequential getDocs.
-      // A 30-card dashboard cost 30-90 uncached reads on every mount, and the
-      // effect refired on tab focus. attemptStatusService reads a denormalised
-      // completion index on the user document (1 read) and falls back to at
-      // most one batched `documentId() in [...]` query per result collection,
-      // with a 60s session cache on top.
+      // Resolve completion status (1 Firestore read via attempt index)
+      // force:true when returning from assessment (cache already invalidated)
       try {
-        const completionMap = await fetchCompletionMap(userData, combined.map((item) => item.id));
-        combined.forEach((item) => { item.completed = completionMap[item.id] === true; });
+        const { fetchCompletionMap } = await import('../services/attemptStatusService');
+        const forceRefresh = !!(location?.state?.justCompleted);
+        const completionMap = await fetchCompletionMap(userData, combined.map(i => i.id), { force: forceRefresh });
+        combined.forEach(item => { item.completed = completionMap[item.id] === true; });
       } catch (e) {
-        console.warn('Failed to resolve assessment completion status:', e?.message);
-        combined.forEach((item) => { item.completed = item.completed === true; });
+        console.warn('[loadAssessments] completion map failed:', e?.message);
       }
 
       setAssessments(combined);
       setFilteredAssessments(combined);
     } catch (err) {
-      console.error("Failed to load assessments map:", err);
+      console.error("Failed to load assessments:", err);
       setError("Failed to retrieve your assigned assessments. Please try again.");
     } finally {
       setLoading(false);
@@ -795,37 +762,72 @@ const StudentDashboard = () => {
     setFilteredAssessments(filtered);
   }, [searchTerm, filterDifficulty, filterType, filterStatus, assessments]);
 
-  // Fetch JSON files: GitHub Raw Primary (1st), GitHub API (2nd), Local Fallback (3rd)
+  // Fetch JSON files: CDN direct (1st), authenticated GitHub API with PAT (2nd), local fallback (3rd)
   const fetchJSONFile = async (url) => {
-    const cleanUrl = url.replace(/^\/+/, '').replace(/^seed-contents\//, '').replace(/^SEEDDB\//, '');
+    // ── Guard: empty URL means the test was never published ──
+    if (!url || !url.trim()) {
+      throw new Error('Assessment JSON URL is not set. Please ask your administrator to publish this test slug.');
+    }
 
-    // 1st: GitHub Raw Primary (seed-contents repo)
+    // Strip to relative path (handles full CDN URLs and relative paths)
+    const cleanUrl = url
+      .replace(/^https?:\/\/raw\.githubusercontent\.com\/seeditDev\/[^/]+\/main\//, '')
+      .replace(/^https?:\/\/api\.github\.com\/.*\/contents\//, '')
+      .replace(/^\/+/, '')
+      .replace(/^seed-contents\//, '')
+      .replace(/^SEEDDB\//, '');
+
+    // Helper: authenticated GitHub Contents API fetch
+    const fetchViaGitHubAPI = async (repo, path) => {
+      const pat = import.meta.env?.VITE_GITHUB_PAT;
+      const headers = { Accept: 'application/vnd.github.v3+json' };
+      if (pat) headers['Authorization'] = `token ${pat}`;
+      const res = await fetch(
+        `https://api.github.com/repos/seeditDev/${repo}/contents/${path}`,
+        { headers }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.content) return null;
+      const decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+      return JSON.parse(decoded);
+    };
+
+    // 1st: If a full CDN URL is stored, hit it directly (cache-busted)
+    if (url.startsWith('https://raw.githubusercontent.com/')) {
+      try {
+        const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`);
+        if (res.ok) return await res.json();
+      } catch (_) {}
+    }
+
+    // 2nd: seed-contents CDN (public, fast)
     try {
-      const seedContentsRawUrl = `https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cleanUrl}`;
-      const rawRes = await fetch(seedContentsRawUrl);
+      const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cleanUrl}?_t=${Date.now()}`);
       if (rawRes.ok) return await rawRes.json();
     } catch (_) {}
 
-    // 2nd: GitHub Raw Primary (SEEDDB repo)
+    // 3rd: SEEDDB CDN (public, fast)
     try {
-      const seedDbRawUrl = `https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cleanUrl}`;
-      const rawRes = await fetch(seedDbRawUrl);
+      const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cleanUrl}?_t=${Date.now()}`);
       if (rawRes.ok) return await rawRes.json();
     } catch (_) {}
 
-    // 3rd: authenticated fallback via the server-side proxy.
-    // SECURITY: the GitHub PAT used to be reconstructed here from an
-    // atob()-obfuscated char-array in the client bundle. It is now held only as
-    // a Worker secret and never reaches the browser.
+    // 4th: seed-contents via authenticated GitHub API (uses VITE_GITHUB_PAT)
     try {
-      const proxied = await fetchContentJSON(cleanUrl, { localFirst: false });
-      if (proxied !== undefined) return proxied;
+      const result = await fetchViaGitHubAPI('seed-contents', cleanUrl);
+      if (result) return result;
     } catch (_) {}
 
-    // 4th: Local Fallback
+    // 5th: SEEDDB via authenticated GitHub API (uses VITE_GITHUB_PAT)
     try {
-      const localUrl = `/seed-contents/${cleanUrl}`;
-      const localRes = await fetch(localUrl);
+      const result = await fetchViaGitHubAPI('SEEDDB', cleanUrl);
+      if (result) return result;
+    } catch (_) {}
+
+    // 6th: Local public/seed-contents fallback (dev / offline)
+    try {
+      const localRes = await fetch(`/seed-contents/${cleanUrl}`);
       if (localRes.ok) return await localRes.json();
     } catch (_) {}
 
@@ -1047,17 +1049,39 @@ const StudentDashboard = () => {
       const nowISO = timeService.getNow().toISOString();
       const durationSec = assessment.duration * 60;
 
-      const testData = await fetchJSONFile(assessment.url);
-
-      if (assessment.type === 'spoken_english' || assessment.type === 'SPOKEN_ENGLISH' || assessment.url?.includes('spoken_english')) {
-        sessionStorage.setItem("spokenEnglishAssessmentData", JSON.stringify({ ...testData, ...assessment }));
-        setLaunchStep(null);
-        navigate(`/student/spoken-english/${assessment.slug}`);
-      } else if (assessment.isMultiSection) {
+      // ── MSA: sections carry their own cdnUrls — no top-level JSON needed ──
+      if (assessment.isMultiSection || assessment.type === 'MSA' || assessment.type === 'msa') {
         sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
+        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
+          courseId:   assessment.courseId  || '',
+          seriesId:   assessment.seriesId  || '',
+          testId:     assessment.id        || '',
+          totalMarks: assessment.totalMarks || 100,
+          settings:   assessment.settings  || {},
+        }));
         setLaunchStep(null);
         navigate(`/student/assessment/multisection/${assessment.slug}`);
-      } else if (assessment.type === 'mcq') {
+        return;
+      }
+
+      // ── SEA: data is in Firestore / passed via assessment object ──
+      if (assessment.type === 'spoken_english' || assessment.type === 'SPOKEN_ENGLISH' || assessment.type === 'sea') {
+        sessionStorage.setItem("spokenEnglishAssessmentData", JSON.stringify(assessment));
+        sessionStorage.setItem('seaCourseCtx', JSON.stringify({
+          courseId:   assessment.courseId  || '',
+          seriesId:   assessment.seriesId  || '',
+          testId:     assessment.id        || '',
+          totalMarks: assessment.totalMarks || 100,
+        }));
+        setLaunchStep(null);
+        navigate(`/student/spoken-english/${assessment.slug}`);
+        return;
+      }
+
+      // ── MCQ / Coding: fetch the CDN JSON ──
+      const testData = await fetchJSONFile(assessment.url || assessment.cdnUrl);
+
+      if (assessment.type === 'mcq') {
         const testInfo = {
           ...testData,
           name: testData.name || assessment.name,
@@ -1075,6 +1099,13 @@ const StudentDashboard = () => {
         localStorage.setItem('mcqTestData', JSON.stringify({ test: assessment, testData }));
         localStorage.setItem('mcqActiveTestSlug', assessment.slug);
         localStorage.setItem('mcqTestNewLaunch', 'true');
+        localStorage.setItem('mcqTestCourseCtx', JSON.stringify({
+          courseId:  assessment.courseId  || '',
+          seriesId:  assessment.seriesId  || '',
+          testId:    assessment.id        || '',
+          totalMarks: assessment.totalMarks || testData.totalMarks || 100,
+          settings:  assessment.settings  || {},
+        }));
         setLaunchStep(null);
         navigate(`/student/mcq/${assessment.slug}`);
       } else {
@@ -1135,6 +1166,14 @@ const StudentDashboard = () => {
           questions: resolvedQuestions
         }));
         localStorage.setItem("codingAssessmentNewLaunch", "true");
+        // ── New: course progress context ──
+        localStorage.setItem('codingCourseCtx', JSON.stringify({
+          courseId:  assessment.courseId  || '',
+          seriesId:  assessment.seriesId  || '',
+          testId:    assessment.id        || '',
+          totalMarks: assessment.totalMarks || 100,
+          settings:  assessment.settings  || {},
+        }));
         setLaunchStep(null);
         navigate(`/student/coding/${assessment.slug}`);
       }
@@ -1723,22 +1762,12 @@ const StudentDashboard = () => {
                 </div>
                 <div className="profile-meta-title">
                   <h2>{name}</h2>
-                  <button
-                    type="button"
+                  <span
                     className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}
-                    onClick={() => setShowPremiumModal(true)}
-                    style={{
-                      cursor: 'pointer',
-                      border: 'none',
-                      outline: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                    title="Click to view Premium Edition details"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                   >
-                    {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium Edition</> : <><FaCrown style={{ color: '#fbbf24' }} /> Upgrade to Premium</>}
-                  </button>
+                    {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium</> : <>Student</>}
+                  </span>
                 </div>
               </div>
 
@@ -1914,22 +1943,12 @@ const StudentDashboard = () => {
               </div>
               <div className="profile-meta-title">
                 <h2>{name}</h2>
-                <button
-                  type="button"
+                <span
                   className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}
-                  onClick={() => setShowPremiumModal(true)}
-                  style={{
-                    cursor: 'pointer',
-                    border: 'none',
-                    outline: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                  title="Click to view Premium Edition details"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium Edition</> : <><FaCrown style={{ color: '#fbbf24' }} /> Upgrade to Premium</>}
-                </button>
+                  {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium</> : <>Student</>}
+                </span>
               </div>
             </div>
 

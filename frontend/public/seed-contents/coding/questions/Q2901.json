@@ -1,104 +1,318 @@
 {
   "questionId": "Q2901",
-  "title": "Counting Flags",
-  "slug": "counting-flags",
+  "title": "Maximum-Length Unequal Adjacent Groups Subsequence II",
+  "slug": "longest-unequal-adjacent-groups-subsequence-ii",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
+    "category": "Arrays",
     "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Combinatorics",
-      "Counting",
-      "Math"
+      "array",
+      "string",
+      "dynamic-programming"
     ],
     "companyTags": [],
     "topicTags": [
-      "Ad-hoc & Implementation"
-    ]
+      "array",
+      "string",
+      "dynamic-programming"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Mike is a famous traveler. He visits about 100 countries a year and buys the flag of each country he has been to.\n\n\n\nMike knows, that there are some flags, that correspond to one pattern, but colored in different ways. E.g. the flag of Ireland(link) and the flag of Belgium(link). In this problem we consider only **five** 2,2cm\u27151,1cm patterns of flags:\n\n\n\n\n\n\nThere are **N** different colors available to paint the flags and the colors are denoted by integers from 1 to **N**.\n\nMike wants you to count the number of different well-painted flags. We call a flag well-painted if it's made according to the following algorithm:\n\n\n\n\nPick up one of the flag patterns considered above;\nPaint each one-colored polygon on the pattern in a color encoded by an integer from **1** to **N**. Different colors are encoded with different integers. If two different one-colored polygons share a common side(not corner), than they must be painted in different colors. In any other case they can be painted in both equal and different colors.\n\nTwo flags are different, if they look different(have at least one pixel painted with different color).\n\n\n\nHelp Mike!\n\n\nText version of the pictures: **Picture 1**\n\n\n112233\n\n\n112233\n\n\n112233\n\n\n\n111111\n\n\n222222\n\n\n333333\n\n\n\n112222\n\n\n112222\n\n\n113333\n\n\n\n122223\n\n\n111333\n\n\n144443\n\n\n\n111222\n\n\n333222\n\n\n333444\n\n\n**Picture 2**\n\n\n112211\n\n\n112211\n\n\n112211\n\n\n\n221122\n\n\n221122\n\n\n221122\n\n\n\n111111\n\n\n222222\n\n\n111111\n\n\n\n222222\n\n\n111111\n\n\n222222",
+    "problemStatement": "You receive a string array `words`, and an array `groups`, both arrays having length `n`.\n\nThe **hamming distance** between two strings of equal length is the number of positions at which the corresponding characters are **different**.\n\nYou need to select the **longest** subsequence from an array of indices `[0, 1, ..., n - 1]`, such that for the subsequence denoted as `[i0, i1, ..., ik-1]` having length `k`, the following holds:\n\n* For **adjacent** indices in the subsequence, their corresponding groups are **unequal**, i.e., `groups[ij] != groups[ij+1]`, for each `j` where `0 < j + 1 < k`.\n* `words[ij]` and `words[ij+1]` are **equal** in length, and the **hamming distance** between them is `1`, where `0 < j + 1 < k`, for all indices in the subsequence.\n\nOutput *a string array containing the words corresponding to the indices **(in order)** in the selected subsequence*. If there are multiple answers, output *any of them*.\n\n**Note:** strings in `words` may be **unequal** in length.\n\n**Example 1:**\n\n**Input:** words = [\"bab\",\"dab\",\"cab\"], groups = [1,2,2]\n\n**Output:** [\"bab\",\"cab\"]\n\n**Explanation:** A subsequence that can be selected is `[0,2]`.\n\n* `groups[0] != groups[2]`\n* `words[0].length == words[2].length`, and the hamming distance between them is 1.\n\nSo, a valid answer is `[words[0],words[2]] = [\"bab\",\"cab\"]`.\n\nAnother subsequence that can be selected is `[0,1]`.\n\n* `groups[0] != groups[1]`\n* `words[0].length == words[1].length`, and the hamming distance between them is `1`.\n\nSo, another valid answer is `[words[0],words[1]] = [\"bab\",\"dab\"]`.\n\nIt can be shown that the length of the longest subsequence of indices that satisfies the conditions is `2`.\n\n**Example 2:**\n\n**Input:** words = [\"a\",\"b\",\"c\",\"d\"], groups = [1,2,3,4]\n\n**Output:** [\"a\",\"b\",\"c\",\"d\"]\n\n**Explanation:** We can select the subsequence `[0,1,2,3]`.\n\nIt satisfies both conditions.\n\nHence, the answer is `[words[0],words[1],words[2],words[3]] = [\"a\",\"b\",\"c\",\"d\"]`.\n\nIt has the longest length among all subsequences of indices that satisfy the conditions.\n\nHence, it is the only answer.\n\n**Constraints:**\n\n* `1 <= n == words.length == groups.length <= 1000`\n* `1 <= words[i].length <= 10`\n* `1 <= groups[i] <= n`\n* `words` is composed of **distinct** strings.\n* `words[i]` is composed of lowercase English letters.",
     "constraints": [
-      "1 \u2264 T \u2264 10000",
-      "1 \u2264 N \u2264 10000"
+      "None"
     ],
-    "inputFormat": "The first line contains T, the number of test cases. Each test case contains a single integer N.",
-    "outputFormat": "For each test case, print the number of different well-painted flags.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "3\n1\n2\n3",
-        "output": "0\n4\n42",
-        "explanation": "For N = 1, there are no well-painted flags. For N = 2, there are 4 well-painted flags. For N = 3, there are 42 well-painted flags."
-      },
-      {
-        "id": "sample_2",
-        "input": "1\n10",
-        "output": "7380",
-        "explanation": "For N = 10, there are 7380 well-painted flags."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n100",
-        "output": "94109400",
-        "explanation": "For N = 100, there are 94109400 well-painted flags."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n10000",
-        "expectedOutput": "94109400",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n3",
-        "expectedOutput": "42",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n4",
-        "expectedOutput": "276",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
-        "expectedOutput": "0\n4\n42\n276\n1820\n10530\n52800\n233220\n887040\n2799360\n8548960",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -109,18 +323,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we need to consider the different patterns of flags and count the number of ways to paint each pattern with the given colors. We can use combinatorial principles to calculate the number of ways to paint each pattern.",
-    "timeComplexity": "O(T) per test case, O(T) total. No precomputation is done.",
-    "spaceComplexity": "O(1) \u2014 the space used does not grow with the size of the input.",
     "code": {
-      "C": "#include <stdio.h>\nint main() {\n    int T, N;\n    scanf(\"%d\", &T);\n    while (T--) {\n        scanf(\"%d\", &N);\n        if (N < 3) {\n            printf(\"0\\n\");\n        } else {\n            printf(\"%lld\\n\", (long long)N*(N-1)*(N-2) + (long long)N*(N-1)*(N-2)*(N-3) + (long long)N*(N-1) + (long long)N*(N-1)*(N-2) + (long long)N*(N-1)*(N-2)*(N-3));\n        }\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T, N;\n    cin >> T;\n    while (T--) {\n        cin >> N;\n        if (N < 3) {\n            cout << 0 << endl;\n        } else {\n            cout << (long long)N*(N-1)*(N-2) + (long long)N*(N-1)*(N-2)*(N-3) + (long long)N*(N-1) + (long long)N*(N-1)*(N-2) + (long long)N*(N-1)*(N-2)*(N-3) << endl;\n        }\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int N = sc.nextInt();\n            if (N < 3) {\n                System.out.println(0);\n            } else {\n                System.out.println((long)N*(N-1)*(N-2) + (long)N*(N-1)*(N-2)*(N-3) + (long)N*(N-1) + (long)N*(N-1)*(N-2) + (long)N*(N-1)*(N-2)*(N-3));\n            }\n        }\n    }\n}",
-      "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    N = int(input())\n    if N < 3:\n        print(0)\n    else:\n        print(N*(N-1)*(N-2) + N*(N-1)*(N-2)*(N-3) + N*(N-1) + N*(N-1)*(N-2) + N*(N-1)*(N-2)*(N-3))",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\nconst T = parseInt(lines[i++]);\nfor (let i2 = 0; i2 < T; i2++) {\n    const N = parseInt(lines[i++]);\n    if (N < 3) {\n        console.log(0);\n    } else {\n        console.log(BigInt(N)*(BigInt(N)-1n)*(BigInt(N)-2n) + BigInt(N)*(BigInt(N)-1n)*(BigInt(N)-2n)*(BigInt(N)-3n) + BigInt(N)*(BigInt(N)-1n) + BigInt(N)*(BigInt(N)-1n)*(BigInt(N)-2n) + BigInt(N)*(BigInt(N)-1n)*(BigInt(N)-2n)*(BigInt(N)-3n));\n    }\n}"
+      "Python3": "# Time:  O(n^2)\n# Space: O(n)\n\nimport itertools\n\n\n# dp, backtracing\nclass Solution(object):\n    def getWordsInLongestSubsequence(self, n, words, groups):\n        \"\"\"\n        :type n: int\n        :type words: List[str]\n        :type groups: List[int]\n        :rtype: List[str]\n        \"\"\"\n        def check(s1, s2):\n            return len(s1) == len(s2) and sum(a != b for a, b in itertools.izip(s1, s2)) == 1\n\n        dp = [[1, -1] for _ in range(n)]\n        for i in reversed(range(n)):\n            for j in range(i+1, n):\n                if groups[i] != groups[j] and check(words[j], words[i]):\n                    dp[i] = max(dp[i], [dp[j][0]+1, j])\n        result = []\n        i = max(range(n), key=lambda x: dp[x])\n        while i != -1:\n            result.append(words[i])\n            i = dp[i][1]\n        return result"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    vector<string> getWordsInLongestSubsequence(vector<string>& words, vector<int>& groups) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public List<String> getWordsInLongestSubsequence(String[] words, int[] groups) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n^2)\n# Space: O(n)\n\nimport itertools\n\n\n# dp, backtracing\nclass Solution(object):\n    def getWordsInLongestSubsequence(self, n, words, groups):\n        \"\"\"\n        :type n: int\n        :type words: List[str]\n        :type groups: List[int]\n        :rtype: List[str]\n        \"\"\"\n        def check(s1, s2):\n            return len(s1) == len(s2) and sum(a != b for a, b in itertools.izip(s1, s2)) == 1\n\n        dp = [[1, -1] for _ in range(n)]\n        for i in reversed(range(n)):\n            for j in range(i+1, n):\n                if groups[i] != groups[j] and check(words[j], words[i]):\n                    dp[i] = max(dp[i], [dp[j][0]+1, j])\n        result = []\n        i = max(range(n), key=lambda x: dp[x])\n        while i != -1:\n            result.append(words[i])\n            i = dp[i][1]\n        return result",
+    "Python": "class Solution(object):\n    def getWordsInLongestSubsequence(self, words, groups):\n        \"\"\"\n        :type words: List[str]\n        :type groups: List[int]\n        :rtype: List[str]\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {string[]} words\n * @param {number[]} groups\n * @return {string[]}\n */\nvar getWordsInLongestSubsequence = function(words, groups) {\n    \n};",
+    "TypeScript": "function getWordsInLongestSubsequence(words: string[], groups: number[]): string[] {\n    \n};",
+    "C#": "public class Solution {\n    public IList<string> GetWordsInLongestSubsequence(string[] words, int[] groups) {\n        \n    }\n}",
+    "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nchar** getWordsInLongestSubsequence(char** words, int wordsSize, int* groups, int groupsSize, int* returnSize) {\n    \n}",
+    "Go": "func getWordsInLongestSubsequence(words []string, groups []int) []string {\n    \n}",
+    "Kotlin": "class Solution {\n    fun getWordsInLongestSubsequence(words: Array<String>, groups: IntArray): List<String> {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func getWordsInLongestSubsequence(_ words: [String], _ groups: [Int]) -> [String] {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn get_words_in_longest_subsequence(words: Vec<String>, groups: Vec<i32>) -> Vec<String> {\n        \n    }\n}",
+    "Ruby": "# @param {String[]} words\n# @param {Integer[]} groups\n# @return {String[]}\ndef get_words_in_longest_subsequence(words, groups)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param String[] $words\n     * @param Integer[] $groups\n     * @return String[]\n     */\n    function getWordsInLongestSubsequence($words, $groups) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  List<String> getWordsInLongestSubsequence(List<String> words, List<int> groups) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def getWordsInLongestSubsequence(words: Array[String], groups: Array[Int]): List[String] = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec get_words_in_longest_subsequence(words :: [String.t], groups :: [integer]) :: [String.t]\n  def get_words_in_longest_subsequence(words, groups) do\n    \n  end\nend",
+    "Erlang": "-spec get_words_in_longest_subsequence(Words :: [unicode:unicode_binary()], Groups :: [integer()]) -> [unicode:unicode_binary()].\nget_words_in_longest_subsequence(Words, Groups) ->\n  .",
+    "Racket": "(define/contract (get-words-in-longest-subsequence words groups)\n  (-> (listof string?) (listof exact-integer?) (listof string?))\n  )"
+  },
+  "_internal": {
+    "methodName": "getWordsInLongestSubsequence",
+    "params": [
+      {
+        "type": "string[]",
+        "name": "words"
+      },
+      {
+        "type": "integer[]",
+        "name": "groups"
+      }
+    ]
+  },
+  "verified": false
 }

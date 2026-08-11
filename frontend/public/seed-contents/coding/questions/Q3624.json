@@ -1,93 +1,320 @@
 {
   "questionId": "Q3624",
-  "title": "Bear and Row 01",
-  "slug": "bear-and-row-01",
+  "title": "Count of Integers With Popcount-Depth Equal to K II",
+  "slug": "number-of-integers-with-popcount-depth-equal-to-k-ii",
   "version": 1,
-  "createdAt": "2026-07-02",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Strings",
-    "difficulty": "Medium",
+    "category": "Arrays",
+    "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "String Manipulation",
-      "Greedy Algorithm",
-      "Strings"
+      "array",
+      "divide-and-conquer",
+      "binary-indexed-tree",
+      "segment-tree"
     ],
     "companyTags": [],
     "topicTags": [
-      "Ad-hoc & Implementation"
-    ]
+      "array",
+      "divide-and-conquer",
+      "binary-indexed-tree",
+      "segment-tree"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Limak is a little polar bear.\nHe is playing a video game and he needs your help.\n\nThere is a row with N cells, each either empty or occupied by a soldier, denoted by '0' and '1' respectively.\nThe goal of the game is to move all soldiers to the right (they should occupy some number of rightmost cells).\n\nThe only possible command is choosing a soldier and telling him to move to the right as far as possible.\nChoosing a soldier takes 1 second, and a soldier moves with the speed of a cell per second.\nThe soldier stops immediately if he is in the last cell of the row or the next cell is already occupied.\nLimak isn't allowed to choose a soldier that can't move at all (the chosen soldier must move at least one cell to the right).\n\nLimak enjoys this game very much and wants to play as long as possible.\nIn particular, he doesn't start a new command while the previously chosen soldier moves.\nCan you tell him, how many seconds he can play at most?",
+    "problemStatement": "You receive an integer array `nums`.\n\nFor any positive integer `x`, define the following sequence:\n\n* `p0 = x`\n* `pi+1 = popcount(pi)` for all `i >= 0`, where `popcount(y)` is the number of set bits (1's) in the binary representation of `y`.\n\nThis sequence will eventually reach the value 1.\n\nThe **popcount-depth** of `x` is defined as the **smallest** integer `d >= 0` such that `pd = 1`.\n\nAs an example, if `x = 7` (binary representation `\"111\"`). Then, the sequence is: `7 → 3 → 2 → 1`, so the popcount-depth of 7 is 3.\n\nYou are also given a 2D integer array `queries`, where each `queries[i]` is either:\n\n* `[1, l, r, k]` - **Identify** the number of indices `j` such that `l <= j <= r` and the **popcount-depth** of `nums[j]` is equal to `k`.\n* `[2, idx, val]` - **Update** `nums[idx]` to `val`.\n\nOutput an integer array `answer`, where `answer[i]` is the number of indices for the `ith` query of type `[1, l, r, k]`.\n\n**Example 1:**\n\n**Input:** nums = [2,4], queries = [[1,0,1,1],[2,1,1],[1,0,1,0]]\n\n**Output:** [2,1]\n\n**Explanation:**\n\n| `i` | `queries[i]` | `nums` | binary(`nums`) | popcount-  depth | `[l, r]` | `k` | Valid  `nums[j]` | updated  `nums` | Answer |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 0 | [1,0,1,1] | [2,4] | [10, 100] | [1, 1] | [0, 1] | 1 | [0, 1] | — | 2 |\n| 1 | [2,1,1] | [2,4] | [10, 100] | [1, 1] | — | — | — | [2,1] | — |\n| 2 | [1,0,1,0] | [2,1] | [10, 1] | [1, 0] | [0, 1] | 0 | [1] | — | 1 |\n\nThus, the final `answer` is `[2, 1]`.\n\n**Example 2:**\n\n**Input:** nums = [3,5,6], queries = [[1,0,2,2],[2,1,4],[1,1,2,1],[1,0,1,0]]\n\n**Output:** [3,1,0]\n\n**Explanation:**\n\n| `i` | `queries[i]` | `nums` | binary(`nums`) | popcount-  depth | `[l, r]` | `k` | Valid  `nums[j]` | updated  `nums` | Answer |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 0 | [1,0,2,2] | [3, 5, 6] | [11, 101, 110] | [2, 2, 2] | [0, 2] | 2 | [0, 1, 2] | — | 3 |\n| 1 | [2,1,4] | [3, 5, 6] | [11, 101, 110] | [2, 2, 2] | — | — | — | [3, 4, 6] | — |\n| 2 | [1,1,2,1] | [3, 4, 6] | [11, 100, 110] | [2, 1, 2] | [1, 2] | 1 | [1] | — | 1 |\n| 3 | [1,0,1,0] | [3, 4, 6] | [11, 100, 110] | [2, 1, 2] | [0, 1] | 0 | [] | — | 0 |\n\nThus, the final `answer` is `[3, 1, 0]`.\n\n**Example 3:**\n\n**Input:** nums = [1,2], queries = [[1,0,1,1],[2,0,3],[1,0,0,1],[1,0,0,2]]\n\n**Output:** [1,0,1]\n\n**Explanation:**\n\n| `i` | `queries[i]` | `nums` | binary(`nums`) | popcount-  depth | `[l, r]` | `k` | Valid  `nums[j]` | updated  `nums` | Answer |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 0 | [1,0,1,1] | [1, 2] | [1, 10] | [0, 1] | [0, 1] | 1 | [1] | — | 1 |\n| 1 | [2,0,3] | [1, 2] | [1, 10] | [0, 1] | — | — | — | [3, 2] |  |\n| 2 | [1,0,0,1] | [3, 2] | [11, 10] | [2, 1] | [0, 0] | 1 | [] | — | 0 |\n| 3 | [1,0,0,2] | [3, 2] | [11, 10] | [2, 1] | [0, 0] | 2 | [0] | — | 1 |\n\nThus, the final `answer` is `[1, 0, 1]`.\n\n**Constraints:**\n\n* `1 <= n == nums.length <= 105`\n* `1 <= nums[i] <= 1015`\n* `1 <= queries.length <= 105`\n* `queries[i].length == 3` or `4`\n  + `queries[i] == [1, l, r, k]` or,\n  + `queries[i] == [2, idx, val]`\n  + `0 <= l <= r <= n - 1`\n  + `0 <= k <= 5`\n  + `0 <= idx <= n - 1`\n  + `1 <= val <= 1015`",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "1 \u2264 N \u2264 10^5",
-      "Subtasks: Subtask #1 (25 points): 1 \u2264 N \u2264 10, Subtask #2 (25 points): 1 \u2264 N \u2264 2000, Subtask #3 (50 points): Original constraints"
+      "None"
     ],
-    "inputFormat": "The first line of the input contains an integer T denoting the number of test cases. The description of T test cases follows. The only line of each test case contains a string S describing the row with N cells. Each character is either '0' or '1', denoting an empty cell or a cell with a soldier respectively.",
-    "outputFormat": "For each test case, output a single line containing one integer \u2014 the maximum possible number of seconds Limak will play the game.",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "4\\n10100\\n1100001\\n000000000111\\n001110100011010",
-        "output": "8\n10\n0\n48",
-        "explanation": "Explanation:\nTest case 1.\nThe initial string is 10100.\nThere are N = 5 cells.\nThere is one soldier in the first cell, and one soldier in the third cell.\nThe following scenario maximizes the total time:\n\nLimak chooses the soldier in the first cell.\nThis soldier can move only one cell to the right.\nIt takes 1 second to choose a soldier and 1 second for a soldier to move to the next cell (2 seconds in total).\nThe string is 01100 now.\nLimak has only one choice.\nHe must choose the soldier in the third cell because the other soldier can't move at all (the soldier in the second cell can't move to the right because the next cell is already occupied).\nChoosing a soldier takes 1 second.\nThe chosen soldier moves from the third cell to the fifth cell, which takes 2 seconds.\nThis operation takes 1 + 2 = 3 seconds in total.\nThe string is 01001 now.\nLimak has only one choice again.\nSince the soldier in the last row can't move further to the right, the soldier in the second cell must be chosen.\nHe will move 2 cells to the right.\nThis operation takes 1 + 2 = 3 seconds in total.\nThe string become 00011 and the game is over.\n\nThe total time is 2 + 3 + 3 = 8.\nTest case 2.\nThe initial string is 1100001.\nThere is only one possible scenario:\n\n1100001 is changed to 1000011 in 5 seconds (1 second to choose a soldier and 4 seconds for the soldier to move 4 cells to the right).\n1000011 is changed to 0000111 in 5 seconds.\n\nThe total time is 5 + 5 = 10 seconds.\nTest case 3.\nThe game is over immediately because all soldiers occupy rightmost cells already.\nThe answer is 0."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n1\".repeat(100000)",
-        "expectedOutput": "4999950000",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Case 3",
-        "input": "1\n1",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Case 4",
-        "input": "1\n1",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Case 5",
-        "input": "1\n1",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -98,18 +325,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The approach to solve this problem is to use a greedy algorithm. We start by initializing a variable to keep track of the total time. Then, we iterate over the string from left to right. If we encounter a '1', we calculate the time it takes for the soldier to move to the rightmost available position and add it to the total time. We repeat this process until all soldiers have been moved to the rightmost available positions.",
-    "timeComplexity": "O(T * N) \u2014 where T is the number of test cases and N is the length of the string. This is because we are iterating over the string for each test case.",
-    "spaceComplexity": "O(N) \u2014 where N is the length of the string. This is because we are storing the string in memory.",
     "code": {
-      "C": "#include <stdio.h>\n#include <string.h>\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        char S[100005];\n        scanf(\"%s\", S);\n        int N = strlen(S);\n        int time = 0;\n        for (int i = 0; i < N; i++) {\n            if (S[i] == '1') {\n                int j = i + 1;\n                while (j < N && S[j] == '0') {\n                    j++;\n                }\n                time += j - i;\n                for (int k = i; k < j; k++) {\n                    S[k] = '0';\n                }\n                S[j] = '1';\n            }\n        }\n        printf(\"%d\\n\", time);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        string S;\n        cin >> S;\n        int N = S.length();\n        int time = 0;\n        for (int i = 0; i < N; i++) {\n            if (S[i] == '1') {\n                int j = i + 1;\n                while (j < N && S[j] == '0') {\n                    j++;\n                }\n                time += j - i;\n                for (int k = i; k < j; k++) {\n                    S[k] = '0';\n                }\n                S[j] = '1';\n            }\n        }\n        cout << time << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            String S = sc.next();\n            int N = S.length();\n            int time = 0;\n            char[] arr = S.toCharArray();\n            for (int i = 0; i < N; i++) {\n                if (arr[i] == '1') {\n                    int j = i + 1;\n                    while (j < N && arr[j] == '0') {\n                        j++;\n                    }\n                    time += j - i;\n                    for (int k = i; k < j; k++) {\n                        arr[k] = '0';\n                    }\n                    arr[j] = '1';\n                }\n            }\n            System.out.println(time);\n        }\n    }\n}",
-      "Python3": "import sys\n\nfor _ in range(int(input())):\n    S = input()\n    N = len(S)\n    time = 0\n    arr = list(S)\n    for i in range(N):\n        if arr[i] == '1':\n            j = i + 1\n            while j < N and arr[j] == '0':\n                j += 1\n            time += j - i\n            for k in range(i, j):\n                arr[k] = '0'\n            arr[j] = '1'\n    print(time)",
-      "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\n\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const S = readline().trim();\n    const N = S.length;\n    let time = 0;\n    const arr = S.split('');\n    for (let j = 0; j < N; j++) {\n        if (arr[j] === '1') {\n            let k = j + 1;\n            while (k < N && arr[k] === '0') {\n                k++;\n            }\n            time += k - j;\n            for (let l = j; l < k; l++) {\n                arr[l] = '0';\n            }\n            arr[k] = '1';\n        }\n    }\n    console.log(time);\n}"
+      "Python3": "# Time:  precompute: O((logr) * log(logr) + log*(r) * (logr)) = O((logr) * log(logr)), r = max(n)\n#        runtime:    O(nlogr + max_k * n + nlogn + qlogn)\n# Space: O(logr + max_k * n)\n\n# fenwick tree\ndef popcount(x):\n    return bin(x).count('1')\n\n\ndef ceil_log2(x):\n    return (x-1).bit_length()\n\n\nclass BIT(object):  # 0-indexed.\n    def __init__(self, n):\n        self.__bit = [0]*(n+1)  # Extra one for dummy node.\n\n    def add(self, i, val):\n        i += 1  # Extra one for dummy node.\n        while i < len(self.__bit):\n            self.__bit[i] += val\n            i += (i & -i)\n\n    def query(self, i):\n        i += 1  # Extra one for dummy node.\n        ret = 0\n        while i > 0:\n            ret += self.__bit[i]\n            i -= (i & -i)\n        return ret\n\n\nMAX_N = 10**15\nMAX_BIT_LEN = MAX_N.bit_length()\nD = [0]*(MAX_BIT_LEN+1)\nfor i in range(2, MAX_BIT_LEN+1):\n    D[i] = D[popcount(i)]+1\nMAX_K = 0\nwhile MAX_N != 1:  # O(log*(MAX_N)) times\n    MAX_N = ceil_log2(MAX_N)\n    MAX_K += 1\nclass Solution(object):\n    def popcountDepth(self, nums, queries):\n        \"\"\"\n        :type nums: List[int]\n        :type queries: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        def count(x):\n            return D[popcount(x)]+1 if x != 1 else 0\n        \n        bit = [BIT(len(nums)) for _ in range(MAX_K+1)]\n        for i in range(len(nums)):\n            bit[count(nums[i])].add(i, +1)\n        result = []\n        for q in queries:\n            if q[0] == 1:\n                _, l, r, k = q\n                assert(k < len(bit))\n                result.append(bit[k].query(r)-bit[k].query(l-1))\n            else:\n                _, i, x = q\n                old_d = count(nums[i])\n                new_d = count(x)\n                if new_d != old_d:\n                    bit[old_d].add(i, -1)\n                    bit[new_d].add(i, +1)\n                nums[i] = x\n        return result"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    vector<int> popcountDepth(vector<long long>& nums, vector<vector<long long>>& queries) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int[] popcountDepth(long[] nums, long[][] queries) {\n        \n    }\n}",
+    "Python3": "# Time:  precompute: O((logr) * log(logr) + log*(r) * (logr)) = O((logr) * log(logr)), r = max(n)\n#        runtime:    O(nlogr + max_k * n + nlogn + qlogn)\n# Space: O(logr + max_k * n)\n\n# fenwick tree\ndef popcount(x):\n    return bin(x).count('1')\n\n\ndef ceil_log2(x):\n    return (x-1).bit_length()\n\n\nclass BIT(object):  # 0-indexed.\n    def __init__(self, n):\n        self.__bit = [0]*(n+1)  # Extra one for dummy node.\n\n    def add(self, i, val):\n        i += 1  # Extra one for dummy node.\n        while i < len(self.__bit):\n            self.__bit[i] += val\n            i += (i & -i)\n\n    def query(self, i):\n        i += 1  # Extra one for dummy node.\n        ret = 0\n        while i > 0:\n            ret += self.__bit[i]\n            i -= (i & -i)\n        return ret\n\n\nMAX_N = 10**15\nMAX_BIT_LEN = MAX_N.bit_length()\nD = [0]*(MAX_BIT_LEN+1)\nfor i in range(2, MAX_BIT_LEN+1):\n    D[i] = D[popcount(i)]+1\nMAX_K = 0\nwhile MAX_N != 1:  # O(log*(MAX_N)) times\n    MAX_N = ceil_log2(MAX_N)\n    MAX_K += 1\nclass Solution(object):\n    def popcountDepth(self, nums, queries):\n        \"\"\"\n        :type nums: List[int]\n        :type queries: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        def count(x):\n            return D[popcount(x)]+1 if x != 1 else 0\n        \n        bit = [BIT(len(nums)) for _ in range(MAX_K+1)]\n        for i in range(len(nums)):\n            bit[count(nums[i])].add(i, +1)\n        result = []\n        for q in queries:\n            if q[0] == 1:\n                _, l, r, k = q\n                assert(k < len(bit))\n                result.append(bit[k].query(r)-bit[k].query(l-1))\n            else:\n                _, i, x = q\n                old_d = count(nums[i])\n                new_d = count(x)\n                if new_d != old_d:\n                    bit[old_d].add(i, -1)\n                    bit[new_d].add(i, +1)\n                nums[i] = x\n        return result",
+    "Python": "class Solution(object):\n    def popcountDepth(self, nums, queries):\n        \"\"\"\n        :type nums: List[int]\n        :type queries: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[]} nums\n * @param {number[][]} queries\n * @return {number[]}\n */\nvar popcountDepth = function(nums, queries) {\n    \n};",
+    "TypeScript": "function popcountDepth(nums: number[], queries: number[][]): number[] {\n    \n};",
+    "C#": "public class Solution {\n    public int[] PopcountDepth(long[] nums, long[][] queries) {\n        \n    }\n}",
+    "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* popcountDepth(long long* nums, int numsSize, long long** queries, int queriesSize, int* queriesColSize, int* returnSize) {\n    \n}",
+    "Go": "func popcountDepth(nums []int64, queries [][]int64) []int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun popcountDepth(nums: LongArray, queries: Array<LongArray>): IntArray {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func popcountDepth(_ nums: [Int], _ queries: [[Int]]) -> [Int] {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn popcount_depth(nums: Vec<i64>, queries: Vec<Vec<i64>>) -> Vec<i32> {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[]} nums\n# @param {Integer[][]} queries\n# @return {Integer[]}\ndef popcount_depth(nums, queries)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[] $nums\n     * @param Integer[][] $queries\n     * @return Integer[]\n     */\n    function popcountDepth($nums, $queries) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  List<int> popcountDepth(List<int> nums, List<List<int>> queries) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def popcountDepth(nums: Array[Long], queries: Array[Array[Long]]): Array[Int] = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec popcount_depth(nums :: [integer], queries :: [[integer]]) :: [integer]\n  def popcount_depth(nums, queries) do\n    \n  end\nend",
+    "Erlang": "-spec popcount_depth(Nums :: [integer()], Queries :: [[integer()]]) -> [integer()].\npopcount_depth(Nums, Queries) ->\n  .",
+    "Racket": "(define/contract (popcount-depth nums queries)\n  (-> (listof exact-integer?) (listof (listof exact-integer?)) (listof exact-integer?))\n  )"
+  },
+  "_internal": {
+    "methodName": "popcountDepth",
+    "params": [
+      {
+        "name": "nums",
+        "type": "long[]"
+      },
+      {
+        "type": "long[][]",
+        "name": "queries"
+      }
+    ]
+  },
+  "verified": false
 }

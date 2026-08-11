@@ -1,107 +1,350 @@
 {
   "questionId": "Q2617",
-  "title": "Escape from the Mines",
-  "slug": "escape-from-the-mines",
+  "title": "Smallest Number of Visited Cells in a Grid",
+  "slug": "minimum-number-of-visited-cells-in-a-grid",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
+    "category": "Arrays",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Nested Rooms",
-      "Math",
-      "Rectangle Intersection"
+      "array",
+      "dynamic-programming",
+      "stack",
+      "breadth-first-search",
+      "union-find",
+      "heap-priority-queue",
+      "matrix",
+      "monotonic-stack"
     ],
     "companyTags": [],
     "topicTags": [
-      "Geometry"
-    ]
+      "array",
+      "dynamic-programming",
+      "stack",
+      "breadth-first-search",
+      "union-find",
+      "heap-priority-queue",
+      "matrix",
+      "monotonic-stack"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Escape from the MinesIt was after nightfall when they had entered the Mines. They had been going for several hours with only brief halts, when Gandalf came to his first serious check. Before him stood a wide dark arch opening into three passages: all led in the same general direction, eastwards; but the left-hand passage plunged down, while the right-hand climbed up, and the middle way seemed to run on, smooth and level but very narrow. - The Fellowship of the Ring are lost in the Mines.\n\nThe Mines of Moria are a true testament of Dwarvish genius. And the Fellowship of the Ring are lost in the maze of rooms, halls and caverns. You have managed to acquire a copy of the blueprints, and if only you were part of the Fellowship, Gandalf need not have had to face the Balrog!\n\nIn this problem, we consider the Mines as consisting of rectangular rooms with their sides aligned parallel to the X (West-East) and Y (South-North) axes. Some rooms are situated within other rooms. The boundaries of any two rooms have no point in common. The rooms are numbered 0 to **N**-1. Your task is to determine for each room **i**, which room would you enter if you exit room **i**. If you exit into the open, output **-1**.\n\nFor example, if the blueprints of the Mines looked like:\n\n\n\nThen, you should determine that:\n\n\nRoom **0** exits into the open (**-1**)\nRoom **1** exits into Room **0**\nRoom **2** exits into Room **1**\nRoom **3** exits into the open (**-1**)\n\nInput Format\nThe first line contains an integer **N** followed by N lines. The i'th line defines the coordinates of the i'th room in the mines: **x1_i, y1_i, x2_i, y2_i**, where **(x1_i, y1_i)** are the coordinates of the southwest corner and **(x2_i, y2_i)** are the coordinates of the northeast corner of the i'th room.\n\n\n\nOutput Format\nOutput **N** lines, the i'th line containing the number of the room into which the i'th room exits. Output **-1** if the i'th room exits into the open.",
+    "problemStatement": "You receive a **0-indexed** `m x n` integer matrix `grid`. Your initial position is at the **top-left** cell `(0, 0)`.\n\nStarting from the cell `(i, j)`, you can move to one of the following cells:\n\n* Cells `(i, k)` with `j < k <= grid[i][j] + j` (rightward movement), or\n* Cells `(k, j)` with `i < k <= grid[i][j] + i` (downward movement).\n\nOutput *the smallest number of cells you need to visit to reach the **bottom-right** cell* `(m - 1, n - 1)`. If there is no valid path, output `-1`.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2023/01/25/ex1.png)\n\n```\nInput: grid = [[3,4,2,1],[4,2,3,1],[2,1,0,0],[2,4,0,0]]\nOutput: 4\nExplanation: The image above shows one of the paths that visits exactly 4 cells.\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2023/01/25/ex2.png)\n\n```\nInput: grid = [[3,4,2,1],[4,2,1,1],[2,1,1,0],[3,4,1,0]]\nOutput: 3\nExplanation: The image above shows one of the paths that visits exactly 3 cells.\n```\n\n**Example 3:**\n\n![](https://assets.leetcode.com/uploads/2023/01/26/ex3.png)\n\n```\nInput: grid = [[2,1,0],[1,0,0]]\nOutput: -1\nExplanation: It can be proven that no path exists.\n```\n\n**Constraints:**\n\n* `m == grid.length`\n* `n == grid[i].length`\n* `1 <= m, n <= 105`\n* `1 <= m * n <= 105`\n* `0 <= grid[i][j] < m * n`\n* `grid[m - 1][n - 1] == 0`",
     "constraints": [
-      "1 <= T <= 100",
-      "1 <= N <= 100000",
-      "0 <= x1_i < x2_i <= 1000000000",
-      "0 <= y1_i < y2_i <= 1000000000",
-      "The borders of no two rooms have any point in common"
+      "None"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case starts with an integer N, the number of rooms. Then, N lines follow, each containing four space-separated integers x1_i, y1_i, x2_i, y2_i, which define the coordinates of the i-th room in the mines.",
-    "outputFormat": "For each test case, output N lines, the i-th line containing the number of the room into which the i-th room exits. Output -1 if the i-th room exits into the open.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "1\n4\n0 0 10 10\n2 3 7 8\n3 4 5 6\n12 10 13 15",
-        "output": "-1\n0\n1\n-1",
-        "explanation": "Room 0 exits into the open, room 1 exits into room 0, room 2 exits into room 1, and room 3 exits into the open."
+        "type": "reg",
+        "input": "grid = [[3,4,2,1],[4,2,3,1],[2,1,0,0],[2,4,0,0]]",
+        "output": "4",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n2\n0 0 10 10\n1 1 9 9",
-        "output": "-1\n0",
-        "explanation": "Room 0 exits into the open and room 1 exits into room 0."
+        "type": "reg",
+        "input": "grid = [[3,4,2,1],[4,2,1,1],[2,1,1,0],[3,4,1,0]]",
+        "output": "3",
+        "explanation": ""
       },
       {
         "id": "sample_3",
-        "input": "1\n1\n0 0 10 10",
+        "type": "reg",
+        "input": "grid = [[2,1,0],[1,0,0]]",
         "output": "-1",
-        "explanation": "Room 0 exits into the open."
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1\n0 0 1 1",
-        "expectedOutput": "-1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n1\n0 0 1000000000 1000000000",
-        "expectedOutput": "-1",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n2\n0 0 10 10\n0 0 10 10",
-        "expectedOutput": "-1\n-1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n2\n0 0 10 10\n5 5 15 15",
-        "expectedOutput": "-1\n-1",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "1\n3\n0 0 10 10\n2 2 8 8\n3 3 6 6",
-        "expectedOutput": "-1\n0\n1",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -112,18 +355,68 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "To solve this problem, we iterate through each room and check if it is contained within any other room. If a room is found to contain the current room, we print the index of the containing room. If no containing room is found, we print -1 to indicate that the room exits into the open.",
-    "timeComplexity": "O(T * N^2) per test case, where T is the number of test cases and N is the number of rooms. This is because for each room, we potentially check all other rooms to see if it is contained within any of them.",
-    "spaceComplexity": "O(N) for storing the coordinates of the rooms.",
     "code": {
-      "C": "#include <stdio.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int x1[N], y1[N], x2[N], y2[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d %d %d %d\", &x1[i], &y1[i], &x2[i], &y2[i]);\n        }\n        for (int i = 0; i < N; i++) {\n            int contained = 0;\n            for (int j = 0; j < N; j++) {\n                if (i != j && x1[j] <= x1[i] && x2[i] <= x2[j] && y1[j] <= y1[i] && y2[i] <= y2[j]) {\n                    printf(\"%d\\n\", j);\n                    contained = 1;\n                    break;\n                }\n            }\n            if (!contained) {\n                printf(\"-1\\n\");\n            }\n        }\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        int x1[N], y1[N], x2[N], y2[N];\n        for (int i = 0; i < N; i++) {\n            cin >> x1[i] >> y1[i] >> x2[i] >> y2[i];\n        }\n        for (int i = 0; i < N; i++) {\n            int contained = 0;\n            for (int j = 0; j < N; j++) {\n                if (i != j && x1[j] <= x1[i] && x2[i] <= x2[j] && y1[j] <= y1[i] && y2[i] <= y2[j]) {\n                    cout << j << endl;\n                    contained = 1;\n                    break;\n                }\n            }\n            if (!contained) {\n                cout << -1 << endl;\n            }\n        }\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            int N = sc.nextInt();\n            int[][] rooms = new int[N][4];\n            for (int i = 0; i < N; i++) {\n                rooms[i][0] = sc.nextInt();\n                rooms[i][1] = sc.nextInt();\n                rooms[i][2] = sc.nextInt();\n                rooms[i][3] = sc.nextInt();\n            }\n            for (int i = 0; i < N; i++) {\n                int contained = 0;\n                for (int j = 0; j < N; j++) {\n                    if (i != j && rooms[j][0] <= rooms[i][0] && rooms[i][2] <= rooms[j][2] && rooms[j][1] <= rooms[i][1] && rooms[i][3] <= rooms[j][3]) {\n                        System.out.println(j);\n                        contained = 1;\n                        break;\n                    }\n                }\n                if (contained == 0) {\n                    System.out.println(-1);\n                }\n            }\n        }\n    }\n}",
-      "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    N = int(input())\n    rooms = [list(map(int, input().split())) for _ in range(N)]\n    for i in range(N):\n        contained = 0\n        for j in range(N):\n            if i != j and rooms[j][0] <= rooms[i][0] and rooms[i][2] <= rooms[j][2] and rooms[j][1] <= rooms[i][1] and rooms[i][3] <= rooms[j][3]:\n                print(j)\n                contained = 1\n                break\n        if contained == 0:\n            print(-1)",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\nconst T = parseInt(lines[i++]);\nfor (let t = 0; t < T; t++) {\n    const N = parseInt(lines[i++]);\n    const rooms = [];\n    for (let j = 0; j < N; j++) {\n        rooms.push(lines[i++].split(' ').map(x => parseInt(x)));\n    }\n    for (let i = 0; i < N; i++) {\n        let contained = 0;\n        for (let j = 0; j < N; j++) {\n            if (i !== j && rooms[j][0] <= rooms[i][0] && rooms[i][2] <= rooms[j][2] && rooms[j][1] <= rooms[i][1] && rooms[i][3] <= rooms[j][3]) {\n                console.log(j);\n                contained = 1;\n                break;\n            }\n        }\n        if (contained === 0) {\n            console.log(-1);\n        }\n    }\n}"
+      "Python3": "# Time:  O(m * n * alpha(m + n)) = O(m + n)\n# Space: O(m * n)\n\n# bfs, union find\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, n):\n        self.set = range(n)\n        self.rank = [0]*n\n        self.right = range(n)  # added\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        self.right[y] = max(self.right[x], self.right[y])  # added\n        return True\n\n    def right_set(self, x):  # added\n        return self.right[self.find_set(x)]\n\n\nclass Solution(object):\n    def minimumVisitedCells(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        m, n = len(grid), len(grid[0])\n        uf1 = [UnionFind(n+1) for _ in range(m)]\n        uf2 = [UnionFind(m+1) for _ in range(n)]\n        d, i, j = 1, 0, 0\n        q = [(i, j)]\n        uf1[i].union_set(j, j+1)\n        uf2[j].union_set(i, i+1)\n        while q:\n            new_q = []\n            for i, j in q:\n                if (i, j) == (m-1, n-1):\n                    return d\n                while uf1[i].right_set(j) <= min(j+grid[i][j], n-1):\n                    k = uf1[i].right_set(j)\n                    new_q.append((i, k))\n                    uf2[k].union_set(i, i+1)\n                    uf1[i].union_set(k, k+1)\n                while uf2[j].right_set(i) <= min(i+grid[i][j], m-1):\n                    k = uf2[j].right_set(i)\n                    new_q.append((k, j))\n                    uf1[k].union_set(j, j+1)\n                    uf2[j].union_set(k, k+1)\n            q = new_q\n            d += 1\n        return -1"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int minimumVisitedCells(vector<vector<int>>& grid) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int minimumVisitedCells(int[][] grid) {\n        \n    }\n}",
+    "Python3": "# Time:  O(m * n * alpha(m + n)) = O(m + n)\n# Space: O(m * n)\n\n# bfs, union find\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, n):\n        self.set = range(n)\n        self.rank = [0]*n\n        self.right = range(n)  # added\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        self.right[y] = max(self.right[x], self.right[y])  # added\n        return True\n\n    def right_set(self, x):  # added\n        return self.right[self.find_set(x)]\n\n\nclass Solution(object):\n    def minimumVisitedCells(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        m, n = len(grid), len(grid[0])\n        uf1 = [UnionFind(n+1) for _ in range(m)]\n        uf2 = [UnionFind(m+1) for _ in range(n)]\n        d, i, j = 1, 0, 0\n        q = [(i, j)]\n        uf1[i].union_set(j, j+1)\n        uf2[j].union_set(i, i+1)\n        while q:\n            new_q = []\n            for i, j in q:\n                if (i, j) == (m-1, n-1):\n                    return d\n                while uf1[i].right_set(j) <= min(j+grid[i][j], n-1):\n                    k = uf1[i].right_set(j)\n                    new_q.append((i, k))\n                    uf2[k].union_set(i, i+1)\n                    uf1[i].union_set(k, k+1)\n                while uf2[j].right_set(i) <= min(i+grid[i][j], m-1):\n                    k = uf2[j].right_set(i)\n                    new_q.append((k, j))\n                    uf1[k].union_set(j, j+1)\n                    uf2[j].union_set(k, k+1)\n            q = new_q\n            d += 1\n        return -1",
+    "Python": "class Solution(object):\n    def minimumVisitedCells(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar minimumVisitedCells = function(grid) {\n    \n};",
+    "TypeScript": "function minimumVisitedCells(grid: number[][]): number {\n\n};",
+    "C#": "public class Solution {\n    public int MinimumVisitedCells(int[][] grid) {\n        \n    }\n}",
+    "C": "int minimumVisitedCells(int** grid, int gridSize, int* gridColSize){\n\n}",
+    "Go": "func minimumVisitedCells(grid [][]int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun minimumVisitedCells(grid: Array<IntArray>): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func minimumVisitedCells(_ grid: [[Int]]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn minimum_visited_cells(grid: Vec<Vec<i32>>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[][]} grid\n# @return {Integer}\ndef minimum_visited_cells(grid)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[][] $grid\n     * @return Integer\n     */\n    function minimumVisitedCells($grid) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int minimumVisitedCells(List<List<int>> grid) {\n\n  }\n}",
+    "Scala": "object Solution {\n    def minimumVisitedCells(grid: Array[Array[Int]]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec minimum_visited_cells(grid :: [[integer]]) :: integer\n  def minimum_visited_cells(grid) do\n    \n  end\nend",
+    "Erlang": "-spec minimum_visited_cells(Grid :: [[integer()]]) -> integer().\nminimum_visited_cells(Grid) ->\n  .",
+    "Racket": "(define/contract (minimum-visited-cells grid)\n  (-> (listof (listof exact-integer?)) exact-integer?)\n\n  )"
+  },
+  "_internal": {
+    "methodName": "minimumVisitedCells",
+    "params": [
+      {
+        "name": "grid",
+        "type": "integer[][]"
+      }
+    ]
+  },
+  "verified": false
 }

@@ -1,104 +1,316 @@
 {
   "questionId": "Q3196",
-  "title": "Jump mission",
-  "slug": "jump-mission",
+  "title": "Maximize Total Cost of Alternating Subarrays Problem",
+  "slug": "maximize-total-cost-of-alternating-subarrays",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Dynamic Programming",
-    "difficulty": "Hard",
+    "category": "Arrays",
+    "difficulty": "Medium",
     "isPremium": false,
     "tags": [
-      "Convex Hull Trick",
-      "DP",
-      "Binary Indexed Tree",
-      "2\u2011D Dominance",
-      "Li Chao Segment Tree",
-      "Dynamic Programming"
+      "array",
+      "dynamic-programming"
     ],
     "companyTags": [],
     "topicTags": [
-      "Dynamic Programming"
-    ]
+      "array",
+      "dynamic-programming"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Chef the chief is participating in a hill jumping competition.\n\n\n\nThere are N hills arranged in a row, and each of them is assigned a unique index from 1 to **N** \u2014 the **i**th hill has an index **Pi** on it. The height of the **i**th hill is **Hi**.\nChef starts at the first hill with a goal to reach the **Nth** hill by jumping over hills from left to right (he is not allowed to jump in the other direction), jumping from **i**th hill to **j**th costs (**Hj** - **Hi**)2 energy.\n\n\n\nWhen chief is on the **i**th hill, he has to prepare a special dish for the community of that hill as a thanks for letting him use their resources. This will cost him **Ai** energy (some dishes are chief's favorites and preparing it refreshes chef that why **Ai** may be negative). To make things more challenging for Chef the chief, he is allowed to jump from **i**th hill to **j**th if and only if **i &lt; j** and **Pi &lt; Pj**.\n\n\n\nHelp Chef choose the sequence of jumps that consume the minimum energy possible. (Note that it's possible at any moment that energy consumed is negative.)",
+    "problemStatement": "You receive an integer array `nums` with length `n`.\n\nThe **cost** of a subarray `nums[l..r]`, where `0 <= l <= r < n`, is defined as:\n\n`cost(l, r) = nums[l] - nums[l + 1] + ... + nums[r] * (−1)r − l`\n\nThe task is to **split** `nums` into subarrays such that the **total** **cost** of the subarrays is **maximized**, ensuring each element belongs to **exactly one** subarray.\n\nFormally, if `nums` is split into `k` subarrays, where `k > 1`, at indices `i1, i2, ..., ik − 1`, where `0 <= i1 < i2 < ... < ik - 1 < n - 1`, then the total cost will be:\n\n`cost(0, i1) + cost(i1 + 1, i2) + ... + cost(ik − 1 + 1, n − 1)`\n\nOutput an integer denoting the *largest total cost* of the subarrays after splitting the array optimally.\n\n**Note:** If `nums` is not split into subarrays, i.e. `k = 1`, the total cost is simply `cost(0, n - 1)`.\n\n**Example 1:**\n\n**Input:** nums = [1,-2,3,4]\n\n**Output:** 10\n\n**Explanation:**\n\nOne way to maximize the total cost is by splitting `[1, -2, 3, 4]` into subarrays `[1, -2, 3]` and `[4]`. The total cost will be `(1 + 2 + 3) + 4 = 10`.\n\n**Example 2:**\n\n**Input:** nums = [1,-1,1,-1]\n\n**Output:** 4\n\n**Explanation:**\n\nOne way to maximize the total cost is by splitting `[1, -1, 1, -1]` into subarrays `[1, -1]` and `[1, -1]`. The total cost will be `(1 + 1) + (1 + 1) = 4`.\n\n**Example 3:**\n\n**Input:** nums = [0]\n\n**Output:** 0\n\n**Explanation:**\n\nWe cannot split the array further, so the answer is 0.\n\n**Example 4:**\n\n**Input:** nums = [1,-1]\n\n**Output:** 2\n\n**Explanation:**\n\nSelecting the whole array gives a total cost of `1 + 1 = 2`, which is the largest.\n\n**Constraints:**\n\n* `1 <= nums.length <= 105`\n* `-109 <= nums[i] <= 109`",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "2 \u2264 N \u2264 300000",
-      "P is a permutation of 1\u2026N, P1 = 1, PN = N",
-      "-10^9 \u2264 Ai \u2264 10^9",
-      "1 \u2264 Hi \u2264 600000"
+      "None"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. For each test case:\n- The first line contains an integer N (2 \u2264 N \u2264 300000).\n- The second line contains N space\u2011separated integers P1 \u2026 PN \u2013 a permutation of 1\u2026N, with P1 = 1 and PN = N.\n- The third line contains N space\u2011separated integers A1 \u2026 AN (\u201110^9 \u2264 Ai \u2264 10^9).\n- The fourth line contains N space\u2011separated integers H1 \u2026 HN (1 \u2264 Hi \u2264 600000).",
-    "outputFormat": "For each test case output a single line containing the minimal possible total energy consumption (it may be negative).",
-    "sampleTestCases": [
-      {
-        "id": "sample_1",
-        "input": "5\n1 4 3 2 5\n0 1 3 0 0\n1 2 3 4 5",
-        "output": "10",
-        "explanation": "Jumping from the first hill to the fourth hill and then to the fifth hill results in a total energy consumption of 0 + 0 + 0 + (4-1)^2 + (5-4)^2 = 10."
-      },
-      {
-        "id": "sample_2",
-        "input": "3\n1 2 3\n0 0 0\n1 2 3",
-        "output": "5",
-        "explanation": "Jumping from the first hill to the second hill and then to the third hill results in a total energy consumption of 0 + (2-1)^2 + (3-2)^2 = 2 + 1 = 3. However, we can also jump from the first hill directly to the third hill, resulting in a total energy consumption of 0 + (3-1)^2 = 4. Therefore, the minimum energy consumption is 3 + 2 = 5."
-      }
-    ]
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "Case 1",
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "Case 2",
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "Case 3",
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "Case 4",
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "Case 5",
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
         "input": "",
         "expectedOutput": "",
-        "weight": 2
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -109,14 +321,68 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "Let dp[i] be the minimal energy needed to reach hill i (including the preparation cost Ai). When we jump from j to i (j < i, Pj < Pi) the extra cost is (Hi\u2011Hj)^2. Expanding the square gives:\n    dp[i] = Ai + Hi^2 + min_{j<i, Pj<Pi} ( dp[j] + Hj^2 - 2*Hi*Hj ).\nDefine for each already processed hill j a line:\n    y = m*x + b   where   m = -2*Hj ,  b = dp[j] + Hj^2.\nFor a fixed i we need the minimum value of y at x = Hi. This is a classic \"minimum of lines at a point\" query, solvable with a Li Chao segment tree in O(log X) where X is the range of Hi (\u2264 600000).\nThe additional condition Pj < Pi makes the problem a 2\u2011D dominance query. Because P is a permutation we can store the lines in a Binary Indexed Tree (Fenwick) indexed by Pi. When we finish computing dp[i] we insert its line into all BIT nodes that cover position Pi. To answer dp[i] we query the BIT for the prefix Pi\u20111, taking the minimum over the Li Chao trees stored in those nodes. Both insertion and query take O(log N * log X).\nOverall complexity per test case: O(N log N log X) time and O(N log N) memory, easily fast for N = 3\u00b710^5.\nThe algorithm steps for each test case:\n1. Initialise a BIT of size N, each cell containing an empty Li Chao tree.\n2. Process hills in increasing index i = 1 \u2026 N.\n   a. Query the BIT for the minimum value at x = Hi using the prefix Pi\u20111. If the query returns INF (no predecessor), the only possible way is to start from hill 1, whose dp is A1.\n   b. Compute dp[i] = Ai + Hi*Hi + queryResult.\n   c. Build the line (m = -2*Hi, b = dp[i] + Hi*Hi) and insert it into the BIT at position Pi.\n3. The answer for the test case is dp[N].\nAll five language implementations follow exactly this plan.",
-    "timeComplexity": "O(N log N log Hmax) per test case, where Hmax \u2264 600000.",
-    "spaceComplexity": "O(N log N) for the BIT of Li Chao trees (each line is stored O(log N) times).",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <limits.h>\n\ntypedef long long ll;\nconst ll INF = (1LL<<62);\n\n"
+      "Python3": "# Time:  O(n)\n# Space: O(1)\n\n# dp\nclass Solution(object):\n    def maximumTotalCost(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        dp = [nums[0], float(\"-inf\")]\n        for i in range(1, len(nums)):\n            dp[:] = [max(dp)+nums[i], dp[0]-nums[i]]\n        return max(dp)"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    long long maximumTotalCost(vector<int>& nums) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public long maximumTotalCost(int[] nums) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n)\n# Space: O(1)\n\n# dp\nclass Solution(object):\n    def maximumTotalCost(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        dp = [nums[0], float(\"-inf\")]\n        for i in range(1, len(nums)):\n            dp[:] = [max(dp)+nums[i], dp[0]-nums[i]]\n        return max(dp)",
+    "Python": "class Solution(object):\n    def maximumTotalCost(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[]} nums\n * @return {number}\n */\nvar maximumTotalCost = function(nums) {\n    \n};",
+    "TypeScript": "function maximumTotalCost(nums: number[]): number {\n    \n};",
+    "C#": "public class Solution {\n    public long MaximumTotalCost(int[] nums) {\n        \n    }\n}",
+    "C": "long long maximumTotalCost(int* nums, int numsSize) {\n    \n}",
+    "Go": "func maximumTotalCost(nums []int) int64 {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maximumTotalCost(nums: IntArray): Long {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maximumTotalCost(_ nums: [Int]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn maximum_total_cost(nums: Vec<i32>) -> i64 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[]} nums\n# @return {Integer}\ndef maximum_total_cost(nums)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[] $nums\n     * @return Integer\n     */\n    function maximumTotalCost($nums) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int maximumTotalCost(List<int> nums) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maximumTotalCost(nums: Array[Int]): Long = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec maximum_total_cost(nums :: [integer]) :: integer\n  def maximum_total_cost(nums) do\n    \n  end\nend",
+    "Erlang": "-spec maximum_total_cost(Nums :: [integer()]) -> integer().\nmaximum_total_cost(Nums) ->\n  .",
+    "Racket": "(define/contract (maximum-total-cost nums)\n  (-> (listof exact-integer?) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "maximumTotalCost",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      }
+    ]
+  },
+  "verified": false
 }

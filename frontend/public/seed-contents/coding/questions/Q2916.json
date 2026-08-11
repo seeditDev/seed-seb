@@ -1,106 +1,335 @@
 {
   "questionId": "Q2916",
-  "title": "Cleaning Tables",
-  "slug": "cleaning-tables",
+  "title": "Subarrays Distinct Element Sum of Squares II Problem",
+  "slug": "subarrays-distinct-element-sum-of-squares-ii",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Greedy",
-    "difficulty": "Medium",
+    "category": "Arrays",
+    "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Customer Orders",
-      "Table Allocation",
-      "Greedy"
+      "array",
+      "hash-table",
+      "binary-indexed-tree",
+      "segment-tree"
     ],
     "companyTags": [],
     "topicTags": [
-      "Greedy Algorithms"
-    ]
+      "array",
+      "hash-table",
+      "binary-indexed-tree",
+      "segment-tree"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Haku has been newly hired by Chef to clean tables at his restaurant. So whenever a customer wants a table, Haku must clean it.\n\nBut Haku happens to be a lazy boy. So in the morning, when the restaurant is opened, all the tables are dirty from night before.\n\nThe customer don't leave the table unless they are politely requested to do so. And customers can order meal later again. So if they were already having a table, they can be served on the same table [Haku doesn't have to clean :)]. But if they don't have a table then they must be given some table [Haku must clean :(]\n\nThe restaurant has **N** tables. When a customer requires a table, he/she can occupy any unoccupied table. However if all tables are occupied, then Haku is free to ask politely any customer to leave his/her table. And the freed table can be given to the waiting customer.\n\nNow Chef has the psychic ability to tell the order of customer meal requests for the entire day. Given this list, help Haku find the minimum number of times he has to clean the tables.",
+    "problemStatement": "You receive a **0-indexed** integer array `nums`.\n\nThe **distinct count** of a subarray of `nums` is defined as:\n\n* Let `nums[i..j]` be a subarray of `nums` consisting of all the indices from `i` to `j` such that `0 <= i <= j < nums.length`. Then the number of distinct values in `nums[i..j]` is called the distinct count of `nums[i..j]`.\n\nOutput *the sum of the **squares** of **distinct counts** of all subarrays of* `nums`.\n\nSince the answer may be very large, output it **modulo** `109 + 7`.\n\nA subarray is a contiguous **non-empty** sequence of elements within an array.\n\n**Example 1:**\n\n```\nInput: nums = [1,2,1]\nOutput: 15\nExplanation: Six possible subarrays are:\n[1]: 1 distinct value\n[2]: 1 distinct value\n[1]: 1 distinct value\n[1,2]: 2 distinct values\n[2,1]: 2 distinct values\n[1,2,1]: 2 distinct values\nThe sum of the squares of the distinct counts in all subarrays is equal to 12 + 12 + 12 + 22 + 22 + 22 = 15.\n```\n\n**Example 2:**\n\n```\nInput: nums = [2,2]\nOutput: 3\nExplanation: Three possible subarrays are:\n[2]: 1 distinct value\n[2]: 1 distinct value\n[2,2]: 1 distinct value\nThe sum of the squares of the distinct counts in all subarrays is equal to 12 + 12 + 12 = 3.\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 105`\n* `1 <= nums[i] <= 105`",
     "constraints": [
-      "1 \u2264 T \u2264 100",
-      "1 \u2264 N \u2264 200",
-      "1 \u2264 M \u2264 400",
-      "1 \u2264 C \u2264 400"
+      "None"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case consists of two lines. The first line contains two integers N and M, where N is the number of tables and M is the number of customer orders. The second line contains M integers representing the order in which customers ask for a meal.",
-    "outputFormat": "For each test case, output the minimum number of times Haku must clean the tables.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "2 4\n1 2 3 4",
-        "output": "4",
-        "explanation": "Explanation: In the starting all tables i.e. 2 tables are unoccupied. When customer 1 asks for table, he can be given any of the 2 tables. Haku has to clean either of the table. Next customer 2 can occupy the other free table. Haku must clean second time. When customer 3 comes Haku can ask either customer 1 or 2 to leave. Suppose he asks customer 1 to leave. Then he has to clean table for the third time. When customer 4 comes, Haku can ask customer 2 or 3 to leave. In either case Haku will have to clean the table for the fourth time."
+        "type": "reg",
+        "input": "nums = [1,2,1]",
+        "output": "15",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "3 2\n4 1",
-        "output": "2",
-        "explanation": "Explanation: In the starting all tables i.e. 3 tables are unoccupied. When customer 4 asks for table, he can be given any of the 3 tables. Haku has to clean either of the table. Next customer 1 can occupy the other free table. Haku must clean second time."
-      },
-      {
-        "id": "sample_3",
-        "input": "3 6\n1 2 1 3 4 1",
-        "output": "4",
-        "explanation": "Explanation: A possible optimal order of allocating tables can be [1, -, -] -> [1, 2, -] -> [1, 2, -] -> [1, 2, 3] -> [4, 2, 3]. So Haku will have to clean table for order no. 1, 2, 4 and 5. That is 4 times."
+        "type": "reg",
+        "input": "nums = [2,2]",
+        "output": "3",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1 1\n1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "200 400\n1 2 3 4 5 6 7 8 9 10",
-        "expectedOutput": "10",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "3 3\n1 1 1",
-        "expectedOutput": "1",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "2 4\n1 2 1 2",
-        "expectedOutput": "2",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "5 10\n1 2 3 4 5 1 2 3 4 5",
-        "expectedOutput": "5",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +340,68 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to allocate tables to customers in a way that minimizes the number of cleanings required. We can achieve this by always trying to allocate an empty table to a customer. If all tables are occupied, we can ask any customer to leave and allocate the freed table to the new customer. This approach ensures that we minimize the number of cleanings required.",
-    "timeComplexity": "O(T * M * N) per test case, O(T * M * N) total.",
-    "spaceComplexity": "O(N) \u2014 we need to store the state of each table.",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M;\n        scanf(\"%d %d\", &N, &M);\n        int* orders = (int*) malloc(M * sizeof(int));\n        for (int i = 0; i < M; i++) {\n            scanf(\"%d\", &orders[i]);\n        }\n        int* tables = (int*) calloc(N, sizeof(int));\n        int cleanCount = 0;\n        for (int i = 0; i < M; i++) {\n            int customer = orders[i];\n            int allocated = 0;\n            for (int j = 0; j < N; j++) {\n                if (tables[j] == 0) {\n                    tables[j] = customer;\n                    allocated = 1;\n                    cleanCount++;\n                    break;\n                }\n            }\n            if (!allocated) {\n                for (int j = 0; j < N; j++) {\n                    if (tables[j] != customer) {\n                        tables[j] = customer;\n                        cleanCount++;\n                        break;\n                    }\n                }\n            }\n        }\n        printf(\"%d\\n\", cleanCount);\n        free(orders);\n        free(tables);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M;\n        cin >> N >> M;\n        int orders[M];\n        for (int i = 0; i < M; i++) {\n            cin >> orders[i];\n        }\n        int tables[N] = {0};\n        int cleanCount = 0;\n        for (int i = 0; i < M; i++) {\n            int customer = orders[i];\n            bool allocated = false;\n            for (int j = 0; j < N; j++) {\n                if (tables[j] == 0) {\n                    tables[j] = customer;\n                    allocated = true;\n                    cleanCount++;\n                    break;\n                }\n            }\n            if (!allocated) {\n                for (int j = 0; j < N; j++) {\n                    if (tables[j] != customer) {\n                        tables[j] = customer;\n                        cleanCount++;\n                        break;\n                    }\n                }\n            }\n        }\n        cout << cleanCount << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int T = scanner.nextInt();\n        while (T-- > 0) {\n            int N = scanner.nextInt();\n            int M = scanner.nextInt();\n            int[] orders = new int[M];\n            for (int i = 0; i < M; i++) {\n                orders[i] = scanner.nextInt();\n            }\n            int[] tables = new int[N];\n            int cleanCount = 0;\n            for (int i = 0; i < M; i++) {\n                int customer = orders[i];\n                boolean allocated = false;\n                for (int j = 0; j < N; j++) {\n                    if (tables[j] == 0) {\n                        tables[j] = customer;\n                        allocated = true;\n                        cleanCount++;\n                        break;\n                    }\n                }\n                if (!allocated) {\n                    for (int j = 0; j < N; j++) {\n                        if (tables[j] != customer) {\n                            tables[j] = customer;\n                            cleanCount++;\n                            break;\n                        }\n                    }\n                }\n            }\n            System.out.println(cleanCount);\n        }\n    }\n}",
-      "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    N, M = map(int, input().split())\n    orders = list(map(int, input().split()))\n    tables = [0] * N\n    cleanCount = 0\n    for customer in orders:\n        allocated = False\n        for i in range(N):\n            if tables[i] == 0:\n                tables[i] = customer\n                allocated = True\n                cleanCount += 1\n                break\n        if not allocated:\n            for i in range(N):\n                if tables[i] != customer:\n                    tables[i] = customer\n                    cleanCount += 1\n                    break\n    print(cleanCount)",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\nconst readline = () => lines[i++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, M] = readline().split(' ').map(Number);\n    const orders = readline().split(' ').map(Number);\n    const tables = new Array(N).fill(0);\n    let cleanCount = 0;\n    for (let j = 0; j < M; j++) {\n        const customer = orders[j];\n        let allocated = false;\n        for (let k = 0; k < N; k++) {\n            if (tables[k] === 0) {\n                tables[k] = customer;\n                allocated = true;\n                cleanCount++;\n                break;\n            }\n        }\n        if (!allocated) {\n            for (let k = 0; k < N; k++) {\n                if (tables[k] !== customer) {\n                    tables[k] = customer;\n                    cleanCount++;\n                    break;\n                }\n            }\n        }\n    }\n    console.log(cleanCount);\n}"
+      "Python3": "# Time:  O(nlogn)\n# Space: O(n)\n\nimport collections\nfrom sortedcontainers import SortedList\n\n\n# bit, fenwick tree, sorted list, math\nclass Solution(object):\n    def sumCounts(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        class BIT(object):  # 0-indexed.\n            def __init__(self, n):\n                self.__bit = [0]*(n+1)  # Extra one for dummy node.\n\n            def add(self, i, val):\n                i += 1  # Extra one for dummy node.\n                while i < len(self.__bit):\n                    self.__bit[i] = (self.__bit[i]+val) % MOD\n                    i += (i & -i)\n\n            def query(self, i):\n                i += 1  # Extra one for dummy node.\n                ret = 0\n                while i > 0:\n                    ret = (ret+self.__bit[i]) % MOD\n                    i -= (i & -i)\n                return ret\n\n        def update(accu, d):\n            i = sl.bisect_left(idxs[x][-1])\n            accu = (accu + d*(len(nums)*(2*len(sl)-1) - (2*i+1)*idxs[x][-1] - 2*(bit.query(len(nums)-1)-bit.query(idxs[x][-1])))) % MOD\n            bit.add(idxs[x][-1], d*idxs[x][-1])\n            return accu\n\n        idxs = collections.defaultdict(list)\n        for i in reversed(range(len(nums))):\n            idxs[nums[i]].append(i)\n        result = 0\n        sl = SortedList(idxs[x][-1] for x in idxs)\n        accu = (len(nums)*len(sl)**2) % MOD\n        for i, x in enumerate(sl):\n            accu = (accu-(2*i+1)*x) % MOD\n        bit = BIT(len(nums))\n        for x in sl:\n            bit.add(x, x)\n        for x in nums:\n            result = (result+accu) % MOD  # accu = sum(count(i, k) for k in range(i, len(nums)))\n            accu = update(accu, -1)\n            del sl[0]\n            idxs[x].pop()\n            if not idxs[x]:\n                continue\n            sl.add(idxs[x][-1])\n            accu = update(accu, +1)\n        assert(accu == 0)\n        return result"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int sumCounts(vector<int>& nums) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int sumCounts(int[] nums) {\n        \n    }\n}",
+    "Python3": "# Time:  O(nlogn)\n# Space: O(n)\n\nimport collections\nfrom sortedcontainers import SortedList\n\n\n# bit, fenwick tree, sorted list, math\nclass Solution(object):\n    def sumCounts(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        MOD = 10**9+7\n        class BIT(object):  # 0-indexed.\n            def __init__(self, n):\n                self.__bit = [0]*(n+1)  # Extra one for dummy node.\n\n            def add(self, i, val):\n                i += 1  # Extra one for dummy node.\n                while i < len(self.__bit):\n                    self.__bit[i] = (self.__bit[i]+val) % MOD\n                    i += (i & -i)\n\n            def query(self, i):\n                i += 1  # Extra one for dummy node.\n                ret = 0\n                while i > 0:\n                    ret = (ret+self.__bit[i]) % MOD\n                    i -= (i & -i)\n                return ret\n\n        def update(accu, d):\n            i = sl.bisect_left(idxs[x][-1])\n            accu = (accu + d*(len(nums)*(2*len(sl)-1) - (2*i+1)*idxs[x][-1] - 2*(bit.query(len(nums)-1)-bit.query(idxs[x][-1])))) % MOD\n            bit.add(idxs[x][-1], d*idxs[x][-1])\n            return accu\n\n        idxs = collections.defaultdict(list)\n        for i in reversed(range(len(nums))):\n            idxs[nums[i]].append(i)\n        result = 0\n        sl = SortedList(idxs[x][-1] for x in idxs)\n        accu = (len(nums)*len(sl)**2) % MOD\n        for i, x in enumerate(sl):\n            accu = (accu-(2*i+1)*x) % MOD\n        bit = BIT(len(nums))\n        for x in sl:\n            bit.add(x, x)\n        for x in nums:\n            result = (result+accu) % MOD  # accu = sum(count(i, k) for k in range(i, len(nums)))\n            accu = update(accu, -1)\n            del sl[0]\n            idxs[x].pop()\n            if not idxs[x]:\n                continue\n            sl.add(idxs[x][-1])\n            accu = update(accu, +1)\n        assert(accu == 0)\n        return result",
+    "Python": "class Solution(object):\n    def sumCounts(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[]} nums\n * @return {number}\n */\nvar sumCounts = function(nums) {\n    \n};",
+    "TypeScript": "function sumCounts(nums: number[]): number {\n    \n};",
+    "C#": "public class Solution {\n    public int SumCounts(int[] nums) {\n        \n    }\n}",
+    "C": "int sumCounts(int* nums, int numsSize) {\n    \n}",
+    "Go": "func sumCounts(nums []int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun sumCounts(nums: IntArray): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func sumCounts(_ nums: [Int]) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn sum_counts(nums: Vec<i32>) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[]} nums\n# @return {Integer}\ndef sum_counts(nums)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[] $nums\n     * @return Integer\n     */\n    function sumCounts($nums) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int sumCounts(List<int> nums) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def sumCounts(nums: Array[Int]): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec sum_counts(nums :: [integer]) :: integer\n  def sum_counts(nums) do\n    \n  end\nend",
+    "Erlang": "-spec sum_counts(Nums :: [integer()]) -> integer().\nsum_counts(Nums) ->\n  .",
+    "Racket": "(define/contract (sum-counts nums)\n  (-> (listof exact-integer?) exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "sumCounts",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      }
+    ]
+  },
+  "verified": false
 }

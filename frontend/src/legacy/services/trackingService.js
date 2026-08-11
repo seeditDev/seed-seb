@@ -62,20 +62,22 @@ class TrackingService {
         return typeof document !== 'undefined' && document.visibilityState === 'hidden';
     }
 
-    // Helper to get date string in DD-MM-YYYY format
+    // ISO date string YYYY-MM-DD (Firestore TTL compatible)
     getDateString() {
         const now = timeService.getNow();
-        const dd = String(now.getDate()).padStart(2, '0');
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const yyyy = now.getFullYear();
-        return `${dd}-${mm}-${yyyy}`;
+        return now.toISOString().slice(0, 10);
     }
 
-    // Get the specific document path for a user
+    // v2: livePresence/{dateStr}/sessions/{sessionId}
+    getLivePresenceDocRef(dateStr, sessionId) {
+        return doc(db, 'livePresence', dateStr, 'sessions', sessionId);
+    }
+
+    // v1 legacy path — kept for backward compat (read by old staff dashboards)
     getUserDocRef(dateStr, college, year, email) {
         const normalizedCollege = (college || 'OTHER').trim().toUpperCase();
         const normalizedYear = (year || 'OTHER').toString().trim().toUpperCase();
-        const normalizedEmail = String(email).toLowerCase().replace(/[.#$[\]]/g, '_'); // Firestore safe keys
+        const normalizedEmail = String(email).toLowerCase().replace(/[.#$[\]]/g, '_');
 
         return doc(db, 'LiveUsers', dateStr, 'colleges', normalizedCollege, 'years', normalizedYear, 'users', normalizedEmail);
     }
@@ -87,54 +89,95 @@ class TrackingService {
             this.getDateString(),
             tenant.college || 'OTHER',
             tenant.year || 'OTHER',
-            this.currentUser.Email
+            this.currentUser.Email || this.currentUser.email
         );
     }
 
+    // v2 session doc ref
+    currentSessionRef() {
+        if (!this.currentUser) return null;
+        const dateStr = this.getDateString();
+        const uid = this.currentUser.uid || (this.currentUser.email || '').replace(/[@.]/g, '_');
+        this.sessionId = this.sessionId || `sess_${uid}_${dateStr}`;
+        return this.getLivePresenceDocRef(dateStr, this.sessionId);
+    }
+
     async startTracking(userData) {
-        if (!userData || !userData.Email) return;
+        if (!userData || !(userData.email || userData.Email)) return;
+
+        const email = userData.email || userData.Email;
+        const uid = userData.uid || email.replace(/[@.]/g, '_');
 
         // Idempotent: restarting for the same student must not stack intervals.
-        if (this.currentUser && this.currentUser.Email === userData.Email && this.heartbeatTimer) {
+        if (this.currentUser && (this.currentUser.uid === uid || this.currentUser.Email === email) && this.heartbeatTimer) {
             return;
         }
         if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
 
-        this.currentUser = userData;
+        this.currentUser = { ...userData, uid };
+        this.sessionId = null; // reset so currentSessionRef() generates a fresh one
         this.sessionStartTime = timeService.now();
         this.lastHeartbeatTime = timeService.now();
         this.lastVisibleAt = this.isHidden() ? null : timeService.now();
         this.visibleSinceLastBeat = 0;
 
-        const userRef = this.currentUserDocRef();
-        if (!userRef) return;
+        const sessionRef = this.currentSessionRef();
+        if (!sessionRef) return;
 
         try {
-            const userDoc = await getDoc(userRef);
-
-            if (!userDoc.exists()) {
-                // First visit of the day
-                await setDoc(userRef, {
-                    Email: userData.Email,
-                    Name: userData.Name || 'Anonymous',
-                    RollNumber: userData["Roll Number"] || userData.rollNo || 'N/A',
-                    Department: userData.Department || 'N/A',
-                    Date: this.getDateString(), // Added for collection group filtering
-                    VisitTime: serverTimestamp(),
-                    LastActive: serverTimestamp(),
-                    LoginCount: 1,
-                    DailyDuration: 0, // in seconds
-                    SessionDuration: 0, // in seconds
-                    IsOnline: true
-                }, { merge: true });
-            } else {
-                // Subsequent login/refresh
-                await updateDoc(userRef, {
-                    LoginCount: increment(1),
-                    IsOnline: true,
-                    LastActive: serverTimestamp()
-                });
+            // Ensure Firebase auth is ready before any Firestore write.
+            // If anonymous auth is disabled in Firebase Console, ensureAnonymousAuth()
+            // resolves to null — in that case, skip livePresence writes silently.
+            const { ensureAnonymousAuth, auth } = await import('../firebase-config');
+            await ensureAnonymousAuth();
+            if (!auth.currentUser) {
+                // No authenticated session — skip Firestore tracking silently.
+                this.attachLifecycleListeners();
+                this.startHeartbeat();
+                return;
             }
+
+            await setDoc(sessionRef, {
+                userId: uid,
+                email: email,
+                displayName: userData.displayName || userData.Name || '',
+                tenantId: userData.tenantId || userData.College || '',
+                cohortId: userData.cohortId || '',
+                assessmentId: null,
+                page: typeof window !== 'undefined' ? window.location.pathname : '/',
+                connectedAt: serverTimestamp(),
+                lastHeartbeatAt: serverTimestamp(),
+                deviceInfo: {
+                    os: navigator?.userAgent || 'unknown',
+                    browser: navigator?.platform || 'unknown',
+                },
+                isOnline: true,
+            }, { merge: true });
+
+            // v1 legacy path — non-blocking backward compat write
+            try {
+                const legacyRef = this.currentUserDocRef();
+                if (legacyRef) {
+                    const legacySnap = await getDoc(legacyRef);
+                    if (!legacySnap.exists()) {
+                        setDoc(legacyRef, {
+                            Email: email,
+                            Name: userData.Name || userData.displayName || 'Anonymous',
+                            RollNumber: userData['Roll Number'] || userData.rollNumber || 'N/A',
+                            Department: userData.Department || userData.department || 'N/A',
+                            Date: this.getDateString(),
+                            VisitTime: serverTimestamp(),
+                            LastActive: serverTimestamp(),
+                            LoginCount: 1,
+                            DailyDuration: 0,
+                            SessionDuration: 0,
+                            IsOnline: true,
+                        }, { merge: true }).catch(() => {});
+                    } else {
+                        updateDoc(legacyRef, { LoginCount: increment(1), IsOnline: true, LastActive: serverTimestamp() }).catch(() => {});
+                    }
+                }
+            } catch (_) {}
 
             this.attachLifecycleListeners();
             this.startHeartbeat();
@@ -199,23 +242,34 @@ class TrackingService {
         this.lastVisibleAt = now;
 
         const visibleSeconds = this.visibleSinceLastBeat;
-        // Nothing meaningful accrued (e.g. two beats in the same second).
         if (visibleSeconds <= 0) return;
         this.visibleSinceLastBeat = 0;
         this.lastHeartbeatTime = now;
 
-        const userRef = this.currentUserDocRef();
-        if (!userRef) return;
+        const sessionRef = this.currentSessionRef();
+        if (!sessionRef) return;
 
         const sessionDuration = Math.floor((now - this.sessionStartTime) / 1000);
 
         try {
-            await updateDoc(userRef, {
-                LastActive: serverTimestamp(),
-                DailyDuration: increment(visibleSeconds),
-                SessionDuration: sessionDuration,
-                IsOnline: true
+            // v2: update livePresence session doc
+            await updateDoc(sessionRef, {
+                lastHeartbeatAt: serverTimestamp(),
+                page: typeof window !== 'undefined' ? window.location.pathname : '/',
+                sessionDurationSeconds: sessionDuration,
+                isOnline: true,
             });
+
+            // v1 legacy non-blocking update
+            const legacyRef = this.currentUserDocRef();
+            if (legacyRef) {
+                updateDoc(legacyRef, {
+                    LastActive: serverTimestamp(),
+                    DailyDuration: increment(visibleSeconds),
+                    SessionDuration: sessionDuration,
+                    IsOnline: true,
+                }).catch(() => {});
+            }
         } catch (error) {
             // Put the time back so it is not silently lost on a transient failure.
             this.visibleSinceLastBeat += visibleSeconds;

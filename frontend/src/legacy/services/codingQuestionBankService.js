@@ -104,16 +104,29 @@ export const fetchQuestionsIndex = async () => {
 
 /**
  * Fetch multiple questions by ID in parallel.
+ * Accepts either plain string IDs or {id, cdnUrl} objects from the new slim slug format.
  * Failed fetches return null (graceful degradation).
- * @param {string[]} questionIds - Array of question IDs
+ * @param {string[]|{id:string,cdnUrl?:string}[]} questionIds
  * @returns {Promise<Object[]>} Array of question data (nulls filtered out)
  */
 export const fetchQuestionsForContest = async (questionIds = []) => {
-  const results = await Promise.allSettled(questionIds.map(qid => fetchQuestion(qid)));
+  const results = await Promise.allSettled(questionIds.map(item => {
+    if (item && typeof item === 'object') {
+      // New slim slug format: { id, cdnUrl, title, difficulty, category }
+      const { id, cdnUrl } = item;
+      if (cdnUrl) {
+        return fetchJson(cdnUrl.replace(/^https?:\/\/raw\.githubusercontent\.com\/seeditDev\/seed-contents\/main\//, ''))
+          .catch(() => fetchQuestion(id)); // fallback to id-based if cdnUrl fails
+      }
+      return fetchQuestion(id);
+    }
+    return fetchQuestion(item); // plain string ID
+  }));
   return results
     .map((r, i) => {
       if (r.status === 'fulfilled') return r.value;
-      console.warn(`[QuestionBankService] Failed to fetch ${questionIds[i]}:`, r.reason?.message);
+      const id = typeof questionIds[i] === 'object' ? questionIds[i]?.id : questionIds[i];
+      console.warn(`[QuestionBankService] Failed to fetch ${id}:`, r.reason?.message);
       return null;
     })
     .filter(Boolean);

@@ -1,106 +1,331 @@
 {
   "questionId": "Q2872",
-  "title": "Stone",
-  "slug": "stone",
+  "title": "Largest Number of K-Divisible Components",
+  "slug": "maximum-number-of-k-divisible-components",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Arrays",
-    "difficulty": "Medium",
+    "category": "Searching",
+    "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Array Transformation",
-      "Turn-based Operations",
-      "Arrays",
-      "Max Value"
+      "tree",
+      "depth-first-search"
     ],
     "companyTags": [],
     "topicTags": [
-      "Ad-hoc & Implementation"
-    ]
+      "tree",
+      "depth-first-search"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Roman has no idea, why this problem is called Stone. He also has no idea on how to solve the followong problem: given array of **N** integers **A** and a number **K**. During a turn the maximal value over all **Ai** is chosen, let's call it **MAX**. Then **Ai** = \n**MAX** - **Ai** is done for every **1 &lt;= i &lt;= N**. Help Roman to find out how will the array look like after **K** turns.",
+    "problemStatement": "There is an undirected tree with `n` nodes labeled from `0` to `n - 1`. You receive the integer `n` and a 2D integer array `edges` of length `n - 1`, where `edges[i] = [ai, bi]` indicates that there is an edge between nodes `ai` and `bi` in the tree.\n\nYou are also given a **0-indexed** integer array `values` of length `n`, where `values[i]` is the **value** associated with the `ith` node, and an integer `k`.\n\nA **valid split** of the tree is obtained by removing any set of edges, possibly empty, from the tree such that the resulting components all have values that are divisible by `k`, where the **value of a connected component** is the sum of the values of its nodes.\n\nOutput *the **largest number of components** in any valid split*.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2023/08/07/example12-cropped2svg.jpg)\n\n```\nInput: n = 5, edges = [[0,2],[1,2],[1,3],[2,4]], values = [1,8,1,4,4], k = 6\nOutput: 2\nExplanation: We remove the edge connecting node 1 with 2. The resulting split is valid because:\n- The value of the component containing nodes 1 and 3 is values[1] + values[3] = 12.\n- The value of the component containing nodes 0, 2, and 4 is values[0] + values[2] + values[4] = 6.\nIt can be shown that no other valid split has more than 2 connected components.\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2023/08/07/example21svg-1.jpg)\n\n```\nInput: n = 7, edges = [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]], values = [3,0,6,1,5,2,1], k = 3\nOutput: 3\nExplanation: We remove the edge connecting node 0 with 2, and the edge connecting node 0 with 1. The resulting split is valid because:\n- The value of the component containing node 0 is values[0] = 3.\n- The value of the component containing nodes 2, 5, and 6 is values[2] + values[5] + values[6] = 9.\n- The value of the component containing nodes 1, 3, and 4 is values[1] + values[3] + values[4] = 6.\nIt can be shown that no other valid split has more than 3 connected components.\n```\n\n**Constraints:**\n\n* `1 <= n <= 3 * 104`\n* `edges.length == n - 1`\n* `edges[i].length == 2`\n* `0 <= ai, bi < n`\n* `values.length == n`\n* `0 <= values[i] <= 109`\n* `1 <= k <= 109`\n* Sum of `values` is divisible by `k`.\n* The input is generated such that `edges` represents a valid tree.",
     "constraints": [
-      "1 <= N <= 10^5",
-      "0 <= K <= 10^9",
-      "-2 * 10^9 <= Ai <= 2 * 10^9"
+      "None"
     ],
-    "inputFormat": "The first line contains two integers N and K, where N is the number of elements in the array and K is the number of turns. The second line contains N integers representing the array A.",
-    "outputFormat": "Output N numbers on a single line, representing the array A after K turns.",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "1\n4 1\n5 -1 7 0",
-        "output": "2 8 0 7",
-        "explanation": "The maximum value in the array is 7. After one turn, the array becomes [7-5, 7-(-1), 7-7, 7-0] = [2, 8, 0, 7]."
+        "type": "reg",
+        "input": "n = 5, edges = [[0,2],[1,2],[1,3],[2,4]], values = [1,8,1,4,4], k = 6",
+        "output": "2",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n3 2\n1 2 3",
-        "output": "2 0 2",
-        "explanation": "After the first turn, the maximum value is 3, so the array becomes [3-1, 3-2, 3-3] = [2, 1, 0]. After the second turn, the maximum value is 2, so the array becomes [2-2, 2-1, 2-0] = [0, 1, 2]."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n5 3\n10 20 30 40 50",
-        "output": "20 10 30 10 20",
-        "explanation": "After the first turn, the maximum value is 50, so the array becomes [50-10, 50-20, 50-30, 50-40, 50-50] = [40, 30, 20, 10, 0]. After the second turn, the maximum value is 40, so the array becomes [40-40, 40-30, 40-20, 40-10, 40-0] = [0, 10, 20, 30, 40]. After the third turn, the maximum value is 40, so the array becomes [40-0, 40-10, 40-20, 40-30, 40-40] = [40, 30, 20, 10, 0]."
+        "type": "reg",
+        "input": "n = 7, edges = [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]], values = [3,0,6,1,5,2,1], k = 3",
+        "output": "3",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n1 1\n0",
-        "expectedOutput": "0",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n10 10\n1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000",
-        "expectedOutput": "0 0 0 0 0 0 0 0 0 0",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n5 5\n0 0 0 0 0",
-        "expectedOutput": "0 0 0 0 0",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n5 5\n-1000000000 -1000000000 -1000000000 -1000000000 -1000000000",
-        "expectedOutput": "0 0 0 0 0",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "10\n5 5\n1 2 3 4 5\n5 5\n6 7 8 9 10\n5 5\n11 12 13 14 15\n5 5\n16 17 18 19 20\n5 5\n21 22 23 24 25\n5 5\n26 27 28 29 30\n5 5\n31 32 33 34 35\n5 5\n36 37 38 39 40\n5 5\n41 42 43 44 45\n5 5\n46 47 48 49 50",
-        "expectedOutput": "4 2 0 2 4\n14 12 10 12 14\n24 22 20 22 24\n34 32 30 32 34\n44 42 40 42 44\n54 52 50 52 54\n64 62 60 62 64\n74 72 70 72 74\n84 82 80 82 84\n94 92 90 92 94",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -111,18 +336,80 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight is to understand the transformation applied to the array in each turn. The algorithm iterates through the array K times, each time finding the maximum value and then transforming each element by subtracting it from the maximum value. This process is repeated for K turns, resulting in the final transformed array.",
-    "timeComplexity": "O(N*K) per test case, where N is the number of elements in the array and K is the number of turns.",
-    "spaceComplexity": "O(N) for storing the array A.",
     "code": {
-      "C": "#include <stdio.h>\n#include <limits.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, K;\n        scanf(\"%d %d\", &N, &K);\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        for (int turn = 0; turn < K; turn++) {\n            int maxVal = INT_MIN;\n            for (int i = 0; i < N; i++) {\n                if (A[i] > maxVal) {\n                    maxVal = A[i];\n                }\n            }\n            for (int i = 0; i < N; i++) {\n                A[i] = maxVal - A[i];\n            }\n        }\n        for (int i = 0; i < N; i++) {\n            printf(\"%d \", A[i]);\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\n#include <climits>\nusing namespace std;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, K;\n        cin >> N >> K;\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        for (int turn = 0; turn < K; turn++) {\n            int maxVal = INT_MIN;\n            for (int i = 0; i < N; i++) {\n                if (A[i] > maxVal) {\n                    maxVal = A[i];\n                }\n            }\n            for (int i = 0; i < N; i++) {\n                A[i] = maxVal - A[i];\n            }\n        }\n        for (int i = 0; i < N; i++) {\n            cout << A[i] << \" \";\n        }\n        cout << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        int T = scanner.nextInt();\n        while (T-- > 0) {\n            int N = scanner.nextInt();\n            int K = scanner.nextInt();\n            int[] A = new int[N];\n            for (int i = 0; i < N; i++) {\n                A[i] = scanner.nextInt();\n            }\n            for (int turn = 0; turn < K; turn++) {\n                int maxVal = Integer.MIN_VALUE;\n                for (int i = 0; i < N; i++) {\n                    if (A[i] > maxVal) {\n                        maxVal = A[i];\n                    }\n                }\n                for (int i = 0; i < N; i++) {\n                    A[i] = maxVal - A[i];\n                }\n            }\n            for (int i = 0; i < N; i++) {\n                System.out.print(A[i] + \" \");\n            }\n            System.out.println();\n        }\n    }\n}",
-      "Python3": "import sys\nT = int(sys.stdin.readline())\nfor _ in range(T):\n    N, K = map(int, sys.stdin.readline().split())\n    A = list(map(int, sys.stdin.readline().split()))\n    for turn in range(K):\n        maxVal = max(A)\n        A = [maxVal - x for x in A]\n    print(*A)",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\nconst readline = () => lines[i++];\nconst T = parseInt(readline());\nfor (let t = 0; t < T; t++) {\n    const [N, K] = readline().split(' ').map(Number);\n    const A = readline().split(' ').map(Number);\n    for (let turn = 0; turn < K; turn++) {\n        const maxVal = Math.max(...A);\n        for (let i = 0; i < N; i++) {\n            A[i] = maxVal - A[i];\n        }\n    }\n    console.log(A.join(' '));\n}"
+      "Python3": "# Time:  O(n)\n# Space: O(n)\n\n# bfs, greedy\nclass Solution(object):\n    def maxKDivisibleComponents(self, n, edges, values, k):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :type values: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        def bfs():\n            result = 0\n            dp = [x%k for x in values]\n            cnt = [len(adj[u]) for u in range(len(adj))]\n            q = [u for u in range(n) if cnt[u] == 1]\n            while q:\n                new_q = []\n                for u in q:\n                    if not dp[u]:\n                        result += 1\n                    for v in adj[u]:\n                        dp[v] = (dp[v]+dp[u])%k\n                        cnt[v] -= 1\n                        if cnt[v] == 1:\n                            new_q.append(v)\n                q = new_q\n            return max(result, 1)\n\n        adj = [[] for _ in range(n)]\n        for u, v in edges:\n            adj[u].append(v)\n            adj[v].append(u)\n        return bfs()"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    int maxKDivisibleComponents(int n, vector<vector<int>>& edges, vector<int>& values, int k) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public int maxKDivisibleComponents(int n, int[][] edges, int[] values, int k) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n)\n# Space: O(n)\n\n# bfs, greedy\nclass Solution(object):\n    def maxKDivisibleComponents(self, n, edges, values, k):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :type values: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        def bfs():\n            result = 0\n            dp = [x%k for x in values]\n            cnt = [len(adj[u]) for u in range(len(adj))]\n            q = [u for u in range(n) if cnt[u] == 1]\n            while q:\n                new_q = []\n                for u in q:\n                    if not dp[u]:\n                        result += 1\n                    for v in adj[u]:\n                        dp[v] = (dp[v]+dp[u])%k\n                        cnt[v] -= 1\n                        if cnt[v] == 1:\n                            new_q.append(v)\n                q = new_q\n            return max(result, 1)\n\n        adj = [[] for _ in range(n)]\n        for u, v in edges:\n            adj[u].append(v)\n            adj[v].append(u)\n        return bfs()",
+    "Python": "class Solution(object):\n    def maxKDivisibleComponents(self, n, edges, values, k):\n        \"\"\"\n        :type n: int\n        :type edges: List[List[int]]\n        :type values: List[int]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number} n\n * @param {number[][]} edges\n * @param {number[]} values\n * @param {number} k\n * @return {number}\n */\nvar maxKDivisibleComponents = function(n, edges, values, k) {\n    \n};",
+    "TypeScript": "function maxKDivisibleComponents(n: number, edges: number[][], values: number[], k: number): number {\n    \n};",
+    "C#": "public class Solution {\n    public int MaxKDivisibleComponents(int n, int[][] edges, int[] values, int k) {\n        \n    }\n}",
+    "C": "int maxKDivisibleComponents(int n, int** edges, int edgesSize, int* edgesColSize, int* values, int valuesSize, int k) {\n    \n}",
+    "Go": "func maxKDivisibleComponents(n int, edges [][]int, values []int, k int) int {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maxKDivisibleComponents(n: Int, edges: Array<IntArray>, values: IntArray, k: Int): Int {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maxKDivisibleComponents(_ n: Int, _ edges: [[Int]], _ values: [Int], _ k: Int) -> Int {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn max_k_divisible_components(n: i32, edges: Vec<Vec<i32>>, values: Vec<i32>, k: i32) -> i32 {\n        \n    }\n}",
+    "Ruby": "# @param {Integer} n\n# @param {Integer[][]} edges\n# @param {Integer[]} values\n# @param {Integer} k\n# @return {Integer}\ndef max_k_divisible_components(n, edges, values, k)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer $n\n     * @param Integer[][] $edges\n     * @param Integer[] $values\n     * @param Integer $k\n     * @return Integer\n     */\n    function maxKDivisibleComponents($n, $edges, $values, $k) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  int maxKDivisibleComponents(int n, List<List<int>> edges, List<int> values, int k) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maxKDivisibleComponents(n: Int, edges: Array[Array[Int]], values: Array[Int], k: Int): Int = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec max_k_divisible_components(n :: integer, edges :: [[integer]], values :: [integer], k :: integer) :: integer\n  def max_k_divisible_components(n, edges, values, k) do\n    \n  end\nend",
+    "Erlang": "-spec max_k_divisible_components(N :: integer(), Edges :: [[integer()]], Values :: [integer()], K :: integer()) -> integer().\nmax_k_divisible_components(N, Edges, Values, K) ->\n  .",
+    "Racket": "(define/contract (max-k-divisible-components n edges values k)\n  (-> exact-integer? (listof (listof exact-integer?)) (listof exact-integer?) exact-integer? exact-integer?)\n  )"
+  },
+  "_internal": {
+    "methodName": "maxKDivisibleComponents",
+    "params": [
+      {
+        "name": "n",
+        "type": "integer"
+      },
+      {
+        "type": "integer[][]",
+        "name": "edges"
+      },
+      {
+        "type": "integer[]",
+        "name": "values"
+      },
+      {
+        "type": "integer",
+        "name": "k"
+      }
+    ]
+  },
+  "verified": false
 }

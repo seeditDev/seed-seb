@@ -1,105 +1,335 @@
 {
   "questionId": "Q2382",
-  "title": "Short II",
-  "slug": "short-ii",
+  "title": "Largest Segment Sum After Removals",
+  "slug": "maximum-segment-sum-after-removals",
   "version": 1,
-  "createdAt": "2026-07-01",
-  "updatedAt": "2026-07-04",
+  "createdAt": "2026-07-15",
+  "updatedAt": "2026-07-15",
   "metadata": {
-    "category": "Math",
+    "category": "Arrays",
     "difficulty": "Hard",
     "isPremium": false,
     "tags": [
-      "Number Theory",
-      "Divisibility",
-      "Math"
+      "array",
+      "union-find",
+      "prefix-sum",
+      "ordered-set"
     ],
     "companyTags": [],
     "topicTags": [
-      "Mathematics"
-    ]
+      "array",
+      "union-find",
+      "prefix-sum",
+      "ordered-set"
+    ],
+    "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Given a prime number **p**, find the number of pairs of integers (**a**, **b**) such that **p** &lt; **a**, **p** &lt; **b** and **ab** is divisible by **(a-p)(b-p)**.",
+    "problemStatement": "You receive two **0-indexed** integer arrays `nums` and `removeQueries`, both of length `n`. For the `ith` query, the element in `nums` at the index `removeQueries[i]` is removed, splitting `nums` into different segments.\n\nA **segment** is a contiguous sequence of **positive** integers in `nums`. A **segment sum** is the sum of every element in a segment.\n\nOutput *an integer array* `answer`*, of length* `n`*, where* `answer[i]` *is the **largest** segment sum after applying the* `ith` *removal.*\n\n**Note:** The same index will **not** be removed more than once.\n\n**Example 1:**\n\n```\nInput: nums = [1,2,5,6,1], removeQueries = [0,3,2,4,1]\nOutput: [14,7,2,2,0]\nExplanation: Using 0 to indicate a removed element, the answer is as follows:\nQuery 1: Remove the 0th element, nums becomes [0,2,5,6,1] and the maximum segment sum is 14 for segment [2,5,6,1].\nQuery 2: Remove the 3rd element, nums becomes [0,2,5,0,1] and the maximum segment sum is 7 for segment [2,5].\nQuery 3: Remove the 2nd element, nums becomes [0,2,0,0,1] and the maximum segment sum is 2 for segment [2]. \nQuery 4: Remove the 4th element, nums becomes [0,2,0,0,0] and the maximum segment sum is 2 for segment [2]. \nQuery 5: Remove the 1st element, nums becomes [0,0,0,0,0] and the maximum segment sum is 0, since there are no segments.\nFinally, we return [14,7,2,2,0].\n```\n\n**Example 2:**\n\n```\nInput: nums = [3,2,11,1], removeQueries = [3,2,1,0]\nOutput: [16,5,3,0]\nExplanation: Using 0 to indicate a removed element, the answer is as follows:\nQuery 1: Remove the 3rd element, nums becomes [3,2,11,0] and the maximum segment sum is 16 for segment [3,2,11].\nQuery 2: Remove the 2nd element, nums becomes [3,2,0,0] and the maximum segment sum is 5 for segment [3,2].\nQuery 3: Remove the 1st element, nums becomes [3,0,0,0] and the maximum segment sum is 3 for segment [3].\nQuery 4: Remove the 0th element, nums becomes [0,0,0,0] and the maximum segment sum is 0, since there are no segments.\nFinally, we return [16,5,3,0].\n```\n\n**Constraints:**\n\n* `n == nums.length == removeQueries.length`\n* `1 <= n <= 105`\n* `1 <= nums[i] <= 109`\n* `0 <= removeQueries[i] < n`\n* All the values of `removeQueries` are **unique**.",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "2 < p < 10^12",
-      "p is a prime number"
+      "None"
     ],
-    "inputFormat": "The first line contains the number of test cases T (1 \u2264 T \u2264 5). Then T test cases follow, each test case consists of a line containing one prime integer p (2 < p < 10^12).",
-    "outputFormat": "For each test case output one line containing the required number of pairs of integers (a, b) such that p < a, p < b and ab is divisible by (a-p)(b-p).",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
-        "input": "3\n2\n23\n59",
-        "output": "14\n80\n116",
-        "explanation": "For p = 2, the pairs are (3, 3), (3, 4), (3, 5), (3, 8), (4, 3), (4, 4), (4, 6), (5, 3), (5, 12), (6, 4), (6, 8), (8, 3), (8, 6), (12, 5). For p = 23, there are 80 pairs. For p = 59, there are 116 pairs."
+        "type": "reg",
+        "input": "nums = [1,2,5,6,1], removeQueries = [0,3,2,4,1]",
+        "output": "[14,7,2,2,0]",
+        "explanation": ""
       },
       {
         "id": "sample_2",
-        "input": "1\n7",
-        "output": "6",
-        "explanation": "For p = 7, the pairs are (8, 8), (8, 9), (8, 10), (8, 14), (9, 8), (10, 8)."
-      },
-      {
-        "id": "sample_3",
-        "input": "1\n11",
-        "output": "10",
-        "explanation": "For p = 11, the pairs are (12, 12), (12, 13), (12, 14), (12, 15), (12, 22), (13, 12), (14, 12), (15, 12), (22, 12), (24, 12)."
+        "type": "reg",
+        "input": "nums = [3,2,11,1], removeQueries = [3,2,1,0]",
+        "output": "[16,5,3,0]",
+        "explanation": ""
       }
-    ]
+    ],
+    "notes": []
   },
   "testCases": {
     "hidden": [
       {
-        "id": "tc_1",
-        "label": "minimum boundary",
-        "input": "1\n2",
-        "expectedOutput": "14",
-        "weight": 2
+        "id": "tc_01",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_2",
-        "label": "maximum boundary",
-        "input": "1\n1000000000000",
-        "expectedOutput": "1999999999998",
-        "weight": 2
+        "id": "tc_02",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_3",
-        "label": "uniform/edge case",
-        "input": "1\n3",
-        "expectedOutput": "4",
-        "weight": 2
+        "id": "tc_03",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_4",
-        "label": "tricky case",
-        "input": "1\n5",
-        "expectedOutput": "6",
-        "weight": 2
+        "id": "tc_04",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       },
       {
-        "id": "tc_5",
-        "label": "stress/general",
-        "input": "3\n7\n11\n13",
-        "expectedOutput": "6\n10\n14",
-        "weight": 2
+        "id": "tc_05",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "label": "",
+        "input": "",
+        "expectedOutput": "",
+        "weight": 3
       }
     ],
-    "totalTestCases": 5,
-    "totalWeight": 10
+    "totalTestCases": 30,
+    "totalWeight": 100
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
-    "maxScore": 10
+    "maxScore": 100
   },
   "judging": {
     "timeLimitMs": 2000,
@@ -110,18 +340,72 @@
       "Java",
       "Python3",
       "JavaScript"
-    ]
+    ],
+    "notes": []
   },
   "solution": {
-    "approach": "The key insight here is to realize that for ab to be divisible by (a-p)(b-p), a and b must have a common factor with p. Since p is a prime number, this common factor can only be p itself or 1. Thus, we can iterate over all possible values of a and b that satisfy the given conditions and count the pairs where ab is divisible by (a-p)(b-p).",
-    "timeComplexity": "O(T * p) per test case, O(T * p) total. No precomputation is done.",
-    "spaceComplexity": "O(1) \u2014 the space used does not grow with the size of the input.",
     "code": {
-      "C": "#include <stdio.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        long long p;\n        scanf(\"%lld\", &p);\n        long long ans = 0;\n        for (long long a = p + 1; a <= 2 * p; a++) {\n            for (long long b = a; b <= 2 * p; b++) {\n                if ((a - p) * (b - p) != 0 && (a * b) % ((a - p) * (b - p)) == 0) {\n                    ans++;\n                }\n            }\n        }\n        printf(\"%lld\\n\", ans);\n    }\n    return 0;\n}",
-      "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        long long p;\n        cin >> p;\n        long long ans = 0;\n        for (long long a = p + 1; a <= 2 * p; a++) {\n            for (long long b = a; b <= 2 * p; b++) {\n                if ((a - p) * (b - p) != 0 && (a * b) % ((a - p) * (b - p)) == 0) {\n                    ans++;\n                }\n            }\n        }\n        cout << ans << endl;\n    }\n    return 0;\n}",
-      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int T = sc.nextInt();\n        while (T-- > 0) {\n            long p = sc.nextLong();\n            long ans = 0;\n            for (long a = p + 1; a <= 2 * p; a++) {\n                for (long b = a; b <= 2 * p; b++) {\n                    if ((a - p) * (b - p) != 0 && (a * b) % ((a - p) * (b - p)) == 0) {\n                        ans++;\n                    }\n                }\n            }\n            System.out.println(ans);\n        }\n    }\n}",
-      "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    p = int(input())\n    ans = 0\n    for a in range(p + 1, 2 * p + 1):\n        for b in range(a, 2 * p + 1):\n            if (a - p) * (b - p) != 0 and (a * b) % ((a - p) * (b - p)) == 0:\n                ans += 1\n    print(ans)",
-      "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\nconst T = parseInt(lines[i++]);\nfor (let t = 0; t < T; t++) {\n    const p = parseInt(lines[i++]);\n    let ans = 0;\n    for (let a = p + 1; a <= 2 * p; a++) {\n        for (let b = a; b <= 2 * p; b++) {\n            if ((a - p) * (b - p) != 0 && (a * b) % ((a - p) * (b - p)) == 0) {\n                ans++;\n            }\n        }\n    }\n    console.log(ans);\n}"
+      "Python3": "# Time:  O(n)\n# Space: O(n)\n\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, nums):\n        self.set = range(len(nums))\n        self.rank = [0]*len(nums)\n        self.size = nums[:]\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        self.size[y] += self.size[x]\n        return True\n\n    def total(self, x):\n        return self.size[self.find_set(x)]\n\n\n# union find\nclass Solution(object):\n    def maximumSegmentSum(self, nums, removeQueries):\n        \"\"\"\n        :type nums: List[int]\n        :type removeQueries: List[int]\n        :rtype: List[int]\n        \"\"\"\n        result = [0]*len(removeQueries)\n        lookup = [0]*len(nums)\n        uf = UnionFind(nums)\n        for i in reversed(range(1, len(removeQueries))): \n            q = removeQueries[i]\n            lookup[q] = 1\n            if q-1 >= 0 and lookup[q-1]:\n                uf.union_set(q-1, q)\n            if q+1 < len(nums) and lookup[q+1]:\n                uf.union_set(q, q+1)\n            result[i-1] = max(result[i], uf.total(q))   \n        return result"
+    },
+    "approach": "",
+    "timeComplexity": "",
+    "spaceComplexity": "",
+    "notes": [],
+    "editorial": {
+      "bruteForce": {
+        "description": "",
+        "complexity": ""
+      },
+      "better": {
+        "description": "",
+        "complexity": ""
+      },
+      "optimal": {
+        "description": "",
+        "complexity": ""
+      }
     }
-  }
+  },
+  "hints": [],
+  "followUps": [],
+  "learningObjectives": [],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C++": "class Solution {\npublic:\n    vector<long long> maximumSegmentSum(vector<int>& nums, vector<int>& removeQueries) {\n        \n    }\n};",
+    "Java": "class Solution {\n    public long[] maximumSegmentSum(int[] nums, int[] removeQueries) {\n        \n    }\n}",
+    "Python3": "# Time:  O(n)\n# Space: O(n)\n\nclass UnionFind(object):  # Time: O(n * alpha(n)), Space: O(n)\n    def __init__(self, nums):\n        self.set = range(len(nums))\n        self.rank = [0]*len(nums)\n        self.size = nums[:]\n\n    def find_set(self, x):\n        stk = []\n        while self.set[x] != x:  # path compression\n            stk.append(x)\n            x = self.set[x]\n        while stk:\n            self.set[stk.pop()] = x\n        return x\n\n    def union_set(self, x, y):\n        x, y = self.find_set(x), self.find_set(y)\n        if x == y:\n            return False\n        if self.rank[x] > self.rank[y]:  # union by rank\n            x, y = y, x\n        self.set[x] = self.set[y]\n        if self.rank[x] == self.rank[y]:\n            self.rank[y] += 1\n        self.size[y] += self.size[x]\n        return True\n\n    def total(self, x):\n        return self.size[self.find_set(x)]\n\n\n# union find\nclass Solution(object):\n    def maximumSegmentSum(self, nums, removeQueries):\n        \"\"\"\n        :type nums: List[int]\n        :type removeQueries: List[int]\n        :rtype: List[int]\n        \"\"\"\n        result = [0]*len(removeQueries)\n        lookup = [0]*len(nums)\n        uf = UnionFind(nums)\n        for i in reversed(range(1, len(removeQueries))): \n            q = removeQueries[i]\n            lookup[q] = 1\n            if q-1 >= 0 and lookup[q-1]:\n                uf.union_set(q-1, q)\n            if q+1 < len(nums) and lookup[q+1]:\n                uf.union_set(q, q+1)\n            result[i-1] = max(result[i], uf.total(q))   \n        return result",
+    "Python": "class Solution(object):\n    def maximumSegmentSum(self, nums, removeQueries):\n        \"\"\"\n        :type nums: List[int]\n        :type removeQueries: List[int]\n        :rtype: List[int]\n        \"\"\"\n        ",
+    "JavaScript": "/**\n * @param {number[]} nums\n * @param {number[]} removeQueries\n * @return {number[]}\n */\nvar maximumSegmentSum = function(nums, removeQueries) {\n    \n};",
+    "TypeScript": "function maximumSegmentSum(nums: number[], removeQueries: number[]): number[] {\n    \n};",
+    "C#": "public class Solution {\n    public long[] MaximumSegmentSum(int[] nums, int[] removeQueries) {\n        \n    }\n}",
+    "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nlong long* maximumSegmentSum(int* nums, int numsSize, int* removeQueries, int removeQueriesSize, int* returnSize) {\n    \n}",
+    "Go": "func maximumSegmentSum(nums []int, removeQueries []int) []int64 {\n    \n}",
+    "Kotlin": "class Solution {\n    fun maximumSegmentSum(nums: IntArray, removeQueries: IntArray): LongArray {\n        \n    }\n}",
+    "Swift": "class Solution {\n    func maximumSegmentSum(_ nums: [Int], _ removeQueries: [Int]) -> [Int] {\n        \n    }\n}",
+    "Rust": "impl Solution {\n    pub fn maximum_segment_sum(nums: Vec<i32>, remove_queries: Vec<i32>) -> Vec<i64> {\n        \n    }\n}",
+    "Ruby": "# @param {Integer[]} nums\n# @param {Integer[]} remove_queries\n# @return {Integer[]}\ndef maximum_segment_sum(nums, remove_queries)\n    \nend",
+    "PHP": "class Solution {\n\n    /**\n     * @param Integer[] $nums\n     * @param Integer[] $removeQueries\n     * @return Integer[]\n     */\n    function maximumSegmentSum($nums, $removeQueries) {\n        \n    }\n}",
+    "Dart": "class Solution {\n  List<int> maximumSegmentSum(List<int> nums, List<int> removeQueries) {\n    \n  }\n}",
+    "Scala": "object Solution {\n    def maximumSegmentSum(nums: Array[Int], removeQueries: Array[Int]): Array[Long] = {\n        \n    }\n}",
+    "Elixir": "defmodule Solution do\n  @spec maximum_segment_sum(nums :: [integer], remove_queries :: [integer]) :: [integer]\n  def maximum_segment_sum(nums, remove_queries) do\n    \n  end\nend",
+    "Erlang": "-spec maximum_segment_sum(Nums :: [integer()], RemoveQueries :: [integer()]) -> [integer()].\nmaximum_segment_sum(Nums, RemoveQueries) ->\n  .",
+    "Racket": "(define/contract (maximum-segment-sum nums removeQueries)\n  (-> (listof exact-integer?) (listof exact-integer?) (listof exact-integer?))\n  )"
+  },
+  "_internal": {
+    "methodName": "maximumSegmentSum",
+    "params": [
+      {
+        "name": "nums",
+        "type": "integer[]"
+      },
+      {
+        "type": "integer[]",
+        "name": "removeQueries"
+      }
+    ]
+  },
+  "verified": false
 }
