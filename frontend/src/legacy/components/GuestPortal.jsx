@@ -53,35 +53,70 @@ function flattenColleges(indexData) {
   return result.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// ─── Fetch college GateKey from Firestore tenants collection ──────────────────
-async function fetchTenantGateKey(collegeCode) {
+// ─── Scan cohorts for a matching gate key ─────────────────────────────────────
+// Returns { cohortId, cohortLabel, allowedModules } if found, or null if no match.
+// Also handles the case where a cohort has NO gate key set (open access).
+async function findCohortByGateKey(collegeCode, enteredKey) {
   try {
-    const snap = await getDoc(doc(db, 'tenants', collegeCode));
-    if (!snap.exists()) return null;
-    const key = snap.data()?.gateKey;
-    return key && typeof key === 'string' && key.trim() ? key.trim() : null;
+    const cohortsSnap = await getDocs(collection(db, 'tenants', collegeCode, 'cohorts'));
+    if (cohortsSnap.empty) return null;
+
+    const entered = enteredKey.trim().toUpperCase();
+
+    // Look for exact match first
+    for (const d of cohortsSnap.docs) {
+      const data = d.data();
+      const cohortKey = (data.gateKey || '').trim().toUpperCase();
+      if (cohortKey && cohortKey === entered) {
+        return {
+          cohortId: d.id,
+          cohortLabel: String(data.label || d.id),
+          year: String(data.year || ''),
+          allowedModules: Array.isArray(data.allowedModules) ? data.allowedModules : [],
+        };
+      }
+    }
+    return null; // no cohort matched
   } catch {
-    return null; // if read fails, allow access (fail open)
+    return null;
   }
 }
 
-// ─── Load guest tests from tenantCourses/{collegeCode}/tests ────────────────────
-async function fetchGuestTests(collegeCode, graduationYear) {
+// ─── Check if the college has ANY cohort with a gate key set ──────────────────
+async function collegeHasGateKeys(collegeCode) {
+  try {
+    const snap = await getDocs(collection(db, 'tenants', collegeCode, 'cohorts'));
+    return snap.docs.some(d => (d.data().gateKey || '').trim().length > 0);
+  } catch {
+    return false; // fail open
+  }
+}
+
+// ─── Load tests for a cohort from tenantCourses/{collegeCode}/tests ───────────
+// Filters by the cohort's allowedModules (testId list). If allowedModules is
+// empty, falls back to showing ALL tests in tenantCourses for the college.
+async function fetchGuestTests(collegeCode, allowedModules) {
   const col = collection(db, 'tenantCourses', collegeCode, 'tests');
-  // No guestEnabled filter — all tests assigned to tenantCourses are valid for guests.
-  // Admin controls visibility by assigning/removing tests from tenantCourses.
   const snap = await getDocs(col);
   const now = new Date();
+
+  // Extract bare testIds from allowedModules keys (courseId::seriesId::testId)
+  const allowedTestIds = new Set(
+    (allowedModules || []).map(key => {
+      const parts = key.split('::');
+      return parts[parts.length - 1]; // last segment is testId
+    }).filter(Boolean)
+  );
+  const filterByModule = allowedTestIds.size > 0;
+
   return snap.docs
     .map(d => ({ testId: d.id, ...d.data() }))
     .filter(t => {
-      // Skip tests explicitly disabled for guests
+      // Scope to cohort's allowed tests (if cohort has allowedModules defined)
+      if (filterByModule && !allowedTestIds.has(t.testId)) return false;
+      // Skip explicitly disabled guest tests
       if (t.guestEnabled === false) return false;
-      // Filter by graduation year if test specifies target years
-      if (graduationYear && t.targetYears && Array.isArray(t.targetYears) && t.targetYears.length > 0) {
-        if (!t.targetYears.includes(graduationYear)) return false;
-      }
-      // Filter by schedule if present
+      // Schedule filter
       if (t.schedule?.start && new Date(t.schedule.start) > now) return false;
       if (t.schedule?.end   && new Date(t.schedule.end)   < now) return false;
       return true;
@@ -214,8 +249,8 @@ const GuestPortal = () => {
   const [checkingAttempt, setChecking]    = useState(false);
   const passkeyRef = useRef(null);
 
-  // GateKey step
-  const [requiredGateKey, setRequiredGateKey] = useState(null); // string | null
+  // GateKey step — cohort-based
+  const [matchedCohort, setMatchedCohort]     = useState(null); // { cohortId, cohortLabel, year, allowedModules }
   const [gateInput, setGateInput]             = useState('');
   const [gateError, setGateError]             = useState('');
   const [gateLoading, setGateLoading]         = useState(false);
@@ -243,12 +278,13 @@ const GuestPortal = () => {
     );
   }, [collegeSearch, allColleges]);
 
-  // ── Load guest tests when college is confirmed ──────────────────────────────
-  const loadGuestTests = useCallback(async (college) => {
+  // ── Load guest tests scoped to matched cohort ──────────────────────────────
+  const loadGuestTests = useCallback(async (college, cohort) => {
     setLoadingTests(true);
     setGuestTests([]);
     try {
-      const tests = await fetchGuestTests(college.code);
+      const allowedModules = cohort?.allowedModules || [];
+      const tests = await fetchGuestTests(college.code, allowedModules);
       setGuestTests(tests);
     } catch (e) {
       console.error('[GuestPortal] fetchGuestTests error:', e);
@@ -281,37 +317,46 @@ const GuestPortal = () => {
     if (!selectedCollege) { setError('Please select your college from the list.'); return; }
     setError('');
     setGateLoading(true);
-    const key = await fetchTenantGateKey(selectedCollege.code);
+    // Check if any cohort in this college has a gate key configured
+    const hasKeys = await collegeHasGateKeys(selectedCollege.code);
     setGateLoading(false);
-    if (key) {
-      // Check if already verified this session
-      const sessionKey = `gate_ok_${selectedCollege.code}`;
-      const alreadyVerified = sessionStorage.getItem(sessionKey) === key;
-      if (alreadyVerified) {
-        setStep('details');
-      } else {
-        setRequiredGateKey(key);
-        setGateInput('');
-        setGateError('');
-        setStep('gate');
-        setTimeout(() => gateInputRef.current?.focus(), 100);
+    if (hasKeys) {
+      // Check session cache
+      const cached = sessionStorage.getItem(`cohort_ok_${selectedCollege.code}`);
+      if (cached) {
+        try {
+          const c = JSON.parse(cached);
+          setMatchedCohort(c);
+          setStep('details');
+          return;
+        } catch { /* ignore */ }
       }
+      setGateInput('');
+      setGateError('');
+      setStep('gate');
+      setTimeout(() => gateInputRef.current?.focus(), 100);
     } else {
+      // No gate keys — open access, no cohort scoping
+      setMatchedCohort(null);
       setStep('details');
     }
   };
 
-  // ── GATE STEP: Validate entered key ─────────────────────────────────────────
-  const handleGateSubmit = () => {
-    if (!gateInput.trim()) { setGateError('Enter the college gate key.'); return; }
-    if (gateInput.trim() !== requiredGateKey) {
-      setGateError('Incorrect key. Please check with your coordinator.');
+  // ── GATE STEP: Scan cohorts for matching key ────────────────────────────────
+  const handleGateSubmit = async () => {
+    if (!gateInput.trim()) { setGateError('Enter your cohort gate key.'); return; }
+    setGateLoading(true);
+    const cohort = await findCohortByGateKey(selectedCollege.code, gateInput);
+    setGateLoading(false);
+    if (!cohort) {
+      setGateError('Incorrect key. Please check with your placement coordinator.');
       setGateInput('');
       setTimeout(() => gateInputRef.current?.focus(), 50);
       return;
     }
-    // Store verification for this session
-    sessionStorage.setItem(`gate_ok_${selectedCollege.code}`, requiredGateKey);
+    // Cache for this session
+    sessionStorage.setItem(`cohort_ok_${selectedCollege.code}`, JSON.stringify(cohort));
+    setMatchedCohort(cohort);
     setGateError('');
     setStep('details');
   };
@@ -330,7 +375,7 @@ const GuestPortal = () => {
     if (!form.department)               { setError('Please select your department.'); return; }
     if (!form.year)                     { setError('Please select your graduation year.'); return; }
     setError('');
-    loadGuestTests(selectedCollege);
+    loadGuestTests(selectedCollege, matchedCohort);
     setStep('dashboard');
   };
 
@@ -355,6 +400,8 @@ const GuestPortal = () => {
       rollNo:         form.rollNo.trim(),
       college:        selectedCollege.name,
       collegeCode:    selectedCollege.code,
+      cohortId:       matchedCohort?.cohortId || '',
+      cohortLabel:    matchedCohort?.cohortLabel || '',
       department:     form.department,
       graduationYear: form.year,
       email:          form.email.trim(),
@@ -471,33 +518,40 @@ const GuestPortal = () => {
             </>
           )}
 
-          {/* ══ GATE STEP: College GateKey ══════════════════════════════════ */}
+          {/* ══ GATE STEP: Cohort GateKey ═══════════════════════════════════ */}
           {step === 'gate' && (
             <>
-              <div style={S.title}>College Access</div>
+              <div style={S.title}>Cohort Access</div>
               <div style={S.subtitle}>{selectedCollege?.name}</div>
 
               <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.08) 100%)', border: '1px solid rgba(99,102,241,0.35)', borderRadius: '1rem', padding: '1.5rem', marginBottom: '1.5rem', textAlign: 'center' }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏫🔑</div>
                 <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>{selectedCollege?.name}</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>This college requires a Gate Key to access the Guest Portal.</div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem' }}>
+                  Enter your batch gate key to access your cohort's assessments.
+                  Each batch (year) has a unique key — contact your coordinator.
+                </div>
               </div>
 
-              <label style={S.label}>Gate Key</label>
+              <label style={S.label}>Batch Gate Key</label>
               <input
                 id="guest-gate-input"
                 ref={gateInputRef}
-                style={{ ...S.input, letterSpacing: '0.1em', textAlign: 'center', fontSize: '1.1rem', fontWeight: 700 }}
+                style={{ ...S.input, letterSpacing: '0.15em', textAlign: 'center', fontSize: '1.1rem', fontWeight: 700 }}
                 type="password"
                 value={gateInput}
                 onChange={e => { setGateInput(e.target.value); setGateError(''); }}
-                onKeyDown={e => e.key === 'Enter' && handleGateSubmit()}
-                placeholder="Enter gate key"
+                onKeyDown={e => e.key === 'Enter' && !gateLoading && handleGateSubmit()}
+                placeholder="Enter cohort gate key"
                 autoComplete="off"
+                disabled={gateLoading}
               />
               {gateError && <div style={{ ...S.error, marginTop: '-0.5rem' }}>⚠ {gateError}</div>}
 
-              <button id="guest-gate-btn" style={S.btn} onClick={handleGateSubmit}>Verify & Continue →</button>
+              {gateLoading
+                ? <div style={{ textAlign: 'center', color: '#6366f1', fontSize: '0.85rem', padding: '0.5rem' }}>⏳ Verifying…</div>
+                : <button id="guest-gate-btn" style={S.btn} onClick={handleGateSubmit}>Verify & Continue →</button>
+              }
               <button style={S.btnSecondary} onClick={() => { setStep('college'); setGateInput(''); setGateError(''); }}>← Change College</button>
             </>
           )}
