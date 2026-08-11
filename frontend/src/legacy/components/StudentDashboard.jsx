@@ -516,21 +516,47 @@ const StudentDashboard = () => {
           const profileSnap = await getDoc(doc(db, 'users', lookupId));
           if (profileSnap.exists()) {
             const p = profileSnap.data();
+
+            // Derive Year from cohortId if not on profile: "2K27" → "2027"
+            const cohortId = p.tenantId ? (p.cohortId || authData.cohortId || '') : (authData.cohortId || '');
+            let derivedYear = p.year || p.graduationYear || authData.Year || '';
+            if (!derivedYear && cohortId) {
+              const m = cohortId.match(/^2K(\d{2})/i);
+              if (m) derivedYear = `20${m[1]}`;
+            }
+            // tenantId IS the college key for all Firestore paths
+            const effectiveCollege = p.college || p.institution || authData.College
+              || p.tenantId || authData.tenantId || '';
+
             const enriched = {
               ...authData,
-              Name:         p.name         || p.displayName  || authData.Name || '',
-              Email:        p.email         || userEmail      || '',
-              College:      p.college       || p.institution  || authData.College || '',
-              Department:   p.department    || p.dept         || authData.Department || '',
-              Year:         p.year          || p.graduationYear || authData.Year || '',
-              'Roll Number': p.rollNumber   || p.rollNo       || authData['Roll Number'] || '',
-              photoURL:     p.photoURL      || authData.photoURL || '',
-              tenantId:     p.tenantId      || authData.tenantId || '',
-              isPremium:    p.isPremium     ?? authData.isPremium ?? false,
-              uid:          p.uid           || userUid || lookupId,
+              Name:          p.name         || p.displayName  || authData.Name || '',
+              Email:         p.email         || userEmail      || '',
+              College:       effectiveCollege,
+              college:       effectiveCollege,
+              Department:    p.department    || p.dept         || authData.Department || '',
+              department:    p.department    || p.dept         || authData.department || '',
+              Year:          derivedYear,
+              year:          derivedYear,
+              'Roll Number': p.rollNumber    || p.rollNo       || authData['Roll Number'] || '',
+              rollNumber:    p.rollNumber    || p.rollNo       || authData.rollNumber || '',
+              photoURL:      p.photoURL      || authData.photoURL || '',
+              tenantId:      p.tenantId      || authData.tenantId || '',
+              cohortId:      p.cohortId      || authData.cohortId || '',
+              isPremium:     p.isPremium     ?? authData.isPremium ?? false,
+              uid:           p.uid           || userUid || lookupId,
             };
             setUser(enriched);
             localStorage.setItem('auth_data', JSON.stringify(enriched));
+
+            // Re-load assessments if College or Year was missing before enrichment
+            // (new students provisioned via Admin may have incomplete auth_data on first load)
+            const wasIncomplete = !authData.College || !authData.Year;
+            const nowComplete   = !!enriched.College;
+            if (wasIncomplete && nowComplete) {
+              console.info('[Dashboard] Profile enriched — reloading assessments with complete tenant info.');
+              loadAssessments(enriched);
+            }
           }
         } catch (enrichErr) {
           console.warn('[Dashboard] Profile enrichment skipped:', enrichErr.message);

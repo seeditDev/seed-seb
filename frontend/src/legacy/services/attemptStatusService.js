@@ -108,7 +108,23 @@ async function queryCollectionForIds(path, ids) {
  * @returns {Promise<Record<string, boolean>>} id -> completed
  */
 export async function fetchCompletionMap(userData, assessmentIds = [], options = {}) {
-  const tenant = requireTenant(userData);
+  // ── Tenant resolution ─────────────────────────────────────────────────────
+  // If College/Year are missing the student still gets their assessment list;
+  // we just cannot look up completions in the per-college Firestore paths.
+  // Return a map of all-false ("not completed") gracefully instead of throwing.
+  let tenant;
+  try {
+    tenant = requireTenant(userData);
+  } catch (e) {
+    // TENANT_INCOMPLETE — profile not fully populated yet (normal for new
+    // students whose enrichProfile background fetch hasn't resolved).
+    // Log once at debug level and return empty-completion map.
+    console.debug('[attemptStatusService] profile incomplete, skipping completion lookup:', e?.message?.split('.')[0]);
+    const ids = Array.from(new Set(assessmentIds.filter(Boolean).map(String)));
+    const map = {};
+    ids.forEach((id) => { map[id] = false; });
+    return map;
+  }
   const ids = Array.from(new Set(assessmentIds.filter(Boolean).map(String)));
   if (ids.length === 0) return {};
 

@@ -37,24 +37,42 @@ import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
  * object that the rest of the app reads from localStorage.
  */
 function buildAuthData(firebaseUser, profile) {
+    // tenantId from Admin import = college code (e.g. TN000026)
+    // college may be empty if Admin didn't write the name field
+    // year may be empty if Admin didn't write it but cohortId encodes it (2K27 → 2027)
+    const rawCollege    = profile?.college       || '';
+    const rawYear       = profile?.year          || '';
+    const tenantId      = profile?.tenantId      || '';
+    const cohortId      = profile?.cohortId      || '';
+
+    // Derive year from cohortId if year is missing: "2K27" → "2027"
+    let derivedYear = rawYear;
+    if (!derivedYear && cohortId) {
+        const m = cohortId.match(/^2K(\d{2})/i);
+        if (m) derivedYear = `20${m[1]}`;
+    }
+
+    // Use tenantId as College fallback (it IS the college key used in all Firestore paths)
+    const effectiveCollege = rawCollege || tenantId;
+
     return {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        displayName: profile?.displayName || firebaseUser.displayName || '',
-        photoUrl: profile?.photoUrl || firebaseUser.photoURL || '',
-        role: profile?.role || ROLES.STUDENT,
-        tenantId: profile?.tenantId || '',
-        cohortId: profile?.cohortId || '',
-        department: profile?.department || '',
-        year: profile?.year || '',
-        college: profile?.college || '',
-        rollNumber: profile?.rollNumber || '',
-        // Legacy fields kept for backward compat
-        Name: profile?.displayName || '',
-        Email: firebaseUser.email,
-        College: profile?.college || '',
-        Year: profile?.year || '',
-        Department: profile?.department || '',
+        uid:          firebaseUser.uid,
+        email:        firebaseUser.email,
+        displayName:  profile?.displayName || firebaseUser.displayName || '',
+        photoUrl:     profile?.photoUrl    || firebaseUser.photoURL    || '',
+        role:         profile?.role        || ROLES.STUDENT,
+        tenantId,
+        cohortId,
+        department:   profile?.department  || '',
+        year:         derivedYear,
+        college:      effectiveCollege,
+        rollNumber:   profile?.rollNumber  || '',
+        // Legacy CAPITALISED fields read by tenant.js resolveTenant() and older components
+        Name:         profile?.displayName || '',
+        Email:        firebaseUser.email,
+        College:      effectiveCollege,
+        Year:         derivedYear,
+        Department:   profile?.department  || '',
         isAuthenticated: true,
     };
 }
