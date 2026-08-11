@@ -183,9 +183,9 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
       const paths = [
         ...studentResultCollections(tenant),
         `users/${userKey}/contestAttempts`,
-        `users/${userKey}/multiSectionAttempts`,
         `users/${tenant.email}/contestAttempts`,
-        `users/${tenant.email}/multiSectionAttempts`
+        // Note: multiSectionAttempts is deprecated — all attempt types now
+        // write to contestAttempts via assessmentSessionService.
       ];
       const results = await Promise.all(paths.map((p) => queryCollectionForIds(p, unknown)));
       results.forEach((found) => {
