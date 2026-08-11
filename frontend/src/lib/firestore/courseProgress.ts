@@ -17,7 +17,7 @@ import {
 function getDb() {
   const apps = getApps();
   if (!apps.length) throw new Error('[courseProgress.ts] Firebase not initialised');
-  return getFirestore(apps[0]);
+  return getFirestore(apps[0]!);
 }
 
 export interface TestProgress {

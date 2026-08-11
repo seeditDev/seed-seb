@@ -24,7 +24,7 @@ import {
 function getDb() {
   const apps = getApps();
   if (!apps.length) throw new Error('[courses.ts] Firebase not initialised');
-  return getFirestore(apps[0]);
+  return getFirestore(apps[0]!);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,7 +125,7 @@ export interface NewModuleKey {
 
 export function parseModuleKey(key: string): NewModuleKey | null {
   const parts = key.split('::');
-  if (parts.length === 3 && parts.every(Boolean)) {
+  if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
     return { isNew: true, courseId: parts[0], seriesId: parts[1], testId: parts[2] };
   }
   return null; // Unrecognised key format — skip
@@ -277,19 +277,24 @@ export async function findTestByCode(assessmentCode: string): Promise<TestDoc | 
     const snap = await getDocs(q);
     if (snap.empty) return null;
     const d = snap.docs[0];
+    if (!d) return null;
     // Path: courses/{courseId}/series/{seriesId}/tests/{testId}
     const parts = d.ref.path.split('/');
-    const courseId = parts[1];
-    const seriesId = parts[3];
+    const courseId = parts[1] || '';
+    const seriesId = parts[3] || '';
     const t = mapTest(d.id, courseId, seriesId, d.data() as Record<string, unknown>);
     // Enrich titles
     try {
-      const [cSnap, sSnap] = await Promise.all([
-        getDoc(doc(getDb(), 'courses', courseId)),
-        getDoc(doc(getDb(), 'courses', courseId, 'series', seriesId)),
-      ]);
-      t.courseTitle = cSnap.exists() ? String(cSnap.data()['title'] ?? courseId) : courseId;
-      t.seriesTitle = sSnap.exists() ? String(sSnap.data()['title'] ?? seriesId) : seriesId;
+      if (courseId && seriesId) {
+        const [cSnap, sSnap] = await Promise.all([
+          getDoc(doc(getDb(), 'courses', courseId)),
+          getDoc(doc(getDb(), 'courses', courseId, 'series', seriesId)),
+        ]);
+        const cData = cSnap.data();
+        const sData = sSnap.data();
+        t.courseTitle = cSnap.exists() && cData ? String(cData['title'] ?? courseId) : courseId;
+        t.seriesTitle = sSnap.exists() && sData ? String(sData['title'] ?? seriesId) : seriesId;
+      }
     } catch { /* non-fatal */ }
     return t;
   } catch (err) {
