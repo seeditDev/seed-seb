@@ -92,7 +92,7 @@ async function collegeHasGateKeys(collegeCode) {
   }
 }
 
-async function fetchGuestTests(collegeCode, allowedModules = []) {
+async function fetchGuestTests(collegeCode, allowedModules = [], guestYear = '') {
   const now = new Date();
   let tests = [];
 
@@ -143,6 +143,7 @@ async function fetchGuestTests(collegeCode, allowedModules = []) {
     }).filter(Boolean)
   );
   const filterByModule = allowedTestIds.size > 0 && tests.length > allowedTestIds.size;
+  const cleanGuestYear = String(guestYear || '').trim();
 
   return tests.filter(t => {
     // Scope to cohort's allowed tests (if cohort has allowedModules defined)
@@ -152,9 +153,23 @@ async function fetchGuestTests(collegeCode, allowedModules = []) {
     // Schedule filter
     if (t.schedule?.start && new Date(t.schedule.start) > now) return false;
     if (t.schedule?.end   && new Date(t.schedule.end)   < now) return false;
+
+    // Year-based filter: if targetYears is defined on test, filter by student's graduation year
+    const targetYears = Array.isArray(t.years)
+      ? t.years
+      : Array.isArray(t.targetYears)
+      ? t.targetYears
+      : Array.isArray(t.targeting?.years)
+      ? t.targeting.years
+      : [];
+    if (targetYears.length > 0 && cleanGuestYear) {
+      if (!targetYears.includes(cleanGuestYear)) return false;
+    }
+
     return true;
   });
 }
+
 
 
 // ─── Check if already attempted ──────────────────────────────────────────────
@@ -318,7 +333,8 @@ const GuestPortal = () => {
     setGuestTests([]);
     try {
       const allowedModules = cohort?.allowedModules || [];
-      const tests = await fetchGuestTests(college.code, allowedModules);
+      const cohortYear = cohort?.year || selectedYear || '';
+      const tests = await fetchGuestTests(college.code, allowedModules, cohortYear);
       setGuestTests(tests);
     } catch (e) {
       console.error('[GuestPortal] fetchGuestTests error:', e);
@@ -326,7 +342,8 @@ const GuestPortal = () => {
     } finally {
       setLoadingTests(false);
     }
-  }, []);
+  }, [selectedYear]);
+
 
   // ── Check re-attempt when assessment is selected ────────────────────────────
   useEffect(() => {
