@@ -92,13 +92,48 @@ async function collegeHasGateKeys(collegeCode) {
   }
 }
 
-// ─── Load tests for a cohort from tenantCourses/{collegeCode}/tests ───────────
-// Filters by the cohort's allowedModules (testId list). If allowedModules is
-// empty, falls back to showing ALL tests in tenantCourses for the college.
-async function fetchGuestTests(collegeCode, allowedModules) {
-  const col = collection(db, 'tenantCourses', collegeCode, 'tests');
-  const snap = await getDocs(col);
+async function fetchGuestTests(collegeCode, allowedModules = []) {
   const now = new Date();
+  let tests = [];
+
+  // 1. Primary: If cohort has allowedModules, try fetching via getAllowedTests
+  if (Array.isArray(allowedModules) && allowedModules.length > 0) {
+    try {
+      const { getAllowedTests } = await import('../../lib/firestore/courses');
+      const docs = await getAllowedTests(allowedModules);
+      if (Array.isArray(docs) && docs.length > 0) {
+        tests = docs.map(d => ({ testId: d.id, ...d }));
+      }
+    } catch (e) {
+      console.warn('[GuestPortal] getAllowedTests error:', e);
+    }
+  }
+
+  // 2. Secondary: Read from tenantCourses/{collegeCode}/tests
+  if (tests.length === 0 && collegeCode) {
+    try {
+      const col = collection(db, 'tenantCourses', collegeCode, 'tests');
+      const snap = await getDocs(col);
+      if (!snap.empty) {
+        tests = snap.docs.map(d => ({ testId: d.id, ...d.data() }));
+      }
+    } catch (e) {
+      console.warn('[GuestPortal] tenantCourses read error:', e);
+    }
+  }
+
+  // 3. Fallback: Read from legacy top-level assessments collection
+  if (tests.length === 0) {
+    try {
+      const col = collection(db, 'assessments');
+      const snap = await getDocs(col);
+      if (!snap.empty) {
+        tests = snap.docs.map(d => ({ testId: d.id, ...d.data() }));
+      }
+    } catch (e) {
+      console.warn('[GuestPortal] assessments fallback error:', e);
+    }
+  }
 
   // Extract bare testIds from allowedModules keys (courseId::seriesId::testId)
   const allowedTestIds = new Set(
@@ -107,21 +142,20 @@ async function fetchGuestTests(collegeCode, allowedModules) {
       return parts[parts.length - 1]; // last segment is testId
     }).filter(Boolean)
   );
-  const filterByModule = allowedTestIds.size > 0;
+  const filterByModule = allowedTestIds.size > 0 && tests.length > allowedTestIds.size;
 
-  return snap.docs
-    .map(d => ({ testId: d.id, ...d.data() }))
-    .filter(t => {
-      // Scope to cohort's allowed tests (if cohort has allowedModules defined)
-      if (filterByModule && !allowedTestIds.has(t.testId)) return false;
-      // Skip explicitly disabled guest tests
-      if (t.guestEnabled === false) return false;
-      // Schedule filter
-      if (t.schedule?.start && new Date(t.schedule.start) > now) return false;
-      if (t.schedule?.end   && new Date(t.schedule.end)   < now) return false;
-      return true;
-    });
+  return tests.filter(t => {
+    // Scope to cohort's allowed tests (if cohort has allowedModules defined)
+    if (filterByModule && !allowedTestIds.has(t.testId) && !allowedTestIds.has(t.id)) return false;
+    // Skip explicitly disabled guest tests
+    if (t.guestEnabled === false) return false;
+    // Schedule filter
+    if (t.schedule?.start && new Date(t.schedule.start) > now) return false;
+    if (t.schedule?.end   && new Date(t.schedule.end)   < now) return false;
+    return true;
+  });
 }
+
 
 // ─── Check if already attempted ──────────────────────────────────────────────
 async function checkAlreadyAttempted(testId, guestId) {

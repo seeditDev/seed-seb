@@ -30,6 +30,7 @@ import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
 import { requireTenant, resolveTenant } from '../utils/tenant';
+import { safeUpsert } from '../supabaseClient';
 import {
   startAssessmentSession,
   markSectionStarted,
@@ -39,6 +40,7 @@ import {
   oneThirdSaveThreshold,
 } from '../services/assessmentSessionService';
 import { markAssessmentCompleted, invalidateCompletionCache } from '../services/attemptStatusService';
+
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -1004,13 +1006,21 @@ const MultiSectionAssessment = () => {
     if (!info?.violationType) return;
     setProctoringData(prev => {
       const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
+      const nextCount = typeof info.violationCount === 'number' ? info.violationCount : (prev.violationCount + 1);
+      if (maxViolations > 0 && nextCount >= maxViolations) {
+        console.warn(`[MSA] maxViolations (${maxViolations}) reached (count: ${nextCount}). Auto-submitting exam...`);
+        setTimeout(() => {
+          autoSubmitEntireExam('proctoring_violations');
+        }, 500);
+      }
       return {
         ...prev,
-        violationCount: typeof info.violationCount === 'number' ? info.violationCount : prev.violationCount,
+        violationCount: nextCount,
         violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
       };
     });
-  }, []);
+  }, [maxViolations, autoSubmitEntireExam]);
+
 
   const handleProctorAutoSubmit = useCallback(() => {
     autoSubmitEntireExam('proctoring_violations');

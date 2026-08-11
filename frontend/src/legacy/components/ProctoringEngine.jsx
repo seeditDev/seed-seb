@@ -238,7 +238,13 @@ const ProctoringEngine = ({
   const detectionInProgressRef = useRef(false);
   const sequenceInProgressRef = useRef(false);
 
-  const [violationCount, setViolationCount] = useState(0);
+  const [violationCount, setViolationCount] = useState(() => {
+    if (testID && studentID) {
+      const cached = getViolations(testID, studentID);
+      return cached.violationCount || 0;
+    }
+    return 0;
+  });
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState(null);
   const [alerts, setAlerts] = useState([]);
@@ -248,12 +254,32 @@ const ProctoringEngine = ({
   const onViolationUpdateRef = useRef(onViolationUpdate);
   const onAutoSubmitRef = useRef(onAutoSubmit);
   const maxViolationsRef = useRef(maxViolations);
-  const violationCountRef = useRef(0);
+  const violationCountRef = useRef(violationCount);
   const onReadyRef = useRef(onReady);
+
+  useEffect(() => {
+    if (testID && studentID) {
+      const cached = getViolations(testID, studentID);
+      const count = cached.violationCount || 0;
+      if (count > 0) {
+        setViolationCount(count);
+        violationCountRef.current = count;
+        if (maxViolations > 0 && count >= maxViolations && onAutoSubmitRef.current) {
+          console.warn(`[ProctoringEngine] Cached violation count (${count}) already meets limit (${maxViolations}). Auto-submitting...`);
+          setTimeout(() => {
+            if (onAutoSubmitRef.current) {
+              onAutoSubmitRef.current({ reason: 'proctoring_violations', violationCount: count, violations: cached.violations });
+            }
+          }, 1000);
+        }
+      }
+    }
+  }, [testID, studentID, maxViolations]);
 
   useEffect(() => {
     onReadyRef.current = onReady;
   }, [onReady]);
+
 
   useEffect(() => {
     onViolationUpdateRef.current = onViolationUpdate;

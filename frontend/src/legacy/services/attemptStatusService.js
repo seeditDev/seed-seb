@@ -157,8 +157,12 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
 
   // 1. Fast path — denormalised completion list on the user doc (1 read).
   let denormalisedComplete = false;
+  const userKey = userData?.uid || userData?.UID || tenant.email;
   try {
-    const userSnap = await getDoc(doc(db, 'users', tenant.email));
+    let userSnap = await getDoc(doc(db, 'users', userKey));
+    if (!userSnap.exists() && userKey !== tenant.email) {
+      userSnap = await getDoc(doc(db, 'users', tenant.email));
+    }
     const list = userSnap.exists() ? userSnap.data()?.completedAssessmentIds : null;
     if (Array.isArray(list)) {
       list.forEach((id) => {
@@ -176,7 +180,13 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
   if (!denormalisedComplete) {
     const unknown = ids.filter((id) => !map[id]);
     if (unknown.length > 0) {
-      const paths = [...studentResultCollections(tenant), `users/${tenant.email}/contestAttempts`, `users/${tenant.email}/multiSectionAttempts`];
+      const paths = [
+        ...studentResultCollections(tenant),
+        `users/${userKey}/contestAttempts`,
+        `users/${userKey}/multiSectionAttempts`,
+        `users/${tenant.email}/contestAttempts`,
+        `users/${tenant.email}/multiSectionAttempts`
+      ];
       const results = await Promise.all(paths.map((p) => queryCollectionForIds(p, unknown)));
       results.forEach((found) => {
         Object.keys(found).forEach((id) => { map[id] = true; });
@@ -217,7 +227,8 @@ export async function markAssessmentCompleted(userData, assessmentId) {
   writeCompletionCache(tenant.email, { ...cached, [assessmentId]: true });
 
   // 2. Try updating Firestore remote user document
-  const ref = doc(db, 'users', tenant.email);
+  const userKey = userData?.uid || userData?.UID || tenant.email;
+  const ref = doc(db, 'users', userKey);
   try {
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
@@ -243,6 +254,7 @@ export async function markAssessmentCompleted(userData, assessmentId) {
     }
     try {
       await setDoc(
+
         ref,
         {
           email: tenant.email,
