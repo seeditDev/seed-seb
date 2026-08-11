@@ -37,23 +37,25 @@ import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
  * object that the rest of the app reads from localStorage.
  */
 function buildAuthData(firebaseUser, profile) {
-    // tenantId from Admin import = college code (e.g. TN000026)
-    // college may be empty if Admin didn't write the name field
-    // year may be empty if Admin didn't write it but cohortId encodes it (2K27 → 2027)
-    const rawCollege    = profile?.college       || '';
-    const rawYear       = profile?.year          || '';
+    // Primary fields written explicitly by new provisionAccount:
+    //   college / collegeName = human-readable college name
+    //   collegeCode / tenantId = Firestore key (e.g. TN000026)
+    //   year = 4-digit graduation year (e.g. "2027")
+    //   cohortId = batch code (e.g. "2K27")
     const tenantId      = profile?.tenantId      || '';
     const cohortId      = profile?.cohortId      || '';
+    const rawCollege    = profile?.college       || profile?.collegeName   || '';
+    const rawYear       = profile?.year          || '';
 
-    // Derive year from cohortId if year is missing: "2K27" → "2027"
+    // Last-resort derivation for legacy accounts provisioned before explicit fields were added:
+    // Derive year from cohortId: "2K27" -> "2027"
     let derivedYear = rawYear;
     if (!derivedYear && cohortId) {
         const m = cohortId.match(/^2K(\d{2})/i);
         if (m) derivedYear = `20${m[1]}`;
     }
-
-    // Use tenantId as College fallback (it IS the college key used in all Firestore paths)
-    const effectiveCollege = rawCollege || tenantId;
+    // Use tenantId (= collegeCode) as College fallback if name is empty
+    const effectiveCollege = rawCollege || profile?.collegeCode || tenantId;
 
     return {
         uid:          firebaseUser.uid,
@@ -76,6 +78,7 @@ function buildAuthData(firebaseUser, profile) {
         isAuthenticated: true,
     };
 }
+
 
 // ────────────────────────────────────────────────────────────────────────────
 // Auth
