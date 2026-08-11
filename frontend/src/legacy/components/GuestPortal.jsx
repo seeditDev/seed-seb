@@ -506,27 +506,62 @@ const GuestPortal = () => {
           {step === 'details' && (
             <>
               <div style={S.title}>Your Details</div>
-              <div style={S.subtitle}>{selectedCollege?.shortName || selectedCollege?.name} · Enter your info before viewing assessments</div>
+              <div style={S.subtitle}>{selectedCollege?.shortName || selectedCollege?.name} · All fields are required</div>
               {error && <div style={S.error}>⚠ {error}</div>}
               <form onSubmit={handleDetailsSubmit}>
+
                 <label style={S.label}>Full Name *</label>
-                <input id="guest-name" style={S.input} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" autoFocus />
+                <input id="guest-name" style={S.input} value={form.name}
+                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Your full name" autoFocus />
 
                 <label style={S.label}>Roll Number *</label>
-                <input id="guest-roll" style={S.input} value={form.rollNo} onChange={e => setForm(p => ({ ...p, rollNo: e.target.value }))} placeholder="e.g. 20CS001" />
+                <input id="guest-roll" style={S.input} value={form.rollNo}
+                  onChange={e => setForm(p => ({ ...p, rollNo: e.target.value }))}
+                  placeholder="e.g. 22CS001" autoComplete="off" />
 
-                <label style={S.label}>Email (optional — for results)</label>
-                <input id="guest-email" style={S.input} type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="you@example.com" />
+                <label style={S.label}>Confirm Roll Number *</label>
+                <input id="guest-roll-confirm"
+                  style={{ ...S.input, borderColor: form.rollNoConfirm && form.rollNo !== form.rollNoConfirm ? 'rgba(239,68,68,0.8)' : undefined }}
+                  value={form.rollNoConfirm}
+                  onChange={e => setForm(p => ({ ...p, rollNoConfirm: e.target.value }))}
+                  placeholder="Re-enter roll number" autoComplete="off" />
+
+                <label style={S.label}>College Email *</label>
+                <input id="guest-email" style={S.input} type="email" value={form.email}
+                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                  placeholder="you@college.edu" autoComplete="off" />
+
+                <label style={S.label}>Confirm Email *</label>
+                <input id="guest-email-confirm"
+                  style={{ ...S.input, borderColor: form.emailConfirm && form.email !== form.emailConfirm ? 'rgba(239,68,68,0.8)' : undefined }}
+                  type="email" value={form.emailConfirm}
+                  onChange={e => setForm(p => ({ ...p, emailConfirm: e.target.value }))}
+                  placeholder="Re-enter email" autoComplete="off" />
+
+                <label style={S.label}>Phone Number *</label>
+                <input id="guest-phone" style={S.input} type="tel" value={form.phone}
+                  onChange={e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                  placeholder="10-digit mobile number" autoComplete="off" maxLength={10} />
+
+                <label style={S.label}>Confirm Phone Number *</label>
+                <input id="guest-phone-confirm"
+                  style={{ ...S.input, borderColor: form.phoneConfirm && form.phone !== form.phoneConfirm ? 'rgba(239,68,68,0.8)' : undefined }}
+                  type="tel" value={form.phoneConfirm}
+                  onChange={e => setForm(p => ({ ...p, phoneConfirm: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                  placeholder="Re-enter phone number" autoComplete="off" maxLength={10} />
 
                 <label style={S.label}>Department *</label>
-                <select id="guest-dept" style={S.select} value={form.department} onChange={e => setForm(p => ({ ...p, department: e.target.value }))}>
+                <select id="guest-dept" style={S.select} value={form.department}
+                  onChange={e => setForm(p => ({ ...p, department: e.target.value }))}>
                   <option value="">Select department…</option>
                   {deptData.map(d => <option key={d.code} value={d.code}>{d.name} ({d.shortName})</option>)}
                 </select>
 
-                <label style={S.label}>Year of Study *</label>
-                <select id="guest-year" style={S.select} value={form.year} onChange={e => setForm(p => ({ ...p, year: e.target.value }))}>
-                  <option value="">Select year…</option>
+                <label style={S.label}>Graduation Year *</label>
+                <select id="guest-year" style={S.select} value={form.year}
+                  onChange={e => setForm(p => ({ ...p, year: e.target.value }))}>
+                  <option value="">Select graduation year…</option>
                   {YEARS.map(y => <option key={y} value={y}>{YEAR_L[y]}</option>)}
                 </select>
 
