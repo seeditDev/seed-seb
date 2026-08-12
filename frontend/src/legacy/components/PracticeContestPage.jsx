@@ -38,8 +38,16 @@ const PracticeContestPage = () => {
     try {
       const [contestData, progressData] = await Promise.all([
         fetchPracticeContest(courseId, moduleId, contestId),
-        // FIX: use Firebase UID (not email) so progress writes to codingProgress/{uid}
-        getFullProgress(authData?.uid || authData?.Email || authData?.email || ''),
+        // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+        // Do NOT fall back to email — that reads a different/legacy document.
+        (() => {
+          const uid = authData?.uid;
+          if (!uid) {
+            console.warn('[PracticeContestPage] Firebase UID not available — progress not loaded');
+            return Promise.resolve({ solvedProblems: [], problemDetails: {} });
+          }
+          return getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} }));
+        })(),
       ]);
 
       setContest(contestData);

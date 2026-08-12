@@ -265,9 +265,12 @@ const PracticeCourseSandbox = () => {
       setLoading(true);
       setError(null);
       try {
-        const email = authData?.Email || authData?.email || '';
-        // FIX: use Firebase UID (not email) so progress is stored under codingProgress/{uid}
-        const uid = authData?.uid || email;
+        // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+        // Do NOT fall back to email — that reads a different/legacy document.
+        const uid = authData?.uid;
+        if (!uid) {
+          console.warn('[PracticeCourseSandbox] Firebase UID not available — progress not loaded');
+        }
 
         // 1. Fetch current question
         const qRaw = await fetchQuestion(questionId);
@@ -275,7 +278,9 @@ const PracticeCourseSandbox = () => {
         setQuestion(qData);
 
         // 2. Fetch solved progress
-        const progress = await getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} }));
+        const progress = uid
+          ? await getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} }))
+          : { solvedProblems: [], problemDetails: {} };
         setSolvedIds(progress.solvedProblems || []);
 
         // 3. Detect default language based on Course & Question Boilerplates
@@ -561,9 +566,8 @@ const PracticeCourseSandbox = () => {
 
   const handleMarkConceptComplete = async () => {
     try {
-      const email = user?.Email || user?.email || '';
-      // FIX: use Firebase UID for progress writes
-      const uid = user?.uid || email;
+      // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+      const uid = user?.uid;
       if (uid) {
         await markQuestionSolved(uid, questionId, 'Concept', 100);
         const updatedSolved = [...new Set([...solvedIds, questionId])];
@@ -606,9 +610,12 @@ const isCodeBlankOrEmpty = (codeStr) => {
     let passedCount = 0;
     let totalWeight = 0;
     let earnedWeight = 0;
-    const email = user?.Email || user?.email || '';
-    // FIX: use Firebase UID for all progress writes
-    const uid = user?.uid || email;
+    // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+    // If UID is absent, skip all progress writes — do NOT fall back to email.
+    const uid = user?.uid;
+    if (!uid) {
+      console.warn('[PracticeCourseSandbox] No Firebase UID at submit — progress not saved');
+    }
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;

@@ -246,9 +246,9 @@ const PracticeHome = () => {
       return { ...prev, [sheetId]: updatedSheetDict };
     });
 
-    const email = user?.Email || user?.email || '';
-    // FIX: use Firebase UID for progress writes
-    const uid = user?.uid || email;
+    // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+    // Do NOT fall back to email — that reads a different/legacy document.
+    const uid = user?.uid;
     if (uid) {
       await saveSheetProgress(uid, sheetId, problemId, isNewSolved);
     } else {
@@ -521,9 +521,9 @@ const PracticeHome = () => {
   const loadData = async (authData) => {
     setLoading(true);
     try {
-      const email = authData?.Email || authData?.email || '';
-      // FIX: use Firebase UID (not email) so progress is stored under codingProgress/{uid}
-      const uid = authData?.uid || email;
+      // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+      // Do NOT fall back to email — that reads a different/legacy document.
+      const uid = authData?.uid;
 
       // Auto sync with cloud at start
       if (uid && navigator.onLine) {
@@ -740,10 +740,12 @@ const PracticeHome = () => {
   };
 
   const handleSync = async () => {
-    const email = user?.Email || user?.email || '';
-    // FIX: use Firebase UID for sync
-    const uid = user?.uid || email;
-    if (!uid) return;
+    // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+    const uid = user?.uid;
+    if (!uid) {
+      console.warn('[PracticeHome] Firebase UID not available — sync skipped');
+      return;
+    }
     setSyncing(true);
     setSyncMsg({ text: 'Syncing with cloud...', type: 'info' });
     try {

@@ -271,10 +271,12 @@ const PracticeSandbox = () => {
     // Load sidebar questions list and user progress
     const loadSidebarData = async () => {
       try {
-        const email = authData?.Email || authData?.email || '';
-        // FIX: use Firebase UID (not email) so progress is stored under codingProgress/{uid}
-        const uid = authData?.uid || email;
-        if (uid && navigator.onLine) {
+        // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+        // Do NOT fall back to email — that reads a different/legacy document.
+        const uid = authData?.uid;
+        if (!uid) {
+          console.warn('[PracticeSandbox] Firebase UID not available — progress sync skipped');
+        } else if (navigator.onLine) {
           try {
             await syncProgressWithFirebase(uid);
           } catch (e) {
@@ -283,7 +285,9 @@ const PracticeSandbox = () => {
         }
         let [indexQs, progress] = await Promise.all([
           fetchQuestionsIndex().catch(() => []),
-          getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} })),
+          uid
+            ? getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} }))
+            : Promise.resolve({ solvedProblems: [], problemDetails: {} }),
         ]);
         if (questionId && !indexQs.some(q => q.questionId === questionId)) {
           try {
@@ -329,8 +333,15 @@ const PracticeSandbox = () => {
       const defaultLang = firstAllowed === 'Python3' ? 'python3' : firstAllowed === 'C++' ? 'cpp' : firstAllowed.toLowerCase();
       setLanguage(defaultLang);
 
-      // Check if code is saved in local progress
-      const progress = await getQuestionProgress(authData?.uid || authData?.Email || authData?.email || '', questionId);
+      // Check if code is saved in local progress.
+      // STRICT UID: do not fall back to email — that reads another user's legacy document.
+      const progressUid = authData?.uid;
+      const progress = progressUid
+        ? await getQuestionProgress(progressUid, questionId).catch(() => null)
+        : null;
+      if (!progressUid) {
+        console.warn('[PracticeSandbox] No Firebase UID — saved code not loaded for question:', questionId);
+      }
       let initialCode;
       if (progress && progress.submittedCode) {
         initialCode = progress.submittedCode.replace(/\r\n/g, '\n');
@@ -631,12 +642,12 @@ const isCodeBlankOrEmpty = (codeStr) => {
     let totalWeight = 0;
     let earnedWeight = 0;
 
-    const email = user?.Email || user?.email || '';
-    // FIX: use Firebase UID for all progress and solution writes
-    // uid is always a UID (from Firebase Auth), so codingProgress/{uid} and
-    // userSolutions/{uid} are consistent. Previously email was used for mark* but
-    // uid for saveSolution — now both use uid.
-    const uid = user?.uid || email;
+    // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+    // If UID is absent the user is not authenticated — skip all progress writes.
+    const uid = user?.uid;
+    if (!uid) {
+      console.warn('[PracticeSandbox] No Firebase UID at submit — progress not saved');
+    }
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;

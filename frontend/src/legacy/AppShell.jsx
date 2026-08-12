@@ -75,8 +75,9 @@ function PortalActivityTracker() {
     } catch {
       return;
     }
-    // FIX: use Firebase UID (not email) so logPortalActivityTime writes to codingProgress/{uid}
-    const uid = authUser?.uid || authUser?.Email || authUser?.email;
+    // STRICT UID: logPortalActivityTime writes to codingProgress/{uid}.
+    // Do NOT fall back to Email — that writes to a different/legacy document.
+    const uid = authUser?.uid;
     if (!uid) return;
 
     const path = location.pathname;

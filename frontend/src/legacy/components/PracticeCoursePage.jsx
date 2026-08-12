@@ -25,9 +25,14 @@ const PracticeCoursePage = () => {
   const loadData = async (authData) => {
     setLoading(true);
     try {
+      // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+      // getSolvedQuestionIds reads codingProgress/{uid} — do NOT pass email.
+      const uid = authData?.uid;
       const [courseData, solved] = await Promise.all([
         fetchCourse(courseId),
-        getSolvedQuestionIds(authData?.Email || authData?.email || ''),
+        uid
+          ? getSolvedQuestionIds(uid).catch(() => [])
+          : (console.warn('[PracticeCoursePage] Firebase UID not available — solved list empty'), Promise.resolve([])),
       ]);
       setCourse(courseData);
       setSolvedIds(solved);

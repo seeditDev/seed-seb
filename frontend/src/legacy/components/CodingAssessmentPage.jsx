@@ -144,6 +144,33 @@ const normalizeQuestion = (q) => {
 const CODING_ROUTE_BASE = '/student/coding';
 const AUTO_SUBMIT_NOTICE_KEY = 'codingAutoSubmitNotice';
 
+/**
+ * DEFAULT_QUESTION_WEIGHT — Product default when assessment has no explicit per-question weight.
+ *
+ * WHEN THIS APPLIES:
+ *   Assessment document supplies questions as plain string IDs: ["Q1","Q2","Q3"]
+ *   No {id, weight} object provided in the assessment definition.
+ *
+ * WHEN IT MUST NOT BE USED:
+ *   Admin creates a test with explicit per-question weights: [{id:"Q1",weight:10},{id:"Q2",weight:20}]
+ *   In that case, collectIds() in loadAssessment() builds a weightMap and merges weights
+ *   back onto resolvedQuestions BEFORE normalizeQuestion() runs. q.weight will be set,
+ *   so q.weight || DEFAULT_QUESTION_WEIGHT uses q.weight correctly.
+ *
+ * SCORING FORMULA (per question):
+ *   passes  = count of hidden test cases whose output matches expected
+ *   total   = total hidden test cases for this question
+ *   qScore  = (passes / total) × q.weight     ← NOT scoring.maxScore, NOT tc.weight sum
+ *
+ * THREE DIFFERENT WEIGHT CONCEPTS (must NOT be mixed):
+ *   A. testCases.hidden[i].weight — per-test-case weight used ONLY in Practice scoring
+ *   B. scoring.maxScore           — Q{id}.json intrinsic total (e.g. 117 for Q1)
+ *   C. q.weight (this constant)   — assessment-level question marks, set by Admin
+ *
+ * @type {number}
+ */
+const DEFAULT_QUESTION_WEIGHT = 20;
+
 export const isCodeBlankOrEmpty = (code) => {
     if (!code || typeof code !== 'string') return true;
     const trimmed = code.trim();
@@ -370,7 +397,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             } catch (err) {}
                         }
                     }
-                    const qScore = (!isBlank && hidden.length > 0) ? (passes / hidden.length) * (q.weight || 20) : 0;
+                    const qScore = (!isBlank && hidden.length > 0) ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
                     finalScores[q.id] = {
                         score: qScore,
                         percentage: (!isBlank && hidden.length > 0) ? Math.round((passes / hidden.length) * 100) : 0,
@@ -393,7 +420,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     const status = total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
                     
                     totalEarnedWeight += scoreObj.score || 0;
-                    totalMaxWeight += q.weight || 20;
+                    totalMaxWeight += q.weight || DEFAULT_QUESTION_WEIGHT;
 
                     return {
                         questionNumber: idx + 1,
@@ -1108,7 +1135,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             // Merge assessment-level weights back into resolved Q{id}.json questions.
             // The canonical Q{id}.json does NOT have a top-level weight; weight is
             // supplied by the assessment definition. We apply it here so that
-            // q.weight || 20 evaluates correctly downstream.
+            // q.weight || DEFAULT_QUESTION_WEIGHT evaluates correctly downstream.
             if (Object.keys(weightMap).length > 0) {
                 resolvedQuestions = resolvedQuestions.map(q => {
                     const qId = q.questionId || q.id;
@@ -1433,7 +1460,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         // await new Promise(r => setTimeout(r, 80));
 
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
-        const hiddenTests = currentQuestion.hiddenTests || currentQuestion.sampleTests || [];
+        // SECTION 18: use ONLY hiddenTests for official per-question scoring.
+        // sampleTests must NEVER substitute for hiddenTests even here.
+        // If hiddenTests is absent/empty this question scores 0 (invalidConfig guard below).
+        const hiddenTests = Array.isArray(currentQuestion.hiddenTests) ? currentQuestion.hiddenTests : [];
         const startTimestamp = Date.now();
         const bridgeLang = language === 'python3' ? 'python' : language;
         const isEvalBlank = isCodeBlankOrEmpty(code);
@@ -1462,7 +1492,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             const total = hiddenTests.length;
             const score = (!isEvalBlank && total > 0) ? Math.round((passedCount / total) * 100) : 0;
-            const earnedWeight = (!isEvalBlank && total > 0) ? (passedCount / total) * (currentQuestion.weight || 20) : 0;
+            const earnedWeight = (!isEvalBlank && total > 0) ? (passedCount / total) * (currentQuestion.weight || DEFAULT_QUESTION_WEIGHT) : 0;
 
             const newScores = {
                 ...questionScores,
@@ -1555,7 +1585,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             let totalEarnedWeight = 0;
 
             for (const q of activeQuestions) {
-                totalMaxWeight += (q.weight || 20);
+                totalMaxWeight += (q.weight || DEFAULT_QUESTION_WEIGHT);
                 if (finalScores[q.id]) {
                     totalEarnedWeight += finalScores[q.id].score;
                 } else {
@@ -1579,7 +1609,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             } catch (err) {}
                         }
                     }
-                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || 20) : 0;
+                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
                     finalScores[q.id] = {
                         score: qScore,
                         percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
@@ -1769,7 +1799,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             let totalEarnedWeight = 0;
 
             for (const q of questions) {
-                totalMaxWeight += (q.weight || 20);
+                totalMaxWeight += (q.weight || DEFAULT_QUESTION_WEIGHT);
                 if (finalScores[q.id]) {
                     totalEarnedWeight += finalScores[q.id].score;
                 } else {
@@ -1790,7 +1820,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
                         } catch (err) {}
                     }
-                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || 20) : 0;
+                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
                     finalScores[q.id] = {
                         score: qScore,
                         percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,

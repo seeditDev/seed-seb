@@ -647,14 +647,17 @@ const StudentDashboard = () => {
   // Automatically load free local storage progress on tab visit to ensure instant updates
   useEffect(() => {
     if (activeTab === "profile" && user) {
-      // FIX: use Firebase UID (not email) for codingProgress/{uid}
-      const uid = user.uid || user.Email || user.email;
+      // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+      // Do NOT fall back to Email — that reads a different/legacy document.
+      const uid = user.uid;
       if (uid) {
         import('../services/codingProgressService').then(({ getFullProgress }) => {
           getFullProgress(uid).then(progress => {
             setProgressData(progress);
           });
         });
+      } else {
+        console.warn('[StudentDashboard] Firebase UID not available — profile progress not loaded');
       }
     }
   }, [activeTab, user]);
@@ -1717,9 +1720,13 @@ const StudentDashboard = () => {
 
   const loadProfileProgress = async () => {
     if (!user) return;
-    // FIX: use Firebase UID (not email) for codingProgress/{uid}
-    const uid = user.uid || user.Email || user.email;
-    if (!uid) return;
+    // STRICT UID: canonical Practice identity is Firebase Auth UID only.
+    // Do NOT fall back to Email — that reads a different/legacy document.
+    const uid = user.uid;
+    if (!uid) {
+      console.warn('[StudentDashboard] Firebase UID not available — profile progress not loaded');
+      return;
+    }
 
     setLoadingProfileProgress(true);
     try {
