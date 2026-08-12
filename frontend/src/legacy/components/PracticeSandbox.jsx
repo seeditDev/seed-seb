@@ -322,7 +322,7 @@ const PracticeSandbox = () => {
       setLanguage(defaultLang);
 
       // Check if code is saved in local progress
-      const progress = await getQuestionProgress(authData?.Email || authData?.email || '', questionId);
+      const progress = await getQuestionProgress(authData?.uid || authData?.Email || authData?.email || '', questionId);
       let initialCode;
       if (progress && progress.submittedCode) {
         initialCode = progress.submittedCode.replace(/\r\n/g, '\n');

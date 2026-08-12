@@ -295,7 +295,7 @@ const PracticeCourseSandbox = () => {
         setLanguage(defaultLang);
 
         // Check if code was previously saved
-        const qProg = await getQuestionProgress(email, questionId);
+        const qProg = await getQuestionProgress(uid, questionId);
         if (qProg && qProg.submittedCode) {
           const savedCode = (qProg.submittedCode || '').replace(/\r\n/g, '\n');
           setCode(savedCode);
