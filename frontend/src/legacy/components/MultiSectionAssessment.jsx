@@ -723,7 +723,7 @@ const MultiSectionAssessment = () => {
   // Prevents React StrictMode double-invoke from firing the grace-period auto-submit twice
   const gracePeriodFiredRef = useRef(false);
 
-  const autoSubmitEntireExam = useCallback((reason) => {
+  const autoSubmitEntireExam = useCallback(async (reason) => {
     if (examFinishedRef.current) return;
     examFinishedRef.current = true;
     setSecStarted(false);
@@ -837,33 +837,49 @@ const MultiSectionAssessment = () => {
       }
 
       const v2DocPath = `assessmentResults/${effectiveAssessment.id}/students/${userId}`;
-      setDoc(doc(db, v2DocPath), attemptData, { merge: true })
-        .then(() => {
-          console.log('[MSA] Final result saved to Firestore v2 path');
-          // ── Write denormalized tenant result (non-blocking) ──
-          const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-          const tenantId = college || authData?.tenantId || '';
-          if (tenantId) {
-            const tenantPayload = buildTenantResultPayload(authData, {
-              ...rawAttemptData,
-              assessmentId: effectiveAssessment.id,
-              assessmentName: effectiveAssessment.name,
-              type: 'multisection',
-              score: totalScore,
-              totalMarks: totalMarksSum,
-              percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
-              timeTakenSeconds: timeTaken,
-              violationCount: totalViolations,
-              sourceRef: v2DocPath,
-            });
-            writeTenantResult(tenantId, tenantPayload).catch(() => {});
-          }
-        })
-        .catch(e => console.error('[MSA] Firestore final save failed:', e));
 
+      // SECTION 13: Final submission MUST be reliable. Await the write.
+      // On failure: save pending envelope for recovery on next login.
+      try {
+        await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
+        console.log('[MSA] Final result saved to Firestore v2 path');
+        // ── Write denormalized tenant result (non-blocking) ──
+        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        const tenantId = college || authData?.tenantId || '';
+        if (tenantId) {
+          const tenantPayload = buildTenantResultPayload(authData, {
+            ...rawAttemptData,
+            assessmentId: effectiveAssessment.id,
+            assessmentName: effectiveAssessment.name,
+            type: 'multisection',
+            score: totalScore,
+            totalMarks: totalMarksSum,
+            percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+            timeTakenSeconds: timeTaken,
+            violationCount: totalViolations,
+            sourceRef: v2DocPath,
+          });
+          writeTenantResult(tenantId, tenantPayload).catch(() => {});
+        }
+      } catch (writeErr) {
+        console.error('[MSA] Final Firestore write failed — preserving pending envelope:', writeErr);
+        try {
+          const envKey = `msa_pending_submission_${userId}_${effectiveAssessment.id}`;
+          localStorage.setItem(envKey, JSON.stringify({
+            uid: userId,
+            assessmentId: effectiveAssessment.id,
+            resultPayload: attemptData,
+            savedAt: new Date().toISOString(),
+            retryCount: 0,
+          }));
+        } catch (_) { /* localStorage may be full — best effort */ }
+      }
+
+      // Mirror to users/{uid}/assessmentAttempts (non-fatal)
       setDoc(doc(db, 'users', userId, 'assessmentAttempts', effectiveAssessment.id), attemptData, { merge: true })
         .catch(e => console.error('[MSA] Student assessmentAttempts mirror save failed:', e));
     }
+
 
     setExamFinished(true);
     sessionStorage.removeItem('multisectionAssessmentData');

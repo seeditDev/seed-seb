@@ -740,10 +740,12 @@ class MCQService {
             }
 
             // ── 2. Retry seed_submission_envelope_{uid}_{assessmentId} (attemptStateMachine) ──
-            // ──    and mcq_pending_submission_{uid}_{testID} (MCQPage Phase 1 handler) ──────
+            // ──    mcq_pending_submission_{uid}_{testID} (MCQPage Phase 1 handler) ──────────
+            // ──    msa_pending_submission_{uid}_{assessmentId} (MultiSectionAssessment) ──────
             const ENVELOPE_PREFIXES = [
                 `seed_submission_envelope_${uid}_`,
                 `mcq_pending_submission_${uid}_`,
+                `msa_pending_submission_${uid}_`,
             ];
             const envelopeKeys = [];
             for (let i = 0; i < localStorage.length; i++) {

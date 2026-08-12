@@ -347,7 +347,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 allAnswers[q.id] = code;
                 
                 if (!finalScores[q.id]) {
-                    const hidden = q.hiddenTests || q.sampleTests || [];
+                    // SECTION 18: use ONLY hiddenTests for official scoring.
+                    // sampleTests must NEVER silently become hidden scoring tests.
+                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : [];
+                    if (hidden.length === 0) {
+                        // Configuration invalid — no hidden tests present.
+                        console.error(`[CodingEval] Question ${q.id} has no hiddenTests. Scoring is invalid. Assigning 0.`);
+                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_hidden_tests' };
+                    } else {
                     const bridgeLang = language === 'python3' ? 'python' : language;
                     const isBlank = isCodeBlankOrEmpty(code);
                     let passes = 0;
@@ -370,6 +377,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         total: hidden.length,
                         submitted: true
                     };
+                    }
                 }
             }
 
@@ -1526,7 +1534,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     totalEarnedWeight += finalScores[q.id].score;
                 } else {
                     const code = storedCodeMap[`${q.id}_${language}`] || "";
-                    const hidden = q.hiddenTests || q.sampleTests || [];
+                    // SECTION 18: use ONLY hiddenTests for official scoring.
+                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : [];
+                    if (hidden.length === 0) {
+                        console.error(`[CodingEval] Question ${q.id} has no hiddenTests. Scoring is invalid. Assigning 0.`);
+                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_hidden_tests' };
+                    } else {
                     const bridgeLang = language === 'python3' ? 'python' : language;
                     let passes = 0;
                     if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
@@ -1549,6 +1562,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         submitted: true
                     };
                     totalEarnedWeight += qScore;
+                    }
                 }
             }
 
@@ -1727,9 +1741,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (finalScores[q.id]) {
                     totalEarnedWeight += finalScores[q.id].score;
                 } else {
-                    // Evaluate unevaluated questions now
-                    const code = codeMap[`${q.id}_${language}`] || "";
-                    const hidden = q.hiddenTests || q.sampleTests || [];
+                    // SECTION 18: use ONLY hiddenTests for official scoring.
+                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : [];
+                    if (hidden.length === 0) {
+                        console.error(`[CodingEval] Question ${q.id} has no hiddenTests. Scoring is invalid. Assigning 0.`);
+                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_hidden_tests' };
+                    } else {
                     const bridgeLang = language === 'python3' ? 'python' : language;
                     let passes = 0;
                     for (const tc of hidden) {
@@ -1750,6 +1767,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         submitted: true
                     };
                     totalEarnedWeight += qScore;
+                    }
                 }
             }
 
