@@ -661,32 +661,11 @@ class MCQService {
 
 
     /**
-     * Mark Firestore document as synced to Supabase.
-     *
-     * BUG FIXED (P0): The previous implementation called:
-     *   doc(db, this.canonicalPath(testID, college, year, email))
-     * which passed 4 args to a 2-arg function — 'college' became userId.
-     *
-     * Fix: use auth.currentUser.uid.
+     * @deprecated Supabase has been removed. This method is a no-op retained for
+     * call-site compatibility only. Remove all callers.
      */
-    static async markSyncedToSupabase(email, testID, college, year, department) {
-        try {
-            // BUG FIX P0: get uid from live Firebase Auth — never from 'college' arg
-            const uid = getCanonicalUid();
-            const docRef = doc(db, this.canonicalPath(testID, uid));
-
-            await setDoc(docRef, {
-                syncedToSupabase: true,
-                syncedToSheets:   true, // Keep syncedToSheets for compatibility
-                syncedAt:         serverTimestamp(),
-                syncedAtISO:      timeService.getNow().toISOString()
-            }, { merge: true });
-
-            console.log('[MCQService] Marked as synced to Supabase');
-        } catch (error) {
-            console.error('[MCQService] Error marking as synced to Supabase:', error);
-            throw error;
-        }
+    static async markSyncedToSupabase() {
+        console.warn('[MCQService] markSyncedToSupabase() is deprecated. Supabase has been removed.');
     }
 
     /**
@@ -846,8 +825,8 @@ class MCQService {
     }
 
     /**
-     * Fetch MCQ results for a specific college from Supabase.
-     * @returns {Promise<{success: boolean, data: Array}>}
+     * @deprecated Supabase has been removed. Returns empty data.
+     * Use Firestore: assessmentResults/{assessmentId}/students/{uid}
      */
     static async fetchMCQResults(college) {
         return { success: true, data: [] };

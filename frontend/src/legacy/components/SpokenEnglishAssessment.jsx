@@ -403,7 +403,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     }
   };
 
-  // Complete Assessment & Resilient Persistence to Firestore + Supabase
+  // Complete Assessment — Firestore persistence
   const finishAssessment = async (allResp = responses) => {
     window.speechSynthesis?.cancel();
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -413,65 +413,18 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     const evaluation = evaluateSpokenEnglishSession(allResp, 1200 - examTimeLeft, questions.length);
     setFinalEvaluation(evaluation);
 
-    const userEmail = (currentUser?.Email || currentUser?.email || 'unknown_student').toLowerCase();
+    // ── Resolve canonical identifiers ─────────────────────────────────────────
+    // CANONICAL: Firebase Auth UID — never email / localStorage fallback
+    const { auth: firebaseAuth } = await import('../firebase-config');
+    const userId = firebaseAuth?.currentUser?.uid;
+    if (!userId) {
+      console.error('[SEA] Not authenticated — cannot write result. Aborting finishAssessment.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const userEmail = (currentUser?.Email || currentUser?.email || '').toLowerCase();
     const testId = assessmentData?.id || 'AS003_T001';
-    const docId = `${userEmail}_${testId}`;
-
-    const attemptPayload = {
-      id: docId,
-      email: userEmail,
-      test_id: testId,
-      attemptCount: 1,
-      completedAt: new Date().toISOString()
-    };
-
-    const cleanSupabaseAssessmentPayload = {
-      type: 'spoken_english',
-      test_id: testId,
-      test_name: assessmentData?.name || 'Spoken English Assessment',
-      roll_number: currentUser?.RollNumber || currentUser?.rollNumber || '',
-      name: currentUser?.Name || currentUser?.name || 'Candidate',
-      email: userEmail,
-      college: currentUser?.College || currentUser?.college || '',
-      year: currentUser?.Year || currentUser?.year || '',
-      department: currentUser?.Department || currentUser?.department || '',
-      score: evaluation.percentage,
-      percentage: evaluation.percentage ? (evaluation.percentage / 100) : 0,
-      status: 'submitted',
-      time_taken: 1200 - examTimeLeft,
-      submitted_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    const supabasePayload = {
-      id: docId,
-      test_id: testId,
-      test_name: assessmentData?.name || 'Spoken English Assessment',
-      type: 'spoken_english',
-      email: userEmail,
-      name: currentUser?.Name || currentUser?.name || 'Candidate',
-      roll_number: currentUser?.RollNumber || currentUser?.rollNumber || '',
-      college: currentUser?.College || currentUser?.college || '',
-      department: currentUser?.Department || currentUser?.department || '',
-      year: currentUser?.Year || currentUser?.year || '',
-      score: evaluation.percentage,
-      percentage: evaluation.percentage,
-      status: 'submitted',
-      cefr_level: evaluation.cefr.level,
-      cefr_name: evaluation.cefr.name,
-      wpm: evaluation.wpm,
-      filler_count: evaluation.fillerCount,
-      parameters: evaluation.parameters,
-      grammar_errors: evaluation.grammarErrors,
-      responses: allResp.map(r => ({
-        questionId: r.questionId,
-        moduleType: r.moduleType,
-        transcript: r.transcript,
-        durationSeconds: r.durationSeconds,
-        attemptCount: r.attemptCount
-      })),
-      submitted_at: new Date().toISOString()
-    };
 
     const vInfo = getViolations(testId, userEmail);
     const allViolations = vInfo.violations || [];
@@ -480,7 +433,8 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     const totalMultipleFaces = allViolations.filter(v => v.type === 'multiple_faces').length;
 
     const firestorePayload = {
-      id: docId,
+      userId,
+      uid: userId,
       email: userEmail,
       studentName: currentUser?.Name || currentUser?.name || 'Candidate',
       rollNumber: currentUser?.RollNumber || currentUser?.rollNumber || '',
@@ -488,31 +442,40 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       department: currentUser?.Department || currentUser?.department || '',
       year: currentUser?.Year || currentUser?.year || '',
       testID: testId,
+      assessmentId: testId,
       testName: assessmentData?.name || 'Spoken English Assessment',
+      assessmentTitle: assessmentData?.name || 'Spoken English Assessment',
       testType: 'spoken_english',
+      assessmentType: 'spoken_english',
       type: 'spoken_english',
       score: evaluation.percentage,
+      totalScore: evaluation.percentage,
       percentage: evaluation.percentage,
+      maxScore: 100,
       totalMarks: 100,
+      passed: evaluation.percentage >= 50,
       cefrLevel: evaluation.cefr.level,
       cefrName: evaluation.cefr.name,
       wpm: evaluation.wpm,
       fillerCount: evaluation.fillerCount,
       parameters: evaluation.parameters,
       grammarErrors: evaluation.grammarErrors,
-      responses: supabasePayload.responses,
+      responses: allResp.map(r => ({
+        questionId: r.questionId,
+        moduleType: r.moduleType,
+        transcript: r.transcript,
+        durationSeconds: r.durationSeconds,
+        attemptCount: r.attemptCount
+      })),
       violationCount: finalViolationCount,
-      totalNoFace: totalNoFace,
-      totalMultipleFaces: totalMultipleFaces,
+      totalNoFace,
+      totalMultipleFaces,
       violations: allViolations,
-      submittedAt: new Date().toISOString()
+      submittedAt: new Date().toISOString(),
     };
 
-    // 1. Single Canonical v2 Firestore Path (assessmentResults/{testId}/students/{userId})
+    // 1. Canonical Firestore path: assessmentResults/{testId}/students/{uid}
     try {
-      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      const userId = authData.uid || currentUser?.uid || userEmail.replace(/[@.]/g, '_');
-
       const v2DocPath = `assessmentResults/${testId}/students/${userId}`;
       await setDoc(doc(db, v2DocPath), {
         ...firestorePayload,
@@ -532,10 +495,10 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
         lastUpdatedAt: serverTimestamp()
       }, { merge: true });
     } catch (fireErr) {
-      console.warn('[Firestore Storage] Notice:', fireErr);
+      console.warn('[SEA] Firestore write failed:', fireErr);
     }
 
-    // ── Course progress tracking (non-fatal) ──
+    // ── Course progress tracking (non-fatal) ──────────────────────────────────
     try {
       const courseCtx = JSON.parse(sessionStorage.getItem('seaCourseCtx') || '{}');
       if (courseCtx.courseId && courseCtx.seriesId) {
@@ -545,7 +508,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
           courseId: courseCtx.courseId,
           seriesId: courseCtx.seriesId,
           testId: courseCtx.testId || testId,
-          score: firestorePayload?.overallScore || 0,
+          score: evaluation.percentage || 0,
           maxScore: courseCtx.totalMarks || 100,
         });
         sessionStorage.removeItem('seaCourseCtx');
@@ -555,6 +518,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     setIsSubmitting(false);
     setStage('completed');
   };
+
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60);

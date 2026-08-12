@@ -30,7 +30,6 @@ import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
 import { requireTenant, resolveTenant } from '../utils/tenant';
-import { safeUpsert } from '../supabaseClient';
 import {
   startAssessmentSession,
   markSectionStarted,
@@ -831,8 +830,11 @@ const MultiSectionAssessment = () => {
 
       const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
-      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      const userId = authData.uid || effectiveUser.uid || effectiveUser.Email.replace(/[@.]/g, '_');
+      const userId = auth?.currentUser?.uid;
+      if (!userId) {
+        console.error('[MSA] autoSubmitEntireExam: not authenticated, refusing Firestore write.');
+        return;
+      }
 
       const v2DocPath = `assessmentResults/${effectiveAssessment.id}/students/${userId}`;
       setDoc(doc(db, v2DocPath), attemptData, { merge: true })
@@ -861,94 +863,6 @@ const MultiSectionAssessment = () => {
 
       setDoc(doc(db, 'users', userId, 'assessmentAttempts', effectiveAssessment.id), attemptData, { merge: true })
         .catch(e => console.error('[MSA] Student assessmentAttempts mirror save failed:', e));
-
-
-      safeUpsert('mcq_results', {
-        roll_number: effectiveUser['Roll Number'] || '',
-        name: effectiveUser.Name || '',
-        email: effectiveUser.Email,
-        college,
-        year,
-        department: effectiveUser.Department || '',
-        test_id: effectiveAssessment.id,
-        test_name: effectiveAssessment.name,
-        score: totalScore,
-        total_questions: totalQ,
-        correct_answers: totalScore,
-        incorrect_answers: totalQ - totalScore,
-        percentage: pct,
-        partial_score: partialScore,
-        full_score: fullScore,
-        time_taken: timeTaken,
-        time_taken_formatted: timeTakenFormatted,
-        time_started: timeStartedISO,
-        time_ended: timeEndedISO,
-        submitted_at: timeEndedISO,
-        auto_submitted: true,
-        auto_submit_reason: reason || 'proctoring_violations',
-        violation_count: totalViolations,
-        total_no_face: totalNoFace,
-        total_multiple_faces: totalMultipleFaces,
-        violations: allViolations,
-        total_marks: totalMarksSum,
-        questions: aggregatedQuestions,
-        updated_at: timeEndedISO
-      }, { onConflict: 'email,test_id' }).then(
-        ({ data, error }) => {
-          if (error) {
-            console.warn('[MSA] Supabase mcq_results save failed:', error.message || error);
-          } else {
-            console.log('[MSA] Supabase mcq_results save succeeded:', data);
-          }
-        },
-        e => console.warn('[MSA] Supabase mcq_results save failed (transport):', e)
-      );
-
-      // Upsert to unified assessment_results table
-      safeUpsert('assessment_results', {
-        type: 'multisection',
-        test_id: effectiveAssessment.id,
-        test_name: effectiveAssessment.name,
-        roll_number: effectiveUser['Roll Number'] || '',
-        name: effectiveUser.Name || '',
-        email: effectiveUser.Email,
-        college,
-        year,
-        department: effectiveUser.Department || '',
-        score: totalScore,
-        total_questions: totalQ,
-        correct_answers: totalScore,
-        incorrect_answers: totalQ - totalScore,
-        percentage: pct,
-        partial_score: partialScore,
-        full_score: fullScore,
-        status: 'submitted',
-        time_taken: timeTaken,
-        time_taken_formatted: timeTakenFormatted,
-        time_started: timeStartedISO,
-        time_ended: timeEndedISO,
-        submitted_at: timeEndedISO,
-        auto_submitted: true,
-        auto_submit_reason: reason || 'proctoring_violations',
-        violation_count: totalViolations,
-        total_no_face: totalNoFace,
-        total_multiple_faces: totalMultipleFaces,
-        violations: allViolations,
-        total_marks: totalMarksSum,
-        questions: aggregatedQuestions,
-        coding: aggregatedCoding,
-        sections: sectionsList,
-        updated_at: timeEndedISO
-      }, { onConflict: 'email,test_id,type' }).then(
-        ({ data, error }) => {
-          if (error) {
-            console.warn('[MSA] Supabase assessment_results save failed:', error.message || error);
-          } else {
-            console.log('[MSA] Supabase assessment_results save succeeded:', data);
-          }
-        },
-        e => console.warn('[MSA] Supabase assessment_results save failed (transport):', e)
-      );
     }
 
     setExamFinished(true);
@@ -1600,20 +1514,21 @@ const MultiSectionAssessment = () => {
       }
       if (user?.Email && tenant.valid) {
         const { college, year } = tenant;
-      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      const userId = authData.uid || user.uid || user.Email.replace(/[@.]/g, '_');
-
-      setDoc(doc(db, `assessmentResults/${assessment.id}/students/${userId}`), {
-        userId, email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-        tenantId: authData.tenantId || college, cohortId: authData.cohortId || year,
-        testID: assessment.id, testName: assessment.name,
-        assessmentId: assessment.id, assessmentName: assessment.name,
-        type: 'multisection', status: 'partial',
-        sectionsCompleted: currentSecIdx + 1, totalSections,
-        sections: updatedResults, lastUpdatedAt: serverTimestamp(),
-        lastUpdatedAtISO: new Date().toISOString()
-      }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
-
+        const userId = auth?.currentUser?.uid;
+        if (!userId) {
+          console.error('[MSA] autoSubmitSection partial: not authenticated, refusing Firestore write.');
+        } else {
+          setDoc(doc(db, `assessmentResults/${assessment.id}/students/${userId}`), {
+            userId, email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
+            tenantId: college, cohortId: year,
+            testID: assessment.id, testName: assessment.name,
+            assessmentId: assessment.id, assessmentName: assessment.name,
+            type: 'multisection', status: 'partial',
+            sectionsCompleted: currentSecIdx + 1, totalSections,
+            sections: updatedResults, lastUpdatedAt: serverTimestamp(),
+            lastUpdatedAtISO: new Date().toISOString()
+          }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
+        }
       }
 
       // ── 15-second inter-section relaxation ──
@@ -1725,8 +1640,11 @@ const MultiSectionAssessment = () => {
 
         const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
-        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-        const userId = authData.uid || user.uid || user.Email.replace(/[@.]/g, '_');
+        const userId = auth?.currentUser?.uid;
+        if (!userId) {
+          console.error('[MSA] autoSubmitSection final: not authenticated, refusing Firestore write.');
+          return;
+        }
 
         const v2DocPath = `assessmentResults/${assessment.id}/students/${userId}`;
         setDoc(doc(db, v2DocPath), attemptData, { merge: true })
