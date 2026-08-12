@@ -247,8 +247,10 @@ const PracticeHome = () => {
     });
 
     const email = user?.Email || user?.email || '';
-    if (email) {
-      await saveSheetProgress(email, sheetId, problemId, isNewSolved);
+    // FIX: use Firebase UID for progress writes
+    const uid = user?.uid || email;
+    if (uid) {
+      await saveSheetProgress(uid, sheetId, problemId, isNewSolved);
     } else {
       const key = sheetId === 'a2z' ? 'seed_it_a2z_solved' : `seed_it_sheet_solved_${sheetId}`;
       const saved = localStorage.getItem(key);
@@ -520,16 +522,18 @@ const PracticeHome = () => {
     setLoading(true);
     try {
       const email = authData?.Email || authData?.email || '';
+      // FIX: use Firebase UID (not email) so progress is stored under codingProgress/{uid}
+      const uid = authData?.uid || email;
 
       // Auto sync with cloud at start
-      if (email && navigator.onLine) {
-        await syncProgressWithFirebase(email);
+      if (uid && navigator.onLine) {
+        await syncProgressWithFirebase(uid);
       }
 
       // Fetch Question Bank, Progress, and Access Control config
       const [indexQs, progress, accessControl, cSyllabus, javaSyllabus, cppSyllabus, dsaSyllabus, courseQidsMap] = await Promise.all([
         fetchQuestionsIndex().catch(() => []),
-        getFullProgress(email).catch(() => ({ solvedProblems: [], problemDetails: {} })),
+        getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} })),
         DataService.getAccessControl().catch(() => null),
         fetchArticleFile('CourseMappingFiles/learn-c-syllabus.json').then(r => r.json()).catch(() => null),
         fetchArticleFile('CourseMappingFiles/learn-java-syllabus.json').then(r => r.json()).catch(() => null),
@@ -737,11 +741,13 @@ const PracticeHome = () => {
 
   const handleSync = async () => {
     const email = user?.Email || user?.email || '';
-    if (!email) return;
+    // FIX: use Firebase UID for sync
+    const uid = user?.uid || email;
+    if (!uid) return;
     setSyncing(true);
     setSyncMsg({ text: 'Syncing with cloud...', type: 'info' });
     try {
-      const res = await syncProgressWithFirebase(email);
+      const res = await syncProgressWithFirebase(uid);
       if (res.success) {
         setSolvedIds(res.progress.solvedProblems || []);
         setProblemDetails(res.progress.problemDetails || {});

@@ -75,8 +75,9 @@ function PortalActivityTracker() {
     } catch {
       return;
     }
-    const email = authUser?.Email || authUser?.email;
-    if (!email) return;
+    // FIX: use Firebase UID (not email) so logPortalActivityTime writes to codingProgress/{uid}
+    const uid = authUser?.uid || authUser?.Email || authUser?.email;
+    if (!uid) return;
 
     const path = location.pathname;
     const isAssessment =
@@ -86,13 +87,13 @@ function PortalActivityTracker() {
 
     if (isAssessment) return;
 
-    logPortalActivityTime(email, 1).catch((err) =>
+    logPortalActivityTime(uid, 1).catch((err) =>
       console.warn("Activity tracking failed:", err),
     );
 
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
-        logPortalActivityTime(email, 1).catch((err) =>
+        logPortalActivityTime(uid, 1).catch((err) =>
           console.warn("Activity tracking failed:", err),
         );
       }

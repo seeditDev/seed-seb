@@ -647,10 +647,11 @@ const StudentDashboard = () => {
   // Automatically load free local storage progress on tab visit to ensure instant updates
   useEffect(() => {
     if (activeTab === "profile" && user) {
-      const email = user.Email || user.email;
-      if (email) {
+      // FIX: use Firebase UID (not email) for codingProgress/{uid}
+      const uid = user.uid || user.Email || user.email;
+      if (uid) {
         import('../services/codingProgressService').then(({ getFullProgress }) => {
-          getFullProgress(email).then(progress => {
+          getFullProgress(uid).then(progress => {
             setProgressData(progress);
           });
         });
@@ -1716,20 +1717,21 @@ const StudentDashboard = () => {
 
   const loadProfileProgress = async () => {
     if (!user) return;
-    const email = user.Email || user.email;
-    if (!email) return;
+    // FIX: use Firebase UID (not email) for codingProgress/{uid}
+    const uid = user.uid || user.Email || user.email;
+    if (!uid) return;
 
     setLoadingProfileProgress(true);
     try {
       const { syncProgressWithFirebase, getFullProgress } = await import('../services/codingProgressService');
       if (navigator.onLine) {
-        const syncRes = await syncProgressWithFirebase(email);
+        const syncRes = await syncProgressWithFirebase(uid);
         if (syncRes.success) {
           setProgressData(syncRes.progress);
           return;
         }
       }
-      const progress = await getFullProgress(email);
+      const progress = await getFullProgress(uid);
       setProgressData(progress);
     } catch (err) {
       console.warn("Failed to load user progress:", err);

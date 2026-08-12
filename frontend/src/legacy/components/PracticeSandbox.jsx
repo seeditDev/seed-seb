@@ -264,16 +264,18 @@ const PracticeSandbox = () => {
     const loadSidebarData = async () => {
       try {
         const email = authData?.Email || authData?.email || '';
-        if (email && navigator.onLine) {
+        // FIX: use Firebase UID (not email) so progress is stored under codingProgress/{uid}
+        const uid = authData?.uid || email;
+        if (uid && navigator.onLine) {
           try {
-            await syncProgressWithFirebase(email);
+            await syncProgressWithFirebase(uid);
           } catch (e) {
             console.warn('Sandbox sidebar sync failed:', e);
           }
         }
         let [indexQs, progress] = await Promise.all([
           fetchQuestionsIndex().catch(() => []),
-          getFullProgress(email).catch(() => ({ solvedProblems: [], problemDetails: {} })),
+          getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} })),
         ]);
         if (questionId && !indexQs.some(q => q.questionId === questionId)) {
           try {
@@ -622,6 +624,11 @@ const isCodeBlankOrEmpty = (codeStr) => {
     let earnedWeight = 0;
 
     const email = user?.Email || user?.email || '';
+    // FIX: use Firebase UID for all progress and solution writes
+    // uid is always a UID (from Firebase Auth), so codingProgress/{uid} and
+    // userSolutions/{uid} are consistent. Previously email was used for mark* but
+    // uid for saveSolution — now both use uid.
+    const uid = user?.uid || email;
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
@@ -671,15 +678,13 @@ const isCodeBlankOrEmpty = (codeStr) => {
       setSubmitScore(score);
 
       // Save progress (currentCode already captured at start of try block)
-      if (email) {
-        const authData = getAuthData();
-        const uid = authData?.uid || authData?.UID || email;
+      if (uid) {
         const nowMs = Date.now();
         const questionOpenedAt = window._practiceQuestionOpenedAt || nowMs;
         const timeSpentMs = nowMs - questionOpenedAt;
 
         if (score === 100) {
-          await markQuestionSolved(email, questionId, language, score, currentCode);
+          await markQuestionSolved(uid, questionId, language, score, currentCode);
           setSolvedIds(prev => [...new Set([...prev, questionId])]);
 
           // LeetCode-style: store accepted solution in Firestore
@@ -695,7 +700,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
             isPractice: true,
           });
         } else {
-          await markQuestionAttempted(email, questionId, language, score, currentCode);
+          await markQuestionAttempted(uid, questionId, language, score, currentCode);
 
           // Store wrong-answer submission too
           await saveSolution(uid, {

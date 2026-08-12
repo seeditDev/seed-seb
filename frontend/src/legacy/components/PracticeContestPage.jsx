@@ -38,7 +38,8 @@ const PracticeContestPage = () => {
     try {
       const [contestData, progressData] = await Promise.all([
         fetchPracticeContest(courseId, moduleId, contestId),
-        getFullProgress(authData?.Email || authData?.email || ''),
+        // FIX: use Firebase UID (not email) so progress writes to codingProgress/{uid}
+        getFullProgress(authData?.uid || authData?.Email || authData?.email || ''),
       ]);
 
       setContest(contestData);

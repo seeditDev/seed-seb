@@ -219,7 +219,16 @@ export const trackDailyActivity = async (uid, delta = {}) => {
 /**
  * Synchronize Local Storage progress with Firebase Firestore.
  * Merges both copies taking the best results.
- * @param {string} uid - Student Email or UID
+ *
+ * @param {string} uid - Firebase Auth UID (canonical). Legacy callers that passed
+ *   email will be routed here after the caller-side fix; this function now strictly
+ *   expects a UID and writes to codingProgress/{uid}.
+ *
+ * BACKWARD COMPATIBILITY: On first sync for a user, if codingProgress/{uid} does
+ * not yet exist, we check for a legacy codingProgress/{emailKey} document and
+ * merge it non-destructively into codingProgress/{uid}. Migration is idempotent:
+ * once the UID doc has any data the legacy check is skipped. Old email docs are
+ * NOT deleted (historical data preserved).
  */
 export const syncProgressWithFirebase = async (uid) => {
   if (!uid) return { success: false, error: 'No user ID' };
@@ -228,9 +237,46 @@ export const syncProgressWithFirebase = async (uid) => {
   try {
     const docRef = doc(db, COLLECTION, uid);
     const docSnap = await getDoc(docRef);
-    
+
     const local = getLocalProgress(uid);
-    const remote = docSnap.exists() ? docSnap.data() : { solvedProblems: [], problemDetails: {} };
+
+    // ── Legacy migration (idempotent) ───────────────────────────────────────
+    // If the UID document has no solvedProblems yet, look for a legacy email-based
+    // doc. We only do this once: as soon as the UID doc has content we stop.
+    let remote = docSnap.exists() ? docSnap.data() : { solvedProblems: [], problemDetails: {} };
+    if (!docSnap.exists() || !(remote.solvedProblems?.length > 0)) {
+      try {
+        const { auth } = await import('../firebase-config');
+        const email = auth.currentUser?.email;
+        if (email) {
+          const legacyKey = email.replace(/[@.]/g, '_'); // same normalization as old code
+          // Try both the raw email and the normalized key as the doc ID
+          const legacyCandidates = [email, legacyKey];
+          for (const candidate of legacyCandidates) {
+            if (candidate === uid) continue; // already the same, skip
+            try {
+              const legacySnap = await getDoc(doc(db, COLLECTION, candidate));
+              if (legacySnap.exists()) {
+                const legacyData = legacySnap.data();
+                console.log('[CodingProgressService] Migrating legacy email-based progress to UID doc:', candidate, '→', uid);
+                // Merge legacy into remote (remote wins on conflict since it may have newer data)
+                remote = {
+                  solvedProblems: [...new Set([
+                    ...(legacyData.solvedProblems || []),
+                    ...(remote.solvedProblems || []),
+                  ])],
+                  problemDetails: { ...(legacyData.problemDetails || {}), ...(remote.problemDetails || {}) },
+                  activity: { ...(legacyData.activity || {}), ...(remote.activity || {}) },
+                  sheetSolvedDicts: { ...(legacyData.sheetSolvedDicts || {}), ...(remote.sheetSolvedDicts || {}) },
+                };
+                break;
+              }
+            } catch (_) {} // legacy doc inaccessible — skip silently
+          }
+        }
+      } catch (_) {} // auth not available — skip migration silently
+    }
+    // ── End legacy migration ────────────────────────────────────────────────
 
     // Merge solvedProblems array
     const mergedSolved = [...new Set([...(local.solvedProblems || []), ...(remote.solvedProblems || [])])];

@@ -3,10 +3,8 @@ import {
     doc,
     setDoc,
     updateDoc,
-    getDoc,
     serverTimestamp,
-    increment,
-    collectionGroup,
+    collection,
     query,
     where,
     getCountFromServer
@@ -137,6 +135,7 @@ class TrackingService {
                 return;
             }
 
+            // v2: write only to canonical livePresence/{date}/sessions/{sessionId}
             await setDoc(sessionRef, {
                 userId: uid,
                 email: email,
@@ -153,31 +152,8 @@ class TrackingService {
                 },
                 isOnline: true,
             }, { merge: true });
-
-            // v1 legacy path — non-blocking backward compat write
-            try {
-                const legacyRef = this.currentUserDocRef();
-                if (legacyRef) {
-                    const legacySnap = await getDoc(legacyRef);
-                    if (!legacySnap.exists()) {
-                        setDoc(legacyRef, {
-                            Email: email,
-                            Name: userData.Name || userData.displayName || 'Anonymous',
-                            RollNumber: userData['Roll Number'] || userData.rollNumber || 'N/A',
-                            Department: userData.Department || userData.department || 'N/A',
-                            Date: this.getDateString(),
-                            VisitTime: serverTimestamp(),
-                            LastActive: serverTimestamp(),
-                            LoginCount: 1,
-                            DailyDuration: 0,
-                            SessionDuration: 0,
-                            IsOnline: true,
-                        }, { merge: true }).catch(() => {});
-                    } else {
-                        updateDoc(legacyRef, { LoginCount: increment(1), IsOnline: true, LastActive: serverTimestamp() }).catch(() => {});
-                    }
-                }
-            } catch (_) {}
+            // NOTE: LiveUsers legacy writes removed — rules deny them and they
+            // caused silent permission errors on every login.
 
             this.attachLifecycleListeners();
             this.startHeartbeat();
@@ -252,24 +228,14 @@ class TrackingService {
         const sessionDuration = Math.floor((now - this.sessionStartTime) / 1000);
 
         try {
-            // v2: update livePresence session doc
+            // v2: update canonical livePresence session doc only.
+            // LiveUsers legacy heartbeat writes are removed — rules deny them.
             await updateDoc(sessionRef, {
                 lastHeartbeatAt: serverTimestamp(),
                 page: typeof window !== 'undefined' ? window.location.pathname : '/',
                 sessionDurationSeconds: sessionDuration,
                 isOnline: true,
             });
-
-            // v1 legacy non-blocking update
-            const legacyRef = this.currentUserDocRef();
-            if (legacyRef) {
-                updateDoc(legacyRef, {
-                    LastActive: serverTimestamp(),
-                    DailyDuration: increment(visibleSeconds),
-                    SessionDuration: sessionDuration,
-                    IsOnline: true,
-                }).catch(() => {});
-            }
         } catch (error) {
             // Put the time back so it is not silently lost on a transient failure.
             this.visibleSinceLastBeat += visibleSeconds;
@@ -284,23 +250,29 @@ class TrackingService {
 
         if (!this.currentUser) return;
 
-        const userRef = this.currentUserDocRef();
+        const sessionRef = this.currentSessionRef();
         const now = timeService.now();
         if (this.lastVisibleAt) {
             this.visibleSinceLastBeat += Math.max(0, Math.floor((now - this.lastVisibleAt) / 1000));
         }
         const trailing = this.visibleSinceLastBeat;
+        const sessionDuration = this.sessionStartTime
+            ? Math.floor((now - this.sessionStartTime) / 1000)
+            : 0;
         this.visibleSinceLastBeat = 0;
         this.lastVisibleAt = null;
         this.currentUser = null;
 
-        if (!userRef) return;
+        if (!sessionRef) return;
 
+        // v2: mark canonical livePresence session offline.
+        // LiveUsers write removed — rules deny it and it caused silent errors on logout.
         try {
-            await updateDoc(userRef, {
-                LastActive: serverTimestamp(),
-                ...(trailing > 0 ? { DailyDuration: increment(trailing) } : {}),
-                IsOnline: false
+            await updateDoc(sessionRef, {
+                isOnline: false,
+                disconnectedAt: serverTimestamp(),
+                sessionDurationSeconds: sessionDuration,
+                ...(trailing > 0 ? { finalVisibleSeconds: trailing } : {}),
             });
         } catch (error) {
             console.error('Error stopping tracking:', error);
@@ -310,12 +282,11 @@ class TrackingService {
     // ---------------- live count ----------------
 
     async fetchLiveCount() {
+        // v2: count active sessions in canonical livePresence/{date}/sessions.
+        // Requires Firestore index: livePresence/sessions collection group, isOnline ASC.
         const dateStr = this.getDateString();
-        const q = query(
-            collectionGroup(db, 'users'),
-            where('IsOnline', '==', true),
-            where('Date', '==', dateStr)
-        );
+        const sessionsCol = collection(db, 'livePresence', dateStr, 'sessions');
+        const q = query(sessionsCol, where('isOnline', '==', true));
         const snapshot = await getCountFromServer(q);
         return snapshot.data().count;
     }

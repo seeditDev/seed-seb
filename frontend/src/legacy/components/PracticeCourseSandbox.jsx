@@ -260,6 +260,8 @@ const PracticeCourseSandbox = () => {
       setError(null);
       try {
         const email = authData?.Email || authData?.email || '';
+        // FIX: use Firebase UID (not email) so progress is stored under codingProgress/{uid}
+        const uid = authData?.uid || email;
 
         // 1. Fetch current question
         const qRaw = await fetchQuestion(questionId);
@@ -267,7 +269,7 @@ const PracticeCourseSandbox = () => {
         setQuestion(qData);
 
         // 2. Fetch solved progress
-        const progress = await getFullProgress(email).catch(() => ({ solvedProblems: [], problemDetails: {} }));
+        const progress = await getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} }));
         setSolvedIds(progress.solvedProblems || []);
 
         // 3. Detect default language based on Course & Question Boilerplates
@@ -554,8 +556,10 @@ const PracticeCourseSandbox = () => {
   const handleMarkConceptComplete = async () => {
     try {
       const email = user?.Email || user?.email || '';
-      if (email) {
-        await markQuestionSolved(email, questionId, 'Concept', 100);
+      // FIX: use Firebase UID for progress writes
+      const uid = user?.uid || email;
+      if (uid) {
+        await markQuestionSolved(uid, questionId, 'Concept', 100);
         const updatedSolved = [...new Set([...solvedIds, questionId])];
         setSolvedIds(updatedSolved);
         
@@ -597,6 +601,8 @@ const isCodeBlankOrEmpty = (codeStr) => {
     let totalWeight = 0;
     let earnedWeight = 0;
     const email = user?.Email || user?.email || '';
+    // FIX: use Firebase UID for all progress writes
+    const uid = user?.uid || email;
 
     try {
       const bridgeLang = language === 'python3' ? 'python' : language;
@@ -639,14 +645,14 @@ const isCodeBlankOrEmpty = (codeStr) => {
       const score = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : (passedCount === testCases.length ? 100 : 0);
       setSubmitScore(score);
 
-      if (email) {
+      if (uid) {
         if (score === 100) {
-          await markQuestionSolved(email, questionId, language, score);
+          await markQuestionSolved(uid, questionId, language, score);
           const updatedSolved = [...new Set([...solvedIds, questionId])];
           setSolvedIds(updatedSolved);
           checkCourseCompletion(updatedSolved);
         } else {
-          await markQuestionAttempted(email, questionId, language, score);
+          await markQuestionAttempted(uid, questionId, language, score);
         }
       }
     } catch (err) {
