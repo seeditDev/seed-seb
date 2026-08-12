@@ -300,10 +300,25 @@ class MCQService {
             const { Email, College, Year, Department, Name, 'Roll Number': rollNumber, tenantId, cohortId } = userData;
             const testID = testData.testInfo?.id || testData.id || 'unknown';
 
+            // CREATE-ONCE guard:
             // Check if already exists (using UID-keyed canonical path)
             const existing = await this.checkExistingAttempt(Email, testID, College, Year, Department);
+
             if (existing.exists && existing.completed) {
+                // Terminal state — submission already confirmed. Block.
                 throw new Error('DUPLICATE_SUBMISSION: Test already completed. You cannot retake this test.');
+            }
+
+            if (existing.exists && !existing.completed) {
+                // Active/in-progress attempt already exists — RESUME, never overwrite.
+                // This handles: reload, crash-recovery, dashboard → MCQ re-entry.
+                console.log('[MCQService] Resuming existing in-progress MCQ attempt for testID:', testID);
+                return {
+                    success:  true,
+                    docPath:  this.canonicalPath(testID, uid),
+                    resumed:  true,
+                    existing: existing.data,
+                };
             }
 
             const initialData = {
@@ -345,7 +360,7 @@ class MCQService {
             );
 
             console.log('[MCQService] Initial attempt created:', canonPath);
-            return { success: true, docPath: canonPath };
+            return { success: true, docPath: canonPath, resumed: false };
         } catch (error) {
             console.error('[MCQService] Error creating initial attempt:', error);
             throw error;
@@ -700,6 +715,11 @@ class MCQService {
     /**
      * Retry syncing unsynced results for the current authenticated student.
      * Only retries results belonging to auth.currentUser.uid.
+     *
+     * Also recovers pending submission envelopes written by:
+     *   - MCQPage (key: mcq_pending_submission_{uid}_{testID})
+     *   - attemptStateMachine.js (key: seed_submission_envelope_{uid}_{assessmentId})
+     *
      * @returns {Promise<{synced: number, failed: number}>}
      */
     static async syncUnsyncedResults() {
@@ -707,16 +727,15 @@ class MCQService {
             const uid = auth?.currentUser?.uid;
             if (!uid) return { synced: 0, failed: 0 };
 
-            const storageKey = `mcq_unsynced_${uid}`;
-            const unsynced = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            if (unsynced.length === 0) return { synced: 0, failed: 0 };
-
             let synced  = 0;
             let failed  = 0;
+
+            // ── 1. Retry mcq_unsynced_{uid} queue (legacy Phase 1 offline queue) ────────
+            const storageKey = `mcq_unsynced_${uid}`;
+            const unsynced = JSON.parse(localStorage.getItem(storageKey) || '[]');
             const remaining = [];
 
             for (const result of unsynced) {
-                // Extra safety: skip records that don't belong to current uid
                 if (result.uid && result.uid !== uid) {
                     console.warn('[MCQService] syncUnsyncedResults: skipping result with mismatched uid');
                     continue;
@@ -735,13 +754,75 @@ class MCQService {
                     }
                 }
             }
-
             if (remaining.length > 0) {
                 localStorage.setItem(storageKey, JSON.stringify(remaining));
             } else {
                 localStorage.removeItem(storageKey);
             }
 
+            // ── 2. Retry seed_submission_envelope_{uid}_{assessmentId} (attemptStateMachine) ──
+            // ──    and mcq_pending_submission_{uid}_{testID} (MCQPage Phase 1 handler) ──────
+            const ENVELOPE_PREFIXES = [
+                `seed_submission_envelope_${uid}_`,
+                `mcq_pending_submission_${uid}_`,
+            ];
+            const envelopeKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && ENVELOPE_PREFIXES.some(p => key.startsWith(p))) {
+                    envelopeKeys.push(key);
+                }
+            }
+
+            for (const envKey of envelopeKeys) {
+                try {
+                    const raw = localStorage.getItem(envKey);
+                    if (!raw) continue;
+                    const envelope = JSON.parse(raw);
+
+                    // Ownership check — must belong to current user
+                    if (envelope.uid && envelope.uid !== uid) {
+                        console.warn('[MCQService] syncUnsyncedResults: skipping envelope with mismatched uid:', envKey);
+                        continue;
+                    }
+
+                    const assessmentId = envelope.assessmentId || envelope.testID;
+                    if (!assessmentId) continue;
+
+                    // Check whether a confirmed result already exists in Firestore
+                    // to avoid duplicate writes (idempotency).
+                    const { doc: firestoreDoc, getDoc: firestoreGetDoc } = await import('firebase/firestore');
+                    const { db: firestoreDb } = await import('../firebase-config');
+                    const canonRef = firestoreDoc(firestoreDb, `assessmentResults/${assessmentId}/students/${uid}`);
+                    const snap = await firestoreGetDoc(canonRef);
+                    if (snap.exists()) {
+                        const existingData = snap.data();
+                        if (existingData.completed === true || existingData.status === 'submitted') {
+                            // Already confirmed — safe to clear local envelope
+                            localStorage.removeItem(envKey);
+                            console.log('[MCQService] syncUnsyncedResults: confirmed result exists, cleared envelope:', envKey);
+                            synced++;
+                            continue;
+                        }
+                    }
+
+                    // Result not confirmed yet — retry submission
+                    if (envelope.resultPayload || envelope.totalScore !== undefined) {
+                        const payload = envelope.resultPayload || envelope;
+                        await this.saveResultToFirestore({ ...payload, uid, assessmentId });
+                        localStorage.removeItem(envKey);
+                        console.log('[MCQService] syncUnsyncedResults: retried and cleared envelope:', envKey);
+                        synced++;
+                    }
+                } catch (envErr) {
+                    console.error('[MCQService] syncUnsyncedResults: envelope retry failed:', envKey, envErr?.message);
+                    failed++;
+                }
+            }
+
+            if (synced > 0 || failed > 0) {
+                console.log(`[MCQService] syncUnsyncedResults: synced=${synced} failed=${failed}`);
+            }
             return { synced, failed };
         } catch (error) {
             console.error('[MCQService] Error syncing unsynced results:', error);

@@ -57,6 +57,7 @@ import { fetchContentJSON } from '../utils/contentApi';
 import { fetchCompletionMap, invalidateCompletionCache } from '../services/attemptStatusService';
 import { requireTenant } from '../utils/tenant';
 import { RESUMABLE_STATES, ATTEMPT_STATES } from '../services/attemptStateMachine';
+import { validateAssessmentPayload, validateTestDoc } from '../utils/assessmentValidator';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -538,8 +539,15 @@ const StudentDashboard = () => {
       // Reads users/{uid} and merges fresh profile fields into user state
       // so the profile tab always shows Firestore-authoritative data.
       const enrichProfile = async () => {
-        const lookupId = userUid || userEmail?.replace(/[@.]/g, '_');
-        if (!lookupId) return;
+        // FIX P2: Use auth.currentUser.uid as the canonical Firestore lookup ID.
+        // The previous fallback `userEmail.replace(/[@.]/g,'_')` could produce
+        // wrong paths if the uid was never set in auth_data, or could leak one
+        // student's profile into another session.
+        const lookupId = auth?.currentUser?.uid || userUid;
+        if (!lookupId) {
+          console.warn('[Dashboard] enrichProfile: no Firebase Auth UID and no cached uid. Skipping.');
+          return;
+        }
         try {
           const profileSnap = await getDoc(doc(db, 'users', lookupId));
           if (profileSnap.exists()) {
@@ -923,13 +931,18 @@ const StudentDashboard = () => {
       }
 
       let check;
+      // CANONICAL: All attempt existence checks use Firebase Auth UID and the
+      // canonical path assessmentResults/{assessmentId}/students/{uid}.
+      // Legacy AssessmentResults/colleges/years/students paths are read-only
+      // backward compat and must NOT be used for new attempt checks.
+      const liveUid = auth?.currentUser?.uid;
+      if (!liveUid) throw new Error('Authentication required. Please log in again.');
+
       if (assessment.isMultiSection || assessment.type === 'multisection' || assessment.type === 'MSA') {
-        // BUG FIXED (P0 cross-tenant leak): defaulting a missing College/Year to
-        // 'KGKITE'/'2026' silently pointed one college's student at another
-        // college's result document. requireTenant throws instead of guessing.
-        const { college, year, email: tenantEmail } = requireTenant(user);
-        const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${tenantEmail}`;
-        const docSnap = await getDoc(doc(db, docPath));
+        // FIX P0: was reading from legacy AssessmentResults/.../colleges/.../students/{email}
+        // Now reads from canonical assessmentResults/{assessmentId}/students/{uid}
+        const canonDocPath = `assessmentResults/${assessment.id}/students/${liveUid}`;
+        const docSnap = await getDoc(doc(db, canonDocPath));
         let isCompleted = false;
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -937,12 +950,9 @@ const StudentDashboard = () => {
         }
         check = { exists: docSnap.exists(), completed: isCompleted };
       } else if (assessment.type === 'spoken_english' || assessment.type === 'sea' || assessment.type === 'SPOKEN_ENGLISH') {
-        // BUG FIXED (P0 cross-tenant leak): defaulting a missing College/Year to
-        // 'KGKITE'/'2026' silently pointed one college's student at another
-        // college's result document. requireTenant throws instead of guessing.
-        const { college, year, email: tenantEmail } = requireTenant(user);
-        const docPath = `AssessmentResults/${assessment.id}/colleges/${college}/years/${year}/students/${tenantEmail}`;
-        const docSnap = await getDoc(doc(db, docPath));
+        // FIX P0: same as MSA — use canonical path
+        const canonDocPath = `assessmentResults/${assessment.id}/students/${liveUid}`;
+        const docSnap = await getDoc(doc(db, canonDocPath));
         let isCompleted = false;
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -1135,6 +1145,39 @@ const StudentDashboard = () => {
       // ── MCQ / Coding: fetch the CDN JSON ──
       const testData = await fetchJSONFile(assessment.url || assessment.cdnUrl);
 
+      // ── SCENARIO 5 (WRONG TEST): Validate CDN payload matches TestDoc ────────
+      // assessmentValidator checks: assessmentId cross-match, type compatibility,
+      // duration validity, schedule (Scenario 8: expired), and content presence.
+      // This is the canonical gate — nothing proceeds past this point on failure.
+      const testDocForValidation = {
+        id:               assessment.id,
+        assessmentId:     assessment.slug || assessment.id,
+        cdnUrl:           assessment.cdnUrl || assessment.url || '',
+        type:             (assessment.type || 'mcq').replace('MSA','msa').replace('spoken_english','sea'),
+        duration_minutes: assessment.duration,
+        totalMarks:       assessment.totalMarks,
+        schedule:         assessment.schedule
+          ? {
+              start: assessment.schedule.startDate && assessment.schedule.startTime
+                ? `${assessment.schedule.startDate}T${assessment.schedule.startTime}` : null,
+              end: assessment.schedule.endDate && assessment.schedule.endTime
+                ? `${assessment.schedule.endDate}T${assessment.schedule.endTime}` : null,
+            }
+          : null,
+      };
+      const docCheck = validateTestDoc(testDocForValidation);
+      if (!docCheck.valid) {
+        throw new Error(`Assessment configuration error:\n${docCheck.errors.join('\n')}`);
+      }
+      const payloadCheck = validateAssessmentPayload(testDocForValidation, testData);
+      if (!payloadCheck.valid) {
+        console.error('[Launch] assessmentValidator FAILED:', payloadCheck.errors);
+        throw new Error(`Assessment mismatch detected:\n${payloadCheck.errors.join('\n')}`);
+      }
+      if (payloadCheck.warnings?.length) {
+        console.warn('[Launch] assessmentValidator warnings:', payloadCheck.warnings);
+      }
+
       if (assessment.type === 'mcq') {
         const testInfo = {
           ...testData,
@@ -1212,6 +1255,30 @@ const StudentDashboard = () => {
           resolvedQuestions = inline;
         }
 
+        // ── SCENARIO 9 (MISSING HIDDEN TESTS) ─────────────────────────────────
+        // If the TestDoc declares hiddenTests, they MUST be resolvable.
+        // DO NOT silently score using visible/sample tests.
+        const declaresHiddenTests = !!(testData.hiddenTests || testData.hidden_tests ||
+          assessment.hiddenTests || testData.hiddenTestIds?.length);
+        if (declaresHiddenTests) {
+          const hiddenResolved = resolvedQuestions.filter(q => q.isHidden || q.hidden);
+          if (hiddenResolved.length === 0) {
+            console.error('[Launch] Scenario 9: hiddenTests declared but not resolvable. Blocking launch.');
+            throw new Error(
+              'CODING_CONFIG_ERROR: This coding assessment has hidden tests configured but they ' +
+              'could not be loaded from the question bank. The assessment cannot start to prevent ' +
+              'incorrect scoring. Please contact your administrator.'
+            );
+          }
+        }
+        // Final guard: no questions at all is always a fatal configuration error
+        if (resolvedQuestions.length === 0) {
+          throw new Error(
+            'Coding assessment configuration error: no questions could be loaded. ' +
+            'Please contact your administrator.'
+          );
+        }
+
         await CodingAssessmentService.createInitialAttempt(user, assessment);
         localStorage.setItem("codingAssessmentStartTime", now.toString());
         localStorage.setItem("codingAssessmentTimer", durationSec.toString());
@@ -1246,6 +1313,7 @@ const StudentDashboard = () => {
     TrackingService.stopTracking();
     sessionStorage.clear();
 
+    // Clear cookies
     try {
       const cookies = document.cookie.split(";");
       for (let i = 0; i < cookies.length; i++) {
@@ -1260,22 +1328,18 @@ const StudentDashboard = () => {
       console.error('Error clearing cookies:', error);
     }
 
-    try {
-      localStorage.removeItem("auth_data");
-      localStorage.removeItem("role");
-      localStorage.removeItem("portal_links");
-
+    // FIX P1: Use DataService.signOut() which:
+    //   1. Signs out Firebase Auth (prevents next user inheriting the session)
+    //   2. Clears all UID-scoped student localStorage keys
+    //   3. Clears proctor offline queues scoped to the current UID
+    // The previous implementation never called Firebase signOut(), meaning the
+    // next login attempt inherited the previous student's Firebase session token.
+    DataService.signOut().finally(() => {
       setTimeout(() => {
-        localStorage.clear();
-      }, 100);
-    } catch (error) {
-      console.error('Error clearing storage:', error);
-    }
-
-    setTimeout(() => {
-      setShowLogoutAnimation(false);
-      navigate("/login");
-    }, 1500);
+        setShowLogoutAnimation(false);
+        navigate("/login");
+      }, 800);
+    });
   };
 
   const name = user?.Name || user?.name || "Student";

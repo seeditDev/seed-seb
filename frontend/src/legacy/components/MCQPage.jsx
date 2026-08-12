@@ -293,6 +293,25 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 // Registered user path
                 authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
                 if (!authData.Email) { navigate('/login'); return; }
+
+                // ── SCENARIO 10 (CROSS-USER DATA ISOLATION) ─────────────────
+                // If the cached auth_data belongs to a different student than the
+                // current Firebase Auth user, reject the stale session.
+                // This prevents Student B from seeing Student A's assessment state
+                // when they log in on the same machine.
+                const liveFirebaseUid = auth?.currentUser?.uid;
+                const cachedUid       = authData.uid;
+                if (liveFirebaseUid && cachedUid && liveFirebaseUid !== cachedUid) {
+                    console.warn('[MCQPage] Cross-user contamination detected: cached uid=', cachedUid,
+                        'live uid=', liveFirebaseUid, '. Discarding stale session.');
+                    // Clear the stale MCQ session data for the previous student
+                    ['mcqTestData', 'mcqTestStartTime', 'mcqTestStartTimeISO',
+                     'mcqTestDuration', 'mcqActiveTestSlug', 'mcqTestAnswers',
+                     'mcqLastProgressSync', 'mcqTestNewLaunch'].forEach(k => localStorage.removeItem(k));
+                    navigate('/student/dashboard');
+                    return;
+                }
+
                 setUser(authData);
 
                 // Redirect to unified student dashboard if no active test session exists

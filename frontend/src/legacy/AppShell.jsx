@@ -224,15 +224,14 @@ export default function AppShell({ children }) {
       }
     });
 
-    return () => {
-      unsubscribeAuth();
-    };
-
+    // FIX P2: The previous code had TWO return statements — the second one (with
+    // beforeunload + clearMemoryCache) was completely unreachable. Merged into one.
     const handleUnload = () => TrackingService.stopTracking();
     window.addEventListener("beforeunload", handleUnload);
 
     return () => {
       isMounted = false;
+      unsubscribeAuth();
       window.removeEventListener("beforeunload", handleUnload);
       if (timeoutId) clearTimeout(timeoutId);
       try {

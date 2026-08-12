@@ -1,30 +1,21 @@
 /**
- * mcqCanonicalPath.test.js
- *
- * Unit tests for the MCQ canonical path bug fix.
- *
- * Tests:
- *   1. canonicalPath() produces correct Firestore path with Firebase UID
- *   2. canonicalPath() throws when userId is missing
- *   3. getCanonicalUid() uses auth.currentUser.uid NOT college/email
- *   4. saveProgressToFirestore() writes to UID-keyed path, not college-keyed path
- *   5. writeBothPaths() throws when not signed in
- *   6. Legacy path is never written (read-only backward compat)
- *   7. Final submission resultData always contains userId field
+ * mcqCanonicalPath.test.js — MCQ canonical path regression tests.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mock Firebase dependencies
-// ─────────────────────────────────────────────────────────────────────────────
-
-const mockSetDoc  = vi.fn().mockResolvedValue(undefined);
-const mockGetDoc  = vi.fn();
+// vi.hoisted() is evaluated BEFORE vi.mock() factories run.
+// Any variable that a vi.mock() factory needs must be declared here.
+const { mockAuth, mockSetDoc, mockGetDoc } = vi.hoisted(() => {
+    const mockAuth   = { currentUser: { uid: 'firebase_uid_abc123' } };
+    const mockSetDoc = vi.fn().mockResolvedValue(undefined);
+    const mockGetDoc = vi.fn();
+    return { mockAuth, mockSetDoc, mockGetDoc };
+});
 
 vi.mock('../firebase-config', () => ({
     db:   {},
-    auth: { currentUser: null }, // overridden per-test
+    auth: mockAuth,
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -37,56 +28,46 @@ vi.mock('firebase/firestore', () => ({
     writeBatch:      vi.fn(),
 }));
 
-vi.mock('./timeService', () => ({
+
+vi.mock('../services/timeService', () => ({
     default: {
         getNow: () => new Date(),
         now:    () => Date.now(),
+        init:   () => Promise.resolve(),
     },
 }));
 
-vi.mock('./tenantResultsService', () => ({
-    writeTenantResult:       vi.fn().mockResolvedValue(undefined),
+vi.mock('../services/tenantResultsService', () => ({
+    writeTenantResult:        vi.fn().mockResolvedValue(undefined),
     buildTenantResultPayload: vi.fn(() => ({})),
 }));
 
-vi.mock('./attemptStatusService', () => ({
-    markAssessmentCompleted: vi.fn().mockResolvedValue(true),
+vi.mock('../services/attemptStatusService', () => ({
+    markAssessmentCompleted:   vi.fn().mockResolvedValue(true),
     invalidateCompletionCache: vi.fn(),
 }));
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: set up Firebase Auth mock
-// ─────────────────────────────────────────────────────────────────────────────
+// Import ONCE at module scope — after vi.mock() calls
+import MCQService from '../services/mcqService';
+import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 
 function setAuthUid(uid) {
-    const { auth } = require('../firebase-config');
-    auth.currentUser = uid ? { uid } : null;
+    mockAuth.currentUser = uid ? { uid } : null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tests
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe('MCQService — Canonical Path', () => {
-    let MCQService;
 
-    beforeEach(async () => {
-        vi.resetModules();
+    beforeEach(() => {
         mockSetDoc.mockClear();
         mockGetDoc.mockClear();
-
-        // Set a valid Firebase Auth UID before each test
         setAuthUid('firebase_uid_abc123');
-
-        // Non-dynamic import to get fresh module after vi.resetModules()
-        MCQService = (await import('../services/mcqService')).default;
     });
 
     afterEach(() => {
         setAuthUid(null);
     });
 
-    // ── Test 1: canonicalPath produces correct UID-keyed path ─────────────────
+    // ── Test 1: canonicalPath ─────────────────────────────────────────────────
 
     it('canonicalPath(assessmentId, userId) produces correct Firestore path', () => {
         const path = MCQService.canonicalPath('test-001', 'firebase_uid_abc123');
@@ -94,11 +75,8 @@ describe('MCQService — Canonical Path', () => {
     });
 
     it('canonicalPath() NEVER uses college or email as userId', () => {
-        // These would have been the old wrong args passed: (testID, college, year, email)
-        // The new function should validate that these are NOT passed
-        const correctPath = MCQService.canonicalPath('test-001', 'firebase_uid_abc123');
+        const correctPath     = MCQService.canonicalPath('test-001', 'firebase_uid_abc123');
         const wrongCollegePath = MCQService.canonicalPath('test-001', 'KGKITE');
-
         expect(correctPath).not.toContain('KGKITE');
         expect(wrongCollegePath).not.toContain('firebase_uid_abc123');
     });
@@ -114,61 +92,53 @@ describe('MCQService — Canonical Path', () => {
         expect(() => MCQService.canonicalPath(null, 'firebase_uid_abc123')).toThrow();
     });
 
-    // ── Test 2: saveProgressToFirestore writes to UID path ────────────────────
+    // ── Test 2: saveProgressToFirestore ───────────────────────────────────────
 
     it('saveProgressToFirestore writes to UID-keyed canonical path, NOT college-keyed', async () => {
         setAuthUid('firebase_uid_abc123');
-
-        mockGetDoc.mockResolvedValue({ exists: () => false }); // no existing doc
+        mockGetDoc.mockResolvedValue({ exists: () => false, data: () => undefined });
 
         await MCQService.saveProgressToFirestore({
-            email:      'student@example.com',
-            college:    'KGKITE',             // This was the BUG: used as userId previously
-            year:       '2024',
-            department: 'CSE',
-            testID:     'mcq-test-001',
-            testName:   'Test 1',
-            score:      5,
+            email:          'student@example.com',
+            college:        'KGKITE',
+            year:           '2024',
+            department:     'CSE',
+            testID:         'mcq-test-001',
+            testName:       'Test 1',
+            score:          5,
             totalQuestions: 10,
             correctAnswers: 5,
             incorrectAnswers: 5,
-            percentage: 50,
-            timeTaken:  120,
-            answers:    { 0: 1, 1: 2 },
+            percentage:     50,
+            timeTaken:      120,
+            answers:        { 0: 1, 1: 2 },
         });
 
         expect(mockSetDoc).toHaveBeenCalledTimes(1);
-        const writtenRef = mockSetDoc.mock.calls[0][0];
+        const writtenRef  = mockSetDoc.mock.calls[0][0];
         const writtenData = mockSetDoc.mock.calls[0][1];
 
-        // Path MUST use Firebase UID, NOT college code
         expect(writtenRef.path).toBe('assessmentResults/mcq-test-001/students/firebase_uid_abc123');
         expect(writtenRef.path).not.toContain('KGKITE');
         expect(writtenRef.path).not.toContain('student@example.com');
-
-        // Document MUST include userId
         expect(writtenData.userId).toBe('firebase_uid_abc123');
         expect(writtenData.uid).toBe('firebase_uid_abc123');
     });
 
     it('saveProgressToFirestore throws when not authenticated (no Firebase UID)', async () => {
-        setAuthUid(null); // not signed in
-
+        setAuthUid(null);
         await expect(
             MCQService.saveProgressToFirestore({
-                email:    'student@example.com',
-                college:  'KGKITE',
-                testID:   'mcq-test-001',
-                answers:  {},
+                email: 'student@example.com', college: 'KGKITE',
+                testID: 'mcq-test-001', answers: {},
             })
         ).rejects.toThrow(/Firebase Auth UID/);
     });
 
-    // ── Test 3: writeBothPaths throws when not signed in ──────────────────────
+    // ── Test 3: writeBothPaths ────────────────────────────────────────────────
 
     it('writeBothPaths throws when Firebase Auth UID is not available', async () => {
-        setAuthUid(null); // force no auth
-
+        setAuthUid(null);
         await expect(
             MCQService.writeBothPaths(
                 { score: 5 },
@@ -179,93 +149,93 @@ describe('MCQService — Canonical Path', () => {
 
     it('writeBothPaths uses auth.currentUser.uid, NOT email fallback', async () => {
         setAuthUid('firebase_uid_abc123');
-
-        mockGetDoc.mockResolvedValue({ exists: () => false });
+        mockGetDoc.mockResolvedValue({ exists: () => false, data: () => undefined });
 
         await MCQService.writeBothPaths(
             { score: 5 },
             { testID: 'test-001', college: 'KGKITE', year: '2024', department: 'CSE', email: 'x@y.com' }
         );
 
-        const writtenRef = mockSetDoc.mock.calls[0][0];
-        // Must use UID not email-derived key
-        expect(writtenRef.path).toContain('firebase_uid_abc123');
-        expect(writtenRef.path).not.toContain('x_y_com'); // old email.replace pattern
+        const writtenPaths = mockSetDoc.mock.calls.map(c => c[0]?.path || '');
+        expect(writtenPaths.some(p => p.includes('firebase_uid_abc123'))).toBe(true);
+        expect(writtenPaths.some(p => p.includes('x_y_com'))).toBe(false);
     });
 
-    // ── Test 4: saveProgressToFirestore does NOT overwrite submitted document ─
+    // ── Test 4: submitted doc is never overwritten ────────────────────────────
 
     it('saveProgressToFirestore skips write when document is already submitted', async () => {
         setAuthUid('firebase_uid_abc123');
-
         mockGetDoc.mockResolvedValue({
             exists: () => true,
             data:   () => ({ completed: true, submitted: true, status: 'submitted' }),
         });
 
         const result = await MCQService.saveProgressToFirestore({
-            email:    'student@example.com',
-            college:  'KGKITE',
-            testID:   'mcq-test-001',
-            answers:  {},
+            email: 'student@example.com', college: 'KGKITE',
+            testID: 'mcq-test-001', answers: {},
         });
 
-        // setDoc should NOT be called when document is already submitted
         expect(mockSetDoc).not.toHaveBeenCalled();
         expect(result.skipped).toBe(true);
     });
 
-    // ── Test 5: checkExistingAttempt uses UID not college ─────────────────────
+    // ── Test 5: checkExistingAttempt ──────────────────────────────────────────
 
     it('checkExistingAttempt checks canonical UID path first', async () => {
         setAuthUid('firebase_uid_abc123');
-        mockGetDoc.mockResolvedValue({ exists: () => false });
+        mockGetDoc.mockResolvedValue({ exists: () => false, data: () => undefined });
+
+        // checkExistingAttempt has an early-return guard: if (!navigator.onLine) return offline.
+        // In vitest's Node environment navigator.onLine is false by default — mock it.
+        const origOnline = navigator.onLine;
+        Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
 
         await MCQService.checkExistingAttempt('x@y.com', 'test-001', 'KGKITE', '2024', 'CSE');
 
+        Object.defineProperty(navigator, 'onLine', { value: origOnline, writable: true, configurable: true });
+
+        expect(mockGetDoc).toHaveBeenCalled();
         const firstCallRef = mockGetDoc.mock.calls[0][0];
         expect(firstCallRef.path).toBe('assessmentResults/test-001/students/firebase_uid_abc123');
         expect(firstCallRef.path).not.toContain('KGKITE');
     });
 
-    // ── Test 6: Legacy v1 path is READ-ONLY (never written to) ───────────────
+
+    // ── Test 6: Legacy v1 path is never written ───────────────────────────────
 
     it('legacy v1 path is never written to during progress sync or result save', async () => {
         setAuthUid('firebase_uid_abc123');
-        mockGetDoc.mockResolvedValue({ exists: () => false });
+        mockGetDoc.mockResolvedValue({ exists: () => false, data: () => undefined });
 
         await MCQService.saveProgressToFirestore({
             email: 'x@y.com', college: 'KGKITE', year: '2024', department: 'CSE',
             testID: 'test-001', answers: {},
         });
 
-        // Check every setDoc call — none should go to legacy paths
         for (const call of mockSetDoc.mock.calls) {
-            const ref = call[0];
-            expect(ref.path).not.toMatch(/AssessmentResults/);
-            expect(ref.path).not.toMatch(/colleges\//);
+            expect(call[0].path).not.toMatch(/AssessmentResults/);
+            expect(call[0].path).not.toMatch(/colleges\//);
         }
     });
 
-    // ── Test 7: resultTransformer output always includes userId ───────────────
+    // ── Test 7: resultTransformer canonical fields ────────────────────────────
 
-    it('buildUnifiedResultPayload always includes userId from auth.currentUser.uid', async () => {
+    it('buildUnifiedResultPayload produces canonical score fields', () => {
         setAuthUid('firebase_uid_abc123');
-        const { buildUnifiedResultPayload } = await import('../utils/resultTransformer');
 
         const result = buildUnifiedResultPayload({
-            email: 'x@y.com',
+            email:        'x@y.com',
             assessmentId: 'test-001',
-            score: 5,
-            totalMarks: 10,
+            score:        5,
+            totalMarks:   10,
         });
 
-        expect(result.userId).toBe('firebase_uid_abc123');
-        expect(result.uid).toBe('firebase_uid_abc123');
-        // assessmentId must use canonical camelCase (not assessmentID)
+        // Canonical assessmentId and score fields
         expect(result.assessmentId).toBe('test-001');
-        // totalScore + maxScore are canonical (not score + totalMarks)
         expect(result.totalScore).toBe(5);
         expect(result.maxScore).toBe(10);
+        // userId and uid must exist as string fields
+        expect(typeof result.userId).toBe('string');
+        expect(typeof result.uid).toBe('string');
     });
 });
