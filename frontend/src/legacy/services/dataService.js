@@ -339,29 +339,29 @@ class DataService {
         try {
             const { getAllowedTests } = await import('../../lib/firestore/courses');
             const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-            const { tenantId, cohortId, college } = authData;
+            const { tenantId, cohortId } = authData;
 
             // ── Primary path: cohort allowedModules from courses schema ───────────
+            // SCENARIO 6: Only tests explicitly listed in allowedModules are returned.
+            // If allowedModules is empty, the student sees no tests.
+            // Do NOT fall back to loading all tests for the tenant.
             if (tenantId && cohortId) {
                 const cohort = await DataService.getTenantCohort(tenantId, cohortId);
                 const allowedModules = cohort?.allowedModules || [];
                 if (allowedModules.length > 0) {
                     return await getAllowedTests(allowedModules);
                 }
+                // No allowed modules — correct behaviour: student sees nothing
+                console.warn(
+                    '[DataService] getAllowedTestDocs: allowedModules is empty for ' +
+                    `tenantId=${tenantId} cohortId=${cohortId}. ` +
+                    'No tests are assigned to this cohort. Contact admin to configure allowedModules.'
+                );
+                return [];
             }
 
-            // ── Fallback: read all tests from tenantCourses/{college}/tests ───────
-            // Used when student was provisioned before cohort/allowedModules were set,
-            // or when tenantCourses is the primary assignment mechanism.
-            const effectiveTenant = tenantId || college || '';
-            if (effectiveTenant) {
-                const { collection: col, getDocs: gd, getFirestore } = await import('firebase/firestore');
-                const { app } = await import('../firebase-config');
-                const db2 = getFirestore(app);
-                const snap = await gd(col(db2, 'tenantCourses', effectiveTenant, 'tests'));
-                return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            }
-
+            // No tenantId/cohortId — user profile incomplete
+            console.warn('[DataService] getAllowedTestDocs: auth_data missing tenantId or cohortId. Returning empty.');
             return [];
         } catch (err) {
             console.error('[DataService] getAllowedTestDocs error:', err);

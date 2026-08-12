@@ -18,6 +18,8 @@ import { readJSON } from '../utils/safeStorage';
 import { throttledLocalStorageSet, flushThrottledWrites } from '../utils/throttle';
 import { createSubmitGuard } from '../utils/submitGuard';
 import { markAssessmentCompleted } from '../services/attemptStatusService';
+import * as AttemptStatusService from '../services/attemptStatusService';
+import { auth } from '../firebase-config';
 
 // ========================================
 // PROCTORING CONFIGURATION
@@ -304,17 +306,18 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 // Load available MCQ tests
                 await loadAvailableTests(accessControlData, authData);
 
-                // Load user attempts
+                // Load user completion map from the canonical completion index.
+                // MCQService.fetchUserAttempts() is deprecated (legacy path, never written).
+                // Use attemptStatusService.fetchCompletionMap() which reads from
+                // users/{uid}/assessmentAttempts — the canonical completion index.
                 try {
-                    const attempts = await MCQService.fetchUserAttempts(
-                        authData.Email,
-                        authData.College,
-                        authData.Year,
-                        authData.Department
-                    );
-                    setUserAttempts(attempts);
+                    const authData2 = getAuthData();
+                    if (authData2) {
+                        const completionMap = await AttemptStatusService.fetchCompletionMap(authData2, []);
+                        setUserAttempts(completionMap || {});
+                    }
                 } catch (attemptsError) {
-                    console.error('[MCQPage] Error loading attempts:', attemptsError);
+                    console.error('[MCQPage] Error loading completion map:', attemptsError);
                 }
 
                 // Try to sync any unsynced results
@@ -1126,11 +1129,20 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
             const elapsedSeconds = startTime ? Math.round((timeService.now() - startTime) / 1000) : 0;
 
+            // BUG FIX (P0): uid MUST be present so saveProgressToFirestore
+            // can call getCanonicalUid() and build the correct Firestore path.
+            // Without uid, it falls back to auth.currentUser.uid directly, but
+            // passing it explicitly also enables logging and future assertions.
+            const uid = auth?.currentUser?.uid || user?.uid || '';
+
             const progressPayload = {
+                uid,                          // ← Required for canonical path construction
                 email: user.Email,
                 college: user.College,
                 year: user.Year,
                 department: user.Department,
+                tenantId: user.tenantId || '',
+                cohortId: user.cohortId || '',
                 rollNumber: user["Roll Number"] || '',
                 name: user.Name || '',
                 testID: currentTest.testInfo?.id || currentTest.id || 'unknown',
@@ -1528,9 +1540,27 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 setError('This test has already been submitted. Multiple submissions are not allowed.');
                 alert('❌ This test has already been submitted. You cannot submit again.');
             } else {
-                setSubmissionStatus('error');
-                setError(`Submission failed: ${error.message}. Please try again or contact support.`);
-                alert(`❌ Submission failed: ${error.message}. Your answers have been saved locally and will be retried automatically.`);
+                // NETWORK FAILURE: save pending result locally so it survives a crash
+                // and can be retried on the next launch.
+                const uid = auth?.currentUser?.uid || user?.uid || 'unknown';
+                const testID = currentTest?.testInfo?.id || currentTest?.id || 'unknown';
+                const pendingKey = `mcq_pending_submission_${uid}_${testID}`;
+                try {
+                    const pendingPayload = {
+                        uid,
+                        testID,
+                        timestamp: timeService.getNow().toISOString(),
+                        retryCount: 0,
+                    };
+                    localStorage.setItem(pendingKey, JSON.stringify(pendingPayload));
+                    console.warn('[MCQPage] Submission failed — result saved as pending for retry:', pendingKey);
+                } catch (_) {}
+
+                setSubmissionStatus('pending');
+                setError(
+                    'Submission is pending due to a network issue. ' +
+                    'Your answers are saved locally and will be uploaded automatically when connectivity is restored.'
+                );
             }
             setIsSubmitting(false);
             submitGuard.fail();
@@ -1609,10 +1639,13 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             });
 
             const resultData = {
+                uid: auth?.currentUser?.uid || user?.uid || '',
                 email: user.Email,
                 college: user.College,
                 year: user.Year,
                 department: user.Department,
+                tenantId: user.tenantId || '',
+                cohortId: user.cohortId || '',
                 rollNumber: user["Roll Number"] || '',
                 name: user.Name || '',
                 testID: currentTest.testInfo?.id || currentTest.id || 'unknown',
@@ -1634,6 +1667,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 timeSpentPerQ: timeSpentPerQ,
                 autoSubmitted: true,
                 autoSubmitReason: reasonLabel,
+                submissionReason: 'auto_submit',
                 // Include proctoring data
                 violationCount: proctoringData.violationCount || 0,
                 totalNoFace: violationStats.totalNoFace || 0,

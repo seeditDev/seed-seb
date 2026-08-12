@@ -1,4 +1,4 @@
-import { db } from '../firebase-config';
+import { db, auth } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import timeService from './timeService';
 import { writeTenantResult, buildTenantResultPayload } from './tenantResultsService';
@@ -81,21 +81,29 @@ class CodingAssessmentService {
     }
 
     /**
-     * @deprecated Use writeCanonicalResult instead.
+     * @deprecated Use writeCanonicalResult() with an explicit auth.currentUser.uid instead.
+     *
      * Shim for call sites that pass (payload, { assessmentID, college, year, department, email }).
+     * HARDENED: always uses auth.currentUser.uid — never email-derived fallback.
      */
     static async writeBothPaths(payload, { assessmentID, college, year, department, email }) {
-        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-        const userId = authData.uid || email.replace(/[@.]/g, '_');
+        // PRIMARY: live Firebase Auth UID — never email-derived substitute
+        const userId = auth?.currentUser?.uid;
+        if (!userId) {
+            throw new Error(
+                '[CodingAssessmentService] writeBothPaths: Firebase Auth UID is required. ' +
+                'Student must be authenticated. Never use email as a Firestore identity key.'
+            );
+        }
         return this.writeCanonicalResult(
-            { ...payload, college, year, department },
-            { assessmentId: assessmentID, userId, userProfile: authData }
+            { ...payload, college, year, department, userId, uid: userId },
+            { assessmentId: assessmentID, userId, userProfile: { uid: userId, email, tenantId: payload.tenantId || '' } }
         );
     }
 
     /**
      * Check if student has already completed the coding assessment.
-     * Checks v2 path first, then v1 legacy paths.
+     * Checks v2 path first (using Firebase Auth UID), then v1 legacy paths.
      */
     static async checkExistingAttempt(email, assessmentID, college, year, department) {
         try {
@@ -104,36 +112,41 @@ class CodingAssessmentService {
                 return { exists: false, data: null, completed: false, offline: true };
             }
 
-            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-            const userId = authData.uid || email.replace(/[@.]/g, '_');
+            // CANONICAL: Firebase Auth UID is the identity for Firestore paths
+            const uid = auth?.currentUser?.uid;
 
-            // 1. Try v2 canonical path first
-            try {
-                const v2Ref = doc(db, this.canonicalPath(assessmentID, userId));
-                const v2Snap = await getDoc(v2Ref);
-                if (v2Snap.exists()) {
-                    const data = v2Snap.data();
-                    return {
-                        exists: true,
-                        data,
-                        completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
-                    };
-                }
-            } catch (e) { /* fall through */ }
+            // 1. Try v2 canonical path with Firebase Auth UID
+            if (uid) {
+                try {
+                    const v2Ref = doc(db, this.canonicalPath(assessmentID, uid));
+                    const v2Snap = await getDoc(v2Ref);
+                    if (v2Snap.exists()) {
+                        const data = v2Snap.data();
+                        return {
+                            exists: true,
+                            data,
+                            completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
+                        };
+                    }
+                } catch (e) { /* fall through */ }
+            }
 
-            // 2. Fall back to v1 old canonical path
-            try {
-                const v1Ref = doc(db, this.legacyV1Path(assessmentID, college, year, email));
-                const v1Snap = await getDoc(v1Ref);
-                if (v1Snap.exists()) {
-                    const data = v1Snap.data();
-                    return {
-                        exists: true,
-                        data,
-                        completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
-                    };
-                }
-            } catch (e) { /* fall through */ }
+            // 2. Fall back to v1 legacy paths (READ-ONLY backward compat)
+            if (college && year && email) {
+                try {
+                    const v1Ref = doc(db, this.legacyV1Path(assessmentID, college, year, email));
+                    const v1Snap = await getDoc(v1Ref);
+                    if (v1Snap.exists()) {
+                        const data = v1Snap.data();
+                        console.warn('[CodingAssessmentService] checkExistingAttempt: found result in legacy v1 path.');
+                        return {
+                            exists: true,
+                            data,
+                            completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
+                        };
+                    }
+                } catch (e) { /* ignore */ }
+            }
 
             return { exists: false, data: null, completed: false };
         } catch (error) {
@@ -146,35 +159,15 @@ class CodingAssessmentService {
     }
 
     /**
-     * Fetch all coding assessment attempts for a student
+     * @deprecated  The legacy `colleges/.../coding_results` path is never written
+     *   by the current system. Returns empty. Use attemptStatusService.fetchCompletionMap().
      */
     static async fetchUserAttempts(email, college, year, department) {
-        try {
-            if (!navigator.onLine) {
-                console.warn('[CodingAssessmentService] Client is offline, cannot fetch user attempts');
-                return {};
-            }
-
-            // Try legacy path first for backward compat
-            const colPath = `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results`;
-            const colRef = collection(db, colPath);
-            const querySnapshot = await getDocs(colRef);
-            
-            const attemptsMap = {};
-            querySnapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                attemptsMap[docSnap.id] = {
-                    completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted',
-                    score: data.score || 0,
-                    percentage: data.percentage || 0,
-                    data: data
-                };
-            });
-            return attemptsMap;
-        } catch (error) {
-            console.error('[CodingAssessmentService] Error fetching user attempts:', error);
-            return {};
-        }
+        console.warn(
+            '[CodingAssessmentService] fetchUserAttempts() is deprecated and returns empty. ' +
+            'Use attemptStatusService.fetchCompletionMap() instead.'
+        );
+        return {};
     }
 
     /**
