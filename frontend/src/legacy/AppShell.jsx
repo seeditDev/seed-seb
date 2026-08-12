@@ -135,7 +135,6 @@ export default function AppShell({ children }) {
     const ua = navigator.userAgent || "";
     const hostname = window.location.hostname;
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    const hasWebBypass = localStorage.getItem("web_access_bypass") === "true" || urlParams?.get("bypass") === "true" || urlParams?.get("mode") === "web";
     const isDev =
       hostname === "localhost" ||
       hostname === "127.0.0.1" ||
@@ -144,6 +143,11 @@ export default function AppShell({ children }) {
       hostname.endsWith(".pages.dev") ||
       hostname.includes("seedit.site") ||
       import.meta.env.DEV;
+    // URL-parameter bypass is restricted to DEV builds only.
+    // In production, the gate can only be bypassed via the in-app button (localStorage)
+    // or a valid SEEDSEB/QtWebEngine user-agent. This prevents ?bypass=true in production.
+    const hasWebBypass = localStorage.getItem("web_access_bypass") === "true" ||
+      (isDev && (urlParams?.get("bypass") === "true" || urlParams?.get("mode") === "web"));
     const isUAOk =
       ua.includes("SEEDSEB") ||
       ua.includes("QtWebEngine") ||

@@ -775,12 +775,14 @@ const MultiSectionAssessment = () => {
 
       const totalScore = Object.values(examResults).reduce((a, s) => a + (s.data?.score || 0), 0);
       const totalQ = Object.values(examResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
-      const pct = totalQ > 0 ? (totalScore / totalQ) : 0;
+      // BUG FIX: percentage must use totalMarksSum (max marks), not totalQ (question count).
+      // Example: MCQ=40 marks, Coding=60 marks → totalMarksSum=100, not totalQ=32.
+      const pct = totalMarksSum > 0 ? (totalScore / totalMarksSum) : 0;
       const totalViolations = proctoringData.violationCount;
 
       // Scoring fields
       const partialScore = totalScore;
-      const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
+      const fullScore = (totalMarksSum > 0 && totalScore >= totalMarksSum) ? totalMarksSum : 0;
 
       const timeStartedISO = examStartTimeRef.current;
       const timeEndedISO = new Date().toISOString();
@@ -813,7 +815,7 @@ const MultiSectionAssessment = () => {
         totalQuestions: totalQ,
         correctAnswers: totalScore,
         incorrectAnswers: totalQ - totalScore,
-        percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+        percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
         partialScore,
         fullScore,
         timeTaken: timeTakenFormatted,
@@ -854,7 +856,7 @@ const MultiSectionAssessment = () => {
             type: 'multisection',
             score: totalScore,
             totalMarks: totalMarksSum,
-            percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+            percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
             timeTakenSeconds: timeTaken,
             violationCount: totalViolations,
             sourceRef: v2DocPath,
@@ -1489,7 +1491,7 @@ const MultiSectionAssessment = () => {
     }
   }, [assessment]);
 
-  const autoSubmitSection = useCallback((sectionResults) => {
+  const autoSubmitSection = useCallback(async (sectionResults) => {
     if (examFinishedRef.current) return;
     if (!assessment?.sections || currentSecIdx < 0 || currentSecIdx >= assessment.sections.length) return;
 
@@ -1618,9 +1620,10 @@ const MultiSectionAssessment = () => {
 
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
         const totalQ = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
-        const pct = totalQ > 0 ? totalScore / totalQ : 0;
+        // BUG FIX: percentage must use totalMarksSum (max marks), not totalQ (question count).
+        const pct = totalMarksSum > 0 ? totalScore / totalMarksSum : 0;
         const partialScore = totalScore;
-        const fullScore = (totalQ > 0 && totalScore >= totalQ) ? totalMarksSum : 0;
+        const fullScore = (totalMarksSum > 0 && totalScore >= totalMarksSum) ? totalMarksSum : 0;
 
         const timeStartedISO = examStartTimeRef.current;
         const timeEndedISO = new Date().toISOString();
@@ -1661,7 +1664,7 @@ const MultiSectionAssessment = () => {
           totalQuestions: totalQ,
           correctAnswers: totalScore,
           incorrectAnswers: totalQ - totalScore,
-          percentage: totalQ > 0 ? Math.round(pct * 100) : 0,
+          percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
           partialScore,
           fullScore,
           timeTaken: timeTakenFormatted,
@@ -1685,13 +1688,42 @@ const MultiSectionAssessment = () => {
         }
 
         const v2DocPath = `assessmentResults/${assessment.id}/students/${userId}`;
-        setDoc(doc(db, v2DocPath), attemptData, { merge: true })
-          .then(() => console.log('[MSA] Final result saved to Firestore v2 path'))
-          .catch(e => console.error('[MSA] Firestore final save failed:', e));
 
+        // BUG FIX: Final submission MUST await Firestore confirmation.
+        // Do NOT show success or navigate until the write is confirmed.
+        // On failure: save pending envelope for recovery on next login (same pattern as autoSubmitEntireExam).
+        let writeSuccess = false;
+        try {
+          await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
+          console.log('[MSA] Final result saved to Firestore v2 path');
+          writeSuccess = true;
+        } catch (writeErr) {
+          console.error('[MSA] handleFinalSubmit: Firestore write failed — preserving pending envelope:', writeErr);
+          try {
+            const envKey = `msa_pending_submission_${userId}_${assessment.id}`;
+            localStorage.setItem(envKey, JSON.stringify({
+              uid: userId,
+              assessmentId: assessment.id,
+              resultPayload: attemptData,
+              savedAt: new Date().toISOString(),
+              retryCount: 0,
+            }));
+          } catch (_) { /* localStorage may be full */ }
+          toast.error(
+            '⚠️ Submission saved locally — please reconnect. Your answers are safe and will sync automatically.',
+            { duration: 8000 }
+          );
+        }
+
+        // Mirror to users/{uid}/assessmentAttempts (non-fatal, non-blocking)
         setDoc(doc(db, 'users', userId, 'assessmentAttempts', assessment.id), attemptData, { merge: true })
           .catch(e => console.error('[MSA] Student assessmentAttempts mirror save failed:', e));
 
+        if (!writeSuccess) {
+          // Do NOT mark finished or navigate — let the student see the error state.
+          // The pending envelope will be retried on next login.
+          return;
+        }
       }
 
       setExamFinished(true);
