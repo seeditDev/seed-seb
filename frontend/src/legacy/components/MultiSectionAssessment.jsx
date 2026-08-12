@@ -16,7 +16,7 @@ import {
 import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
-import { db } from '../firebase-config';
+import { db, auth } from '../firebase-config';
 import { doc, setDoc, getDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
 import { writeTenantResult, buildTenantResultPayload } from '../services/tenantResultsService';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
@@ -1117,12 +1117,17 @@ const MultiSectionAssessment = () => {
     // Verify if already completed/submitted on server
     const checkAttempt = async () => {
       try {
-        // BUG FIXED (P0 cross-tenant write): `user.College || 'KGKITE'` wrote one
-        // college's attempt into another college's document path whenever the
-        // profile field was blank. Fail loudly instead of substituting.
-        const { college, year } = requireTenant(authData);
-        const docPath = `AssessmentResults/${assessmentData.id}/colleges/${college}/years/${year}/students/${authData.Email}`;
-        const docSnap = await getDoc(doc(db, docPath));
+        // CANONICAL: use Firebase Auth UID for the result path.
+        // The legacy AssessmentResults/{id}/colleges/{college}/years/{year}/students/{email}
+        // path is no longer written. All results are at:
+        //   assessmentResults/{assessmentId}/students/{uid}
+        const uid = auth?.currentUser?.uid;
+        if (!uid) {
+          console.warn('[MSA] checkAttempt: not authenticated, skipping server check.');
+          return;
+        }
+        const canonDocPath = `assessmentResults/${assessmentData.id}/students/${uid}`;
+        const docSnap = await getDoc(doc(db, canonDocPath));
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.completed === true || data.status === 'submitted') {
@@ -1139,6 +1144,7 @@ const MultiSectionAssessment = () => {
         console.error('[MSA] Failed to check existing attempt:', err);
       }
     };
+
     checkAttempt();
 
     // Crash / Exit recovery with 15-minute grace period check.

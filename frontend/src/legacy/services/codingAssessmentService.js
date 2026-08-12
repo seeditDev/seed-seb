@@ -208,64 +208,8 @@ class CodingAssessmentService {
                 assessmentID, college: College, year: Year, department: Department, email: Email
             });
 
-            // Write initial status to Supabase coding_results table
-            try {
-                const { error: supabaseError } = await safeUpsert('coding_results', {
-                        roll_number: rollNumber || '',
-                        name: Name || '',
-                        email: Email,
-                        college: College,
-                        year: Year,
-                        department: Department,
-                        test_id: assessmentID,
-                        test_name: initialData.assessmentName,
-                        score: 0,
-                        total_questions: Array.isArray(assessmentData.questions) ? assessmentData.questions.length : (parseInt(assessmentData.questions, 10) || 0),
-                        correct_answers: 0,
-                        incorrect_answers: 0,
-                        percentage: 0,
-                        partial_score: 0,
-                        full_score: 0,
-                        status: 'started',
-                        time_taken: 0,
-                        time_started: initialData.timeStartedISO,
-                        updated_at: new Date().toISOString()
-                    }, {
-                        onConflict: 'email,test_id'
-                    });
-                if (supabaseError) throw supabaseError;
-            } catch (supabaseErr) {
-                console.warn('[CodingAssessmentService] Supabase coding_results initial attempt insert failed:', supabaseErr.message);
-            }
-
-            // Also write initial 'started' status to unified assessment_results table
-            try {
-                const { error: arErr } = await safeUpsert('assessment_results', {
-                        type: 'coding',
-                        test_id: assessmentID,
-                        test_name: initialData.assessmentName,
-                        roll_number: rollNumber || '',
-                        name: Name || '',
-                        email: Email,
-                        college: College,
-                        year: Year,
-                        department: Department,
-                        score: 0,
-                        total_questions: Array.isArray(assessmentData.questions) ? assessmentData.questions.length : (parseInt(assessmentData.questions, 10) || 0),
-                        correct_answers: 0,
-                        incorrect_answers: 0,
-                        percentage: 0,
-                        partial_score: 0,
-                        full_score: 0,
-                        status: 'started',
-                        time_taken: 0,
-                        time_started: initialData.timeStartedISO,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'email,test_id,type' });
-                if (arErr) console.warn('[CodingAssessmentService] assessment_results initial insert failed (non-blocking):', arErr.message);
-            } catch (arEx) {
-                console.warn('[CodingAssessmentService] assessment_results initial exception:', arEx.message);
-            }
+            // Note: Supabase sync (coding_results / assessment_results tables) was removed.
+            // Firestore at assessmentResults/{assessmentId}/students/{uid} is the single source of truth.
 
             console.log('[CodingAssessmentService] Initial attempt created:', canonPath);
             return { success: true, docPath: canonPath };
@@ -274,6 +218,7 @@ class CodingAssessmentService {
             return { success: false, error: error.message };
         }
     }
+
 
     /**
      * Mark attempt as submitting/completed to prevent tab refresh exploit

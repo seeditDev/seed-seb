@@ -1,19 +1,14 @@
-import { db } from '../firebase-config';
+import { db, auth } from '../firebase-config';
 import {
   doc,
   getDoc,
   setDoc,
-  collection,
-  query,
-  where,
-  limit,
-  documentId,
-  getDocs,
   arrayUnion,
   serverTimestamp,
   runTransaction,
 } from 'firebase/firestore';
-import { requireTenant, tenantDepartment } from '../utils/tenant';
+import { requireTenant } from '../utils/tenant';
+
 
 /**
  * Batched assessment-completion lookup.
@@ -76,27 +71,33 @@ export function invalidateCompletionCache(email) {
   } catch (_) {}
 }
 
-/** Collections (relative to the student document) that hold per-assessment results. */
-function studentResultCollections(tenant) {
-  const dept = tenantDepartment(tenant);
-  const base = `colleges/${tenant.college}/years/${tenant.year}/departments/${dept}/students/${tenant.email}`;
-  return [`${base}/mcq_results`, `${base}/coding_results`, `${base}/sea_results`];
-}
-
-async function queryCollectionForIds(path, ids) {
+/**
+ * Canonical fallback: for each unknown assessmentId, read
+ * assessmentResults/{assessmentId}/students/{uid} directly.
+ *
+ * Replaces the legacy colleges/{college}/years/{year}/... path which is no
+ * longer written by any assessment engine.
+ *
+ * @param {string} uid          — Firebase Auth UID
+ * @param {string[]} ids        — assessment IDs to check
+ * @returns {Promise<Record<string,boolean>>} id -> completed
+ */
+async function queryCanonicalPaths(uid, ids) {
   const found = {};
-  for (const ids30 of chunk(ids, IN_CHUNK)) {
-    try {
-      const snap = await getDocs(
-        query(collection(db, path), where(documentId(), 'in', ids30), limit(IN_CHUNK))
-      );
-      snap.forEach((d) => {
-        if (isCompletedDoc(d.data())) found[d.id] = true;
-      });
-    } catch (e) {
-      // Missing collection / index issues must not break the dashboard.
-      console.warn('[attemptStatusService] batch query skipped for', path, e?.message);
-    }
+  if (!uid || !ids?.length) return found;
+  // Batch: up to IN_CHUNK parallel reads
+  for (let i = 0; i < ids.length; i += IN_CHUNK) {
+    const batch = ids.slice(i, i + IN_CHUNK);
+    const snaps = await Promise.allSettled(
+      batch.map((id) => getDoc(doc(db, `assessmentResults/${id}/students/${uid}`)))
+    );
+    snaps.forEach((result, idx) => {
+      if (result.status === 'fulfilled' && result.value.exists()) {
+        if (isCompletedDoc(result.value.data())) {
+          found[batch[idx]] = true;
+        }
+      }
+    });
   }
   return found;
 }
@@ -176,21 +177,19 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
     }
   }
 
-  // 2. Bounded fallback for ids the index does not vouch for yet.
+  // 2. Canonical fallback: read assessmentResults/{id}/students/{uid} for each
+  // unknown assessment. Replaces legacy colleges/... subcollection queries.
   if (!denormalisedComplete) {
     const unknown = ids.filter((id) => !map[id]);
     if (unknown.length > 0) {
-      const paths = [
-        ...studentResultCollections(tenant),
-        `users/${userKey}/contestAttempts`,
-        `users/${tenant.email}/contestAttempts`,
-        // Note: multiSectionAttempts is deprecated — all attempt types now
-        // write to contestAttempts via assessmentSessionService.
-      ];
-      const results = await Promise.all(paths.map((p) => queryCollectionForIds(p, unknown)));
-      results.forEach((found) => {
-        Object.keys(found).forEach((id) => { map[id] = true; });
-      });
+      // Use live Firebase Auth UID for canonical reads
+      const liveUid = auth?.currentUser?.uid || userKey;
+      try {
+        const canonFound = await queryCanonicalPaths(liveUid, unknown);
+        Object.keys(canonFound).forEach((id) => { map[id] = true; });
+      } catch (e) {
+        console.warn('[attemptStatusService] canonical fallback failed:', e?.message);
+      }
     }
   }
 

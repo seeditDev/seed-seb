@@ -334,11 +334,37 @@ class DataService {
      * Uses: courses/{courseId}/series/{seriesId}/tests/{testId}
      * Keys from: tenants/{tenantId}/cohorts/{cohortId}.allowedModules
      * Format: "courseId::seriesId::testId"
+     *
+     * SECURITY: Verifies auth.currentUser.uid matches auth_data.uid before
+     * using any cached tenantId/cohortId. Prevents stale-cache test loading
+     * after a user switch on the same machine.
      */
     static async getAllowedTestDocs() {
         try {
+            // ── UID guard: auth_data cache must belong to the live Firebase Auth user ──
+            const liveUid = auth?.currentUser?.uid;
+            if (!liveUid) {
+                console.warn('[DataService] getAllowedTestDocs: no authenticated Firebase user. Returning empty.');
+                return [];
+            }
+
+            let authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+
+            // If cached UID doesn't match live Auth UID, rebuild cache from Firestore
+            if (authData.uid && authData.uid !== liveUid) {
+                console.warn(
+                    '[DataService] getAllowedTestDocs: auth_data.uid mismatch — ' +
+                    `cached="${authData.uid}" live="${liveUid}". Refreshing auth_data.`
+                );
+                const fresh = await DataService.refreshAuthData();
+                if (!fresh) {
+                    console.error('[DataService] getAllowedTestDocs: failed to refresh auth_data. Returning empty.');
+                    return [];
+                }
+                authData = fresh;
+            }
+
             const { getAllowedTests } = await import('../../lib/firestore/courses');
-            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
             const { tenantId, cohortId } = authData;
 
             // ── Primary path: cohort allowedModules from courses schema ───────────
@@ -368,6 +394,7 @@ class DataService {
             return [];
         }
     }
+
 
     /**
      * Legacy getAccessControl — kept for call sites that haven't migrated.

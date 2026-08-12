@@ -1,8 +1,23 @@
+/**
+ * proctoringService.js — LEGACY / DEPRECATED
+ *
+ * @deprecated This file has NO callers in the current codebase.
+ *   All proctoring events are logged via proctorService.js which writes to:
+ *   proctoringLogs/{attemptId}/events/{eventId}   (UID-keyed, Firestore v2)
+ *
+ * The legacy paths written here (colleges/.../mcq_results/.../proctor_events)
+ * are NOT written by any active assessment engine. They exist only for
+ * historical audit reads from old submissions.
+ *
+ * DO NOT add new callers to this file.
+ * DO NOT remove this file until legacy data migration is complete.
+ */
 import { db } from '../firebase-config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import timeService from './timeService';
 
 class ProctoringService {
+
     /**
      * Log a proctoring event to Firestore
      * @param {string} studentEmail - Student email
