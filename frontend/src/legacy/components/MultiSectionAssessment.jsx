@@ -25,7 +25,7 @@ import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
-import { getViolations } from '../utils/proctorCache';
+import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
@@ -934,6 +934,17 @@ const MultiSectionAssessment = () => {
 
   const handleProctorViolationUpdate = useCallback((info) => {
     if (!info?.violationType) return;
+
+    // ── Firestore audit trail (fire-and-forget) ───────────────────────────────
+    const uid = auth?.currentUser?.uid;
+    if (uid && assessment?.id) {
+      writeViolationToFirestore(uid, assessment.id, {
+        type:      info.violationType,
+        timestamp: info.timestamp || new Date().toISOString(),
+        source:    'camera',
+      });
+    }
+
     setProctoringData(prev => {
       const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
       const nextCount = typeof info.violationCount === 'number' ? info.violationCount : (prev.violationCount + 1);
@@ -949,7 +960,7 @@ const MultiSectionAssessment = () => {
         violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
       };
     });
-  }, [maxViolations, autoSubmitEntireExam]);
+  }, [maxViolations, autoSubmitEntireExam, assessment?.id]);
 
 
   const handleProctorAutoSubmit = useCallback(() => {
@@ -963,6 +974,17 @@ const MultiSectionAssessment = () => {
 
   const handleAudioProctorViolationUpdate = useCallback((info) => {
     if (!info?.type) return;
+
+    // ── Firestore audit trail (fire-and-forget) ───────────────────────────────
+    const uid = auth?.currentUser?.uid;
+    if (uid && assessment?.id) {
+      writeViolationToFirestore(uid, assessment.id, {
+        type:      info.type,
+        timestamp: info.timestamp || new Date().toISOString(),
+        source:    'audio',
+      });
+    }
+
     setProctoringData(prev => {
       const nextAudioCount = (prev.audioViolationCount || 0) + 1;
       if (nextAudioCount >= maxAudioViolations) {

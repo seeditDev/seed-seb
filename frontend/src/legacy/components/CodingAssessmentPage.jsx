@@ -11,6 +11,7 @@ import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
 import { clearAllProctorCache, getViolations, recordViolation } from '../utils/proctorCache';
+import { auth } from '../firebase-config';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
@@ -1692,7 +1693,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             setViolationCount((prev) => {
                 const next = prev + 1;
-                recordViolation(currentAssessment?.id || 'coding', user?.Email, type, { message: `Tab switch violation ${next}` });
+                recordViolation(
+                    currentAssessment?.id || 'coding',
+                    user?.Email,
+                    type,
+                    { message: `Tab switch violation ${next}` },
+                    auth?.currentUser?.uid ?? null  // activates Firestore audit trail
+                );
                 if (next >= TAB_SWITCH_LIMIT) {
                     setIsLockedOut(true);
                     autoSubmitAttemptRef.current?.('tab_switch_lockout');
