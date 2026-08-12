@@ -1,7 +1,54 @@
 /**
  * Proctoring Cache Manager
  * Handles local storage caching, auto-expiration, and cleanup of proctoring-related session data.
+ *
+ * WRITE-THROUGH AUDIT TRAIL:
+ *   recordViolation() accepts an optional `uid` parameter.
+ *   When uid is provided, violations are written to Firestore (fire-and-forget):
+ *     proctoringLogs/{uid}_{assessmentId}/events/{auto_id}   — individual event
+ *     proctoringLogs/{uid}_{assessmentId}/summary            — running counts
+ *   localStorage cache is retained for in-session performance (read path unchanged).
  */
+
+/**
+ * Write a single violation event to Firestore.
+ * Fire-and-forget — never blocks the caller.
+ *
+ * @param {string} uid          — Firebase Auth UID (canonical identity)
+ * @param {string} assessmentId — Assessment ID
+ * @param {object} violation    — Violation event object
+ */
+export function writeViolationToFirestore(uid, assessmentId, violation) {
+  if (!uid || !assessmentId) return;
+  // Dynamic import keeps Firestore out of the synchronous critical path
+  Promise.all([
+    import('firebase/firestore'),
+    import('../firebase-config'),
+  ]).then(([{ addDoc, setDoc, doc, collection, serverTimestamp, increment }, { db }]) => {
+    const logId = `${uid}_${assessmentId}`;
+    const eventsRef = collection(db, 'proctoringLogs', logId, 'events');
+    const summaryRef = doc(db, 'proctoringLogs', logId, 'summary');
+
+    // Write event
+    addDoc(eventsRef, {
+      ...violation,
+      uid,
+      assessmentId,
+      recordedAt: serverTimestamp(),
+    }).catch(() => {}); // non-fatal
+
+    // Update summary counts
+    setDoc(summaryRef, {
+      uid,
+      assessmentId,
+      totalViolations: increment(1),
+      [`${violation.type || 'unknown'}Count`]: increment(1),
+      lastViolationAt: serverTimestamp(),
+      lastViolationType: violation.type || 'unknown',
+    }, { merge: true }).catch(() => {}); // non-fatal
+  }).catch(() => {}); // import failed — non-fatal
+}
+
 
 export const getProctorCacheKeys = (testID) => {
   const suffix = testID ? `_${testID}` : '';
@@ -93,9 +140,16 @@ export const checkAndClearProctorCache = (testID) => {
 };
 
 /**
- * Record a proctoring violation event to local cache
+ * Record a proctoring violation event to local cache.
+ * Optionally writes to Firestore audit trail when uid is provided.
+ *
+ * @param {string} testID      — Assessment / test ID
+ * @param {string} email       — Student email (localStorage key)
+ * @param {string} type        — Violation type (e.g. 'no_face', 'multiple_faces')
+ * @param {object} [details]   — Additional event metadata
+ * @param {string} [uid]       — Firebase Auth UID. When provided, writes to Firestore audit log.
  */
-export const recordViolation = (testID, email, type, details = {}) => {
+export const recordViolation = (testID, email, type, details = {}, uid = null) => {
   if (!testID || !email) return { count: 0, violations: [] };
 
   const cleanEmail = String(email).toLowerCase();
@@ -124,6 +178,11 @@ export const recordViolation = (testID, email, type, details = {}) => {
     localStorage.setItem(logKey, JSON.stringify(violations));
     localStorage.setItem(countKey, count.toString());
   } catch (_) {}
+
+  // ── Firestore write-through audit trail (fire-and-forget) ─────────────────
+  if (uid) {
+    writeViolationToFirestore(uid, cleanTestID, newEntry);
+  }
 
   return { count, violations };
 };

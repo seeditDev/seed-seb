@@ -1113,8 +1113,45 @@ const StudentDashboard = () => {
       const nowISO = timeService.getNow().toISOString();
       const durationSec = assessment.duration * 60;
 
-      // ── MSA: sections carry their own cdnUrls — no top-level JSON needed ──
+      // ── UNIFIED PRE-LAUNCH VALIDATION (all types) ──────────────────────────
+      // validateTestDoc runs for every assessment type before any early-return.
+      // Catches: missing id, assessmentId, cdnUrl, duration, type (Scenario 7 & 8).
+      const testDocForValidation = {
+        id:               assessment.id,
+        assessmentId:     assessment.slug || assessment.id,
+        cdnUrl:           assessment.cdnUrl || assessment.url || assessment.id || '',
+        type:             (assessment.type || 'mcq').replace('MSA', 'msa').replace('spoken_english', 'sea'),
+        duration_minutes: assessment.duration,
+        totalMarks:       assessment.totalMarks,
+        schedule:         assessment.schedule
+          ? {
+              start: assessment.schedule.startDate && assessment.schedule.startTime
+                ? `${assessment.schedule.startDate}T${assessment.schedule.startTime}` : null,
+              end: assessment.schedule.endDate && assessment.schedule.endTime
+                ? `${assessment.schedule.endDate}T${assessment.schedule.endTime}` : null,
+            }
+          : null,
+      };
+
+      // Lightweight doc check — catches misconfiguration before any CDN fetch or navigation.
+      // For MSA/SEA, cdnUrl may be per-section/Firestore; relax the cdnUrl requirement.
+      const isNoCDNType = assessment.isMultiSection
+        || ['msa', 'MSA', 'spoken_english', 'SPOKEN_ENGLISH', 'sea'].includes(assessment.type);
+      const docCheck = isNoCDNType
+        ? validateTestDoc({ ...testDocForValidation, cdnUrl: testDocForValidation.cdnUrl || assessment.id || 'no-cdn' })
+        : validateTestDoc(testDocForValidation);
+
+      if (!docCheck.valid) {
+        throw new Error(`Assessment configuration error:\n${docCheck.errors.join('\n')}`);
+      }
+
+      // ── MSA: sections carry their own cdnUrls — no top-level JSON needed ────
       if (assessment.isMultiSection || assessment.type === 'MSA' || assessment.type === 'msa') {
+        // MSA-specific: must have at least one section configured
+        const sections = assessment.sections || [];
+        if (sections.length === 0) {
+          throw new Error('MSA configuration error: assessment has no sections. Contact your administrator.');
+        }
         sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
         sessionStorage.setItem('msaCourseCtx', JSON.stringify({
           courseId:   assessment.courseId  || '',
@@ -1128,7 +1165,9 @@ const StudentDashboard = () => {
         return;
       }
 
-      // ── SEA: data is in Firestore / passed via assessment object ──
+      // ── SEA: data is in Firestore / passed via assessment object ─────────────
+      // validateAssessmentPayload is NOT run for SEA — there is no CDN JSON payload.
+      // The validateTestDoc above already confirmed the assessment is correctly configured.
       if (assessment.type === 'spoken_english' || assessment.type === 'SPOKEN_ENGLISH' || assessment.type === 'sea') {
         sessionStorage.setItem("spokenEnglishAssessmentData", JSON.stringify(assessment));
         sessionStorage.setItem('seaCourseCtx', JSON.stringify({
@@ -1146,29 +1185,8 @@ const StudentDashboard = () => {
       const testData = await fetchJSONFile(assessment.url || assessment.cdnUrl);
 
       // ── SCENARIO 5 (WRONG TEST): Validate CDN payload matches TestDoc ────────
-      // assessmentValidator checks: assessmentId cross-match, type compatibility,
-      // duration validity, schedule (Scenario 8: expired), and content presence.
-      // This is the canonical gate — nothing proceeds past this point on failure.
-      const testDocForValidation = {
-        id:               assessment.id,
-        assessmentId:     assessment.slug || assessment.id,
-        cdnUrl:           assessment.cdnUrl || assessment.url || '',
-        type:             (assessment.type || 'mcq').replace('MSA','msa').replace('spoken_english','sea'),
-        duration_minutes: assessment.duration,
-        totalMarks:       assessment.totalMarks,
-        schedule:         assessment.schedule
-          ? {
-              start: assessment.schedule.startDate && assessment.schedule.startTime
-                ? `${assessment.schedule.startDate}T${assessment.schedule.startTime}` : null,
-              end: assessment.schedule.endDate && assessment.schedule.endTime
-                ? `${assessment.schedule.endDate}T${assessment.schedule.endTime}` : null,
-            }
-          : null,
-      };
-      const docCheck = validateTestDoc(testDocForValidation);
-      if (!docCheck.valid) {
-        throw new Error(`Assessment configuration error:\n${docCheck.errors.join('\n')}`);
-      }
+      // validateTestDoc already ran above for all types.
+      // Here we run validateAssessmentPayload — the CDN content cross-check.
       const payloadCheck = validateAssessmentPayload(testDocForValidation, testData);
       if (!payloadCheck.valid) {
         console.error('[Launch] assessmentValidator FAILED:', payloadCheck.errors);
