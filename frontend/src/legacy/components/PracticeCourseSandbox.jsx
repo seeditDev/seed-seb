@@ -102,10 +102,16 @@ const normalizeQuestion = (q) => {
     return clean;
   };
 
+  // Valid language key names — filter out non-language keys that exist in canonical Q JSON
+  // (e.g. 'solution', '_internal', 'verified' appear in boilerPlates of Q1-Q79)
+  const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
+
   const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
   const boilerplates = {};
 
   Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+    if (!VALID_LANG_NAMES.has(String(lang).trim().toLowerCase())) return;
+    if (typeof val !== 'string') return;
     const norm = getNormalizedLangKey(lang);
     if (norm === 'python') {
       boilerplates.python = val;

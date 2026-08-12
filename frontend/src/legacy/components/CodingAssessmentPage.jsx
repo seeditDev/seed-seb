@@ -88,10 +88,18 @@ const normalizeQuestion = (q) => {
         return clean;
     };
 
+    // Valid language key names in boilerPlates — filter out non-code keys.
+    // Q1–Q79 boilerPlates objects contain non-language keys ('solution', '_internal', 'verified')
+    // alongside real language keys. We whitelist only recognized language keys.
+    const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
+
     const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
     const boilerplates = {};
 
     Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+        // Skip non-language keys and non-string values
+        if (!VALID_LANG_NAMES.has(String(lang).trim().toLowerCase())) return;
+        if (typeof val !== 'string') return;
         const norm = getNormalizedLangKey(lang);
         if (norm === 'python') {
             boilerplates.python = val;
@@ -101,17 +109,9 @@ const normalizeQuestion = (q) => {
         }
     });
 
-    if (q.solution?.code) {
-        Object.entries(q.solution.code).forEach(([lang, val]) => {
-            const norm = getNormalizedLangKey(lang);
-            if (norm === 'python') {
-                boilerplates.python = val;
-                boilerplates.python3 = val;
-            } else {
-                boilerplates[norm] = val;
-            }
-        });
-    }
+    // NOTE: solution.code is editorial reference (often empty string "") and must NOT
+    // overwrite the student-facing boilerplate. Removed the previous merge that was
+    // accidentally replacing valid boilerplates with empty solution code strings.
 
     // Normalize sample test cases
     const sampleTestCases = normalizeTestCaseArray(q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []);
@@ -1046,8 +1046,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 console.warn("Failed to fetch assessment JSON file, using access_control data:", err.message);
             }
 
-            // Collect questionIds from all sources
+            // Collect questionIds from all sources, preserving assessment-level weights.
+            // Q{id}.json files do NOT have a top-level `weight` field — weight is always
+            // supplied by the assessment/test document. collectIds() builds a weightMap
+            // so that assessment weights survive the fetchQuestionsForContest() round-trip.
             let questionIds = [];
+            const weightMap = {}; // questionId -> weight from assessment config
+
             const collectIds = (src) => {
                 if (!src) return;
                 if (Array.isArray(src)) {
@@ -1055,7 +1060,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         if (typeof item === 'string') {
                             questionIds.push(item);
                         } else if (item && (item.id || item.questionId)) {
-                            questionIds.push(item.id || item.questionId);
+                            const qId = item.id || item.questionId;
+                            questionIds.push(qId);
+                            // Preserve assessment-level weight if provided
+                            if (typeof item.weight === 'number' || typeof item.weight === 'string') {
+                                weightMap[qId] = Number(item.weight);
+                            }
                         }
                     });
                 }
@@ -1093,6 +1103,21 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 addInline(assessment.questions);
                 addInline(data.questions);
                 resolvedQuestions = inline;
+            }
+
+            // Merge assessment-level weights back into resolved Q{id}.json questions.
+            // The canonical Q{id}.json does NOT have a top-level weight; weight is
+            // supplied by the assessment definition. We apply it here so that
+            // q.weight || 20 evaluates correctly downstream.
+            if (Object.keys(weightMap).length > 0) {
+                resolvedQuestions = resolvedQuestions.map(q => {
+                    const qId = q.questionId || q.id;
+                    const assessmentWeight = weightMap[qId];
+                    if (assessmentWeight !== undefined && !q.weight) {
+                        return { ...q, weight: assessmentWeight };
+                    }
+                    return q;
+                });
             }
 
             // Set resolved questions on data object for further processing
