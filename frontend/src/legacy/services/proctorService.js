@@ -1,251 +1,369 @@
+/**
+ * proctorService.js — SEED SEB Proctoring Event Logger
+ *
+ * v2 Firestore path:  proctoringLogs/{attemptId}/events/{eventId}
+ *   where attemptId = {assessmentId}_{uid}   (Firebase Auth UID — NOT email)
+ *
+ * Identity rule:
+ *   uid must be passed in from the authenticated component that holds
+ *   auth.currentUser.uid. This service MUST NOT read localStorage to
+ *   derive identity. localStorage is untrusted by policy.
+ *
+ * Offline queue:
+ *   Events that fail to upload are queued in localStorage under a key
+ *   scoped to {uid}_{assessmentId} to prevent cross-user contamination.
+ *   They are retried idempotently on reconnect using the stored eventId.
+ *
+ * Append-only rule:
+ *   Events are written with addDoc (auto-generated ID) or setDoc with
+ *   a client-generated UUID. They are NEVER updated after creation.
+ *   Historical events must not be modified.
+ */
+
 import { db, storage } from '../firebase-config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, setDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+
+// ─── Offline Queue ─────────────────────────────────────────────────────────────
+
+const OFFLINE_QUEUE_PREFIX = 'proctor_offline_';
+const MAX_RETRY_COUNT      = 5;
+
+function offlineQueueKey(uid, assessmentId) {
+  // Scoped to uid + assessmentId to prevent cross-user contamination
+  return `${OFFLINE_QUEUE_PREFIX}${uid}_${assessmentId}`;
+}
+
+function readOfflineQueue(uid, assessmentId) {
+  try {
+    const raw = localStorage.getItem(offlineQueueKey(uid, assessmentId));
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeOfflineQueue(uid, assessmentId, events) {
+  try {
+    localStorage.setItem(offlineQueueKey(uid, assessmentId), JSON.stringify(events));
+  } catch (_) {}
+}
+
+function appendToOfflineQueue(uid, assessmentId, event) {
+  const queue = readOfflineQueue(uid, assessmentId);
+  // Deduplicate by eventId
+  const existing = queue.find((e) => e.eventId === event.eventId);
+  if (!existing) {
+    queue.push(event);
+    writeOfflineQueue(uid, assessmentId, queue);
+  }
+}
+
+/**
+ * Generate a UUID-like event ID for idempotent offline event handling.
+ * @returns {string}
+ */
+function generateEventId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older environments
+  return `evt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// ─── Sequence Counter ──────────────────────────────────────────────────────────
+
+const sequenceCounters = new Map(); // key: `${uid}_${assessmentId}` → number
+
+function nextSequence(uid, assessmentId) {
+  const key = `${uid}_${assessmentId}`;
+  const current = sequenceCounters.get(key) || 0;
+  const next = current + 1;
+  sequenceCounters.set(key, next);
+  return next;
+}
+
+// ─── ProctorService ────────────────────────────────────────────────────────────
 
 class ProctorService {
   /**
-   * Upload snapshot to Firebase Storage
-   * @param {string} studentID - Student email/ID
-   * @param {string} testID - Test ID
-   * @param {Blob} imageBlob - Image blob
-   * @param {string} filename - Filename for the image
-   * @returns {Promise<string>} Download URL
+   * Upload a proctoring snapshot to Firebase Storage.
+   *
+   * @param {string} uid          — Firebase Auth UID (NOT email)
+   * @param {string} assessmentId — Assessment ID
+   * @param {Blob}   imageBlob    — Image blob
+   * @param {string} filename     — Filename for the image
+   * @returns {Promise<string|null>} Download URL or null on failure
    */
-  static async uploadSnapshot(studentID, testID, imageBlob, filename) {
+  static async uploadSnapshot(uid, assessmentId, imageBlob, filename) {
+    if (!uid || !assessmentId) {
+      console.error('[ProctorService] uploadSnapshot: uid and assessmentId are required.');
+      return null;
+    }
     try {
       if (!imageBlob) {
         console.warn('[ProctorService] No image blob provided');
         return null;
       }
 
-      // Create storage path: proctor_snapshots/{studentID}/{testID}/{filename}.jpg
-      const sanitizedStudentID = studentID.replace(/[^a-zA-Z0-9]/g, '_');
-      const sanitizedTestID = testID.replace(/[^a-zA-Z0-9]/g, '_');
-      const sanitizedFilename = filename.replace(/[^a-zA-Z0-9]/g, '_');
-      
-      const storagePath = `proctor_snapshots/${sanitizedStudentID}/${sanitizedTestID}/${sanitizedFilename}.jpg`;
-      const storageRef = ref(storage, storagePath);
+      // Storage path scoped to UID (not email) to prevent cross-user data mixing
+      const sanitizedUid        = uid.replace(/[^a-zA-Z0-9]/g, '_');
+      const sanitizedAssessment = assessmentId.replace(/[^a-zA-Z0-9]/g, '_');
+      const sanitizedFilename   = filename.replace(/[^a-zA-Z0-9]/g, '_');
 
-      console.log('[ProctorService] Uploading snapshot to:', storagePath);
+      const storagePath = `proctor_snapshots/${sanitizedUid}/${sanitizedAssessment}/${sanitizedFilename}.jpg`;
+      const storageRef  = ref(storage, storagePath);
 
-      // Upload blob
-      const snapshot = await uploadBytes(storageRef, imageBlob, {
-        contentType: 'image/jpeg',
-        cacheControl: 'public, max-age=31536000'
+      const snapshot    = await uploadBytes(storageRef, imageBlob, {
+        contentType:  'image/jpeg',
+        cacheControl: 'private, max-age=86400',
       });
 
-      // Get download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
-      console.log('[ProctorService] Snapshot uploaded successfully:', downloadURL);
-
+      console.log('[ProctorService] Snapshot uploaded:', storagePath);
       return downloadURL;
+
     } catch (error) {
       console.error('[ProctorService] Error uploading snapshot:', error);
-      
-      // Save to localStorage for retry
-      this.saveUnsyncedSnapshot(studentID, testID, imageBlob, filename);
-      
+      // Save for retry — do not pass email, use UID-scoped key
+      this._saveOfflineSnapshot(uid, assessmentId, imageBlob, filename);
       return null;
     }
   }
 
   /**
-   * Log proctor event to Firestore.
-   * v2 path: proctoringLogs/{attemptId}/events/{eventId}
-   * where attemptId = {assessmentId}_{userId}
-   * @param {string} studentID - Student UID or email
-   * @param {string} testID - Assessment ID
-   * @param {object} eventData - Event data
-   * @returns {Promise<string>} Document ID
+   * Log a proctoring event to Firestore.
+   *
+   * v2 path: proctoringLogs/{assessmentId}_{uid}/events/{eventId}
+   *
+   * IDENTITY: uid MUST be auth.currentUser.uid — passed in from the
+   * authenticated component. This method does NOT read localStorage.
+   *
+   * @param {string} uid          — Firebase Auth UID (required)
+   * @param {string} assessmentId — Assessment ID (required)
+   * @param {string} tenantId     — Tenant ID for the parent doc metadata
+   * @param {object} eventData    — Event fields
+   * @returns {Promise<string|null>} eventId or null on failure
    */
-  static async logProctorEvent(studentID, testID, eventData) {
+  static async logProctorEvent(uid, assessmentId, tenantId, eventData) {
+    if (!uid || !assessmentId) {
+      console.error('[ProctorService] logProctorEvent: uid and assessmentId are required. Not reading from localStorage.');
+      return null;
+    }
+
+    const {
+      eventType, severity, misbehaviorCount,
+      snapshotUrl, timestamp, sectionId,
+    } = eventData;
+
+    const attemptId      = `${assessmentId}_${uid}`;
+    const eventId        = generateEventId();
+    const eventTimestamp = timestamp || new Date().toISOString();
+    const seqNum         = nextSequence(uid, assessmentId);
+
+    const logData = {
+      // ── Identity (from Firebase Auth, not localStorage) ──────────────────
+      uid,
+      tenantId:        tenantId || '',
+      attemptId,
+      assessmentId,
+
+      // ── Event data ───────────────────────────────────────────────────────
+      eventId,
+      type:            eventType,
+      severity:        severity || 'low',
+      sequence:        seqNum,
+
+      // ── Timestamps ───────────────────────────────────────────────────────
+      timestamp:       serverTimestamp(),
+      clientTimestamp: eventTimestamp,
+
+      // ── Context ──────────────────────────────────────────────────────────
+      sectionId:       sectionId || null,
+      snapshotUrl:     snapshotUrl || null,
+      metadata: {
+        confidence:       eventData.confidence    || null,
+        faceCount:        eventData.faceCount     || null,
+        misbehaviorCount: misbehaviorCount        || 0,
+      },
+
+      synced: true,
+    };
+
     try {
-      const { eventType, severity, misbehaviorCount, snapshotUrl, timestamp, sectionId } = eventData;
-
-      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      const userId = authData.uid || studentID.replace(/[@.]/g, '_');
-      const attemptId = `${testID}_${userId}`;
-      const eventTimestamp = timestamp || new Date().toISOString();
-
-      const logData = {
-        type: eventType,             // "face-not-detected" | "multiple-faces" | "audio-spike" | "tab-switch"
-        severity: severity || 'low', // "info" | "low" | "medium" | "high"
-        timestamp: serverTimestamp(),
-        timestampISO: eventTimestamp,
-        sectionId: sectionId || null,
-        snapshotUrl: snapshotUrl || null,
-        metadata: {
-          confidence: eventData.confidence || null,
-          faceCount: eventData.faceCount || null,
-          misbehaviorCount: misbehaviorCount || 0,
-        },
-        // Legacy fields for backward compat
-        studentID,
-        testID,
-        eventType,
-        createdAt: serverTimestamp(),
-      };
-
       // v2: proctoringLogs/{attemptId}/events/{eventId}
-      const v2Ref = collection(db, 'proctoringLogs', attemptId, 'events');
+      const v2Ref  = collection(db, 'proctoringLogs', attemptId, 'events');
       const docRef = await addDoc(v2Ref, logData);
 
-      // Ensure the parent proctoringLogs doc exists with metadata
-      const { doc: docFn, setDoc: setDocFn, getDoc: getDocFn } = await import('firebase/firestore');
-      const parentRef = docFn(db, 'proctoringLogs', attemptId);
-      const parentSnap = await getDocFn(parentRef);
+      // Ensure parent proctoringLogs doc exists with metadata (idempotent)
+      const parentRef  = doc(db, 'proctoringLogs', attemptId);
+      const parentSnap = await getDoc(parentRef);
       if (!parentSnap.exists()) {
-        setDocFn(parentRef, {
-          userId,
-          assessmentId: testID,
-          tenantId: authData.tenantId || '',
+        setDoc(parentRef, {
+          uid,
+          assessmentId,
+          tenantId: tenantId || '',
           createdAt: serverTimestamp(),
         }, { merge: true }).catch(() => {});
       }
 
-      // NOTE: Legacy proctor_logs write removed — blocked by Firestore rules.
-      // All proctoring events are written to proctoringLogs/{attemptId}/events/ (v2).
-
-      console.log('[ProctorService] Proctor event logged (v2):', attemptId, docRef.id);
+      console.log('[ProctorService] Event logged (v2):', attemptId, docRef.id, `seq=${seqNum}`);
       return docRef.id;
 
     } catch (error) {
       console.error('[ProctorService] Error logging proctor event:', error);
-      this.saveUnsyncedLog(studentID, testID, eventData);
-      throw error;
+      // Queue for offline retry with full identity
+      appendToOfflineQueue(uid, assessmentId, {
+        ...logData,
+        eventId,   // stable for idempotent retry
+        synced:    false,
+        retryCount: 0,
+        timestamp:  eventTimestamp,  // client timestamp (serverTimestamp not available offline)
+      });
+      return null;
     }
   }
 
+  /**
+   * Flush queued offline proctoring events to Firestore.
+   * Events are uploaded idempotently using their stored eventId.
+   * Events that fail after MAX_RETRY_COUNT are dropped.
+   *
+   * @param {string} uid          — Firebase Auth UID
+   * @param {string} assessmentId
+   * @returns {Promise<{ uploaded: number, failed: number }>}
+   */
+  static async flushOfflineEvents(uid, assessmentId) {
+    if (!uid || !assessmentId) return { uploaded: 0, failed: 0 };
+
+    const queue    = readOfflineQueue(uid, assessmentId);
+    if (queue.length === 0) return { uploaded: 0, failed: 0 };
+
+    const remaining = [];
+    let uploaded    = 0;
+    let failed      = 0;
+
+    for (const event of queue) {
+      if (event.synced) continue; // Already uploaded in a previous run
+
+      try {
+        const attemptId = `${assessmentId}_${uid}`;
+        // Use setDoc with stable eventId for idempotent write
+        const eventRef = doc(db, 'proctoringLogs', attemptId, 'events', event.eventId);
+        await setDoc(eventRef, {
+          ...event,
+          timestamp: serverTimestamp(), // Use server timestamp on upload
+          synced:    true,
+        }, { merge: false }); // Overwrite — idempotent by eventId
+
+        uploaded++;
+        console.log('[ProctorService] Offline event flushed:', event.eventId);
+
+      } catch (err) {
+        console.warn('[ProctorService] Offline flush failed for event:', event.eventId, err?.code);
+        event.retryCount = (event.retryCount || 0) + 1;
+        if (event.retryCount < MAX_RETRY_COUNT) {
+          remaining.push(event);
+        } else {
+          console.error('[ProctorService] Event dropped after max retries:', event.eventId);
+          failed++;
+        }
+      }
+    }
+
+    writeOfflineQueue(uid, assessmentId, remaining);
+    console.log(`[ProctorService] Offline flush complete — uploaded: ${uploaded}, failed: ${failed}, queued: ${remaining.length}`);
+    return { uploaded, failed };
+  }
 
   /**
-   * Save unsynced snapshot to localStorage
+   * Clear all offline proctor queues for a specific user.
+   * Call on logout to prevent previous student's data appearing for next login.
+   *
+   * @param {string} uid
    */
-  static saveUnsyncedSnapshot(studentID, testID, imageBlob, filename) {
+  static clearUserQueues(uid) {
+    if (!uid) return;
     try {
-      const key = 'proctor_unsynced_snapshots';
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`${OFFLINE_QUEUE_PREFIX}${uid}_`)) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      sequenceCounters.forEach((_, key) => {
+        if (key.startsWith(uid)) sequenceCounters.delete(key);
+      });
+      console.log(`[ProctorService] Cleared ${keysToRemove.length} offline queue(s) for uid:`, uid);
+    } catch (_) {}
+  }
+
+  // ── Private: offline snapshot queue ───────────────────────────────────────
+
+  static _saveOfflineSnapshot(uid, assessmentId, imageBlob, filename) {
+    try {
+      const key      = `proctor_snapshots_offline_${uid}_${assessmentId}`;
       const unsynced = JSON.parse(localStorage.getItem(key) || '[]');
-      
-      // Convert blob to base64 for storage
-      const reader = new FileReader();
-      reader.onloadend = () => {
+
+      const reader       = new FileReader();
+      reader.onloadend   = () => {
         unsynced.push({
-          studentID,
-          testID,
+          uid,
+          assessmentId,
           filename,
-          imageData: reader.result, // base64
-          timestamp: new Date().toISOString(),
-          retryCount: 0
+          imageData:   reader.result, // base64
+          timestamp:   new Date().toISOString(),
+          retryCount:  0,
         });
         localStorage.setItem(key, JSON.stringify(unsynced));
-        console.log('[ProctorService] Saved unsynced snapshot to localStorage');
+        console.log('[ProctorService] Saved offline snapshot for uid:', uid);
       };
       reader.readAsDataURL(imageBlob);
     } catch (error) {
-      console.error('[ProctorService] Error saving unsynced snapshot:', error);
+      console.error('[ProctorService] Error saving offline snapshot:', error);
     }
   }
 
   /**
-   * Save unsynced log to localStorage
+   * Retry uploading offline snapshots.
+   * @param {string} uid
+   * @param {string} assessmentId
    */
-  static saveUnsyncedLog(studentID, testID, eventData) {
-    try {
-      const key = 'proctor_unsynced_logs';
-      const unsynced = JSON.parse(localStorage.getItem(key) || '[]');
-      
-      unsynced.push({
-        studentID,
-        testID,
-        ...eventData,
-        retryCount: 0,
-        timestamp: eventData.timestamp || new Date().toISOString()
-      });
-      
-      localStorage.setItem(key, JSON.stringify(unsynced));
-      console.log('[ProctorService] Saved unsynced log to localStorage');
-    } catch (error) {
-      console.error('[ProctorService] Error saving unsynced log:', error);
-    }
-  }
+  static async retryOfflineSnapshots(uid, assessmentId) {
+    if (!uid || !assessmentId) return;
+    const key      = `proctor_snapshots_offline_${uid}_${assessmentId}`;
+    const unsynced = JSON.parse(localStorage.getItem(key) || '[]');
+    const remaining = [];
 
-  /**
-   * Retry syncing unsynced snapshots and logs
-   */
-  static async retryUnsyncedData() {
-    try {
-      // Retry snapshots
-      const unsyncedSnapshots = JSON.parse(localStorage.getItem('proctor_unsynced_snapshots') || '[]');
-      const remainingSnapshots = [];
+    for (const snapshot of unsynced) {
+      // Validate this snapshot belongs to this uid (belt-and-braces)
+      if (snapshot.uid !== uid) {
+        console.warn('[ProctorService] Snapshot uid mismatch — skipping.');
+        continue;
+      }
+      try {
+        const response = await fetch(snapshot.imageData);
+        const blob     = await response.blob();
+        const url      = await this.uploadSnapshot(uid, assessmentId, blob, snapshot.filename);
 
-      for (const snapshot of unsyncedSnapshots) {
-        try {
-          // Convert base64 back to blob
-          const response = await fetch(snapshot.imageData);
-          const blob = await response.blob();
-          
-          const url = await this.uploadSnapshot(
-            snapshot.studentID,
-            snapshot.testID,
-            blob,
-            snapshot.filename
-          );
-          
-          if (url) {
-            console.log('[ProctorService] Retried snapshot upload successfully');
-          } else {
-            snapshot.retryCount++;
-            if (snapshot.retryCount < 5) {
-              remainingSnapshots.push(snapshot);
-            }
-          }
-        } catch (error) {
-          console.error('[ProctorService] Retry snapshot failed:', error);
+        if (!url) {
           snapshot.retryCount++;
-          if (snapshot.retryCount < 5) {
-            remainingSnapshots.push(snapshot);
-          }
+          if (snapshot.retryCount < MAX_RETRY_COUNT) remaining.push(snapshot);
         }
+      } catch (error) {
+        snapshot.retryCount++;
+        if (snapshot.retryCount < MAX_RETRY_COUNT) remaining.push(snapshot);
       }
+    }
 
-      if (remainingSnapshots.length > 0) {
-        localStorage.setItem('proctor_unsynced_snapshots', JSON.stringify(remainingSnapshots));
-      } else {
-        localStorage.removeItem('proctor_unsynced_snapshots');
-      }
-
-      // Retry logs
-      const unsyncedLogs = JSON.parse(localStorage.getItem('proctor_unsynced_logs') || '[]');
-      const remainingLogs = [];
-
-      for (const log of unsyncedLogs) {
-        try {
-          await this.logProctorEvent(log.studentID, log.testID, log);
-          console.log('[ProctorService] Retried log upload successfully');
-        } catch (error) {
-          console.error('[ProctorService] Retry log failed:', error);
-          log.retryCount++;
-          if (log.retryCount < 5) {
-            remainingLogs.push(log);
-          }
-        }
-      }
-
-      if (remainingLogs.length > 0) {
-        localStorage.setItem('proctor_unsynced_logs', JSON.stringify(remainingLogs));
-      } else {
-        localStorage.removeItem('proctor_unsynced_logs');
-      }
-
-      return {
-        snapshotsRetried: unsyncedSnapshots.length - remainingSnapshots.length,
-        logsRetried: unsyncedLogs.length - remainingLogs.length
-      };
-    } catch (error) {
-      console.error('[ProctorService] Error retrying unsynced data:', error);
-      return { snapshotsRetried: 0, logsRetried: 0 };
+    if (remaining.length > 0) {
+      localStorage.setItem(key, JSON.stringify(remaining));
+    } else {
+      localStorage.removeItem(key);
     }
   }
 }
 
 export default ProctorService;
-

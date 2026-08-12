@@ -118,15 +118,69 @@ class DataService {
     }
 
     /**
-     * Sign out the current Firebase Auth user.
+     * Sign out the current Firebase Auth user and clear ALL student session data.
+     * This prevents a subsequent login from inheriting data belonging to the
+     * previous student (stale auth_data, proctor queues, active attempt cache).
      */
     static async signOut() {
         try {
+            // Read UID before clearing so ProctorService can wipe its queues
+            let prevUid = null;
+            try {
+                const raw = localStorage.getItem('auth_data');
+                if (raw) prevUid = JSON.parse(raw)?.uid || null;
+            } catch (_) {}
+
             await signOut(auth);
+
+            // Clear proctor offline queues for the previous user
+            if (prevUid) {
+                try {
+                    const { default: ProctorService } = await import('./proctorService');
+                    ProctorService.clearUserQueues(prevUid);
+                } catch (_) {}
+            }
+
+            // Clear all student session keys from localStorage
+            DataService._clearAllStudentLocalData();
+
         } catch (error) {
             console.error('[DataService] signOut error:', error);
+            // Always clear local data even if Firebase signOut fails
+            DataService._clearAllStudentLocalData();
         }
-        localStorage.removeItem('auth_data');
+    }
+
+    /**
+     * Clear all student session keys from localStorage.
+     * Called on signOut and on stale-auth detection.
+     */
+    static _clearAllStudentLocalData() {
+        const prefixes = [
+            'msaProgress_',
+            'msaActiveAssessment_',
+            'proctor_offline_',
+            'proctor_snapshots_offline_',
+            'proctor_unsynced_',
+            'seed_submission_envelope_',
+        ];
+        const exactKeys = [
+            'auth_data',
+            'rememberedUser',
+            'codingAssessmentData',
+            'codingAssessmentStartTime',
+            'codingAssessmentTimer',
+            'codingLastActiveTime',
+        ];
+        const toRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            if (exactKeys.includes(key)) { toRemove.push(key); continue; }
+            if (prefixes.some((p) => key.startsWith(p))) toRemove.push(key);
+        }
+        toRemove.forEach((k) => localStorage.removeItem(k));
+        console.log('[DataService] Cleared', toRemove.length, 'student session keys on sign-out.');
     }
 
     /**
@@ -135,6 +189,30 @@ class DataService {
      */
     static onAuthStateChanged(callback) {
         return onAuthStateChanged(auth, callback);
+    }
+
+    /**
+     * Rebuild auth_data from the live Firebase Auth user + Firestore profile.
+     * Call when the stored UID may be stale (e.g. AppShell UID mismatch detection).
+     *
+     * @returns {Promise<object|null>} fresh auth_data or null if not signed in
+     */
+    static async refreshAuthData() {
+        const firebaseUser = auth.currentUser;
+        if (!firebaseUser) {
+            console.warn('[DataService] refreshAuthData: no Firebase Auth user.');
+            return null;
+        }
+        try {
+            const profile  = await DataService.getUserProfile(firebaseUser.uid);
+            const authData = buildAuthData(firebaseUser, profile);
+            localStorage.setItem('auth_data', JSON.stringify(authData));
+            console.log('[DataService] refreshAuthData: auth_data rebuilt for uid:', firebaseUser.uid);
+            return authData;
+        } catch (err) {
+            console.error('[DataService] refreshAuthData error:', err?.code || err);
+            return null;
+        }
     }
 
     // ────────────────────────────────────────────────────────────────────────

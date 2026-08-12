@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link, useLocation } from '../router-compat';
 import { APP_VERSION } from "../AppShell";
 import { fetchArticleFile } from '../utils/articleFetcher';
+import { auth } from '../firebase-config';
 import {
   FaBars,
   FaUser,
@@ -55,6 +56,7 @@ import AIInterviewSimulator from './AIInterviewSimulator';
 import { fetchContentJSON } from '../utils/contentApi';
 import { fetchCompletionMap, invalidateCompletionCache } from '../services/attemptStatusService';
 import { requireTenant } from '../utils/tenant';
+import { RESUMABLE_STATES, ATTEMPT_STATES } from '../services/attemptStateMachine';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -236,30 +238,56 @@ const StudentDashboard = () => {
       } catch (_) {}
     }
 
-    // 3. Fallback: Query Firestore for Remote Active Attempt if local storage was wiped (e.g. laptop reboot)
+    // 3. Fallback: Query Firestore for Remote Active Attempt using Firebase Auth UID
+    // SECURITY: Firestore path uses uid (auth.currentUser.uid), NOT email string.
+    // Using email as a document path allowed cross-user data access if a student
+    // knew another student's email.
     const checkRemoteActiveAttempt = async () => {
       try {
-        const userDocRef = doc(db, 'users', email);
-        const attemptsColRef = collection(userDocRef, 'contestAttempts');
+        // Require Firebase Auth UID — refuse to query with email as document key
+        const uid = auth?.currentUser?.uid;
+        if (!uid) {
+          console.warn('[StudentDashboard] checkRemoteActiveAttempt: no Firebase Auth UID. Skipping remote check.');
+          setActiveResumeSession(null);
+          return;
+        }
+
+        const attemptsColRef = collection(db, 'users', uid, 'contestAttempts');
         const q = query(attemptsColRef, where('completed', '==', false));
         const snap = await getDocs(q);
 
         if (!snap.empty) {
           const docSnap = snap.docs[0];
           const data = docSnap.data();
-          const lastActiveISO = data.updated_at || data.submittedAtISO || data.timeStartedISO || '';
-          const lastActiveMs = lastActiveISO ? new Date(lastActiveISO).getTime() : 0;
-          const elapsedOfflineSec = Math.floor((nowMs - lastActiveMs) / 1000);
+
+          // Validate ownership — the attempt must belong to this UID
+          if (data.uid && data.uid !== uid) {
+            console.warn('[StudentDashboard] Remote attempt uid mismatch — not restoring.');
+            setActiveResumeSession(null);
+            return;
+          }
+
+          // Only resume attempts in a resumable state
+          const attemptStatus = data.status || (data.completed ? ATTEMPT_STATES.SUBMITTED : ATTEMPT_STATES.IN_PROGRESS);
+          if (!RESUMABLE_STATES.has(attemptStatus)) {
+            console.log('[StudentDashboard] Remote attempt is in non-resumable state:', attemptStatus);
+            setActiveResumeSession(null);
+            return;
+          }
+
+          const lastSavedAt = data.lastSavedAt?.toDate ? data.lastSavedAt.toDate() : null;
+          const lastActiveMs = lastSavedAt ? lastSavedAt.getTime() : (data.completedAtISO ? new Date(data.completedAtISO).getTime() : 0);
+          const elapsedOfflineSec = lastActiveMs ? Math.floor((nowMs - lastActiveMs) / 1000) : Infinity;
 
           if (elapsedOfflineSec <= 300) {
             setActiveResumeSession({
-              type: data.type || 'multisection',
-              id: data.testID || data.assessmentId || docSnap.id,
-              name: data.testName || data.assessmentName || 'Active Assessment',
-              slug: data.slug || data.testID || docSnap.id,
+              type:             data.type || 'multisection',
+              id:               data.assessmentId || data.testID || docSnap.id,
+              name:             data.assessmentName || data.testName || 'Active Assessment',
+              slug:             data.slug || data.assessmentId || data.testID || docSnap.id,
               isRemoteRestored: true,
               elapsedOfflineSec,
-              remoteSnapshot: data
+              remoteSnapshot:   data,
             });
             return;
           }

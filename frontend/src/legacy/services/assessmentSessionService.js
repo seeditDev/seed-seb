@@ -1,69 +1,95 @@
 /**
  * assessmentSessionService.js
  *
- * Firestore-backed active attempt tracking.
+ * Firestore-backed attempt lifecycle management for SEED SEB.
  *
- * Schema:  users/{userId}/contestAttempts/{assessmentId}
+ * ─── Schema: users/{uid}/contestAttempts/{uid}_{assessmentId} ────────────────
  * {
+ *   uid,               // Firebase Auth UID — canonical identity
  *   assessmentId,
  *   assessmentName,
- *   type:            'mcq' | 'msa' | 'coding',
+ *   type:              'mcq' | 'msa' | 'coding',
  *   slug,
- *   startedAt:       serverTimestamp,
- *   startedAtISO:    string,
- *   completed:       false,
- *   autoSubmitted:   false,
- *   sections: {
- *     [sectionId]: {
- *       status: 'not_started' | 'in_progress' | 'completed',
- *       startedAt: ISO,
- *     }
- *   },
- *   activeSection: { id, idx, startedAt },
- *   // Populated only when section is started (not before):
- *   sectionAnswers: {
- *     [sectionId]: { [qIdx]: selectedOptionIdx }
- *   },
- *   timeRemainingSeconds: number,   // remaining time at last save
- *   lastSavedAt: serverTimestamp,
+ *   tenantId,
+ *   cohortId,
+ *   email,             // stored for reporting only; NOT used as identity
+ *   status,            // ATTEMPT_STATES value (see attemptStateMachine.js)
+ *   startedAt:         serverTimestamp,   // authoritative start
+ *   durationSeconds:   number,            // total exam time
+ *   //
+ *   // NOTE: timeRemainingSeconds is NOT stored here.
+ *   //   Remaining time on resume = durationSeconds - elapsed(now - startedAt)
+ *   //   Client timer is a display mechanism only.
+ *   //
+ *   sections:          { [sectionId]: { status, startedAt, completedAt, durationSeconds } },
+ *   sectionAnswers:    { [sectionId]: { [qIdx]: selectedOptionIdx } },
+ *   activeSection:     { id, idx, startedAt, durationSeconds } | null,
+ *   completed:         boolean,
+ *   autoSubmitted:     boolean,
+ *   autoSubmitReason:  string | null,
+ *   lastSavedAt:       serverTimestamp,
+ *   scoring_authority: 'client_provisional',  // always set; see limitation notice
  * }
  *
- * Design:
- * - We ONLY create the Firestore doc when an assessment starts.
- * - We ONLY write answers for sections that have been started (saves bandwidth).
- * - Progress is saved at 1/3 of the total duration (configurable via SAVE_AT_FRACTION).
- * - On section start: set section status to 'in_progress'.
- * - On section complete: set section status to 'completed'.
- * - On final submit: set completed = true.
- * - Auto-submit (Cloud Function suggestion): a Cloud Function can watch for
- *   completed == false AND lastSavedAt older than 10 minutes to mark autoSubmitted.
+ * ─── Create-Once Rule ────────────────────────────────────────────────────────
+ * startAssessmentSession() MUST NOT overwrite an existing active or completed attempt.
+ * It reads the existing document first and only creates if:
+ *   1. No document exists, OR
+ *   2. The existing document is in NOT_STARTED state.
+ * Any other existing state causes it to return the existing attempt for resume handling.
+ *
+ * ─── LIMITATION ──────────────────────────────────────────────────────────────
+ * All scoring is client_provisional. This client computes scores locally.
+ * A trusted server-side scoring pipeline is not yet implemented.
+ * The scoring_authority field clearly marks this in every attempt document.
  */
 
-import { db } from '../firebase-config';
+import { auth, db } from '../firebase-config';
 import {
   doc,
+  getDoc,
   setDoc,
+  updateDoc,
   serverTimestamp,
   deleteField,
 } from 'firebase/firestore';
+import {
+  ATTEMPT_STATES,
+  TERMINAL_STATES,
+  RESUMABLE_STATES,
+  isValidTransition,
+  isTerminal,
+  isResumable,
+  attemptDocId,
+  buildAttemptEnvelope,
+  withRetry,
+  saveLocalSubmissionEnvelope,
+  clearLocalSubmissionEnvelope,
+  calcAuthoritativeRemainingSeconds,
+} from './attemptStateMachine';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Config
+// Identity
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Fraction of section duration at which we write the first Firestore save. */
-const SAVE_AT_FRACTION = 1 / 3;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function getUserId(userData) {
-  return userData?.uid || userData?.UID || (userData?.Email || '').replace(/[@.]/g, '_');
+/**
+ * Get the canonical user ID: Firebase Auth UID.
+ * MUST be auth.currentUser.uid — never fall back to email or localStorage.
+ *
+ * @returns {string|null}
+ */
+function getCanonicalUid() {
+  const uid = auth?.currentUser?.uid;
+  if (!uid) {
+    console.error('[SessionService] No Firebase Auth user. Cannot derive canonical UID. Student must be logged in via Firebase Auth before any attempt operation.');
+    return null;
+  }
+  return uid;
 }
 
-function getSessionRef(userId, assessmentId) {
-  return doc(db, 'users', userId, 'contestAttempts', assessmentId);
+function getAttemptRef(uid, assessmentId) {
+  const docId = attemptDocId(uid, assessmentId);
+  return doc(db, 'users', uid, 'contestAttempts', docId);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,72 +97,189 @@ function getSessionRef(userId, assessmentId) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Call when the assessment begins.
- * Creates the Firestore session doc with all sections marked as 'not_started'.
+ * Start a new assessment attempt — CREATE ONCE.
  *
- * @param {object} userData   - auth_data from localStorage
- * @param {object} assessment - { id, name, type, sections: [{sectionId, name, duration_minutes}] }
- * @param {string} slug       - route slug (used for resume navigation)
+ * Returns an object describing the outcome:
+ *   { outcome: 'created',  attempt: data }  — new attempt, exam can begin
+ *   { outcome: 'resumed',  attempt: data }  — existing resumable attempt found
+ *   { outcome: 'blocked',  attempt: data, reason }  — submitted/terminal, cannot proceed
+ *   { outcome: 'error',    error }
+ *
+ * NEVER overwrites an existing active or submitted attempt.
+ *
+ * @param {object} assessment — { id, name, type, duration_minutes, sections }
+ * @param {string} slug       — route slug
+ * @returns {Promise<{outcome, attempt?, reason?, error?}>}
  */
-export async function startAssessmentSession(userData, assessment, slug = '') {
+export async function startAssessmentSession(assessment, slug = '') {
+  const uid = getCanonicalUid();
+  if (!uid) {
+    return { outcome: 'error', error: 'Not authenticated. Please log in before starting an assessment.' };
+  }
+  if (!assessment?.id) {
+    return { outcome: 'error', error: 'Invalid assessment: missing id.' };
+  }
+
   try {
-    const userId = getUserId(userData);
-    if (!userId || !assessment?.id) return;
+    const ref = getAttemptRef(uid, assessment.id);
 
-    const sections = {};
-    (assessment.sections || []).forEach(sec => {
-      sections[sec.sectionId || sec.id || sec.name] = { status: 'not_started' };
-    });
+    // ── Existence check (create-once) ───────────────────────────────────────
+    const existing = await getDoc(ref);
+    if (existing.exists()) {
+      const data = existing.data();
+      const currentStatus = data.status || (data.completed ? ATTEMPT_STATES.SUBMITTED : ATTEMPT_STATES.IN_PROGRESS);
 
-    await setDoc(getSessionRef(userId, assessment.id), {
-      assessmentId:         assessment.id,
-      assessmentName:       assessment.name || '',
-      type:                 assessment.type || 'msa',
-      slug:                 slug || assessment.id,
-      startedAt:            serverTimestamp(),
-      startedAtISO:         new Date().toISOString(),
-      completed:            false,
-      autoSubmitted:        false,
-      sections,
-      sectionAnswers:       {},
-      activeSection:        null,
-      timeRemainingSeconds: (assessment.duration_minutes || 60) * 60,
-      lastSavedAt:          serverTimestamp(),
-    }, { merge: false }); // overwrite — fresh start
+      if (isTerminal(currentStatus)) {
+        console.log(`[SessionService] Attempt for ${assessment.id} is in terminal state: ${currentStatus}. Blocking.`);
+        return {
+          outcome: 'blocked',
+          attempt: data,
+          reason: currentStatus === ATTEMPT_STATES.SUBMITTED
+            ? 'This assessment has already been submitted.'
+            : currentStatus === ATTEMPT_STATES.AUTO_SUBMITTED
+              ? 'This assessment was auto-submitted.'
+              : `Assessment is in a final state: ${currentStatus}.`,
+        };
+      }
 
-    console.log('[SessionService] Session started for assessment', assessment.id);
+      if (isResumable(currentStatus)) {
+        console.log(`[SessionService] Resumable attempt found for ${assessment.id} (status: ${currentStatus}).`);
+        return { outcome: 'resumed', attempt: data };
+      }
+
+      // STARTING / SUBMITTING / EXPIRED — do not interfere
+      console.log(`[SessionService] Attempt in non-resumable active state: ${currentStatus}. Not creating new attempt.`);
+      return { outcome: 'resumed', attempt: data };
+    }
+
+    // ── Create new attempt ─────────────────────────────────────────────────
+    const profile = auth.currentUser;
+    const authProfile = {
+      tenantId:    null, // filled below from Firestore if needed; not trusted from localStorage
+      cohortId:    null,
+      email:       profile?.email || '',
+      displayName: profile?.displayName || '',
+    };
+
+    // Read profile fields from Firestore (single read, not from localStorage)
+    try {
+      const userSnap = await getDoc(doc(db, 'users', uid));
+      if (userSnap.exists()) {
+        const p = userSnap.data();
+        authProfile.tenantId = p.tenantId || '';
+        authProfile.cohortId = p.cohortId || '';
+      }
+    } catch (profileErr) {
+      console.warn('[SessionService] Could not read user profile for attempt envelope:', profileErr?.message);
+    }
+
+    const envelope = buildAttemptEnvelope(uid, assessment.id, authProfile, assessment, slug);
+
+    await withRetry(() =>
+      setDoc(ref, {
+        ...envelope,
+        startedAt:   serverTimestamp(),
+        lastSavedAt: serverTimestamp(),
+      })
+    );
+
+    console.log('[SessionService] New attempt created for assessment', assessment.id, '| uid:', uid);
+    return { outcome: 'created', attempt: envelope };
+
   } catch (err) {
-    console.warn('[SessionService] startAssessmentSession failed (non-fatal):', err?.message);
+    console.error('[SessionService] startAssessmentSession failed:', err?.message);
+    return { outcome: 'error', error: err?.message || 'Failed to start assessment session.' };
+  }
+}
+
+/**
+ * Retrieve the current attempt for the authenticated student.
+ * Returns null if none exists.
+ *
+ * @param {string} assessmentId
+ * @returns {Promise<object|null>}
+ */
+export async function getActiveAttempt(assessmentId) {
+  const uid = getCanonicalUid();
+  if (!uid || !assessmentId) return null;
+  try {
+    const snap = await getDoc(getAttemptRef(uid, assessmentId));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
+  } catch (err) {
+    console.warn('[SessionService] getActiveAttempt failed:', err?.message);
+    return null;
+  }
+}
+
+/**
+ * Transition the attempt state in Firestore.
+ * Validates the transition against the state machine before writing.
+ *
+ * @param {string} assessmentId
+ * @param {string} toState        — target ATTEMPT_STATES value
+ * @param {object} [extraData]    — additional fields to merge
+ * @returns {Promise<boolean>}    — true on success
+ */
+export async function transitionAttemptState(assessmentId, toState, extraData = {}) {
+  const uid = getCanonicalUid();
+  if (!uid || !assessmentId) return false;
+
+  try {
+    const ref = getAttemptRef(uid, assessmentId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      console.warn('[SessionService] transitionAttemptState: attempt doc does not exist.');
+      return false;
+    }
+
+    const current = snap.data();
+    const fromState = current.status || ATTEMPT_STATES.IN_PROGRESS;
+
+    if (!isValidTransition(fromState, toState)) {
+      console.warn(`[SessionService] Invalid state transition ${fromState} → ${toState} rejected.`);
+      return false;
+    }
+
+    await withRetry(() =>
+      updateDoc(ref, {
+        status:      toState,
+        lastSavedAt: serverTimestamp(),
+        ...extraData,
+      })
+    );
+
+    console.log(`[SessionService] Attempt state: ${fromState} → ${toState}`);
+    return true;
+  } catch (err) {
+    console.error('[SessionService] transitionAttemptState failed:', err?.message);
+    return false;
   }
 }
 
 /**
  * Call when a section begins.
- * Marks the section as in_progress and sets activeSection.
- *
- * @param {object} userData
  * @param {string} assessmentId
- * @param {{ sectionId: string, name: string, durationMinutes: number, secIdx: number }} section
+ * @param {{ sectionId, name, secIdx, durationMinutes }} section
  */
-export async function markSectionStarted(userData, assessmentId, section) {
+export async function markSectionStarted(assessmentId, section) {
+  const uid = getCanonicalUid();
+  if (!uid || !assessmentId) return;
   try {
-    const userId = getUserId(userData);
-    if (!userId || !assessmentId) return;
-
     const now = new Date().toISOString();
-    await setDoc(getSessionRef(userId, assessmentId), {
-      [`sections.${section.sectionId}.status`]:    'in_progress',
-      [`sections.${section.sectionId}.startedAt`]: now,
+    await updateDoc(getAttemptRef(uid, assessmentId), {
+      [`sections.${section.sectionId}.status`]:          ATTEMPT_STATES.IN_PROGRESS,
+      [`sections.${section.sectionId}.startedAt`]:       now,
+      [`sections.${section.sectionId}.durationSeconds`]: (section.durationMinutes || 30) * 60,
       activeSection: {
-        id:         section.sectionId,
-        name:       section.name || '',
-        idx:        section.secIdx,
-        startedAt:  now,
-        durationMinutes: section.durationMinutes || 30,
+        id:              section.sectionId,
+        name:            section.name || '',
+        idx:             section.secIdx,
+        startedAt:       now,
+        durationSeconds: (section.durationMinutes || 30) * 60,
       },
       lastSavedAt: serverTimestamp(),
-    }, { merge: true });
-
+    });
     console.log('[SessionService] Section started:', section.sectionId);
   } catch (err) {
     console.warn('[SessionService] markSectionStarted failed (non-fatal):', err?.message);
@@ -145,26 +288,21 @@ export async function markSectionStarted(userData, assessmentId, section) {
 
 /**
  * Save current section answers to Firestore.
- * Only called once per section at the 1/3-time mark.
+ * Does NOT store timeRemainingSeconds — authoritative time comes from startedAt + durationSeconds.
  *
- * @param {object} userData
  * @param {string} assessmentId
  * @param {string} sectionId
- * @param {object} answers          - { [qIdx]: selectedOptionIdx | null }
- * @param {number} timeRemainingSeconds
+ * @param {object} answers  — { [qIdx]: selectedOptionIdx | null }
  */
-export async function saveSessionProgress(userData, assessmentId, sectionId, answers, timeRemainingSeconds) {
+export async function saveSessionProgress(assessmentId, sectionId, answers) {
+  const uid = getCanonicalUid();
+  if (!uid || !assessmentId) return;
   try {
-    const userId = getUserId(userData);
-    if (!userId || !assessmentId) return;
-
-    await setDoc(getSessionRef(userId, assessmentId), {
+    await updateDoc(getAttemptRef(uid, assessmentId), {
       [`sectionAnswers.${sectionId}`]: answers || {},
-      timeRemainingSeconds: timeRemainingSeconds || 0,
       lastSavedAt: serverTimestamp(),
-    }, { merge: true });
-
-    console.log('[SessionService] Progress saved for section', sectionId, '— remaining:', timeRemainingSeconds, 's');
+    });
+    console.log('[SessionService] Progress saved for section', sectionId);
   } catch (err) {
     console.warn('[SessionService] saveSessionProgress failed (non-fatal):', err?.message);
   }
@@ -172,73 +310,102 @@ export async function saveSessionProgress(userData, assessmentId, sectionId, ans
 
 /**
  * Call when a section is submitted (normal or auto-submit).
- *
- * @param {object} userData
  * @param {string} assessmentId
  * @param {string} sectionId
  */
-export async function markSectionCompleted(userData, assessmentId, sectionId) {
+export async function markSectionCompleted(assessmentId, sectionId) {
+  const uid = getCanonicalUid();
+  if (!uid || !assessmentId) return;
   try {
-    const userId = getUserId(userData);
-    if (!userId || !assessmentId) return;
-
-    await setDoc(getSessionRef(userId, assessmentId), {
-      [`sections.${sectionId}.status`]:      'completed',
+    await updateDoc(getAttemptRef(uid, assessmentId), {
+      [`sections.${sectionId}.status`]:      ATTEMPT_STATES.SUBMITTED,
       [`sections.${sectionId}.completedAt`]: new Date().toISOString(),
-      [`sectionAnswers.${sectionId}`]:       deleteField(), // free memory — already saved in results
+      [`sectionAnswers.${sectionId}`]:       deleteField(), // already in results collection
       activeSection:                         null,
       lastSavedAt:                           serverTimestamp(),
-    }, { merge: true });
+    });
   } catch (err) {
     console.warn('[SessionService] markSectionCompleted failed (non-fatal):', err?.message);
   }
 }
 
 /**
- * Call when the entire assessment is fully submitted.
- * Marks completed = true so checkRemoteActiveAttempt won't surface it as "resumable".
+ * Mark the entire assessment as fully submitted.
+ * Uses the state machine transition SUBMITTING → SUBMITTED or AUTO_SUBMITTED.
+ * This is a CRITICAL write — retried with exponential backoff.
+ * The student MUST NOT be shown "submitted" until this succeeds.
  *
- * @param {object} userData
  * @param {string} assessmentId
- * @param {{ autoSubmitted?: boolean, reason?: string }} [opts]
+ * @param {{ autoSubmitted?: boolean, reason?: string, finalPayload?: object }} [opts]
+ * @returns {Promise<{ success: boolean, pending?: boolean }>}
  */
-export async function completeAssessmentSession(userData, assessmentId, opts = {}) {
+export async function completeAssessmentSession(assessmentId, opts = {}) {
+  const uid = getCanonicalUid();
+  if (!uid || !assessmentId) return { success: false };
+
+  const targetState = opts.autoSubmitted
+    ? ATTEMPT_STATES.AUTO_SUBMITTED
+    : ATTEMPT_STATES.SUBMITTED;
+
+  const updateData = {
+    status:           targetState,
+    completed:        true,
+    autoSubmitted:    opts.autoSubmitted || false,
+    autoSubmitReason: opts.reason || null,
+    completedAt:      serverTimestamp(),
+    completedAtISO:   new Date().toISOString(),
+    activeSection:    null,
+    lastSavedAt:      serverTimestamp(),
+    scoring_authority: 'client_provisional',
+  };
+
+  // Persist envelope locally before attempting the write (crash recovery)
+  saveLocalSubmissionEnvelope(uid, assessmentId, {
+    assessmentId,
+    uid,
+    status:         targetState,
+    completedAtISO: updateData.completedAtISO,
+    ...(opts.finalPayload || {}),
+  });
+
   try {
-    const userId = getUserId(userData);
-    if (!userId || !assessmentId) return;
-
-    await setDoc(getSessionRef(userId, assessmentId), {
-      completed:     true,
-      autoSubmitted: opts.autoSubmitted || false,
-      autoReason:    opts.reason || null,
-      completedAt:   serverTimestamp(),
-      completedAtISO: new Date().toISOString(),
-      activeSection: null,
-      lastSavedAt:   serverTimestamp(),
-    }, { merge: true });
-
-    console.log('[SessionService] Session completed for assessment', assessmentId);
+    await withRetry(() => updateDoc(getAttemptRef(uid, assessmentId), updateData));
+    clearLocalSubmissionEnvelope(uid, assessmentId);
+    console.log('[SessionService] Session completed for assessment', assessmentId, '| state:', targetState);
+    return { success: true };
   } catch (err) {
-    console.warn('[SessionService] completeAssessmentSession failed (non-fatal):', err?.message);
+    console.error('[SessionService] completeAssessmentSession FAILED after retries:', err?.message);
+    // Envelope remains in localStorage for retry on next boot.
+    return { success: false, pending: true };
   }
 }
 
 /**
- * Compute the timer (in seconds) at which we should trigger the 1/3-mark save.
+ * Calculate authoritative remaining seconds for an assessment/section.
+ * Uses server-recorded startedAt + durationSeconds — NOT client-stored timeRemainingSeconds.
  *
- * @param {number} totalDurationSeconds   total section time in seconds
- * @returns {number}  seconds remaining at which saveSessionProgress should be called
+ * @param {object} attemptData — Firestore attempt document data
+ * @returns {number}
+ */
+export { calcAuthoritativeRemainingSeconds };
+
+/**
+ * Threshold (in seconds remaining) at which the 1/3-mark save fires.
+ * @param {number} totalDurationSeconds
+ * @returns {number}
  */
 export function oneThirdSaveThreshold(totalDurationSeconds) {
-  // Save when 2/3 of time has elapsed (1/3 remaining)
-  return Math.round(totalDurationSeconds * (1 - SAVE_AT_FRACTION));
+  return Math.round(totalDurationSeconds * (2 / 3));
 }
 
 export default {
   startAssessmentSession,
+  getActiveAttempt,
+  transitionAttemptState,
   markSectionStarted,
   saveSessionProgress,
   markSectionCompleted,
   completeAssessmentSession,
+  calcAuthoritativeRemainingSeconds,
   oneThirdSaveThreshold,
 };

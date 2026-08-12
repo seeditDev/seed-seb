@@ -139,17 +139,18 @@ const desktopBridge = {
                 testCases: []
             });
         } else {
-            console.log("[DesktopBridge] Mock: submitCode", { language, questionId });
-            // Fallback: mock full success score
+            // SECURITY: Do NOT return fabricated scores when the desktop backend is unavailable.
+            // The assessment code executor runs only inside the SEED-SEB desktop application.
+            // Returning a mock score here would allow a student in a browser to fake any result.
+            console.error("[DesktopBridge] submitCode: Desktop backend not connected. Official scoring requires the SEED-SEB desktop application.");
             return {
-                score: 100,
-                passed: 5,
-                total: 5,
-                executionTime: 0.15,
-                testCases: [
-                    { caseNumber: 1, passed: true, executionTime: 0.02 },
-                    { caseNumber: 2, passed: true, executionTime: 0.03 }
-                ]
+                error:               "DESKTOP_REQUIRED",
+                score:               0,
+                passed:              0,
+                total:               0,
+                testCases:           [],
+                scoring_authority:   "client_provisional",
+                message:             "Code assessment submission requires the SEED-SEB desktop application. Please open this assessment inside the installed SEED-SEB app.",
             };
         }
     },

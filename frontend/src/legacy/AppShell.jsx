@@ -11,7 +11,9 @@ import TrackingService from "./services/trackingService";
 import timeService from "./services/timeService";
 import desktopBridge from "./utils/desktopBridge";
 import { logPortalActivityTime } from "./services/codingProgressService";
-import { useLocation } from "./router-compat";
+import { useLocation, useNavigate } from "./router-compat";
+import { auth, onAuthStateChanged } from "./firebase-config";
+import ProctorService from "./services/proctorService";
 
 import "./index.css";
 import "./styles/Login.css";
@@ -187,16 +189,44 @@ export default function AppShell({ children }) {
 
     init();
 
-    const rawAuth = localStorage.getItem("auth_data");
-    if (rawAuth) {
-      try {
-        const parsedAuth = JSON.parse(rawAuth);
-        TrackingService.startTracking(parsedAuth);
-        desktopBridge.setStudentSession(parsedAuth);
-      } catch (e) {
-        console.error("Failed to restart tracking on mount:", e);
+    // ── Validate Firebase Auth state before consuming any localStorage cache ──
+    // Do NOT read auth_data from localStorage as authoritative until Firebase
+    // confirms the same UID is still authenticated. Stale cache from a previous
+    // student session must not be used.
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser) {
+        // No authenticated Firebase user — clear any stale local data
+        const staleRaw = localStorage.getItem("auth_data");
+        if (staleRaw) {
+          console.warn("[AppShell] Firebase Auth has no active user but auth_data exists in localStorage. Clearing stale session.");
+          clearAllStudentLocalData();
+        }
+        return;
       }
-    }
+
+      // Firebase user is present — verify UID matches localStorage cache
+      const rawAuth = localStorage.getItem("auth_data");
+      if (rawAuth) {
+        try {
+          const parsedAuth = JSON.parse(rawAuth);
+          if (parsedAuth.uid && parsedAuth.uid !== firebaseUser.uid) {
+            console.warn("[AppShell] auth_data UID mismatch (cached:", parsedAuth.uid, "/ Firebase:", firebaseUser.uid, "). Clearing stale session.");
+            clearAllStudentLocalData();
+            return;
+          }
+          // UID matches — safe to restart tracking
+          TrackingService.startTracking(parsedAuth);
+          desktopBridge.setStudentSession(parsedAuth);
+        } catch (e) {
+          console.error("[AppShell] Failed to restart tracking on mount:", e);
+          localStorage.removeItem("auth_data");
+        }
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+    };
 
     const handleUnload = () => TrackingService.stopTracking();
     window.addEventListener("beforeunload", handleUnload);
@@ -212,6 +242,33 @@ export default function AppShell({ children }) {
       }
     };
   }, []);
+
+  /** Clear all localStorage keys that belong to the active student session. */
+  function clearAllStudentLocalData() {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      // Remove session-scoped keys
+      if (
+        key === 'auth_data' ||
+        key === 'rememberedUser' ||
+        key.startsWith('msaProgress_') ||
+        key.startsWith('msaActiveAssessment_') ||
+        key === 'codingAssessmentData' ||
+        key === 'codingAssessmentStartTime' ||
+        key === 'codingAssessmentTimer' ||
+        key === 'codingLastActiveTime' ||
+        key.startsWith('proctor_offline_') ||
+        key.startsWith('proctor_snapshots_offline_') ||
+        key.startsWith('seed_submission_envelope_')
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+    console.log('[AppShell] Cleared', keysToRemove.length, 'student session keys from localStorage.');
+  }
 
   const handleEnableWebAccess = () => {
     localStorage.setItem("web_access_bypass", "true");
