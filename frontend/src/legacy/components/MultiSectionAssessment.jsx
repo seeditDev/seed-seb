@@ -280,12 +280,25 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   }, [qTimerRemaining, questionIndex, questions.length, settings.questionTimer]);
 
   const handleSubmit = useCallback(() => {
-    let correct = 0;
+    // ── Scoring ──────────────────────────────────────────────────────────────
+    // Use per-question marks when available, falling back to 1 mark/question.
+    // The section's canonical max is sectionData.totalMarks (set by Admin Hub).
+    // NEVER use question count as the max marks — sections can have different
+    // weights (e.g. MCQ section = 40 marks, Coding section = 60 marks).
+    let score = 0;
     questions.forEach((q, i) => {
-      if (answers[i] !== undefined && q.options[answers[i]] === q.correctAnswer) correct++;
+      if (answers[i] !== undefined && q.options[answers[i]] === q.correctAnswer) {
+        score += (Number(q.marks) > 0 ? Number(q.marks) : 1);
+      }
     });
     const total = questions.length;
-    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    // Authoritative section max from Admin Hub config; fall back to question count only
+    // when sectionData.totalMarks is not set (old/incomplete data).
+    const sectionTotalMarks = Number(sectionData?.totalMarks) > 0
+      ? Number(sectionData.totalMarks)
+      : total;
+    // Percentage based on marks, clamped, NaN-safe.
+    const pct = sectionTotalMarks > 0 ? Math.min(100, Math.round((score / sectionTotalMarks) * 100)) : 0;
 
     const questionsDetails = questions.map((q, idx) => {
       const selectedIdx = answers[idx];
@@ -312,9 +325,12 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
       onSubmitRef.current({
         answers,
         timeSpentPerQ,
-        score: correct,
+        score,
         totalQuestions: total,
-        totalMarks: total,
+        // FIX: totalMarks = section max marks (from Admin Hub), NOT question count.
+        // This is what the MSA aggregator sums to get the overall maxScore.
+        totalMarks: sectionTotalMarks,
+        // FIX: percentage = score / sectionTotalMarks * 100, not score / totalQuestions.
         percentage: pct,
         questions: questionsDetails,
         violationCount: 0,
@@ -323,7 +339,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
         violations: []
       });
     }
-  }, [answers, timeSpentPerQ, questions, stateKey]);
+  }, [answers, timeSpentPerQ, questions, stateKey, sectionData]);
 
   const questionEnterTimeRef = useRef(null);
 
