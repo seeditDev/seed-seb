@@ -135,25 +135,8 @@ export default function AppShell({ children }) {
 
   useEffect(() => {
     const ua = navigator.userAgent || "";
-    const hostname = window.location.hostname;
-    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    const isDev =
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname.endsWith(".lovable.app") ||
-      hostname.endsWith(".vercel.app") ||
-      hostname.endsWith(".pages.dev") ||
-      hostname.includes("seedit.site") ||
-      import.meta.env.DEV;
-    // URL-parameter bypass is restricted to DEV builds only.
-    // In production, the gate can only be bypassed via a valid SEEDSEB/QtWebEngine user-agent.
-    // localStorage 'web_access_bypass' is also restricted to DEV — production students
-    // must use the desktop app and cannot unlock the gate through localStorage.
-    const hasWebBypass = isDev && (
-      localStorage.getItem("web_access_bypass") === "true" ||
-      urlParams?.get("bypass") === "true" ||
-      urlParams?.get("mode") === "web"
-    );
+    // Web bypass disabled per production security policy.
+    // Desktop environment is verified via SEEDSEB/QtWebEngine user agent or PyQt window bridge.
     const isUAOk =
       ua.includes("SEEDSEB") ||
       ua.includes("QtWebEngine") ||
@@ -161,8 +144,9 @@ export default function AppShell({ children }) {
       !!window.qt ||
       !!window.desktopBackend ||
       window.pyqtFlag === true;
-    setIsDesktopApp(isUAOk || isDev || hasWebBypass);
+    setIsDesktopApp(isUAOk);
   }, []);
+
 
   useEffect(() => {
     let isMounted = true;

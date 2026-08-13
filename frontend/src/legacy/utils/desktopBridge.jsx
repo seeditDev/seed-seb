@@ -16,8 +16,15 @@ export const initBridge = () => {
         const maxChecks = 50; // Check for up to 2.5 seconds (50 * 50ms)
         
         const checkBridge = () => {
-            if (typeof window !== 'undefined' && window.qt) {
+            if (typeof window !== 'undefined' && (window.desktopBackend || window.qt)) {
+                if (window.desktopBackend) {
+                    bridgeInstance = window.desktopBackend;
+                    console.log("[DesktopBridge] Connected directly to window.desktopBackend");
+                    resolve(bridgeInstance);
+                    return;
+                }
                 const connectChannel = () => {
+
                     try {
                         new window.QWebChannel(window.qt.webChannelTransport, (channel) => {
                             bridgeInstance = channel.objects.desktopBackend;
