@@ -4,7 +4,7 @@ import * as tf from '@tensorflow/tfjs';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import '../styles/ProctoringEngine.css';
 import timeService from '../services/timeService';
-import { recordViolation } from '../utils/proctorCache';
+import { recordViolation, getViolations } from '../utils/proctorCache';
 
 // Helper to resolve models directory path under both file:// and http/https protocols
 const getModelsPath = (subPath) => {
