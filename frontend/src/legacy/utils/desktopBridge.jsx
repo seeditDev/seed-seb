@@ -117,22 +117,60 @@ const desktopBridge = {
                 const rawResult = await backend.runCode(String(language || ""), String(code || ""), String(stdin || ""));
                 const res = safeJsonParse(rawResult, null);
                 if (res) return res;
-            } catch (_) {}
+            } catch (err) {
+                console.error("[DesktopBridge] Error executing runCode via native backend:", err);
+            }
         }
 
         if (isJs) {
             return await executeJavaScript(code, stdin);
         }
 
-        console.warn("[DesktopBridge] Local compiler backend not connected. Run code is disabled in web fallback.");
+        // Practice mode / Web environment fallback execution via Piston API
+        try {
+            const res = await fetch("https://emkc.org/api/v2/piston/execute", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    language: cleanLang === "python" ? "python3" : (cleanLang === "c" ? "c" : (cleanLang === "cpp" || cleanLang === "c++" ? "cpp" : cleanLang)),
+                    version: "*",
+                    files: [{ content: code }],
+                    stdin: stdin
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const run = data.run || {};
+                return {
+                    stdout: run.stdout || "",
+                    stderr: run.stderr || "",
+                    output: run.output || "",
+                    exit_code: run.code || 0,
+                    error: run.stderr ? run.stderr : null,
+                    cases: [{
+                        caseNumber: 1,
+                        input: stdin,
+                        expected: "",
+                        actual: run.stdout || "",
+                        stderr: run.stderr || "",
+                        passed: run.code === 0 && !run.stderr,
+                        executionTime: 0.1
+                    }]
+                };
+            }
+        } catch (pistonErr) {
+            console.warn("[DesktopBridge] Web compiler fallback error:", pistonErr);
+        }
+
         return { 
             stdout: "", 
-            stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
+            stderr: "Local compiler backend not connected. Please run inside the SEED-SEB Desktop Application.", 
             output: "",
             exit_code: -1, 
             error: "Desktop App Environment Required" 
         };
     },
+
 
     submitCode: async (language, code, questionId) => {
         const backend = await initBridge();
