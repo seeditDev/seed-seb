@@ -910,7 +910,7 @@ class MainWindow(QMainWindow):
         self.conn_monitor_timer.start(30000)
 
         # Disable Windows three-finger swipe / virtual desktop gestures via registry
-        self.disable_swipe_gestures()
+        # self.disable_swipe_gestures()
 
         # Virtual desktop enforcement: poll every 500ms and forcibly reclaim focus
         self.vd_guard_timer = QTimer(self)
@@ -1122,19 +1122,41 @@ class MainWindow(QMainWindow):
 
     def inject_webchannel_script(self):
         """Injects qwebchannel.js into the pages automatically."""
-        script = QWebEngineScript()
-        script.setName("qwebchannel")
-        script.setSourceCode("""
+        qwebchannel_content = ""
+        possible_paths = [
+            os.path.join(runtime_manager.app_root, "frontend", "public", "qwebchannel.js"),
+            os.path.join(runtime_manager.app_root, "public", "qwebchannel.js"),
+            os.path.join(script_dir, "..", "frontend", "public", "qwebchannel.js")
+        ]
+        for p in possible_paths:
+            if os.path.exists(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        qwebchannel_content = f.read()
+                        logging.info(f"Loaded qwebchannel.js source from {p}")
+                        break
+                except Exception as e:
+                    logging.warning(f"Failed to read qwebchannel.js from {p}: {e}")
+
+        if not qwebchannel_content:
+            qwebchannel_content = """
             if (typeof QWebChannel === 'undefined') {
-                var script = document.createElement('script');
-                script.src = 'qrc:///qtwebchannel/qwebchannel.js';
-                document.head.appendChild(script);
+                var s = document.createElement('script');
+                s.src = '/qwebchannel.js';
+                document.head.appendChild(s);
             }
-        """)
+            """
+
+        full_injection = qwebchannel_content + "\nwindow.pyqtFlag = true;\n"
+
+        script = QWebEngineScript()
+        script.setName("qwebchannel_loader")
+        script.setSourceCode(full_injection)
         script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentCreation)
         script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         script.setRunsOnSubFrames(True)
         self.web_view.page().profile().scripts().insert(script)
+
 
     def load_frontend(self):
         """Loads React app from load-balanced Netlify sites, or falls back to local build/server."""
