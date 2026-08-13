@@ -115,12 +115,45 @@ class RuntimeManager:
         path = self.binaries.get(binary_name, binary_name)
         if path and os.path.exists(path):
             return path
+
         if binary_name == "python":
-            return sys.executable if sys.executable else "python"
+            meipass = getattr(sys, '_MEIPASS', '')
+            candidates = [
+                os.path.join(self.runtimes_dir, "python-embed", "python.exe"),
+                os.path.join(self.app_root, "resources", "runtimes", "python-embed", "python.exe"),
+                os.path.join(meipass, "resources", "runtimes", "python-embed", "python.exe"),
+                os.path.join(self.app_root, "python-embed", "python.exe"),
+                os.path.join(os.path.dirname(self.app_root), "runtimes", "python-embed", "python.exe"),
+                os.path.join(os.path.dirname(os.path.dirname(self.app_root)), "runtimes", "python-embed", "python.exe"),
+                shutil.which("python.exe"),
+                shutil.which("python")
+            ]
+            for c in candidates:
+                if c and os.path.exists(c) and os.path.basename(c).lower() not in ("seed-seb.exe", os.path.basename(sys.executable).lower()):
+                    return c
+
+            exe_base = os.path.basename(sys.executable).lower() if sys.executable else ""
+            if exe_base in ("python.exe", "pythonw.exe", "python3.exe", "python311.exe", "python314.exe"):
+                return sys.executable
+
+            return "python"
+
+        meipass = getattr(sys, '_MEIPASS', '')
+        alt_paths = [
+            os.path.join(self.app_root, "resources", "runtimes", "mingw64", "bin", f"{binary_name}.exe"),
+            os.path.join(self.app_root, "resources", "runtimes", "jdk", "bin", f"{binary_name}.exe"),
+            os.path.join(meipass, "resources", "runtimes", "mingw64", "bin", f"{binary_name}.exe"),
+            os.path.join(meipass, "resources", "runtimes", "jdk", "bin", f"{binary_name}.exe")
+        ]
+        for p in alt_paths:
+            if p and os.path.exists(p):
+                return p
+
         found = shutil.which(binary_name)
         if found:
             return found
         return path
+
 
 # Singleton instance
 runtime_manager = RuntimeManager()
