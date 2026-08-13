@@ -174,16 +174,26 @@ export function validateAssessmentPayload(testDoc, assessmentPayload) {
     const effectiveType = testDocType || payloadType;
 
     if (effectiveType === 'mcq') {
-        for (const field of MCQ_REQUIRED_PAYLOAD_FIELDS) {
-            if (!assessmentPayload[field] || (Array.isArray(assessmentPayload[field]) && assessmentPayload[field].length === 0)) {
-                errors.push(`MCQ payload is missing required content: "${field}" (empty or absent).`);
-            }
+        const hasMcqContent =
+            (Array.isArray(assessmentPayload.questions) && assessmentPayload.questions.length > 0) ||
+            (Array.isArray(assessmentPayload.questionIds) && assessmentPayload.questionIds.length > 0) ||
+            (Array.isArray(testDoc.questionIds) && testDoc.questionIds.length > 0) ||
+            (Array.isArray(testDoc.questions) && testDoc.questions.length > 0);
+        if (!hasMcqContent) {
+            errors.push('MCQ payload is missing required content: "questions" (empty or absent).');
         }
     } else if (effectiveType === 'coding') {
-        for (const field of CODING_REQUIRED_PAYLOAD_FIELDS) {
-            if (!assessmentPayload[field] || (Array.isArray(assessmentPayload[field]) && assessmentPayload[field].length === 0)) {
-                errors.push(`Coding payload is missing required content: "${field}" (empty or absent).`);
-            }
+        const hasCodingContent =
+            (Array.isArray(assessmentPayload.questions) && assessmentPayload.questions.length > 0) ||
+            (Array.isArray(assessmentPayload.codingQuestions) && assessmentPayload.codingQuestions.length > 0) ||
+            (Array.isArray(assessmentPayload.questionIds) && assessmentPayload.questionIds.length > 0) ||
+            (Array.isArray(assessmentPayload.items) && assessmentPayload.items.length > 0) ||
+            (Array.isArray(testDoc.questionIds) && testDoc.questionIds.length > 0) ||
+            (Array.isArray(testDoc.questions) && testDoc.questions.length > 0) ||
+            Boolean(assessmentPayload.problemStatement || assessmentPayload.statement || assessmentPayload.title || assessmentPayload.sampleTestCases || assessmentPayload.testCases || assessmentPayload.question || assessmentPayload.code);
+
+        if (!hasCodingContent) {
+            errors.push('Coding payload is missing required content: "questions" or coding problem specification (empty or absent).');
         }
     } else if (effectiveType === 'msa') {
         // MSA: either top-level sections or individual section payloads
@@ -191,6 +201,7 @@ export function validateAssessmentPayload(testDoc, assessmentPayload) {
             warnings.push('MSA payload has no sections or questions. Check Admin Hub configuration.');
         }
     }
+
 
     // ── 7. Schedule validity (Scenario 7: archived, Scenario 8: expired) ──────
     if (testDoc.schedule) {
