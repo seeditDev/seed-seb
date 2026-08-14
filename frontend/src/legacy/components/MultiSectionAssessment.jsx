@@ -879,7 +879,8 @@ const MultiSectionAssessment = () => {
         return;
       }
 
-      const v2DocPath = `assessmentResults/${effectiveAssessment.id}/students/${userId}`;
+      const tenantId = college || authData?.tenantId || '_unknown_';
+        const v2DocPath = `assessmentResults/${effectiveAssessment.id}/${tenantId}/students/${userId}`;
 
       // SECTION 13: Final submission MUST be reliable. Await the write.
       // On failure: save pending envelope for recovery on next login.
@@ -888,8 +889,7 @@ const MultiSectionAssessment = () => {
         console.log('[MSA] Final result saved to Firestore v2 path');
         // ── Write denormalized tenant result (non-blocking) ──
         const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-        const tenantId = college || authData?.tenantId || '';
-        if (tenantId) {
+        if (tenantId !== '_unknown_') {
           const tenantPayload = buildTenantResultPayload(authData, {
             ...rawAttemptData,
             assessmentId: effectiveAssessment.id,
@@ -902,7 +902,7 @@ const MultiSectionAssessment = () => {
             violationCount: totalViolations,
             sourceRef: v2DocPath,
           });
-          writeTenantResult(tenantId, tenantPayload).catch(() => {});
+          writeTenantResult(tenantId, effectiveAssessment.id, userId, tenantPayload).catch(() => {});
         }
       } catch (writeErr) {
         console.error('[MSA] Final Firestore write failed — preserving pending envelope:', writeErr);

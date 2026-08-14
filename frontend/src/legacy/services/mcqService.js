@@ -45,17 +45,19 @@ class MCQService {
     }
 
     /**
-     * v2 Canonical Firestore path (single write, no dual paths).
+     * v2 Canonical Firestore path — tenant-scoped.
      *
-     * assessmentResults/{assessmentId}/students/{userId}
+     * assessmentResults/{assessmentId}/{tenantId}/students/{userId}
      *
      * @param {string} assessmentId
-     * @param {string} userId  — MUST be Firebase Auth UID. Never college/email/year.
+     * @param {string} userId      — MUST be Firebase Auth UID
+     * @param {string} tenantId   — student's college/tenant code (e.g. "KGKITE")
      */
-    static canonicalPath(assessmentId, userId) {
+    static canonicalPath(assessmentId, userId, tenantId = '_unknown_') {
         if (!assessmentId) throw new Error('[MCQService] canonicalPath: assessmentId is required');
         if (!userId)       throw new Error('[MCQService] canonicalPath: userId (Firebase Auth UID) is required');
-        return `assessmentResults/${assessmentId}/students/${userId}`;
+        const tid = tenantId || '_unknown_';
+        return `assessmentResults/${assessmentId}/${tid}/students/${userId}`;
     }
 
     /**
@@ -77,7 +79,8 @@ class MCQService {
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
         // Belt-and-braces: validate UID one more time at write boundary
         const canonicalUid = getCanonicalUid(userId);
-        const canonRef = doc(db, this.canonicalPath(assessmentId, canonicalUid));
+        const tenantId = payload.tenantId || userProfile?.tenantId || '_unknown_';
+        const canonRef = doc(db, this.canonicalPath(assessmentId, canonicalUid, tenantId));
         await setDoc(canonRef, { ...payload, userId: canonicalUid }, { merge: true });
 
         // Mirror summary to user's assessmentAttempts subcollection
@@ -88,7 +91,7 @@ class MCQService {
                     assessmentId,
                     type: payload.type || 'mcq',
                     title: payload.testName || payload.assessmentTitle || '',
-                    tenantId: payload.tenantId || userProfile?.tenantId || '',
+                    tenantId,
                     startedAt: payload.timeStarted || payload.startedAt || null,
                     startedAtISO: payload.timeStartedISO || payload.startedAtISO || '',
                     submittedAt: payload.submittedAt || null,
@@ -97,7 +100,7 @@ class MCQService {
                     totalScore: payload.score || payload.totalScore || 0,
                     maxScore: payload.totalMarks || payload.maxScore || 0,
                     percentage: payload.percentage || 0,
-                    resultRef: `assessmentResults/${assessmentId}/students/${canonicalUid}`,
+                    resultRef: this.canonicalPath(assessmentId, canonicalUid, tenantId),
                 }, { merge: true });
             } catch (_) {
                 // Mirror failure is non-fatal
@@ -146,7 +149,8 @@ class MCQService {
     static async writeGuestResult(payload, testId, guestSession) {
         try {
             const guestId = guestSession.guestId || `guest_${Date.now()}`;
-            const guestRef = doc(db, `assessmentResults/${testId}/guests/${guestId}`);
+            const tenantId = guestSession.college || guestSession.tenantId || '_guest_';
+            const guestRef = doc(db, `assessmentResults/${testId}/${tenantId}/guests/${guestId}`);
             await setDoc(guestRef, {
                 ...payload,
                 isGuest: true,
@@ -165,13 +169,12 @@ class MCQService {
             }, { merge: true });
 
             // ── Lock re-attempts in localStorage ──────────────────────────────
-            // GuestPortal reads this key in step 3 to block the same guest from starting again.
             try {
                 localStorage.setItem(`guest_done_${testId}_${guestId}`, 'true');
                 localStorage.removeItem('guest_session');
             } catch (_) { /* non-fatal */ }
 
-            return `assessmentResults/${testId}/guests/${guestId}`;
+            return `assessmentResults/${testId}/${tenantId}/guests/${guestId}`;
         } catch (err) {
             console.error('[MCQService] writeGuestResult error:', err);
             return null;

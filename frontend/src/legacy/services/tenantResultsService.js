@@ -2,34 +2,37 @@
  * tenantResultsService.js
  *
  * Writes a denormalized copy of each assessment result to:
- *   tenantResults/{tenantId}/results/{autoId}
+ *   tenantResults/{tenantId}/{assessmentId}/{userId}
  *
- * This powers the staff-scoped Reports dashboard — staff only read
- * their college's sub-collection instead of scanning all 5000+ results.
+ * Path structure change (v3):
+ *   OLD: tenantResults/{tenantId}/results/{autoId}     ← addDoc, flat list
+ *   NEW: tenantResults/{tenantId}/{assessmentId}/{userId} ← setDoc, keyed by userId
  *
- * Called non-blocking (fire-and-forget) after every assessment submit:
- *   - MSA:    autoSubmitEntireExam()
- *   - Coding: writeCanonicalResult()
- *   - MCQ:    Assessment.jsx handleSubmit()
+ * Benefits:
+ *   - Admins can query a specific assessment directly: collection(db, 'tenantResults', tid, assessmentId)
+ *   - setDoc prevents duplicate rows per student per assessment
+ *   - Assessment filter in Reports dashboard works natively
  *
  * Failure never blocks the student submit flow.
  */
 
 import { db } from '../firebase-config';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 /**
- * Write one result row to tenantResults/{tenantId}/results.
+ * Write one result row to tenantResults/{tenantId}/{assessmentId}/{userId}.
  *
- * @param {string}  tenantId   - College code (e.g. "KGKITE", "TN000001")
- * @param {object}  payload    - Flat result fields (see schema below)
+ * @param {string}  tenantId     - College code (e.g. "KGKITE", "TN000001")
+ * @param {string}  assessmentId - Assessment ID (same as assessmentResults doc ID)
+ * @param {string}  userId       - Firebase Auth UID (used as doc key — prevents duplicates)
+ * @param {object}  payload      - Flat result fields (see schema below)
  *
  * Schema:
- *   userId           string   - Firebase Auth UID or email-derived key
+ *   userId           string   - Firebase Auth UID
  *   email            string
  *   name             string
  *   rollNumber       string
- *   assessmentId     string   - same as assessmentResults doc ID
+ *   assessmentId     string
  *   assessmentName   string
  *   type             string   - "mcq" | "coding" | "msa" | "multisection"
  *   score            number   - earned marks
@@ -38,21 +41,23 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
  *   status           string   - "submitted" | "partial"
  *   timeTakenSeconds number
  *   submittedAt      Timestamp
- *   cohortId         string   - year/batch (e.g. "2" for 2nd year)
+ *   cohortId         string
  *   department       string
  *   violationCount   number
  *   sourceRef        string   - canonical path for cross-reference
  */
-export async function writeTenantResult(tenantId, payload) {
-    if (!tenantId || !payload?.assessmentId) return; // guard
+export async function writeTenantResult(tenantId, assessmentId, userId, payload) {
+    if (!tenantId || !assessmentId || !userId) return; // guard
     try {
-        const col = collection(db, 'tenantResults', tenantId, 'results');
-        await addDoc(col, {
+        const docRef = doc(db, 'tenantResults', tenantId, assessmentId, userId);
+        await setDoc(docRef, {
             ...payload,
             tenantId,
+            assessmentId,
+            userId,
             submittedAt: serverTimestamp(),
             writtenAt: serverTimestamp(),
-        });
+        }, { merge: true });
     } catch (err) {
         // Non-fatal — student submit is not blocked by this failure
         console.warn('[tenantResultsService] Write failed (non-fatal):', err?.message);

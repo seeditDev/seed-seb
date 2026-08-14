@@ -17,11 +17,12 @@ class CodingAssessmentService {
     }
 
     /**
-     * v2 Canonical Firestore path (single write, no dual paths).
-     * assessmentResults/{assessmentId}/students/{userId}
+     * v2 Canonical Firestore path — tenant-scoped.
+     * assessmentResults/{assessmentId}/{tenantId}/students/{userId}
      */
-    static canonicalPath(assessmentId, userId) {
-        return `assessmentResults/${assessmentId}/students/${userId}`;
+    static canonicalPath(assessmentId, userId, tenantId = '_unknown_') {
+        const tid = tenantId || '_unknown_';
+        return `assessmentResults/${assessmentId}/${tid}/students/${userId}`;
     }
 
     /**
@@ -39,20 +40,20 @@ class CodingAssessmentService {
      * Also mirrors a summary to users/{userId}/assessmentAttempts/{assessmentId}.
      */
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
-        const canonRef = doc(db, this.canonicalPath(assessmentId, userId));
+        const tenantId = payload.tenantId || userProfile?.tenantId || '_unknown_';
+        const canonRef = doc(db, this.canonicalPath(assessmentId, userId, tenantId));
         await setDoc(canonRef, payload, { merge: true });
 
         // ── Denormalized tenant result for staff reports (non-blocking) ──
         try {
             const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-            const tenantId = payload.tenantId || userProfile?.tenantId || authData?.tenantId || authData?.College || '';
-            if (tenantId && assessmentId) {
+            if (tenantId !== '_unknown_' && assessmentId) {
                 const tenantPayload = buildTenantResultPayload(authData, {
                     ...payload,
                     assessmentId,
-                    sourceRef: this.canonicalPath(assessmentId, userId),
+                    sourceRef: this.canonicalPath(assessmentId, userId, tenantId),
                 });
-                writeTenantResult(tenantId, tenantPayload).catch(() => {});
+                writeTenantResult(tenantId, assessmentId, userId, tenantPayload).catch(() => {});
             }
         } catch (_) {}
 
@@ -63,7 +64,7 @@ class CodingAssessmentService {
                     assessmentId,
                     type: payload.type || 'coding',
                     title: payload.testName || payload.assessmentTitle || '',
-                    tenantId: payload.tenantId || userProfile?.tenantId || '',
+                    tenantId,
                     startedAt: payload.timeStarted || payload.startedAt || null,
                     startedAtISO: payload.timeStartedISO || payload.startedAtISO || '',
                     submittedAt: payload.submittedAt || null,
@@ -72,12 +73,12 @@ class CodingAssessmentService {
                     totalScore: payload.score || payload.totalScore || 0,
                     maxScore: payload.totalMarks || payload.maxScore || 0,
                     percentage: payload.percentage || 0,
-                    resultRef: `assessmentResults/${assessmentId}/students/${userId}`,
+                    resultRef: this.canonicalPath(assessmentId, userId, tenantId),
                 }, { merge: true });
             } catch (_) {}
         }
 
-        return this.canonicalPath(assessmentId, userId);
+        return this.canonicalPath(assessmentId, userId, tenantId);
     }
 
     /**
