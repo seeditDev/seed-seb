@@ -184,13 +184,18 @@ export function validateAssessmentPayload(testDoc, assessmentPayload) {
         }
     } else if (effectiveType === 'coding') {
         const hasCodingContent =
-            (Array.isArray(assessmentPayload.questions) && assessmentPayload.questions.length > 0) ||
+            (Array.isArray(assessmentPayload.questions)       && assessmentPayload.questions.length > 0)       ||
             (Array.isArray(assessmentPayload.codingQuestions) && assessmentPayload.codingQuestions.length > 0) ||
-            (Array.isArray(assessmentPayload.questionIds) && assessmentPayload.questionIds.length > 0) ||
-            (Array.isArray(assessmentPayload.items) && assessmentPayload.items.length > 0) ||
-            (Array.isArray(testDoc.questionIds) && testDoc.questionIds.length > 0) ||
-            (Array.isArray(testDoc.questions) && testDoc.questions.length > 0) ||
-            Boolean(assessmentPayload.problemStatement || assessmentPayload.statement || assessmentPayload.title || assessmentPayload.sampleTestCases || assessmentPayload.testCases || assessmentPayload.question || assessmentPayload.code);
+            (Array.isArray(assessmentPayload.challenges)      && assessmentPayload.challenges.length > 0)      || // Admin Hub StaffCodingCreator format
+            (Array.isArray(assessmentPayload.questionIds)     && assessmentPayload.questionIds.length > 0)     ||
+            (Array.isArray(assessmentPayload.items)           && assessmentPayload.items.length > 0)           ||
+            (Array.isArray(testDoc.questionIds)               && testDoc.questionIds.length > 0)               ||
+            (Array.isArray(testDoc.questions)                 && testDoc.questions.length > 0)                 ||
+            Boolean(
+                assessmentPayload.problemStatement || assessmentPayload.statement ||
+                assessmentPayload.title            || assessmentPayload.sampleTestCases ||
+                assessmentPayload.testCases        || assessmentPayload.question || assessmentPayload.code
+            );
 
         if (!hasCodingContent) {
             errors.push('Coding payload is missing required content: "questions" or coding problem specification (empty or absent).');
@@ -236,6 +241,86 @@ export function validateAssessmentPayload(testDoc, assessmentPayload) {
 
     return { valid: true, errors: [], warnings };
 }
+
+
+/**
+ * Validate that an MSA's sections array is correctly configured BEFORE
+ * navigating to the MultiSectionAssessment route.
+ *
+ * Called in StudentDashboard.jsx launchAssessment() for all MSA-type assessments.
+ * Returns specific per-section errors — never a generic "mismatch" message.
+ *
+ * @param {Array<{sectionId: string, name: string, type: string, cdnUrl: string, duration_minutes: number, totalMarks?: number}>} sections
+ * @param {object} [testDoc]  — Optional parent test document for context in error messages.
+ * @returns {{ valid: boolean, errors: string[], warnings: string[] }}
+ */
+export function validateMSASections(sections, testDoc = null) {
+    const errors   = [];
+    const warnings = [];
+    const testName = testDoc?.name || testDoc?.id || 'this MSA assessment';
+
+    if (!Array.isArray(sections) || sections.length === 0) {
+        errors.push(
+            `MSA configuration error: "${testName}" has no sections. ` +
+            'An Admin must add at least one section (MCQ or Coding) before this test can be started.'
+        );
+        return { valid: false, errors, warnings };
+    }
+
+    const VALID_TYPES = new Set(['mcq', 'coding', 'sea', 'spoken-english']);
+
+    sections.forEach((sec, idx) => {
+        const secLabel = sec.name
+            ? `Section ${idx + 1} ("${sec.name}")`
+            : `Section ${idx + 1}`;
+
+        // Required: sectionId
+        if (!sec.sectionId) {
+            errors.push(`${secLabel}: missing sectionId. Contact your administrator.`);
+        }
+
+        // Required: type
+        if (!sec.type) {
+            errors.push(`${secLabel}: missing section type (expected "mcq", "coding", or "sea").`);
+        } else if (!VALID_TYPES.has(sec.type.toLowerCase())) {
+            errors.push(
+                `${secLabel}: unrecognised type "${sec.type}". ` +
+                'Expected "mcq", "coding", or "sea".'
+            );
+        }
+
+        // Required: cdnUrl — must be set and end with .json or be a valid URL
+        if (!sec.cdnUrl || sec.cdnUrl.trim() === '') {
+            errors.push(
+                `${secLabel}: missing content URL (cdnUrl). ` +
+                'An Admin must link a content file to this section before the test can be started.'
+            );
+        }
+
+        // Required: positive duration
+        if (sec.duration_minutes == null || sec.duration_minutes <= 0) {
+            errors.push(
+                `${secLabel}: invalid duration (${sec.duration_minutes} min). ` +
+                'Duration must be greater than 0.'
+            );
+        }
+
+        // Warning: zero marks
+        if (sec.totalMarks != null && sec.totalMarks <= 0) {
+            warnings.push(
+                `${secLabel}: totalMarks is ${sec.totalMarks}. ` +
+                'This section will not contribute to the overall score.'
+            );
+        }
+    });
+
+    if (errors.length > 0) {
+        return { valid: false, errors, warnings };
+    }
+
+    return { valid: true, errors: [], warnings };
+}
+
 
 
 /**

@@ -57,7 +57,7 @@ import { fetchContentJSON } from '../utils/contentApi';
 import { fetchCompletionMap, invalidateCompletionCache } from '../services/attemptStatusService';
 import { requireTenant } from '../utils/tenant';
 import { RESUMABLE_STATES, ATTEMPT_STATES } from '../services/attemptStateMachine';
-import { validateAssessmentPayload, validateTestDoc } from '../utils/assessmentValidator';
+import { validateAssessmentPayload, validateTestDoc, validateMSASections } from '../utils/assessmentValidator';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -1151,10 +1151,22 @@ const StudentDashboard = () => {
 
       // ── MSA: sections carry their own cdnUrls — no top-level JSON needed ────
       if (assessment.isMultiSection || assessment.type === 'MSA' || assessment.type === 'msa') {
-        // MSA-specific: must have at least one section configured
+        // ── MSA: run per-section configuration validator ─────────────────────
+        // Returns specific errors per section (missing cdnUrl, invalid duration, etc.)
+        // rather than a generic "mismatch" message.
         const sections = assessment.sections || [];
-        if (sections.length === 0) {
-          throw new Error('MSA configuration error: assessment has no sections. Contact your administrator.');
+        const msaCheck = validateMSASections(sections, {
+          id: assessment.id,
+          name: assessment.name || assessment.slug,
+        });
+        if (!msaCheck.valid) {
+          console.error('[Launch] validateMSASections FAILED:', msaCheck.errors);
+          throw new Error(
+            `Assessment configuration error:\n${msaCheck.errors.join('\n')}`
+          );
+        }
+        if (msaCheck.warnings?.length) {
+          console.warn('[Launch] validateMSASections warnings:', msaCheck.warnings);
         }
         sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
         sessionStorage.setItem('msaCourseCtx', JSON.stringify({
@@ -1245,8 +1257,10 @@ const StudentDashboard = () => {
 
         collectIds(assessment.questionIds);
         collectIds(assessment.questions);
+        collectIds(assessment.challenges); // Admin Hub StaffCodingCreator format
         collectIds(testData.questionIds);
         collectIds(testData.questions);
+        collectIds(testData.challenges);   // Admin Hub format in CDN JSON
 
         questionIds = [...new Set(questionIds)].filter(Boolean);
 
@@ -1266,14 +1280,16 @@ const StudentDashboard = () => {
           const addInline = (src) => {
             if (Array.isArray(src)) {
               src.forEach(item => {
-                if (item && typeof item === 'object' && (item.id || item.questionId)) {
+                if (item && typeof item === 'object' && (item.id || item.questionId || item.title || item.problemStatement)) {
                   inline.push(item);
                 }
               });
             }
           };
           addInline(assessment.questions);
+          addInline(assessment.challenges); // Admin Hub StaffCodingCreator format
           addInline(testData.questions);
+          addInline(testData.challenges);   // Admin Hub format in CDN JSON
           resolvedQuestions = inline;
         }
 

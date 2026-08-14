@@ -239,10 +239,14 @@ const ProctoringEngine = ({
   const sequenceInProgressRef = useRef(false);
 
   const [violationCount, setViolationCount] = useState(() => {
-    if (testID && studentID) {
-      const cached = getViolations(testID, studentID);
-      return cached.violationCount || 0;
-    }
+    // Guarded: proctorCache is a plain localStorage utility — no async deps.
+    // The try/catch protects against circular-import TDZ races in ESM bundlers.
+    try {
+      if (testID && studentID) {
+        const cached = getViolations(testID, studentID);
+        return (cached && typeof cached.violationCount === 'number') ? cached.violationCount : 0;
+      }
+    } catch (_) {}
     return 0;
   });
   const [isInitialized, setIsInitialized] = useState(false);
@@ -258,21 +262,27 @@ const ProctoringEngine = ({
   const onReadyRef = useRef(onReady);
 
   useEffect(() => {
-    if (testID && studentID) {
-      const cached = getViolations(testID, studentID);
-      const count = cached.violationCount || 0;
-      if (count > 0) {
-        setViolationCount(count);
-        violationCountRef.current = count;
-        if (maxViolations > 0 && count >= maxViolations && onAutoSubmitRef.current) {
-          console.warn(`[ProctoringEngine] Cached violation count (${count}) already meets limit (${maxViolations}). Auto-submitting...`);
-          setTimeout(() => {
-            if (onAutoSubmitRef.current) {
-              onAutoSubmitRef.current({ reason: 'proctoring_violations', violationCount: count, violations: cached.violations });
-            }
-          }, 1000);
+    // Guarded: wrap in try/catch to prevent ESM TDZ or localStorage errors from
+    // crashing the effect and triggering the React ErrorBoundary.
+    try {
+      if (testID && studentID) {
+        const cached = getViolations(testID, studentID);
+        const count = (cached && typeof cached.violationCount === 'number') ? cached.violationCount : 0;
+        if (count > 0) {
+          setViolationCount(count);
+          violationCountRef.current = count;
+          if (maxViolations > 0 && count >= maxViolations && onAutoSubmitRef.current) {
+            console.warn(`[ProctoringEngine] Cached violation count (${count}) already meets limit (${maxViolations}). Auto-submitting...`);
+            setTimeout(() => {
+              if (onAutoSubmitRef.current) {
+                onAutoSubmitRef.current({ reason: 'proctoring_violations', violationCount: count, violations: cached.violations || [] });
+              }
+            }, 1000);
+          }
         }
       }
+    } catch (err) {
+      console.warn('[ProctoringEngine] Could not restore cached violation count:', err);
     }
   }, [testID, studentID, maxViolations]);
 

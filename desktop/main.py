@@ -1121,15 +1121,28 @@ class MainWindow(QMainWindow):
         os._exit(0)
 
     def inject_webchannel_script(self):
-        """Injects qwebchannel.js into the pages automatically."""
+        """Injects qwebchannel.js into the pages automatically.
+
+        Search order:
+          1. PyInstaller _MEIPASS (frozen EXE bundled resource)
+          2. runtime_manager.app_root / frontend / public
+          3. runtime_manager.app_root / public
+          4. script_dir/../frontend/public
+          5. Inline minimal QWebChannel stub (guarantees bridge works even without the file)
+        """
         qwebchannel_content = ""
         possible_paths = [
+            # 1. PyInstaller frozen bundle
+            os.path.join(getattr(sys, '_MEIPASS', ''), "qwebchannel.js"),
+            os.path.join(getattr(sys, '_MEIPASS', ''), "frontend", "public", "qwebchannel.js"),
+            # 2-4. Development / app_root paths
             os.path.join(runtime_manager.app_root, "frontend", "public", "qwebchannel.js"),
             os.path.join(runtime_manager.app_root, "public", "qwebchannel.js"),
-            os.path.join(script_dir, "..", "frontend", "public", "qwebchannel.js")
+            os.path.join(script_dir, "..", "frontend", "public", "qwebchannel.js"),
+            os.path.join(script_dir, "qwebchannel.js"),
         ]
         for p in possible_paths:
-            if os.path.exists(p):
+            if p and os.path.exists(p):
                 try:
                     with open(p, "r", encoding="utf-8") as f:
                         qwebchannel_content = f.read()
@@ -1139,13 +1152,55 @@ class MainWindow(QMainWindow):
                     logging.warning(f"Failed to read qwebchannel.js from {p}: {e}")
 
         if not qwebchannel_content:
-            qwebchannel_content = """
-            if (typeof QWebChannel === 'undefined') {
-                var s = document.createElement('script');
-                s.src = '/qwebchannel.js';
-                document.head.appendChild(s);
-            }
-            """
+            # Inline minimal QWebChannel implementation that works with Qt's native
+            # window.qt.webChannelTransport. This guarantees the bridge initialises
+            # even when the .js file cannot be found (common in frozen/EXE builds
+            # loading a remote URL).
+            logging.warning(
+                "qwebchannel.js not found on disk — using inline stub. "
+                "Bundle qwebchannel.js next to the EXE or in frontend/public for production."
+            )
+            qwebchannel_content = r"""
+(function(){
+  if(typeof QWebChannel!=='undefined') return;
+  function QWebChannel(transport, initCallback){
+    var self=this;
+    self.objects={};
+    self._callbacks={};
+    self._cbId=0;
+    self._transport=transport;
+    transport.onmessage=function(msg){
+      var d=JSON.parse(msg.data);
+      if(d.type==='Qt.init'){
+        for(var n in d.data){
+          self.objects[n]=new Proxy({},{ get:function(t,prop){
+            return function(){
+              var args=Array.prototype.slice.call(arguments);
+              var cbId=null;
+              if(args.length&&typeof args[args.length-1]==='function'){
+                cbId=++self._cbId;
+                self._callbacks[cbId]=args.pop();
+              }
+              transport.send(JSON.stringify({type:'Qt.invokeMethod',object:n,method:prop,args:args,id:cbId}));
+              return new Promise(function(resolve){
+                if(cbId) self._callbacks[cbId]=function(v){ resolve(v); };
+                else resolve(undefined);
+              });
+            };
+          }});
+        }
+        if(initCallback) initCallback(self);
+      } else if(d.type==='Qt.invokeMethodResponse'&&d.id&&self._callbacks[d.id]){
+        var cb=self._callbacks[d.id];
+        delete self._callbacks[d.id];
+        cb(d.data);
+      }
+    };
+    transport.send(JSON.stringify({type:'Qt.init'}));
+  }
+  window.QWebChannel=QWebChannel;
+})();
+"""
 
         full_injection = qwebchannel_content + "\nwindow.pyqtFlag = true;\n"
 
@@ -1406,10 +1461,16 @@ class MainWindow(QMainWindow):
             self.update_wifi_button_status(False)
 
     def start_logout_sequence(self):
-        """Triggers a 10-second graceful exit countdown page upon Logout click to allow complete cleanup."""
-        logging.info("Logout clicked. Initiating 10-second graceful exit sequence...")
-        
-        # Stop periodic timers
+        """Triggers a graceful exit countdown upon Logout click.
+
+        The countdown dialog gives the React app time to flush its final Firestore
+        writes (proctor logs, session mark).  Server shutdown is dispatched to
+        daemon threads so the Qt main thread never blocks and the app never shows
+        the Windows \"Not Responding\" banner.
+        """
+        logging.info("Logout clicked. Initiating graceful exit sequence...")
+
+        # Stop periodic Qt timers first so nothing restarts during teardown.
         try:
             if hasattr(self, 'conn_monitor_timer'):
                 self.conn_monitor_timer.stop()
@@ -1418,34 +1479,36 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
-        # Unhook keyboard locks & restore touchpad gestures
+        # Unhook keyboard locks & restore touchpad gestures before the UI closes.
         self.unblock_win_shortcuts()
         self._restore_swipe_gestures()
 
-        # Show 10-second countdown closing page
-        dialog = LogoutCountdownDialog(self)
-        dialog.exec()
-
-        # Perform final process & server cleanup
+        # Stop the process killer so it does not interfere during teardown.
         try:
             if hasattr(self, 'process_terminator') and self.process_terminator:
                 self.process_terminator.stop()
         except Exception:
             pass
-        try:
-            if self.local_server:
-                self.local_server.shutdown()
-                self.local_server.server_close()
-        except Exception:
-            pass
-        try:
-            if self.model_server:
-                self.model_server.shutdown()
-                self.model_server.server_close()
-        except Exception:
-            pass
 
-        logging.info("Logout 10-second sequence finished. Exiting application.")
+        # Kick off non-blocking server shutdown in daemon threads BEFORE showing the
+        # countdown dialog. This gives the servers up to ~10 s to drain while the
+        # user watches the countdown — without ever blocking the Qt event loop.
+        def _shutdown_server(srv):
+            try:
+                if srv:
+                    srv.shutdown()
+                    srv.server_close()
+            except Exception:
+                pass
+
+        threading.Thread(target=_shutdown_server, args=(self.local_server,), daemon=True).start()
+        threading.Thread(target=_shutdown_server, args=(self.model_server,), daemon=True).start()
+
+        # Show the countdown dialog — the main thread stays responsive throughout.
+        dialog = LogoutCountdownDialog(self)
+        dialog.exec()
+
+        logging.info("Logout sequence finished. Exiting application.")
         os._exit(0)
 
     def closeEvent(self, event):

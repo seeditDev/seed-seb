@@ -2,7 +2,6 @@ import { db } from '../firebase-config';
 import {
     doc,
     setDoc,
-    updateDoc,
     serverTimestamp,
     collection,
     query,
@@ -211,6 +210,11 @@ class TrackingService {
         // Do not burn a write (or credit idle time) while the window is hidden.
         if (this.isHidden()) return;
 
+        // Guard: skip Firestore writes when not authenticated.
+        // Covers the case where anonymous auth is disabled in the Firebase project.
+        const { auth } = await import('../firebase-config').catch(() => ({ auth: null }));
+        if (!auth?.currentUser) return;
+
         const now = timeService.now();
         if (this.lastVisibleAt) {
             this.visibleSinceLastBeat += Math.max(0, Math.floor((now - this.lastVisibleAt) / 1000));
@@ -228,14 +232,16 @@ class TrackingService {
         const sessionDuration = Math.floor((now - this.sessionStartTime) / 1000);
 
         try {
-            // v2: update canonical livePresence session doc only.
+            // v2: use setDoc+merge instead of updateDoc so this is safe even when
+            // the session doc was never created (e.g. setDoc in startTracking was
+            // skipped because auth.currentUser was null at that point).
             // LiveUsers legacy heartbeat writes are removed — rules deny them.
-            await updateDoc(sessionRef, {
+            await setDoc(sessionRef, {
                 lastHeartbeatAt: serverTimestamp(),
                 page: typeof window !== 'undefined' ? window.location.pathname : '/',
                 sessionDurationSeconds: sessionDuration,
                 isOnline: true,
-            });
+            }, { merge: true });
         } catch (error) {
             // Put the time back so it is not silently lost on a transient failure.
             this.visibleSinceLastBeat += visibleSeconds;
@@ -265,15 +271,20 @@ class TrackingService {
 
         if (!sessionRef) return;
 
-        // v2: mark canonical livePresence session offline.
+        // Guard: skip Firestore writes when not authenticated.
+        const { auth } = await import('../firebase-config').catch(() => ({ auth: null }));
+        if (!auth?.currentUser) return;
+
+        // v2: mark canonical livePresence session offline using setDoc+merge
+        // to be safe if the initial setDoc was never executed (auth was null at login time).
         // LiveUsers write removed — rules deny it and it caused silent errors on logout.
         try {
-            await updateDoc(sessionRef, {
+            await setDoc(sessionRef, {
                 isOnline: false,
                 disconnectedAt: serverTimestamp(),
                 sessionDurationSeconds: sessionDuration,
                 ...(trailing > 0 ? { finalVisibleSeconds: trailing } : {}),
-            });
+            }, { merge: true });
         } catch (error) {
             console.error('Error stopping tracking:', error);
         }

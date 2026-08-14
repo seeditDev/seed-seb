@@ -639,8 +639,30 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
 // Uses the real CodingAssessmentPage in embedded mode for full feature parity.
 
 const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, proctoringData, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
+  // Normalize all possible coding content field names into a single `questions` array.
+  // Admin Hub (StaffCodingCreator) uses `challenges[]`.
+  // CDN JSON may use `codingQuestions[]`, `questions[]`, or `items[]`.
+  // This guard ensures CodingAssessmentPage never receives an empty questions array
+  // when the content exists under a different field name.
+  const resolvedQuestions = (() => {
+    if (Array.isArray(sectionData?.questions) && sectionData.questions.length > 0) {
+      return sectionData.questions;
+    }
+    if (Array.isArray(sectionData?.challenges) && sectionData.challenges.length > 0) {
+      return sectionData.challenges;
+    }
+    if (Array.isArray(sectionData?.codingQuestions) && sectionData.codingQuestions.length > 0) {
+      return sectionData.codingQuestions;
+    }
+    if (Array.isArray(sectionData?.items) && sectionData.items.length > 0) {
+      return sectionData.items;
+    }
+    return [];
+  })();
+
   const testData = {
-    questions: sectionData?.questions || []
+    ...sectionData,
+    questions: resolvedQuestions
   };
 
   const embeddedSettings = {
@@ -784,8 +806,11 @@ const MultiSectionAssessment = () => {
         .reduce((acc, sec) => acc.concat(sec.data.questions), []);
 
       const aggregatedCoding = Object.values(examResults)
-        .filter(sec => sec.type === 'coding' && sec.data?.coding)
-        .reduce((acc, sec) => acc.concat(sec.data.coding), []);
+        .filter(sec => sec.type === 'coding')
+        // Coding sections store resolved questions in .data.questions (normalized by processData).
+        // Fall back to .data.coding for any legacy result format that used the old field name.
+        .filter(sec => sec.data?.questions?.length || sec.data?.coding?.length)
+        .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), []);
 
       const totalMarksSum = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMarks || s.data?.totalQuestions || 0), 0);
 
