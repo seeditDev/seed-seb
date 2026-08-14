@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 
 # Disable Chromium sandbox to allow loading dependencies/runtimes in secure layouts
@@ -61,7 +61,7 @@ logging.info("Application starting up...")
 # App version
 CURRENT_VERSION = "1.0.4"
 
-# ── Binary Integrity Check ────────────────────────────────────────────────────
+# â”€â”€ Binary Integrity Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Computes SHA-256 hash of the running EXE and validates it against the server.
 # Even if a student has admin rights and modifies the EXE, the server will
 # reject their session because the hash won't match the official build.
@@ -95,10 +95,10 @@ def verify_binary_integrity():
     - Compute SHA-256 of the running EXE.
     - Query Supabase app_build_hashes table for a row with this hash
       AND is_active = true AND version = CURRENT_VERSION.
-    - If the row EXISTS  → valid build, allow launch.
-    - If the row is MISSING → hash was revoked or never registered → BLOCK.
-    - If Supabase is UNREACHABLE (network error) → fail-open (offline grace).
-    - If not running as a compiled exe (no sys.executable path) → skip check.
+    - If the row EXISTS  â†’ valid build, allow launch.
+    - If the row is MISSING â†’ hash was revoked or never registered â†’ BLOCK.
+    - If Supabase is UNREACHABLE (network error) â†’ fail-open (offline grace).
+    - If not running as a compiled exe (no sys.executable path) â†’ skip check.
     """
     exe_hash = compute_exe_hash()
     if not exe_hash:
@@ -107,7 +107,7 @@ def verify_binary_integrity():
 
     logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (validating against Supabase)")
 
-    # ── Supabase direct REST query ────────────────────────────────────────────
+    # â”€â”€ Supabase direct REST query â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     SUPABASE_URL     = "https://iygqntndsgiysvibqjyw.supabase.co"
     SUPABASE_ANON_KEY = "sb_publishable_t3I55wzxcJI5owngYx0A4w_oCLVZvq7"
 
@@ -131,11 +131,11 @@ def verify_binary_integrity():
         if resp.status_code == 200:
             rows = resp.json()
             if rows:
-                # Hash found and active — legitimate build
+                # Hash found and active â€” legitimate build
                 logging.info("Binary integrity check PASSED (hash verified in Supabase).")
                 return True
             else:
-                # Hash not found or revoked — tampered / outdated binary
+                # Hash not found or revoked â€” tampered / outdated binary
                 logging.error(
                     f"INTEGRITY VIOLATION: Hash {exe_hash[:16]}... not found in Supabase "
                     f"(revoked or unregistered binary). Version={CURRENT_VERSION}"
@@ -143,16 +143,16 @@ def verify_binary_integrity():
                 return False
 
         else:
-            # Supabase responded with an unexpected status — fail open to avoid
+            # Supabase responded with an unexpected status â€” fail open to avoid
             # blocking students during a Supabase outage.
             logging.warning(
-                f"Integrity check: Supabase returned HTTP {resp.status_code} — "
+                f"Integrity check: Supabase returned HTTP {resp.status_code} â€” "
                 f"failing open to preserve availability."
             )
             return True
 
     except Exception as e:
-        # Network unreachable — fail open so offline / poor-connectivity students
+        # Network unreachable â€” fail open so offline / poor-connectivity students
         # are not locked out. Revoked builds will be blocked on next online check.
         logging.info(f"Integrity check skipped (Supabase unreachable): {e}")
         return True
@@ -292,7 +292,7 @@ class StyledJSDialog(QDialog):
 
         # Icon + Title row
         title_row = QHBoxLayout()
-        icon = QLabel("🛡️")
+        icon = QLabel("ðŸ›¡ï¸")
         icon.setStyleSheet("font-size: 20px; background: transparent; border: none;")
         title_lbl = QLabel(title)
         title_lbl.setObjectName("titleLabel")
@@ -313,10 +313,10 @@ class StyledJSDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         if confirm_mode:
-            no_btn = QPushButton("✕  No")
+            no_btn = QPushButton("âœ•  No")
             no_btn.setObjectName("noBtn")
             no_btn.clicked.connect(self.reject)
-            yes_btn = QPushButton("✓  Yes")
+            yes_btn = QPushButton("âœ“  Yes")
             yes_btn.setObjectName("yesBtn")
             yes_btn.clicked.connect(self.accept)
             btn_row.addWidget(no_btn)
@@ -385,7 +385,7 @@ class PreLaunchDialog(QDialog):
         self.camera_check_passed = False
         self.internet_check_passed = False
         self.mic_check_passed = False        # warning-only (non-blocking)
-        self.debugger_check_passed = True    # must pass — blocks launch if debugger found
+        self.debugger_check_passed = True    # must pass â€” blocks launch if debugger found
         
         self.drag_position = None
         self.init_ui()
@@ -413,7 +413,7 @@ class PreLaunchDialog(QDialog):
         
         # Title
         title_layout = QHBoxLayout()
-        logo_label = QLabel("🛡️")
+        logo_label = QLabel("ðŸ›¡ï¸")
         logo_label.setStyleSheet("font-size: 28px; border: none; background: transparent;")
         
         title = QLabel("SEED-IT Assessment Portal")
@@ -438,7 +438,7 @@ class PreLaunchDialog(QDialog):
         warning_layout = QHBoxLayout(self.warning_banner)
         warning_layout.setContentsMargins(14, 12, 14, 12)
         
-        warning_text = QLabel("⚠️ <b>System Check:</b> Secure Exam Proctoring is enabled. Background applications, swipe gestures, and system shortcuts will be locked during the assessment.")
+        warning_text = QLabel("âš ï¸ <b>System Check:</b> Secure Exam Proctoring is enabled. Background applications, swipe gestures, and system shortcuts will be locked during the assessment.")
         warning_text.setWordWrap(True)
         warning_text.setStyleSheet("color: #fca5a5; font-size: 12px; line-height: 1.4; border: none; background: transparent;")
         warning_layout.addWidget(warning_text)
@@ -458,23 +458,23 @@ class PreLaunchDialog(QDialog):
         status_layout.setContentsMargins(20, 18, 20, 18)
         status_layout.setSpacing(14)
         
-        self.version_label = QLabel("⏳ Verifying application version...")
+        self.version_label = QLabel("â³ Verifying application version...")
         self.version_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.version_label)
         
-        self.camera_label = QLabel("⏳ Checking camera access...")
+        self.camera_label = QLabel("â³ Checking camera access...")
         self.camera_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.camera_label)
         
-        self.mic_label = QLabel("⏳ Checking microphone access...")
+        self.mic_label = QLabel("â³ Checking microphone access...")
         self.mic_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.mic_label)
         
-        self.internet_label = QLabel("⏳ Verifying internet connection...")
+        self.internet_label = QLabel("â³ Verifying internet connection...")
         self.internet_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.internet_label)
         
-        self.debugger_label = QLabel("⏳ Scanning for unauthorized processes...")
+        self.debugger_label = QLabel("â³ Scanning for unauthorized processes...")
         self.debugger_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.debugger_label)
         
@@ -503,7 +503,7 @@ class PreLaunchDialog(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(12)
         
-        self.close_button = QPushButton("✖ Close")
+        self.close_button = QPushButton("âœ– Close")
         self.close_button.setStyleSheet("""
             QPushButton {
                 background-color: #334155;
@@ -581,7 +581,7 @@ class PreLaunchDialog(QDialog):
         if self.internet_check_passed:
             self.check_version()
         else:
-            self.version_label.setText("❌ <b>Application Version:</b> Check skipped (no internet)")
+            self.version_label.setText("âŒ <b>Application Version:</b> Check skipped (no internet)")
             self.version_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.update_launch_button()
@@ -591,16 +591,16 @@ class PreLaunchDialog(QDialog):
             r = requests.get("https://www.google.com", timeout=5)
             if r.status_code == 200:
                 self.internet_check_passed = True
-                self.internet_label.setText("✅ <b>Internet Connection:</b> Active & Stable")
+                self.internet_label.setText("âœ… <b>Internet Connection:</b> Active & Stable")
                 self.internet_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
             else:
                 self.internet_check_passed = False
-                self.internet_label.setText("❌ <b>Internet Connection:</b> Limited connection")
+                self.internet_label.setText("âŒ <b>Internet Connection:</b> Limited connection")
                 self.internet_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         except Exception as e:
             self.internet_check_passed = False
-            self.internet_label.setText("❌ <b>Internet Connection:</b> Connection failed")
+            self.internet_label.setText("âŒ <b>Internet Connection:</b> Connection failed")
             self.internet_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
 
     def check_camera(self):
@@ -608,21 +608,21 @@ class PreLaunchDialog(QDialog):
             cap = cv2.VideoCapture(0)
             if cap.isOpened():
                 self.camera_check_passed = True
-                self.camera_label.setText("✅ <b>Camera Access:</b> Ready & Available")
+                self.camera_label.setText("âœ… <b>Camera Access:</b> Ready & Available")
                 self.camera_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
                 cap.release()
             else:
                 self.camera_check_passed = False
-                self.camera_label.setText("❌ <b>Camera Access:</b> No camera detected")
+                self.camera_label.setText("âŒ <b>Camera Access:</b> No camera detected")
                 self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         except Exception as e:
             self.camera_check_passed = False
-            self.camera_label.setText("❌ <b>Camera Access:</b> Permission denied or error")
+            self.camera_label.setText("âŒ <b>Camera Access:</b> Permission denied or error")
             self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
 
     def check_microphone(self):
-        """Check if a microphone is accessible. Warning-only — does not block launch."""
+        """Check if a microphone is accessible. Warning-only â€” does not block launch."""
         mic_found = False
         try:
             # Try pyaudio first
@@ -647,10 +647,10 @@ class PreLaunchDialog(QDialog):
 
         self.mic_check_passed = True  # always non-blocking
         if mic_found:
-            self.mic_label.setText("✅ <b>Microphone:</b> Detected & Ready")
+            self.mic_label.setText("âœ… <b>Microphone:</b> Detected & Ready")
             self.mic_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         else:
-            self.mic_label.setText("⚠️ <b>Microphone:</b> Not detected (audio proctoring may be limited)")
+            self.mic_label.setText("âš ï¸ <b>Microphone:</b> Not detected (audio proctoring may be limited)")
             self.mic_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -658,7 +658,7 @@ class PreLaunchDialog(QDialog):
         """Scan for debuggers attached to this process and kill any FORBIDDEN_PROCESSES already running."""
         threats_found = []
 
-        # 1. IsDebuggerPresent — block if debugger is attached to this very process
+        # 1. IsDebuggerPresent â€” block if debugger is attached to this very process
         try:
             import ctypes
             if ctypes.windll.kernel32.IsDebuggerPresent():
@@ -694,7 +694,7 @@ class PreLaunchDialog(QDialog):
 
         if threats_found:
             self.debugger_check_passed = False
-            self.debugger_label.setText(f"🛡️ <b>Security Scan:</b> Debugger detected ({threats_found[0]})")
+            self.debugger_label.setText(f"ðŸ›¡ï¸ <b>Security Scan:</b> Debugger detected ({threats_found[0]})")
             self.debugger_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             self.show_error('Debugger detected. Please close all debugging tools and restart.')
         else:
@@ -702,10 +702,10 @@ class PreLaunchDialog(QDialog):
             if killed:
                 unique_killed = list(set(killed))
                 detail = ', '.join(unique_killed[:3])
-                self.debugger_label.setText(f"✅ <b>Security Scan:</b> Cleaned background apps ({detail})")
+                self.debugger_label.setText(f"âœ… <b>Security Scan:</b> Cleaned background apps ({detail})")
                 self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             else:
-                self.debugger_label.setText("✅ <b>Security Scan:</b> System secure (No threats)")
+                self.debugger_label.setText("âœ… <b>Security Scan:</b> System secure (No threats)")
                 self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -723,28 +723,28 @@ class PreLaunchDialog(QDialog):
                     if version_id:
                         if version_id == CURRENT_VERSION:
                             self.version_check_passed = True
-                            self.version_label.setText(f"✅ <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
+                            self.version_label.setText(f"âœ… <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
                             self.version_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                         else:
                             self.version_check_passed = False
-                            self.version_label.setText(f"❌ <b>Application Version:</b> Outdated (v{CURRENT_VERSION} -> v{version_id})")
+                            self.version_label.setText(f"âŒ <b>Application Version:</b> Outdated (v{CURRENT_VERSION} -> v{version_id})")
                             self.version_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                             self.show_error(f"Please update application to version {version_id}")
                     else:
                         self.version_check_passed = True
-                        self.version_label.setText(f"⚠️ <b>Application Version:</b> v{CURRENT_VERSION} (No remote version config)")
+                        self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (No remote version config)")
                         self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                 else:
                     self.version_check_passed = True
-                    self.version_label.setText(f"⚠️ <b>Application Version:</b> v{CURRENT_VERSION} (No documents found)")
+                    self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (No documents found)")
                     self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             else:
                 self.version_check_passed = True
-                self.version_label.setText(f"⚠️ <b>Application Version:</b> v{CURRENT_VERSION} (Check bypassed)")
+                self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (Check bypassed)")
                 self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         except Exception as e:
             self.version_check_passed = True
-            self.version_label.setText(f"⚠️ <b>Application Version:</b> v{CURRENT_VERSION} (Check failed)")
+            self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (Check failed)")
             self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -768,7 +768,7 @@ class PreLaunchDialog(QDialog):
             self.launch_button.setText(f"\u274c Cannot Launch ({', '.join(failed)} required)")
 
     def show_error(self, message):
-        self.error_label.setText(f"⚠️ {message}")
+        self.error_label.setText(f"âš ï¸ {message}")
         self.error_label.show()
 
 
@@ -1032,24 +1032,24 @@ class MainWindow(QMainWindow):
         nav_layout.setSpacing(10)
 
         # Back / Forward / Refresh buttons
-        back_btn = QPushButton("← Back")
+        back_btn = QPushButton("â† Back")
         back_btn.clicked.connect(self.web_view.back)
-        forward_btn = QPushButton("Forward →")
+        forward_btn = QPushButton("Forward â†’")
         forward_btn.clicked.connect(self.web_view.forward)
-        refresh_btn = QPushButton("↻ Refresh")
+        refresh_btn = QPushButton("â†» Refresh")
         refresh_btn.clicked.connect(self.web_view.reload)
 
         # Title Logo
-        logo_label = QLabel("🛡️ SEED-IT Secure Portal")
+        logo_label = QLabel("ðŸ›¡ï¸ SEED-IT Secure Portal")
         logo_label.setStyleSheet("color: white; font-weight: bold; font-size: 14px; margin-right: 15px;")
 
         # Wi-Fi Quick Settings Button (header near Logout)
-        wifi_btn = QPushButton("📶 Wi-Fi")
+        wifi_btn = QPushButton("ðŸ“¶ Wi-Fi")
         wifi_btn.setObjectName("wifiBtn")
         wifi_btn.clicked.connect(self.toggle_wifi_panel)
 
         # Logout Button (Triggers 10-second countdown closing page)
-        logout_btn = QPushButton("🚪 Logout")
+        logout_btn = QPushButton("ðŸšª Logout")
         logout_btn.setObjectName("logoutBtn")
         logout_btn.clicked.connect(self.start_logout_sequence)
 
@@ -1152,8 +1152,12 @@ class MainWindow(QMainWindow):
                     logging.warning(f"Failed to read qwebchannel.js from {p}: {e}")
 
         if not qwebchannel_content:
+            # Inline minimal QWebChannel implementation that works with Qt's native
+            # window.qt.webChannelTransport. This guarantees the bridge initialises
+            # even when the .js file cannot be found (common in frozen/EXE builds
+            # loading a remote URL).
             logging.warning(
-                "qwebchannel.js not found on disk — using inline stub. "
+                "qwebchannel.js not found on disk â€” using inline stub. "
                 "Bundle qwebchannel.js next to the EXE or in frontend/public for production."
             )
             qwebchannel_content = r"""
@@ -1387,7 +1391,7 @@ class MainWindow(QMainWindow):
                 self.raise_()
                 self.activateWindow()
                 ctypes.windll.user32.SetForegroundWindow(hwnd)
-                logging.warning("[Security] Foreground window stolen — reclaiming focus.")
+                logging.warning("[Security] Foreground window stolen â€” reclaiming focus.")
         except Exception:
             pass
 
@@ -1419,7 +1423,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, 'wifi_btn'):
             return
         if is_connected:
-            self.wifi_btn.setText("📶 Wi-Fi")
+            self.wifi_btn.setText("ðŸ“¶ Wi-Fi")
             self.wifi_btn.setProperty("class", "")
             self.wifi_btn.setStyleSheet("""
                 QPushButton#wifiBtn {
@@ -1434,7 +1438,7 @@ class MainWindow(QMainWindow):
                 }
             """)
         else:
-            self.wifi_btn.setText("⚠️ Wi-Fi (Offline)")
+            self.wifi_btn.setText("âš ï¸ Wi-Fi (Offline)")
             self.wifi_btn.setStyleSheet("""
                 QPushButton#wifiBtn {
                     background-color: rgba(239, 68, 68, 0.15);
@@ -1457,38 +1461,30 @@ class MainWindow(QMainWindow):
             self.update_wifi_button_status(False)
 
     def start_logout_sequence(self):
-        """Triggers a graceful exit countdown upon Logout click.
+        """Immediate exit on Logout click. Servers are shut down in daemon threads."""
+        logging.info("Logout clicked. Exiting immediately.")
 
-        The countdown dialog gives the React app time to flush its final Firestore
-        writes (proctor logs, session mark).  Server shutdown is dispatched to
-        daemon threads so the Qt main thread never blocks and the app never shows
-        the Windows \"Not Responding\" banner.
-        """
-        logging.info("Logout clicked. Initiating graceful exit sequence...")
-
-        # Stop periodic Qt timers first so nothing restarts during teardown.
+        # Stop periodic Qt timers.
         try:
-            if hasattr(self, 'conn_monitor_timer'):
+            if hasattr(self, "conn_monitor_timer"):
                 self.conn_monitor_timer.stop()
-            if hasattr(self, 'vd_guard_timer'):
+            if hasattr(self, "vd_guard_timer"):
                 self.vd_guard_timer.stop()
         except Exception:
             pass
 
-        # Unhook keyboard locks & restore touchpad gestures before the UI closes.
+        # Unhook keyboard locks & restore touchpad gestures.
         self.unblock_win_shortcuts()
         self._restore_swipe_gestures()
 
-        # Stop the process killer so it does not interfere during teardown.
+        # Stop the process killer.
         try:
-            if hasattr(self, 'process_terminator') and self.process_terminator:
+            if hasattr(self, "process_terminator") and self.process_terminator:
                 self.process_terminator.stop()
         except Exception:
             pass
 
-        # Kick off non-blocking server shutdown in daemon threads BEFORE showing the
-        # countdown dialog. This gives the servers up to ~10 s to drain while the
-        # user watches the countdown — without ever blocking the Qt event loop.
+        # Shutdown servers in daemon threads (non-blocking).
         def _shutdown_server(srv):
             try:
                 if srv:
@@ -1500,11 +1496,20 @@ class MainWindow(QMainWindow):
         threading.Thread(target=_shutdown_server, args=(self.local_server,), daemon=True).start()
         threading.Thread(target=_shutdown_server, args=(self.model_server,), daemon=True).start()
 
-        # Show the countdown dialog — the main thread stays responsive throughout.
-        dialog = LogoutCountdownDialog(self)
-        dialog.exec()
+        os._exit(0)
+        def _shutdown_server(srv):
+            try:
+                if srv:
+                    srv.shutdown()
+                    srv.server_close()
+            except Exception:
+                pass
 
-        logging.info("Logout sequence finished. Exiting application.")
+        threading.Thread(target=_shutdown_server, args=(self.local_server,), daemon=True).start()
+        threading.Thread(target=_shutdown_server, args=(self.model_server,), daemon=True).start()
+
+        # Show the countdown dialog â€” the main thread stays responsive throughout.
+        logging.info("Logout: exiting immediately.")
         os._exit(0)
 
     def closeEvent(self, event):
@@ -1643,7 +1648,7 @@ class LogoutCountdownDialog(QDialog):
 
         # Header Title
         title_row = QHBoxLayout()
-        icon = QLabel("🚪")
+        icon = QLabel("ðŸšª")
         icon.setStyleSheet("font-size: 24px; background: transparent;")
         title = QLabel("Logging Out & Closing Application...", self)
         title.setObjectName("titleLabel")
@@ -1677,12 +1682,12 @@ class LogoutCountdownDialog(QDialog):
 
         # Bottom row with Exit Now button
         btn_row = QHBoxLayout()
-        status_info = QLabel("✨ Releasing hardware & network locks...", self)
+        status_info = QLabel("âœ¨ Releasing hardware & network locks...", self)
         status_info.setStyleSheet("color: #64748b; font-size: 12px; font-style: italic;")
         btn_row.addWidget(status_info)
         btn_row.addStretch()
 
-        exit_now_btn = QPushButton("Close Immediately ➔", self)
+        exit_now_btn = QPushButton("Close Immediately âž”", self)
         exit_now_btn.setObjectName("closeNowBtn")
         exit_now_btn.clicked.connect(self.accept)
         btn_row.addWidget(exit_now_btn)
@@ -1768,12 +1773,12 @@ class WindowsWifiPanel(QDialog):
 
         # Header Title Row
         header_row = QHBoxLayout()
-        wifi_title = QLabel("📶  Wi-Fi Networks", self)
+        wifi_title = QLabel("ðŸ“¶  Wi-Fi Networks", self)
         wifi_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #f8fafc;")
         header_row.addWidget(wifi_title)
         header_row.addStretch()
 
-        self.refresh_btn = QPushButton("🔄 Refresh", self)
+        self.refresh_btn = QPushButton("ðŸ”„ Refresh", self)
         self.refresh_btn.setObjectName("refreshBtn")
         self.refresh_btn.clicked.connect(self.refresh_networks)
         header_row.addWidget(self.refresh_btn)
@@ -1841,16 +1846,16 @@ class WindowsWifiPanel(QDialog):
             connected = False
 
         if connected:
-            self.status_lbl.setText("🟢 Connected to Internet")
+            self.status_lbl.setText("ðŸŸ¢ Connected to Internet")
             self.status_lbl.setStyleSheet("color: #10b981; font-weight: bold;")
         else:
-            self.status_lbl.setText("🔴 Disconnected — No Internet Access")
+            self.status_lbl.setText("ðŸ”´ Disconnected â€” No Internet Access")
             self.status_lbl.setStyleSheet("color: #ef4444; font-weight: bold;")
 
         wifis = get_available_wifis()
         if wifis:
             for w in wifis:
-                self.wifi_combo.addItem(f"📶 {w}")
+                self.wifi_combo.addItem(f"ðŸ“¶ {w}")
             self.msg_label.setText(f"Found {len(wifis)} networks nearby.")
             self.msg_label.setStyleSheet("color: #10b981; font-size: 12px;")
         else:
@@ -1865,7 +1870,7 @@ class WindowsWifiPanel(QDialog):
             self.msg_label.setStyleSheet("color: #ef4444; font-size: 12px;")
             return
 
-        ssid = selected_text.replace("📶 ", "").strip()
+        ssid = selected_text.replace("ðŸ“¶ ", "").strip()
         password = self.password_input.text()
 
         self.msg_label.setText(f"Connecting to {ssid}...")
@@ -1874,14 +1879,14 @@ class WindowsWifiPanel(QDialog):
 
         success = connect_to_wifi(ssid, password)
         if success:
-            self.msg_label.setText("✅ Connected successfully!")
+            self.msg_label.setText("âœ… Connected successfully!")
             self.msg_label.setStyleSheet("color: #10b981; font-size: 12px;")
-            self.status_lbl.setText("🟢 Connected to Internet")
+            self.status_lbl.setText("ðŸŸ¢ Connected to Internet")
             self.status_lbl.setStyleSheet("color: #10b981; font-weight: bold;")
             if self.parent() and hasattr(self.parent(), 'update_wifi_button_status'):
                 self.parent().update_wifi_button_status(True)
         else:
-            self.msg_label.setText("❌ Connection failed. Check password.")
+            self.msg_label.setText("âŒ Connection failed. Check password.")
             self.msg_label.setStyleSheet("color: #ef4444; font-size: 12px;")
 
 
@@ -1919,7 +1924,7 @@ class ExitConfirmDialog(QDialog):
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(20)
 
-        title = QLabel("🛡️ Exit SEED-SEB Sandbox")
+        title = QLabel("ðŸ›¡ï¸ Exit SEED-SEB Sandbox")
         title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f8fafc;")
         layout.addWidget(title)
 
@@ -1999,7 +2004,7 @@ class WifiSetupDialog(QDialog):
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(12)
 
-        title = QLabel("📶 Internet Connection Lost")
+        title = QLabel("ðŸ“¶ Internet Connection Lost")
         title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f59e0b;")
         layout.addWidget(title)
 
@@ -2030,7 +2035,7 @@ class WifiSetupDialog(QDialog):
         # Action buttons
         buttons = QHBoxLayout()
         
-        refresh_btn = QPushButton("🔄 Refresh List")
+        refresh_btn = QPushButton("ðŸ”„ Refresh List")
         refresh_btn.setStyleSheet("""
             background-color: #334155;
             color: #cbd5e1;
@@ -2073,12 +2078,12 @@ class WifiSetupDialog(QDialog):
         # Connect logic
         success = connect_to_wifi(ssid, password)
         if success:
-            self.status_label.setText("✅ Connected successfully!")
+            self.status_label.setText("âœ… Connected successfully!")
             QApplication.processEvents()
             time.sleep(1.5)
             self.accept()
         else:
-            self.status_label.setText("❌ Connection failed. Check password.")
+            self.status_label.setText("âŒ Connection failed. Check password.")
 
 
 def get_available_wifis():
@@ -2303,7 +2308,7 @@ def main():
     except Exception as e:
         pass
     
-    # 🔹 Show Pre-Launch System Check Dialog first
+    # ðŸ”¹ Show Pre-Launch System Check Dialog first
     prelaunch = PreLaunchDialog()
     result = prelaunch.exec()
     if result != QDialog.DialogCode.Accepted or not prelaunch.checks_passed:
@@ -2318,3 +2323,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

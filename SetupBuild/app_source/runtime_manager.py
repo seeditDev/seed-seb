@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import shutil
 
@@ -19,31 +19,13 @@ class RuntimeManager:
         self.resolve_paths()
 
     def get_app_root(self):
-        """Get the base path of the application dynamically based on execution context."""
-        exe_name = os.path.basename(sys.executable).lower()
-        is_frozen = getattr(sys, 'frozen', False) or exe_name not in ("python.exe", "pythonw.exe", "python3.exe", "python311.exe", "python314.exe")
-        
-        if is_frozen:
-            exec_dir = os.path.dirname(os.path.abspath(sys.executable))
-            if os.path.exists(os.path.join(exec_dir, "resources")):
-                return exec_dir
-            file_dir = os.path.dirname(os.path.abspath(__file__))
-            if os.path.exists(os.path.join(file_dir, "resources")):
-                return file_dir
-            parent_dir = os.path.dirname(exec_dir)
-            if os.path.exists(os.path.join(parent_dir, "resources")):
-                return parent_dir
-            file_parent = os.path.dirname(file_dir)
-            if os.path.exists(os.path.join(file_parent, "resources")):
-                return file_parent
-            return exec_dir
+        """Always returns the fixed SEED-SEB install root.
 
-        # Otherwise (during development), return parent of the desktop/app_source directory
-        file_dir = os.path.dirname(os.path.abspath(__file__))
-        if os.path.basename(file_dir) in ("desktop", "app_source"):
-            return os.path.dirname(file_dir)
-            
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        The installer always places the app at:
+            C:\Program Files (x86)\SEED-SEB
+        This is the only supported path -- no dynamic probing needed.
+        """
+        return r"C:\Program Files (x86)\SEED-SEB"
 
     def resolve_paths(self):
         """Set paths strictly to the portable runtimes inside resources/runtimes.
@@ -87,30 +69,24 @@ class RuntimeManager:
             print(f"  {lang}: {path} ({status})")
 
     def verify_resources(self):
-        """Verifies that all packaged local compilers are present in production/frozen mode."""
-        exe_name = os.path.basename(sys.executable).lower()
-        is_frozen = getattr(sys, 'frozen', False) or exe_name not in ("python.exe", "pythonw.exe")
-        
-        if not is_frozen:
-            return True
-            
+        """Verifies that all packaged local compilers are present.
+        Always checks -- no frozen/dev bypass."""
         required_binaries = [
             self.binaries.get("gcc"),
             self.binaries.get("javac"),
             self.binaries.get("python")
         ]
-        
+
         missing = []
         for path in required_binaries:
             if not path or not os.path.exists(path):
                 missing.append(str(path))
-                
+
         if missing:
             print(f"[RuntimeManager] ERROR: Missing compiled resources: {missing}")
             return False
-            
-        return True
 
+        return True
     def get_binary_path(self, binary_name):
         path = self.binaries.get(binary_name, binary_name)
         if path and os.path.exists(path):
@@ -157,3 +133,4 @@ class RuntimeManager:
 
 # Singleton instance
 runtime_manager = RuntimeManager()
+
