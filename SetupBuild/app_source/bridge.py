@@ -208,3 +208,11 @@ class DesktopBridge(QObject):
             print(f"[DesktopBridge] Error getting local model port: {e}")
         return 0
 
+    @pyqtSlot()
+    def endStudentSession(self):
+        """Cleans up ephemeral local session files on exam completion or logout."""
+        try:
+            self.engine.cleanup_student_session_data()
+        except Exception as e:
+            print(f"[DesktopBridge] Error ending student session: {e}")
+

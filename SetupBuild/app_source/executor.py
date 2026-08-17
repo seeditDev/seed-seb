@@ -204,16 +204,17 @@ class CodeExecutor:
         return self._run_process(run_cmd, run_dir, stdin, time_limit, env=env_run)
 
     def _run_process(self, cmd, run_dir, stdin, time_limit, env=None):
-        """Helper to spawn, feed stdin, enforce time limits, and clean process handles."""
+        """Helper to spawn, feed stdin, enforce time limits, and clean process handles and child trees."""
         stdout = ""
         stderr = ""
         exit_code = -1
         error_msg = None
         
         start_time = time.perf_counter()
+        job = None
         
         try:
-            # Hide command windows on Windows
+            # Hide command windows and break away from parent console if needed
             creationflags = 0x08000000 if sys.platform == "win32" else 0
             
             # Create process with redirected streams
@@ -228,11 +229,48 @@ class CodeExecutor:
                 creationflags=creationflags
             )
             
+            # Attach to Windows Job Object with KILL_ON_JOB_CLOSE
+            if sys.platform == "win32":
+                try:
+                    import ctypes
+                    from ctypes import wintypes
+                    kernel32 = ctypes.windll.kernel32
+                    job = kernel32.CreateJobObjectW(None, None)
+                    if job:
+                        class IO_COUNTERS(ctypes.Structure):
+                            _fields_ = [("R", ctypes.c_uint64), ("W", ctypes.c_uint64), ("O", ctypes.c_uint64),
+                                        ("RB", ctypes.c_uint64), ("WB", ctypes.c_uint64), ("OB", ctypes.c_uint64)]
+                        class BASIC_LIMITS(ctypes.Structure):
+                            _fields_ = [("PUser", ctypes.c_int64), ("JUser", ctypes.c_int64), ("LimitFlags", wintypes.DWORD),
+                                        ("MinWS", ctypes.c_size_t), ("MaxWS", ctypes.c_size_t), ("ActiveProc", wintypes.DWORD),
+                                        ("Affinity", ctypes.c_size_t), ("Priority", wintypes.DWORD), ("Sched", wintypes.DWORD)]
+                        class EXTENDED_LIMITS(ctypes.Structure):
+                            _fields_ = [("Basic", BASIC_LIMITS), ("Io", IO_COUNTERS),
+                                        ("PProcMem", ctypes.c_size_t), ("PJobMem", ctypes.c_size_t),
+                                        ("PeakProcMem", ctypes.c_size_t), ("PeakJobMem", ctypes.c_size_t)]
+                        
+                        limits = EXTENDED_LIMITS()
+                        limits.Basic.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+                        kernel32.SetInformationJobObject(job, 9, ctypes.byref(limits), ctypes.sizeof(limits))
+                        kernel32.AssignProcessToJobObject(job, int(proc._handle))
+                except Exception:
+                    pass
+            
             try:
                 stdout, stderr = proc.communicate(input=stdin, timeout=time_limit)
                 exit_code = proc.returncode
             except subprocess.TimeoutExpired:
-                # Terminate infinite loops
+                # Terminate process tree recursively
+                try:
+                    import psutil
+                    parent = psutil.Process(proc.pid)
+                    for child in parent.children(recursive=True):
+                        try:
+                            child.kill()
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
                 proc.kill()
                 stdout, stderr = proc.communicate() # Drain pipes after killing
                 exit_code = -9
@@ -240,6 +278,13 @@ class CodeExecutor:
                 
         except Exception as e:
             error_msg = f"Runtime execution error: {str(e)}"
+        finally:
+            if job and sys.platform == "win32":
+                try:
+                    import ctypes
+                    ctypes.windll.kernel32.CloseHandle(job)
+                except Exception:
+                    pass
             
         end_time = time.perf_counter()
         execution_time = end_time - start_time

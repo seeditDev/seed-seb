@@ -11,6 +11,9 @@ mkdir "app_source"
 if exist "..\desktop" (
     xcopy /E /I /Y "..\desktop" "app_source"
 )
+if not exist "app_source\SEED_Logo.ico" (
+    if exist "SEED_Logo.ico" copy /Y "SEED_Logo.ico" "app_source\SEED_Logo.ico"
+)
 
 :: Clean old build outputs
 if exist dist rmdir /s /q dist
@@ -20,7 +23,7 @@ if exist SEED-SEB.build rmdir /s /q SEED-SEB.build
 if exist SEED-SEB.dist rmdir /s /q SEED-SEB.dist
 
 echo Starting compilation of main.py (this might take several minutes)...
-py -3.11 -m nuitka --standalone --disable-console --windows-uac-admin --enable-plugin=pyqt6 --windows-icon-from-ico=app_source\SEED_Logo.ico --output-dir=dist --output-filename=SEED-SEB app_source\main.py
+py -3.11 -m nuitka --standalone --windows-console-mode=disable --windows-uac-admin --enable-plugin=pyqt6 --windows-icon-from-ico=app_source\SEED_Logo.ico --output-dir=dist --output-filename=SEED-SEB app_source\main.py
 
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Nuitka compilation failed.
