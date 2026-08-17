@@ -164,12 +164,12 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
             setIsLoading(true);
             setError(null);
 
-            console.log('👉 STARTING ASSESSMENT PROCESS - DEBUGGING INFO:');
+            console.log(' STARTING ASSESSMENT PROCESS - DEBUGGING INFO:');
             console.log('User object:', user);
 
             // First check if running in PyQt environment
             // For development, we'll log a warning instead of throwing an error
-            console.log('👉 Checking PyQt environment...');
+            console.log(' Checking PyQt environment...');
             console.log('isRunningInPyQt function returns:', isRunningInPyQt());
             console.log('window.pyqtFlag =', window.pyqtFlag);
             console.log('navigator.userAgent =', navigator.userAgent);
@@ -179,13 +179,13 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
 
                 // Development-only fallback
                 if (process.env.NODE_ENV === 'development') {
-                    console.log('👉 Development mode: proceeding with authentication check anyway');
+                    console.log(' Development mode: proceeding with authentication check anyway');
                 } else {
                     // In production, still enforce the PyQt requirement
                     throw new Error('Assessment environment initialization required.');
                 }
             } else {
-                console.log('👉 PyQt environment detected, proceeding normally');
+                console.log(' PyQt environment detected, proceeding normally');
             }
 
             // Log user info for debugging
@@ -198,27 +198,27 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
             }
 
             // Check for HackerRank authentication status using our helper function
-            console.log('👉 Checking HackerRank authentication status...');
+            console.log(' Checking HackerRank authentication status...');
             const isAuthenticated = checkHackerRankAuthentication();
             console.log('Authentication check result:', isAuthenticated);
 
             // If already authenticated, load assessment data
             if (isAuthenticated) {
-                console.log('👉 HackerRank authentication is complete, loading assessment data');
+                console.log(' HackerRank authentication is complete, loading assessment data');
                 setIsHackerRankAuthenticated(true);
                 await loadAssessmentData();
                 return;
             }
 
             // Not authenticated, redirect to HackerRank
-            console.log('👉 HackerRank authentication not complete, preparing to redirect to login');
+            console.log(' HackerRank authentication not complete, preparing to redirect to login');
 
             // The URL should be configured based on your environment
             const hackerRankAuthUrl = 'https://www.hackerrank.com/auth/login';
             console.log('HackerRank auth URL:', hackerRankAuthUrl);
 
             // Clear any existing auth flags before redirecting to ensure a clean start
-            console.log('👉 Clearing existing authentication flags before redirect');
+            console.log(' Clearing existing authentication flags before redirect');
             localStorage.removeItem('hackerRankAuth');
             sessionStorage.removeItem('hackerRankAuthInProgress');
             setIsHackerRankAuthenticated(false);
@@ -232,18 +232,18 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
             //    c. Set hackerRankAuthInProgress to 'true' in sessionStorage
             //    d. Navigate back to the SEED-IT dashboard
 
-            console.log('👉 Redirecting to HackerRank auth in PyQt environment');
+            console.log(' Redirecting to HackerRank auth in PyQt environment');
 
             // Redirect the current page to HackerRank - using a more reliable approach
             try {
                 // Create a more reliable way to handle the redirect
-                console.log('👉 Setting up redirect to:', hackerRankAuthUrl);
+                console.log(' Setting up redirect to:', hackerRankAuthUrl);
 
                 // Keep the loading state active
                 // The setTimeout ensures we show the loading animation for at least 1.5 seconds
                 // even if there are issues with the redirect
                 const redirectTimeout = setTimeout(() => {
-                    console.log('👉 EXECUTING REDIRECT NOW');
+                    console.log(' EXECUTING REDIRECT NOW');
 
                     // In some cases, directly assigning to location.href might be blocked
                     // Using location.replace as a more forceful alternative
@@ -257,7 +257,7 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                     // Backup approach - if neither method works, try opening in same tab
                     setTimeout(() => {
                         if (document.location.href !== hackerRankAuthUrl) {
-                            console.log('👉 Primary redirect methods failed, trying window.open');
+                            console.log(' Primary redirect methods failed, trying window.open');
                             window.open(hackerRankAuthUrl, '_self');
                         }
                     }, 500);
@@ -1093,7 +1093,7 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                                                                         <span className="module-name">{option.label}</span>
                                                                         {option.moduleData?.schedule && (
                                                                             <span className="schedule-indicator" title={option.scheduleInfo}>
-                                                                                📅
+                                                                                
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -1159,7 +1159,7 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                                                                     Validating...
                                                                 </>
                                                             ) : isPasskeyValidated ? (
-                                                                '✓ Validated'
+                                                                ' Validated'
                                                             ) : (
                                                                 'Validate'
                                                             )}
@@ -1167,7 +1167,7 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                                                     </div>
                                                     {(isPasskeyValidated || error) && (
                                                         <div className={`passkey-message ${isPasskeyValidated ? 'passkey-success' : 'passkey-error'}`}>
-                                                            {isPasskeyValidated ? '✓ Passkey validated successfully' : error}
+                                                            {isPasskeyValidated ? ' Passkey validated successfully' : error}
                                                         </div>
                                                     )}
                                                 </div>

@@ -518,7 +518,7 @@ const GuestPortal = () => {
             <>
               <div style={S.title}>Guest Assessment Portal</div>
               <div style={S.subtitle}>No account required · Search your college to begin</div>
-              {error && <div style={S.error}>⚠ {error}</div>}
+              {error && <div style={S.error}> {error}</div>}
 
               <label style={S.label}>Your College</label>
               <div style={{ position: 'relative', marginBottom: '1rem' }}>
@@ -551,7 +551,7 @@ const GuestPortal = () => {
 
               {selectedCollege && (
                 <div style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '0.75rem', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '1.5rem' }}>🏫</span>
+                  <span style={{ fontSize: '1.5rem' }}></span>
                   <div>
                     <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: '0.9rem' }}>{selectedCollege.name}</div>
                     <div style={{ color: '#6366f1', fontSize: '0.78rem' }}>{selectedCollege.code} · {selectedCollege.city}</div>
@@ -560,7 +560,7 @@ const GuestPortal = () => {
               )}
 
               {gateLoading
-                ? <div style={{ textAlign: 'center', color: '#6366f1', fontSize: '0.85rem', padding: '0.5rem' }}>⏳ Checking access…</div>
+                ? <div style={{ textAlign: 'center', color: '#6366f1', fontSize: '0.85rem', padding: '0.5rem' }}> Checking access…</div>
                 : <button id="guest-college-btn" style={S.btn} onClick={handleCollegeContinue}>Continue →</button>
               }
               <button style={S.btnSecondary} onClick={() => navigate('/login')}>
@@ -576,7 +576,7 @@ const GuestPortal = () => {
               <div style={S.subtitle}>{selectedCollege?.name}</div>
 
               <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.08) 100%)', border: '1px solid rgba(99,102,241,0.35)', borderRadius: '1rem', padding: '1.5rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏫🔑</div>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}></div>
                 <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>{selectedCollege?.name}</div>
                 <div style={{ color: '#64748b', fontSize: '0.82rem' }}>
                   Enter your batch gate key to access your cohort's assessments.
@@ -597,10 +597,10 @@ const GuestPortal = () => {
                 autoComplete="off"
                 disabled={gateLoading}
               />
-              {gateError && <div style={{ ...S.error, marginTop: '-0.5rem' }}>⚠ {gateError}</div>}
+              {gateError && <div style={{ ...S.error, marginTop: '-0.5rem' }}> {gateError}</div>}
 
               {gateLoading
-                ? <div style={{ textAlign: 'center', color: '#6366f1', fontSize: '0.85rem', padding: '0.5rem' }}>⏳ Verifying…</div>
+                ? <div style={{ textAlign: 'center', color: '#6366f1', fontSize: '0.85rem', padding: '0.5rem' }}> Verifying…</div>
                 : <button id="guest-gate-btn" style={S.btn} onClick={handleGateSubmit}>Verify & Continue →</button>
               }
               <button style={S.btnSecondary} onClick={() => { setStep('college'); setGateInput(''); setGateError(''); }}>← Change College</button>
@@ -612,7 +612,7 @@ const GuestPortal = () => {
             <>
               <div style={S.title}>Your Details</div>
               <div style={S.subtitle}>{selectedCollege?.shortName || selectedCollege?.name} · All fields are required</div>
-              {error && <div style={S.error}>⚠ {error}</div>}
+              {error && <div style={S.error}> {error}</div>}
               <form onSubmit={handleDetailsSubmit}>
 
                 <label style={S.label}>Full Name *</label>
@@ -686,13 +686,13 @@ const GuestPortal = () => {
 
               {loadingTests && (
                 <div style={{ textAlign: 'center', color: '#6366f1', padding: '2rem', fontSize: '0.9rem' }}>
-                  ⏳ Loading assessments for your college…
+                   Loading assessments for your college…
                 </div>
               )}
 
               {!loadingTests && guestTests.length === 0 && (
                 <div style={{ textAlign: 'center', color: '#64748b', padding: '2rem', background: 'rgba(99,102,241,0.05)', borderRadius: '1rem', border: '1px dashed rgba(99,102,241,0.2)' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📋</div>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}></div>
                   <div style={{ fontWeight: 600, color: '#94a3b8' }}>No active assessments right now</div>
                   <div style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}>Check back later or contact your placement coordinator.</div>
                 </div>
@@ -710,14 +710,14 @@ const GuestPortal = () => {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
                         <span style={S.badge}>{(test.type || 'MCQ').toUpperCase()}</span>
-                        <span style={S.badgeGreen}>🔓 Guest</span>
+                        <span style={S.badgeGreen}> Guest</span>
                       </div>
                       <div style={S.assessmentTitle}>{test.name}</div>
                       <div style={S.assessmentMeta}>
-                        <span>⏱ {test.duration} min</span>
-                        {test.totalMarks > 0 && <span>📊 {test.totalMarks} marks</span>}
-                        {test.passkey && <span style={S.badge}>🔑 Passkey</span>}
-                        {test.proctored && <span style={S.badgeYellow}>🎥 Proctored</span>}
+                        <span> {test.duration} min</span>
+                        {test.totalMarks > 0 && <span> {test.totalMarks} marks</span>}
+                        {test.passkey && <span style={S.badge}> Passkey</span>}
+                        {test.proctored && <span style={S.badgeYellow}> Proctored</span>}
                       </div>
                       <div style={{ color: '#6366f1', fontSize: '0.8rem', fontWeight: 600 }}>Click to start →</div>
                     </div>
@@ -740,7 +740,7 @@ const GuestPortal = () => {
               {/* Already attempted */}
               {alreadyAttempted && (
                 <div style={S.blockedCard}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔒</div>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}></div>
                   <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Already Submitted</div>
                   <div style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
                     Your response for this assessment has already been recorded for Roll No <strong style={{ color: '#f1f5f9' }}>{form.rollNo}</strong>. Re-attempts are not allowed.
@@ -756,27 +756,27 @@ const GuestPortal = () => {
                   <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.08) 100%)', border: '1px solid rgba(99,102,241,0.35)', borderRadius: '1rem', padding: '1.25rem', marginBottom: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                       <span style={S.badge}>{(selectedTest.type || 'MCQ').toUpperCase()}</span>
-                      <span style={S.badgeGreen}>🔓 Guest Access</span>
+                      <span style={S.badgeGreen}> Guest Access</span>
                     </div>
                     <div style={S.assessmentTitle}>{selectedTest.name}</div>
                     <div style={S.assessmentMeta}>
-                      <span>⏱ {selectedTest.duration} min</span>
-                      {selectedTest.totalMarks > 0 && <span>📊 {selectedTest.totalMarks} marks</span>}
-                      {selectedTest.proctored && <span style={S.badgeYellow}>🎥 Proctored</span>}
+                      <span> {selectedTest.duration} min</span>
+                      {selectedTest.totalMarks > 0 && <span> {selectedTest.totalMarks} marks</span>}
+                      {selectedTest.proctored && <span style={S.badgeYellow}> Proctored</span>}
                     </div>
                     {/* Student info */}
                     <div style={{ borderTop: '1px solid rgba(99,102,241,0.15)', paddingTop: '0.75rem', marginTop: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontSize: '0.8rem', color: '#94a3b8' }}>
-                      <span>👤 <strong style={{ color: '#e2e8f0' }}>{form.name}</strong></span>
-                      <span>🎫 <strong style={{ color: '#e2e8f0' }}>{form.rollNo}</strong></span>
-                      <span>🏫 {selectedCollege?.shortName || selectedCollege?.name}</span>
-                      <span>📅 {YEAR_L[form.year] || form.year}</span>
+                      <span> <strong style={{ color: '#e2e8f0' }}>{form.name}</strong></span>
+                      <span> <strong style={{ color: '#e2e8f0' }}>{form.rollNo}</strong></span>
+                      <span> {selectedCollege?.shortName || selectedCollege?.name}</span>
+                      <span> {YEAR_L[form.year] || form.year}</span>
                     </div>
                   </div>
 
                   {/* Passkey */}
                   {selectedTest.passkey && (
                     <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ ...S.label, color: '#a5b4fc' }}>🔑 Access Passkey</label>
+                      <label style={{ ...S.label, color: '#a5b4fc' }}> Access Passkey</label>
                       <input
                         id="guest-passkey-input"
                         ref={passkeyRef}
@@ -788,23 +788,23 @@ const GuestPortal = () => {
                         placeholder="Enter access passkey"
                         autoFocus
                       />
-                      {passkeyError && <div style={{ color: '#fca5a5', fontSize: '0.82rem', marginBottom: '0.5rem' }}>⚠ {passkeyError}</div>}
+                      {passkeyError && <div style={{ color: '#fca5a5', fontSize: '0.82rem', marginBottom: '0.5rem' }}> {passkeyError}</div>}
                     </div>
                   )}
 
                   {/* Warning */}
                   <div style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)', borderRadius: '0.75rem', padding: '0.75rem 1rem', color: '#fde68a', fontSize: '0.82rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-                    ⚠️ Once started, the timer begins immediately. You can only submit once — re-attempts are not allowed.
+                     Once started, the timer begins immediately. You can only submit once — re-attempts are not allowed.
                     {selectedTest.proctored && ' Camera access is required.'}
                   </div>
 
                   {checkingAttempt && (
-                    <div style={{ textAlign: 'center', color: '#6366f1', fontSize: '0.85rem', marginBottom: '1rem' }}>⏳ Checking eligibility…</div>
+                    <div style={{ textAlign: 'center', color: '#6366f1', fontSize: '0.85rem', marginBottom: '1rem' }}> Checking eligibility…</div>
                   )}
 
                   {!checkingAttempt && (
                     <>
-                      <button id="guest-start-btn" style={S.btn} onClick={handleStartClick}>🚀 Start Assessment</button>
+                      <button id="guest-start-btn" style={S.btn} onClick={handleStartClick}> Start Assessment</button>
                       <button style={S.btnSecondary} onClick={() => { setStep('dashboard'); setPasskey(''); setPasskeyErr(''); }}>← Back to Assessments</button>
                     </>
                   )}
@@ -816,7 +816,7 @@ const GuestPortal = () => {
           {/* ══ DONE ════════════════════════════════════════════════════════════ */}
           {step === 'done' && (
             <div style={S.successCard}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}></div>
               <div style={{ color: '#34d399', fontWeight: 700, fontSize: '1.2rem', marginBottom: '0.5rem' }}>Assessment Submitted!</div>
               <div style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '2rem', lineHeight: '1.5' }}>
                 Your responses have been recorded. Thank you for participating.

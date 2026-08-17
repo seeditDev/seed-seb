@@ -1538,7 +1538,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 const total = hiddenTests.length;
                 const score = total > 0 ? Math.round((passedCount / total) * 100) : 0;
                 showCustomAlert(
-                    "Question Submitted ✅",
+                    "Question Submitted ",
                     `Hidden Tests Passed: ${passedCount}/${total} \u00a0\u00a0 Score: ${score}%`,
                     "success"
                 );
@@ -2550,7 +2550,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     fontSize: '0.65rem',
                                     fontWeight: '700'
                                 }}>
-                                    <span>🎤 Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 5}</span>
+                                    <span> Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 5}</span>
                                 </div>
                             )}
                             {shouldUseProctoring && (
@@ -2566,7 +2566,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     fontSize: '0.65rem',
                                     fontWeight: '700'
                                 }}>
-                                    <span>📷 Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}</span>
+                                    <span> Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}</span>
                                 </div>
                             )}
                         </div>
@@ -2924,7 +2924,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             }}>
                                 <FaLock style={{ color: '#ef4444', marginTop: '2px', flexShrink: 0 }} />
                                 <div>
-                                    <p style={{ margin: 0, color: '#fca5a5', fontWeight: '700', fontSize: '0.9rem' }}>⚠️ Cannot Re-Attempt</p>
+                                    <p style={{ margin: 0, color: '#fca5a5', fontWeight: '700', fontSize: '0.9rem' }}> Cannot Re-Attempt</p>
                                     <p style={{ margin: '4px 0 0', color: '#fda4af', fontSize: '0.82rem', lineHeight: '1.4' }}>
                                         Once submitted, this assessment is permanently locked. You will not be able to retake or modify your answers.
                                     </p>
@@ -2996,12 +2996,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         <div className="compiling-spinner"></div>
                         {submitPhase === 'evaluating' ? (
                             <>
-                                <span className="compiling-loader-text">🔍 Evaluating All Questions...</span>
+                                <span className="compiling-loader-text"> Evaluating All Questions...</span>
                                 <span className="compiling-loader-subtext">Running hidden test cases against your solutions. Please wait.</span>
                             </>
                         ) : (
                             <>
-                                <span className="compiling-loader-text">✅ Submitting Assessment...</span>
+                                <span className="compiling-loader-text"> Submitting Assessment...</span>
                                 <span className="compiling-loader-subtext">Saving your results securely. Please do not close this window.</span>
                             </>
                         )}
@@ -3016,7 +3016,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     <div className="compiling-loader-container">
                         <div className="compiling-spinner"></div>
                         <span className="compiling-loader-text">
-                            {isRunning ? '⚙️ Compiling & Running...' : '🔍 Evaluating Test Cases...'}
+                            {isRunning ? ' Compiling & Running...' : ' Evaluating Test Cases...'}
                         </span>
                         <span className="compiling-loader-subtext">
                             {isRunning ? 'Executing your code against sample test cases...' : 'Running hidden test cases against your solution...'}

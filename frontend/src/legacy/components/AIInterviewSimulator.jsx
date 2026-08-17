@@ -275,7 +275,7 @@ const AIInterviewSimulator = ({ user }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h2 style={{ color: 'var(--text-main)', fontSize: '24px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🤖</span> AI Placement Interview Simulator
+            <span></span> AI Placement Interview Simulator
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0' }}>
             Evaluate your placement readiness under expert mock interview bots powered by premium language models.
@@ -401,13 +401,13 @@ const AIInterviewSimulator = ({ user }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', background: 'rgba(0,0,0,0.1)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>STATUS</span>
                 {interviewerStatus === 'talking' && (
-                  <span className="status-indicator talking">⚡ Interviewer Speaking</span>
+                  <span className="status-indicator talking"> Interviewer Speaking</span>
                 )}
                 {interviewerStatus === 'listening' && (
-                  <span className="status-indicator listening">🎤 Listening Response</span>
+                  <span className="status-indicator listening"> Listening Response</span>
                 )}
                 {interviewerStatus === 'evaluating' && (
-                  <span className="status-indicator evaluating">⏳ Evaluation Ready</span>
+                  <span className="status-indicator evaluating"> Evaluation Ready</span>
                 )}
               </div>
             </div>
@@ -511,13 +511,13 @@ const AIInterviewSimulator = ({ user }) => {
 
             <div className="strengths-weaknesses-row">
               <div className="feedback-bullet-box strengths">
-                <h4 style={{ color: '#10b981' }}>🥇 Strengths Identified</h4>
+                <h4 style={{ color: '#10b981' }}> Strengths Identified</h4>
                 <ul className="feedback-list">
                   {evaluationScores.strengths?.map((str, idx) => <li key={idx}>{str}</li>)}
                 </ul>
               </div>
               <div className="feedback-bullet-box weaknesses">
-                <h4 style={{ color: '#ef4444' }}>🛠️ Areas of Improvement</h4>
+                <h4 style={{ color: '#ef4444' }}> Areas of Improvement</h4>
                 <ul className="feedback-list">
                   {evaluationScores.weaknesses?.map((weak, idx) => <li key={idx}>{weak}</li>)}
                 </ul>
@@ -562,7 +562,7 @@ const AIInterviewSimulator = ({ user }) => {
                       <div className="cert-meta-label">Verification Date</div>
                     </div>
                     
-                    <div className="cert-badge">🎖️</div>
+                    <div className="cert-badge"></div>
                     
                     <div className="cert-meta-item">
                       <div className="cert-signature">SEED-AI BOT</div>
@@ -593,7 +593,7 @@ const AIInterviewSimulator = ({ user }) => {
             </div>
           ) : historyAttempts.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '50px 20px', textAlign: 'center' }}>
-              <span style={{ fontSize: '48px', marginBottom: '12px' }}>🎖️</span>
+              <span style={{ fontSize: '48px', marginBottom: '12px' }}></span>
               <h4 style={{ color: 'var(--text-main)' }}>No Attempts Logged Yet</h4>
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', maxWidth: '400px' }}>
                 Launch a placement round in the setup lobby. Your completed scores, strengths, and certificates will accumulate here.
@@ -627,9 +627,9 @@ const AIInterviewSimulator = ({ user }) => {
                         </td>
                         <td>
                           {overall >= 6.5 ? (
-                            <span style={{ color: '#10b981', fontWeight: 'bold' }}>✓ Verified Ready</span>
+                            <span style={{ color: '#10b981', fontWeight: 'bold' }}> Verified Ready</span>
                           ) : (
-                            <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>⚠️ Support Needed</span>
+                            <span style={{ color: '#f59e0b', fontWeight: 'bold' }}> Support Needed</span>
                           )}
                         </td>
                       </tr>

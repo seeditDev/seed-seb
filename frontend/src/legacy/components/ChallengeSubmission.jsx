@@ -213,7 +213,7 @@ const ChallengeSubmission = () => {
             <span style={{ color: '#cbd5e1', fontSize: 12 }}>{timeService.getNow().toLocaleString()}</span>
             <div className="challenge-avatar">{getAvatarInitials()}</div>
             <button className="challenge-logout-btn" title="Logout" onClick={handleLogout}>
-              ⎋
+              
             </button>
           </div>
         </div>
@@ -454,7 +454,7 @@ const ChallengeSubmission = () => {
         </form>
       ) : (
         <div className="success-message">
-          <h3>✅ Challenge submitted!</h3>
+          <h3> Challenge submitted!</h3>
           <p>Thank you for your contribution.</p>
           <button className="register-btn" onClick={() => setSubmitted(false)}>Submit Another</button>
         </div>

@@ -680,7 +680,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
             setIsRunning(false);
             setActiveTab('output');
             setStdout('');
-            setStderr('⚠️ Code execution requires the SEED-IT Desktop App (PyQt environment). Your code is saved and can be submitted from within the desktop app.');
+            setStderr(' Code execution requires the SEED-IT Desktop App (PyQt environment). Your code is saved and can be submitted from within the desktop app.');
             setExitCode(1);
             return;
         }
@@ -1199,7 +1199,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                                                     border: qTimerRemaining <= 60 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)',
                                                     fontWeight: 'bold'
                                                 }}>
-                                                    ⏳ Locks in: {Math.floor(qTimerRemaining / 60)}:{(qTimerRemaining % 60).toString().padStart(2, '0')}
+                                                     Locks in: {Math.floor(qTimerRemaining / 60)}:{(qTimerRemaining % 60).toString().padStart(2, '0')}
                                                 </span>
                                             )}
                                         </div>
@@ -1247,7 +1247,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                                         <h3>Editorial / Solution Analysis</h3>
                                         <div className="editorial-lock-card">
                                             <p>Complete the challenge and pass all tests to unlock details. Editorial solutions are provided to guide structure optimization.</p>
-                                            <div className="lock-icon-box">🔒</div>
+                                            <div className="lock-icon-box"></div>
                                         </div>
                                     </div>
                                 )}

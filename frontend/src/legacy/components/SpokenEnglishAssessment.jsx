@@ -677,7 +677,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
         <div className="spe-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="spe-card spe-completion-box" style={{ maxWidth: '600px' }}>
             <div className="spe-completion-icon">
-              ✓
+              
             </div>
             <h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: 'white', margin: 0 }}>
               Assessment Section Completed!

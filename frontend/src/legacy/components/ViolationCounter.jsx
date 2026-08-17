@@ -15,7 +15,7 @@ const ViolationCounter = ({ count = 0, maxViolations = 5 }) => {
     if (count === 0) return 'No violations';
     if (count === 1) return 'Violation detected';
     if (count < Math.round(maxViolations * 0.8)) return 'Multiple violations';
-    if (count < maxViolations) return '⚠️ Warning: Auto-submit imminent';
+    if (count < maxViolations) return ' Warning: Auto-submit imminent';
     return 'Exam auto-submitted due to violations';
   };
 
@@ -36,7 +36,7 @@ const ViolationCounter = ({ count = 0, maxViolations = 5 }) => {
       </div>
       {count > 0 && remaining > 0 && remaining <= 2 && (
         <div className="violation-warning">
-          ⚠️ {remaining} more violation{remaining > 1 ? 's' : ''} will auto-submit your exam
+           {remaining} more violation{remaining > 1 ? 's' : ''} will auto-submit your exam
         </div>
       )}
     </div>

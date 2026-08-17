@@ -197,7 +197,7 @@ const SpokenEnglishReport = ({ evaluation, responses = [], candidateName = 'Cand
               <FaCheckCircle /> Grammar & Expression Feedback
             </h4>
             {grammarErrors.length === 0 ? (
-              <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0 }}>✓ Excellent grammar! No obvious grammatical errors detected in speech transcripts.</p>
+              <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0 }}> Excellent grammar! No obvious grammatical errors detected in speech transcripts.</p>
             ) : (
               <table className="spe-grammar-table">
                 <thead>
@@ -224,7 +224,7 @@ const SpokenEnglishReport = ({ evaluation, responses = [], candidateName = 'Cand
               <FaExclamationTriangle /> Filler Word Usage
             </h4>
             {fillersFound.length === 0 ? (
-              <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0 }}>✓ Outstanding delivery! Minimal or zero filler words detected.</p>
+              <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0 }}> Outstanding delivery! Minimal or zero filler words detected.</p>
             ) : (
               <div>
                 <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '12px' }}>

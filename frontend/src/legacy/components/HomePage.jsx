@@ -485,7 +485,7 @@ function HomePage() {
           </button>
           <div className="seed-courses-grid">
             <div className="seed-course-box">
-              <h3>🔥 Data Structures & Algorithms</h3>
+              <h3> Data Structures & Algorithms</h3>
               <p>Master DSA with hands-on problems.</p>
               <button
                 className="seed-course-button"
@@ -516,7 +516,7 @@ function HomePage() {
               </button>
             </div>
             <div className="seed-course-box">
-              <h3>💻 Full Stack Web Development</h3>
+              <h3> Full Stack Web Development</h3>
               <p>Learn MERN stack from scratch.</p>
               <button
                 className="seed-course-button"
@@ -547,7 +547,7 @@ function HomePage() {
               </button>
             </div>
             <div className="seed-course-box">
-              <h3>🤖 Machine Learning & AI</h3>
+              <h3> Machine Learning & AI</h3>
               <p>Understand ML models and deep learning.</p>
               <button
                 className="seed-course-button"
@@ -578,7 +578,7 @@ function HomePage() {
               </button>
             </div>
             <div className="seed-course-box">
-              <h3>🔢 SQL & Database Management</h3>
+              <h3> SQL & Database Management</h3>
               <p>Master SQL for data-driven applications.</p>
               <button
                 className="seed-course-button"
@@ -609,7 +609,7 @@ function HomePage() {
               </button>
             </div>
             <div className="seed-course-box">
-              <h3>🌐 DevOps & Cloud Computing</h3>
+              <h3> DevOps & Cloud Computing</h3>
               <p>Master modern DevOps practices and cloud platforms.</p>
               <button
                 className="seed-course-button"
@@ -640,7 +640,7 @@ function HomePage() {
               </button>
             </div>
             <div className="seed-course-box">
-              <h3>🔒 Cybersecurity & Ethical Hacking</h3>
+              <h3> Cybersecurity & Ethical Hacking</h3>
               <p>Learn advanced security techniques and penetration testing.</p>
               <button
                 className="seed-course-button"
@@ -671,7 +671,7 @@ function HomePage() {
               </button>
             </div>
             <div className="seed-course-box">
-              <h3>📱 Mobile App Development</h3>
+              <h3> Mobile App Development</h3>
               <p>Build cross-platform mobile applications.</p>
               <button
                 className="seed-course-button"
@@ -702,7 +702,7 @@ function HomePage() {
               </button>
             </div>
             <div className="seed-course-box">
-              <h3>🎮 Game Development</h3>
+              <h3> Game Development</h3>
               <p>Create engaging games with modern engines.</p>
               <button
                 className="seed-course-button"

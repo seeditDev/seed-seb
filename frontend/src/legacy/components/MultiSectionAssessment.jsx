@@ -447,7 +447,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
               padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '700'
             }}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: (proctoringData?.audioViolationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
-              🎤 Audio: {proctoringData?.audioViolationCount || 0}/{settings.maxAudioViolations || 5}
+               Audio: {proctoringData?.audioViolationCount || 0}/{settings.maxAudioViolations || 5}
             </div>
           )}
           {settings.proctored && (
@@ -459,7 +459,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
               padding: '2px 6px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '700'
             }}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: (proctoringData?.violationCount || 0) > 0 ? '#ef4444' : '#10b981', animation: 'pulseLock 1.5s infinite' }} />
-              📷 Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 7}
+               Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 7}
             </div>
           )}
           <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{attempted} / {total} Answered</span>
@@ -525,7 +525,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
                       border: qTimerRemaining <= 10 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)',
                       padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold'
                     }}>
-                      ⏳ Locks in: {qTimerRemaining}s
+                       Locks in: {qTimerRemaining}s
                     </span>
                   )}
                   <button
@@ -1370,7 +1370,7 @@ const MultiSectionAssessment = () => {
   // ── Handle timer expiry (outside the state updater)
   useEffect(() => {
     if (secStarted && secTimer === 0) {
-      toast('⏰ Time up! Submitting section…', { icon: '⏰', duration: 3000 });
+      toast(' Time up! Submitting section…', { icon: '', duration: 3000 });
       autoSubmitSection();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1592,7 +1592,7 @@ const MultiSectionAssessment = () => {
 
       // ── 15-second inter-section relaxation ──
       const nextSec = assessment.sections[nextIdx];
-      toast.success(`✅ Section submitted! Next: "${nextSec?.name || `Section ${nextIdx + 1}`}" starts in 15 seconds.`, { duration: 5000 });
+      toast.success(` Section submitted! Next: "${nextSec?.name || `Section ${nextIdx + 1}`}" starts in 15 seconds.`, { duration: 5000 });
       setRelaxationNextIdx(nextIdx);
       setRelaxationCountdown(15);
       // handleStartSection(nextIdx) is called by the relaxation countdown useEffect
@@ -1721,14 +1721,14 @@ const MultiSectionAssessment = () => {
               }));
             } catch (_) { /* localStorage may be full */ }
             toast.error(
-              '⚠️ Submission saved — please reconnect. Your answers are safe and will sync automatically.',
+              ' Submission saved — please reconnect. Your answers are safe and will sync automatically.',
               { duration: 8000 }
             );
           }
         }
 
         setExamFinished(true);
-        toast.success('🎉 Assessment submitted! Returning to dashboard…', { duration: 4000 });
+        toast.success(' Assessment submitted! Returning to dashboard…', { duration: 4000 });
         setTimeout(() => {
           navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
         }, 4000);
@@ -1976,14 +1976,14 @@ const MultiSectionAssessment = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Section Questions:</span>
                     <span style={{ fontWeight: '600', color: questionsLoaded ? '#10b981' : '#f59e0b' }}>
-                      {questionsLoaded ? 'Loaded ✓' : 'Fetching questions...'}
+                      {questionsLoaded ? 'Loaded ' : 'Fetching questions...'}
                     </span>
                   </div>
                   {shouldUseProctoring && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Camera Proctoring:</span>
                       <span style={{ fontWeight: '600', color: isVisualProctorReady ? '#10b981' : '#f59e0b' }}>
-                        {isVisualProctorReady ? 'Ready ✓' : 'Initializing AI & models...'}
+                        {isVisualProctorReady ? 'Ready ' : 'Initializing AI & models...'}
                       </span>
                     </div>
                   )}
@@ -1991,7 +1991,7 @@ const MultiSectionAssessment = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Microphone Proctoring:</span>
                       <span style={{ fontWeight: '600', color: isAudioProctorReady ? '#10b981' : '#f59e0b' }}>
-                        {isAudioProctorReady ? 'Ready ✓' : 'Requesting mic permission...'}
+                        {isAudioProctorReady ? 'Ready ' : 'Requesting mic permission...'}
                       </span>
                     </div>
                   )}
@@ -2039,7 +2039,7 @@ const MultiSectionAssessment = () => {
     <div className="msa-root">
       <header className="msa-header">
         <div className="msa-header-title">
-          <span>🏆</span> {assessment.name}
+          <span></span> {assessment.name}
         </div>
         <div className="msa-candidate-info">
           <span>{user?.Name || 'Candidate'}</span>

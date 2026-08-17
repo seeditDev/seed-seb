@@ -348,7 +348,7 @@ const ProctoringEngine = ({
           faceapi.nets.faceRecognitionNet.loadFromUri(getModelsPath('models/face-api'))
         ]);
         window.faceApiLoaded = true;
-        console.log('[ProctoringEngine] ✓ Face-API loaded successfully');
+        console.log('[ProctoringEngine] Face-API loaded successfully');
       } catch (faceErr) {
         window.faceApiLoaded = false;
         console.warn('[ProctoringEngine] Face-API loading failed:', faceErr);
@@ -359,13 +359,13 @@ const ProctoringEngine = ({
         console.log('[ProctoringEngine] Loading YOLOv8 offline...');
         window.yolov8Model = await tf.loadGraphModel(getModelsPath('models/yolov8/model.json'));
         window.yolov8Loaded = true;
-        console.log('[ProctoringEngine] ✓ YOLOv8 loaded offline successfully');
+        console.log('[ProctoringEngine] YOLOv8 loaded offline successfully');
       } catch (yoloOfflineErr) {
         console.warn('[ProctoringEngine] YOLOv8 offline load failed, trying online CDN...', yoloOfflineErr.message);
         try {
           window.yolov8Model = await tf.loadGraphModel('https://hyuto.github.io/yolov8-tfjs/yolov8n_web_model/model.json');
           window.yolov8Loaded = true;
-          console.log('[ProctoringEngine] ✓ YOLOv8 loaded online successfully');
+          console.log('[ProctoringEngine] YOLOv8 loaded online successfully');
         } catch (yoloOnlineErr) {
           window.yolov8Loaded = false;
           console.warn('[ProctoringEngine] YOLOv8 online CDN load also failed:', yoloOnlineErr.message);
@@ -1102,7 +1102,7 @@ const ProctoringEngine = ({
             </div>
             {/* Violation count badge overlaid on camera */}
             <div className={`camera-violation-badge ${violationCount === 0 ? 'badge-safe' : violationCount >= Math.round(maxViolations * 0.8) ? 'badge-critical' : 'badge-warn'}`}>
-              ⚠ {violationCount}/{maxViolations}
+               {violationCount}/{maxViolations}
             </div>
           </div>
         </div>

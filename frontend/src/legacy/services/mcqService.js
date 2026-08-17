@@ -80,7 +80,7 @@ class MCQService {
         const canonRef = doc(db, this.canonicalPath(assessmentId, canonicalUid, tenantId));
         await setDoc(canonRef, { ...payload, userId: canonicalUid, tenantId }, { merge: true });
 
-        // Mark attempt in the completion index so dashboard shows ✓ Completed
+        // Mark attempt in the completion index so dashboard shows Completed
         try {
             const { markAssessmentCompleted, invalidateCompletionCache } = await import('./attemptStatusService');
             const email = userProfile?.email || userProfile?.Email || payload.email || '';
@@ -787,10 +787,10 @@ class MCQService {
         try {
             await this.saveResultToFirestore(resultData);
             firestoreSuccess = true;
-            console.log('[MCQService] ✅ Firestore save successful');
+            console.log('[MCQService] Firestore save successful');
             return { success: firestoreSuccess, firestore: firestoreSuccess };
         } catch (error) {
-            console.error('[MCQService] ❌ Submission failed:', error);
+            console.error('[MCQService] Submission failed:', error);
             throw error;
         }
     }

@@ -3064,7 +3064,7 @@ const PracticeHome = () => {
                 <span className="ph-article-subtitle">SEED-IT Learning Platform • Course Tutorial</span>
               </div>
               <button className="ph-article-close" onClick={() => setActiveArticle(null)} title="Close Tutorial">
-                ✕
+                
               </button>
             </div>
 

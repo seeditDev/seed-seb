@@ -617,7 +617,7 @@ class PreLaunchDialog(QDialog):
             self.check_version()
         else:
             self.version_check_passed = False
-            self.version_label.setText("✕ <b>Application Version:</b> Check failed (no internet)")
+            self.version_label.setText(" <b>Application Version:</b> Check failed (no internet)")
             self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
             self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.update_launch_button()
@@ -627,16 +627,16 @@ class PreLaunchDialog(QDialog):
             r = requests.get("https://www.google.com", timeout=5)
             if r.status_code == 200:
                 self.internet_check_passed = True
-                self.internet_label.setText("✓ <b>Internet Connection:</b> Active & Stable")
+                self.internet_label.setText(" <b>Internet Connection:</b> Active & Stable")
                 self.internet_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
             else:
                 self.internet_check_passed = False
-                self.internet_label.setText("✕ <b>Internet Connection:</b> Limited connection")
+                self.internet_label.setText(" <b>Internet Connection:</b> Limited connection")
                 self.internet_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         except Exception as e:
             self.internet_check_passed = False
-            self.internet_label.setText("✕ <b>Internet Connection:</b> Connection failed")
+            self.internet_label.setText(" <b>Internet Connection:</b> Connection failed")
             self.internet_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
 
     def check_camera(self):
@@ -644,17 +644,17 @@ class PreLaunchDialog(QDialog):
             cap = cv2.VideoCapture(0)
             if cap.isOpened():
                 self.camera_check_passed = True
-                self.camera_label.setText("✓ <b>Camera Device:</b> Ready & Available")
+                self.camera_label.setText(" <b>Camera Device:</b> Ready & Available")
                 self.camera_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
                 cap.release()
             else:
                 self.camera_check_passed = False
-                self.camera_label.setText("✕ <b>Camera Device:</b> No camera detected")
+                self.camera_label.setText(" <b>Camera Device:</b> No camera detected")
                 self.camera_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         except Exception as e:
             self.camera_check_passed = False
-            self.camera_label.setText("✕ <b>Camera Device:</b> Permission denied or unavailable")
+            self.camera_label.setText(" <b>Camera Device:</b> Permission denied or unavailable")
             self.camera_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
 
     def check_microphone(self):
@@ -681,10 +681,10 @@ class PreLaunchDialog(QDialog):
 
         self.mic_check_passed = True  # non-blocking
         if mic_found:
-            self.mic_label.setText("✓ <b>Microphone:</b> Detected & Ready")
+            self.mic_label.setText(" <b>Microphone:</b> Detected & Ready")
             self.mic_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         else:
-            self.mic_label.setText("⚠ <b>Microphone:</b> Not detected (audio proctoring limited)")
+            self.mic_label.setText(" <b>Microphone:</b> Not detected (audio proctoring limited)")
             self.mic_label.setStyleSheet("color: #d97706; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -726,7 +726,7 @@ class PreLaunchDialog(QDialog):
 
         if threats_found:
             self.debugger_check_passed = False
-            self.debugger_label.setText(f"✕ <b>Process Integrity:</b> Debugger detected ({threats_found[0]})")
+            self.debugger_label.setText(f" <b>Process Integrity:</b> Debugger detected ({threats_found[0]})")
             self.debugger_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
             self.show_error('Debugger detected. Please close all debugging tools and restart.')
         else:
@@ -734,10 +734,10 @@ class PreLaunchDialog(QDialog):
             if killed:
                 unique_killed = list(set(killed))
                 detail = ', '.join(unique_killed[:3])
-                self.debugger_label.setText(f"✓ <b>Process Integrity:</b> Cleaned background apps ({detail})")
+                self.debugger_label.setText(f" <b>Process Integrity:</b> Cleaned background apps ({detail})")
                 self.debugger_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
             else:
-                self.debugger_label.setText("✓ <b>Process Integrity:</b> System secure (No threats)")
+                self.debugger_label.setText(" <b>Process Integrity:</b> System secure (No threats)")
                 self.debugger_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -755,31 +755,31 @@ class PreLaunchDialog(QDialog):
                     if version_id:
                         if version_id == CURRENT_VERSION:
                             self.version_check_passed = True
-                            self.version_label.setText(f"✓ <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
+                            self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
                             self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                         else:
                             self.version_check_passed = False
-                            self.version_label.setText(f"✕ <b>Application Version:</b> Outdated (Installed: v{CURRENT_VERSION} • Required: v{version_id})")
+                            self.version_label.setText(f" <b>Application Version:</b> Outdated (Installed: v{CURRENT_VERSION} • Required: v{version_id})")
                             self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                             self.show_error(f"Application update required: Please upgrade to version {version_id}.")
                     else:
                         self.version_check_passed = False
-                        self.version_label.setText(f"✕ <b>Application Version:</b> Version configuration missing")
+                        self.version_label.setText(f" <b>Application Version:</b> Version configuration missing")
                         self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                         self.show_error("Could not verify application version with server.")
                 else:
                     self.version_check_passed = False
-                    self.version_label.setText(f"✕ <b>Application Version:</b> Version record not found")
+                    self.version_label.setText(f" <b>Application Version:</b> Version record not found")
                     self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                     self.show_error("Version record not found on server.")
             else:
                 self.version_check_passed = False
-                self.version_label.setText(f"✕ <b>Application Version:</b> Server verification failed (HTTP {response.status_code})")
+                self.version_label.setText(f" <b>Application Version:</b> Server verification failed (HTTP {response.status_code})")
                 self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                 self.show_error(f"Version check failed with status {response.status_code}.")
         except Exception as e:
             self.version_check_passed = False
-            self.version_label.setText(f"✕ <b>Application Version:</b> Network check error")
+            self.version_label.setText(f" <b>Application Version:</b> Network check error")
             self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
             self.show_error("Could not reach version verification service.")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
@@ -799,7 +799,7 @@ class PreLaunchDialog(QDialog):
                 failed.append("Version")
             if not self.debugger_check_passed:
                 failed.append("Security")
-            self.launch_button.setText(f"✕ Cannot Launch ({', '.join(failed)} required)")
+            self.launch_button.setText(f" Cannot Launch ({', '.join(failed)} required)")
 
     def show_error(self, message):
         self.error_label.setText(f" {message}")

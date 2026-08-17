@@ -662,7 +662,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                                         <h3>Editorial / Solution Analysis</h3>
                                         <div className="editorial-lock-card">
                                             <p>Complete the challenge and pass all tests to unlock details. Editorial solutions are provided to guide structure optimization.</p>
-                                            <div className="lock-icon-box">🔒</div>
+                                            <div className="lock-icon-box"></div>
                                         </div>
                                     </div>
                                 )}

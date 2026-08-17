@@ -10,7 +10,7 @@ const DIFF_CLASS = {
 };
 
 const STATUS_ICON = {
-  SOLVED: '✅', ATTEMPTED: '🟡', UNSOLVED: '○', LOCKED: '🔒',
+  SOLVED: 'SOLVED', ATTEMPTED: 'ATTEMPTED', UNSOLVED: 'UNSOLVED', LOCKED: 'LOCKED',
 };
 
 const PracticeContestPage = () => {
@@ -102,7 +102,7 @@ const PracticeContestPage = () => {
     return (
       <div className="pcont-root">
         <div className="pcont-center">
-          <p style={{ color: '#f87171' }}>⚠️ {error}</p>
+          <p style={{ color: '#f87171' }}> {error}</p>
           <button className="pcont-back-btn" onClick={() => navigate(-1)}>← Go Back</button>
         </div>
       </div>
@@ -153,7 +153,7 @@ const PracticeContestPage = () => {
       <div className="pcont-list">
         {questions.length === 0 ? (
           <div className="pcont-center">
-            <p style={{ fontSize: 48 }}>📭</p>
+            <p style={{ fontSize: 48 }}></p>
             <p>No questions in this contest yet.</p>
           </div>
         ) : (
@@ -179,7 +179,7 @@ const PracticeContestPage = () => {
                     <span className={`pcont-q-tag ${DIFF_CLASS[q.metadata?.difficulty] || 'diff-medium'}`}>
                       {q.metadata?.difficulty}
                     </span>
-                    {q.metadata?.isPremium && <span className="pcont-q-tag premium">⭐ Premium</span>}
+                    {q.metadata?.isPremium && <span className="pcont-q-tag premium"> Premium</span>}
                     {bestScore !== undefined && (
                       <span className="pcont-q-tag score">
                         Best: {bestScore}% {lang && `· ${lang}`}
@@ -201,7 +201,7 @@ const PracticeContestPage = () => {
       {showPremiumModal && (
         <div className="pcont-modal-overlay" onClick={() => setShowPremiumModal(false)}>
           <div className="pcont-modal" onClick={e => e.stopPropagation()}>
-            <div className="pcont-modal-icon">⭐</div>
+            <div className="pcont-modal-icon"></div>
             <div className="pcont-modal-title">Premium Content Required</div>
             <div className="pcont-modal-desc" style={{ marginBottom: '20px', lineHeight: '1.5' }}>
               This question is available exclusively to Premium members.

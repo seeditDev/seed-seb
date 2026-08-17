@@ -716,7 +716,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
           const updatedSolved = [...new Set([...solvedIds, questionId])];
           setSolvedIds(updatedSolved);
           checkCourseCompletion(updatedSolved);
-          toast.success(`🎉 Problem Solved! 100% test cases passed.`);
+          toast.success(` Problem Solved! 100% test cases passed.`);
         } else {
           await markQuestionAttempted(uid, questionId, language, score);
           toast.info(`Tests completed: ${passedCount}/${testCases.length} passed (${score}%).`);
@@ -870,7 +870,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                       textAlign: 'center'
                     }}>
                       <h3 style={{ margin: '0 0 8px 0', color: testScore === question.questions.length ? '#4ade80' : '#f87171' }}>
-                        {testScore === question.questions.length ? '🎉 Perfect Score!' : '❌ Attempt Finished'}
+                        {testScore === question.questions.length ? ' Perfect Score!' : ' Attempt Finished'}
                       </h3>
                       <p style={{ margin: '0', fontSize: '15px', fontWeight: 'bold' }}>
                         Your Score: {testScore} / {question.questions.length}
@@ -971,7 +971,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                               fontSize: '13px'
                             }}>
                               <div style={{ fontWeight: 'bold', color: isCorrect ? '#4ade80' : '#ef4444', marginBottom: '4px' }}>
-                                {isCorrect ? '✓ Correct' : `✗ Incorrect (Correct Answer: ${q.correctAnswer})`}
+                                {isCorrect ? ' Correct' : ` Incorrect (Correct Answer: ${q.correctAnswer})`}
                               </div>
                               <div style={{ color: 'var(--ps-text-dim)' }}>
                                 <strong>Explanation:</strong> {q.explanation}

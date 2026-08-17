@@ -1444,7 +1444,7 @@ const StudentDashboard = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '22px', fontWeight: 'bold'
               }}>
-                ⚡
+                
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: '16px', color: '#FBBF24', fontWeight: '700' }}>
@@ -2429,7 +2429,7 @@ const StudentDashboard = () => {
                   cursor: 'pointer'
                 }}
               >
-                ✕
+                
               </button>
 
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -2458,21 +2458,21 @@ const StudentDashboard = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '20px' }}>⚡</span>
+                  <span style={{ fontSize: '20px' }}></span>
                   <div>
                     <div style={{ fontWeight: '700', fontSize: '14px' }}>Unlimited AI Mock Interviews</div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Real-time voice & coding feedback with Gemini AI</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '20px' }}>📹</span>
+                  <span style={{ fontSize: '20px' }}></span>
                   <div>
                     <div style={{ fontWeight: '700', fontSize: '14px' }}>AI Camera Proctoring Sandbox</div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Anti-cheat detection with face monitoring</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '20px' }}>🎙️</span>
+                  <span style={{ fontSize: '20px' }}></span>
                   <div>
                     <div style={{ fontWeight: '700', fontSize: '14px' }}>Spoken English CEFR Evaluator</div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Pronunciation, grammar & fluency scorecard</div>
@@ -2510,7 +2510,7 @@ const StudentDashboard = () => {
                       boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
                     }}
                   >
-                    🚀 Activate Premium Edition Now
+                     Activate Premium Edition Now
                   </button>
                 ) : (
                   <button
@@ -2528,7 +2528,7 @@ const StudentDashboard = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    ✓ Premium Access Active
+                     Premium Access Active
                   </button>
                 )}
               </div>

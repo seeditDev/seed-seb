@@ -72,7 +72,7 @@ const PracticeCoursePage = () => {
     <div className="ph-root">
       {/* Top Bar */}
       <div className="ph-topbar">
-        <div className="ph-topbar-logo">⚡ SEED-IT Practice</div>
+        <div className="ph-topbar-logo"> SEED-IT Practice</div>
         <div className="ph-topbar-nav">
           <button className="ph-topbar-btn" onClick={() => navigate('/student/practice')}>← All Courses</button>
           <button className="ph-topbar-btn" onClick={() => navigate('/student/dashboard')}>Dashboard</button>
@@ -81,7 +81,7 @@ const PracticeCoursePage = () => {
 
       {/* Hero */}
       <div className="ph-hero">
-        <div className="ph-hero-tag">📚 {course?.title || 'Course'}</div>
+        <div className="ph-hero-tag"> {course?.title || 'Course'}</div>
         <h1 className="ph-hero-title" style={{ fontSize: 'clamp(28px,4vw,44px)' }}>
           {course?.title}
         </h1>
@@ -101,11 +101,11 @@ const PracticeCoursePage = () => {
       {/* Modules */}
       <div className="ph-section">
         <div className="ph-section-header">
-          <h2 className="ph-section-title">📖 Modules</h2>
+          <h2 className="ph-section-title"> Modules</h2>
         </div>
         {modules.length === 0 ? (
           <div className="ph-empty">
-            <div className="ph-empty-icon">📭</div>
+            <div className="ph-empty-icon"></div>
             <div className="ph-empty-title">No modules yet</div>
             <div className="ph-empty-desc">Modules are being prepared for this course.</div>
           </div>
@@ -123,14 +123,14 @@ const PracticeCoursePage = () => {
                 >
                   <div className="ph-course-thumb" style={{ background: `linear-gradient(135deg, hsl(${idx * 47 + 200}, 60%, 20%), hsl(${idx * 47 + 240}, 70%, 25%))` }}>
                     <span style={{ fontSize: 42 }}>
-                      {['📦', '📝', '🔢', '🔍', '🔄', '🧩', '🕸️', '🌳'][idx % 8]}
+                      {['', '', '', '', '', '', '', ''][idx % 8]}
                     </span>
                   </div>
                   <div className="ph-course-body">
                     <div className="ph-course-title">{mod.title}</div>
                     <div className="ph-course-desc">{mod.description || 'Practice problems in this module.'}</div>
                     <div className="ph-course-meta">
-                      <span>🎯 {mod.contestIds?.length || 0} contest{(mod.contestIds?.length || 0) !== 1 ? 's' : ''}</span>
+                      <span> {mod.contestIds?.length || 0} contest{(mod.contestIds?.length || 0) !== 1 ? 's' : ''}</span>
                       {stats.total > 0 && (
                         <span style={{ color: pct === 100 ? '#4ade80' : 'inherit' }}>
                           {stats.solved}/{stats.total} solved

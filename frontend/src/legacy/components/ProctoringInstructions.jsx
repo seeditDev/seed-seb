@@ -262,7 +262,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
       
       // Single dispatch — one React render for all photo state changes (prevents flicker)
       dispatchPhoto({ url: dataUrl, status: 'captured', error: '', capturing: false });
-      console.log('[ProctoringInstructions] ✓ Reference photo manually captured and validated!');
+      console.log('[ProctoringInstructions] Reference photo manually captured and validated!');
     } catch (err) {
       console.error('[ProctoringInstructions] Error during manual face capture:', err);
       dispatchPhoto({ error: "An error occurred during verification. Please try again.", status: 'failed', capturing: false });
@@ -352,7 +352,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
               fontSize: '11px',
               fontWeight: '700'
             }}>
-              {photoStatus === 'captured' ? '✓' : '1'}
+              {photoStatus === 'captured' ? '' : '1'}
             </span>
             <span style={{ fontSize: '13.5px', fontWeight: '600', color: currentStep === 1 ? 'var(--text-main, #f1f5f9)' : 'var(--text-muted, #94a3b8)' }}>
               Face Registration
@@ -427,7 +427,7 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                         {photoStatus === 'captured' && (
                           <div className="photo-scan-status scan-captured">
                             <FaCheckCircle className="scan-success-icon" />
-                            <span>✓ Identity Verified & Registered!</span>
+                            <span> Identity Verified & Registered!</span>
                           </div>
                         )}
                       </div>
@@ -532,12 +532,12 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                     <li className={cameraStatus === 'granted' ? 'passed' : 'pending'}>
                       <span className="badge-bullet"></span>
                       <span className="badge-text">Webcam Access Permission</span>
-                      <span className="badge-status">{cameraStatus === 'granted' ? '✓ Passed' : '○ Pending'}</span>
+                      <span className="badge-status">{cameraStatus === 'granted' ? ' Passed' : '○ Pending'}</span>
                     </li>
                     <li className={photoStatus === 'captured' ? 'passed' : 'pending'}>
                       <span className="badge-bullet"></span>
                       <span className="badge-text">Offline Face Registration</span>
-                      <span className="badge-status">{photoStatus === 'captured' ? '✓ Registered' : isCapturing ? '⚡ Verifying...' : '○ Pending'}</span>
+                      <span className="badge-status">{photoStatus === 'captured' ? ' Registered' : isCapturing ? ' Verifying...' : '○ Pending'}</span>
                     </li>
                   </ul>
                 </div>
@@ -662,8 +662,8 @@ const ProctoringInstructions = ({ assessment, onContinue, onCancel }) => {
                                 <span style={{ color: 'var(--text-main)', fontWeight: '600', fontSize: '0.9rem' }}>{sec.name}</span>
                               </div>
                               <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                                <span>⏱️ {sec.duration_minutes || sec.duration || 0}m</span>
-                                <span>❓ {secQCount > 0 ? `${secQCount} Qs` : sec.type?.toUpperCase()}</span>
+                                <span> {sec.duration_minutes || sec.duration || 0}m</span>
+                                <span> {secQCount > 0 ? `${secQCount} Qs` : sec.type?.toUpperCase()}</span>
                               </div>
                             </div>
                           );

@@ -1558,7 +1558,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             if (error.message.includes('DUPLICATE_SUBMISSION') || error.message.includes('already been completed')) {
                 setSubmissionStatus('duplicate');
                 setError('This test has already been submitted. Multiple submissions are not allowed.');
-                toast.error('❌ This test has already been submitted. You cannot submit again.');
+                toast.error(' This test has already been submitted. You cannot submit again.');
             } else {
                 // NETWORK FAILURE: save pending result locally so it survives a crash
                 // and can be retried on the next launch.
@@ -1710,7 +1710,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     }));
                     setShowConfirmSubmit(false);
                     setShowReviewAnswers(false);
-                    toast.warning('⏰ Time is up! Your test has been automatically submitted.');
+                    toast.warning(' Time is up! Your test has been automatically submitted.');
                 } else {
                     setCurrentTest(null);
                     setShowConfirmSubmit(false);
@@ -2322,7 +2322,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                     fontWeight: '700'
                                 }}>
                                     <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
-                                    🎤 Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 5}
+                                     Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 5}
                                 </div>
                             )}
                             {shouldUseProctoring && (
@@ -2339,7 +2339,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                     fontWeight: '700'
                                 }}>
                                     <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
-                                    📷 Camera: {proctoringData.violationCount}/{currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
+                                     Camera: {proctoringData.violationCount}/{currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
                                 </div>
                             )}
                         </div>
@@ -2421,7 +2421,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                                 borderRadius: '12px',
                                                 fontWeight: 'bold'
                                             }}>
-                                                ⏳ Locks in: {qTimerRemaining}s
+                                                 Locks in: {qTimerRemaining}s
                                             </span>
                                         )}
                                         <button
@@ -2904,7 +2904,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 }}>
                     {/* Status icon */}
                     <div style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '16px' }}>
-                        {restored ? '✅' : '📡'}
+                        {restored ? '' : ''}
                     </div>
                     <h3 style={{
                         color: restored ? '#10b981' : '#f87171',
