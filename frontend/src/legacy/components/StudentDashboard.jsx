@@ -203,7 +203,7 @@ const StudentDashboard = () => {
               }
             }
           }
-        } catch (_) {}
+        } catch (_) { }
       }
     }
 
@@ -236,7 +236,7 @@ const StudentDashboard = () => {
             return;
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 3. Fallback: Query Firestore for Remote Active Attempt using Firebase Auth UID
@@ -282,13 +282,13 @@ const StudentDashboard = () => {
 
           if (elapsedOfflineSec <= 300) {
             setActiveResumeSession({
-              type:             data.type || 'multisection',
-              id:               data.assessmentId || data.testID || docSnap.id,
-              name:             data.assessmentName || data.testName || 'Active Assessment',
-              slug:             data.slug || data.assessmentId || data.testID || docSnap.id,
+              type: data.type || 'multisection',
+              id: data.assessmentId || data.testID || docSnap.id,
+              name: data.assessmentName || data.testName || 'Active Assessment',
+              slug: data.slug || data.assessmentId || data.testID || docSnap.id,
               isRemoteRestored: true,
               elapsedOfflineSec,
-              remoteSnapshot:   data,
+              remoteSnapshot: data,
             });
             return;
           }
@@ -348,11 +348,12 @@ const StudentDashboard = () => {
         if (!list) {
           try {
             const localRes = await fetch("/SEEDDB/Premium/ai-interview.json");
-            if (localRes.ok) {
+            const contentType = localRes.headers.get("content-type") || "";
+            if (localRes.ok && contentType.includes("application/json")) {
               list = await localRes.json();
             }
-          } catch (localErr) {
-            console.error("Local fallback for AI interview list failed:", localErr);
+          } catch (_) {
+            // Local fallback unavailable — silent fallback
           }
         }
 
@@ -523,7 +524,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
     const userEmail = authData.Email || authData.email;
-    const userUid   = authData.uid   || authData.UID;
+    const userUid = authData.uid || authData.UID;
     if (userEmail || authData.Name) {
       setUser(authData);
       loadAssessments(authData);
@@ -566,21 +567,21 @@ const StudentDashboard = () => {
 
             const enriched = {
               ...authData,
-              Name:          p.name         || p.displayName  || authData.Name || '',
-              Email:         p.email         || userEmail      || '',
-              College:       effectiveCollege,
-              college:       effectiveCollege,
-              Department:    p.department    || p.dept         || authData.Department || '',
-              department:    p.department    || p.dept         || authData.department || '',
-              Year:          derivedYear,
-              year:          derivedYear,
-              'Roll Number': p.rollNumber    || p.rollNo       || authData['Roll Number'] || '',
-              rollNumber:    p.rollNumber    || p.rollNo       || authData.rollNumber || '',
-              photoURL:      p.photoURL      || authData.photoURL || '',
-              tenantId:      p.tenantId      || authData.tenantId || '',
-              cohortId:      p.cohortId      || authData.cohortId || '',
-              isPremium:     p.isPremium     ?? authData.isPremium ?? false,
-              uid:           p.uid           || userUid || lookupId,
+              Name: p.name || p.displayName || authData.Name || '',
+              Email: p.email || userEmail || '',
+              College: effectiveCollege,
+              college: effectiveCollege,
+              Department: p.department || p.dept || authData.Department || '',
+              department: p.department || p.dept || authData.department || '',
+              Year: derivedYear,
+              year: derivedYear,
+              'Roll Number': p.rollNumber || p.rollNo || authData['Roll Number'] || '',
+              rollNumber: p.rollNumber || p.rollNo || authData.rollNumber || '',
+              photoURL: p.photoURL || authData.photoURL || '',
+              tenantId: p.tenantId || authData.tenantId || '',
+              cohortId: p.cohortId || authData.cohortId || '',
+              isPremium: p.isPremium ?? authData.isPremium ?? false,
+              uid: p.uid || userUid || lookupId,
             };
             setUser(enriched);
             localStorage.setItem('auth_data', JSON.stringify(enriched));
@@ -588,7 +589,7 @@ const StudentDashboard = () => {
             // Re-load assessments if College or Year was missing before enrichment
             // (new students provisioned via Admin may have incomplete auth_data on first load)
             const wasIncomplete = !authData.College || !authData.Year;
-            const nowComplete   = !!enriched.College;
+            const nowComplete = !!enriched.College;
             if (wasIncomplete && nowComplete) {
               console.info('[Dashboard] Profile enriched — reloading assessments with complete tenant info.');
               loadAssessments(enriched);
@@ -684,8 +685,8 @@ const StudentDashboard = () => {
               schedule = {
                 startDate: s ? s.toISOString().slice(0, 10) : '',
                 startTime: s ? s.toTimeString().slice(0, 8) : '',
-                endDate:   e ? e.toISOString().slice(0, 10) : '',
-                endTime:   e ? e.toTimeString().slice(0, 8) : '',
+                endDate: e ? e.toISOString().slice(0, 10) : '',
+                endTime: e ? e.toTimeString().slice(0, 8) : '',
               };
             }
           }
@@ -694,46 +695,46 @@ const StudentDashboard = () => {
           const rawType = t.type || 'mcq';
           const isMultiSection = rawType === 'msa';
           const engineType = rawType === 'spoken-english' ? 'spoken_english'
-                           : rawType === 'msa'            ? 'MSA'
-                           : rawType; // 'mcq' | 'coding' | 'sea'
+            : rawType === 'msa' ? 'MSA'
+              : rawType; // 'mcq' | 'coding' | 'sea'
 
           return {
             // ── identity ──
-            id:              t.id,
-            courseId:        t.courseId,
-            seriesId:        t.seriesId,
+            id: t.id,
+            courseId: t.courseId,
+            seriesId: t.seriesId,
             // ── display ──
-            name:            t.name,
-            seriesName:      t.seriesTitle || t.courseTitle || 'Assessments',
-            courseTitle:     t.courseTitle || '',
-            seriesKey:       t.seriesId,
-            difficulty:      t.difficulty || 'Medium',
+            name: t.name,
+            seriesName: t.seriesTitle || t.courseTitle || 'Assessments',
+            courseTitle: t.courseTitle || '',
+            seriesKey: t.seriesId,
+            difficulty: t.difficulty || 'Medium',
             // ── engine routing ──
-            type:            engineType,
+            type: engineType,
             isMultiSection,
-            slug:            t.assessmentId || t.id,
-            url:             t.cdnUrl || '',
-            cdnUrl:          t.cdnUrl || '',
+            slug: t.assessmentId || t.id,
+            url: t.cdnUrl || '',
+            cdnUrl: t.cdnUrl || '',
             // ── sections (MSA) ──
-            sections:        t.sections || [],
+            sections: t.sections || [],
             // ── timing ──
-            duration:        t.duration_minutes || 60,
+            duration: t.duration_minutes || 60,
             schedule,
             // ── access ──
-            passkey:         t.passkey || '',
-            isPremium:       t.isPremium,
-            guestEnabled:    t.guestEnabled,
+            passkey: t.passkey || '',
+            isPremium: t.isPremium,
+            guestEnabled: t.guestEnabled,
             // ── proctor ──
-            proctored:       t.proctored,
-            audioProctored:  t.audioProctored,
-            maxViolations:   t.maxViolations ?? 5,
+            proctored: t.proctored,
+            audioProctored: t.audioProctored,
+            maxViolations: t.maxViolations ?? 5,
             maxAudioViolations: t.maxAudioViolations ?? 3,
             // ── settings ──
-            settings:        t.settings,
-            display_order:   t.display_order ?? 999,
-            totalMarks:      t.totalMarks || 100,
+            settings: t.settings,
+            display_order: t.display_order ?? 999,
+            totalMarks: t.totalMarks || 100,
             // ── initially false, resolved below ──
-            completed:       false,
+            completed: false,
           };
         });
 
@@ -864,38 +865,38 @@ const StudentDashboard = () => {
       try {
         const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`);
         if (res.ok) return await res.json();
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // 2nd: seed-contents CDN (public, fast)
     try {
       const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cleanUrl}?_t=${Date.now()}`);
       if (rawRes.ok) return await rawRes.json();
-    } catch (_) {}
+    } catch (_) { }
 
     // 3rd: SEEDDB CDN (public, fast)
     try {
       const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cleanUrl}?_t=${Date.now()}`);
       if (rawRes.ok) return await rawRes.json();
-    } catch (_) {}
+    } catch (_) { }
 
     // 4th: seed-contents via authenticated GitHub API (uses VITE_GITHUB_PAT)
     try {
       const result = await fetchViaGitHubAPI('seed-contents', cleanUrl);
       if (result) return result;
-    } catch (_) {}
+    } catch (_) { }
 
     // 5th: SEEDDB via authenticated GitHub API (uses VITE_GITHUB_PAT)
     try {
       const result = await fetchViaGitHubAPI('SEEDDB', cleanUrl);
       if (result) return result;
-    } catch (_) {}
+    } catch (_) { }
 
     // 6th: Local public/seed-contents fallback (dev / offline)
     try {
       const localRes = await fetch(`/seed-contents/${cleanUrl}`);
       if (localRes.ok) return await localRes.json();
-    } catch (_) {}
+    } catch (_) { }
 
     throw new Error(`Could not download assessment JSON file: ${cleanUrl}`);
   };
@@ -943,9 +944,9 @@ const StudentDashboard = () => {
       if (!liveUid) throw new Error('Authentication required. Please log in again.');
 
       if (assessment.isMultiSection || assessment.type === 'multisection' || assessment.type === 'MSA') {
-        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/students/{uid}
+        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/{uid}
         const tenantId = user?.College || user?.college || user?.tenantId || '_unknown_';
-        const canonDocPath = `assessmentResults/${tenantId}/${assessment.id}/students/${liveUid}`;
+        const canonDocPath = `assessmentResults/${tenantId}/${assessment.id}/${liveUid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
         let isCompleted = false;
         if (docSnap.exists()) {
@@ -954,9 +955,9 @@ const StudentDashboard = () => {
         }
         check = { exists: docSnap.exists(), completed: isCompleted };
       } else if (assessment.type === 'spoken_english' || assessment.type === 'sea' || assessment.type === 'SPOKEN_ENGLISH') {
-        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/students/{uid}
+        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/{uid}
         const seaTenantId = user?.College || user?.college || user?.tenantId || '_unknown_';
-        const seaCanonDocPath = `assessmentResults/${seaTenantId}/${assessment.id}/students/${liveUid}`;
+        const seaCanonDocPath = `assessmentResults/${seaTenantId}/${assessment.id}/${liveUid}`;
         const seaDocSnap = await getDoc(doc(db, seaCanonDocPath));
         let isCompleted = false;
         if (seaDocSnap.exists()) {
@@ -1122,19 +1123,19 @@ const StudentDashboard = () => {
       // validateTestDoc runs for every assessment type before any early-return.
       // Catches: missing id, assessmentId, cdnUrl, duration, type (Scenario 7 & 8).
       const testDocForValidation = {
-        id:               assessment.id,
-        assessmentId:     assessment.slug || assessment.id,
-        cdnUrl:           assessment.cdnUrl || assessment.url || assessment.id || '',
-        type:             (assessment.type || 'mcq').replace('MSA', 'msa').replace('spoken_english', 'sea'),
+        id: assessment.id,
+        assessmentId: assessment.slug || assessment.id,
+        cdnUrl: assessment.cdnUrl || assessment.url || assessment.id || '',
+        type: (assessment.type || 'mcq').replace('MSA', 'msa').replace('spoken_english', 'sea'),
         duration_minutes: assessment.duration,
-        totalMarks:       assessment.totalMarks,
-        schedule:         assessment.schedule
+        totalMarks: assessment.totalMarks,
+        schedule: assessment.schedule
           ? {
-              start: assessment.schedule.startDate && assessment.schedule.startTime
-                ? `${assessment.schedule.startDate}T${assessment.schedule.startTime}` : null,
-              end: assessment.schedule.endDate && assessment.schedule.endTime
-                ? `${assessment.schedule.endDate}T${assessment.schedule.endTime}` : null,
-            }
+            start: assessment.schedule.startDate && assessment.schedule.startTime
+              ? `${assessment.schedule.startDate}T${assessment.schedule.startTime}` : null,
+            end: assessment.schedule.endDate && assessment.schedule.endTime
+              ? `${assessment.schedule.endDate}T${assessment.schedule.endTime}` : null,
+          }
           : null,
       };
 
@@ -1171,11 +1172,11 @@ const StudentDashboard = () => {
         }
         sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
         sessionStorage.setItem('msaCourseCtx', JSON.stringify({
-          courseId:   assessment.courseId  || '',
-          seriesId:   assessment.seriesId  || '',
-          testId:     assessment.id        || '',
+          courseId: assessment.courseId || '',
+          seriesId: assessment.seriesId || '',
+          testId: assessment.id || '',
           totalMarks: assessment.totalMarks || 100,
-          settings:   assessment.settings  || {},
+          settings: assessment.settings || {},
         }));
         setLaunchStep(null);
         navigate(`/student/assessment/multisection/${assessment.slug}`);
@@ -1188,9 +1189,9 @@ const StudentDashboard = () => {
       if (assessment.type === 'spoken_english' || assessment.type === 'SPOKEN_ENGLISH' || assessment.type === 'sea') {
         sessionStorage.setItem("spokenEnglishAssessmentData", JSON.stringify(assessment));
         sessionStorage.setItem('seaCourseCtx', JSON.stringify({
-          courseId:   assessment.courseId  || '',
-          seriesId:   assessment.seriesId  || '',
-          testId:     assessment.id        || '',
+          courseId: assessment.courseId || '',
+          seriesId: assessment.seriesId || '',
+          testId: assessment.id || '',
           totalMarks: assessment.totalMarks || 100,
         }));
         setLaunchStep(null);
@@ -1232,11 +1233,11 @@ const StudentDashboard = () => {
         localStorage.setItem('mcqActiveTestSlug', assessment.slug);
         localStorage.setItem('mcqTestNewLaunch', 'true');
         localStorage.setItem('mcqTestCourseCtx', JSON.stringify({
-          courseId:  assessment.courseId  || '',
-          seriesId:  assessment.seriesId  || '',
-          testId:    assessment.id        || '',
+          courseId: assessment.courseId || '',
+          seriesId: assessment.seriesId || '',
+          testId: assessment.id || '',
           totalMarks: assessment.totalMarks || testData.totalMarks || 100,
-          settings:  assessment.settings  || {},
+          settings: assessment.settings || {},
         }));
         setLaunchStep(null);
         navigate(`/student/mcq/${assessment.slug}`);
@@ -1328,11 +1329,11 @@ const StudentDashboard = () => {
         localStorage.setItem("codingAssessmentNewLaunch", "true");
         // ── New: course progress context ──
         localStorage.setItem('codingCourseCtx', JSON.stringify({
-          courseId:  assessment.courseId  || '',
-          seriesId:  assessment.seriesId  || '',
-          testId:    assessment.id        || '',
+          courseId: assessment.courseId || '',
+          seriesId: assessment.seriesId || '',
+          testId: assessment.id || '',
           totalMarks: assessment.totalMarks || 100,
-          settings:  assessment.settings  || {},
+          settings: assessment.settings || {},
         }));
         setLaunchStep(null);
         navigate(`/student/coding/${assessment.slug}`);
@@ -2482,7 +2483,7 @@ const StudentDashboard = () => {
                           parsed.Premium = true;
                           parsed.isPremium = true;
                           localStorage.setItem('auth_data', JSON.stringify(parsed));
-                        } catch (e) {}
+                        } catch (e) { }
                       }
                       setUserPremiumState(true);
                       setShowPremiumModal(false);

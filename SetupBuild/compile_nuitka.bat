@@ -94,6 +94,15 @@ if not "%RUNTIMES_SRC%"=="" (
     echo WARNING: runtimes folder not found anywhere!
 )
 
+echo Copying qwebchannel.js into distribution...
+if exist "..\frontend\public\qwebchannel.js" (
+    copy /Y "..\frontend\public\qwebchannel.js" "dist\SEED-SEB\qwebchannel.js"
+    if not exist "dist\SEED-SEB\public" mkdir "dist\SEED-SEB\public"
+    copy /Y "..\frontend\public\qwebchannel.js" "dist\SEED-SEB\public\qwebchannel.js"
+) else if exist "..\build\qwebchannel.js" (
+    copy /Y "..\build\qwebchannel.js" "dist\SEED-SEB\qwebchannel.js"
+)
+
 echo.
 echo Native compilation and resource staging completed successfully!
 echo Binary distribution is ready at dist\SEED-SEB\

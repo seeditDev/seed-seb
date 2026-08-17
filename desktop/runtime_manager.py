@@ -29,26 +29,30 @@ class RuntimeManager:
 
     def resolve_paths(self):
         """Set paths strictly to the portable runtimes inside resources/runtimes.
-        No fallbacks to system PATH or host python are allowed, even in development."""
-        
-        # Strictly lock runtimes to the installed path as requested by the user
+        Searches adjacent to executable, installed path, and local dev paths."""
+        exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+        exe_runtimes = os.path.join(exe_dir, "resources", "runtimes")
         hardcoded_dir = r"C:\Program Files (x86)\SEED-SEB\resources\runtimes"
-        if os.path.exists(hardcoded_dir):
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        file_runtimes = os.path.join(os.path.dirname(file_dir), "resources", "runtimes")
+        
+        if os.path.exists(exe_runtimes):
+            self.runtimes_dir = exe_runtimes
+        elif os.path.exists(hardcoded_dir):
             self.runtimes_dir = hardcoded_dir
+        elif os.path.exists(file_runtimes):
+            self.runtimes_dir = file_runtimes
         else:
             # Sibling / Parent fallback check during local development if not installed
-            if not os.path.exists(self.runtimes_dir):
-                parent_runtimes = os.path.join(os.path.dirname(self.app_root), "runtimes")
-                grandparent_runtimes = os.path.join(os.path.dirname(os.path.dirname(self.app_root)), "runtimes")
-                file_dir = os.path.dirname(os.path.abspath(__file__))
-                file_parent_runtimes = os.path.join(os.path.dirname(file_dir), "runtimes")
-                
-                if os.path.exists(parent_runtimes):
-                    self.runtimes_dir = parent_runtimes
-                elif os.path.exists(grandparent_runtimes):
-                    self.runtimes_dir = grandparent_runtimes
-                elif os.path.exists(file_parent_runtimes):
-                    self.runtimes_dir = file_parent_runtimes
+            candidates = [
+                os.path.join(os.path.dirname(file_dir), "runtimes"),
+                os.path.join(os.path.dirname(self.app_root), "runtimes"),
+                os.path.join(os.path.dirname(os.path.dirname(self.app_root)), "runtimes"),
+            ]
+            for c in candidates:
+                if os.path.exists(c):
+                    self.runtimes_dir = c
+                    break
 
         # C/C++ (MinGW)
         mingw_bin = os.path.join(self.runtimes_dir, "mingw64", "bin")

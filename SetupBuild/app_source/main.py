@@ -62,7 +62,7 @@ logging.info("Application starting up...")
 # App version
 CURRENT_VERSION = "1.0.4"
 
-# â”€â”€ Binary Integrity Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# - Binary Integrity Check -
 # Computes SHA-256 hash of the running EXE and validates it against the server.
 # Even if a student has admin rights and modifies the EXE, the server will
 # reject their session because the hash won't match the official build.
@@ -134,14 +134,14 @@ def verify_binary_integrity():
 
         elif resp.status_code == 404:
             logging.warning(
-                f"Integrity check: No hash document found in Firestore for version {CURRENT_VERSION} — "
+                f"Integrity check: No hash document found in Firestore for version {CURRENT_VERSION} - "
                 f"allowing launch."
             )
             return True
 
         else:
             logging.warning(
-                f"Integrity check: Firestore returned HTTP {resp.status_code} — "
+                f"Integrity check: Firestore returned HTTP {resp.status_code} - "
                 f"failing open to preserve availability."
             )
             return True
@@ -296,7 +296,7 @@ class StyledJSDialog(QDialog):
 
         # Icon + Title row
         title_row = QHBoxLayout()
-        icon = QLabel("ðŸ›¡ï¸")
+        icon = QLabel("")
         icon.setStyleSheet("font-size: 20px; background: transparent; border: none;")
         title_lbl = QLabel(title)
         title_lbl.setObjectName("titleLabel")
@@ -317,10 +317,10 @@ class StyledJSDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         if confirm_mode:
-            no_btn = QPushButton("âœ•  No")
+            no_btn = QPushButton("*  No")
             no_btn.setObjectName("noBtn")
             no_btn.clicked.connect(self.reject)
-            yes_btn = QPushButton("âœ“  Yes")
+            yes_btn = QPushButton("Yes")
             yes_btn.setObjectName("yesBtn")
             yes_btn.clicked.connect(self.accept)
             btn_row.addWidget(no_btn)
@@ -389,7 +389,7 @@ class PreLaunchDialog(QDialog):
         self.camera_check_passed = False
         self.internet_check_passed = False
         self.mic_check_passed = False        # warning-only (non-blocking)
-        self.debugger_check_passed = True    # must pass â€” blocks launch if debugger found
+        self.debugger_check_passed = True    # must pass  blocks launch if debugger found
         
         self.drag_position = None
         self.init_ui()
@@ -417,7 +417,7 @@ class PreLaunchDialog(QDialog):
         
         # Title
         title_layout = QHBoxLayout()
-        logo_label = QLabel("ðŸ›¡ï¸")
+        logo_label = QLabel("")
         logo_label.setStyleSheet("font-size: 28px; border: none; background: transparent;")
         
         title = QLabel("SEED-IT Assessment Portal")
@@ -442,7 +442,7 @@ class PreLaunchDialog(QDialog):
         warning_layout = QHBoxLayout(self.warning_banner)
         warning_layout.setContentsMargins(14, 12, 14, 12)
         
-        warning_text = QLabel("âš ï¸ <b>System Check:</b> Secure Exam Proctoring is enabled. Background applications, swipe gestures, and system shortcuts will be locked during the assessment.")
+        warning_text = QLabel("<b>System Check:</b> Secure Exam Proctoring is enabled. Background applications, swipe gestures, and system shortcuts will be locked during the assessment.")
         warning_text.setWordWrap(True)
         warning_text.setStyleSheet("color: #fca5a5; font-size: 12px; line-height: 1.4; border: none; background: transparent;")
         warning_layout.addWidget(warning_text)
@@ -462,23 +462,23 @@ class PreLaunchDialog(QDialog):
         status_layout.setContentsMargins(20, 18, 20, 18)
         status_layout.setSpacing(14)
         
-        self.version_label = QLabel("â³ Verifying application version...")
+        self.version_label = QLabel("Verifying application version...")
         self.version_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.version_label)
         
-        self.camera_label = QLabel("â³ Checking camera access...")
+        self.camera_label = QLabel("Checking camera access...")
         self.camera_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.camera_label)
         
-        self.mic_label = QLabel("â³ Checking microphone access...")
+        self.mic_label = QLabel("Checking microphone access...")
         self.mic_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.mic_label)
         
-        self.internet_label = QLabel("â³ Verifying internet connection...")
+        self.internet_label = QLabel("Verifying internet connection...")
         self.internet_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.internet_label)
         
-        self.debugger_label = QLabel("â³ Scanning for unauthorized processes...")
+        self.debugger_label = QLabel("Scanning for unauthorized processes...")
         self.debugger_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         status_layout.addWidget(self.debugger_label)
         
@@ -507,7 +507,7 @@ class PreLaunchDialog(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(12)
         
-        self.close_button = QPushButton("âœ– Close")
+        self.close_button = QPushButton("- Close")
         self.close_button.setStyleSheet("""
             QPushButton {
                 background-color: #334155;
@@ -585,7 +585,7 @@ class PreLaunchDialog(QDialog):
         if self.internet_check_passed:
             self.check_version()
         else:
-            self.version_label.setText("âŒ <b>Application Version:</b> Check skipped (no internet)")
+            self.version_label.setText("<b>Application Version:</b> Check skipped (no internet)")
             self.version_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.update_launch_button()
@@ -595,16 +595,16 @@ class PreLaunchDialog(QDialog):
             r = requests.get("https://www.google.com", timeout=5)
             if r.status_code == 200:
                 self.internet_check_passed = True
-                self.internet_label.setText("âœ… <b>Internet Connection:</b> Active & Stable")
+                self.internet_label.setText("... <b>Internet Connection:</b> Active & Stable")
                 self.internet_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
             else:
                 self.internet_check_passed = False
-                self.internet_label.setText("âŒ <b>Internet Connection:</b> Limited connection")
+                self.internet_label.setText("<b>Internet Connection:</b> Limited connection")
                 self.internet_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         except Exception as e:
             self.internet_check_passed = False
-            self.internet_label.setText("âŒ <b>Internet Connection:</b> Connection failed")
+            self.internet_label.setText("<b>Internet Connection:</b> Connection failed")
             self.internet_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
 
     def check_camera(self):
@@ -612,21 +612,21 @@ class PreLaunchDialog(QDialog):
             cap = cv2.VideoCapture(0)
             if cap.isOpened():
                 self.camera_check_passed = True
-                self.camera_label.setText("âœ… <b>Camera Access:</b> Ready & Available")
+                self.camera_label.setText("... <b>Camera Access:</b> Ready & Available")
                 self.camera_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
                 cap.release()
             else:
                 self.camera_check_passed = False
-                self.camera_label.setText("âŒ <b>Camera Access:</b> No camera detected")
+                self.camera_label.setText("<b>Camera Access:</b> No camera detected")
                 self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         except Exception as e:
             self.camera_check_passed = False
-            self.camera_label.setText("âŒ <b>Camera Access:</b> Permission denied or error")
+            self.camera_label.setText("<b>Camera Access:</b> Permission denied or error")
             self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
 
     def check_microphone(self):
-        """Check if a microphone is accessible. Warning-only â€” does not block launch."""
+        """Check if a microphone is accessible. Warning-only  does not block launch."""
         mic_found = False
         try:
             # Try pyaudio first
@@ -651,10 +651,10 @@ class PreLaunchDialog(QDialog):
 
         self.mic_check_passed = True  # always non-blocking
         if mic_found:
-            self.mic_label.setText("âœ… <b>Microphone:</b> Detected & Ready")
+            self.mic_label.setText("... <b>Microphone:</b> Detected & Ready")
             self.mic_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         else:
-            self.mic_label.setText("âš ï¸ <b>Microphone:</b> Not detected (audio proctoring may be limited)")
+            self.mic_label.setText("<b>Microphone:</b> Not detected (audio proctoring may be limited)")
             self.mic_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -662,7 +662,7 @@ class PreLaunchDialog(QDialog):
         """Scan for debuggers attached to this process and kill any FORBIDDEN_PROCESSES already running."""
         threats_found = []
 
-        # 1. IsDebuggerPresent â€” block if debugger is attached to this very process
+        # 1. IsDebuggerPresent - block if debugger is attached to this very process
         try:
             import ctypes
             if ctypes.windll.kernel32.IsDebuggerPresent():
@@ -698,7 +698,7 @@ class PreLaunchDialog(QDialog):
 
         if threats_found:
             self.debugger_check_passed = False
-            self.debugger_label.setText(f"ðŸ›¡ï¸ <b>Security Scan:</b> Debugger detected ({threats_found[0]})")
+            self.debugger_label.setText(f" <b>Security Scan:</b> Debugger detected ({threats_found[0]})")
             self.debugger_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             self.show_error('Debugger detected. Please close all debugging tools and restart.')
         else:
@@ -706,10 +706,10 @@ class PreLaunchDialog(QDialog):
             if killed:
                 unique_killed = list(set(killed))
                 detail = ', '.join(unique_killed[:3])
-                self.debugger_label.setText(f"âœ… <b>Security Scan:</b> Cleaned background apps ({detail})")
+                self.debugger_label.setText(f"... <b>Security Scan:</b> Cleaned background apps ({detail})")
                 self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             else:
-                self.debugger_label.setText("âœ… <b>Security Scan:</b> System secure (No threats)")
+                self.debugger_label.setText("... <b>Security Scan:</b> System secure (No threats)")
                 self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -727,28 +727,28 @@ class PreLaunchDialog(QDialog):
                     if version_id:
                         if version_id == CURRENT_VERSION:
                             self.version_check_passed = True
-                            self.version_label.setText(f"âœ… <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
+                            self.version_label.setText(f"... <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
                             self.version_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                         else:
                             self.version_check_passed = False
-                            self.version_label.setText(f"âŒ <b>Application Version:</b> Outdated (v{CURRENT_VERSION} -> v{version_id})")
+                            self.version_label.setText(f" <b>Application Version:</b> Outdated (v{CURRENT_VERSION} -> v{version_id})")
                             self.version_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                             self.show_error(f"Please update application to version {version_id}")
                     else:
                         self.version_check_passed = True
-                        self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (No remote version config)")
+                        self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (No remote version config)")
                         self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
                 else:
                     self.version_check_passed = True
-                    self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (No documents found)")
+                    self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (No documents found)")
                     self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
             else:
                 self.version_check_passed = True
-                self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (Check bypassed)")
+                self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Check bypassed)")
                 self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         except Exception as e:
             self.version_check_passed = True
-            self.version_label.setText(f"âš ï¸ <b>Application Version:</b> v{CURRENT_VERSION} (Check failed)")
+            self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Check failed)")
             self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
@@ -772,7 +772,7 @@ class PreLaunchDialog(QDialog):
             self.launch_button.setText(f"\u274c Cannot Launch ({', '.join(failed)} required)")
 
     def show_error(self, message):
-        self.error_label.setText(f"âš ï¸ {message}")
+        self.error_label.setText(f" {message}")
         self.error_label.show()
 
 
@@ -1036,24 +1036,24 @@ class MainWindow(QMainWindow):
         nav_layout.setSpacing(10)
 
         # Back / Forward / Refresh buttons
-        back_btn = QPushButton("â† Back")
+        back_btn = QPushButton("Back")
         back_btn.clicked.connect(self.web_view.back)
-        forward_btn = QPushButton("Forward â†’")
+        forward_btn = QPushButton("Forward ")
         forward_btn.clicked.connect(self.web_view.forward)
-        refresh_btn = QPushButton("â†» Refresh")
+        refresh_btn = QPushButton("Refresh")
         refresh_btn.clicked.connect(self.web_view.reload)
 
         # Title Logo
-        logo_label = QLabel("ðŸ›¡ï¸ SEED-IT Secure Portal")
+        logo_label = QLabel("SEED-IT Secure Portal")
         logo_label.setStyleSheet("color: white; font-weight: bold; font-size: 14px; margin-right: 15px;")
 
         # Wi-Fi Quick Settings Button (header near Logout)
-        wifi_btn = QPushButton("ðŸ“¶ Wi-Fi")
+        wifi_btn = QPushButton("Wi-Fi")
         wifi_btn.setObjectName("wifiBtn")
         wifi_btn.clicked.connect(self.toggle_wifi_panel)
 
         # Logout Button (Triggers 10-second countdown closing page)
-        logout_btn = QPushButton("ðŸšª Logout")
+        logout_btn = QPushButton("Logout")
         logout_btn.setObjectName("logoutBtn")
         logout_btn.clicked.connect(self.start_logout_sequence)
 
@@ -1160,54 +1160,410 @@ class MainWindow(QMainWindow):
                     logging.warning(f"Failed to read qwebchannel.js from {p}: {e}")
 
         if not qwebchannel_content:
-            # Inline minimal QWebChannel implementation that works with Qt's native
-            # window.qt.webChannelTransport. This guarantees the bridge initialises
-            # even when the .js file cannot be found (common in frozen/EXE builds
-            # loading a remote URL).
-            logging.warning(
-                "qwebchannel.js not found on disk â€” using inline stub. "
-                "Bundle qwebchannel.js next to the EXE or in frontend/public for production."
-            )
+            logging.info("Using embedded official QWebChannel implementation.")
             qwebchannel_content = r"""
-(function(){
-  if(typeof QWebChannel!=='undefined') return;
-  function QWebChannel(transport, initCallback){
-    var self=this;
-    self.objects={};
-    self._callbacks={};
-    self._cbId=0;
-    self._transport=transport;
-    transport.onmessage=function(msg){
-      var d=JSON.parse(msg.data);
-      if(d.type==='Qt.init'){
-        for(var n in d.data){
-          self.objects[n]=new Proxy({},{ get:function(t,prop){
-            return function(){
-              var args=Array.prototype.slice.call(arguments);
-              var cbId=null;
-              if(args.length&&typeof args[args.length-1]==='function'){
-                cbId=++self._cbId;
-                self._callbacks[cbId]=args.pop();
-              }
-              transport.send(JSON.stringify({type:'Qt.invokeMethod',object:n,method:prop,args:args,id:cbId}));
-              return new Promise(function(resolve){
-                if(cbId) self._callbacks[cbId]=function(v){ resolve(v); };
-                else resolve(undefined);
-              });
-            };
-          }});
+"use strict";
+
+var QWebChannelMessageTypes = {
+    signal: 1,
+    propertyUpdate: 2,
+    init: 3,
+    idle: 4,
+    debug: 5,
+    invokeMethod: 6,
+    connectToSignal: 7,
+    disconnectFromSignal: 8,
+    setProperty: 9,
+    response: 10,
+};
+
+var QWebChannel = function(transport, initCallback, converters)
+{
+    if (typeof transport !== "object" || typeof transport.send !== "function") {
+        console.error("The QWebChannel expects a transport object with a send function and onmessage callback property." +
+                      " Given is: transport: " + typeof(transport) + ", transport.send: " + typeof(transport.send));
+        return;
+    }
+
+    var channel = this;
+    this.transport = transport;
+
+    var converterRegistry =
+    {
+        Date : function(response) {
+            if (typeof response === "string"
+                && response.match(
+                        /^-?\d+-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d*)?([-+\u2212](\d{2}):(\d{2})|Z)?$/)) {
+                var date = new Date(response);
+                if (!isNaN(date))
+                    return date;
+            }
+            return undefined;
         }
-        if(initCallback) initCallback(self);
-      } else if(d.type==='Qt.invokeMethodResponse'&&d.id&&self._callbacks[d.id]){
-        var cb=self._callbacks[d.id];
-        delete self._callbacks[d.id];
-        cb(d.data);
-      }
     };
-    transport.send(JSON.stringify({type:'Qt.init'}));
-  }
-  window.QWebChannel=QWebChannel;
-})();
+
+    this.usedConverters = [];
+
+    this.addConverter = function(converter)
+    {
+        if (typeof converter === "string") {
+            if (converterRegistry.hasOwnProperty(converter))
+                this.usedConverters.push(converterRegistry[converter]);
+            else
+                console.error("Converter '" + converter + "' not found");
+        } else if (typeof converter === "function") {
+            this.usedConverters.push(converter);
+        } else {
+            console.error("Invalid converter object type " + typeof converter);
+        }
+    }
+
+    if (Array.isArray(converters)) {
+        for (const converter of converters)
+            this.addConverter(converter);
+    } else if (converters !== undefined) {
+        this.addConverter(converters);
+    }
+
+    this.send = function(data)
+    {
+        if (typeof(data) !== "string") {
+            data = JSON.stringify(data);
+        }
+        channel.transport.send(data);
+    }
+
+    this.transport.onmessage = function(message)
+    {
+        var data = message.data;
+        if (typeof data === "string") {
+            data = JSON.parse(data);
+        }
+        switch (data.type) {
+            case QWebChannelMessageTypes.signal:
+                channel.handleSignal(data);
+                break;
+            case QWebChannelMessageTypes.response:
+                channel.handleResponse(data);
+                break;
+            case QWebChannelMessageTypes.propertyUpdate:
+                channel.handlePropertyUpdate(data);
+                break;
+            default:
+                console.error("invalid message received:", message.data);
+                break;
+        }
+    }
+
+    this.execCallbacks = {};
+    this.execId = 0;
+    this.exec = function(data, callback)
+    {
+        if (!callback) {
+            channel.send(data);
+            return;
+        }
+        if (channel.execId === Number.MAX_VALUE) {
+            channel.execId = Number.MIN_VALUE;
+        }
+        if (data.hasOwnProperty("id")) {
+            console.error("Cannot exec message with property id: " + JSON.stringify(data));
+            return;
+        }
+        data.id = channel.execId++;
+        channel.execCallbacks[data.id] = callback;
+        channel.send(data);
+    };
+
+    this.objects = {};
+
+    this.handleSignal = function(message)
+    {
+        var object = channel.objects[message.object];
+        if (object) {
+            object.signalEmitted(message.signal, message.args);
+        } else {
+            console.warn("Unhandled signal: " + message.object + "::" + message.signal);
+        }
+    }
+
+    this.handleResponse = function(message)
+    {
+        if (!message.hasOwnProperty("id")) {
+            console.error("Invalid response message received: ", JSON.stringify(message));
+            return;
+        }
+        channel.execCallbacks[message.id](message.data);
+        delete channel.execCallbacks[message.id];
+    }
+
+    this.handlePropertyUpdate = function(message)
+    {
+        message.data.forEach(data => {
+            var object = channel.objects[data.object];
+            if (object) {
+                object.propertyUpdate(data.signals, data.properties);
+            } else {
+                console.warn("Unhandled property update: " + data.object + "::" + data.signal);
+            }
+        });
+        channel.exec({type: QWebChannelMessageTypes.idle});
+    }
+
+    this.debug = function(message)
+    {
+        channel.send({type: QWebChannelMessageTypes.debug, data: message});
+    };
+
+    channel.exec({type: QWebChannelMessageTypes.init}, function(data) {
+        for (const objectName of Object.keys(data)) {
+            new QObject(objectName, data[objectName], channel);
+        }
+
+        for (const objectName of Object.keys(channel.objects)) {
+            channel.objects[objectName].unwrapProperties();
+        }
+
+        if (initCallback) {
+            initCallback(channel);
+        }
+        channel.exec({type: QWebChannelMessageTypes.idle});
+    });
+};
+
+function QObject(name, data, webChannel)
+{
+    this.__id__ = name;
+    webChannel.objects[name] = this;
+    this.__objectSignals__ = {};
+    this.__propertyCache__ = {};
+
+    var object = this;
+
+    this.unwrapQObject = function(response)
+    {
+        for (const converter of webChannel.usedConverters) {
+            var result = converter(response);
+            if (result !== undefined)
+                return result;
+        }
+
+        if (response instanceof Array) {
+            return response.map(qobj => object.unwrapQObject(qobj))
+        }
+        if (!(response instanceof Object))
+            return response;
+
+        if (!response["__QObject*__"] || response.id === undefined) {
+            var jObj = {};
+            for (const propName of Object.keys(response)) {
+                jObj[propName] = object.unwrapQObject(response[propName]);
+            }
+            return jObj;
+        }
+
+        var objectId = response.id;
+        if (webChannel.objects[objectId])
+            return webChannel.objects[objectId];
+
+        if (!response.data) {
+            console.error("Cannot unwrap unknown QObject " + objectId + " without data.");
+            return;
+        }
+
+        var qObject = new QObject( objectId, response.data, webChannel );
+        qObject.destroyed.connect(function() {
+            if (webChannel.objects[objectId] === qObject) {
+                delete webChannel.objects[objectId];
+                Object.keys(qObject).forEach(name => delete qObject[name]);
+            }
+        });
+        qObject.unwrapProperties();
+        return qObject;
+    }
+
+    this.unwrapProperties = function()
+    {
+        for (const propertyIdx of Object.keys(object.__propertyCache__)) {
+            object.__propertyCache__[propertyIdx] = object.unwrapQObject(object.__propertyCache__[propertyIdx]);
+        }
+    }
+
+    function addSignal(signalData, isPropertyNotifySignal)
+    {
+        var signalName = signalData[0];
+        var signalIndex = signalData[1];
+        object[signalName] = {
+            connect: function(callback) {
+                if (typeof(callback) !== "function") {
+                    console.error("Bad callback given to connect to signal " + signalName);
+                    return;
+                }
+
+                object.__objectSignals__[signalIndex] = object.__objectSignals__[signalIndex] || [];
+                object.__objectSignals__[signalIndex].push(callback);
+
+                if (isPropertyNotifySignal)
+                    return;
+
+                if (signalName === "destroyed" || signalName === "destroyed()" || signalName === "destroyed(QObject*)")
+                    return;
+
+                if (object.__objectSignals__[signalIndex].length == 1) {
+                    webChannel.exec({
+                        type: QWebChannelMessageTypes.connectToSignal,
+                        object: object.__id__,
+                        signal: signalIndex
+                    });
+                }
+            },
+            disconnect: function(callback) {
+                if (typeof(callback) !== "function") {
+                    console.error("Bad callback given to disconnect from signal " + signalName);
+                    return;
+                }
+                object.__objectSignals__[signalIndex] = (object.__objectSignals__[signalIndex] || []).filter(function(c) {
+                  return c != callback;
+                });
+                if (!isPropertyNotifySignal && object.__objectSignals__[signalIndex].length === 0) {
+                    webChannel.exec({
+                        type: QWebChannelMessageTypes.disconnectFromSignal,
+                        object: object.__id__,
+                        signal: signalIndex
+                    });
+                }
+            }
+        };
+    }
+
+    function invokeSignalCallbacks(signalName, signalArgs)
+    {
+        var connections = object.__objectSignals__[signalName];
+        if (connections) {
+            connections.forEach(function(callback) {
+                callback.apply(callback, signalArgs);
+            });
+        }
+    }
+
+    this.propertyUpdate = function(signals, propertyMap)
+    {
+        for (const propertyIndex of Object.keys(propertyMap)) {
+            var propertyValue = propertyMap[propertyIndex];
+            object.__propertyCache__[propertyIndex] = this.unwrapQObject(propertyValue);
+        }
+
+        for (const signalName of Object.keys(signals)) {
+            invokeSignalCallbacks(signalName, signals[signalName]);
+        }
+    }
+
+    this.signalEmitted = function(signalName, signalArgs)
+    {
+        invokeSignalCallbacks(signalName, this.unwrapQObject(signalArgs));
+    }
+
+    function addMethod(methodData)
+    {
+        var methodName = methodData[0];
+        var methodIdx = methodData[1];
+        var invokedMethod = methodName[methodName.length - 1] === ')' ? methodIdx : methodName
+
+        object[methodName] = function() {
+            var args = [];
+            var callback;
+            var errCallback;
+            for (var i = 0; i < arguments.length; ++i) {
+                var argument = arguments[i];
+                if (typeof argument === "function")
+                    callback = argument;
+                else
+                    args.push(argument);
+            }
+
+            var result;
+            if (!callback && (typeof(Promise) === 'function')) {
+              result = new Promise(function(resolve, reject) {
+                callback = resolve;
+                errCallback = reject;
+              });
+            }
+
+            webChannel.exec({
+                "type": QWebChannelMessageTypes.invokeMethod,
+                "object": object.__id__,
+                "method": invokedMethod,
+                "args": args
+            }, function(response) {
+                if (response !== undefined) {
+                    var result = object.unwrapQObject(response);
+                    if (callback) {
+                        (callback)(result);
+                    }
+                } else if (errCallback) {
+                  (errCallback)();
+                }
+            });
+
+            return result;
+        };
+    }
+
+    function bindGetterSetter(propertyInfo)
+    {
+        var propertyIndex = propertyInfo[0];
+        var propertyName = propertyInfo[1];
+        var notifySignalData = propertyInfo[2];
+        object.__propertyCache__[propertyIndex] = propertyInfo[3];
+
+        if (notifySignalData) {
+            if (notifySignalData[0] === 1) {
+                notifySignalData[0] = propertyName + "Changed";
+            }
+            addSignal(notifySignalData, true);
+        }
+
+        Object.defineProperty(object, propertyName, {
+            configurable: true,
+            get: function () {
+                var propertyValue = object.__propertyCache__[propertyIndex];
+                if (propertyValue === undefined) {
+                    console.warn("Undefined value in property cache for property \"" + propertyName + "\" in object " + object.__id__);
+                }
+                return propertyValue;
+            },
+            set: function(value) {
+                if (value === undefined) {
+                    console.warn("Property setter for " + propertyName + " called with undefined value!");
+                    return;
+                }
+                object.__propertyCache__[propertyIndex] = value;
+                var valueToSend = value;
+                webChannel.exec({
+                    "type": QWebChannelMessageTypes.setProperty,
+                    "object": object.__id__,
+                    "property": propertyIndex,
+                    "value": valueToSend
+                });
+            }
+        });
+    }
+
+    data.methods.forEach(addMethod);
+    data.properties.forEach(bindGetterSetter);
+    data.signals.forEach(function(signal) { addSignal(signal, false); });
+    Object.assign(object, data.enums);
+}
+
+QObject.prototype.toJSON = function() {
+    if (this.__id__ === undefined) return {};
+    return {
+        id: this.__id__,
+        "__QObject*__": true
+    };
+};
+
+window.QWebChannel = QWebChannel;
 """
 
         full_injection = qwebchannel_content + "\nwindow.pyqtFlag = true;\n"
@@ -1399,7 +1755,7 @@ class MainWindow(QMainWindow):
                 self.raise_()
                 self.activateWindow()
                 ctypes.windll.user32.SetForegroundWindow(hwnd)
-                logging.warning("[Security] Foreground window stolen â€” reclaiming focus.")
+                logging.warning("[Security] Foreground window stolen  reclaiming focus.")
         except Exception:
             pass
 
@@ -1431,7 +1787,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, 'wifi_btn'):
             return
         if is_connected:
-            self.wifi_btn.setText("ðŸ“¶ Wi-Fi")
+            self.wifi_btn.setText("Wi-Fi")
             self.wifi_btn.setProperty("class", "")
             self.wifi_btn.setStyleSheet("""
                 QPushButton#wifiBtn {
@@ -1446,7 +1802,7 @@ class MainWindow(QMainWindow):
                 }
             """)
         else:
-            self.wifi_btn.setText("âš ï¸ Wi-Fi (Offline)")
+            self.wifi_btn.setText("Wi-Fi (Offline)")
             self.wifi_btn.setStyleSheet("""
                 QPushButton#wifiBtn {
                     background-color: rgba(239, 68, 68, 0.15);
@@ -1516,7 +1872,7 @@ class MainWindow(QMainWindow):
         threading.Thread(target=_shutdown_server, args=(self.local_server,), daemon=True).start()
         threading.Thread(target=_shutdown_server, args=(self.model_server,), daemon=True).start()
 
-        # Show the countdown dialog â€” the main thread stays responsive throughout.
+        # Show the countdown dialog - the main thread stays responsive throughout.
         logging.info("Logout: exiting immediately.")
         os._exit(0)
 
@@ -1660,7 +2016,7 @@ class LogoutCountdownDialog(QDialog):
 
         # Header Title
         title_row = QHBoxLayout()
-        icon = QLabel("ðŸšª")
+        icon = QLabel("")
         icon.setStyleSheet("font-size: 24px; background: transparent;")
         title = QLabel("Logging Out & Closing Application...", self)
         title.setObjectName("titleLabel")
@@ -1694,12 +2050,12 @@ class LogoutCountdownDialog(QDialog):
 
         # Bottom row with Exit Now button
         btn_row = QHBoxLayout()
-        status_info = QLabel("âœ¨ Releasing hardware & network locks...", self)
+        status_info = QLabel("Releasing hardware & network locks...", self)
         status_info.setStyleSheet("color: #64748b; font-size: 12px; font-style: italic;")
         btn_row.addWidget(status_info)
         btn_row.addStretch()
 
-        exit_now_btn = QPushButton("Close Immediately âž”", self)
+        exit_now_btn = QPushButton("Close Immediately ", self)
         exit_now_btn.setObjectName("closeNowBtn")
         exit_now_btn.clicked.connect(self.accept)
         btn_row.addWidget(exit_now_btn)
@@ -1785,12 +2141,12 @@ class WindowsWifiPanel(QDialog):
 
         # Header Title Row
         header_row = QHBoxLayout()
-        wifi_title = QLabel("ðŸ“¶  Wi-Fi Networks", self)
+        wifi_title = QLabel("Wi-Fi Networks", self)
         wifi_title.setStyleSheet("font-size: 15px; font-weight: bold; color: #f8fafc;")
         header_row.addWidget(wifi_title)
         header_row.addStretch()
 
-        self.refresh_btn = QPushButton("ðŸ”„ Refresh", self)
+        self.refresh_btn = QPushButton("Refresh", self)
         self.refresh_btn.setObjectName("refreshBtn")
         self.refresh_btn.clicked.connect(self.refresh_networks)
         header_row.addWidget(self.refresh_btn)
@@ -1858,16 +2214,16 @@ class WindowsWifiPanel(QDialog):
             connected = False
 
         if connected:
-            self.status_lbl.setText("ðŸŸ¢ Connected to Internet")
+            self.status_lbl.setText("Connected to Internet")
             self.status_lbl.setStyleSheet("color: #10b981; font-weight: bold;")
         else:
-            self.status_lbl.setText("ðŸ”´ Disconnected â€” No Internet Access")
+            self.status_lbl.setText("Disconnected  No Internet Access")
             self.status_lbl.setStyleSheet("color: #ef4444; font-weight: bold;")
 
         wifis = get_available_wifis()
         if wifis:
             for w in wifis:
-                self.wifi_combo.addItem(f"ðŸ“¶ {w}")
+                self.wifi_combo.addItem(f"{w}")
             self.msg_label.setText(f"Found {len(wifis)} networks nearby.")
             self.msg_label.setStyleSheet("color: #10b981; font-size: 12px;")
         else:
@@ -1882,7 +2238,7 @@ class WindowsWifiPanel(QDialog):
             self.msg_label.setStyleSheet("color: #ef4444; font-size: 12px;")
             return
 
-        ssid = selected_text.replace("ðŸ“¶ ", "").strip()
+        ssid = selected_text.replace(" ", "").strip()
         password = self.password_input.text()
 
         self.msg_label.setText(f"Connecting to {ssid}...")
@@ -1891,14 +2247,14 @@ class WindowsWifiPanel(QDialog):
 
         success = connect_to_wifi(ssid, password)
         if success:
-            self.msg_label.setText("âœ… Connected successfully!")
+            self.msg_label.setText("Connected successfully!")
             self.msg_label.setStyleSheet("color: #10b981; font-size: 12px;")
-            self.status_lbl.setText("ðŸŸ¢ Connected to Internet")
+            self.status_lbl.setText("Connected to Internet")
             self.status_lbl.setStyleSheet("color: #10b981; font-weight: bold;")
             if self.parent() and hasattr(self.parent(), 'update_wifi_button_status'):
                 self.parent().update_wifi_button_status(True)
         else:
-            self.msg_label.setText("âŒ Connection failed. Check password.")
+            self.msg_label.setText("Connection failed. Check password.")
             self.msg_label.setStyleSheet("color: #ef4444; font-size: 12px;")
 
 
@@ -1936,7 +2292,7 @@ class ExitConfirmDialog(QDialog):
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(20)
 
-        title = QLabel("ðŸ›¡ï¸ Exit SEED-SEB Sandbox")
+        title = QLabel("Exit SEED-SEB Sandbox")
         title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f8fafc;")
         layout.addWidget(title)
 
@@ -2016,7 +2372,7 @@ class WifiSetupDialog(QDialog):
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(12)
 
-        title = QLabel("ðŸ“¶ Internet Connection Lost")
+        title = QLabel("Internet Connection Lost")
         title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f59e0b;")
         layout.addWidget(title)
 
@@ -2047,7 +2403,7 @@ class WifiSetupDialog(QDialog):
         # Action buttons
         buttons = QHBoxLayout()
         
-        refresh_btn = QPushButton("ðŸ”„ Refresh List")
+        refresh_btn = QPushButton("Refresh List")
         refresh_btn.setStyleSheet("""
             background-color: #334155;
             color: #cbd5e1;
@@ -2090,12 +2446,12 @@ class WifiSetupDialog(QDialog):
         # Connect logic
         success = connect_to_wifi(ssid, password)
         if success:
-            self.status_label.setText("âœ… Connected successfully!")
+            self.status_label.setText("Connected successfully!")
             QApplication.processEvents()
             time.sleep(1.5)
             self.accept()
         else:
-            self.status_label.setText("âŒ Connection failed. Check password.")
+            self.status_label.setText("Connection failed. Check password.")
 
 
 def get_available_wifis():
@@ -2328,7 +2684,7 @@ def main():
     except Exception as e:
         pass
     
-    # ðŸ”¹ Show Pre-Launch System Check Dialog first
+    # - Show Pre-Launch System Check Dialog first
     prelaunch = PreLaunchDialog()
     result = prelaunch.exec()
     if result != QDialog.DialogCode.Accepted or not prelaunch.checks_passed:

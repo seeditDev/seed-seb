@@ -71,7 +71,7 @@ describe('MCQService — Canonical Path', () => {
 
     it('canonicalPath(assessmentId, userId, tenantId) produces correct Firestore path', () => {
         const path = MCQService.canonicalPath('test-001', 'firebase_uid_abc123', 'KGKITE');
-        expect(path).toBe('assessmentResults/KGKITE/test-001/students/firebase_uid_abc123');
+        expect(path).toBe('assessmentResults/KGKITE/test-001/firebase_uid_abc123');
     });
 
     it('canonicalPath() NEVER uses email as userId', () => {
@@ -117,7 +117,7 @@ describe('MCQService — Canonical Path', () => {
         const writtenRef  = mockSetDoc.mock.calls[0][0];
         const writtenData = mockSetDoc.mock.calls[0][1];
 
-        expect(writtenRef.path).toBe('assessmentResults/KGKITE/mcq-test-001/students/firebase_uid_abc123');
+        expect(writtenRef.path).toBe('assessmentResults/KGKITE/mcq-test-001/firebase_uid_abc123');
         expect(writtenRef.path).not.toContain('student@example.com');
         expect(writtenData.userId).toBe('firebase_uid_abc123');
         expect(writtenData.uid).toBe('firebase_uid_abc123');
@@ -156,7 +156,7 @@ describe('MCQService — Canonical Path', () => {
 
         expect(mockSetDoc).toHaveBeenCalledTimes(1);
         const writtenRef = mockSetDoc.mock.calls[0][0];
-        expect(writtenRef.path).toBe('assessmentResults/KGKITE/test-001/students/firebase_uid_abc123');
+        expect(writtenRef.path).toBe('assessmentResults/KGKITE/test-001/firebase_uid_abc123');
     });
 
     // ── Test 4: submitted doc is never overwritten ────────────────────────────
@@ -194,7 +194,7 @@ describe('MCQService — Canonical Path', () => {
 
         expect(mockGetDoc).toHaveBeenCalled();
         const firstCallRef = mockGetDoc.mock.calls[0][0];
-        expect(firstCallRef.path).toBe('assessmentResults/KGKITE/test-001/students/firebase_uid_abc123');
+        expect(firstCallRef.path).toBe('assessmentResults/KGKITE/test-001/firebase_uid_abc123');
     });
 
 

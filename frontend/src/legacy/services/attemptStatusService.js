@@ -62,13 +62,13 @@ export function readCompletionCache(email) {
 function writeCompletionCache(email, map) {
   try {
     sessionStorage.setItem(cacheKey(email), JSON.stringify({ at: Date.now(), map }));
-  } catch (_) {}
+  } catch (_) { }
 }
 
 export function invalidateCompletionCache(email) {
   try {
     sessionStorage.removeItem(cacheKey(email));
-  } catch (_) {}
+  } catch (_) { }
 }
 
 /**
@@ -86,11 +86,11 @@ async function queryCanonicalPaths(uid, ids, tenantId = '_unknown_') {
   const found = {};
   if (!uid || !ids?.length) return found;
   const tid = tenantId || '_unknown_';
-  // Batch: up to IN_CHUNK parallel reads
+  // Batch: up to IN_CHUNK parallel reads (4 segments: assessmentResults/{tenantId}/{id}/{uid})
   for (let i = 0; i < ids.length; i += IN_CHUNK) {
     const batch = ids.slice(i, i + IN_CHUNK);
     const snaps = await Promise.allSettled(
-      batch.map((id) => getDoc(doc(db, `assessmentResults/${tid}/${id}/students/${uid}`)))
+      batch.map((id) => getDoc(doc(db, `assessmentResults/${tid}/${id}/${uid}`)))
     );
     snaps.forEach((result, idx) => {
       if (result.status === 'fulfilled' && result.value.exists()) {
@@ -142,7 +142,7 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
         if (id in map) map[id] = true;
       });
     }
-  } catch (_) {}
+  } catch (_) { }
 
   if (!options.force) {
     const cached = readCompletionCache(tenant.email);
@@ -221,7 +221,7 @@ export async function markAssessmentCompleted(userData, assessmentId) {
       localList.push(assessmentId);
       localStorage.setItem(localKey, JSON.stringify(localList));
     }
-  } catch (_) {}
+  } catch (_) { }
 
   const cached = readCompletionCache(tenant.email) || {};
   writeCompletionCache(tenant.email, { ...cached, [assessmentId]: true });

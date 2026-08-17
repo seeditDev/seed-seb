@@ -16,26 +16,26 @@ class CodingAssessmentService {
     }
 
     /**
-     * Canonical Firestore path — tenant-first scoped.
-     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
+     * Canonical Firestore path — tenant-first scoped (4 segments).
+     * assessmentResults/{tenantId}/{assessmentId}/{userId}
      */
     static canonicalPath(assessmentId, userId, tenantId = '_unknown_') {
         const tid = tenantId || '_unknown_';
-        return `assessmentResults/${tid}/${assessmentId}/students/${userId}`;
+        return `assessmentResults/${tid}/${assessmentId}/${userId}`;
     }
 
 
     /**
      * Write result to the single canonical path.
      *
-     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
+     * assessmentResults/{tenantId}/{assessmentId}/{userId}
      *
      * This is the ONLY Firestore write on submission. No secondary mirrors.
      */
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
-        const tenantId = payload.tenantId || userProfile?.tenantId || '_unknown_';
+        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.College || userProfile?.college || '_unknown_';
         const canonRef = doc(db, this.canonicalPath(assessmentId, userId, tenantId));
-        await setDoc(canonRef, payload, { merge: true });
+        await setDoc(canonRef, { ...payload, userId, tenantId }, { merge: true });
         return this.canonicalPath(assessmentId, userId, tenantId);
     }
 
@@ -298,7 +298,7 @@ class CodingAssessmentService {
                 if (docSnap.exists() && docSnap.data().completed) {
                     return { success: true, skipped: true };
                 }
-            } catch (e) {}
+            } catch (e) { }
 
             const progressDocument = {
                 rollNumber: rollNumber || '',

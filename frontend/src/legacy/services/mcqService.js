@@ -45,9 +45,9 @@ class MCQService {
     }
 
     /**
-     * Canonical Firestore path — tenant-first scoped.
+     * Canonical Firestore path — tenant-first scoped (4 segments).
      *
-     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
+     * assessmentResults/{tenantId}/{assessmentId}/{userId}
      *
      * @param {string} assessmentId
      * @param {string} userId      — MUST be Firebase Auth UID
@@ -55,16 +55,16 @@ class MCQService {
      */
     static canonicalPath(assessmentId, userId, tenantId = '_unknown_') {
         if (!assessmentId) throw new Error('[MCQService] canonicalPath: assessmentId is required');
-        if (!userId)       throw new Error('[MCQService] canonicalPath: userId (Firebase Auth UID) is required');
+        if (!userId) throw new Error('[MCQService] canonicalPath: userId (Firebase Auth UID) is required');
         const tid = tenantId || '_unknown_';
-        return `assessmentResults/${tid}/${assessmentId}/students/${userId}`;
+        return `assessmentResults/${tid}/${assessmentId}/${userId}`;
     }
 
 
     /**
      * Write result to the single canonical path.
      *
-     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
+     * assessmentResults/{tenantId}/{assessmentId}/{userId}
      *
      * This is the ONLY Firestore write on submission. No secondary mirrors.
      * Admin, Staff, and Student all read from this single document.
@@ -76,9 +76,9 @@ class MCQService {
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
         // Belt-and-braces: validate UID one more time at write boundary
         const canonicalUid = getCanonicalUid(userId);
-        const tenantId = payload.tenantId || userProfile?.tenantId || '_unknown_';
+        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.College || userProfile?.college || '_unknown_';
         const canonRef = doc(db, this.canonicalPath(assessmentId, canonicalUid, tenantId));
-        await setDoc(canonRef, { ...payload, userId: canonicalUid }, { merge: true });
+        await setDoc(canonRef, { ...payload, userId: canonicalUid, tenantId }, { merge: true });
 
         // Mark attempt in the completion index so dashboard shows ✓ Completed
         try {
@@ -95,7 +95,7 @@ class MCQService {
 
 
     /**
-     * Write a guest result to assessmentResults/{tenantId}/{testId}/guests/{guestId}.
+     * Write a guest result to assessmentResults/{tenantId}/{testId}/{guestId}.
      * Called from guest assessment submissions — no Firebase Auth UID.
      * @param {object} payload - Assessment result payload
      * @param {string} testId - The Firestore testId from courses/.../tests/
@@ -105,7 +105,7 @@ class MCQService {
         try {
             const guestId = guestSession.guestId || `guest_${Date.now()}`;
             const tenantId = guestSession.college || guestSession.tenantId || '_guest_';
-            const guestRef = doc(db, `assessmentResults/${tenantId}/${testId}/guests/${guestId}`);
+            const guestRef = doc(db, `assessmentResults/${tenantId}/${testId}/${guestId}`);
             await setDoc(guestRef, {
                 ...payload,
                 isGuest: true,
@@ -256,44 +256,44 @@ class MCQService {
                 // This handles: reload, crash-recovery, dashboard → MCQ re-entry.
                 console.log('[MCQService] Resuming existing in-progress MCQ attempt for testID:', testID);
                 return {
-                    success:  true,
-                    docPath:  this.canonicalPath(testID, uid),
-                    resumed:  true,
+                    success: true,
+                    docPath: this.canonicalPath(testID, uid),
+                    resumed: true,
                     existing: existing.data,
                 };
             }
 
             const initialData = {
                 // ── Identity (canonical) ──────────────────────────────────────
-                userId:     uid,
+                userId: uid,
                 uid,
-                email:      Email,
+                email: Email,
                 // ── Profile (for reporting) ───────────────────────────────────
                 rollNumber: rollNumber || '',
-                name:       Name || '',
-                college:    College,
-                year:       Year,
+                name: Name || '',
+                college: College,
+                year: Year,
                 department: Department,
-                tenantId:   tenantId || '',
-                cohortId:   cohortId || '',
+                tenantId: tenantId || '',
+                cohortId: cohortId || '',
                 // ── Assessment ────────────────────────────────────────────────
                 testID,
-                assessmentId:   testID,
-                testName:       testData.name || testData.testInfo?.name || 'Unknown Test',
+                assessmentId: testID,
+                testName: testData.name || testData.testInfo?.name || 'Unknown Test',
                 assessmentTitle: testData.name || testData.testInfo?.name || 'Unknown Test',
                 totalQuestions: testData.questions?.length || testData.totalQuestions || 0,
-                type:       'mcq',
+                type: 'mcq',
                 // ── Attempt lifecycle ─────────────────────────────────────────
-                startedAt:      serverTimestamp(),
-                timeStarted:    serverTimestamp(),
+                startedAt: serverTimestamp(),
+                timeStarted: serverTimestamp(),
                 timeStartedISO: timeService.getNow().toISOString(),
-                status:     'started',
-                completed:  false,
-                submitted:  false,
-                attempts:   1,
-                from:       'student',
+                status: 'started',
+                completed: false,
+                submitted: false,
+                attempts: 1,
+                from: 'student',
                 syncedToSheets: false,
-                createdAt:  serverTimestamp(),
+                createdAt: serverTimestamp(),
             };
 
             const canonPath = await this.writeCanonicalResult(
@@ -405,65 +405,65 @@ class MCQService {
 
             const resultDocument = {
                 // ── Identity (canonical) ──────────────────────────────────────
-                userId:     uid,
+                userId: uid,
                 uid,
                 email,
                 rollNumber: rollNumber || '',
-                name:       name || '',
+                name: name || '',
                 college,
                 year,
                 department,
-                tenantId:   resultData.tenantId || '',
-                cohortId:   resultData.cohortId || '',
+                tenantId: resultData.tenantId || '',
+                cohortId: resultData.cohortId || '',
                 // ── Assessment ────────────────────────────────────────────────
                 testID,
                 assessmentId: testID,
-                testName:   testName || 'Unknown Test',
+                testName: testName || 'Unknown Test',
                 assessmentTitle: testName || 'Unknown Test',
-                type:       'mcq',
+                type: 'mcq',
                 // ── Scores ────────────────────────────────────────────────────
-                score:          score || 0,
-                totalScore:     score || 0,
+                score: score || 0,
+                totalScore: score || 0,
                 totalQuestions: totalQuestions || 0,
-                maxScore:       resultData.totalMarks || resultData.totalQuestions || 0,
-                totalMarks:     resultData.totalMarks || resultData.totalQuestions || 0,
+                maxScore: resultData.totalMarks || resultData.totalQuestions || 0,
+                totalMarks: resultData.totalMarks || resultData.totalQuestions || 0,
                 correctAnswers: correctAnswers || 0,
                 incorrectAnswers: incorrectAnswers || 0,
-                percentage:     percentage || 0,
-                passed:         percentage >= (resultData.passMark || 50),
+                percentage: percentage || 0,
+                passed: percentage >= (resultData.passMark || 50),
                 partialScore,
                 fullScore,
                 // ── Timing ────────────────────────────────────────────────────
-                timeTaken:          timeTaken || 0,
-                timeTakenSeconds:   timeTaken || 0,
+                timeTaken: timeTaken || 0,
+                timeTakenSeconds: timeTaken || 0,
                 timeTakenFormatted: this.formatTime(timeTaken || 0),
-                startedAt:      timeStarted || serverTimestamp(),
-                timeStarted:    timeStarted || serverTimestamp(),
+                startedAt: timeStarted || serverTimestamp(),
+                timeStarted: timeStarted || serverTimestamp(),
                 timeStartedISO: resultData.timeStartedISO || timeService.getNow().toISOString(),
-                submittedAt:    serverTimestamp(),
-                timeEnded:      timeEnded || serverTimestamp(),
-                timeEndedISO:   timeService.getNow().toISOString(),
+                submittedAt: serverTimestamp(),
+                timeEnded: timeEnded || serverTimestamp(),
+                timeEndedISO: timeService.getNow().toISOString(),
                 submittedAtISO: timeService.getNow().toISOString(),
                 // ── Status ────────────────────────────────────────────────────
-                status:       'submitted',
-                completed:    true,
-                submitted:    true,
+                status: 'submitted',
+                completed: true,
+                submitted: true,
                 autoSubmitted: autoSubmitted || false,
                 autoSubmitReason: resultData.autoSubmitReason || '',
                 submissionReason: autoSubmitted ? (resultData.autoSubmitReason || 'timer_expired') : 'manual',
                 // ── Data ──────────────────────────────────────────────────────
-                attempts:   existingData?.attempts || 1,
-                from:       'student',
+                attempts: existingData?.attempts || 1,
+                from: 'student',
                 syncedToSheets: false,
-                answers:    answers || {},
-                questions:  resultData.questions || [],
+                answers: answers || {},
+                questions: resultData.questions || [],
                 // ── Proctoring ────────────────────────────────────────────────
-                violationCount:       resultData.violationCount || 0,
-                totalNoFace:          resultData.totalNoFace || 0,
-                totalMultipleFaces:   resultData.totalMultipleFaces || 0,
-                violations:           resultData.violations || [],
-                proctorSummary:       resultData.proctorSummary || null,
-                updatedAt:            serverTimestamp(),
+                violationCount: resultData.violationCount || 0,
+                totalNoFace: resultData.totalNoFace || 0,
+                totalMultipleFaces: resultData.totalMultipleFaces || 0,
+                violations: resultData.violations || [],
+                proctorSummary: resultData.proctorSummary || null,
+                updatedAt: serverTimestamp(),
             };
 
             // Canonical write via writeCanonicalResult (uses uid from getCanonicalUid)
@@ -543,42 +543,42 @@ class MCQService {
 
         const progressDocument = {
             // ── Identity ──────────────────────────────────────────────────────
-            userId:     uid,
+            userId: uid,
             uid,
             email,
             rollNumber: rollNumber || '',
-            name:       name || '',
+            name: name || '',
             college,
             year,
             department,
-            tenantId:   progressData.tenantId || '',
+            tenantId: progressData.tenantId || '',
             // ── Assessment ────────────────────────────────────────────────────
             testID,
             assessmentId: testID,
-            testName:   testName || 'Unknown Test',
+            testName: testName || 'Unknown Test',
             assessmentTitle: testName || 'Unknown Test',
             totalQuestions: totalQuestions || 0,
             // ── In-progress scores (prefixed to distinguish from final score) ─
-            inProgressScore:      score || 0,
+            inProgressScore: score || 0,
             inProgressPercentage: percentage || 0,
-            correctAnswers:   correctAnswers || 0,
+            correctAnswers: correctAnswers || 0,
             incorrectAnswers: incorrectAnswers || 0,
             // ── Timing ────────────────────────────────────────────────────────
-            progressTimeTaken:          timeTaken || 0,
+            progressTimeTaken: timeTaken || 0,
             progressTimeTakenFormatted: this.formatTime(timeTaken || 0),
-            startedAt:      timeStarted || serverTimestamp(),
-            timeStarted:    timeStarted || serverTimestamp(),
+            startedAt: timeStarted || serverTimestamp(),
+            timeStarted: timeStarted || serverTimestamp(),
             timeStartedISO: progressData.timeStartedISO || timeService.getNow().toISOString(),
-            lastProgressAt:    serverTimestamp(),
+            lastProgressAt: serverTimestamp(),
             lastProgressAtISO: timeService.getNow().toISOString(),
             // ── Answers ───────────────────────────────────────────────────────
             answers: answers || {},
             // ── Status (must NOT set completed/submitted — only final submit does that) ──
-            status:         'in_progress',
-            completed:      false,
-            submitted:      false,
+            status: 'in_progress',
+            completed: false,
+            submitted: false,
             syncedToSheets: false,
-            updatedAt:      serverTimestamp(),
+            updatedAt: serverTimestamp(),
             autoSubmitReason: progressData.autoSubmitReason || '',
         };
 
@@ -625,7 +625,7 @@ class MCQService {
                 ...resultData,
                 uid,
                 retryCount: 0,
-                lastRetry:  null
+                lastRetry: null
             });
             localStorage.setItem(storageKey, JSON.stringify(unsynced));
             console.log('[MCQService] Saved unsynced result to localStorage key:', storageKey);
@@ -649,8 +649,8 @@ class MCQService {
             const uid = auth?.currentUser?.uid;
             if (!uid) return { synced: 0, failed: 0 };
 
-            let synced  = 0;
-            let failed  = 0;
+            let synced = 0;
+            let failed = 0;
 
             // ── 1. Retry mcq_unsynced_{uid} queue (legacy Phase 1 offline queue) ────────
             const storageKey = `mcq_unsynced_${uid}`;
@@ -668,7 +668,7 @@ class MCQService {
                 } catch (error) {
                     console.error('[MCQService] Retry failed for result:', error);
                     result.retryCount = (result.retryCount || 0) + 1;
-                    result.lastRetry  = new Date().toISOString();
+                    result.lastRetry = new Date().toISOString();
                     if (result.retryCount < 5) {
                         remaining.push(result);
                     } else {
@@ -761,10 +761,10 @@ class MCQService {
      */
     static formatTime(seconds) {
         if (!seconds || seconds < 0) return '0s';
-        const hrs  = Math.floor(seconds / 3600);
+        const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-        if (hrs  > 0) return `${hrs}h ${mins}m ${secs}s`;
+        if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`;
         if (mins > 0) return `${mins}m ${secs}s`;
         return `${secs}s`;
     }

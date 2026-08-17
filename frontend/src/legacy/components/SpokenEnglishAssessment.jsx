@@ -476,10 +476,10 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       submittedAt: new Date().toISOString(),
     };
 
-    // Canonical Firestore path: assessmentResults/{tenantId}/{testId}/students/{userId}
+    // Canonical Firestore path: assessmentResults/{tenantId}/{testId}/{userId}
     const tenantId = currentUser?.College || currentUser?.college || currentUser?.tenantId || '_unknown_';
     try {
-      const v2DocPath = `assessmentResults/${tenantId}/${testId}/students/${userId}`;
+      const v2DocPath = `assessmentResults/${tenantId}/${testId}/${userId}`;
       const unifiedPayload = buildUnifiedResultPayload({
         ...firestorePayload,
         tenantId,

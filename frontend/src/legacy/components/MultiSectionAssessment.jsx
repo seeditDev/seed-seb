@@ -880,7 +880,7 @@ const MultiSectionAssessment = () => {
       }
 
       const tenantId = college || authData?.tenantId || '_unknown_';
-      const v2DocPath = `assessmentResults/${tenantId}/${effectiveAssessment.id}/students/${userId}`;
+      const v2DocPath = `assessmentResults/${tenantId}/${effectiveAssessment.id}/${userId}`;
 
       // SECTION 13: Final submission MUST be reliable. Await the write.
       // On failure: save pending envelope for recovery on next login.
@@ -1099,7 +1099,7 @@ const MultiSectionAssessment = () => {
           return;
         }
         const tenantId = authData?.College || authData?.college || authData?.tenantId || '_unknown_';
-        const canonDocPath = `assessmentResults/${tenantId}/${assessmentData.id}/students/${uid}`;
+        const canonDocPath = `assessmentResults/${tenantId}/${assessmentData.id}/${uid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -1577,7 +1577,7 @@ const MultiSectionAssessment = () => {
         if (!userId) {
           console.error('[MSA] autoSubmitSection partial: not authenticated, refusing Firestore write.');
         } else {
-          setDoc(doc(db, `assessmentResults/${college}/${assessment.id}/students/${userId}`), {
+          setDoc(doc(db, `assessmentResults/${college}/${assessment.id}/${userId}`), {
             userId, email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
             tenantId: college, cohortId: year,
             testID: assessment.id, testName: assessment.name,
@@ -1703,7 +1703,7 @@ const MultiSectionAssessment = () => {
           console.error('[MSA] autoSubmitSection final: not authenticated, refusing Firestore write.');
         } else {
           const tenantId = college || user?.tenantId || '_unknown_';
-          const v2DocPath = `assessmentResults/${tenantId}/${assessment.id}/students/${userId}`;
+          const v2DocPath = `assessmentResults/${tenantId}/${assessment.id}/${userId}`;
 
           try {
             await setDoc(doc(db, v2DocPath), attemptData, { merge: true });

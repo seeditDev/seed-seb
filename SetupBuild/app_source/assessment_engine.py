@@ -27,7 +27,7 @@ class AssessmentEngine:
         """Sets the active student profile session.
 
         auth_data must originate from Firebase Auth (validated server-side).
-        This engine uses it only for file-path scoping — it is NOT a security
+        This engine uses it only for file-path scoping - it is NOT a security
         authority. Firestore rules enforce access control server-side.
         """
         if isinstance(auth_data, str):

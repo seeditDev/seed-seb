@@ -4,13 +4,23 @@ import uuid
 import time
 import shutil
 import subprocess
+import tempfile
 from runtime_manager import runtime_manager
 
 class CodeExecutor:
     def __init__(self):
         self.app_root = runtime_manager.app_root
-        self.workspace_dir = os.path.join(self.app_root, "temp_workspace")
-        os.makedirs(self.workspace_dir, exist_ok=True)
+        candidate_dir = os.path.join(self.app_root, "temp_workspace")
+        try:
+            os.makedirs(candidate_dir, exist_ok=True)
+            test_file = os.path.join(candidate_dir, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("test")
+            os.remove(test_file)
+            self.workspace_dir = candidate_dir
+        except Exception:
+            self.workspace_dir = os.path.join(tempfile.gettempdir(), "seed_seb_temp_workspace")
+            os.makedirs(self.workspace_dir, exist_ok=True)
 
     def _create_temp_run_dir(self):
         """Creates a unique directory for the execution run to support concurrency and clean isolation."""
