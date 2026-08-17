@@ -735,9 +735,9 @@ const isCodeBlankOrEmpty = (codeStr) => {
 
   if (loading) {
     return (
-      <div className="psb-root" style={{ justifyContent: 'center', alignItems: 'center', background: '#090915' }}>
-        <div className="psb-spinner" style={{ width: '40px', height: '40px', borderTopColor: '#7c6bff' }} />
-        <p style={{ marginTop: '16px', color: '#94a3b8', fontFamily: 'sans-serif' }}>Connecting code compiler & loading topics...</p>
+      <div className="psb-root" style={{ justifyContent: 'center', alignItems: 'center', background: 'var(--ps-bg, #f8fafc)' }}>
+        <div className="psb-spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--ps-primary, #15803d)' }} />
+        <p style={{ marginTop: '16px', color: 'var(--ps-text-dim, #64748b)', fontFamily: 'sans-serif' }}>Connecting code compiler & loading topics...</p>
       </div>
     );
   }

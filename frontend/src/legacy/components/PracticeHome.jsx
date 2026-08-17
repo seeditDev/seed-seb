@@ -2374,16 +2374,16 @@ const PracticeHome = () => {
               <div style={{
                 display: 'flex',
                 gap: '12px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid var(--ph-border)',
                 paddingBottom: '16px',
                 marginBottom: '28px'
               }}>
                 <button
                   onClick={() => setCurriculumSubTab('technical')}
                   style={{
-                    background: curriculumSubTab === 'technical' ? 'rgba(124,107,255,0.15)' : 'transparent',
-                    border: '1px solid ' + (curriculumSubTab === 'technical' ? 'var(--ph-primary)' : 'rgba(255,255,255,0.08)'),
-                    color: 'var(--ph-text)',
+                    background: curriculumSubTab === 'technical' ? 'var(--ph-primary-light)' : 'transparent',
+                    border: '1px solid ' + (curriculumSubTab === 'technical' ? 'var(--ph-primary)' : 'var(--ph-border)'),
+                    color: curriculumSubTab === 'technical' ? 'var(--ph-primary)' : 'var(--ph-text)',
                     padding: '8px 18px',
                     borderRadius: '20px',
                     fontWeight: 'bold',
@@ -2400,9 +2400,9 @@ const PracticeHome = () => {
                 <button
                   onClick={() => setCurriculumSubTab('aptitude')}
                   style={{
-                    background: curriculumSubTab === 'aptitude' ? 'rgba(124,107,255,0.15)' : 'transparent',
-                    border: '1px solid ' + (curriculumSubTab === 'aptitude' ? 'var(--ph-primary)' : 'rgba(255,255,255,0.08)'),
-                    color: 'var(--ph-text)',
+                    background: curriculumSubTab === 'aptitude' ? 'var(--ph-primary-light)' : 'transparent',
+                    border: '1px solid ' + (curriculumSubTab === 'aptitude' ? 'var(--ph-primary)' : 'var(--ph-border)'),
+                    color: curriculumSubTab === 'aptitude' ? 'var(--ph-primary)' : 'var(--ph-text)',
                     padding: '8px 18px',
                     borderRadius: '20px',
                     fontWeight: 'bold',
@@ -2419,9 +2419,9 @@ const PracticeHome = () => {
                 <button
                   onClick={() => setCurriculumSubTab('roadmaps')}
                   style={{
-                    background: curriculumSubTab === 'roadmaps' ? 'rgba(124,107,255,0.15)' : 'transparent',
-                    border: '1px solid ' + (curriculumSubTab === 'roadmaps' ? 'var(--ph-primary)' : 'rgba(255,255,255,0.08)'),
-                    color: 'var(--ph-text)',
+                    background: curriculumSubTab === 'roadmaps' ? 'var(--ph-primary-light)' : 'transparent',
+                    border: '1px solid ' + (curriculumSubTab === 'roadmaps' ? 'var(--ph-primary)' : 'var(--ph-border)'),
+                    color: curriculumSubTab === 'roadmaps' ? 'var(--ph-primary)' : 'var(--ph-text)',
                     padding: '8px 18px',
                     borderRadius: '20px',
                     fontWeight: 'bold',
@@ -2550,11 +2550,11 @@ const PracticeHome = () => {
                         }
 
                         const style = {
-                          '--theme-border-color': '#7c6bff',
-                          '--theme-border-color-15': 'rgba(124,107,255,0.15)',
-                          '--theme-border-color-25': 'rgba(124,107,255,0.25)',
-                          '--theme-border-color-30': 'rgba(124,107,255,0.30)',
-                          '--theme-border-color-50': 'rgba(124,107,255,0.50)'
+                          '--theme-border-color': 'var(--ph-primary)',
+                          '--theme-border-color-15': 'var(--ph-primary-light)',
+                          '--theme-border-color-25': 'var(--ph-primary-light)',
+                          '--theme-border-color-30': 'var(--ph-primary-light)',
+                          '--theme-border-color-50': 'var(--ph-primary-light)'
                         };
 
                         const isCompleted = totalQs > 0 && solvedQs === totalQs;
@@ -2770,16 +2770,16 @@ const PracticeHome = () => {
                                         }
                                       }}
                                       style={{
-                                        background: actionText === 'Review Course' ? 'transparent' : '#7c6bff',
-                                        border: actionText === 'Review Course' ? '1px solid rgba(255,255,255,0.15)' : 'none',
-                                        color: 'white',
+                                        background: actionText === 'Review Course' ? 'transparent' : 'var(--ph-primary)',
+                                        border: actionText === 'Review Course' ? '1px solid var(--ph-border)' : 'none',
+                                        color: actionText === 'Review Course' ? 'var(--ph-text)' : 'white',
                                         borderRadius: '6px',
                                         padding: '8px 14px',
                                         fontSize: '13px',
                                         fontWeight: '600',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s',
-                                        boxShadow: actionText === 'Review Course' ? 'none' : '0 2px 4px rgba(124,107,255,0.2)'
+                                        boxShadow: actionText === 'Review Course' ? 'none' : '0 2px 4px rgba(21,128,61,0.2)'
                                       }}
                                       className="ph-topbar-btn"
                                     >

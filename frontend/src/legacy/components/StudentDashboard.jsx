@@ -1501,19 +1501,19 @@ const StudentDashboard = () => {
                         key={series.key}
                         className="ps-sheet-card"
                         style={{
-                          '--theme-border-color': '#7c6bff',
+                          '--theme-border-color': 'var(--accent-coding)',
                           minHeight: '190px'
                         }}
                       >
                         <div>
                           <h3 className="ps-card-title">{series.title}</h3>
-                          <p className="ps-card-desc" style={{ fontSize: '13px', marginTop: '6px', color: 'var(--ph-text-dim)' }}>
+                          <p className="ps-card-desc" style={{ fontSize: '13px', marginTop: '6px', color: 'var(--text-muted)' }}>
                             {series.description}
                           </p>
                         </div>
 
-                        <div className="ps-card-footer" style={{ borderTop: '1px solid var(--ph-border)', paddingTop: '14px', marginTop: '16px' }}>
-                          <span className="ps-card-stats" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ph-text-dim)' }}>
+                        <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '16px' }}>
+                          <span className="ps-card-stats" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)' }}>
                             {completedTests}/{totalTests} Completed
                           </span>
 
@@ -1575,7 +1575,7 @@ const StudentDashboard = () => {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '8px',
-                      background: 'rgba(255,255,255,0.05)',
+                      background: 'var(--bg-tertiary)',
                       border: '1px solid var(--border-color)',
                       color: 'var(--text-main)',
                       padding: '8px 16px',
@@ -1590,7 +1590,7 @@ const StudentDashboard = () => {
                   </button>
                   <div>
                     <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{series.title}</h2>
-                    <p style={{ fontSize: '13px', color: 'var(--ph-text-dim)', margin: '2px 0 0 0' }}>{series.description}</p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{series.description}</p>
                   </div>
                 </div>
 
@@ -1648,9 +1648,9 @@ const StudentDashboard = () => {
                           key={a.id}
                           className="ps-sheet-card"
                           style={{
-                            '--theme-border-color': a.type === 'mcq' ? '#0ea5e9' : (a.type === 'MSA' ? '#8b5cf6' : '#7c6bff'),
-                            border: a.completed ? '1px solid rgba(74,222,128,0.3)' : '1px solid var(--ph-border)',
-                            boxShadow: a.completed ? '0 4px 20px rgba(74,222,128,0.08)' : 'none',
+                            '--theme-border-color': a.type === 'mcq' ? 'var(--accent-mcq)' : 'var(--accent-coding)',
+                            border: a.completed ? '1px solid var(--accent-coding)' : '1px solid var(--border-color)',
+                            boxShadow: a.completed ? '0 4px 20px rgba(21, 128, 61, 0.08)' : 'none',
                             minHeight: '200px'
                           }}
                         >
@@ -1658,7 +1658,7 @@ const StudentDashboard = () => {
                             <h3 className="ps-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span>{a.name}</span>
                               {a.completed ? (
-                                <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ade80', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                                <span style={{ background: 'var(--soft-green, rgba(21, 128, 61, 0.15))', color: 'var(--accent-coding, #15803d)', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
                                   Completed
                                 </span>
                               ) : (
@@ -1667,11 +1667,11 @@ const StudentDashboard = () => {
                                 </span>
                               )}
                             </h3>
-                            <p className="ps-card-desc" style={{ fontSize: '12px', marginTop: '6px', color: 'var(--ph-text-dim)' }}>
+                            <p className="ps-card-desc" style={{ fontSize: '12px', marginTop: '6px', color: 'var(--text-muted)' }}>
                               {a.description || `Assessment test covering various ${a.type} questions and topics.`}
                             </p>
 
-                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px', fontSize: '12px', color: 'var(--ph-text-dim)' }}>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                 <FaClock /> {a.duration} Mins
                               </span>
@@ -1686,22 +1686,22 @@ const StudentDashboard = () => {
                             </div>
                           </div>
 
-                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--ph-border)', paddingTop: '14px', marginTop: '16px' }}>
-                            <span className="ps-card-stats" style={{ textTransform: 'uppercase', fontSize: '11px', fontWeight: 'bold', color: a.type === 'mcq' ? '#0ea5e9' : (a.type === 'MSA' ? '#a78bfa' : '#7c6bff') }}>
+                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '16px' }}>
+                            <span className="ps-card-stats" style={{ textTransform: 'uppercase', fontSize: '11px', fontWeight: 'bold', color: a.type === 'mcq' ? 'var(--accent-mcq)' : 'var(--accent-coding)' }}>
                               {a.type.toUpperCase()}
                             </span>
 
                             <div className="ps-card-actions">
                               {a.completed ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--soft-green, rgba(21, 128, 61, 0.1))', color: 'var(--accent-coding, #15803d)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                                   <FaCheckCircle /> Submitted
                                 </button>
                               ) : isExpired ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ph-text-dim)', border: '1px solid var(--ph-border)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '13px' }}>
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '13px' }}>
                                   Expired
                                 </button>
                               ) : isUpcoming ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--ph-text-dim)', border: '1px solid var(--ph-border)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
                                   <FaLock /> Locked
                                 </button>
                               ) : (
@@ -1711,7 +1711,7 @@ const StudentDashboard = () => {
                                   style={{
                                     padding: '6px 16px',
                                     fontSize: '13px',
-                                    background: a.type === 'mcq' ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : (a.type === 'MSA' ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'linear-gradient(135deg, #7c6bff, #4f46e5)')
+                                    background: a.type === 'mcq' ? 'var(--accent-mcq)' : 'var(--accent-coding)'
                                   }}
                                 >
                                   Start Test
@@ -3651,7 +3651,10 @@ const StudentDashboard = () => {
           <button className="sidebar-toggle" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle Sidebar">
             <FaBars />
           </button>
-          <span className="brand-title">SEED SEB Dashboard</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img src="/SEED_Logo_Transparent.png" alt="SEED Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+            <span className="brand-title">SEED <span>SEB</span></span>
+          </div>
         </div>
         <div className="header-profile">
           <FaUser className="user-icon" />

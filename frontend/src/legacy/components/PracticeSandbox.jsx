@@ -1051,7 +1051,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 <button
                   onClick={() => setShowContactInfo(true)}
                   style={{
-                    background: '#7c6bff',
+                    background: 'var(--ps-primary)',
                     border: 'none',
                     borderRadius: '8px',
                     color: 'white',
