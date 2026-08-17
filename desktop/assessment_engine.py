@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import base64
+import re
 from executor import code_executor
 from runtime_manager import runtime_manager
 
@@ -39,22 +40,41 @@ class AssessmentEngine:
         print(f"[AssessmentEngine] Active session set for uid: {self.current_student.get('uid') if self.current_student else 'Guest'}")
 
     def get_student_id(self):
-        """Returns normalized student file identifier.
+        """Returns normalized, path-safe student file identifier.
 
         Priority: Firebase Auth UID > sanitised email.
         The UID is preferred because it is stable and unique.
-        This identifier is used ONLY for local file naming, not for
-        Firestore document paths or security decisions.
+        Strictly sanitizes against path traversal characters.
         """
+        raw_id = "guest"
         if self.current_student:
             uid = self.current_student.get("uid")
             if uid:
-                # Sanitize UID for use in filenames (already safe chars, but belt-and-braces)
-                return str(uid).replace("/", "_").replace("\\", "_")
-            email = self.current_student.get("Email", "")
-            if email:
-                return email.replace("@", "_at_").replace(".", "_")
-        return "guest"
+                raw_id = str(uid)
+            else:
+                email = self.current_student.get("Email", "")
+                if email:
+                    raw_id = str(email)
+        # Strict alphanumeric + hyphen + underscore only (prevents traversal)
+        sanitized = re.sub(r'[^a-zA-Z0-9_-]', '_', raw_id)
+        return sanitized or "guest"
+
+    def cleanup_student_session_data(self, student_id=None):
+        """Deletes ephemeral student progress/answer files from disk upon exit/completion."""
+        target_id = student_id or self.get_student_id()
+        if not os.path.exists(self.student_dir):
+            return
+        try:
+            for fname in os.listdir(self.student_dir):
+                if fname.endswith((".json", ".tmp")) and (target_id == "all" or fname.startswith(f"{target_id}_")):
+                    fpath = os.path.join(self.student_dir, fname)
+                    try:
+                        os.remove(fpath)
+                        print(f"[AssessmentEngine] Cleaned ephemeral student file: {fname}")
+                    except Exception as e:
+                        print(f"[AssessmentEngine] Could not delete {fname}: {e}")
+        except Exception as err:
+            print(f"[AssessmentEngine] Cleanup error: {err}")
 
     # ── Local cache encoding (NOT cryptographic security) ────────────────────
     #

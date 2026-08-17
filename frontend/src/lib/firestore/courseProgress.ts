@@ -5,23 +5,17 @@
  * Called after every MCQ / Coding / SEA submission.
  */
 
-import { getApps } from 'firebase/app';
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { getApps } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 function getDb() {
   const apps = getApps();
-  if (!apps.length) throw new Error('[courseProgress.ts] Firebase not initialised');
+  if (!apps.length) throw new Error("[courseProgress.ts] Firebase not initialised");
   return getFirestore(apps[0]!);
 }
 
 export interface TestProgress {
-  status: 'completed' | 'attempted';
+  status: "completed" | "attempted";
   score: number;
   maxScore: number;
   submittedAt: unknown; // Firestore Timestamp
@@ -40,13 +34,16 @@ export interface CourseProgress {
 }
 
 /** Get course progress for a user. Returns null if not started yet. */
-export async function getCourseProgress(uid: string, courseId: string): Promise<CourseProgress | null> {
+export async function getCourseProgress(
+  uid: string,
+  courseId: string,
+): Promise<CourseProgress | null> {
   try {
-    const snap = await getDoc(doc(getDb(), 'users', uid, 'courseProgress', courseId));
+    const snap = await getDoc(doc(getDb(), "users", uid, "courseProgress", courseId));
     if (!snap.exists()) return null;
     return snap.data() as CourseProgress;
   } catch (err) {
-    console.error('[courseProgress.ts] getCourseProgress error:', err);
+    console.error("[courseProgress.ts] getCourseProgress error:", err);
     return null;
   }
 }
@@ -67,7 +64,7 @@ export async function markTestComplete(params: {
   const { uid, courseId, seriesId, testId, score, maxScore, totalTestsInSeries } = params;
   try {
     const db = getDb();
-    const ref = doc(db, 'users', uid, 'courseProgress', courseId);
+    const ref = doc(db, "users", uid, "courseProgress", courseId);
     const snap = await getDoc(ref);
     const existing = snap.exists() ? (snap.data() as CourseProgress) : null;
 
@@ -78,15 +75,13 @@ export async function markTestComplete(params: {
     };
 
     const existingTest = existingSeries.tests?.[testId];
-    const wasCompleted = existingTest?.status === 'completed';
+    const wasCompleted = existingTest?.status === "completed";
 
     // Only increment completed count if this is a new completion
-    const newCompleted = wasCompleted
-      ? existingSeries.completed
-      : existingSeries.completed + 1;
+    const newCompleted = wasCompleted ? existingSeries.completed : existingSeries.completed + 1;
 
     const updatedTest: TestProgress = {
-      status: 'completed',
+      status: "completed",
       score: Math.max(existingTest?.score ?? 0, score), // keep highest score
       maxScore,
       submittedAt: serverTimestamp(),
@@ -110,7 +105,7 @@ export async function markTestComplete(params: {
       { merge: true },
     );
   } catch (err) {
-    console.error('[courseProgress.ts] markTestComplete error:', err);
+    console.error("[courseProgress.ts] markTestComplete error:", err);
   }
 }
 

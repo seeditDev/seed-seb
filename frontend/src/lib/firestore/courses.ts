@@ -8,7 +8,7 @@
  *   "courseId::seriesId::testId"
  */
 
-import { getApps } from 'firebase/app';
+import { getApps } from "firebase/app";
 import {
   getFirestore,
   doc,
@@ -19,11 +19,11 @@ import {
   query,
   where,
   Timestamp,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
 function getDb() {
   const apps = getApps();
-  if (!apps.length) throw new Error('[courses.ts] Firebase not initialised');
+  if (!apps.length) throw new Error("[courses.ts] Firebase not initialised");
   return getFirestore(apps[0]!);
 }
 
@@ -53,7 +53,7 @@ export interface TestSettings {
 export interface MSASection {
   id: string;
   name: string;
-  type: 'mcq' | 'coding' | 'sea';
+  type: "mcq" | "coding" | "sea";
   cdnUrl: string;
   assessmentId: string;
   duration_minutes: number;
@@ -71,13 +71,13 @@ export interface TestDoc {
   seriesId: string;
   name: string;
   description: string;
-  type: 'mcq' | 'coding' | 'sea' | 'spoken-english' | 'msa';
+  type: "mcq" | "coding" | "sea" | "spoken-english" | "msa";
   cdnUrl: string;
   assessmentId: string;
   sections: MSASection[];
   duration_minutes: number;
   totalMarks: number;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
+  difficulty: "Easy" | "Medium" | "Hard";
   proctored: boolean;
   audioProctored: boolean;
   maxViolations: number;
@@ -124,7 +124,7 @@ export interface NewModuleKey {
 }
 
 export function parseModuleKey(key: string): NewModuleKey | null {
-  const parts = key.split('::');
+  const parts = key.split("::");
   if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
     return { isNew: true, courseId: parts[0], seriesId: parts[1], testId: parts[2] };
   }
@@ -135,45 +135,50 @@ export function parseModuleKey(key: string): NewModuleKey | null {
 // Mapping helper
 // ─────────────────────────────────────────────────────────────────────────────
 
-function mapTest(id: string, courseId: string, seriesId: string, d: Record<string, unknown>): TestDoc {
-  const s = (d['settings'] ?? {}) as Record<string, unknown>;
+function mapTest(
+  id: string,
+  courseId: string,
+  seriesId: string,
+  d: Record<string, unknown>,
+): TestDoc {
+  const s = (d["settings"] ?? {}) as Record<string, unknown>;
   return {
     id,
     courseId,
     seriesId,
-    name: String(d['name'] ?? id),
-    description: String(d['description'] ?? ''),
-    type: (d['type'] as TestDoc['type']) ?? 'mcq',
-    cdnUrl: String(d['cdnUrl'] ?? ''),
-    assessmentId: String(d['assessmentId'] ?? ''),
-    sections: Array.isArray(d['sections']) ? (d['sections'] as MSASection[]) : [],
-    duration_minutes: Number(d['duration_minutes'] ?? 60),
-    totalMarks: Number(d['totalMarks'] ?? 100),
-    difficulty: (d['difficulty'] as TestDoc['difficulty']) ?? 'Medium',
-    proctored: Boolean(d['proctored']),
-    audioProctored: Boolean(d['audioProctored']),
-    maxViolations: Number(d['maxViolations'] ?? 5),
-    maxAudioViolations: Number(d['maxAudioViolations'] ?? 3),
-    maxAttempts: Number(d['maxAttempts'] ?? 1),
-    passkey: String(d['passkey'] ?? ''),
-    isPremium: Boolean(d['isPremium']),
-    guestEnabled: Boolean(d['guestEnabled']),
-    assessmentCode: String(d['assessmentCode'] ?? ''),
-    display_order: Number(d['display_order'] ?? 999),
-    schedule: (d['schedule'] as ScheduleConfig) ?? { start: null, end: null, autoClose: false },
+    name: String(d["name"] ?? id),
+    description: String(d["description"] ?? ""),
+    type: (d["type"] as TestDoc["type"]) ?? "mcq",
+    cdnUrl: String(d["cdnUrl"] ?? ""),
+    assessmentId: String(d["assessmentId"] ?? ""),
+    sections: Array.isArray(d["sections"]) ? (d["sections"] as MSASection[]) : [],
+    duration_minutes: Number(d["duration_minutes"] ?? 60),
+    totalMarks: Number(d["totalMarks"] ?? 100),
+    difficulty: (d["difficulty"] as TestDoc["difficulty"]) ?? "Medium",
+    proctored: Boolean(d["proctored"]),
+    audioProctored: Boolean(d["audioProctored"]),
+    maxViolations: Number(d["maxViolations"] ?? 5),
+    maxAudioViolations: Number(d["maxAudioViolations"] ?? 3),
+    maxAttempts: Number(d["maxAttempts"] ?? 1),
+    passkey: String(d["passkey"] ?? ""),
+    isPremium: Boolean(d["isPremium"]),
+    guestEnabled: Boolean(d["guestEnabled"]),
+    assessmentCode: String(d["assessmentCode"] ?? ""),
+    display_order: Number(d["display_order"] ?? 999),
+    schedule: (d["schedule"] as ScheduleConfig) ?? { start: null, end: null, autoClose: false },
     settings: {
-      shuffleQuestions: Boolean(s['shuffleQuestions']),
-      shuffleOptions: Boolean(s['shuffleOptions']),
-      allowLanguageSwitch: s['allowLanguageSwitch'] !== false,
-      showResultAfterSubmit: s['showResultAfterSubmit'] !== false,
-      allowedLanguages: Array.isArray(s['allowedLanguages'])
-        ? (s['allowedLanguages'] as string[])
-        : ['C', 'C++', 'Java', 'Python3'],
-      forwardOnly: Boolean(s['forwardOnly']),
-      autoSubmit: Boolean(s['autoSubmit']),
-      questionTimer: Number(s['questionTimer'] ?? 0),
-      questionTimerList: String(s['questionTimerList'] ?? ''),
-      timerRestrictedSubmit: Boolean(s['timerRestrictedSubmit']),
+      shuffleQuestions: Boolean(s["shuffleQuestions"]),
+      shuffleOptions: Boolean(s["shuffleOptions"]),
+      allowLanguageSwitch: s["allowLanguageSwitch"] !== false,
+      showResultAfterSubmit: s["showResultAfterSubmit"] !== false,
+      allowedLanguages: Array.isArray(s["allowedLanguages"])
+        ? (s["allowedLanguages"] as string[])
+        : ["C", "C++", "Java", "Python3"],
+      forwardOnly: Boolean(s["forwardOnly"]),
+      autoSubmit: Boolean(s["autoSubmit"]),
+      questionTimer: Number(s["questionTimer"] ?? 0),
+      questionTimerList: String(s["questionTimerList"] ?? ""),
+      timerRestrictedSubmit: Boolean(s["timerRestrictedSubmit"]),
     },
   };
 }
@@ -183,13 +188,19 @@ function mapTest(id: string, courseId: string, seriesId: string, d: Record<strin
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Fetch a single test from courses/{courseId}/series/{seriesId}/tests/{testId}. */
-export async function getTest(courseId: string, seriesId: string, testId: string): Promise<TestDoc | null> {
+export async function getTest(
+  courseId: string,
+  seriesId: string,
+  testId: string,
+): Promise<TestDoc | null> {
   try {
-    const snap = await getDoc(doc(getDb(), 'courses', courseId, 'series', seriesId, 'tests', testId));
+    const snap = await getDoc(
+      doc(getDb(), "courses", courseId, "series", seriesId, "tests", testId),
+    );
     if (!snap.exists()) return null;
     return mapTest(snap.id, courseId, seriesId, snap.data() as Record<string, unknown>);
   } catch (err) {
-    console.error('[courses.ts] getTest error:', err);
+    console.error("[courses.ts] getTest error:", err);
     return null;
   }
 }
@@ -197,12 +208,14 @@ export async function getTest(courseId: string, seriesId: string, testId: string
 /** Fetch all tests in a series ordered by display_order. */
 export async function getSeriesTests(courseId: string, seriesId: string): Promise<TestDoc[]> {
   try {
-    const snap = await getDocs(collection(getDb(), 'courses', courseId, 'series', seriesId, 'tests'));
+    const snap = await getDocs(
+      collection(getDb(), "courses", courseId, "series", seriesId, "tests"),
+    );
     return snap.docs
       .map((d) => mapTest(d.id, courseId, seriesId, d.data() as Record<string, unknown>))
       .sort((a, b) => a.display_order - b.display_order);
   } catch (err) {
-    console.error('[courses.ts] getSeriesTests error:', err);
+    console.error("[courses.ts] getSeriesTests error:", err);
     return [];
   }
 }
@@ -230,9 +243,11 @@ export async function getAllowedTests(allowedModules: string[]): Promise<TestDoc
   await Promise.all(
     Array.from(courseSet).map(async (cId) => {
       try {
-        const snap = await getDoc(doc(db, 'courses', cId));
-        if (snap.exists()) courseTitles.set(cId, String(snap.data()['title'] ?? cId));
-      } catch { /* skip */ }
+        const snap = await getDoc(doc(db, "courses", cId));
+        if (snap.exists()) courseTitles.set(cId, String(snap.data()["title"] ?? cId));
+      } catch {
+        /* skip */
+      }
     }),
   );
 
@@ -241,9 +256,12 @@ export async function getAllowedTests(allowedModules: string[]): Promise<TestDoc
   await Promise.all(
     Array.from(seriesSet.values()).map(async ({ courseId, seriesId }) => {
       try {
-        const snap = await getDoc(doc(db, 'courses', courseId, 'series', seriesId));
-        if (snap.exists()) seriesTitles.set(`${courseId}::${seriesId}`, String(snap.data()['title'] ?? seriesId));
-      } catch { /* skip */ }
+        const snap = await getDoc(doc(db, "courses", courseId, "series", seriesId));
+        if (snap.exists())
+          seriesTitles.set(`${courseId}::${seriesId}`, String(snap.data()["title"] ?? seriesId));
+      } catch {
+        /* skip */
+      }
     }),
   );
 
@@ -270,35 +288,37 @@ export async function getAllowedTests(allowedModules: string[]): Promise<TestDoc
 export async function findTestByCode(assessmentCode: string): Promise<TestDoc | null> {
   try {
     const q = query(
-      collectionGroup(getDb(), 'tests'),
-      where('guestEnabled', '==', true),
-      where('assessmentCode', '==', assessmentCode.toUpperCase()),
+      collectionGroup(getDb(), "tests"),
+      where("guestEnabled", "==", true),
+      where("assessmentCode", "==", assessmentCode.toUpperCase()),
     );
     const snap = await getDocs(q);
     if (snap.empty) return null;
     const d = snap.docs[0];
     if (!d) return null;
     // Path: courses/{courseId}/series/{seriesId}/tests/{testId}
-    const parts = d.ref.path.split('/');
-    const courseId = parts[1] || '';
-    const seriesId = parts[3] || '';
+    const parts = d.ref.path.split("/");
+    const courseId = parts[1] || "";
+    const seriesId = parts[3] || "";
     const t = mapTest(d.id, courseId, seriesId, d.data() as Record<string, unknown>);
     // Enrich titles
     try {
       if (courseId && seriesId) {
         const [cSnap, sSnap] = await Promise.all([
-          getDoc(doc(getDb(), 'courses', courseId)),
-          getDoc(doc(getDb(), 'courses', courseId, 'series', seriesId)),
+          getDoc(doc(getDb(), "courses", courseId)),
+          getDoc(doc(getDb(), "courses", courseId, "series", seriesId)),
         ]);
         const cData = cSnap.data();
         const sData = sSnap.data();
-        t.courseTitle = cSnap.exists() && cData ? String(cData['title'] ?? courseId) : courseId;
-        t.seriesTitle = sSnap.exists() && sData ? String(sData['title'] ?? seriesId) : seriesId;
+        t.courseTitle = cSnap.exists() && cData ? String(cData["title"] ?? courseId) : courseId;
+        t.seriesTitle = sSnap.exists() && sData ? String(sData["title"] ?? seriesId) : seriesId;
       }
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
     return t;
   } catch (err) {
-    console.error('[courses.ts] findTestByCode error:', err);
+    console.error("[courses.ts] findTestByCode error:", err);
     return null;
   }
 }

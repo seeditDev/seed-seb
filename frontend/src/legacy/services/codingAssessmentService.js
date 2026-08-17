@@ -1,7 +1,6 @@
 import { db, auth } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import timeService from './timeService';
-import { writeTenantResult, buildTenantResultPayload } from './tenantResultsService';
 
 
 class CodingAssessmentService {
@@ -17,89 +16,27 @@ class CodingAssessmentService {
     }
 
     /**
-     * v2 Canonical Firestore path — tenant-scoped.
-     * assessmentResults/{assessmentId}/{tenantId}/students/{userId}
+     * Canonical Firestore path — tenant-first scoped.
+     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
      */
     static canonicalPath(assessmentId, userId, tenantId = '_unknown_') {
         const tid = tenantId || '_unknown_';
-        return `assessmentResults/${assessmentId}/${tid}/students/${userId}`;
+        return `assessmentResults/${tid}/${assessmentId}/students/${userId}`;
     }
 
-    /**
-     * v1 legacy paths — READ-ONLY for 30-day backward compat.
-     */
-    static legacyV1Path(assessmentID, college, year, email) {
-        return `AssessmentResults/${assessmentID}/colleges/${college}/years/${year}/students/${email}`;
-    }
-    static legacyPath(college, year, department, email, assessmentID) {
-        return `colleges/${college}/years/${year}/departments/${department}/students/${email}/coding_results/${assessmentID}`;
-    }
 
     /**
-     * Write result to the single canonical v2 path.
-     * Also mirrors a summary to users/{userId}/assessmentAttempts/{assessmentId}.
+     * Write result to the single canonical path.
+     *
+     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
+     *
+     * This is the ONLY Firestore write on submission. No secondary mirrors.
      */
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
         const tenantId = payload.tenantId || userProfile?.tenantId || '_unknown_';
         const canonRef = doc(db, this.canonicalPath(assessmentId, userId, tenantId));
         await setDoc(canonRef, payload, { merge: true });
-
-        // ── Denormalized tenant result for staff reports (non-blocking) ──
-        try {
-            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-            if (tenantId !== '_unknown_' && assessmentId) {
-                const tenantPayload = buildTenantResultPayload(authData, {
-                    ...payload,
-                    assessmentId,
-                    sourceRef: this.canonicalPath(assessmentId, userId, tenantId),
-                });
-                writeTenantResult(tenantId, assessmentId, userId, tenantPayload).catch(() => {});
-            }
-        } catch (_) {}
-
-        if (userId) {
-            try {
-                const mirrorRef = doc(db, `users/${userId}/assessmentAttempts/${assessmentId}`);
-                await setDoc(mirrorRef, {
-                    assessmentId,
-                    type: payload.type || 'coding',
-                    title: payload.testName || payload.assessmentTitle || '',
-                    tenantId,
-                    startedAt: payload.timeStarted || payload.startedAt || null,
-                    startedAtISO: payload.timeStartedISO || payload.startedAtISO || '',
-                    submittedAt: payload.submittedAt || null,
-                    submittedAtISO: payload.submittedAtISO || '',
-                    status: payload.status || 'submitted',
-                    totalScore: payload.score || payload.totalScore || 0,
-                    maxScore: payload.totalMarks || payload.maxScore || 0,
-                    percentage: payload.percentage || 0,
-                    resultRef: this.canonicalPath(assessmentId, userId, tenantId),
-                }, { merge: true });
-            } catch (_) {}
-        }
-
         return this.canonicalPath(assessmentId, userId, tenantId);
-    }
-
-    /**
-     * @deprecated Use writeCanonicalResult() with an explicit auth.currentUser.uid instead.
-     *
-     * Shim for call sites that pass (payload, { assessmentID, college, year, department, email }).
-     * HARDENED: always uses auth.currentUser.uid — never email-derived fallback.
-     */
-    static async writeBothPaths(payload, { assessmentID, college, year, department, email }) {
-        // PRIMARY: live Firebase Auth UID — never email-derived substitute
-        const userId = auth?.currentUser?.uid;
-        if (!userId) {
-            throw new Error(
-                '[CodingAssessmentService] writeBothPaths: Firebase Auth UID is required. ' +
-                'Student must be authenticated. Never use email as a Firestore identity key.'
-            );
-        }
-        return this.writeCanonicalResult(
-            { ...payload, college, year, department, userId, uid: userId },
-            { assessmentId: assessmentID, userId, userProfile: { uid: userId, email, tenantId: payload.tenantId || '' } }
-        );
     }
 
     /**
@@ -116,10 +53,11 @@ class CodingAssessmentService {
             // CANONICAL: Firebase Auth UID is the identity for Firestore paths
             const uid = auth?.currentUser?.uid;
 
-            // 1. Try v2 canonical path with Firebase Auth UID
+            // 1. Try canonical path with Firebase Auth UID
             if (uid) {
                 try {
-                    const v2Ref = doc(db, this.canonicalPath(assessmentID, uid));
+                    const tenantId = college || '_unknown_';
+                    const v2Ref = doc(db, this.canonicalPath(assessmentID, uid, tenantId));
                     const v2Snap = await getDoc(v2Ref);
                     if (v2Snap.exists()) {
                         const data = v2Snap.data();
@@ -130,23 +68,6 @@ class CodingAssessmentService {
                         };
                     }
                 } catch (e) { /* fall through */ }
-            }
-
-            // 2. Fall back to v1 legacy paths (READ-ONLY backward compat)
-            if (college && year && email) {
-                try {
-                    const v1Ref = doc(db, this.legacyV1Path(assessmentID, college, year, email));
-                    const v1Snap = await getDoc(v1Ref);
-                    if (v1Snap.exists()) {
-                        const data = v1Snap.data();
-                        console.warn('[CodingAssessmentService] checkExistingAttempt: found result in legacy v1 path.');
-                        return {
-                            exists: true,
-                            data,
-                            completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
-                        };
-                    }
-                } catch (e) { /* ignore */ }
             }
 
             return { exists: false, data: null, completed: false };

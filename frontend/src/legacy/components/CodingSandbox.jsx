@@ -6,6 +6,7 @@ import { collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from 'fireb
 import desktopBridge from '../utils/desktopBridge';
 import { useLocation, useNavigate } from '../router-compat';
 import { normalizeTestCaseArray, compareOutputs } from '../utils/testCaseUtils';
+import { toast } from 'sonner';
 import '../styles/CodingSandbox.css';
 
 // Predefined fallback challenges
@@ -302,7 +303,7 @@ const CodingSandbox = () => {
                 const isPremiumUser = user?.Premium === true || user?.Premium === 'true' || user?.Premium === 1 || user?.Premium === 2 || user?.Premium === 'Yes' || !!user?.isPremium;
                 if (found.isPremium && (!user || !isPremiumUser)) {
                     if (user) {
-                        alert("This is a Premium challenge. Please upgrade your subscription to access it.");
+                        toast.warning("This is a Premium challenge. Please upgrade your subscription to access it.");
                         navigate('/student/learn');
                         return;
                     }
@@ -439,7 +440,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 }
             }
         } catch (err) {
-            alert(`Testing failed: ${err.message}`);
+            toast.error(`Testing failed: ${err.message}`);
         } finally {
             setIsTesting(false);
         }
@@ -568,7 +569,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                                         className={`drawer-challenge-item ${selectedChallenge?.id === ch.id ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
                                         onClick={() => {
                                             if (isLocked) {
-                                                alert("This is a Premium challenge. Please upgrade your subscription to access it.");
+                                                toast.warning("This is a Premium challenge. Please upgrade your subscription to access it.");
                                                 return;
                                             }
                                             setIsDrawerOpen(false);

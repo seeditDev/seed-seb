@@ -45,9 +45,9 @@ class MCQService {
     }
 
     /**
-     * v2 Canonical Firestore path — tenant-scoped.
+     * Canonical Firestore path — tenant-first scoped.
      *
-     * assessmentResults/{assessmentId}/{tenantId}/students/{userId}
+     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
      *
      * @param {string} assessmentId
      * @param {string} userId      — MUST be Firebase Auth UID
@@ -57,20 +57,17 @@ class MCQService {
         if (!assessmentId) throw new Error('[MCQService] canonicalPath: assessmentId is required');
         if (!userId)       throw new Error('[MCQService] canonicalPath: userId (Firebase Auth UID) is required');
         const tid = tenantId || '_unknown_';
-        return `assessmentResults/${assessmentId}/${tid}/students/${userId}`;
+        return `assessmentResults/${tid}/${assessmentId}/students/${userId}`;
     }
 
-    /**
-     * Legacy v1 path — READ-ONLY backward compat for 30 days.
-     * Do NOT write to this path. Remove after grace period.
-     */
-    static legacyV1Path(testID, college, year, email) {
-        return `AssessmentResults/${testID}/colleges/${college}/years/${year}/students/${email}`;
-    }
 
     /**
-     * Write result to the single canonical v2 path.
-     * Also writes a summary mirror to users/{userId}/assessmentAttempts/{assessmentId}.
+     * Write result to the single canonical path.
+     *
+     * assessmentResults/{tenantId}/{assessmentId}/students/{userId}
+     *
+     * This is the ONLY Firestore write on submission. No secondary mirrors.
+     * Admin, Staff, and Student all read from this single document.
      *
      * @param {object} payload
      * @param {{ assessmentId: string, userId: string, userProfile: object }} ctx
@@ -83,30 +80,6 @@ class MCQService {
         const canonRef = doc(db, this.canonicalPath(assessmentId, canonicalUid, tenantId));
         await setDoc(canonRef, { ...payload, userId: canonicalUid }, { merge: true });
 
-        // Mirror summary to user's assessmentAttempts subcollection
-        if (canonicalUid) {
-            try {
-                const mirrorRef = doc(db, `users/${canonicalUid}/assessmentAttempts/${assessmentId}`);
-                await setDoc(mirrorRef, {
-                    assessmentId,
-                    type: payload.type || 'mcq',
-                    title: payload.testName || payload.assessmentTitle || '',
-                    tenantId,
-                    startedAt: payload.timeStarted || payload.startedAt || null,
-                    startedAtISO: payload.timeStartedISO || payload.startedAtISO || '',
-                    submittedAt: payload.submittedAt || null,
-                    submittedAtISO: payload.submittedAtISO || '',
-                    status: payload.status || 'submitted',
-                    totalScore: payload.score || payload.totalScore || 0,
-                    maxScore: payload.totalMarks || payload.maxScore || 0,
-                    percentage: payload.percentage || 0,
-                    resultRef: this.canonicalPath(assessmentId, canonicalUid, tenantId),
-                }, { merge: true });
-            } catch (_) {
-                // Mirror failure is non-fatal
-            }
-        }
-
         // Mark attempt in the completion index so dashboard shows ✓ Completed
         try {
             const { markAssessmentCompleted, invalidateCompletionCache } = await import('./attemptStatusService');
@@ -117,30 +90,12 @@ class MCQService {
             }
         } catch (_) { /* non-fatal */ }
 
-        return this.canonicalPath(assessmentId, canonicalUid);
+        return this.canonicalPath(assessmentId, canonicalUid, tenantId);
     }
 
-    /**
-     * @deprecated Use writeCanonicalResult() with an explicit auth.currentUser.uid instead.
-     *
-     * Shim for call sites that still pass legacy-style args.
-     * HARDENED: always uses auth.currentUser.uid — never email-derived fallback.
-     */
-    static async writeBothPaths(payload, { testID, college, year, department, email }) {
-        // PRIMARY: live Firebase Auth UID — never an email-derived substitute
-        const uid = getCanonicalUid(); // throws if not signed in
-        return this.writeCanonicalResult(
-            { ...payload, college, year, department },
-            {
-                assessmentId:  testID,
-                userId:        uid,
-                userProfile:   { uid, email, tenantId: payload.tenantId || '' },
-            }
-        );
-    }
 
     /**
-     * Write a guest result to assessmentResults/{testId}/guests/{guestId}.
+     * Write a guest result to assessmentResults/{tenantId}/{testId}/guests/{guestId}.
      * Called from guest assessment submissions — no Firebase Auth UID.
      * @param {object} payload - Assessment result payload
      * @param {string} testId - The Firestore testId from courses/.../tests/
@@ -150,7 +105,7 @@ class MCQService {
         try {
             const guestId = guestSession.guestId || `guest_${Date.now()}`;
             const tenantId = guestSession.college || guestSession.tenantId || '_guest_';
-            const guestRef = doc(db, `assessmentResults/${testId}/${tenantId}/guests/${guestId}`);
+            const guestRef = doc(db, `assessmentResults/${tenantId}/${testId}/guests/${guestId}`);
             await setDoc(guestRef, {
                 ...payload,
                 isGuest: true,
@@ -174,7 +129,7 @@ class MCQService {
                 localStorage.removeItem('guest_session');
             } catch (_) { /* non-fatal */ }
 
-            return `assessmentResults/${testId}/${tenantId}/guests/${guestId}`;
+            return `assessmentResults/${tenantId}/${testId}/guests/${guestId}`;
         } catch (err) {
             console.error('[MCQService] writeGuestResult error:', err);
             return null;
@@ -225,10 +180,11 @@ class MCQService {
             // CANONICAL: Firebase Auth UID is the identity for Firestore paths
             const uid = auth?.currentUser?.uid;
 
-            // 1. Try v2 canonical path with Firebase Auth UID
+            // 1. Try canonical path with Firebase Auth UID
             if (uid) {
                 try {
-                    const v2Ref = doc(db, this.canonicalPath(testID, uid));
+                    const tenantId = college || '_unknown_';
+                    const v2Ref = doc(db, this.canonicalPath(testID, uid, tenantId));
                     const v2Snap = await getDoc(v2Ref);
                     if (v2Snap.exists()) {
                         const data = v2Snap.data();
@@ -239,23 +195,6 @@ class MCQService {
                         };
                     }
                 } catch (e) { /* fall through */ }
-            }
-
-            // 2. Fall back to v1 legacy path (READ-ONLY backward compat)
-            if (college && year && email) {
-                try {
-                    const v1Ref = doc(db, this.legacyV1Path(testID, college, year, email));
-                    const v1Snap = await getDoc(v1Ref);
-                    if (v1Snap.exists()) {
-                        const data = v1Snap.data();
-                        console.warn('[MCQService] checkExistingAttempt: found result in legacy v1 path — Admin should migrate this record.');
-                        return {
-                            exists: true,
-                            data,
-                            completed: data.completed === true || data.submitted === true || data.status === 'submitting' || data.status === 'submitted'
-                        };
-                    }
-                } catch (e) { /* ignore */ }
             }
 
             return { exists: false, data: null, completed: false };
@@ -582,8 +521,9 @@ class MCQService {
             answers
         } = progressData;
 
-        // BUG FIX P0: canonical path now uses Firebase Auth UID, not 'college'
-        const canonPath = this.canonicalPath(testID, uid);
+        // Canonical path now uses Firebase Auth UID and tenantId
+        const tenantId = progressData.tenantId || progressData.college || '_unknown_';
+        const canonPath = this.canonicalPath(testID, uid, tenantId);
         const docRef = doc(db, canonPath);
 
         // Fetch existing document to prevent overwriting completed/submitted status

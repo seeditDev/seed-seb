@@ -23,5 +23,10 @@ export const setStorageJson = (key, value) => {
 };
 
 export const getAuthData = () => {
-  return getStorageJson('auth_data', {});
+  const data = getStorageJson('auth_data', {});
+  const resolvedUid = data?.uid || data?.UID || data?.userId || (typeof window !== 'undefined' && window.firebaseUser?.uid) || '';
+  if (resolvedUid && !data.uid) {
+    data.uid = resolvedUid;
+  }
+  return data;
 };

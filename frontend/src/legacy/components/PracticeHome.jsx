@@ -16,6 +16,8 @@ import roadmapsData from './roadmaps_data.json';
 import '../styles/PracticeHome.css';
 import { CATEGORIZED_SHEETS } from '../config/sheetsData';
 import { getAuthData } from '../utils/storageUtils';
+import DOMPurify from 'dompurify';
+import { toast } from 'sonner';
 
 const CATEGORIES = [
   'Arrays', 'Strings', 'Sorting', 'Searching', 'Recursion',
@@ -270,14 +272,14 @@ const PracticeHome = () => {
       sheet.sections.forEach(sec => {
         sec.subcategories.forEach(sub => {
           sub.problems.forEach(p => {
-            if (dict[p.id]) count++;
+            if (dict[p.id] || (solvedIds && solvedIds.includes(p.id))) count++;
           });
         });
       });
     } else {
       (sheet.sections || []).forEach(sec => {
         (sec.problems || []).forEach(p => {
-          if (dict[p.id]) count++;
+          if (dict[p.id] || (solvedIds && solvedIds.includes(p.id))) count++;
         });
       });
     }
@@ -522,8 +524,7 @@ const PracticeHome = () => {
     setLoading(true);
     try {
       // STRICT UID: canonical Practice identity is Firebase Auth UID only.
-      // Do NOT fall back to email — that reads a different/legacy document.
-      const uid = authData?.uid;
+      const uid = authData?.uid || authData?.UID || authData?.userId || '';
 
       // Auto sync with cloud at start
       if (uid && navigator.onLine) {
@@ -1395,7 +1396,7 @@ const PracticeHome = () => {
         setContestQuestions(questionsList);
       } catch (err) {
         console.error('Failed to load contest questions:', err);
-        alert('Could not fetch questions list for this practice module.');
+        toast.error('Could not fetch questions list for this practice module.');
         setSelectedModule(null);
       } finally {
         setContestLoading(false);
@@ -2764,7 +2765,7 @@ const PracticeHome = () => {
                                           if (matchedCourse) {
                                             setSelectedCourse(matchedCourse.id);
                                           } else {
-                                            alert(`Course "${step.label}" is not currently enrolled.`);
+                                            toast.warning(`Course "${step.label}" is not currently enrolled.`);
                                           }
                                         }
                                       }}
@@ -3123,7 +3124,7 @@ const PracticeHome = () => {
                   <div
                     className="ph-article-content"
                     onClick={handleArticleContainerClick}
-                    dangerouslySetInnerHTML={{ __html: activeArticle.content }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeArticle.content || '') }}
                   />
                 </>
               )}

@@ -3,6 +3,7 @@ import { useNavigate, Link } from '../router-compat';
 import { FaTrash, FaEdit, FaPlus, FaCheck, FaTimes, FaUser, FaArrowLeft, FaDatabase, FaLock, FaKey } from 'react-icons/fa';
 import { db } from '../firebase-config';
 import { collection, doc, setDoc, getDocs, deleteDoc, getDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 import '../styles/AdminQuestionBank.css';
 
 const DEFAULT_CHALLENGES = [
@@ -125,10 +126,10 @@ const AdminQuestionBank = () => {
                 for (const ch of DEFAULT_CHALLENGES) {
                     await setDoc(doc(db, "codingChallenges", ch.id), ch, { merge: true });
                 }
-                alert("Default challenges seeded successfully.");
+                toast.success("Default challenges seeded successfully.");
                 fetchChallenges();
             } catch (err) {
-                alert(`Seeding failed: ${err.message}`);
+                toast.error(`Seeding failed: ${err.message}`);
             }
         }
     };
@@ -138,10 +139,10 @@ const AdminQuestionBank = () => {
         if (window.confirm("Are you sure you want to delete this challenge permanently?")) {
             try {
                 await deleteDoc(doc(db, "codingChallenges", id));
-                alert("Challenge deleted successfully.");
+                toast.success("Challenge deleted successfully.");
                 fetchChallenges();
             } catch (err) {
-                alert(`Delete failed: ${err.message}`);
+                toast.error(`Delete failed: ${err.message}`);
             }
         }
     };
@@ -169,7 +170,7 @@ const AdminQuestionBank = () => {
     const handleSaveContest = async (e) => {
         e.preventDefault();
         if (!contestForm.id.trim() || !contestForm.title.trim()) {
-            alert("ID and Title are required.");
+            toast.warning("ID and Title are required.");
             return;
         }
         try {
@@ -177,11 +178,11 @@ const AdminQuestionBank = () => {
                 ...contestForm,
                 id: contestForm.id.trim()
             });
-            alert("Contest saved successfully.");
+            toast.success("Contest saved successfully.");
             setIsContestModalOpen(false);
             fetchContests();
         } catch (err) {
-            alert(`Failed to save contest: ${err.message}`);
+            toast.error(`Failed to save contest: ${err.message}`);
         }
     };
 
@@ -191,7 +192,7 @@ const AdminQuestionBank = () => {
                 await deleteDoc(doc(db, "contests", id));
                 fetchContests();
             } catch (err) {
-                alert(`Delete failed: ${err.message}`);
+                toast.error(`Delete failed: ${err.message}`);
             }
         }
     };
@@ -235,7 +236,7 @@ const AdminQuestionBank = () => {
     const handleSaveForm = async (e) => {
         e.preventDefault();
         if (!formId.trim() || !formTitle.trim()) {
-            alert("Please fill in the ID and Title.");
+            toast.warning("Please fill in the ID and Title.");
             return;
         }
 
@@ -261,11 +262,11 @@ const AdminQuestionBank = () => {
 
         try {
             await setDoc(doc(db, "codingChallenges", formId.trim()), challengeData);
-            alert("Challenge saved successfully.");
+            toast.success("Challenge saved successfully.");
             setIsModalOpen(false);
             fetchChallenges();
         } catch (err) {
-            alert(`Save failed: ${err.message}`);
+            toast.error(`Save failed: ${err.message}`);
         }
     };
 

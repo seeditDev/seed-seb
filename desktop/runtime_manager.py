@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 import shutil
 
@@ -19,7 +19,7 @@ class RuntimeManager:
         self.resolve_paths()
 
     def get_app_root(self):
-        """Always returns the fixed SEED-SEB install root.
+        r"""Always returns the fixed SEED-SEB install root.
 
         The installer always places the app at:
             C:\Program Files (x86)\SEED-SEB

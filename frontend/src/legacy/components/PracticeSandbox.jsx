@@ -7,6 +7,7 @@ import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBa
 import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, trackQuestionTimeSpent, trackDailyActivity } from '../services/codingProgressService';
 import { saveSolution } from '../services/userSolutionsService';
 import { getAuthData } from '../utils/storageUtils';
+import { toast } from 'sonner';
 import '../styles/PracticeSandbox.css';
 
 const FREE_BOILERPLATES = {
@@ -272,8 +273,7 @@ const PracticeSandbox = () => {
     const loadSidebarData = async () => {
       try {
         // STRICT UID: canonical Practice identity is Firebase Auth UID only.
-        // Do NOT fall back to email — that reads a different/legacy document.
-        const uid = authData?.uid;
+        const uid = authData?.uid || authData?.UID || authData?.userId || '';
         if (!uid) {
           console.warn('[PracticeSandbox] Firebase UID not available — progress sync skipped');
         } else if (navigator.onLine) {
@@ -334,8 +334,7 @@ const PracticeSandbox = () => {
       setLanguage(defaultLang);
 
       // Check if code is saved in local progress.
-      // STRICT UID: do not fall back to email — that reads another user's legacy document.
-      const progressUid = authData?.uid;
+      const progressUid = authData?.uid || authData?.UID || authData?.userId || '';
       const progress = progressUid
         ? await getQuestionProgress(progressUid, questionId).catch(() => null)
         : null;
@@ -749,7 +748,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
         }));
       }
     } catch (err) {
-      alert('Testing failed: ' + err.message);
+      toast.error('Testing failed: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }

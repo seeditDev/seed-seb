@@ -24,11 +24,28 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const COLLECTION = 'codingProgress';
 
+// Helper: Resolve effective UID
+const resolveEffectiveUid = (uid) => {
+  if (uid && typeof uid === 'string' && uid.trim() !== '') return uid.trim();
+  try {
+    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    if (authData.uid) return authData.uid;
+    if (authData.UID) return authData.UID;
+    if (authData.userId) return authData.userId;
+    if (authData.Email) return authData.Email.replace(/[@.]/g, '_');
+  } catch (_) {}
+  return '';
+};
+
 // Helper: Get local progress structure
 const getLocalProgress = (uid) => {
-  if (!uid) return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
+  const effectiveUid = resolveEffectiveUid(uid);
+  if (!effectiveUid) return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
   try {
-    const raw = localStorage.getItem(`practice_progress_${uid}`);
+    let raw = localStorage.getItem(`practice_progress_${effectiveUid}`);
+    if (!raw && uid && uid !== effectiveUid) {
+      raw = localStorage.getItem(`practice_progress_${uid}`);
+    }
     if (!raw) return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
     const parsed = JSON.parse(raw);
     return {
@@ -44,8 +61,12 @@ const getLocalProgress = (uid) => {
 
 // Helper: Save local progress structure
 const saveLocalProgress = (uid, progress) => {
-  if (!uid) return;
-  localStorage.setItem(`practice_progress_${uid}`, JSON.stringify(progress));
+  const effectiveUid = resolveEffectiveUid(uid);
+  if (!effectiveUid) return;
+  localStorage.setItem(`practice_progress_${effectiveUid}`, JSON.stringify(progress));
+  if (uid && uid !== effectiveUid) {
+    localStorage.setItem(`practice_progress_${uid}`, JSON.stringify(progress));
+  }
 };
 
 // ── Read Operations ────────────────────────────────────────────────────────────

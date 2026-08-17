@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 
 # Disable Chromium sandbox to allow loading dependencies/runtimes in secure layouts
@@ -31,6 +31,7 @@ from PyQt6.QtWebChannel import QWebChannel
 
 from bridge import DesktopBridge
 from runtime_manager import runtime_manager
+from assessment_engine import assessment_engine
 
 # Configure logging to both file and console
 log_dir = os.path.join(runtime_manager.app_root, "data", "student")
@@ -89,72 +90,64 @@ def compute_exe_hash():
 
 def verify_binary_integrity():
     """
-    Verify the running executable against the Supabase-registered hash.
+    Verify the running executable against the Firestore-registered hash.
 
     Logic:
     - Compute SHA-256 of the running EXE.
-    - Query Supabase app_build_hashes table for a row with this hash
-      AND is_active = true AND version = CURRENT_VERSION.
-    - If the row EXISTS  â†’ valid build, allow launch.
-    - If the row is MISSING â†’ hash was revoked or never registered â†’ BLOCK.
-    - If Supabase is UNREACHABLE (network error) â†’ fail-open (offline grace).
-    - If not running as a compiled exe (no sys.executable path) â†’ skip check.
+    - Query Firebase Firestore document app_build_hashes/{CURRENT_VERSION}
+    - If the document exists AND sha256_hash matches AND is_active = true -> allow launch.
+    - If document does not match or is revoked -> BLOCK.
+    - If Firestore is UNREACHABLE (network error) -> fail-open (offline grace).
+    - If not running as a compiled exe (no sys.executable path) -> skip check.
     """
     exe_hash = compute_exe_hash()
     if not exe_hash:
         logging.info("Integrity check skipped: not running as compiled executable.")
         return True
 
-    logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (validating against Supabase)")
+    logging.info(f"Binary integrity hash: {exe_hash[:16]}...  (validating against Firestore)")
 
-    # â”€â”€ Supabase direct REST query â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    SUPABASE_URL     = "https://iygqntndsgiysvibqjyw.supabase.co"
-    SUPABASE_ANON_KEY = "sb_publishable_t3I55wzxcJI5owngYx0A4w_oCLVZvq7"
-
-    url = f"{SUPABASE_URL}/rest/v1/app_build_hashes"
-    headers = {
-        "apikey":        SUPABASE_ANON_KEY,
-        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
-        "Accept":        "application/json",
-    }
-    params = {
-        "sha256_hash": f"eq.{exe_hash.lower()}",
-        "version":     f"eq.{CURRENT_VERSION}",
-        "is_active":   "eq.true",
-        "select":      "id,sha256_hash,version,is_active",
-        "limit":       "1",
-    }
+    url = (
+        f"https://firestore.googleapis.com/v1/projects/{FIREBASE_CONFIG['projectId']}/databases/(default)/"
+        f"documents/app_build_hashes/{CURRENT_VERSION}"
+    )
+    params = {"key": FIREBASE_CONFIG["apiKey"]}
 
     try:
-        resp = requests.get(url, headers=headers, params=params, timeout=8)
+        resp = requests.get(url, params=params, timeout=8)
 
         if resp.status_code == 200:
-            rows = resp.json()
-            if rows:
-                # Hash found and active â€” legitimate build
-                logging.info("Binary integrity check PASSED (hash verified in Supabase).")
+            doc = resp.json()
+            fields = doc.get("fields", {})
+            registered_hash = fields.get("sha256_hash", {}).get("stringValue", "").lower()
+            is_active = fields.get("is_active", {}).get("booleanValue", True)
+
+            if registered_hash and registered_hash == exe_hash.lower() and is_active:
+                logging.info("Binary integrity check PASSED (hash verified in Firestore).")
                 return True
             else:
-                # Hash not found or revoked â€” tampered / outdated binary
                 logging.error(
-                    f"INTEGRITY VIOLATION: Hash {exe_hash[:16]}... not found in Supabase "
-                    f"(revoked or unregistered binary). Version={CURRENT_VERSION}"
+                    f"INTEGRITY VIOLATION: Hash {exe_hash[:16]}... does not match "
+                    f"registered hash in Firestore (revoked or unregistered binary). Version={CURRENT_VERSION}"
                 )
                 return False
 
-        else:
-            # Supabase responded with an unexpected status â€” fail open to avoid
-            # blocking students during a Supabase outage.
+        elif resp.status_code == 404:
             logging.warning(
-                f"Integrity check: Supabase returned HTTP {resp.status_code} â€” "
+                f"Integrity check: No hash document found in Firestore for version {CURRENT_VERSION} — "
+                f"allowing launch."
+            )
+            return True
+
+        else:
+            logging.warning(
+                f"Integrity check: Firestore returned HTTP {resp.status_code} — "
                 f"failing open to preserve availability."
             )
             return True
 
     except Exception as e:
-        # Network unreachable â€” fail open so offline / poor-connectivity students
-        # are not locked out. Revoked builds will be blocked on next online check.
-        logging.info(f"Integrity check skipped (Supabase unreachable): {e}")
+        logging.info(f"Integrity check skipped (Firestore unreachable): {e}")
         return True
 
 
@@ -175,11 +168,15 @@ FORBIDDEN_PROCESSES = [
     'chrome.exe', 'msedge.exe', 'firefox.exe', 'brave.exe',
     'opera.exe', 'opera_gx.exe', 'vivaldi.exe', 'chromium.exe',
     'iexplore.exe', 'torch.exe', 'maxthon.exe', 'tor.exe', 'tor-browser.exe',
-    # Remote Access / Screen Sharing
+    # Remote Access / Screen Sharing / Display Streaming
     'AnyDesk.exe', 'TeamViewer.exe', 'TeamViewer_Service.exe',
     'RustDesk.exe', 'UltraViewer.exe', 'DWAgent.exe',
     'ChromeRemoteDesktop.exe', 'LogMeIn.exe', 'Splashtop.exe',
     'ZohoAssist.exe', 'RemotePC.exe', 'GoToAssist.exe',
+    'parsec.exe', 'parsecd.exe', 'moonlight.exe', 'sunshine.exe', 'deskreen.exe',
+    'spacedeskService.exe', 'spacedeskViewer.exe', 'vncviewer.exe', 'vncserver.exe',
+    'tvnserver.exe', 'winvnc.exe', 'nomachine.exe', 'scrcpy.exe', 'awe_client.exe',
+    'awe_service.exe', 'ToDesk.exe', 'ToDesk_Service.exe',
     # Messaging / Chat
     'WhatsApp.exe', 'Telegram.exe', 'Signal.exe', 'Viber.exe',
     'WeChat.exe', 'Line.exe', 'KakaoTalk.exe', 'Slack.exe', 'Discord.exe',
@@ -188,10 +185,14 @@ FORBIDDEN_PROCESSES = [
     # IDEs / Code Editors
     'Code.exe', 'code.exe', 'eclipse.exe', 'idea64.exe', 'pycharm64.exe',
     'webstorm64.exe', 'androidstudio.exe', 'netbeans.exe', 'sublime_text.exe',
-    'notepad++.exe', 'notepad.exe',
-    # AI Tools / Assistants
+    'notepad++.exe', 'notepad.exe', 'cursor.exe', 'windsurf.exe',
+    # AI Tools / Assistants / Local LLMs
     'ChatGPT.exe', 'chatgpt.exe', 'Copilot.exe', 'BingChat.exe',
     'Claude.exe', 'Perplexity.exe', 'Replit.exe',
+    'ollama.exe', 'ollama_app.exe', 'lmstudio.exe', 'jan.exe',
+    'gpt4all.exe', 'localai.exe', 'text-generation-webui.exe', 'anythingllm.exe',
+    # Reverse Proxies & Tunnels (Bypassing network / firewall controls)
+    'ngrok.exe', 'cloudflared.exe', 'localtunnel.exe', 'frpc.exe', 'playit.exe', 'bore.exe',
     # Screen Recording / Streaming
     'obs64.exe', 'obs32.exe', 'Streamlabs.exe', 'XSplit.exe', 'Bandicam.exe',
     'Camtasia.exe', 'ShareX.exe', 'Snagit32.exe', 'Snagit64.exe', 'Loom.exe',
@@ -201,10 +202,13 @@ FORBIDDEN_PROCESSES = [
     # Windows Subsystem for Linux (WSL)
     'wsl.exe', 'wslhost.exe', 'wslclient.exe', 'wsl-service.exe',
     'wslservice.exe', 'vmmem', 'vmmemWSL', 'bash.exe', 'sh.exe',
-    # Debuggers / Reverse Engineering / LLMs
+    # Debuggers / Reverse Engineering / Cheat Tools
     'x64dbg.exe', 'x32dbg.exe', 'ollydbg.exe', 'windbg.exe', 'ida64.exe', 'ida.exe',
     'ghidra.exe', 'radare2.exe', 'cutter.exe', 'dnspy.exe', 'procmon.exe',
     'procexp.exe', 'wireshark.exe', 'fiddler.exe', 'burpsuite.exe',
+    'cheatengine.exe', 'cheatengine-x86_64.exe', 'cheatengine-i386.exe',
+    'processhacker.exe', 'systeminformer.exe', 'ProcessHacker.exe', 'SystemInformer.exe',
+    'speedfan.exe', 'artmoney.exe', 'hxD.exe',
     'python.exe', 'python3.exe', 'pythonw.exe',
     # Office Suites & PDF Readers (potential malpractice sources)
     'wps.exe', 'wpp.exe', 'et.exe', 'wpspdf.exe', 'wpscenter.exe', 'wpscloudlaunch.exe',
@@ -1103,6 +1107,10 @@ class MainWindow(QMainWindow):
         logging.info("Force close button clicked. Quitting immediately.")
         self.unblock_win_shortcuts()
         try:
+            assessment_engine.cleanup_student_session_data()
+        except Exception:
+            pass
+        try:
             if hasattr(self, 'process_terminator') and self.process_terminator:
                 self.process_terminator.stop()
         except:
@@ -1534,6 +1542,10 @@ class MainWindow(QMainWindow):
             logging.info("Application closed by student choice.")
             self.unblock_win_shortcuts()
             self._restore_swipe_gestures()  # re-enable touchpad gestures for normal use
+            try:
+                assessment_engine.cleanup_student_session_data()
+            except Exception:
+                pass
             try:
                 if hasattr(self, 'vd_guard_timer'):
                     self.vd_guard_timer.stop()
@@ -2087,10 +2099,10 @@ class WifiSetupDialog(QDialog):
 
 
 def get_available_wifis():
-    """Shells out to netsh on Windows to list available SSIDs"""
+    """Shells out to netsh on Windows to list available SSIDs safely without shell=True."""
     import subprocess
     try:
-        res = subprocess.run("netsh wlan show networks", shell=True, capture_output=True, text=True)
+        res = subprocess.run(["netsh", "wlan", "show", "networks"], capture_output=True, text=True)
         networks = []
         if res.returncode == 0:
             lines = res.stdout.split("\n")
@@ -2108,19 +2120,25 @@ def get_available_wifis():
 
 
 def connect_to_wifi(ssid, password):
-    """Generates an XML profile dynamically (handles WPA2 and Open networks) and connects via netsh."""
+    """Generates an XML profile dynamically and connects via netsh using safe argument lists."""
     import subprocess
     import tempfile
     import socket
+    import html
+
+    safe_ssid = html.escape(ssid or "")
+    safe_pwd = html.escape(password or "")
+    temp_path = None
+
     try:
         # Check if network is open (no password)
         if not password:
             xml = f"""<?xml version="1.0"?>
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
-    <name>{ssid}</name>
+    <name>{safe_ssid}</name>
     <SSIDConfig>
         <SSID>
-            <name>{ssid}</name>
+            <name>{safe_ssid}</name>
         </SSID>
     </SSIDConfig>
     <connectionType>ESS</connectionType>
@@ -2139,10 +2157,10 @@ def connect_to_wifi(ssid, password):
         else:
             xml = f"""<?xml version="1.0"?>
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
-    <name>{ssid}</name>
+    <name>{safe_ssid}</name>
     <SSIDConfig>
         <SSID>
-            <name>{ssid}</name>
+            <name>{safe_ssid}</name>
         </SSID>
     </SSIDConfig>
     <connectionType>ESS</connectionType>
@@ -2157,7 +2175,7 @@ def connect_to_wifi(ssid, password):
             <sharedKey>
                 <keyType>passPhrase</keyType>
                 <protected>false</protected>
-                <keyMaterial>{password}</keyMaterial>
+                <keyMaterial>{safe_pwd}</keyMaterial>
             </sharedKey>
         </security>
     </MSM>
@@ -2167,16 +2185,12 @@ def connect_to_wifi(ssid, password):
             f.write(xml)
             temp_path = f.name
 
-        # Import profile XML
-        subprocess.run(f'netsh wlan add profile filename="{temp_path}"', shell=True, capture_output=True)
-        try:
-            os.remove(temp_path)
-        except Exception:
-            pass
+        # Import profile XML with user=current scope
+        subprocess.run(["netsh", "wlan", "add", "profile", f"filename={temp_path}", "user=current"], capture_output=True)
 
         # Request connect
-        subprocess.run(f'netsh wlan connect name="{ssid}"', shell=True, capture_output=True, text=True)
-        
+        subprocess.run(["netsh", "wlan", "connect", f"name={ssid}"], capture_output=True, text=True)
+
         # Verify connection status up to 4 seconds (fast check)
         for _ in range(8):
             time.sleep(0.5)
@@ -2195,6 +2209,12 @@ def connect_to_wifi(ssid, password):
     except Exception as e:
         logging.error(f"Error connecting to Wi-Fi: {e}")
         return False
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
 
 
 def check_and_disable_caps_lock():

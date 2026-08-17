@@ -25,6 +25,7 @@ import { createSubmitGuard } from '../utils/submitGuard';
 import { readJSON } from '../utils/safeStorage';
 import { throttledLocalStorageSet, flushThrottledWrites } from '../utils/throttle';
 import { markAssessmentCompleted } from '../services/attemptStatusService';
+import { toast } from 'sonner';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -365,6 +366,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         };
     }, [submissionSuccess, questions, activeQuestionIndex]);
 
+    // Ref to latest onSectionSubmit
+    const onSectionSubmitRef = useRef(onSectionSubmit);
+    useEffect(() => {
+        onSectionSubmitRef.current = onSectionSubmit;
+    }, [onSectionSubmit]);
+
     // Embedded Mode helper to submit scores and code map
     const handleEmbeddedSectionSubmit = async (reason = '') => {
         try {
@@ -376,40 +383,40 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 
                 if (!finalScores[q.id]) {
                     // SECTION 18: use ONLY hiddenTests for official scoring.
-                    // sampleTests must NEVER silently become hidden scoring tests.
-                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : [];
+                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : (Array.isArray(q.testCases?.hidden) ? q.testCases.hidden : []);
                     if (hidden.length === 0) {
-                        // Configuration invalid — no hidden tests present.
                         console.error(`[CodingEval] Question ${q.id} has no hiddenTests. Scoring is invalid. Assigning 0.`);
                         finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_hidden_tests' };
                     } else {
-                    const bridgeLang = language === 'python3' ? 'python' : language;
-                    const isBlank = isCodeBlankOrEmpty(code);
-                    let passes = 0;
-                    if (!isBlank) {
-                        for (const tc of hidden) {
-                            try {
-                                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
-                                const exit = res.exit_code !== undefined ? res.exit_code : 0;
-                                const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
-                                const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
-                                if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
-                            } catch (err) {}
+                        const bridgeLang = language === 'python3' ? 'python' : language;
+                        const isBlank = isCodeBlankOrEmpty(code);
+                        let passes = 0;
+                        if (!isBlank) {
+                            for (const tc of hidden) {
+                                try {
+                                    const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                    const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : (resRaw || {});
+                                    const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
+                                    const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
+                                    const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
+                                    if (cleanOut === cleanExp && !res.error && (exit === 0 || exit === null)) passes++;
+                                } catch (err) {}
+                            }
                         }
-                    }
-                    const qScore = (!isBlank && hidden.length > 0) ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
-                    finalScores[q.id] = {
-                        score: qScore,
-                        percentage: (!isBlank && hidden.length > 0) ? Math.round((passes / hidden.length) * 100) : 0,
-                        passed: isBlank ? 0 : passes,
-                        total: hidden.length,
-                        submitted: true
-                    };
+                        const qScore = (!isBlank && hidden.length > 0) ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
+                        finalScores[q.id] = {
+                            score: qScore,
+                            percentage: (!isBlank && hidden.length > 0) ? Math.round((passes / hidden.length) * 100) : 0,
+                            passed: isBlank ? 0 : passes,
+                            total: hidden.length,
+                            submitted: true
+                        };
                     }
                 }
             }
 
-            if (onSectionSubmit) {
+            const targetSubmit = onSectionSubmitRef.current || onSectionSubmit;
+            if (typeof targetSubmit === 'function') {
                 let totalEarnedWeight = 0;
                 let totalMaxWeight = 0;
 
@@ -431,6 +438,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         status,
                         testsPassed: passed,
                         totalTests: total,
+                        score: scoreObj.score || 0,
+                        percentage: scoreObj.percentage || 0,
                         compilationCount: compilationCounts[q.id] || 0,
                         attempts: compilationCounts[q.id] || 0,
                         timeComplexity: q.timeComplexity || '',
@@ -439,7 +448,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     };
                 });
 
-                // ── Timing data (Bug 8: coding section time not tracked) ──
+                // ── Timing data ──
                 const sectionEndISO = new Date().toISOString();
                 const elapsedSecs = getElapsedSeconds();
                 const sectionStartISO = (() => {
@@ -450,7 +459,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 })();
                 sessionStorage.removeItem('codingSecStartTime');
 
-                onSectionSubmit({
+                await targetSubmit({
                     answers: allAnswers,
                     timeSpentPerQ: timeSpentPerQ,
                     completed: finalScores,
@@ -469,6 +478,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             }
         } catch (err) {
             console.error("Embedded submit failure:", err);
+            toast.error(`Section submission error: ${err.message}`);
         }
     };
 
@@ -1220,7 +1230,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             if (elapsedOfflineSec > 300) {
                 console.warn(`[CodingAssessmentPage] Offline exit (${elapsedOfflineSec}s) exceeded 5-minute grace period (300s).`);
-                alert("Your assessment was auto-submitted because your offline window exceeded the 5-minute grace period.");
+                toast.warning("Your assessment was auto-submitted because your offline window exceeded the 5-minute grace period.");
                 autoSubmitAttemptRef.current?.("grace-period-exceeded-5min");
                 return;
             }
@@ -3061,6 +3071,31 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 OK
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* Global Submitting / Evaluating Overlay */}
+            {(isSubmitting || submitPhase) && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                    background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 99999, color: 'white', fontFamily: "'Inter', sans-serif"
+                }}>
+                    <div style={{
+                        background: 'rgba(30, 41, 59, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '16px', padding: '36px 48px', textAlign: 'center', maxWidth: '460px',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                    }}>
+                        <div className="learn-spinner" style={{ width: '48px', height: '48px', borderTopColor: '#10b981', margin: '0 auto 20px' }} />
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px', color: '#f8fafc' }}>
+                            {submitPhase === 'evaluating' ? 'Evaluating Code Across Test Cases...' : 'Submitting Assessment Results...'}
+                        </h3>
+                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5', margin: 0 }}>
+                            {submitPhase === 'evaluating' 
+                                ? 'Running hidden test cases on your code to calculate official scores...' 
+                                : 'Compiling your score and synchronizing results with the secure exam server. Please wait...'}
+                        </p>
                     </div>
                 </div>
             )}

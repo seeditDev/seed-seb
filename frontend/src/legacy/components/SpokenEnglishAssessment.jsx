@@ -9,6 +9,8 @@ import { evaluateSpokenEnglishSession } from '../services/spokenEnglishEvaluator
 import { getViolations } from '../utils/proctorCache';
 import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
+import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import '../styles/SpokenEnglishAssessment.css';
 
 const CALIBRATION_TEXT = "Checking microphone clarity and background noise levels.";
@@ -312,7 +314,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     const currentAttempt = attemptsMap[qId] || 0;
 
     if (currentAttempt >= maxAttempts) {
-      alert(`Maximum attempts (${maxAttempts}) reached for this question.`);
+      toast.warning(`Maximum attempts (${maxAttempts}) reached for this question.`);
       return;
     }
 
@@ -474,26 +476,21 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       submittedAt: new Date().toISOString(),
     };
 
-    // 1. Canonical Firestore path: assessmentResults/{testId}/students/{uid}
+    // Canonical Firestore path: assessmentResults/{tenantId}/{testId}/students/{userId}
+    const tenantId = currentUser?.College || currentUser?.college || currentUser?.tenantId || '_unknown_';
     try {
-      const v2DocPath = `assessmentResults/${testId}/students/${userId}`;
-      await setDoc(doc(db, v2DocPath), {
+      const v2DocPath = `assessmentResults/${tenantId}/${testId}/students/${userId}`;
+      const unifiedPayload = buildUnifiedResultPayload({
         ...firestorePayload,
+        tenantId,
+        userId,
         completed: true,
         status: 'submitted',
         submittedAt: serverTimestamp(),
         lastUpdatedAt: serverTimestamp()
-      }, { merge: true });
-
-      // Mirror summary to users/{userId}/assessmentAttempts/{testId}
-      await setDoc(doc(db, 'users', userId, 'assessmentAttempts', testId), {
-        ...firestorePayload,
-        assessmentId: testId,
-        type: 'sea',
-        completed: true,
-        status: 'submitted',
-        lastUpdatedAt: serverTimestamp()
-      }, { merge: true });
+      });
+      await setDoc(doc(db, v2DocPath), unifiedPayload, { merge: true });
+      console.log('[SEA] Result saved to Firestore canonical path');
     } catch (fireErr) {
       console.warn('[SEA] Firestore write failed:', fireErr);
     }

@@ -69,27 +69,26 @@ describe('MCQService — Canonical Path', () => {
 
     // ── Test 1: canonicalPath ─────────────────────────────────────────────────
 
-    it('canonicalPath(assessmentId, userId) produces correct Firestore path', () => {
-        const path = MCQService.canonicalPath('test-001', 'firebase_uid_abc123');
-        expect(path).toBe('assessmentResults/test-001/students/firebase_uid_abc123');
+    it('canonicalPath(assessmentId, userId, tenantId) produces correct Firestore path', () => {
+        const path = MCQService.canonicalPath('test-001', 'firebase_uid_abc123', 'KGKITE');
+        expect(path).toBe('assessmentResults/KGKITE/test-001/students/firebase_uid_abc123');
     });
 
-    it('canonicalPath() NEVER uses college or email as userId', () => {
-        const correctPath     = MCQService.canonicalPath('test-001', 'firebase_uid_abc123');
-        const wrongCollegePath = MCQService.canonicalPath('test-001', 'KGKITE');
-        expect(correctPath).not.toContain('KGKITE');
-        expect(wrongCollegePath).not.toContain('firebase_uid_abc123');
+    it('canonicalPath() NEVER uses email as userId', () => {
+        const correctPath = MCQService.canonicalPath('test-001', 'firebase_uid_abc123', 'KGKITE');
+        expect(correctPath).not.toContain('student@example.com');
+        expect(correctPath).toContain('firebase_uid_abc123');
     });
 
     it('canonicalPath() throws when userId is missing', () => {
-        expect(() => MCQService.canonicalPath('test-001', '')).toThrow();
-        expect(() => MCQService.canonicalPath('test-001', null)).toThrow();
-        expect(() => MCQService.canonicalPath('test-001', undefined)).toThrow();
+        expect(() => MCQService.canonicalPath('test-001', '', 'KGKITE')).toThrow();
+        expect(() => MCQService.canonicalPath('test-001', null, 'KGKITE')).toThrow();
+        expect(() => MCQService.canonicalPath('test-001', undefined, 'KGKITE')).toThrow();
     });
 
     it('canonicalPath() throws when assessmentId is missing', () => {
-        expect(() => MCQService.canonicalPath('', 'firebase_uid_abc123')).toThrow();
-        expect(() => MCQService.canonicalPath(null, 'firebase_uid_abc123')).toThrow();
+        expect(() => MCQService.canonicalPath('', 'firebase_uid_abc123', 'KGKITE')).toThrow();
+        expect(() => MCQService.canonicalPath(null, 'firebase_uid_abc123', 'KGKITE')).toThrow();
     });
 
     // ── Test 2: saveProgressToFirestore ───────────────────────────────────────
@@ -118,8 +117,7 @@ describe('MCQService — Canonical Path', () => {
         const writtenRef  = mockSetDoc.mock.calls[0][0];
         const writtenData = mockSetDoc.mock.calls[0][1];
 
-        expect(writtenRef.path).toBe('assessmentResults/mcq-test-001/students/firebase_uid_abc123');
-        expect(writtenRef.path).not.toContain('KGKITE');
+        expect(writtenRef.path).toBe('assessmentResults/KGKITE/mcq-test-001/students/firebase_uid_abc123');
         expect(writtenRef.path).not.toContain('student@example.com');
         expect(writtenData.userId).toBe('firebase_uid_abc123');
         expect(writtenData.uid).toBe('firebase_uid_abc123');
@@ -135,30 +133,30 @@ describe('MCQService — Canonical Path', () => {
         ).rejects.toThrow(/Firebase Auth UID/);
     });
 
-    // ── Test 3: writeBothPaths ────────────────────────────────────────────────
+    // ── Test 3: writeCanonicalResult ──────────────────────────────────────────
 
-    it('writeBothPaths throws when Firebase Auth UID is not available', async () => {
+    it('writeCanonicalResult throws when Firebase Auth UID is not available', async () => {
         setAuthUid(null);
         await expect(
-            MCQService.writeBothPaths(
+            MCQService.writeCanonicalResult(
                 { score: 5 },
-                { testID: 'test-001', college: 'KGKITE', year: '2024', department: 'CSE', email: 'x@y.com' }
+                { assessmentId: 'test-001', userId: '', userProfile: { email: 'x@y.com' } }
             )
         ).rejects.toThrow(/Firebase Auth UID/);
     });
 
-    it('writeBothPaths uses auth.currentUser.uid, NOT email fallback', async () => {
+    it('writeCanonicalResult writes single canonical document with correct UID and tenantId', async () => {
         setAuthUid('firebase_uid_abc123');
         mockGetDoc.mockResolvedValue({ exists: () => false, data: () => undefined });
 
-        await MCQService.writeBothPaths(
-            { score: 5 },
-            { testID: 'test-001', college: 'KGKITE', year: '2024', department: 'CSE', email: 'x@y.com' }
+        await MCQService.writeCanonicalResult(
+            { score: 5, totalMarks: 10, tenantId: 'KGKITE' },
+            { assessmentId: 'test-001', userId: 'firebase_uid_abc123', userProfile: { email: 'x@y.com', tenantId: 'KGKITE' } }
         );
 
-        const writtenPaths = mockSetDoc.mock.calls.map(c => c[0]?.path || '');
-        expect(writtenPaths.some(p => p.includes('firebase_uid_abc123'))).toBe(true);
-        expect(writtenPaths.some(p => p.includes('x_y_com'))).toBe(false);
+        expect(mockSetDoc).toHaveBeenCalledTimes(1);
+        const writtenRef = mockSetDoc.mock.calls[0][0];
+        expect(writtenRef.path).toBe('assessmentResults/KGKITE/test-001/students/firebase_uid_abc123');
     });
 
     // ── Test 4: submitted doc is never overwritten ────────────────────────────
@@ -196,8 +194,7 @@ describe('MCQService — Canonical Path', () => {
 
         expect(mockGetDoc).toHaveBeenCalled();
         const firstCallRef = mockGetDoc.mock.calls[0][0];
-        expect(firstCallRef.path).toBe('assessmentResults/test-001/students/firebase_uid_abc123');
-        expect(firstCallRef.path).not.toContain('KGKITE');
+        expect(firstCallRef.path).toBe('assessmentResults/KGKITE/test-001/students/firebase_uid_abc123');
     });
 
 

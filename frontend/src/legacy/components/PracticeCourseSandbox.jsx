@@ -13,6 +13,8 @@ import {
 } from '../services/codingProgressService';
 import { getAuthData } from '../utils/storageUtils';
 import { fetchArticleFile } from '../utils/articleFetcher';
+import DOMPurify from 'dompurify';
+import { toast } from 'sonner';
 import '../styles/PracticeSandbox.css'; // Reuse core sandbox tokens and styling
 
 const FREE_BOILERPLATES = {
@@ -178,9 +180,9 @@ const formatProblemText = (text) => {
       .replace(/^\s*[-*]\s+(.*)$/gm, '<li class="psb-li-item">$1</li>');
 
     if (clean.includes('<li class="psb-li-item">')) {
-      return <ul key={idx} className="psb-para-ul" dangerouslySetInnerHTML={{ __html: clean }} />;
+      return <ul key={idx} className="psb-para-ul" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(clean) }} />;
     }
-    return <p key={idx} className="psb-para" dangerouslySetInnerHTML={{ __html: clean }} />;
+    return <p key={idx} className="psb-para" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(clean) }} />;
   });
 };
 
@@ -266,8 +268,7 @@ const PracticeCourseSandbox = () => {
       setError(null);
       try {
         // STRICT UID: canonical Practice identity is Firebase Auth UID only.
-        // Do NOT fall back to email — that reads a different/legacy document.
-        const uid = authData?.uid;
+        const uid = authData?.uid || authData?.UID || authData?.userId || '';
         if (!uid) {
           console.warn('[PracticeCourseSandbox] Firebase UID not available — progress not loaded');
         }
@@ -583,7 +584,7 @@ const PracticeCourseSandbox = () => {
     if (nextItem) {
       navigate(`/student/practice/course/${courseId}/${nextItem.questionId}`);
     } else {
-      alert("You have reached the end of this course pathways syllabus!");
+      toast.info("You have reached the end of this course pathways syllabus!");
       handleBackToCourse();
     }
   };
@@ -611,8 +612,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
     let totalWeight = 0;
     let earnedWeight = 0;
     // STRICT UID: canonical Practice identity is Firebase Auth UID only.
-    // If UID is absent, skip all progress writes — do NOT fall back to email.
-    const uid = user?.uid;
+    const uid = user?.uid || user?.UID || user?.userId || (getAuthData()?.uid) || '';
     if (!uid) {
       console.warn('[PracticeCourseSandbox] No Firebase UID at submit — progress not saved');
     }
@@ -664,12 +664,14 @@ const isCodeBlankOrEmpty = (codeStr) => {
           const updatedSolved = [...new Set([...solvedIds, questionId])];
           setSolvedIds(updatedSolved);
           checkCourseCompletion(updatedSolved);
+          toast.success(`🎉 Problem Solved! 100% test cases passed.`);
         } else {
           await markQuestionAttempted(uid, questionId, language, score);
+          toast.info(`Tests completed: ${passedCount}/${testCases.length} passed (${score}%).`);
         }
       }
     } catch (err) {
-      alert('Verification test failed: ' + err.message);
+      toast.error('Verification test failed: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -1331,7 +1333,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
             <div style={{
               flex: 1, padding: '24px', overflowY: 'auto', fontSize: '14px',
               lineHeight: '1.7', color: 'var(--ps-text)'
-            }} dangerouslySetInnerHTML={{ __html: activeArticle.content }} />
+            }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeArticle.content || '') }} />
           </div>
         </div>
       )}

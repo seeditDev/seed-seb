@@ -82,14 +82,15 @@ export function invalidateCompletionCache(email) {
  * @param {string[]} ids        — assessment IDs to check
  * @returns {Promise<Record<string,boolean>>} id -> completed
  */
-async function queryCanonicalPaths(uid, ids) {
+async function queryCanonicalPaths(uid, ids, tenantId = '_unknown_') {
   const found = {};
   if (!uid || !ids?.length) return found;
+  const tid = tenantId || '_unknown_';
   // Batch: up to IN_CHUNK parallel reads
   for (let i = 0; i < ids.length; i += IN_CHUNK) {
     const batch = ids.slice(i, i + IN_CHUNK);
     const snaps = await Promise.allSettled(
-      batch.map((id) => getDoc(doc(db, `assessmentResults/${id}/students/${uid}`)))
+      batch.map((id) => getDoc(doc(db, `assessmentResults/${tid}/${id}/students/${uid}`)))
     );
     snaps.forEach((result, idx) => {
       if (result.status === 'fulfilled' && result.value.exists()) {
@@ -185,7 +186,7 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
       // Use live Firebase Auth UID for canonical reads
       const liveUid = auth?.currentUser?.uid || userKey;
       try {
-        const canonFound = await queryCanonicalPaths(liveUid, unknown);
+        const canonFound = await queryCanonicalPaths(liveUid, unknown, tenant.college || '_unknown_');
         Object.keys(canonFound).forEach((id) => { map[id] = true; });
       } catch (e) {
         console.warn('[attemptStatusService] canonical fallback failed:', e?.message);

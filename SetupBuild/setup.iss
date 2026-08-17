@@ -78,10 +78,11 @@ Filename: "icacls"; Parameters: """{app}"" /grant:r *S-1-5-32-545:(OI)(CI)(IO)RX
 ;           Use specific right strings: "RD" = Read Data, which maps to List Folder on directories
 Filename: "icacls"; Parameters: """{app}"" /deny *S-1-5-32-545:(RD)"; Flags: runhidden
 
-; Step 5 – Grant Everyone full control recursively on resources and data subfolders
+; Step 5 – Grant Everyone full control recursively on resources, data, and temp_workspace subfolders
 ;           so compiler processes and student logs can read/write freely
 Filename: "icacls"; Parameters: """{app}\resources"" /grant:r *S-1-1-0:(OI)(CI)F"; Flags: runhidden
 Filename: "icacls"; Parameters: """{app}\data"" /grant:r *S-1-1-0:(OI)(CI)F"; Flags: runhidden
+Filename: "icacls"; Parameters: """{app}\temp_workspace"" /grant:r *S-1-1-0:(OI)(CI)F"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"

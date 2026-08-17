@@ -12,8 +12,8 @@ import { ROLES } from "../config/constants";
 
 const DASHBOARD_PATHS = {
   student: "/student/dashboard",
-  staff:   "/staff/dashboard",
-  admin:   "/staff/dashboard",
+  staff:   "/student/dashboard",
+  admin:   "/admin/questions",
 };
 
 const Login = () => {

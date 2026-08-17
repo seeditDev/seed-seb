@@ -25,7 +25,10 @@ export function resolveTestCaseValue(rawVal, type) {
 
   if (isGen) {
     try {
-      const evaluated = new Function(`"use strict"; return (${strVal});`)();
+      const evaluated = new Function(
+        'window', 'document', 'desktopBridge', 'localStorage', 'sessionStorage', 'fetch', 'globalThis',
+        `"use strict"; return (${strVal});`
+      )(undefined, undefined, undefined, undefined, undefined, undefined, undefined);
       if (typeof evaluated === 'object') {
         return JSON.stringify(evaluated);
       }

@@ -139,6 +139,15 @@ export async function executeJavaScript(code, stdin = "", timeoutMs = 3000) {
       'fs',
       'readline',
       'input',
+      'window',
+      'document',
+      'desktopBridge',
+      'localStorage',
+      'sessionStorage',
+      'fetch',
+      'XMLHttpRequest',
+      'WebSocket',
+      'globalThis',
       `"use strict";
        return (async () => {
          ${code}
@@ -151,7 +160,16 @@ export async function executeJavaScript(code, stdin = "", timeoutMs = 3000) {
       mockProcess,
       mockFs,
       mockReadline,
-      cleanStdin
+      cleanStdin,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined
     );
 
     const timeoutPromise = new Promise((_, reject) => {

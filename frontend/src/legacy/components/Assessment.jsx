@@ -4,6 +4,7 @@ import DataService from '../services/dataService';
 import { API_ENDPOINTS, FILE_TYPES } from '../config/constants';
 import timeService from '../services/timeService';
 import { getAuthData } from '../utils/storageUtils';
+import { toast } from 'sonner';
 import '../styles/Assessment.css';
 
 // Define a loading spinner animation
@@ -599,8 +600,9 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
             console.log('Has access to module:', hasAccess);
 
             if (!hasAccess) {
-                setError('You do not have access to this module. Please check your permissions.');
-                alert('You do not have access to this module. Please check your permissions.');
+                const msg = 'You do not have access to this module. Please check your permissions.';
+                setError(msg);
+                toast.error(msg);
                 setIsBeginLoading(false);
                 return;
             }
@@ -1025,152 +1027,6 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                                     }
                                 </p>
                             </div>
-
-                            {/* Debug buttons - only shown in development */}
-                            {/* 
-                            {process.env.NODE_ENV === 'development' && (
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-                                    <button 
-                                        style={{
-                                            padding: '10px', 
-                                            backgroundColor: '#2196F3',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => {
-                                            // Get auth status from both storage mechanisms
-                                            const persistentAuth = localStorage.getItem('hackerRankAuth');
-                                            const sessionAuth = sessionStorage.getItem('hackerRankAuthInProgress');
-                                            
-                                            // Construct access URL based on user's college
-                                            const authData = getAuthData();
-                                            const college = authData.College || '';
-                                            const email = authData.Email || '';
-                                            const hackerRankEmail = authData["Hackerrank Mail"] || email;
-                                            
-                                            // Log user information
-                                            console.log('User Info:', {
-                                                email,
-                                                hackerRankEmail,
-                                                college,
-                                                accessControl,
-                                                isHackerRankAuthenticated
-                                            });
-                                            
-                                            // Log storage information
-                                            console.log('Authentication Status:', {
-                                                localStorage: persistentAuth,
-                                                sessionStorage: sessionAuth,
-                                                reactState: isHackerRankAuthenticated
-                                            });
-                                            
-                                            // Show alert with info
-                                            alert(`Debug Info:
-- Email: ${email}
-- HackerRank Email: ${hackerRankEmail}
-- College: ${college}
-- Auth State (React): ${isHackerRankAuthenticated ? 'Authenticated' : 'Not Authenticated'}
-- Auth State (localStorage): ${persistentAuth === null ? 'NULL (not set)' : persistentAuth === 'true' ? 'true' : 'false'}
-- Auth State (sessionStorage): ${sessionAuth === null ? 'NULL (not set)' : sessionAuth === 'true' ? 'true' : 'false'}
-- Access URL: ${accessControl ? accessControl.access_url || "Not available" : "No access control data"}`);
-                                        }}
-                                    >
-                                        Debug: Log Auth Info
-                                    </button>
-                                    
-                                    <button 
-                                        style={{
-                                            padding: '10px', 
-                                            backgroundColor: '#4CAF50',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => {
-                                            // Set the auth status in both storage mechanisms
-                                            localStorage.setItem('hackerRankAuth', 'true');
-                                            sessionStorage.setItem('hackerRankAuthInProgress', 'true');
-                                            setIsHackerRankAuthenticated(true);
-                                            console.log('Auth status set to true in both storage mechanisms');
-                                            alert('HackerRank authentication status has been set to TRUE in both localStorage and sessionStorage.');
-                                        }}
-                                    >
-                                        Debug: Set Auth True
-                                    </button>
-                                    
-                                    <button 
-                                        style={{
-                                            padding: '10px', 
-                                            backgroundColor: '#f44336',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => {
-                                            // Reset the auth status in both storage mechanisms
-                                            localStorage.setItem('hackerRankAuth', 'false');
-                                            sessionStorage.setItem('hackerRankAuthInProgress', 'false');
-                                            setIsHackerRankAuthenticated(false);
-                                            console.log('Auth status reset to false in both storage mechanisms');
-                                            alert('HackerRank authentication status has been set to FALSE in both localStorage and sessionStorage.');
-                                        }}
-                                    >
-                                        Debug: Set Auth False
-                                    </button>
-                                    
-                                    <button 
-                                        style={{
-                                            padding: '10px', 
-                                            backgroundColor: '#9C27B0',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => {
-                                            // Completely remove the auth status from both storage mechanisms
-                                            localStorage.removeItem('hackerRankAuth');
-                                            sessionStorage.removeItem('hackerRankAuthInProgress');
-                                            setIsHackerRankAuthenticated(false);
-                                            console.log('Auth status completely removed from both storage mechanisms');
-                                            alert('HackerRank authentication flags have been REMOVED from both localStorage and sessionStorage.');
-                                        }}
-                                    >
-                                        Debug: Clear Auth
-                                    </button>
-                                    
-                                    <button 
-                                        style={{
-                                            padding: '10px', 
-                                            backgroundColor: '#FF9800',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            fontWeight: 'bold'
-                                        }}
-                                        onClick={() => {
-                                            // EMERGENCY REDIRECT - bypass all checks and go directly to HackerRank
-                                            console.log('🚨 EMERGENCY REDIRECT TO HACKERRANK');
-                                            try {
-                                                const hackerRankAuthUrl = 'https://www.hackerrank.com/auth/login';
-                                                console.log('Redirecting to:', hackerRankAuthUrl);
-                                                window.location.href = hackerRankAuthUrl;
-                                            } catch (err) {
-                                                console.error('Direct redirect failed:', err);
-                                                alert('Failed to redirect: ' + err.message);
-                                            }
-                                        }}
-                                    >
-                                        🚨 EMERGENCY REDIRECT
-                                    </button>
-                                </div>
-                            )}
-                            */}
                         </div>
                     ) : (
                         <div className="assessment-content">

@@ -36,10 +36,11 @@ APP_VERSION = "1.0.4"  # must match CURRENT_VERSION in desktop/main.py
 # Path to compiled SEED-SEB.exe (relative to this script)
 POSSIBLE_EXE_PATHS = [
     os.path.join(os.path.dirname(__file__), "SEED-SEB.exe"),
+    os.path.join(os.path.dirname(__file__), "..", "SetupBuild", "SEED-SEB.exe"),
+    os.path.join(os.path.dirname(__file__), "..", "SetupBuild", "dist", "SEED-SEB", "SEED-SEB.exe"),
     os.path.join(os.path.dirname(__file__), "dist", "SEED-SEB", "SEED-SEB.exe"),
     os.path.join(os.path.dirname(__file__), "..", "dist", "SEED-SEB.exe"),
     os.path.join(os.path.dirname(__file__), "..", "dist", "SEED-SEB", "SEED-SEB.exe"),
-    os.path.join(os.path.dirname(__file__), "..", "desktop", "dist", "SEED-SEB", "SEED-SEB.exe"),
 ]
 
 # Service account key paths

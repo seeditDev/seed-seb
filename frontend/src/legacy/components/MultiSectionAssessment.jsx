@@ -18,7 +18,6 @@ import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
 import { db, auth } from '../firebase-config';
 import { doc, setDoc, getDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
-import { writeTenantResult, buildTenantResultPayload } from '../services/tenantResultsService';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
@@ -714,6 +713,7 @@ const MultiSectionAssessment = () => {
   const [sectionData, setSectionData] = useState({});
   const [examResults, setExamResults] = useState({});
   const [examFinished, setExamFinished] = useState(false);
+  const [isSubmittingEntireExam, setIsSubmittingEntireExam] = useState(false);
   // 15-sec relaxation between sections: null = not showing, number = countdown value
   const [relaxationCountdown, setRelaxationCountdown] = useState(null);
   const [relaxationNextIdx, setRelaxationNextIdx] = useState(-1);
@@ -880,30 +880,13 @@ const MultiSectionAssessment = () => {
       }
 
       const tenantId = college || authData?.tenantId || '_unknown_';
-        const v2DocPath = `assessmentResults/${effectiveAssessment.id}/${tenantId}/students/${userId}`;
+      const v2DocPath = `assessmentResults/${tenantId}/${effectiveAssessment.id}/students/${userId}`;
 
       // SECTION 13: Final submission MUST be reliable. Await the write.
       // On failure: save pending envelope for recovery on next login.
       try {
         await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
-        console.log('[MSA] Final result saved to Firestore v2 path');
-        // ── Write denormalized tenant result (non-blocking) ──
-        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-        if (tenantId !== '_unknown_') {
-          const tenantPayload = buildTenantResultPayload(authData, {
-            ...rawAttemptData,
-            assessmentId: effectiveAssessment.id,
-            assessmentName: effectiveAssessment.name,
-            type: 'multisection',
-            score: totalScore,
-            totalMarks: totalMarksSum,
-            percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
-            timeTakenSeconds: timeTaken,
-            violationCount: totalViolations,
-            sourceRef: v2DocPath,
-          });
-          writeTenantResult(tenantId, effectiveAssessment.id, userId, tenantPayload).catch(() => {});
-        }
+        console.log('[MSA] Final result saved to Firestore canonical path');
       } catch (writeErr) {
         console.error('[MSA] Final Firestore write failed — preserving pending envelope:', writeErr);
         try {
@@ -918,9 +901,6 @@ const MultiSectionAssessment = () => {
         } catch (_) { /* localStorage may be full — best effort */ }
       }
 
-      // Mirror to users/{uid}/assessmentAttempts (non-fatal)
-      setDoc(doc(db, 'users', userId, 'assessmentAttempts', effectiveAssessment.id), attemptData, { merge: true })
-        .catch(e => console.error('[MSA] Student assessmentAttempts mirror save failed:', e));
     }
 
 
@@ -1093,7 +1073,7 @@ const MultiSectionAssessment = () => {
 
     // Immediately block if already submitted locally
     if (assessmentData.id && localStorage.getItem(`msaCompleted_${assessmentData.id}`) === 'true') {
-      alert('You have already completed and submitted this assessment. Re-attempts are not permitted.');
+      toast.error('You have already completed and submitted this assessment. Re-attempts are not permitted.');
       sessionStorage.removeItem('multisectionAssessmentData');
       localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
       localStorage.removeItem(`msaProgress_${assessmentData.id}`);
@@ -1113,21 +1093,19 @@ const MultiSectionAssessment = () => {
     const checkAttempt = async () => {
       try {
         // CANONICAL: use Firebase Auth UID for the result path.
-        // The legacy AssessmentResults/{id}/colleges/{college}/years/{year}/students/{email}
-        // path is no longer written. All results are at:
-        //   assessmentResults/{assessmentId}/students/{uid}
         const uid = auth?.currentUser?.uid;
         if (!uid) {
           console.warn('[MSA] checkAttempt: not authenticated, skipping server check.');
           return;
         }
-        const canonDocPath = `assessmentResults/${assessmentData.id}/students/${uid}`;
+        const tenantId = authData?.College || authData?.college || authData?.tenantId || '_unknown_';
+        const canonDocPath = `assessmentResults/${tenantId}/${assessmentData.id}/students/${uid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.completed === true || data.status === 'submitted') {
             localStorage.setItem(`msaCompleted_${assessmentData.id}`, 'true');
-            alert('You have already completed and submitted this assessment. Re-attempts are not permitted.');
+            toast.error('You have already completed and submitted this assessment. Re-attempts are not permitted.');
             sessionStorage.removeItem('multisectionAssessmentData');
             localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
             localStorage.removeItem(`msaProgress_${assessmentData.id}`);
@@ -1157,7 +1135,7 @@ const MultiSectionAssessment = () => {
         if (gracePeriodFiredRef.current) return; // StrictMode guard
         gracePeriodFiredRef.current = true;
         console.warn(`[MSA] Offline exit duration (${elapsedOfflineSec}s) exceeded ${GRACE_PERIOD_SEC / 60}-minute grace period. Auto-submitting.`);
-        alert(`Your assessment was auto-submitted because your offline exit window exceeded ${GRACE_PERIOD_SEC / 60} minutes.`);
+        toast.warning(`Your assessment was auto-submitted because your offline exit window exceeded ${GRACE_PERIOD_SEC / 60} minutes.`);
         setExamResults(saved.examResults || {});
         setSecCompleted(saved.completedSections || {});
         // Use a short delay to let React batch the state above, then submit
@@ -1599,7 +1577,7 @@ const MultiSectionAssessment = () => {
         if (!userId) {
           console.error('[MSA] autoSubmitSection partial: not authenticated, refusing Firestore write.');
         } else {
-          setDoc(doc(db, `assessmentResults/${assessment.id}/students/${userId}`), {
+          setDoc(doc(db, `assessmentResults/${college}/${assessment.id}/students/${userId}`), {
             userId, email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
             tenantId: college, cohortId: year,
             testID: assessment.id, testName: assessment.name,
@@ -1620,13 +1598,12 @@ const MultiSectionAssessment = () => {
       // handleStartSection(nextIdx) is called by the relaxation countdown useEffect
     } else {
       // All sections done — final submission
-      // See autoSubmitEntireExam: never substitute a tenant, skip the write.
+      setIsSubmittingEntireExam(true);
       const tenant = resolveTenant(user);
-      if (user?.Email && !tenant.valid) {
-        console.error('[MSA] Incomplete profile, refusing remote write:', tenant.missing);
-      }
-      if (user?.Email && tenant.valid) {
-        const { college, year } = tenant;
+      const college = tenant.valid ? tenant.college : (user?.College || user?.college || user?.tenantId || '_unknown_');
+      const year = tenant.valid ? tenant.year : (user?.Year || user?.year || '');
+      
+      try {
         const sectionsList = Object.values(updatedResults).map(sec => {
           const secTime = sec.timeSpentSeconds || sec.data?.timeSpentSeconds || 0;
           const secM = Math.floor(secTime / 60);
@@ -1650,8 +1627,8 @@ const MultiSectionAssessment = () => {
           .reduce((acc, sec) => acc.concat(sec.data.questions), []);
 
         const aggregatedCoding = Object.values(updatedResults)
-          .filter(sec => sec.type === 'coding' && sec.data?.coding)
-          .reduce((acc, sec) => acc.concat(sec.data.coding), []);
+          .filter(sec => sec.type === 'coding' && (sec.data?.questions || sec.data?.coding))
+          .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), []);
 
         const aggregatedSpokenEnglish = Object.values(updatedResults)
           .filter(sec => (sec.type === 'spoken_english' || sec.type === 'speech' || sec.type === 'sea'))
@@ -1661,7 +1638,6 @@ const MultiSectionAssessment = () => {
 
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
         const totalQ = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
-        // BUG FIX: percentage must use totalMarksSum (max marks), not totalQ (question count).
         const pct = totalMarksSum > 0 ? totalScore / totalMarksSum : 0;
         const partialScore = totalScore;
         const fullScore = (totalMarksSum > 0 && totalScore >= totalMarksSum) ? totalMarksSum : 0;
@@ -1686,8 +1662,8 @@ const MultiSectionAssessment = () => {
           .join(', ');
 
         const rawAttemptData = {
-          email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-          college, year, department: user.Department || '',
+          email: user?.Email || '', rollNumber: user?.['Roll Number'] || '', name: user?.Name || '',
+          college, year, department: user?.Department || '',
           testID: assessment.id, testName: assessment.name,
           assessmentId: assessment.id, assessmentName: assessment.name,
           startedAt: timeStartedISO,
@@ -1725,64 +1701,51 @@ const MultiSectionAssessment = () => {
         const userId = auth?.currentUser?.uid;
         if (!userId) {
           console.error('[MSA] autoSubmitSection final: not authenticated, refusing Firestore write.');
-          return;
-        }
+        } else {
+          const tenantId = college || user?.tenantId || '_unknown_';
+          const v2DocPath = `assessmentResults/${tenantId}/${assessment.id}/students/${userId}`;
 
-        const v2DocPath = `assessmentResults/${assessment.id}/students/${userId}`;
-
-        // BUG FIX: Final submission MUST await Firestore confirmation.
-        // Do NOT show success or navigate until the write is confirmed.
-        // On failure: save pending envelope for recovery on next login (same pattern as autoSubmitEntireExam).
-        let writeSuccess = false;
-        try {
-          await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
-          console.log('[MSA] Final result saved to Firestore v2 path');
-          writeSuccess = true;
-        } catch (writeErr) {
-          console.error('[MSA] handleFinalSubmit: Firestore write failed — preserving pending envelope:', writeErr);
           try {
-            const envKey = `msa_pending_submission_${userId}_${assessment.id}`;
-            localStorage.setItem(envKey, JSON.stringify({
-              uid: userId,
-              assessmentId: assessment.id,
-              resultPayload: attemptData,
-              savedAt: new Date().toISOString(),
-              retryCount: 0,
-            }));
-          } catch (_) { /* localStorage may be full */ }
-          toast.error(
-            '⚠️ Submission saved locally — please reconnect. Your answers are safe and will sync automatically.',
-            { duration: 8000 }
-          );
+            await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
+            console.log('[MSA] Final result saved to Firestore canonical path');
+          } catch (writeErr) {
+            console.error('[MSA] handleFinalSubmit: Firestore write failed — preserving pending envelope:', writeErr);
+            try {
+              const envKey = `msa_pending_submission_${userId}_${assessment.id}`;
+              localStorage.setItem(envKey, JSON.stringify({
+                uid: userId,
+                assessmentId: assessment.id,
+                resultPayload: attemptData,
+                savedAt: new Date().toISOString(),
+                retryCount: 0,
+              }));
+            } catch (_) { /* localStorage may be full */ }
+            toast.error(
+              '⚠️ Submission saved locally — please reconnect. Your answers are safe and will sync automatically.',
+              { duration: 8000 }
+            );
+          }
         }
 
-        // Mirror to users/{uid}/assessmentAttempts (non-fatal, non-blocking)
-        setDoc(doc(db, 'users', userId, 'assessmentAttempts', assessment.id), attemptData, { merge: true })
-          .catch(e => console.error('[MSA] Student assessmentAttempts mirror save failed:', e));
-
-        if (!writeSuccess) {
-          // Do NOT mark finished or navigate — let the student see the error state.
-          // The pending envelope will be retried on next login.
-          return;
+        setExamFinished(true);
+        toast.success('🎉 Assessment submitted! Returning to dashboard…', { duration: 4000 });
+        setTimeout(() => {
+          navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+        }, 4000);
+        if (assessment?.id) {
+          localStorage.setItem(`msaCompleted_${assessment.id}`, 'true');
         }
-      }
+        sessionStorage.removeItem('multisectionAssessmentData');
+        localStorage.removeItem(`msaProgress_${assessment?.id}`);
+        localStorage.removeItem(`msaActiveAssessment_${assessment?.id}`);
 
-      setExamFinished(true);
-      toast.success('🎉 Assessment submitted! Returning to dashboard…', { duration: 4000 });
-      setTimeout(() => {
-        navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
-      }, 4000);
-      if (assessment?.id) {
-        localStorage.setItem(`msaCompleted_${assessment.id}`, 'true');
+        // ── Mark attempt fully completed (Firestore session + completion index) ──
+        completeAssessmentSession(user, assessment?.id).catch(() => {});
+        markAssessmentCompleted(user, assessment?.id).catch(() => {});
+        if (user?.Email) invalidateCompletionCache(user.Email);
+      } finally {
+        setIsSubmittingEntireExam(false);
       }
-      sessionStorage.removeItem('multisectionAssessmentData');
-      localStorage.removeItem(`msaProgress_${assessment?.id}`);
-      localStorage.removeItem(`msaActiveAssessment_${assessment?.id}`);
-
-      // ── Mark attempt fully completed (Firestore session + completion index) ──
-      completeAssessmentSession(user, assessment?.id).catch(() => {});
-      markAssessmentCompleted(user, assessment?.id).catch(() => {});
-      if (user?.Email) invalidateCompletionCache(user.Email);
 
       // Clear MCQ, Coding, and proctoring temporary workspace details
       const keysToRemove = [];
@@ -2046,6 +2009,27 @@ const MultiSectionAssessment = () => {
             </div>
           );
         })()}
+        {/* Global Submitting Overlay */}
+        {isSubmittingEntireExam && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            zIndex: 99999, color: 'white', fontFamily: "'Inter', sans-serif"
+          }}>
+            <div style={{
+              background: 'rgba(30, 41, 59, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px', padding: '36px 48px', textAlign: 'center', maxWidth: '460px',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+            }}>
+              <div className="learn-spinner" style={{ width: '48px', height: '48px', borderTopColor: '#6366f1', margin: '0 auto 20px' }} />
+              <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px', color: '#f8fafc' }}>Submitting Assessment...</h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5', margin: 0 }}>
+                Evaluating test responses, compiling score metrics, and syncing with the secure server. Please do not close the window.
+              </p>
+            </div>
+          </div>
+        )}
       </>
     );
   }

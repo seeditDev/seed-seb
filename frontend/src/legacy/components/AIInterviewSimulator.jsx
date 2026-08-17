@@ -17,6 +17,7 @@ import {
   FaKeyboard
 } from 'react-icons/fa';
 import { aiInterviewService } from '../services/aiInterviewService';
+import { toast } from 'sonner';
 import '../styles/AIInterviewSimulator.css';
 
 const DOMAINS = ['Java', 'DSA', 'SQL', 'C', 'Python', 'HR', 'System Design'];
@@ -119,7 +120,7 @@ const AIInterviewSimulator = ({ user }) => {
   // Toggle Microphone
   const toggleListening = () => {
     if (!recognitionRef.current) {
-      alert("Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      toast.error("Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.");
       return;
     }
     if (isListening) {

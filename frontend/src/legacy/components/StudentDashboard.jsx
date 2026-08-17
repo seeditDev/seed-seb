@@ -943,9 +943,9 @@ const StudentDashboard = () => {
       if (!liveUid) throw new Error('Authentication required. Please log in again.');
 
       if (assessment.isMultiSection || assessment.type === 'multisection' || assessment.type === 'MSA') {
-        // FIX P0: was reading from legacy AssessmentResults/.../colleges/.../students/{email}
-        // Now reads from canonical assessmentResults/{assessmentId}/students/{uid}
-        const canonDocPath = `assessmentResults/${assessment.id}/students/${liveUid}`;
+        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/students/{uid}
+        const tenantId = user?.College || user?.college || user?.tenantId || '_unknown_';
+        const canonDocPath = `assessmentResults/${tenantId}/${assessment.id}/students/${liveUid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
         let isCompleted = false;
         if (docSnap.exists()) {
@@ -954,15 +954,16 @@ const StudentDashboard = () => {
         }
         check = { exists: docSnap.exists(), completed: isCompleted };
       } else if (assessment.type === 'spoken_english' || assessment.type === 'sea' || assessment.type === 'SPOKEN_ENGLISH') {
-        // FIX P0: same as MSA — use canonical path
-        const canonDocPath = `assessmentResults/${assessment.id}/students/${liveUid}`;
-        const docSnap = await getDoc(doc(db, canonDocPath));
+        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/students/{uid}
+        const seaTenantId = user?.College || user?.college || user?.tenantId || '_unknown_';
+        const seaCanonDocPath = `assessmentResults/${seaTenantId}/${assessment.id}/students/${liveUid}`;
+        const seaDocSnap = await getDoc(doc(db, seaCanonDocPath));
         let isCompleted = false;
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+        if (seaDocSnap.exists()) {
+          const data = seaDocSnap.data();
           isCompleted = (data.completed === true || data.status === 'submitted');
         }
-        check = { exists: docSnap.exists(), completed: isCompleted };
+        check = { exists: seaDocSnap.exists(), completed: isCompleted };
       } else if (assessment.type === 'mcq') {
         check = await MCQService.checkExistingAttempt(
           user.Email, assessment.id, user.College, user.Year, user.Department

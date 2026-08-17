@@ -14,6 +14,8 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as GuestRouteImport } from './routes/guest'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminQuestionsRouteImport } from './routes/admin.questions'
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
 import { Route as StudentCodingIndexRouteImport } from './routes/student.coding.index'
 import { Route as StudentCodingAssessmentSlugRouteImport } from './routes/student.coding.$assessmentSlug'
@@ -48,6 +50,16 @@ const HomeRoute = HomeRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminQuestionsRoute = AdminQuestionsRouteImport.update({
+  id: '/admin/questions',
+  path: '/admin/questions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
@@ -113,7 +125,9 @@ export interface FileRoutesByFullPath {
   '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/admin/questions': typeof AdminQuestionsRoute
   '/student/dashboard': typeof StudentDashboardRoute
+  '/admin/': typeof AdminIndexRoute
   '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
   '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
   '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
@@ -130,7 +144,9 @@ export interface FileRoutesByTo {
   '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/admin/questions': typeof AdminQuestionsRoute
   '/student/dashboard': typeof StudentDashboardRoute
+  '/admin': typeof AdminIndexRoute
   '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
   '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
   '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
@@ -148,7 +164,9 @@ export interface FileRoutesById {
   '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/admin/questions': typeof AdminQuestionsRoute
   '/student/dashboard': typeof StudentDashboardRoute
+  '/admin/': typeof AdminIndexRoute
   '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
   '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
   '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
@@ -167,7 +185,9 @@ export interface FileRouteTypes {
     | '/guest'
     | '/home'
     | '/login'
+    | '/admin/questions'
     | '/student/dashboard'
+    | '/admin/'
     | '/student/coding/$assessmentSlug'
     | '/student/mcq/$testSlug'
     | '/student/sea/$assessmentSlug'
@@ -184,7 +204,9 @@ export interface FileRouteTypes {
     | '/guest'
     | '/home'
     | '/login'
+    | '/admin/questions'
     | '/student/dashboard'
+    | '/admin'
     | '/student/coding/$assessmentSlug'
     | '/student/mcq/$testSlug'
     | '/student/sea/$assessmentSlug'
@@ -201,7 +223,9 @@ export interface FileRouteTypes {
     | '/guest'
     | '/home'
     | '/login'
+    | '/admin/questions'
     | '/student/dashboard'
+    | '/admin/'
     | '/student/coding/$assessmentSlug'
     | '/student/mcq/$testSlug'
     | '/student/sea/$assessmentSlug'
@@ -219,7 +243,9 @@ export interface RootRouteChildren {
   GuestRoute: typeof GuestRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
+  AdminQuestionsRoute: typeof AdminQuestionsRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   StudentCodingAssessmentSlugRoute: typeof StudentCodingAssessmentSlugRoute
   StudentMcqTestSlugRoute: typeof StudentMcqTestSlugRoute
   StudentSeaAssessmentSlugRoute: typeof StudentSeaAssessmentSlugRoute
@@ -266,6 +292,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/questions': {
+      id: '/admin/questions'
+      path: '/admin/questions'
+      fullPath: '/admin/questions'
+      preLoaderRoute: typeof AdminQuestionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/student/dashboard': {
@@ -347,7 +387,9 @@ const rootRouteChildren: RootRouteChildren = {
   GuestRoute: GuestRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
+  AdminQuestionsRoute: AdminQuestionsRoute,
   StudentDashboardRoute: StudentDashboardRoute,
+  AdminIndexRoute: AdminIndexRoute,
   StudentCodingAssessmentSlugRoute: StudentCodingAssessmentSlugRoute,
   StudentMcqTestSlugRoute: StudentMcqTestSlugRoute,
   StudentSeaAssessmentSlugRoute: StudentSeaAssessmentSlugRoute,

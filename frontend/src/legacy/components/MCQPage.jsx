@@ -20,6 +20,7 @@ import { createSubmitGuard } from '../utils/submitGuard';
 import { markAssessmentCompleted } from '../services/attemptStatusService';
 import * as AttemptStatusService from '../services/attemptStatusService';
 import { auth } from '../firebase-config';
+import { toast } from 'sonner';
 
 // ========================================
 // PROCTORING CONFIGURATION
@@ -1557,7 +1558,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             if (error.message.includes('DUPLICATE_SUBMISSION') || error.message.includes('already been completed')) {
                 setSubmissionStatus('duplicate');
                 setError('This test has already been submitted. Multiple submissions are not allowed.');
-                alert('❌ This test has already been submitted. You cannot submit again.');
+                toast.error('❌ This test has already been submitted. You cannot submit again.');
             } else {
                 // NETWORK FAILURE: save pending result locally so it survives a crash
                 // and can be retried on the next launch.
@@ -1709,7 +1710,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     }));
                     setShowConfirmSubmit(false);
                     setShowReviewAnswers(false);
-                    alert('⏰ Time is up! Your test has been automatically submitted.');
+                    toast.warning('⏰ Time is up! Your test has been automatically submitted.');
                 } else {
                     setCurrentTest(null);
                     setShowConfirmSubmit(false);

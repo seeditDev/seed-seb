@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from '../router-compat';
 import { FaCheck, FaPlay, FaSignOutAlt, FaUser, FaArrowLeft, FaSearch, FaBookOpen, FaLock, FaKey, FaTimes, FaShieldAlt, FaTrophy, FaStar, FaBolt } from 'react-icons/fa';
 import DataService from '../services/dataService';
+import { toast } from 'sonner';
 import '../styles/CodingAssessmentHome.css';
 
 const CodingAssessmentHome = () => {
@@ -235,7 +236,7 @@ const CodingAssessmentHome = () => {
                                                 const handleStartTest = () => {
                                                     if (isContestAlreadyCompleted) return;
                                                     if (!hasQuestions) {
-                                                        alert("This contest does not contain any questions yet.");
+                                                        toast.warning("This contest does not contain any questions yet.");
                                                         return;
                                                     }
                                                     navigate(`/student/assessment/sandbox?contest=${c.id}&challenge=${questions[0]}`);
