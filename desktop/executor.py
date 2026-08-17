@@ -36,6 +36,47 @@ class CodeExecutor:
         except Exception as e:
             print(f"[CodeExecutor] Error cleaning up run dir {run_dir}: {e}")
 
+    def _sanitize_output(self, text, run_dir=None):
+        """Sanitizes compilation and execution output so local compiler paths,
+        temporary directories, and internal runtime paths are never exposed to students."""
+        if not text:
+            return ""
+
+        sanitized = str(text)
+
+        paths_to_strip = []
+        if run_dir:
+            paths_to_strip.extend([run_dir, run_dir.replace("\\", "/"), run_dir.replace("/", "\\")])
+
+        if hasattr(self, "workspace_dir") and self.workspace_dir:
+            paths_to_strip.extend([self.workspace_dir, self.workspace_dir.replace("\\", "/"), self.workspace_dir.replace("/", "\\")])
+
+        if hasattr(runtime_manager, "runtimes_dir") and runtime_manager.runtimes_dir:
+            paths_to_strip.extend([runtime_manager.runtimes_dir, runtime_manager.runtimes_dir.replace("\\", "/"), runtime_manager.runtimes_dir.replace("/", "\\")])
+
+        if hasattr(runtime_manager, "app_root") and runtime_manager.app_root:
+            paths_to_strip.extend([runtime_manager.app_root, runtime_manager.app_root.replace("\\", "/"), runtime_manager.app_root.replace("/", "\\")])
+
+        temp_dir = tempfile.gettempdir()
+        paths_to_strip.extend([temp_dir, temp_dir.replace("\\", "/"), temp_dir.replace("/", "\\")])
+
+        # Sort paths by length descending so longer subpaths are replaced first
+        paths_to_strip = sorted(list(set(filter(None, paths_to_strip))), key=len, reverse=True)
+
+        for p in paths_to_strip:
+            sanitized = sanitized.replace(p + "\\", "")
+            sanitized = sanitized.replace(p + "/", "")
+            sanitized = sanitized.replace(p, "")
+
+        # Clean any leftover regex patterns for temp workspace run folders: e.g. [A-Z]:\.*run_[0-9a-f-]+\
+        import re
+        sanitized = re.sub(r'[a-zA-Z]:[\\/][^:\n\r]+[\\/](?=(?:solution|Main)\.)', '', sanitized)
+        # Clean compiler internal header traces: e.g. In file included from .../runtimes/...
+        sanitized = re.sub(r'In file included from [^:\n\r]+[\\/](?:mingw64|runtimes)[^:\n\r]*:\d+:\n?', '', sanitized)
+        sanitized = re.sub(r'[a-zA-Z]:[\\/][^:\n\r]+[\\/](?:mingw64|runtimes)[^:\n\r]*[\\/]', '', sanitized)
+
+        return sanitized.strip()
+
     def execute(self, language, code, stdin="", time_limit=2.0):
         """
         Executes code in a secure and isolated local workspace.
@@ -49,6 +90,7 @@ class CodeExecutor:
                 "error": str or None # Timeout, Compilation Error, etc.
             }
         """
+        lang = str(language or "").strip().lower()
         run_dir = self._create_temp_run_dir()
         result = {
             "stdout": "",
@@ -59,21 +101,31 @@ class CodeExecutor:
         }
 
         try:
-            if language == "python":
+            if lang in ("python", "py", "python3"):
                 result = self._execute_python(run_dir, code, stdin, time_limit)
-            elif language == "c":
+            elif lang in ("c", "c_cpp"):
                 result = self._execute_c(run_dir, code, stdin, time_limit)
-            elif language == "cpp":
+            elif lang in ("cpp", "c++", "cplusplus"):
                 result = self._execute_cpp(run_dir, code, stdin, time_limit)
-            elif language == "java":
+            elif lang in ("java",):
                 result = self._execute_java(run_dir, code, stdin, time_limit)
+            elif lang in ("javascript", "js", "node", "nodejs"):
+                result = self._execute_javascript(run_dir, code, stdin, time_limit)
             else:
                 result["error"] = f"Unsupported language: {language}"
         except Exception as e:
             result["error"] = f"Execution system failure: {str(e)}"
         finally:
             self._cleanup_dir(run_dir)
-            
+
+        # Sanitize all output streams so local compiler paths are never exposed
+        if result.get("stdout"):
+            result["stdout"] = self._sanitize_output(result["stdout"], run_dir)
+        if result.get("stderr"):
+            result["stderr"] = self._sanitize_output(result["stderr"], run_dir)
+        if result.get("error"):
+            result["error"] = self._sanitize_output(result["error"], run_dir)
+
         return result
 
     def _get_run_env(self, binary_path):
@@ -81,12 +133,35 @@ class CodeExecutor:
         env = os.environ.copy()
         if binary_path:
             bin_dir = os.path.dirname(os.path.abspath(binary_path))
-            env["PATH"] = bin_dir + os.pathsep + env.get("PATH", "")
-        # Clean PyInstaller environment variables to avoid runtime conflicts in child subprocesses
+            path_additions = [bin_dir]
+            arch_bin = os.path.join(os.path.dirname(bin_dir), "x86_64-w64-mingw32", "bin")
+            if os.path.exists(arch_bin):
+                path_additions.append(arch_bin)
+            env["PATH"] = os.pathsep.join(path_additions) + os.pathsep + env.get("PATH", "")
+        # Clean PyInstaller / Nuitka environment variables to avoid runtime conflicts in child subprocesses
         for var in ["PYTHONHOME", "PYTHONPATH", "PYTHONIOENCODING"]:
             if var in env:
                 del env[var]
         return env
+
+    def _execute_javascript(self, run_dir, code, stdin, time_limit):
+        file_path = os.path.join(run_dir, "solution.js")
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(code)
+
+        node_bin = runtime_manager.get_binary_path("node")
+        if not node_bin or not os.path.exists(node_bin):
+            return {
+                "stdout": "",
+                "stderr": "JavaScript (Node.js) runtime is not found in resources/runtimes/node.",
+                "exit_code": -1,
+                "execution_time": 0.0,
+                "error": "JavaScript runtime not available"
+            }
+
+        cmd = [node_bin, "solution.js"]
+        env = self._get_run_env(node_bin)
+        return self._run_process(cmd, run_dir, stdin, time_limit, env=env)
 
     def _execute_python(self, run_dir, code, stdin, time_limit):
         file_path = os.path.join(run_dir, "solution.py")

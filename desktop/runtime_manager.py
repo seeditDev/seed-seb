@@ -67,6 +67,9 @@ class RuntimeManager:
         # Python (Portable Python)
         self.binaries["python"] = os.path.join(self.runtimes_dir, "python-embed", "python.exe")
 
+        # JavaScript (Node.js)
+        self.binaries["node"] = os.path.join(self.runtimes_dir, "node", "node.exe")
+
         print("[RuntimeManager] Strict Local Configuration (Active for both Dev and Prod):")
         for lang, path in self.binaries.items():
             status = "EXISTS" if os.path.exists(path) else "NOT FOUND (Must pack in resources/runtimes)"
@@ -78,7 +81,8 @@ class RuntimeManager:
         required_binaries = [
             self.binaries.get("gcc"),
             self.binaries.get("javac"),
-            self.binaries.get("python")
+            self.binaries.get("python"),
+            self.binaries.get("node")
         ]
 
         missing = []

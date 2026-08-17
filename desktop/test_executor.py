@@ -98,7 +98,27 @@ class TestCodeExecutor(unittest.TestCase):
         self.assertIsNone(res["error"])
         self.assertEqual(res["exit_code"], 0)
         self.assertEqual(res["stdout"].strip(), "Hello, Student")
-        print("Java compilation & execution verified.")
+    def test_cpp_alias(self):
+        if not os.path.exists(runtime_manager.get_binary_path("g++")):
+            self.skipTest("Local g++ not found; skipping C++ alias test.")
+        code = '#include <iostream>\nint main() { std::cout << "OK"; return 0; }'
+        res = code_executor.execute("c++", code, time_limit=2.0)
+        self.assertIsNone(res["error"])
+        self.assertEqual(res["stdout"].strip(), "OK")
+
+    def test_javascript_success(self):
+        code = "const fs = require('fs'); const input = fs.readFileSync(0, 'utf-8').trim(); console.log('JS:' + input);"
+        res = code_executor.execute("javascript", code, stdin="world", time_limit=2.0)
+        if res.get("error") == "JavaScript runtime not available":
+            self.skipTest("Node.js not installed on system; skipping JS test.")
+        self.assertIsNone(res["error"])
+        self.assertEqual(res["stdout"].strip(), "JS:world")
+
+    def test_path_sanitization_on_error(self):
+        raw_error = r"C:\Program Files (x86)\SEED-SEB\temp_workspace\run_61b832fb-027c-4bd2\solution.c:10:5: error: expected ';'"
+        clean = code_executor._sanitize_output(raw_error, r"C:\Program Files (x86)\SEED-SEB\temp_workspace\run_61b832fb-027c-4bd2")
+        self.assertNotIn(r"C:\Program Files (x86)\SEED-SEB\temp_workspace\run_61b832fb-027c-4bd2", clean)
+        self.assertTrue(clean.startswith("solution.c:10:5: error:"))
 
 if __name__ == "__main__":
     unittest.main()
