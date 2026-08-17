@@ -904,7 +904,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                       const isCorrect = testSelections[q.id] === q.correctAnswer;
                       const selected = testSelections[q.id];
                       return (
-                        <div key={q.id} style={{
+                        <div key={q.id ? `${q.id}-${idx}` : `q-${idx}`} style={{
                           padding: '20px',
                           background: 'rgba(255,255,255,0.02)',
                           border: '1px solid var(--ps-border)',

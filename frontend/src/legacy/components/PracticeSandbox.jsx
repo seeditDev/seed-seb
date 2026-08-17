@@ -887,7 +887,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
 
               return (
                 <div
-                  key={q.questionId}
+                  key={q.questionId ? `${q.questionId}-${idx}` : `q-${idx}`}
                   className={`psb-sidebar-item ${isActive ? 'active' : ''} ${status === 'LOCKED' ? 'locked' : ''}`}
                   onClick={() => navigate(`/student/practice/solve/${q.questionId}`, { state: { scoringType } })}
                 >

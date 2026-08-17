@@ -1529,7 +1529,7 @@ const StudentDashboard = () => {
                             <button
                               onClick={() => setSelectedSeries(series.key)}
                               className="ps-action-btn primary"
-                              style={{ padding: '6px 16px', fontSize: '13px' }}
+                              style={{ padding: '6px 16px', fontSize: '13px', color: '#ffffff', background: 'var(--accent-coding)' }}
                             >
                               Start Test
                             </button>
@@ -1719,6 +1719,7 @@ const StudentDashboard = () => {
                                   style={{
                                     padding: '6px 16px',
                                     fontSize: '13px',
+                                    color: '#ffffff',
                                     background: a.type === 'mcq' ? 'var(--accent-mcq)' : 'var(--accent-coding)'
                                   }}
                                 >

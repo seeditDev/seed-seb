@@ -1556,7 +1556,7 @@ const PracticeHome = () => {
 
                 return (
                   <div
-                    key={q.id}
+                    key={q.id ? `${q.id}-${idx}` : `q-${idx}`}
                     onClick={() => handleQuestionClick({ questionId: q.id, scoringType: q.scoringType }, status)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px',
@@ -2910,7 +2910,7 @@ const PracticeHome = () => {
 
                       return (
                         <tr
-                          key={q.questionId}
+                          key={q.questionId ? `${q.questionId}-${idx}` : `q-${idx}`}
                           className={`ph-problem-row ${status === 'LOCKED' ? 'locked' : ''}`}
                           onClick={() => handleQuestionClick(q, status)}
                         >

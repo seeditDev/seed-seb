@@ -2366,7 +2366,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     {perQuestion.map((q, idx) => {
                                         const pct = q.percentage;
                                         return (
-                                            <div key={q.id} style={{
+                                            <div key={q.id ? `${q.id}-${idx}` : `q-${idx}`} style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'space-between',
@@ -2593,7 +2593,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             <div className="question-grid">
                                 {questions.map((q, idx) => (
                                     <button
-                                        key={q.id}
+                                        key={q.id ? `${q.id}-${idx}` : `q-${idx}`}
                                         onClick={() => {
                                             setActiveQuestionIndex(idx);
                                             setVisitedQuestions(prev => ({ ...prev, [q.id]: true }));
@@ -2941,7 +2941,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     const total = qs?.total || (q.hiddenTests?.length || q.sampleTests?.length || 0);
                                     const pct = qs?.percentage || 0;
                                     return (
-                                        <div key={q.id} style={{
+                                        <div key={q.id ? `${q.id}-${idx}` : `q-${idx}`} style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
