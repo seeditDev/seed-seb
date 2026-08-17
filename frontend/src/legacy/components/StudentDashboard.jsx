@@ -88,7 +88,7 @@ const StudentDashboard = () => {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [userPremiumState, setUserPremiumState] = useState(null);
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('portal_theme') || 'bw';
+    return localStorage.getItem('portal_theme') || 'seed-seb';
   });
   const [apiKeysList, setApiKeysList] = useState(() => {
     try {
@@ -2633,6 +2633,12 @@ const StudentDashboard = () => {
   const renderSettings = () => {
     const themes = [
       {
+        id: 'seed-seb',
+        name: 'SEED-SEB Academic (Default)',
+        desc: 'Clean, distraction-free examination theme with institutional SEED green accents.',
+        preview: ['#f8fafc', '#ffffff', '#15803d']
+      },
+      {
         id: 'dark',
         name: 'Midnight Space (Dark)',
         desc: 'Futuristic slate theme with indigo highlights.',
@@ -2665,7 +2671,7 @@ const StudentDashboard = () => {
       {
         id: 'bw',
         name: 'Monochrome Minimalist (B&W)',
-        desc: 'High-contrast, clean black & white theme. (Default)',
+        desc: 'High-contrast, clean black & white theme.',
         preview: ['#ffffff', '#000000', '#000000']
       }
     ];
