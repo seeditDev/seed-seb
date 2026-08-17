@@ -3,7 +3,7 @@ import Editor from '@monaco-editor/react';
 import { FaPlay, FaCheck, FaTimes, FaUndo, FaList, FaBookOpen, FaArrowLeft, FaSearch, FaChevronLeft, FaChevronRight, FaLightbulb, FaUser, FaLock } from 'react-icons/fa';
 import { db } from '../firebase-config';
 import { collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from 'firebase/firestore';
-import desktopBridge from '../utils/desktopBridge';
+import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import { useLocation, useNavigate } from '../router-compat';
 import { normalizeTestCaseArray, compareOutputs } from '../utils/testCaseUtils';
 import { toast } from 'sonner';
@@ -404,6 +404,18 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 const res = isBlank
                     ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
                     : await desktopBridge.runDirectSandbox(language, currentCode, tc.input);
+
+                if (isEngineDisconnected(res)) {
+                    results.push({
+                        index: i + 1,
+                        input: tc.input,
+                        expected: (tc.expected || '').replace(/\r\n/g, '\n').trim(),
+                        actual: '',
+                        passed: false,
+                        stderr: 'Evaluation engine not connected. Please restart the application or rerun the code.'
+                    });
+                    break; // Stop running remaining test cases!
+                }
                 
                 const cleanActual = (res.stdout || '').replace(/\r\n/g, '\n').trim();
                 const cleanExpected = (tc.expected || '').replace(/\r\n/g, '\n').trim();

@@ -6,7 +6,7 @@ import {
     FaClock, FaLock, FaExclamationTriangle, FaCheckCircle, 
     FaSearch, FaChevronLeft, FaChevronRight, FaSignOutAlt, FaUser 
 } from 'react-icons/fa';
-import desktopBridge from '../utils/desktopBridge';
+import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
@@ -1398,6 +1398,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 // Run process on python sandbox backend
                 const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
 
+                if (isEngineDisconnected(res)) {
+                    results.push({
+                        index: i + 1,
+                        input: tc.input,
+                        expected: tc.expected,
+                        actual: "",
+                        stderr: "Evaluation engine not connected. Please restart the application or rerun the code.",
+                        passed: false
+                    });
+                    break; // Abort remaining testcases immediately!
+                }
+
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                 const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
                 const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
@@ -1413,20 +1425,31 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 });
             }
 
-            // Run Custom Input if checked
-            if (useCustomInput) {
+            // Run Custom Input if checked (only if engine was not disconnected)
+            if (useCustomInput && (results.length === 0 || !isEngineDisconnected(results[results.length - 1]))) {
                 const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, code, customInput);
                 const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
-                const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                const passed = !res.error && (exit === 0 || exit === null);
-                results.push({
-                    index: 'Custom',
-                    input: customInput,
-                    expected: 'N/A (Custom Run)',
-                    actual: res.stdout || "",
-                    stderr: res.stderr || res.error || "",
-                    passed: passed
-                });
+                if (isEngineDisconnected(res)) {
+                    results.push({
+                        index: 'Custom',
+                        input: customInput,
+                        expected: 'N/A (Custom Run)',
+                        actual: "",
+                        stderr: "Evaluation engine not connected. Please restart the application or rerun the code.",
+                        passed: false
+                    });
+                } else {
+                    const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
+                    const passed = !res.error && (exit === 0 || exit === null);
+                    results.push({
+                        index: 'Custom',
+                        input: customInput,
+                        expected: 'N/A (Custom Run)',
+                        actual: res.stdout || "",
+                        stderr: res.stderr || res.error || "",
+                        passed: passed
+                    });
+                }
             }
 
             setRunResults(results);
@@ -1438,25 +1461,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 setStderr(lastCase.stderr);
             }
         } catch (err) {
-            console.error("Local sandbox execute error:", err);
-            setStderr(`Compiler execution failure: ${err.message}`);
+            console.error("Run code error:", err);
+            setStderr(`Run Code Error: ${err.message}`);
         } finally {
-            // Keep loader up until backend fully responds (already done above)
             setIsRunning(false);
         }
     };
 
-    // Evaluate/Submit Question
-    // Flow: show evaluating overlay → run hidden tests (min 5 s) → close overlay → show inline submitted result
-    const evaluateQuestion = async () => {
+    const handleSubmitQuestion = async () => {
         if (!currentQuestion) return;
 
-        setCompilationCounts(prev => {
-            const updated = { ...prev, [currentQuestion.id]: (prev[currentQuestion.id] || 0) + 1 };
-            localStorage.setItem("codingCompilationCounts", JSON.stringify(updated));
-            return updated;
-        });
-        setQuestionSubmitTimes(prev => {
+        setSubmittedQuestions(prev => {
             const updated = { ...prev, [currentQuestion.id]: new Date().toISOString() };
             localStorage.setItem("codingQuestionSubmitTimes", JSON.stringify(updated));
             return updated;
@@ -1466,15 +1481,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setEvalResults(null);
         setActiveResultTab('results');
 
-        // Yield a tick so the overlay renders before backend starts
-        // await new Promise(r => setTimeout(r, 80));
-
         const code = codeMap[`${currentQuestion.id}_${language}`] || "";
-        // SECTION 18: use ONLY hiddenTests for official per-question scoring.
-        // sampleTests must NEVER substitute for hiddenTests even here.
-        // If hiddenTests is absent/empty this question scores 0 (invalidConfig guard below).
         const hiddenTests = Array.isArray(currentQuestion.hiddenTests) ? currentQuestion.hiddenTests : [];
-        const startTimestamp = Date.now();
         const bridgeLang = language === 'python3' ? 'python' : language;
         const isEvalBlank = isCodeBlankOrEmpty(code);
 
@@ -1490,6 +1498,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     continue;
                 }
                 const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+
+                if (isEngineDisconnected(res)) {
+                    evalError = "Evaluation engine not connected. Please restart the application or rerun the code.";
+                    results.push({ index: i + 1, passed: false, error: evalError });
+                    break; // Abort remaining hidden test cases immediately!
+                }
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                 const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
@@ -1612,6 +1626,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         for (const tc of hidden) {
                             try {
                                 const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                if (isEngineDisconnected(res)) {
+                                    break;
+                                }
                                 const exit = res.exit_code !== undefined ? res.exit_code : 0;
                                 const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
                                 const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();

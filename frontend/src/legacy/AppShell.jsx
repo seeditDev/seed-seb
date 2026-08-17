@@ -318,6 +318,159 @@ export default function AppShell({ children }) {
     return <AppShellLoading />;
   }
 
+function EngineDisconnectedPopup() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleDisconnected = () => {
+      setIsOpen(true);
+    };
+
+    window.addEventListener("seed:engine_disconnected", handleDisconnected);
+    return () => {
+      window.removeEventListener("seed:engine_disconnected", handleDisconnected);
+    };
+  }, []);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(15, 23, 42, 0.65)",
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 999999,
+      }}
+    >
+      <div
+        style={{
+          background: "var(--bg-primary, #ffffff)",
+          border: "1.5px solid var(--border-color, #e2e8f0)",
+          borderRadius: "16px",
+          padding: "28px",
+          maxWidth: "460px",
+          width: "90%",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              width: "36px",
+              height: "36px",
+              borderRadius: "10px",
+              background: "#fee2e2",
+              color: "#dc2626",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "18px",
+              fontWeight: 800,
+            }}
+          >
+            !
+          </div>
+          <div>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "17px",
+                fontWeight: 800,
+                color: "var(--text-main, #0f172a)",
+              }}
+            >
+              Evaluation Engine Not Connected
+            </h3>
+            <p
+              style={{
+                margin: "2px 0 0",
+                fontSize: "12px",
+                color: "var(--text-muted, #64748b)",
+              }}
+            >
+              Code execution compiler bridge unavailable
+            </p>
+          </div>
+        </div>
+
+        <p
+          style={{
+            margin: 0,
+            fontSize: "14px",
+            color: "var(--text-main, #334155)",
+            lineHeight: 1.5,
+          }}
+        >
+          The local code evaluation engine is currently disconnected. Other test cases have been halted to prevent execution delays.
+        </p>
+
+        <p
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            color: "var(--text-muted, #64748b)",
+          }}
+        >
+          Please restart the application or rerun your code to re-establish the compiler connection.
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "10px",
+            marginTop: "8px",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            style={{
+              padding: "10px 18px",
+              borderRadius: "8px",
+              border: "1px solid var(--border-color, #cbd5e1)",
+              background: "transparent",
+              color: "var(--text-main, #475569)",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Rerun Code
+          </button>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "none",
+              background: "var(--accent-coding, #15803d)",
+              color: "#ffffff",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Restart Application
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
   if (!isDesktopApp) {
     return <DesktopOnlyNotice onEnableWebAccess={handleEnableWebAccess} />;
   }
@@ -325,6 +478,7 @@ export default function AppShell({ children }) {
   return (
     <ErrorBoundary>
       <PortalActivityTracker />
+      <EngineDisconnectedPopup />
       {children}
     </ErrorBoundary>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from '../router-compat';
 import Editor from '@monaco-editor/react';
 import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
-import desktopBridge from '../utils/desktopBridge';
+import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBankService';
 import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, trackQuestionTimeSpent, trackDailyActivity } from '../services/codingProgressService';
 import { saveSolution } from '../services/userSolutionsService';
@@ -585,6 +585,19 @@ const PracticeSandbox = () => {
           if (i > 0) await yieldFrame();
           const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
 
+          if (isEngineDisconnected(res)) {
+            results.push({
+              index: i + 1,
+              input: tc.input,
+              expected: (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim(),
+              actual: '',
+              stderr: 'Evaluation engine not connected. Please restart the application or rerun the code.',
+              passed: false,
+              exitCode: -1
+            });
+            break; // Stop running further sample test cases!
+          }
+
           const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
           const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
           const isPassed = actualClean === expectedClean && res.exit_code === 0;
@@ -664,6 +677,18 @@ const isCodeBlankOrEmpty = (codeStr) => {
         const res = isBlank
           ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
           : await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+
+        if (isEngineDisconnected(res)) {
+          results.push({
+            id: tc.id || `tc_${i + 1}`,
+            passed: false,
+            input: tc.input,
+            expected: (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim(),
+            actual: '',
+            stderr: 'Evaluation engine not connected. Please restart the application or rerun the code.'
+          });
+          break; // Stop running further hidden test cases!
+        }
 
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();

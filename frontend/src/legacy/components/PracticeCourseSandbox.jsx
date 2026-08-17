@@ -5,7 +5,7 @@ import {
   FaPlay, FaCheck, FaHourglassHalf, 
   FaListUl, FaChevronRight, FaCheckCircle, FaStar
 } from 'react-icons/fa';
-import desktopBridge from '../utils/desktopBridge';
+import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import { fetchQuestion } from '../services/codingQuestionBankService';
 import { 
   markQuestionSolved, markQuestionAttempted, getQuestionProgress, 
@@ -569,8 +569,7 @@ const PracticeCourseSandbox = () => {
       const currentCode = editorRef.current ? editorRef.current.getValue() : code;
 
       await yieldFrame();
-
-      if (useCustomInput || !question?.sampleTestCases || question.sampleTestCases.length === 0) {
+        if (useCustomInput || !question?.sampleTestCases || question.sampleTestCases.length === 0) {
         const result = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, customInput);
         setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? 'Execution completed successfully with no output.' : ''));
         setStderr(result.stderr || result.error || '');
@@ -582,6 +581,20 @@ const PracticeCourseSandbox = () => {
           const tc = samples[i];
           if (i > 0) await yieldFrame();
           const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+
+          if (isEngineDisconnected(res)) {
+            results.push({
+              index: i + 1,
+              input: tc.input,
+              expected: (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim(),
+              actual: '',
+              stderr: 'Evaluation engine not connected. Please restart the application or rerun the code.',
+              passed: false,
+              exitCode: -1
+            });
+            break; // Stop running further sample test cases!
+          }
+
           const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
           const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();
           const isPassed = actualClean === expectedClean && res.exit_code === 0;
@@ -618,26 +631,18 @@ const PracticeCourseSandbox = () => {
   };
 
   const handleMarkConceptComplete = async () => {
-    try {
-      // STRICT UID: canonical Practice identity is Firebase Auth UID only.
-      const uid = user?.uid;
-      if (uid) {
-        await markQuestionSolved(uid, questionId, 'Concept', 100);
-        const updatedSolved = [...new Set([...solvedIds, questionId])];
-        setSolvedIds(updatedSolved);
-        
-        // Check if this action completed the entire course syllabus
-        checkCourseCompletion(updatedSolved);
-      }
-    } catch (err) {
-      console.error('[PracticeCourseSandbox] Error marking concept complete:', err);
-    }
+    const uid = user?.uid || user?.UID || user?.userId || (getAuthData()?.uid) || '';
+    if (!uid || !questionId) return;
 
-    if (nextItem) {
-      navigate(`/student/practice/course/${courseId}/${nextItem.questionId}`);
-    } else {
-      toast.info("You have reached the end of this course pathways syllabus!");
-      handleBackToCourse();
+    try {
+      await markQuestionSolved(uid, questionId, 'concept', 100);
+      const updatedSolved = [...new Set([...solvedIds, questionId])];
+      setSolvedIds(updatedSolved);
+      checkCourseCompletion(updatedSolved);
+      toast.success(`Concept marked as complete!`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update progress.');
     }
   };
 
@@ -683,6 +688,18 @@ const isCodeBlankOrEmpty = (codeStr) => {
         const res = isBlank
           ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
           : await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+
+        if (isEngineDisconnected(res)) {
+          results.push({
+            id: tc.id || `tc_${i + 1}`,
+            passed: false,
+            input: tc.input,
+            expected: (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim(),
+            actual: '',
+            stderr: 'Evaluation engine not connected. Please restart the application or rerun the code.'
+          });
+          break; // Stop running further hidden test cases!
+        }
 
         const actualClean = (res.stdout || '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || tc.expectedOutput || '').toString().replace(/\r\n/g, '\n').trim();

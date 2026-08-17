@@ -84,6 +84,21 @@ if (typeof window !== 'undefined') {
     });
 }
 
+export const isEngineDisconnected = (res) => {
+    if (!res) return false;
+    if (res.engineDisconnected === true) return true;
+    if (res.error === "ENGINE_NOT_CONNECTED" || res.error === "SERVICE_UNAVAILABLE") return true;
+    if (typeof res.stderr === 'string' && res.stderr.includes("Evaluation engine not connected")) return true;
+    if (typeof res.error === 'string' && res.error.includes("Evaluation engine not connected")) return true;
+    return false;
+};
+
+export const notifyEngineDisconnected = () => {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('seed:engine_disconnected'));
+    }
+};
+
 const safeJsonParse = (str, fallbackValue) => {
     if (str === undefined || str === null || str === "") {
         console.warn("[DesktopBridge] Received empty or falsy result from backend.");
@@ -162,15 +177,17 @@ const desktopBridge = {
             console.warn("[DesktopBridge] Compiler server error:", pistonErr);
         }
 
+        console.warn("[DesktopBridge] Evaluation engine not connected.");
+        notifyEngineDisconnected();
         return { 
             stdout: "", 
-            stderr: "Code execution engine is currently unreachable. Please check your connection.", 
+            stderr: "Evaluation engine not connected. Please restart the application or rerun the code.", 
             output: "",
             exit_code: -1, 
-            error: "Evaluation Service Unavailable" 
+            error: "ENGINE_NOT_CONNECTED",
+            engineDisconnected: true
         };
     },
-
 
     submitCode: async (language, code, questionId) => {
         const backend = await initBridge();
@@ -185,13 +202,15 @@ const desktopBridge = {
             });
         } else {
             console.error("[DesktopBridge] submitCode: Evaluation server not connected.");
+            notifyEngineDisconnected();
             return {
-                error:               "SERVICE_UNAVAILABLE",
+                error:               "ENGINE_NOT_CONNECTED",
+                engineDisconnected:  true,
                 score:               0,
                 passed:              0,
                 total:               0,
                 testCases:           [],
-                message:             "Code assessment evaluation service is currently unreachable. Please check your connection.",
+                message:             "Evaluation engine not connected. Please restart the application or rerun the code.",
             };
         }
     },
@@ -291,12 +310,14 @@ const desktopBridge = {
         }
 
         console.warn("[DesktopBridge] Evaluation engine not connected.");
+        notifyEngineDisconnected();
         return { 
             stdout: "", 
-            stderr: "Code execution engine is currently unreachable. Please check your connection.", 
+            stderr: "Evaluation engine not connected. Please restart the application or rerun the code.", 
             output: "",
             exit_code: -1, 
-            error: "Evaluation Service Unavailable" 
+            error: "ENGINE_NOT_CONNECTED",
+            engineDisconnected: true
         };
     },
 
