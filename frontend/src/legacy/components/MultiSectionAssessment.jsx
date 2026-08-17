@@ -1721,7 +1721,7 @@ const MultiSectionAssessment = () => {
               }));
             } catch (_) { /* localStorage may be full */ }
             toast.error(
-              '⚠️ Submission saved locally — please reconnect. Your answers are safe and will sync automatically.',
+              '⚠️ Submission saved — please reconnect. Your answers are safe and will sync automatically.',
               { duration: 8000 }
             );
           }

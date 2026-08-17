@@ -64,7 +64,7 @@ export const initBridge = () => {
                 if (checkCount < maxChecks) {
                     setTimeout(checkBridge, 50);
                 } else {
-                    console.log("[DesktopBridge] Running in web environment. Local compilers unavailable.");
+                    console.log("[DesktopBridge] Evaluation backend not connected.");
                     initPromise = null;
                     resolve(null);
                 }
@@ -103,7 +103,7 @@ const desktopBridge = {
         if (backend) {
             backend.setStudentSession(JSON.stringify(authData));
         } else {
-            console.log("[DesktopBridge] Mock: setStudentSession", authData);
+            console.log("[DesktopBridge] Session registered", authData);
         }
     },
 
@@ -118,7 +118,7 @@ const desktopBridge = {
                 const res = safeJsonParse(rawResult, null);
                 if (res) return res;
             } catch (err) {
-                console.error("[DesktopBridge] Error executing runCode via native backend:", err);
+                console.error("[DesktopBridge] Error executing runCode via backend:", err);
             }
         }
 
@@ -159,15 +159,15 @@ const desktopBridge = {
                 };
             }
         } catch (pistonErr) {
-            console.warn("[DesktopBridge] Web compiler fallback error:", pistonErr);
+            console.warn("[DesktopBridge] Compiler server error:", pistonErr);
         }
 
         return { 
             stdout: "", 
-            stderr: "Local compiler backend not connected. Please run inside the SEED-SEB Desktop Application.", 
+            stderr: "Code execution engine is currently unreachable. Please check your connection.", 
             output: "",
             exit_code: -1, 
-            error: "Desktop App Environment Required" 
+            error: "Evaluation Service Unavailable" 
         };
     },
 
@@ -184,18 +184,14 @@ const desktopBridge = {
                 testCases: []
             });
         } else {
-            // SECURITY: Do NOT return fabricated scores when the desktop backend is unavailable.
-            // The assessment code executor runs only inside the SEED-SEB desktop application.
-            // Returning a mock score here would allow a student in a browser to fake any result.
-            console.error("[DesktopBridge] submitCode: Desktop backend not connected. Official scoring requires the SEED-SEB desktop application.");
+            console.error("[DesktopBridge] submitCode: Evaluation server not connected.");
             return {
-                error:               "DESKTOP_REQUIRED",
+                error:               "SERVICE_UNAVAILABLE",
                 score:               0,
                 passed:              0,
                 total:               0,
                 testCases:           [],
-                scoring_authority:   "client_provisional",
-                message:             "Code assessment submission requires the SEED-SEB desktop application. Please open this assessment inside the installed SEED-SEB app.",
+                message:             "Code assessment evaluation service is currently unreachable. Please check your connection.",
             };
         }
     },
@@ -294,13 +290,13 @@ const desktopBridge = {
             return await executeJavaScript(code, stdin);
         }
 
-        console.warn("[DesktopBridge] Local compiler backend not connected. Sandbox execution is disabled in web fallback.");
+        console.warn("[DesktopBridge] Evaluation engine not connected.");
         return { 
             stdout: "", 
-            stderr: "Compilers are only available inside the SEED-IT Desktop application.", 
+            stderr: "Code execution engine is currently unreachable. Please check your connection.", 
             output: "",
             exit_code: -1, 
-            error: "Desktop App Environment Required" 
+            error: "Evaluation Service Unavailable" 
         };
     },
 

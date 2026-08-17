@@ -364,7 +364,7 @@ function DesktopOnlyNotice({ onEnableWebAccess }) {
           </div>
           <h1 className="seb-lock__title">SEED-SEB Secure Exam Environment</h1>
           <p className="seb-lock__subtitle">
-            Welcome to the SEED-IT Assessment Platform. Proctored exams run securely inside the SEED-SEB desktop application. You can also launch the Web Edition below to practice and manage assessments.
+            Welcome to the SEED-IT Assessment Platform. Proctored exams run securely inside the SEED-SEB environment. You can also launch the Web Edition below to practice and manage assessments.
           </p>
         </div>
 

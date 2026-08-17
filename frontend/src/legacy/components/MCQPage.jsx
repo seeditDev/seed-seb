@@ -1579,7 +1579,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 setSubmissionStatus('pending');
                 setError(
                     'Submission is pending due to a network issue. ' +
-                    'Your answers are saved locally and will be uploaded automatically when connectivity is restored.'
+                    'Your answers are saved and will be uploaded automatically when connectivity is restored.'
                 );
             }
             setIsSubmitting(false);

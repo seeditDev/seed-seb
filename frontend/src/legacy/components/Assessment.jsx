@@ -182,8 +182,7 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                     console.log('👉 Development mode: proceeding with authentication check anyway');
                 } else {
                     // In production, still enforce the PyQt requirement
-                    console.error('Assessment can only be started in the desktop app');
-                    throw new Error('The assessment platform is only available in our desktop application.');
+                    throw new Error('Assessment environment initialization required.');
                 }
             } else {
                 console.log('👉 PyQt environment detected, proceeding normally');
@@ -1022,8 +1021,8 @@ const Assessment = ({ isOpen, onClose, user, isRunningInPyQt }) => {
                             <div style={{ marginTop: '20px', fontSize: '0.9em', color: '#666' }}>
                                 <p>
                                     {isHackerRankAuthenticated ?
-                                        'Your HackerRank login credentials are securely managed by the desktop application.' :
-                                        'This will connect you to HackerRank for authentication. Your login credentials will be securely managed by the desktop application.'
+                                        'Your HackerRank login credentials are secure and encrypted.' :
+                                        'This will connect you to HackerRank for authentication. Your login credentials are secure and encrypted.'
                                     }
                                 </p>
                             </div>

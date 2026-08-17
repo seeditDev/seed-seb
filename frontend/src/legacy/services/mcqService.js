@@ -377,7 +377,7 @@ class MCQService {
             } catch (checkError) {
                 // If offline, allow to proceed (will be saved to localStorage for retry)
                 if (checkError.message?.includes('NETWORK_ERROR') || !navigator.onLine) {
-                    throw new Error('NETWORK_ERROR: No internet connection. Your answers will be saved locally and submitted when connection is restored.');
+                    throw new Error('NETWORK_ERROR: No internet connection. Your answers will be saved and submitted when connection is restored.');
                 }
                 // If duplicate submission error, re-throw it
                 if (checkError.message?.includes('DUPLICATE_SUBMISSION')) {

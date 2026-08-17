@@ -256,10 +256,10 @@ const AIInterviewSimulator = ({ user }) => {
               <div className="lw-spinner-center" style={{ background: 'var(--accent-coding)' }}></div>
             </div>
             <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center' }}>
-              Initializing Local Browser AI
+              Initializing AI Evaluation Engine
             </h3>
             <p className="lw-subtitle" style={{ marginTop: '10px', color: 'var(--text-muted)', fontSize: '13px' }}>
-              Downloading the lightweight LaMini language model weight files (~260MB) to your browser cache. This executes 100% locally on your CPU/GPU without external API keys.
+              Preparing AI model resources for intelligent interview evaluation.
             </p>
             <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px', marginTop: '20px', overflow: 'hidden' }}>
               <div style={{ width: `${downloadProgress}%`, height: '100%', background: 'var(--accent-coding)', transition: 'width 0.2s' }}></div>

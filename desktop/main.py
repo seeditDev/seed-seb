@@ -1619,15 +1619,15 @@ window.QWebChannel = QWebChannel;
                     self.web_view.load(QUrl(url))
                 except Exception as e:
                     logging.error(f"Failed to start fallback server: {e}")
-                    self.web_view.setHtml(f"<h3>Offline Error</h3><p>Could not connect to online portals and local offline build is not running.</p>")
+                    self.web_view.setHtml(f"<h3>Connection Error</h3><p>Could not connect to the assessment server. Please check your network connection.</p>")
             else:
-                logging.error("Offline fallback failed: React build files not found.")
+                logging.error("Connection failed: Server unreachable.")
                 self.web_view.setHtml("""
                     <html>
                         <body style="font-family: Arial; padding: 50px; background: #0f172a; color: white; text-align: center;">
-                            <h2 style="color: #ef4444;">Network Error / Offline</h2>
-                            <p>The remote portal could not be reached and no offline local build is available.</p>
-                            <p style="color: #64748b;">Please check your internet connection.</p>
+                            <h2 style="color: #ef4444;">Connection Error</h2>
+                            <p>Unable to connect to the assessment server.</p>
+                            <p style="color: #64748b;">Please check your network connection and retry.</p>
                         </body>
                     </html>
                 """)

@@ -70,7 +70,7 @@ class RuntimeManager:
         # JavaScript (Node.js)
         self.binaries["node"] = os.path.join(self.runtimes_dir, "node", "node.exe")
 
-        print("[RuntimeManager] Strict Local Configuration (Active for both Dev and Prod):")
+        print("[RuntimeManager] Runtime Service Configuration:")
         for lang, path in self.binaries.items():
             status = "EXISTS" if os.path.exists(path) else "NOT FOUND (Must pack in resources/runtimes)"
             print(f"  {lang}: {path} ({status})")

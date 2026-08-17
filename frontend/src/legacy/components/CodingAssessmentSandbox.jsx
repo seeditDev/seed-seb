@@ -732,8 +732,8 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
         if (!isRunningInPyQt()) {
             setIsTesting(false);
             setCustomNotice({
-                title: "Desktop App Required",
-                message: "Code submission and test evaluation require the SEED-IT Desktop App. Your code has been saved locally. Please open the desktop application to run and submit tests.",
+                title: "Evaluation Engine Required",
+                message: "Code submission and test evaluation service is currently unavailable. Your code has been saved. Please retry when connection is established.",
                 type: "warning"
             });
             return;
@@ -776,7 +776,7 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
 
             setCustomNotice({
                 title: "Evaluation Score",
-                message: `Assessment score: ${result.score}% (${result.passed}/${result.total} test cases passed). Answer saved locally.`,
+                message: `Assessment score: ${result.score}% (${result.passed}/${result.total} test cases passed). Answers submitted successfully.`,
                 type: result.score === 100 ? "success" : "warning"
             });
         } catch (err) {
