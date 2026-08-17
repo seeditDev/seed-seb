@@ -108,7 +108,7 @@ const normalizeQuestion = (q) => {
   // (e.g. 'solution', '_internal', 'verified' appear in boilerPlates of Q1-Q79)
   const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
 
-  const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
+  const rawBoilerplates = q.boilerPlates || q.boilerplates || q.content?.boilerPlates || q.content?.boilerplates || q.content?.code_templates || q.code_templates || q.templates || {};
   const boilerplates = {};
 
   Object.entries(rawBoilerplates).forEach(([lang, val]) => {
@@ -480,16 +480,68 @@ const PracticeCourseSandbox = () => {
   const prevLangRef = useRef(language);
   const prevQuestionIdRef = useRef(questionId);
 
-  // Switch templates on manual language or questionId change only
-  // Uses editorRef.setValue() directly to avoid React re-render cursor jump
+  // Switch templates on manual language or questionId change
+  // Synchronizes code, codeRef.current, and editorRef.setValue()
   useEffect(() => {
     if (!question) return;
     if (prevLangRef.current !== language || prevQuestionIdRef.current !== questionId) {
       prevLangRef.current = language;
       prevQuestionIdRef.current = questionId;
-      const langCode = getBoilerplate(question.boilerplates, language).replace(/\r\n/g, '\n');
-      setCode(langCode);
-      if (editorRef.current) editorRef.current.setValue(langCode);
+
+      let newCode = getBoilerplate(question.boilerplates, language);
+
+      // If worked example/demonstration, generate appropriate printing code for the language
+      const stmt = question.description || question.content?.problemStatement || '';
+      const lowerStmt = stmt.toLowerCase();
+      const isExample = lowerStmt.includes('in this example') || 
+                        lowerStmt.includes('we demonstrate') || 
+                        lowerStmt.includes('worked example') ||
+                        lowerStmt.includes('display structured message') ||
+                        lowerStmt.includes('try running the code') ||
+                        lowerStmt.includes('let\'s look at an example') ||
+                        lowerStmt.includes('for example') ||
+                        lowerStmt.includes('worked example -');
+
+      if (isExample && (!question.boilerplates || !question.boilerplates[language])) {
+        let expectedText = null;
+        const regexList = [
+          /\*\*Expected Output:\*\*\s*[\r\n]+```(?:default)?\s*([\s\S]*?)```/i,
+          /\*\*When executed, the code will display[\s\S]*?:\*\*\s*[\r\n]+```(?:default)?\s*([\s\S]*?)```/i,
+          /```default\s*([\s\S]*?)```/i
+        ];
+        for (const r of regexList) {
+          const match = stmt.match(r);
+          if (match && match[1]) {
+            expectedText = match[1].trim();
+            break;
+          }
+        }
+        if (!expectedText) expectedText = "Hello, World!";
+        const escaped = expectedText.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        const lines = escaped.split('\n');
+
+        if (language === 'c') {
+          const prints = lines.map(line => `    printf("${line}\\n");`).join('\n');
+          newCode = `#include <stdio.h>\n\nint main() {\n${prints}\n    return 0;\n}`;
+        } else if (language === 'cpp' || language === 'c++') {
+          const prints = lines.map(line => `    cout << "${line}" << endl;`).join('\n');
+          newCode = `#include <iostream>\nusing namespace std;\n\nint main() {\n${prints}\n    return 0;\n}`;
+        } else if (language === 'java') {
+          const prints = lines.map(line => `        System.out.println("${line}");`).join('\n');
+          newCode = `import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n${prints}\n    }\n}`;
+        } else if (language === 'python3' || language === 'python') {
+          newCode = lines.map(line => `print("${line}")`).join('\n');
+        } else if (language === 'javascript' || language === 'js') {
+          newCode = lines.map(line => `console.log("${line}");`).join('\n');
+        }
+      }
+
+      const cleanCode = (newCode || '').replace(/\r\n/g, '\n');
+      setCode(cleanCode);
+      codeRef.current = cleanCode;
+      if (editorRef.current) {
+        editorRef.current.setValue(cleanCode);
+      }
       setStdout('');
       setStderr('');
       setExitCode(null);
