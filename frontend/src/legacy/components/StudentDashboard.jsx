@@ -475,6 +475,14 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleSkipWelcomeModal = () => {
+    sessionStorage.setItem('welcome_shown', 'true');
+    setShowWelcomeModal(false);
+    if (welcomeUpdates) {
+      setShowUpdatesModal(true);
+    }
+  };
+
   // ─── Launch Wizard State ──────────────────────────────────────────
   // launchStep: null | 'verifying' | 'passkey' | 'preflight' | 'instructions' | 'launching'
   const [launchStep, setLaunchStep] = useState(null);
@@ -3220,7 +3228,24 @@ const StudentDashboard = () => {
                 />
               </div>
             </div>
-            <div className="lw-card-footer" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="lw-card-footer" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={handleSkipWelcomeModal}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-muted)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Skip
+              </button>
               <button
                 className="lw-btn-primary"
                 disabled={welcomeInput.trim() !== welcomeQuote.trim()}
