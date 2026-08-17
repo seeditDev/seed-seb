@@ -236,71 +236,70 @@ class ReactHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
 
 class StyledJSDialog(QDialog):
-    """Dark-themed branded dialog for JavaScript alert() and confirm() calls.
-    Replaces the plain native QMessageBox with a styled SEED-IT popup."""
+    """Academic Light-themed branded dialog for JavaScript alert() and confirm() calls.
+    Replaces the plain native QMessageBox with a styled SEED-SEB popup."""
     def __init__(self, title="SEED-IT", message="", confirm_mode=False, parent=None):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setModal(True)
-        self.setFixedSize(440, 220)
+        self.setFixedSize(450, 220)
         self._build_ui(title, message, confirm_mode)
 
     def _build_ui(self, title, message, confirm_mode):
         self.setObjectName("styledJSDialog")
         self.setStyleSheet("""
             QDialog#styledJSDialog {
-                background-color: #0f172a;
-                border: 1px solid #334155;
+                background-color: #ffffff;
+                border: 1.5px solid #e2e8f0;
                 border-radius: 14px;
             }
             QLabel#titleLabel {
-                color: #f8fafc;
+                color: #0f172a;
                 font-size: 15px;
                 font-weight: 700;
                 background: transparent;
                 border: none;
             }
             QLabel#msgLabel {
-                color: #94a3b8;
+                color: #475569;
                 font-size: 13px;
+                line-height: 1.4;
                 background: transparent;
                 border: none;
             }
             QPushButton {
-                border-radius: 7px;
+                border-radius: 8px;
                 padding: 8px 22px;
                 font-size: 13px;
                 font-weight: 600;
                 border: none;
             }
             QPushButton#okBtn {
-                background-color: #6366f1;
-                color: white;
+                background-color: #15803d;
+                color: #ffffff;
             }
-            QPushButton#okBtn:hover { background-color: #4f46e5; }
+            QPushButton#okBtn:hover { background-color: #166534; }
             QPushButton#yesBtn {
-                background-color: #10b981;
-                color: white;
+                background-color: #15803d;
+                color: #ffffff;
             }
-            QPushButton#yesBtn:hover { background-color: #059669; }
+            QPushButton#yesBtn:hover { background-color: #166534; }
             QPushButton#noBtn {
-                background-color: #334155;
-                color: #cbd5e1;
+                background-color: #f1f5f9;
+                color: #475569;
+                border: 1px solid #cbd5e1;
             }
-            QPushButton#noBtn:hover { background-color: #475569; }
+            QPushButton#noBtn:hover { background-color: #e2e8f0; color: #0f172a; }
         """)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 22)
         layout.setSpacing(14)
 
-        # Icon + Title row
+        # Title row
         title_row = QHBoxLayout()
-        icon = QLabel("")
-        icon.setStyleSheet("font-size: 20px; background: transparent; border: none;")
         title_lbl = QLabel(title)
         title_lbl.setObjectName("titleLabel")
-        title_row.addWidget(icon)
         title_row.addWidget(title_lbl)
         title_row.addStretch()
         layout.addLayout(title_row)
@@ -317,10 +316,10 @@ class StyledJSDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         if confirm_mode:
-            no_btn = QPushButton("*  No")
+            no_btn = QPushButton("Cancel")
             no_btn.setObjectName("noBtn")
             no_btn.clicked.connect(self.reject)
-            yes_btn = QPushButton("Yes")
+            yes_btn = QPushButton("Confirm")
             yes_btn.setObjectName("yesBtn")
             yes_btn.clicked.connect(self.accept)
             btn_row.addWidget(no_btn)
@@ -376,13 +375,14 @@ class CustomWebEngineView(QWebEngineView):
 
 
 class PreLaunchDialog(QDialog):
-    """Pre-launch dialog that checks system requirements before starting the secure browser"""
+    """Pre-launch dialog that checks system requirements before starting the secure browser.
+    Redesigned in SEED-SEB Academic White theme with strict security & version checking."""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("SEED-IT Launcher")
+        self.setWindowTitle("SEED-SEB Launch Check")
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
         self.setModal(True)
-        self.setFixedSize(620, 500)
+        self.setFixedSize(640, 520)
         
         self.checks_passed = False
         self.version_check_passed = False
@@ -400,51 +400,77 @@ class PreLaunchDialog(QDialog):
         outer_layout = QVBoxLayout(self)
         outer_layout.setContentsMargins(10, 10, 10, 10)
         
-        self.main_frame = QFrame = QWidget(self)
+        self.main_frame = QWidget(self)
         self.main_frame.setObjectName("mainFrame")
         self.main_frame.setStyleSheet("""
             QWidget#mainFrame {
-                background-color: #0f172a;
-                border: 1px solid #1e293b;
+                background-color: #ffffff;
+                border: 1.5px solid #e2e8f0;
                 border-radius: 16px;
             }
         """)
         outer_layout.addWidget(self.main_frame)
         
         layout = QVBoxLayout(self.main_frame)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(18)
+        layout.setContentsMargins(32, 28, 32, 28)
+        layout.setSpacing(16)
         
-        # Title
-        title_layout = QHBoxLayout()
-        logo_label = QLabel("")
-        logo_label.setStyleSheet("font-size: 28px; border: none; background: transparent;")
+        # Header with Logo & Brand Title
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(12)
         
-        title = QLabel("SEED-IT Assessment Portal")
-        title.setStyleSheet("color: #f8fafc; font-size: 20px; font-weight: bold; border: none; background: transparent;")
+        logo_label = QLabel()
+        logo_path = None
+        for candidate in [
+            os.path.join(script_dir, "..", "frontend", "public", "SEED_Logo_Transparent.png"),
+            os.path.join(runtime_manager.app_root, "frontend", "public", "SEED_Logo_Transparent.png"),
+            os.path.join(runtime_manager.app_root, "SEED_Logo_Transparent.png"),
+            os.path.join(script_dir, "SEED_Logo_Transparent.png"),
+            os.path.join(script_dir, "SEED_Logo.ico"),
+        ]:
+            if os.path.exists(candidate):
+                logo_path = candidate
+                break
+
+        if logo_path:
+            pixmap = QPixmap(logo_path)
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(38, 38, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                logo_label.setPixmap(scaled_pixmap)
+                logo_label.setStyleSheet("border: none; background: transparent;")
+                header_layout.addWidget(logo_label)
+
+        title_box = QVBoxLayout()
+        title_box.setSpacing(2)
         
-        title_layout.addStretch()
-        title_layout.addWidget(logo_label)
-        title_layout.addWidget(title)
-        title_layout.addStretch()
-        layout.addLayout(title_layout)
+        brand_title = QLabel("<b><span style='color: #0f172a;'>SEED </span><span style='color: #15803d;'>SEB</span></b>")
+        brand_title.setStyleSheet("font-size: 20px; font-weight: 800; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         
-        # Warning banner
+        brand_subtitle = QLabel("Secure Examination Browser • System Readiness Check")
+        brand_subtitle.setStyleSheet("color: #64748b; font-size: 12px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+        
+        title_box.addWidget(brand_title)
+        title_box.addWidget(brand_subtitle)
+        header_layout.addLayout(title_box)
+        header_layout.addStretch()
+        layout.addLayout(header_layout)
+        
+        # Security notice banner
         self.warning_banner = QWidget()
         self.warning_banner.setObjectName("warningBanner")
         self.warning_banner.setStyleSheet("""
             QWidget#warningBanner {
-                background-color: rgba(239, 68, 68, 0.1);
-                border: 1px solid rgba(239, 68, 68, 0.25);
-                border-radius: 8px;
+                background-color: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
             }
         """)
         warning_layout = QHBoxLayout(self.warning_banner)
-        warning_layout.setContentsMargins(14, 12, 14, 12)
+        warning_layout.setContentsMargins(14, 10, 14, 10)
         
-        warning_text = QLabel("<b>System Check:</b> Secure Exam Proctoring is enabled. Background applications, swipe gestures, and system shortcuts will be locked during the assessment.")
+        warning_text = QLabel("<b>Security Protocol:</b> Academic proctoring active. External communication, secondary displays, and desktop shortcuts will be secured.")
         warning_text.setWordWrap(True)
-        warning_text.setStyleSheet("color: #fca5a5; font-size: 12px; line-height: 1.4; border: none; background: transparent;")
+        warning_text.setStyleSheet("color: #475569; font-size: 12px; line-height: 1.4; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         warning_layout.addWidget(warning_text)
         layout.addWidget(self.warning_banner)
         
@@ -453,33 +479,33 @@ class PreLaunchDialog(QDialog):
         status_container.setObjectName("statusContainer")
         status_container.setStyleSheet("""
             QWidget#statusContainer {
-                background-color: #1e293b;
-                border: 1px solid #334155;
+                background-color: #f8fafc;
+                border: 1px solid #e2e8f0;
                 border-radius: 12px;
             }
         """)
         status_layout = QVBoxLayout(status_container)
-        status_layout.setContentsMargins(20, 18, 20, 18)
-        status_layout.setSpacing(14)
+        status_layout.setContentsMargins(20, 16, 20, 16)
+        status_layout.setSpacing(12)
         
-        self.version_label = QLabel("Verifying application version...")
-        self.version_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        self.version_label = QLabel("• Verifying application version...")
+        self.version_label.setStyleSheet("color: #64748b; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         status_layout.addWidget(self.version_label)
         
-        self.camera_label = QLabel("Checking camera access...")
-        self.camera_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
-        status_layout.addWidget(self.camera_label)
-        
-        self.mic_label = QLabel("Checking microphone access...")
-        self.mic_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
-        status_layout.addWidget(self.mic_label)
-        
-        self.internet_label = QLabel("Verifying internet connection...")
-        self.internet_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        self.internet_label = QLabel("• Verifying network connection...")
+        self.internet_label.setStyleSheet("color: #64748b; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         status_layout.addWidget(self.internet_label)
         
-        self.debugger_label = QLabel("Scanning for unauthorized processes...")
-        self.debugger_label.setStyleSheet("color: #94a3b8; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+        self.camera_label = QLabel("• Checking camera device access...")
+        self.camera_label.setStyleSheet("color: #64748b; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+        status_layout.addWidget(self.camera_label)
+        
+        self.mic_label = QLabel("• Checking audio microphone access...")
+        self.mic_label.setStyleSheet("color: #64748b; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+        status_layout.addWidget(self.mic_label)
+        
+        self.debugger_label = QLabel("• Scanning system process integrity...")
+        self.debugger_label.setStyleSheet("color: #64748b; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         status_layout.addWidget(self.debugger_label)
         
         layout.addWidget(status_container)
@@ -492,13 +518,13 @@ class PreLaunchDialog(QDialog):
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
-                border-radius: 4px;
-                background-color: #334155;
-                height: 8px;
+                border-radius: 3px;
+                background-color: #e2e8f0;
+                height: 6px;
             }
             QProgressBar::chunk {
-                background-color: #6366f1;
-                border-radius: 4px;
+                background-color: #15803d;
+                border-radius: 3px;
             }
         """)
         layout.addWidget(self.progress_bar)
@@ -507,20 +533,22 @@ class PreLaunchDialog(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(12)
         
-        self.close_button = QPushButton("- Close")
+        self.close_button = QPushButton("Close")
         self.close_button.setStyleSheet("""
             QPushButton {
-                background-color: #334155;
-                color: #cbd5e1;
-                border: 1px solid #475569;
+                background-color: #ffffff;
+                color: #475569;
+                border: 1px solid #cbd5e1;
                 border-radius: 8px;
-                padding: 10px 20px;
+                padding: 10px 22px;
                 font-size: 13px;
                 font-weight: 600;
+                font-family: 'Segoe UI', sans-serif;
             }
             QPushButton:hover {
-                background-color: #475569;
-                color: #f8fafc;
+                background-color: #f1f5f9;
+                color: #0f172a;
+                border-color: #94a3b8;
             }
         """)
         self.close_button.clicked.connect(self.reject)
@@ -529,20 +557,21 @@ class PreLaunchDialog(QDialog):
         self.launch_button.setEnabled(False)
         self.launch_button.setStyleSheet("""
             QPushButton {
-                background-color: #475569;
+                background-color: #e2e8f0;
                 color: #94a3b8;
                 border: none;
                 border-radius: 8px;
-                padding: 10px 24px;
+                padding: 10px 26px;
                 font-size: 13px;
-                font-weight: 600;
+                font-weight: 700;
+                font-family: 'Segoe UI', sans-serif;
             }
             QPushButton:enabled {
-                background-color: #6366f1;
-                color: white;
+                background-color: #15803d;
+                color: #ffffff;
             }
             QPushButton:enabled:hover {
-                background-color: #4f46e5;
+                background-color: #166534;
             }
         """)
         self.launch_button.clicked.connect(self.accept)
@@ -555,12 +584,14 @@ class PreLaunchDialog(QDialog):
         self.error_label = QLabel("")
         self.error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.error_label.setStyleSheet("""
-            color: #f87171;
+            color: #b91c1c;
             font-size: 12px;
-            background-color: rgba(220, 38, 38, 0.1);
-            border: 1px solid rgba(220, 38, 38, 0.25);
-            padding: 8px 12px;
-            border-radius: 6px;
+            font-weight: 600;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-family: 'Segoe UI', sans-serif;
         """)
         self.error_label.hide()
         layout.addWidget(self.error_label)
@@ -585,8 +616,9 @@ class PreLaunchDialog(QDialog):
         if self.internet_check_passed:
             self.check_version()
         else:
-            self.version_label.setText("<b>Application Version:</b> Check skipped (no internet)")
-            self.version_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.version_check_passed = False
+            self.version_label.setText("✕ <b>Application Version:</b> Check failed (no internet)")
+            self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
             self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.update_launch_button()
 
@@ -595,41 +627,40 @@ class PreLaunchDialog(QDialog):
             r = requests.get("https://www.google.com", timeout=5)
             if r.status_code == 200:
                 self.internet_check_passed = True
-                self.internet_label.setText("... <b>Internet Connection:</b> Active & Stable")
-                self.internet_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                self.internet_label.setText("✓ <b>Internet Connection:</b> Active & Stable")
+                self.internet_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
             else:
                 self.internet_check_passed = False
-                self.internet_label.setText("<b>Internet Connection:</b> Limited connection")
-                self.internet_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                self.internet_label.setText("✕ <b>Internet Connection:</b> Limited connection")
+                self.internet_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         except Exception as e:
             self.internet_check_passed = False
-            self.internet_label.setText("<b>Internet Connection:</b> Connection failed")
-            self.internet_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.internet_label.setText("✕ <b>Internet Connection:</b> Connection failed")
+            self.internet_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
 
     def check_camera(self):
         try:
             cap = cv2.VideoCapture(0)
             if cap.isOpened():
                 self.camera_check_passed = True
-                self.camera_label.setText("... <b>Camera Access:</b> Ready & Available")
-                self.camera_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                self.camera_label.setText("✓ <b>Camera Device:</b> Ready & Available")
+                self.camera_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                 self.progress_bar.setValue(self.progress_bar.value() + 1)
                 cap.release()
             else:
                 self.camera_check_passed = False
-                self.camera_label.setText("<b>Camera Access:</b> No camera detected")
-                self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                self.camera_label.setText("✕ <b>Camera Device:</b> No camera detected")
+                self.camera_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         except Exception as e:
             self.camera_check_passed = False
-            self.camera_label.setText("<b>Camera Access:</b> Permission denied or error")
-            self.camera_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.camera_label.setText("✕ <b>Camera Device:</b> Permission denied or unavailable")
+            self.camera_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
 
     def check_microphone(self):
-        """Check if a microphone is accessible. Warning-only  does not block launch."""
+        """Check if a microphone is accessible. Warning-only (non-blocking)."""
         mic_found = False
         try:
-            # Try pyaudio first
             import pyaudio
             pa = pyaudio.PyAudio()
             for i in range(pa.get_device_count()):
@@ -639,7 +670,6 @@ class PreLaunchDialog(QDialog):
                     break
             pa.terminate()
         except ImportError:
-            # Fallback: check via Windows waveIn API
             try:
                 import ctypes
                 num_devs = ctypes.windll.winmm.waveInGetNumDevs()
@@ -649,20 +679,19 @@ class PreLaunchDialog(QDialog):
         except Exception:
             mic_found = False
 
-        self.mic_check_passed = True  # always non-blocking
+        self.mic_check_passed = True  # non-blocking
         if mic_found:
-            self.mic_label.setText("... <b>Microphone:</b> Detected & Ready")
-            self.mic_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.mic_label.setText("✓ <b>Microphone:</b> Detected & Ready")
+            self.mic_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         else:
-            self.mic_label.setText("<b>Microphone:</b> Not detected (audio proctoring may be limited)")
-            self.mic_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.mic_label.setText("⚠ <b>Microphone:</b> Not detected (audio proctoring limited)")
+            self.mic_label.setStyleSheet("color: #d97706; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def check_debuggers(self):
         """Scan for debuggers attached to this process and kill any FORBIDDEN_PROCESSES already running."""
         threats_found = []
 
-        # 1. IsDebuggerPresent - block if debugger is attached to this very process
         try:
             import ctypes
             if ctypes.windll.kernel32.IsDebuggerPresent():
@@ -671,7 +700,6 @@ class PreLaunchDialog(QDialog):
         except Exception:
             pass
 
-        # 2. Kill any FORBIDDEN_PROCESSES already running before launch (excluding self and system shells)
         mypid = os.getpid()
         SAFE_SYSTEM_BINARIES = {
             'cmd.exe', 'powershell.exe', 'pwsh.exe', 'conhost.exe',
@@ -698,19 +726,19 @@ class PreLaunchDialog(QDialog):
 
         if threats_found:
             self.debugger_check_passed = False
-            self.debugger_label.setText(f" <b>Security Scan:</b> Debugger detected ({threats_found[0]})")
-            self.debugger_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.debugger_label.setText(f"✕ <b>Process Integrity:</b> Debugger detected ({threats_found[0]})")
+            self.debugger_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
             self.show_error('Debugger detected. Please close all debugging tools and restart.')
         else:
             self.debugger_check_passed = True
             if killed:
                 unique_killed = list(set(killed))
                 detail = ', '.join(unique_killed[:3])
-                self.debugger_label.setText(f"... <b>Security Scan:</b> Cleaned background apps ({detail})")
-                self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                self.debugger_label.setText(f"✓ <b>Process Integrity:</b> Cleaned background apps ({detail})")
+                self.debugger_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
             else:
-                self.debugger_label.setText("... <b>Security Scan:</b> System secure (No threats)")
-                self.debugger_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                self.debugger_label.setText("✓ <b>Process Integrity:</b> System secure (No threats)")
+                self.debugger_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def check_version(self):
@@ -727,34 +755,36 @@ class PreLaunchDialog(QDialog):
                     if version_id:
                         if version_id == CURRENT_VERSION:
                             self.version_check_passed = True
-                            self.version_label.setText(f"... <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
-                            self.version_label.setStyleSheet("color: #10b981; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                            self.version_label.setText(f"✓ <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
+                            self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                         else:
                             self.version_check_passed = False
-                            self.version_label.setText(f" <b>Application Version:</b> Outdated (v{CURRENT_VERSION} -> v{version_id})")
-                            self.version_label.setStyleSheet("color: #f87171; font-size: 13px; font-weight: 500; border: none; background: transparent;")
-                            self.show_error(f"Please update application to version {version_id}")
+                            self.version_label.setText(f"✕ <b>Application Version:</b> Outdated (Installed: v{CURRENT_VERSION} • Required: v{version_id})")
+                            self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                            self.show_error(f"Application update required: Please upgrade to version {version_id}.")
                     else:
-                        self.version_check_passed = True
-                        self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (No remote version config)")
-                        self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                        self.version_check_passed = False
+                        self.version_label.setText(f"✕ <b>Application Version:</b> Version configuration missing")
+                        self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                        self.show_error("Could not verify application version with server.")
                 else:
-                    self.version_check_passed = True
-                    self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (No documents found)")
-                    self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                    self.version_check_passed = False
+                    self.version_label.setText(f"✕ <b>Application Version:</b> Version record not found")
+                    self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                    self.show_error("Version record not found on server.")
             else:
-                self.version_check_passed = True
-                self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Check bypassed)")
-                self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+                self.version_check_passed = False
+                self.version_label.setText(f"✕ <b>Application Version:</b> Server verification failed (HTTP {response.status_code})")
+                self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                self.show_error(f"Version check failed with status {response.status_code}.")
         except Exception as e:
-            self.version_check_passed = True
-            self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Check failed)")
-            self.version_label.setStyleSheet("color: #f59e0b; font-size: 13px; font-weight: 500; border: none; background: transparent;")
+            self.version_check_passed = False
+            self.version_label.setText(f"✕ <b>Application Version:</b> Network check error")
+            self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+            self.show_error("Could not reach version verification service.")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def update_launch_button(self):
-        # Allow launch if internet and version pass, and no debugger detected
-        # Camera and mic are warning-only (non-blocking)
         if self.internet_check_passed and self.version_check_passed and self.debugger_check_passed:
             self.checks_passed = True
             self.launch_button.setEnabled(True)
@@ -769,11 +799,12 @@ class PreLaunchDialog(QDialog):
                 failed.append("Version")
             if not self.debugger_check_passed:
                 failed.append("Security")
-            self.launch_button.setText(f"\u274c Cannot Launch ({', '.join(failed)} required)")
+            self.launch_button.setText(f"✕ Cannot Launch ({', '.join(failed)} required)")
 
     def show_error(self, message):
         self.error_label.setText(f" {message}")
         self.error_label.show()
+
 
 
 def is_descendant(pid, parent_pid):
