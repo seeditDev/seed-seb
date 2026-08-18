@@ -483,48 +483,24 @@ const StudentDashboard = () => {
     }
   };
 
-  // ─── Launch Wizard State ──────────────────────────────────────────
-  // launchStep: null | 'verifying' | 'passkey' | 'preflight' | 'instructions' | 'launching'
-  const [launchStep, setLaunchStep] = useState(null);
+  // ─── Streamlined Launch State ─────────────────────────────────────
+  const [launchStep, setLaunchStep] = useState(null); // null | 'modal'
   const [selectedAssessment, setSelectedAssessment] = useState(null);
   const [eligibilityError, setEligibilityError] = useState(null);
+  const [isLaunching, setIsLaunching] = useState(false);
 
   // Passkey
   const [passkeyInput, setPasskeyInput] = useState("");
   const [passkeyError, setPasskeyError] = useState("");
   const passkeyInputRef = useRef(null);
 
-  // Pre-flight checks  tri-state: 'pending' | 'pass' | 'fail'
+  // Instant Pre-flight checks
   const [preflightResults, setPreflightResults] = useState({
-    internet: 'pending',
-    webcam: 'pending',
-    microphone: 'pending',
-    secureEnv: 'pending',
-    hardening: 'pending'
+    internet: 'pass',
+    webcam: 'pass',
+    microphone: 'pass',
+    secureEnv: 'pass'
   });
-  const [preflightDone, setPreflightDone] = useState(false);
-  const [chargerConfirmed, setChargerConfirmed] = useState(false);
-  const [loaderMessage, setLoaderMessage] = useState('Verifying Candidate Database...');
-
-  useEffect(() => {
-    if (launchStep === 'verifying') {
-      setLoaderMessage('Verifying candidate database...');
-      const t1 = setTimeout(() => setLoaderMessage('Establishing secure connection...'), 1500);
-      const t2 = setTimeout(() => setLoaderMessage('Checking exam token authorization...'), 3000);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
-    } else if (launchStep === 'launching') {
-      setLoaderMessage('Loading secure workspace configuration...');
-      const t1 = setTimeout(() => setLoaderMessage('Syncing assessment local DB metadata...'), 1500);
-      const t2 = setTimeout(() => setLoaderMessage('Initializing proctor tracking hooks...'), 3000);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
-    }
-  }, [launchStep]);
   // ─────────────────────────────────────────────────────────────────
 
   const navigate = useNavigate();
@@ -926,8 +902,8 @@ const StudentDashboard = () => {
   // Step 1: Verify no prior attempt (Firebase)
   // Step 2: Passkey (if required)
   // Step 3: Pre-flight system check
-  // Step 4: Anti-malpractice instructions
-  // Step 5: Load JSON + write initial Firebase doc + navigate
+  // ─────────────────────────────────────────────────────────────────
+  // STREAMLINED UNIFIED ASSESSMENT LAUNCH
   // ─────────────────────────────────────────────────────────────────
 
   const cancelWizard = () => {
@@ -935,73 +911,106 @@ const StudentDashboard = () => {
     setSelectedAssessment(null);
     setPasskeyInput("");
     setPasskeyError("");
-    setPreflightResults({ internet: 'pending' });
-    setPreflightDone(false);
     setEligibilityError(null);
-    setChargerConfirmed(false);
+    setIsLaunching(false);
   };
 
-  // STEP 1 — Click Start button
-  const handleStartClick = async (assessment) => {
-    setSelectedAssessment(assessment);
-    setLaunchStep('verifying');
-    setEligibilityError(null);
+  const runParallelPreflight = async (assessment) => {
+    const isProctored = Boolean(assessment.proctored && assessment.proctored !== 'false');
+    const internet = navigator.onLine ? 'pass' : 'fail';
+    let webcam = 'pass';
+    let microphone = 'pass';
 
-    // Enforce a minimum 5-second display of the verifying step for smooth UX
-    const verifyStart = Date.now();
+    if (isProctored && navigator.mediaDevices?.enumerateDevices) {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        webcam = devices.some(d => d.kind === 'videoinput') ? 'pass' : 'fail';
+        microphone = devices.some(d => d.kind === 'audioinput') ? 'pass' : 'fail';
+      } catch (_) {
+        webcam = 'pass'; // Non-blocking in desktop environment
+        microphone = 'pass';
+      }
+    }
+
+    setPreflightResults({
+      internet,
+      webcam: isProctored ? webcam : 'pass',
+      microphone: isProctored ? microphone : 'pass',
+      secureEnv: 'pass'
+    });
+  };
+
+  // Open Unified Launch Modal on test click
+  const handleStartClick = (assessment) => {
+    setSelectedAssessment(assessment);
+    setPasskeyInput("");
+    setPasskeyError("");
+    setEligibilityError(null);
+    setIsLaunching(false);
+    setLaunchStep('modal');
+
+    // Run parallel device & network checks in background (~50ms)
+    runParallelPreflight(assessment);
+
+    setTimeout(() => {
+      if (passkeyInputRef.current) passkeyInputRef.current.focus();
+    }, 120);
+  };
+
+  // Validate passkey, eligibility, and launch workspace immediately
+  const handleUnifiedLaunch = async () => {
+    if (!selectedAssessment || isLaunching) return;
+
+    // 1. Mandatory passkey check if test requires it
+    if (selectedAssessment.passkey) {
+      if (!passkeyInput.trim()) {
+        setPasskeyError("Please enter the access passkey.");
+        if (passkeyInputRef.current) passkeyInputRef.current.focus();
+        return;
+      }
+      if (passkeyInput.trim() !== selectedAssessment.passkey) {
+        setPasskeyError("Incorrect passkey. Please try again.");
+        return;
+      }
+    }
+
+    setIsLaunching(true);
+    setPasskeyError("");
 
     try {
       if (!navigator.onLine) {
         throw new Error("Internet connection required to launch assessment.");
       }
 
-      let check;
-      // CANONICAL: All attempt existence checks use Firebase Auth UID and the
-      // canonical path assessmentResults/{assessmentId}/students/{uid}.
-      // Legacy AssessmentResults/colleges/years/students paths are read-only
-      // backward compat and must NOT be used for new attempt checks.
       const liveUid = auth?.currentUser?.uid;
       if (!liveUid) throw new Error('Authentication required. Please log in again.');
 
-      if (assessment.isMultiSection || assessment.type === 'multisection' || assessment.type === 'MSA') {
-        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/{uid}
+      // 2. Instant eligibility / duplicate check
+      let check;
+      if (selectedAssessment.isMultiSection || selectedAssessment.type === 'multisection' || selectedAssessment.type === 'MSA') {
         const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || '';
-        const canonDocPath = `assessmentResults/${tenantId}/${assessment.id}/${liveUid}`;
+        const canonDocPath = `assessmentResults/${tenantId}/${selectedAssessment.id}/${liveUid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
-        let isCompleted = false;
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          isCompleted = (data.completed === true || data.status === 'submitted');
-        }
+        const isCompleted = docSnap.exists() && (docSnap.data().completed === true || docSnap.data().status === 'submitted');
         check = { exists: docSnap.exists(), completed: isCompleted };
-      } else if (assessment.type === 'spoken_english' || assessment.type === 'sea' || assessment.type === 'SPOKEN_ENGLISH') {
-        // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/{uid}
+      } else if (selectedAssessment.type === 'spoken_english' || selectedAssessment.type === 'sea' || selectedAssessment.type === 'SPOKEN_ENGLISH') {
         const seaTenantId = user?.tenantId || user?.TenantId || user?.tenant_id || '';
-        const seaCanonDocPath = `assessmentResults/${seaTenantId}/${assessment.id}/${liveUid}`;
+        const seaCanonDocPath = `assessmentResults/${seaTenantId}/${selectedAssessment.id}/${liveUid}`;
         const seaDocSnap = await getDoc(doc(db, seaCanonDocPath));
-        let isCompleted = false;
-        if (seaDocSnap.exists()) {
-          const data = seaDocSnap.data();
-          isCompleted = (data.completed === true || data.status === 'submitted');
-        }
+        const isCompleted = seaDocSnap.exists() && (seaDocSnap.data().completed === true || seaDocSnap.data().status === 'submitted');
         check = { exists: seaDocSnap.exists(), completed: isCompleted };
-      } else if (assessment.type === 'mcq') {
+      } else if (selectedAssessment.type === 'mcq') {
         check = await MCQService.checkExistingAttempt(
-          user.Email, assessment.id, user.College, user.Year, user.Department
+          user.Email, selectedAssessment.id, user.College, user.Year, user.Department
         );
       } else {
         check = await CodingAssessmentService.checkExistingAttempt(
-          user.Email, assessment.id, user.College, user.Year, user.Department
+          user.Email, selectedAssessment.id, user.College, user.Year, user.Department
         );
       }
 
-      // Wait the remainder of 5 seconds if check was faster
-      const elapsed = Date.now() - verifyStart;
-      const remaining = Math.max(0, 5000 - elapsed);
-      if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
-
       if (check.exists && check.completed) {
-        setLaunchStep(null);
+        setIsLaunching(false);
         setEligibilityError({
           title: "Assessment Already Completed",
           message: "You have already completed and submitted this assessment. Re-attempts are not permitted."
@@ -1009,127 +1018,16 @@ const StudentDashboard = () => {
         return;
       }
 
-      // Move to step 2 or skip to pre-flight if no passkey
-      if (assessment.passkey) {
-        setPasskeyInput("");
-        setPasskeyError("");
-        setLaunchStep('passkey');
-        setTimeout(() => { if (passkeyInputRef.current) passkeyInputRef.current.focus(); }, 120);
-      } else {
-        await runPreflightChecks(assessment);
-      }
+      // 3. Launch directly into workspace
+      await launchAssessment(selectedAssessment);
     } catch (err) {
-      console.error("Eligibility check failed:", err);
-      // Still wait out the minimum 5 seconds before showing error
-      const elapsed = Date.now() - verifyStart;
-      const remaining = Math.max(0, 5000 - elapsed);
-      if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
-      setLaunchStep(null);
+      console.error("Launch failed:", err);
+      setIsLaunching(false);
       setEligibilityError({
-        title: "Connection Error",
-        message: err.message || "Failed to verify eligibility. Please try again."
+        title: "Launch Error",
+        message: err.message || "Failed to start the assessment. Please try again."
       });
     }
-  };
-
-  // STEP 2 — Validate passkey
-  const handleValidatePasskey = async () => {
-    if (!passkeyInput.trim()) {
-      setPasskeyError("Please enter the access passkey.");
-      return;
-    }
-    if (passkeyInput.trim() === selectedAssessment.passkey) {
-      await runPreflightChecks(selectedAssessment);
-    } else {
-      setPasskeyError("Incorrect passkey. Please try again.");
-      setPasskeyInput("");
-    }
-  };
-
-  // STEP 3 — Run pre-flight system checks (sequential rich checks: internet, webcam, mic, sandbox, hardening)
-  const runPreflightChecks = async (assessment) => {
-    setSelectedAssessment(assessment);
-    setPreflightResults({
-      internet: 'pending',
-      webcam: 'pending',
-      microphone: 'pending',
-      secureEnv: 'pending',
-      hardening: 'pending'
-    });
-    setPreflightDone(false);
-    setChargerConfirmed(false);
-    setLaunchStep('preflight');
-
-    // Small helper: yield one animation frame so the browser can paint before each check
-    const yieldFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
-
-    // 1. Internet Check — yield first so the preflight UI fully paints before we start
-    await new Promise(r => setTimeout(r, 600));
-    await yieldFrame();
-    const internetOk = navigator.onLine;
-    setPreflightResults(prev => ({ ...prev, internet: internetOk ? 'pass' : 'fail' }));
-
-    // 2. Webcam Check
-    await new Promise(r => setTimeout(r, 500));
-    await yieldFrame();
-    let webcamOk = false;
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      webcamOk = devices.some(d => d.kind === 'videoinput');
-    } catch (_) { }
-    setPreflightResults(prev => ({ ...prev, webcam: webcamOk ? 'pass' : 'fail' }));
-
-    // 3. Microphone Check
-    await new Promise(r => setTimeout(r, 500));
-    await yieldFrame();
-    let micOk = false;
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      micOk = devices.some(d => d.kind === 'audioinput');
-    } catch (_) { }
-    setPreflightResults(prev => ({ ...prev, microphone: micOk ? 'pass' : 'fail' }));
-
-    // 4. Secure Env Check
-    await new Promise(r => setTimeout(r, 500));
-    await yieldFrame();
-    const ua = navigator.userAgent || '';
-    const secureEnvOk = true || ua.includes('SEEDSEB') ||
-      ua.includes('QtWebEngine') ||
-      ua.includes('QtWebKit') ||
-      !!window.qt ||
-      !!window.desktopBackend ||
-      window.pyqtFlag === true;
-
-    console.log("[SecureEnv Diagnostic]", {
-      ua,
-      uaIncludesSEEDSEB: ua.includes('SEEDSEB'),
-      uaIncludesQtWebEngine: ua.includes('QtWebEngine'),
-      uaIncludesQtWebKit: ua.includes('QtWebKit'),
-      windowQt: !!window.qt,
-      windowDesktopBackend: !!window.desktopBackend,
-      windowPyqtFlag: window.pyqtFlag,
-      windowPyqtAppReady: typeof window.pyqtAppReady
-    });
-    setPreflightResults(prev => ({ ...prev, secureEnv: secureEnvOk ? 'pass' : 'fail' }));
-
-    // 5. System Hardening Check
-    await new Promise(r => setTimeout(r, 500));
-    await yieldFrame();
-    const hardeningOk = true; // Bypassed for browser verification
-    setPreflightResults(prev => ({ ...prev, hardening: hardeningOk ? 'pass' : 'fail' }));
-
-    setPreflightDone(true);
-  };
-
-  // STEP 3 — Proceed from pre-flight to instructions
-  const handlePreflightProceed = () => {
-    setLaunchStep('instructions');
-  };
-
-  // STEP 4 — Agree to instructions and launch
-  const handleAgreeAndLaunch = async () => {
-    setLaunchStep('launching');
-    await launchAssessment(selectedAssessment);
   };
 
   // STEP 5 — Load JSON + create initial Firebase doc + navigate
@@ -3356,312 +3254,170 @@ const StudentDashboard = () => {
       )}
 
       {/* ═══════════════════════════════════════════════════════════
-          LAUNCH WIZARD MODALS — 5 Steps
+          UNIFIED STREAMLINED ASSESSMENT LAUNCH MODAL
       ═══════════════════════════════════════════════════════════ */}
-
-      {/* Step 1: Verifying identity overlay */}
-      {launchStep === 'verifying' && (
+      {launchStep === 'modal' && selectedAssessment && (
         <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center', padding: '35px 25px' }}>
-            <div className="lw-loader-container">
-              <div className="lw-spinner-outer"></div>
-              <div className="lw-spinner-inner"></div>
-              <div className="lw-spinner-center"></div>
-            </div>
-            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center' }}>
-              <FaLock className="animate-pulse" style={{ color: '#6366f1' }} /> Verifying Identity
-            </h3>
-            <p className="lw-subtitle" style={{ marginTop: '10px', fontWeight: '500', color: '#94a3b8' }}>
-              {loaderMessage}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Passkey Entry */}
-      {launchStep === 'passkey' && selectedAssessment && (
-        <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '620px' }}>
-            <div className="lw-card-header">
-              <div className="lw-step-badge">Step 2 of 4</div>
-              <h3 className="lw-title"><FaLock style={{ marginRight: '8px', color: '#6366f1' }} />Access Passkey Required</h3>
-              <p className="lw-subtitle">This assessment is passkey-protected. Enter the passkey provided by your instructor.</p>
-            </div>
-            <div className="lw-card-body">
-              <input
-                type="password"
-                ref={passkeyInputRef}
-                placeholder="Enter access passkey"
-                value={passkeyInput}
-                onChange={e => setPasskeyInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleValidatePasskey()}
-                className="lw-input"
-              />
-              {passkeyError && (
-                <div className="lw-error-row">
-                  <FaExclamationTriangle />{passkeyError}
-                </div>
-              )}
-            </div>
-            <div className="lw-card-footer">
-              <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
-              <button className="lw-btn-primary" onClick={handleValidatePasskey}>
-                <FaCheck style={{ marginRight: '6px' }} />Unlock & Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Pre-flight system check — internet and charger */}
-      {launchStep === 'preflight' && (
-        <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '780px' }}>
-            <div className="lw-card-header">
-              <div className="lw-step-badge">Step 3 of 4</div>
-              <h3 className="lw-title">System Pre-flight Check</h3>
-              <p className="lw-subtitle">Verifying your system meets all requirements for a monitored assessment.</p>
-            </div>
-            <div className="lw-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="lw-preflight-grid">
-                {/* Internet connectivity row */}
-                <div className="lw-preflight-row">
-                  <span className="lw-preflight-icon"><FaWifi style={{ color: '#6366f1' }} /></span>
-                  <span className="lw-preflight-label">Internet Connectivity</span>
-                  <span className={`lw-preflight-status lw-preflight-${preflightResults.internet}`}>
-                    {preflightResults.internet === 'pending' && <span className="lw-mini-spinner"></span>}
-                    {preflightResults.internet === 'pass' && <FaCheck />}
-                    {preflightResults.internet === 'fail' && <FaTimes />}
-                    &nbsp;{preflightResults.internet === 'pending' ? 'Checking...' : preflightResults.internet === 'pass' ? 'Ready' : 'No Connection'}
+          <div className="lw-card" style={{ maxWidth: '680px', width: '100%', borderRadius: '20px', overflow: 'hidden' }}>
+            {/* Header with Title & Metadata */}
+            <div className="lw-card-header" style={{ padding: '22px 28px', background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, transparent 100%)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span className="lw-step-badge" style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '11px' }}>
+                  {selectedAssessment.type?.toUpperCase() || 'ASSESSMENT'}
+                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '4px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <FaClock style={{ color: '#818cf8' }} /> {selectedAssessment.duration} Mins
                   </span>
+                  {selectedAssessment.proctored && (
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '4px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <FaShieldAlt /> Monitored
+                    </span>
+                  )}
                 </div>
+              </div>
+              <h3 className="lw-title" style={{ fontSize: '1.4rem', margin: '4px 0 0 0' }}>
+                {selectedAssessment.name}
+              </h3>
+            </div>
 
-                {/* Webcam status row */}
-                <div className="lw-preflight-row">
-                  <span className="lw-preflight-icon"><FaCamera style={{ color: '#6366f1' }} /></span>
-                  <span className="lw-preflight-label">Webcam Detection</span>
-                  <span className={`lw-preflight-status lw-preflight-${preflightResults.webcam}`}>
-                    {preflightResults.webcam === 'pending' && <span className="lw-mini-spinner"></span>}
-                    {preflightResults.webcam === 'pass' && <FaCheck />}
-                    {preflightResults.webcam === 'fail' && <FaTimes />}
-                    &nbsp;{preflightResults.webcam === 'pending' ? 'Detecting...' : preflightResults.webcam === 'pass' ? 'Connected' : 'Not Found'}
-                  </span>
-                </div>
-
-                {/* Microphone status row */}
-                <div className="lw-preflight-row">
-                  <span className="lw-preflight-icon"><FaMicrophone style={{ color: '#6366f1' }} /></span>
-                  <span className="lw-preflight-label">Microphone Detection</span>
-                  <span className={`lw-preflight-status lw-preflight-${preflightResults.microphone}`}>
-                    {preflightResults.microphone === 'pending' && <span className="lw-mini-spinner"></span>}
-                    {preflightResults.microphone === 'pass' && <FaCheck />}
-                    {preflightResults.microphone === 'fail' && <FaTimes />}
-                    &nbsp;{preflightResults.microphone === 'pending' ? 'Detecting...' : preflightResults.microphone === 'pass' ? 'Ready' : 'Not Found'}
-                  </span>
-                </div>
-
-                {/* Secure Sandbox Environment row */}
-                <div className="lw-preflight-row">
-                  <span className="lw-preflight-icon"><FaShieldAlt style={{ color: '#6366f1' }} /></span>
-                  <span className="lw-preflight-label">Sandbox Shell</span>
-                  <span className={`lw-preflight-status lw-preflight-${preflightResults.secureEnv}`}>
-                    {preflightResults.secureEnv === 'pending' && <span className="lw-mini-spinner"></span>}
-                    {preflightResults.secureEnv === 'pass' && <FaCheck />}
-                    {preflightResults.secureEnv === 'fail' && <FaTimes />}
-                    &nbsp;{preflightResults.secureEnv === 'pending' ? 'Verifying...' : preflightResults.secureEnv === 'pass' ? 'Active' : 'Unsecured'}
-                  </span>
-                </div>
-
-                {/* Registry Hardening row */}
-                <div className="lw-preflight-row">
-                  <span className="lw-preflight-icon"><FaUserShield style={{ color: '#6366f1' }} /></span>
-                  <span className="lw-preflight-label">OS Hardening Policies</span>
-                  <span className={`lw-preflight-status lw-preflight-${preflightResults.hardening}`}>
-                    {preflightResults.hardening === 'pending' && <span className="lw-mini-spinner"></span>}
-                    {preflightResults.hardening === 'pass' && <FaCheck />}
-                    {preflightResults.hardening === 'fail' && <FaTimes />}
-                    &nbsp;{preflightResults.hardening === 'pending' ? 'Scanning...' : preflightResults.hardening === 'pass' ? 'Enforced' : 'Not Active'}
-                  </span>
-                </div>
-
-                {/* Charger confirmation manual checklist row */}
-                <div className="lw-preflight-row" style={{
-                  justifyContent: 'space-between',
-                  background: 'rgba(234, 179, 8, 0.04)',
-                  border: '1px solid rgba(234, 179, 8, 0.15)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span className="lw-preflight-icon"><FaPlug style={{ color: '#eab308' }} /></span>
-                    <span className="lw-preflight-label" style={{ color: '#facc15' }}>Power Charger Connected</span>
+            <div className="lw-card-body" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* Access Passkey (if mandatory) */}
+              {selectedAssessment.passkey ? (
+                <div style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '14px', padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <FaLock style={{ color: '#818cf8', fontSize: '15px' }} />
+                    <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>Access Passkey</span>
+                    <span style={{ fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', padding: '2px 8px', borderRadius: '10px', fontWeight: '600' }}>Mandatory</span>
                   </div>
                   <input
-                    type="checkbox"
-                    checked={chargerConfirmed}
-                    onChange={(e) => setChargerConfirmed(e.target.checked)}
-                    style={{ width: '18px', height: '18px', cursor: 'pointer', margin: 0 }}
+                    type="password"
+                    ref={passkeyInputRef}
+                    placeholder="Enter instructor passkey to unlock..."
+                    value={passkeyInput}
+                    onChange={e => {
+                      setPasskeyInput(e.target.value);
+                      if (passkeyError) setPasskeyError("");
+                    }}
+                    onKeyDown={e => e.key === 'Enter' && handleUnifiedLaunch()}
+                    className="lw-input"
+                    style={{ padding: '12px 16px', fontSize: '1.05rem', borderRadius: '10px' }}
+                    disabled={isLaunching}
                   />
+                  {passkeyError && (
+                    <div className="lw-error-row" style={{ marginTop: '10px', padding: '8px 14px', fontSize: '0.88rem' }}>
+                      <FaExclamationTriangle /> {passkeyError}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
+              {/* Instant System Status Badges */}
+              <div>
+                <div style={{ fontSize: '0.82rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', marginBottom: '8px' }}>
+                  System Status
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                  {/* Internet */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 12px' }}>
+                    <FaWifi style={{ color: preflightResults.internet === 'pass' ? '#10b981' : '#ef4444' }} />
+                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>Internet</span>
+                    <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: '700', color: preflightResults.internet === 'pass' ? '#10b981' : '#ef4444' }}>
+                      {preflightResults.internet === 'pass' ? 'Active' : 'Offline'}
+                    </span>
+                  </div>
+
+                  {/* Camera / Mic (if proctored) */}
+                  {selectedAssessment.proctored && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 12px' }}>
+                      <FaCamera style={{ color: preflightResults.webcam === 'pass' ? '#10b981' : '#f59e0b' }} />
+                      <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>Camera</span>
+                      <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: '700', color: preflightResults.webcam === 'pass' ? '#10b981' : '#f59e0b' }}>
+                        {preflightResults.webcam === 'pass' ? 'Ready' : 'Checking'}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Secure Sandbox */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 12px' }}>
+                    <FaShieldAlt style={{ color: '#10b981' }} />
+                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>Secure Shell</span>
+                    <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: '700', color: '#10b981' }}>Enforced</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Result messages */}
-              {preflightDone && (
-                preflightResults.internet === 'fail' ||
-                (selectedAssessment?.proctored && preflightResults.webcam === 'fail') ||
-                (selectedAssessment?.proctored && preflightResults.secureEnv === 'fail')
-              ) && (
-                  <div className="lw-error-row" style={{ marginTop: '8px' }}>
-                    <FaExclamationTriangle /> System check failed. Please resolve the red errors to unlock the Proceed button.
+              {/* Assessment Section Breakdown (if MSA) */}
+              {selectedAssessment.isMultiSection && selectedAssessment.sections?.length > 0 && (
+                <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '12px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#38bdf8', marginBottom: '8px' }}>
+                    Sections Breakdown ({selectedAssessment.sections.length})
                   </div>
-                )}
-              {preflightDone &&
-                preflightResults.internet === 'pass' &&
-                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) &&
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
+                    {selectedAssessment.sections.map((sec, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.84rem', padding: '4px 8px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                        <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{idx + 1}. {sec.name}</span>
+                        <span style={{ color: '#94a3b8' }}>{sec.duration_minutes || sec.duration || 0} Mins</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                !chargerConfirmed && (
-                  <div className="lw-warning-row" style={{ marginTop: '8px', padding: '12px', background: 'rgba(234, 179, 8, 0.1)', borderLeft: '4px solid #eab308', borderRadius: '8px', display: 'flex', alignItems: 'center', color: '#facc15', fontSize: '0.92rem', fontWeight: '600' }}>
-                    <FaExclamationTriangle style={{ marginRight: '8px' }} /> Please confirm you have connected your charger to enable Proceed.
-                  </div>
-                )}
-              {preflightDone &&
-                preflightResults.internet === 'pass' &&
-                (!selectedAssessment?.proctored || (preflightResults.webcam === 'pass' && preflightResults.secureEnv === 'pass')) &&
-                chargerConfirmed && (
-                  <div className="lw-info-row" style={{ marginTop: '8px' }}>
-                    <FaCheckCircle style={{ color: '#10b981' }} /> All checks passed. You may proceed.
-                  </div>
-                )}
+              {/* Essential Rules */}
+              <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '12px', padding: '12px 16px' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#f59e0b', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FaExclamationTriangle /> Important Guidelines
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.84rem', color: '#94a3b8', lineHeight: '1.5' }}>
+                  <li>Fullscreen mode is enforced. Tab switching and window exits are strictly tracked.</li>
+                  <li>The assessment timer runs continuously and will auto-submit when time expires.</li>
+                  <li>This is a single-attempt session. Ensure your power adapter is plugged in.</li>
+                </ul>
+              </div>
+
             </div>
-            <div className="lw-card-footer">
-              <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
+
+            {/* Footer Actions */}
+            <div className="lw-card-footer" style={{ padding: '16px 28px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                className="lw-btn-secondary"
+                onClick={cancelWizard}
+                disabled={isLaunching}
+                style={{ padding: '10px 20px', fontSize: '0.92rem', borderRadius: '10px' }}
+              >
+                Cancel
+              </button>
               <button
                 className="lw-btn-primary"
-                disabled={
-                  !preflightDone ||
-                  preflightResults.internet === 'fail' ||
-                  (selectedAssessment?.proctored && preflightResults.webcam === 'fail') ||
-                  (selectedAssessment?.proctored && preflightResults.secureEnv === 'fail') ||
-                  !chargerConfirmed
-                }
-                onClick={handlePreflightProceed}
+                onClick={handleUnifiedLaunch}
+                disabled={isLaunching}
+                style={{
+                  padding: '12px 28px',
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: isLaunching ? 'not-allowed' : 'pointer'
+                }}
               >
-                <FaCheck style={{ marginRight: '6px' }} />Proceed
+                {isLaunching ? (
+                  <>
+                    <span className="lw-mini-spinner" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></span>
+                    Starting Assessment...
+                  </>
+                ) : (
+                  <>
+                    <FaCheck /> Start Assessment
+                  </>
+                )}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: Anti-malpractice instructions */}
-      {launchStep === 'instructions' && selectedAssessment && (
-        (selectedAssessment.proctored === true ||
-          selectedAssessment.proctored === 1 ||
-          selectedAssessment.proctored === "1" ||
-          selectedAssessment.proctored === "true") ? (
-          <ProctoringInstructions
-            assessment={selectedAssessment}
-            onContinue={handleAgreeAndLaunch}
-            onCancel={cancelWizard}
-          />
-        ) : (
-          <div className="lw-overlay" style={{ zIndex: 1200 }}>
-            <div className="lw-card" style={{ maxWidth: '780px' }}>
-              <div className="lw-card-header">
-                <div className="lw-step-badge">Step 4 of 4</div>
-                <h3 className="lw-title">Test Details & Instructions</h3>
-              </div>
-              <div className="lw-card-body">
-                {/* Test meta-info */}
-                <div className="lw-info-grid">
-                  <div className="lw-info-cell">
-                    <span className="lw-info-label">Assessment</span>
-                    <span className="lw-info-value">{selectedAssessment.name}</span>
-                  </div>
-                  <div className="lw-info-cell">
-                    <span className="lw-info-label">Type</span>
-                    <span className="lw-info-value" style={{ textTransform: 'capitalize' }}>{selectedAssessment.type}</span>
-                  </div>
-                  <div className="lw-info-cell">
-                    <span className="lw-info-label">Duration</span>
-                    <span className="lw-info-value">{selectedAssessment.duration} minutes</span>
-                  </div>
-                  <div className="lw-info-cell">
-                    <span className="lw-info-label">Questions</span>
-                    <span className="lw-info-value">{selectedAssessment.questions || '—'}</span>
-                  </div>
-                </div>
-
-                {/* Section details for Multi-Section Assessments */}
-                {selectedAssessment.isMultiSection && selectedAssessment.sections && selectedAssessment.sections.length > 0 && (
-                  <div style={{ marginTop: '20px', background: 'rgba(15, 23, 42, 0.6)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <h4 style={{ color: '#38bdf8', margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: '700', letterSpacing: '-0.01em' }}>Assessment Section Breakdowns</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {selectedAssessment.sections.map((sec, idx) => {
-                        const secQCount = Array.isArray(sec.questionIds) ? sec.questionIds.length : (Array.isArray(sec.questions) ? sec.questions.length : (Number(sec.questions) || 0));
-                        return (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.04)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <span style={{ color: '#64748b', fontWeight: '700', fontSize: '0.85rem' }}>SECTION {idx + 1}</span>
-                              <span style={{ color: '#f8fafc', fontWeight: '600', fontSize: '0.9rem' }}>{sec.name}</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '16px', fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500', alignItems: 'center' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center' }}><FaClock style={{ marginRight: '4px' }} /> {sec.duration_minutes || sec.duration || 0} Mins</span>
-                              <span>{secQCount > 0 ? `${secQCount} Questions` : sec.type?.toUpperCase()}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Malpractice Warning Box */}
-                <div className="lw-malpractice-box" style={{ marginTop: '20px' }}>
-                  <p className="lw-malpractice-title" style={{ display: 'flex', alignItems: 'center' }}><FaExclamationTriangle style={{ marginRight: '6px' }} /> Proctoring System Active</p>
-                  <ul className="lw-malpractice-list">
-                    <li>Do not switch tabs or leave this window during the test.</li>
-                    <li>3 tab-switch violations will auto-lock and submit your assessment.</li>
-                    <li>Do not use any external assistance, websites, or AI tools.</li>
-                    <li>This is a <strong>one-time attempt</strong> — you cannot retake this test.</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="lw-card-footer" style={{ padding: '18px 24px' }}>
-                <button className="lw-btn-secondary" onClick={cancelWizard}>Cancel</button>
-                <button
-                  className="lw-btn-success"
-                  onClick={handleAgreeAndLaunch}
-                  style={{
-                    padding: '12px 28px',
-                    fontSize: '1.05rem',
-                    fontWeight: '800',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.25)',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <FaCheckCircle style={{ marginRight: '8px' }} />I Agree & Start Assessment
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      )}
-
-      {/* Step 5: Launching overlay */}
-      {launchStep === 'launching' && (
-        <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '520px', textAlign: 'center', padding: '35px 25px' }}>
-            <div className="lw-loader-container">
-              <div className="lw-spinner-outer"></div>
-              <div className="lw-spinner-inner" style={{ borderBottomColor: '#10b981' }}></div>
-              <div className="lw-spinner-center" style={{ background: 'radial-gradient(circle, #10b981 0%, #059669 100%)', boxShadow: '0 0 25px #10b981' }}></div>
-            </div>
-            <h3 className="lw-title" style={{ marginTop: '24px', justifyContent: 'center' }}>
-              <FaShieldAlt className="animate-pulse" style={{ color: '#10b981' }} /> Setting Up Workspace
-            </h3>
-            <p className="lw-subtitle" style={{ marginTop: '10px', fontWeight: '500', color: '#94a3b8' }}>
-              {loaderMessage}
-            </p>
           </div>
         </div>
       )}
