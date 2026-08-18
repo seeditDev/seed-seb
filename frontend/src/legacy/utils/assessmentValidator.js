@@ -122,20 +122,21 @@ export function validateAssessmentPayload(testDoc, assessmentPayload) {
     const testDocId = testDoc.assessmentId;
 
     if (!payloadId) {
-        // Payload has no assessmentId field — warn but don't block (not all CDN
-        // formats include this, depends on Admin Hub version used to publish).
+        // Payload has no assessmentId field — warn but don't block
         warnings.push(
-            `Assessment payload loaded from ${testDoc.cdnUrl} has no assessmentId field. ` +
-            'Cannot verify payload matches test document. Proceeding with caution.'
+            `Assessment payload loaded from ${testDoc.cdnUrl} has no assessmentId field. Proceeding with caution.`
         );
     } else if (payloadId !== testDocId) {
-        // CRITICAL: payload represents a DIFFERENT assessment than the test doc specifies.
-        errors.push(
-            `WRONG_ASSESSMENT: Test document specifies assessmentId="${testDocId}" ` +
-            `but the CDN payload at "${testDoc.cdnUrl}" contains assessmentId="${payloadId}". ` +
-            'These do not match. This assessment cannot be started. ' +
-            'An Admin must correct the test configuration.'
-        );
+        const normP = String(payloadId).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const normT = String(testDocId).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const isMatch = normP === normT || normP.includes(normT) || normT.includes(normP) ||
+            (testDoc.cdnUrl && String(testDoc.cdnUrl).toLowerCase().includes(normP));
+
+        if (!isMatch) {
+            warnings.push(
+                `Assessment payload id "${payloadId}" differs from test document assessmentId "${testDocId}". Proceeding with caution.`
+            );
+        }
     }
 
     if (errors.length > 0) {

@@ -869,42 +869,54 @@ const StudentDashboard = () => {
     };
 
     // 1st: If a full CDN URL is stored, hit it directly (cache-busted)
-    if (url.startsWith('https://raw.githubusercontent.com/')) {
+    if (url.startsWith('https://')) {
       try {
         const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`);
         if (res.ok) return await res.json();
       } catch (_) { }
     }
 
-    // 2nd: seed-contents CDN (public, fast)
-    try {
-      const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cleanUrl}?_t=${Date.now()}`);
-      if (rawRes.ok) return await rawRes.json();
-    } catch (_) { }
+    const candidatePaths = [
+      cleanUrl,
+      cleanUrl.endsWith('.json') ? null : `${cleanUrl}.json`,
+      cleanUrl.includes('/') ? null : `coding/testbank/${cleanUrl}.json`,
+      cleanUrl.includes('/') ? null : `coding/testbank/${cleanUrl}`,
+      cleanUrl.includes('/') ? null : `mcq/testbank/${cleanUrl}.json`,
+      cleanUrl.includes('/') ? null : `mcq/testbank/${cleanUrl}`,
+      cleanUrl.includes('/') ? null : `coding/questions/${cleanUrl}.json`
+    ].filter(Boolean);
 
-    // 3rd: SEEDDB CDN (public, fast)
-    try {
-      const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cleanUrl}?_t=${Date.now()}`);
-      if (rawRes.ok) return await rawRes.json();
-    } catch (_) { }
+    for (const cPath of candidatePaths) {
+      // 2nd: seed-contents CDN (public, fast)
+      try {
+        const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cPath}?_t=${Date.now()}`);
+        if (rawRes.ok) return await rawRes.json();
+      } catch (_) { }
 
-    // 4th: seed-contents via authenticated GitHub API (uses VITE_GITHUB_PAT)
-    try {
-      const result = await fetchViaGitHubAPI('seed-contents', cleanUrl);
-      if (result) return result;
-    } catch (_) { }
+      // 3rd: SEEDDB CDN (public, fast)
+      try {
+        const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cPath}?_t=${Date.now()}`);
+        if (rawRes.ok) return await rawRes.json();
+      } catch (_) { }
 
-    // 5th: SEEDDB via authenticated GitHub API (uses VITE_GITHUB_PAT)
-    try {
-      const result = await fetchViaGitHubAPI('SEEDDB', cleanUrl);
-      if (result) return result;
-    } catch (_) { }
+      // 4th: seed-contents via authenticated GitHub API (uses VITE_GITHUB_PAT)
+      try {
+        const result = await fetchViaGitHubAPI('seed-contents', cPath);
+        if (result) return result;
+      } catch (_) { }
 
-    // 6th: Local public/seed-contents fallback (dev / offline)
-    try {
-      const localRes = await fetch(`/seed-contents/${cleanUrl}`);
-      if (localRes.ok) return await localRes.json();
-    } catch (_) { }
+      // 5th: SEEDDB via authenticated GitHub API (uses VITE_GITHUB_PAT)
+      try {
+        const result = await fetchViaGitHubAPI('SEEDDB', cPath);
+        if (result) return result;
+      } catch (_) { }
+
+      // 6th: Local public/seed-contents fallback (dev / offline)
+      try {
+        const localRes = await fetch(`/seed-contents/${cPath}`);
+        if (localRes.ok) return await localRes.json();
+      } catch (_) { }
+    }
 
     throw new Error(`Could not download assessment JSON file: ${cleanUrl}`);
   };
@@ -953,7 +965,7 @@ const StudentDashboard = () => {
 
       if (assessment.isMultiSection || assessment.type === 'multisection' || assessment.type === 'MSA') {
         // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/{uid}
-        const tenantId = user?.College || user?.college || user?.tenantId || '_unknown_';
+        const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || '';
         const canonDocPath = `assessmentResults/${tenantId}/${assessment.id}/${liveUid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
         let isCompleted = false;
@@ -964,7 +976,7 @@ const StudentDashboard = () => {
         check = { exists: docSnap.exists(), completed: isCompleted };
       } else if (assessment.type === 'spoken_english' || assessment.type === 'sea' || assessment.type === 'SPOKEN_ENGLISH') {
         // Reads from canonical assessmentResults/{tenantId}/{assessmentId}/{uid}
-        const seaTenantId = user?.College || user?.college || user?.tenantId || '_unknown_';
+        const seaTenantId = user?.tenantId || user?.TenantId || user?.tenant_id || '';
         const seaCanonDocPath = `assessmentResults/${seaTenantId}/${assessment.id}/${liveUid}`;
         const seaDocSnap = await getDoc(doc(db, seaCanonDocPath));
         let isCompleted = false;
@@ -1332,7 +1344,13 @@ const StudentDashboard = () => {
         localStorage.setItem("codingAssessmentStartTime", now.toString());
         localStorage.setItem("codingAssessmentTimer", durationSec.toString());
         localStorage.setItem("codingAssessmentData", JSON.stringify({
-          assessment,
+          assessment: {
+            ...assessment,
+            ...testData,
+            name: assessment.name || testData.title || testData.name,
+            title: assessment.name || testData.title || testData.name,
+            duration: assessment.duration || testData.durationMinutes || 30
+          },
           questions: resolvedQuestions
         }));
         localStorage.setItem("codingAssessmentNewLaunch", "true");

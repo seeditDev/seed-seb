@@ -667,7 +667,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         if (isEmbedded) return; // Skip standard loading flow
         
         const loadInitialData = async () => {
-            setLoading(true);
             try {
                 const authData = JSON.parse(localStorage.getItem("auth_data") || "{}");
                 if (!authData.Email) {
@@ -683,36 +682,32 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     return;
                 }
 
-                // Fetch access control JSON
-                const accessControlData = await DataService.getAccessControl();
-                setAccessControl(accessControlData);
-
-                // Fetch student completion records
-                const attempts = await CodingAssessmentService.fetchUserAttempts(
-                    authData.Email,
-                    authData.College,
-                    authData.Year,
-                    authData.Department
-                );
-                setUserAttempts(attempts);
-
-                // Load available coding assessments
-                await loadAvailableAssessments(accessControlData, authData);
-
-                // Check if there is an active test session to restore
-                const pendingData = localStorage.getItem("codingAssessmentData");
-                if (pendingData && assessmentSlug) {
+                // If active test session exists, restore immediately for zero-latency launch
+                if (hasPending && assessmentSlug) {
                     const isNewLaunch = localStorage.getItem("codingAssessmentNewLaunch") === "true";
                     if (isNewLaunch) {
                         localStorage.removeItem("codingAssessmentNewLaunch");
                         const now = timeService.now();
                         localStorage.setItem("codingAssessmentStartTime", (now + 10000).toString());
                         setStartCountdown(10);
-                        restoreAssessmentState();
-                    } else {
-                        restoreAssessmentState();
                     }
+                    restoreAssessmentState();
+                    setLoading(false);
                 }
+
+                // Background fetch access control and attempts (non-blocking)
+                DataService.getAccessControl().then(accessControlData => {
+                    setAccessControl(accessControlData);
+                    if (authData.Email) {
+                        const tid = authData.tenantId || authData.College;
+                        CodingAssessmentService.fetchUserAttempts(
+                            authData.Email,
+                            tid,
+                            authData.Year,
+                            authData.Department
+                        ).then(setUserAttempts).catch(() => {});
+                    }
+                }).catch(() => {});
             } catch (err) {
                 console.error("Error initializing coding assessment list:", err);
                 setError("Failed to load assessments. Please try again.");
@@ -729,7 +724,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             setAutoSubmitNotice(notice);
             localStorage.removeItem(AUTO_SUBMIT_NOTICE_KEY);
         }
-    }, [navigate, assessmentSlug]);
+    }, [navigate, assessmentSlug, restoreAssessmentState]);
 
     // Start countdown timer effect
     useEffect(() => {

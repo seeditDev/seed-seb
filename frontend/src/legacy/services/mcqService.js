@@ -76,7 +76,7 @@ class MCQService {
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
         // Belt-and-braces: validate UID one more time at write boundary
         const canonicalUid = getCanonicalUid(userId);
-        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.College || userProfile?.college || '_unknown_';
+        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.TenantId || userProfile?.tenant_id || '';
         const canonRef = doc(db, this.canonicalPath(assessmentId, canonicalUid, tenantId));
         await setDoc(canonRef, { ...payload, userId: canonicalUid, tenantId }, { merge: true });
 

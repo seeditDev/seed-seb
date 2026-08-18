@@ -33,7 +33,7 @@ class CodingAssessmentService {
      * This is the ONLY Firestore write on submission. No secondary mirrors.
      */
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
-        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.College || userProfile?.college || '_unknown_';
+        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.TenantId || userProfile?.tenant_id || '';
         const canonRef = doc(db, this.canonicalPath(assessmentId, userId, tenantId));
         await setDoc(canonRef, { ...payload, userId, tenantId }, { merge: true });
         return this.canonicalPath(assessmentId, userId, tenantId);

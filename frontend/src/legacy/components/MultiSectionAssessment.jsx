@@ -74,8 +74,8 @@ const isTruthy = (val) => {
 const normalizeQuestion = (q) => {
   if (!q) return q;
   const id = q.questionId || q.id || '';
-  const title = q.title || '';
-  const description = q.content?.problemStatement || q.description || '';
+  const title = q.title || q.name || q.content?.title || '';
+  const description = q.content?.problemStatement || q.description || q.problemStatement || '';
   const instructions = q.content?.inputFormat || q.instructions || '';
   const constraints = Array.isArray(q.content?.constraints)
     ? q.content.constraints.join('\n')
@@ -92,10 +92,14 @@ const normalizeQuestion = (q) => {
     return clean;
   };
 
+  const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
+
   const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
   const boilerplates = {};
 
   Object.entries(rawBoilerplates).forEach(([lang, val]) => {
+    if (!VALID_LANG_NAMES.has(String(lang).trim().toLowerCase())) return;
+    if (typeof val !== 'string') return;
     const norm = getNormalizedLangKey(lang);
     if (norm === 'python') {
       boilerplates.python = val;
@@ -105,19 +109,7 @@ const normalizeQuestion = (q) => {
     }
   });
 
-  if (q.solution?.code) {
-    Object.entries(q.solution.code).forEach(([lang, val]) => {
-      const norm = getNormalizedLangKey(lang);
-      if (norm === 'python') {
-        boilerplates.python = val;
-        boilerplates.python3 = val;
-      } else {
-        boilerplates[norm] = val;
-      }
-    });
-  }
-
-  const testCases = normalizeTestCaseArray(q.content?.sampleTestCases || []);
+  const testCases = normalizeTestCaseArray(q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || q.testCases?.sample || []);
 
   let hidden = [];
   if (q.testCases?.hidden) {
@@ -126,7 +118,23 @@ const normalizeQuestion = (q) => {
     hidden = normalizeTestCaseArray(q.testCases);
   }
 
-  return { ...q, id, title, description, instructions, constraints, boilerplates, testCases, hiddenTests: hidden };
+  return {
+    ...q,
+    id,
+    title,
+    description,
+    instructions,
+    constraints,
+    boilerplates,
+    sampleTestCases: testCases,
+    sampleTests: testCases,
+    testCases: {
+      ...q.testCases,
+      sample: testCases,
+      hidden
+    },
+    hiddenTests: hidden
+  };
 };
 
 
@@ -879,7 +887,7 @@ const MultiSectionAssessment = () => {
         return;
       }
 
-      const tenantId = college || authData?.tenantId || '_unknown_';
+      const tenantId = authData?.tenantId || authData?.TenantId || authData?.tenant_id || effectiveUser?.tenantId || '';
       const v2DocPath = `assessmentResults/${tenantId}/${effectiveAssessment.id}/${userId}`;
 
       // SECTION 13: Final submission MUST be reliable. Await the write.
@@ -1098,7 +1106,7 @@ const MultiSectionAssessment = () => {
           console.warn('[MSA] checkAttempt: not authenticated, skipping server check.');
           return;
         }
-        const tenantId = authData?.College || authData?.college || authData?.tenantId || '_unknown_';
+        const tenantId = authData?.tenantId || authData?.TenantId || authData?.tenant_id || user?.tenantId || '';
         const canonDocPath = `assessmentResults/${tenantId}/${assessmentData.id}/${uid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
         if (docSnap.exists()) {
@@ -1229,10 +1237,10 @@ const MultiSectionAssessment = () => {
     const loaded = {};
     try {
       await Promise.all(
-        (exam.sections || []).map(async (sec) => {
+        (exam.sections || []).map(async (sec, idx) => {
           // Firestore stores the section's CDN URL in cdnUrl (not url)
-          let fetchUrl = sec.cdnUrl || sec.url || '';
-          if (!fetchUrl || !fetchUrl.endsWith('.json')) {
+          let fetchUrl = sec.cdnUrl || sec.url || sec.assessmentId || sec.slug || '';
+          if (!fetchUrl || (!fetchUrl.endsWith('.json') && !fetchUrl.startsWith('http'))) {
             fetchUrl = sec.type === 'mcq'
               ? `/seed-contents/mcq/testbank/${slugify(sec.name)}.json`
               : `/seed-contents/coding/testbank/${slugify(sec.name)}.json`;
@@ -1250,10 +1258,6 @@ const MultiSectionAssessment = () => {
           if (cleanPath.startsWith('/seed-contents/')) cleanPath = cleanPath.substring('/seed-contents/'.length);
           else if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
 
-          const githubUrl = `https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cleanPath}`;
-          const seedDbUrl = `https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cleanPath}`;
-          const localUrl = `/seed-contents/${cleanPath}`;
-
           const fetchViaGitHubAPI = async (repo, path) => {
             const pat = import.meta.env?.VITE_GITHUB_PAT;
             const headers = { Accept: 'application/vnd.github.v3+json' };
@@ -1265,9 +1269,7 @@ const MultiSectionAssessment = () => {
             return JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
           };
 
-          const processData = async (data, secType, secSectionId) => {
-              // ── MCQ: questions already embedded in slug JSON ──
-              // Normalize field names: slug uses { question, options, correctAnswer }
+          const processData = async (data, secType) => {
               if (secType === 'mcq') {
                 data.questions = (data.questions || []).map(q => ({
                   ...q,
@@ -1277,7 +1279,7 @@ const MultiSectionAssessment = () => {
                   correctAnswer: q.correctAnswer || q.answer || '',
                 }));
               } else if (secType === 'coding') {
-                // Prefer challenges array (has cdnUrl) over plain questionIds
+                // Prefer challenges array (has cdnUrl) or questionIds
                 let questionRefs = [];
                 if (Array.isArray(data.challenges) && data.challenges.length > 0) {
                   questionRefs = data.challenges; // [{id, cdnUrl, title, ...}]
@@ -1301,42 +1303,64 @@ const MultiSectionAssessment = () => {
                   data.questions = [];
                 }
               }
-              loaded[secSectionId] = data;
+
+              // Store under all possible identifiers
+              const secKeys = [sec.sectionId, sec.id, sec.name, sec.slug, String(idx)].filter(Boolean);
+              secKeys.forEach(k => {
+                loaded[k] = data;
+              });
           };
 
           try {
-            // 1st: full cdnUrl direct (if stored as absolute URL)
+            // 1st: direct fetch if URL is absolute
             if (fetchUrl.startsWith('https://')) {
-              const res = await fetch(`${fetchUrl}?_t=${Date.now()}`, { cache: 'no-store' });
+              const res = await fetch(`${fetchUrl}${fetchUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`, { cache: 'no-store' });
               if (res.ok) {
                 const data = await res.json();
-                await processData(data, sec.type, sec.sectionId || sec.name);
+                await processData(data, sec.type);
                 return;
               }
             }
-            // 2nd: seed-contents CDN
-            let res = await fetch(`${githubUrl}?_t=${Date.now()}`, { cache: 'no-store' });
-            if (!res.ok) res = await fetch(`${seedDbUrl}?_t=${Date.now()}`, { cache: 'no-store' });
-            if (!res.ok) {
-              // 3rd: authenticated GitHub API with VITE_GITHUB_PAT
-              let apiData = await fetchViaGitHubAPI('seed-contents', cleanPath);
-              if (!apiData) apiData = await fetchViaGitHubAPI('SEEDDB', cleanPath);
-              if (apiData) {
-                await processData(apiData, sec.type, sec.sectionId);
-              } else {
-                // 4th: local fallback
-                const localRes = await fetch(localUrl);
-                if (localRes.ok) {
-                  const data = await localRes.json();
-                  await processData(data, sec.type, sec.sectionId);
-                } else {
-                  throw new Error(`Cannot load section "${sec.name}" from any source`);
-                }
+
+            const candidatePaths = [
+              cleanPath,
+              cleanPath.endsWith('.json') ? null : `${cleanPath}.json`,
+              cleanPath.includes('/') ? null : `coding/testbank/${cleanPath}.json`,
+              cleanPath.includes('/') ? null : `coding/testbank/${cleanPath}`,
+              cleanPath.includes('/') ? null : `mcq/testbank/${cleanPath}.json`,
+              cleanPath.includes('/') ? null : `mcq/testbank/${cleanPath}`
+            ].filter(Boolean);
+
+            for (const cPath of candidatePaths) {
+              const githubUrl = `https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cPath}`;
+              const seedDbUrl = `https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cPath}`;
+              const localUrl = `/seed-contents/${cPath}`;
+
+              let res = await fetch(`${githubUrl}?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => null);
+              if (!res || !res.ok) res = await fetch(`${seedDbUrl}?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => null);
+
+              if (res && res.ok) {
+                const data = await res.json();
+                await processData(data, sec.type);
+                return;
               }
-              return;
+
+              let apiData = await fetchViaGitHubAPI('seed-contents', cPath).catch(() => null);
+              if (!apiData) apiData = await fetchViaGitHubAPI('SEEDDB', cPath).catch(() => null);
+              if (apiData) {
+                await processData(apiData, sec.type);
+                return;
+              }
+
+              const localRes = await fetch(localUrl).catch(() => null);
+              if (localRes && localRes.ok) {
+                const data = await localRes.json();
+                await processData(data, sec.type);
+                return;
+              }
             }
-            const data = await res.json();
-            await processData(data, sec.type, sec.sectionId);
+
+            console.warn(`[MSA] Could not load section "${sec.name}" from candidate paths.`);
           } catch (e) {
             console.error(`[MSA] Failed to load section "${sec.name}":`, e);
           }
@@ -1436,7 +1460,7 @@ const MultiSectionAssessment = () => {
     }
     if (sectionCountdown <= 0) {
       const activeSec = assessment?.sections?.[countdownSecIdx];
-      const qList = activeSec ? sectionData[activeSec.sectionId]?.questions : null;
+      const qList = activeSec ? (sectionData[activeSec.sectionId]?.questions || sectionData[activeSec.id]?.questions || sectionData[activeSec.name]?.questions || sectionData[activeSec.slug]?.questions || sectionData[String(countdownSecIdx)]?.questions) : null;
       const questionsLoaded = Array.isArray(qList) && qList.length > 0;
 
       const visualReady = !shouldUseProctoring || isVisualProctorReady;
@@ -1572,14 +1596,15 @@ const MultiSectionAssessment = () => {
         console.error('[MSA] Incomplete profile, refusing remote write:', tenant.missing);
       }
       if (user?.Email && tenant.valid) {
-        const { college, year } = tenant;
+        const { year } = tenant;
+        const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || tenant.tenantId || '';
         const userId = auth?.currentUser?.uid;
         if (!userId) {
           console.error('[MSA] autoSubmitSection partial: not authenticated, refusing Firestore write.');
         } else {
-          setDoc(doc(db, `assessmentResults/${college}/${assessment.id}/${userId}`), {
+          setDoc(doc(db, `assessmentResults/${tenantId}/${assessment.id}/${userId}`), {
             userId, email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-            tenantId: college, cohortId: year,
+            tenantId: tenantId, cohortId: year,
             testID: assessment.id, testName: assessment.name,
             assessmentId: assessment.id, assessmentName: assessment.name,
             type: 'multisection', status: 'partial',
@@ -1702,7 +1727,7 @@ const MultiSectionAssessment = () => {
         if (!userId) {
           console.error('[MSA] autoSubmitSection final: not authenticated, refusing Firestore write.');
         } else {
-          const tenantId = college || user?.tenantId || '_unknown_';
+          const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || authData?.tenantId || '';
           const v2DocPath = `assessmentResults/${tenantId}/${assessment.id}/${userId}`;
 
           try {
@@ -1839,7 +1864,9 @@ const MultiSectionAssessment = () => {
     );
   }
 
-  const activeSecData = activeSection ? sectionData[activeSection.sectionId] : null;
+  const activeSecData = activeSection
+    ? (sectionData[activeSection.sectionId] || sectionData[activeSection.id] || sectionData[activeSection.name] || sectionData[activeSection.slug] || sectionData[String(currentSecIdx)] || null)
+    : null;
 
   // ── Active section view (MCQ or Coding)
   if (activeSection) {
@@ -1936,7 +1963,7 @@ const MultiSectionAssessment = () => {
         {/* Pre-section countdown overlay */}
         {sectionCountdown !== null && (() => {
           const activeSec = assessment?.sections?.[countdownSecIdx];
-          const qList = activeSec ? sectionData[activeSec.sectionId]?.questions : null;
+          const qList = activeSec ? (sectionData[activeSec.sectionId]?.questions || sectionData[activeSec.id]?.questions || sectionData[activeSec.name]?.questions || sectionData[activeSec.slug]?.questions || sectionData[String(countdownSecIdx)]?.questions) : null;
           const questionsLoaded = Array.isArray(qList) && qList.length > 0;
           return (
             <div style={{

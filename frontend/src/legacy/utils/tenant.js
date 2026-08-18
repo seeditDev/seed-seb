@@ -14,17 +14,17 @@ const norm = (v) => (v === undefined || v === null ? '' : String(v).trim());
  * @returns {{college:string, year:string, department:string, email:string, valid:boolean, missing:string[]}}
  */
 export function resolveTenant(userData = {}) {
+  const tenantId = norm(userData.tenantId ?? userData.TenantId ?? userData.tenant_id ?? userData.College ?? userData.college);
   const college = norm(userData.College ?? userData.college);
   const year = norm(userData.Year ?? userData.year);
   const department = norm(userData.Department ?? userData.department);
   const email = norm(userData.Email ?? userData.email).toLowerCase();
 
   const missing = [];
-  if (!college) missing.push('College');
-  if (!year) missing.push('Year');
+  if (!tenantId && !college) missing.push('TenantId');
   if (!email) missing.push('Email');
 
-  return { college, year, department, email, valid: missing.length === 0, missing };
+  return { tenantId, college: college || tenantId, year, department, email, valid: missing.length === 0, missing };
 }
 
 /** Same as resolveTenant but throws when the identity is incomplete. */
