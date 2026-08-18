@@ -311,6 +311,30 @@ const StudentDashboard = () => {
         navigate(`/student/assessment/multisection/${session.slug}`);
         return;
       }
+      if (session.type === 'coding') {
+        const snap = session.remoteSnapshot;
+        const now = timeService.now();
+        const startedAtMs = snap.timeStarted?.toDate 
+          ? snap.timeStarted.toDate().getTime() 
+          : (snap.timeStarted || (snap.timeStartedISO ? new Date(snap.timeStartedISO).getTime() : now));
+        const durationSec = (snap.duration || 30) * 60;
+        localStorage.setItem("codingAssessmentStartTime", startedAtMs.toString());
+        localStorage.setItem("codingAssessmentTimer", durationSec.toString());
+        localStorage.setItem("codingLastActiveTime", now.toString());
+        if (snap.codeMap) {
+          localStorage.setItem("codingAssessmentCode", JSON.stringify(snap.codeMap));
+        }
+        localStorage.setItem("codingAssessmentData", JSON.stringify({
+          assessment: {
+            id: snap.assessmentID || session.id,
+            name: snap.assessmentName || session.name,
+            duration: snap.duration || 30
+          },
+          questions: snap.questions || []
+        }));
+        navigate(`/student/coding/${session.slug}`);
+        return;
+      }
     }
 
     if (session.type === 'multisection') {
@@ -1238,9 +1262,39 @@ const StudentDashboard = () => {
           );
         }
 
-        await CodingAssessmentService.createInitialAttempt(user, assessment);
-        localStorage.setItem("codingAssessmentStartTime", now.toString());
-        localStorage.setItem("codingAssessmentTimer", durationSec.toString());
+        const liveUid = auth?.currentUser?.uid || user?.uid || user?.UID;
+        const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || user?.College || '';
+        let existingRemoteAttempt = null;
+        if (liveUid && tenantId) {
+          try {
+            const canonDocPath = `assessmentResults/${tenantId}/${assessment.id}/${liveUid}`;
+            const docSnap = await getDoc(doc(db, canonDocPath));
+            if (docSnap.exists() && !docSnap.data().completed) {
+              existingRemoteAttempt = docSnap.data();
+            }
+          } catch (_) {}
+        }
+
+        if (existingRemoteAttempt) {
+          console.log('[StudentDashboard] Resuming existing in-progress attempt for coding assessment:', assessment.id);
+          const startedAtMs = existingRemoteAttempt.timeStarted?.toDate 
+            ? existingRemoteAttempt.timeStarted.toDate().getTime() 
+            : (existingRemoteAttempt.timeStarted || (existingRemoteAttempt.timeStartedISO ? new Date(existingRemoteAttempt.timeStartedISO).getTime() : now));
+          localStorage.setItem("codingAssessmentStartTime", startedAtMs.toString());
+          localStorage.setItem("codingAssessmentTimer", durationSec.toString());
+          localStorage.setItem("codingLastActiveTime", now.toString());
+          if (existingRemoteAttempt.codeMap) {
+            localStorage.setItem("codingAssessmentCode", JSON.stringify(existingRemoteAttempt.codeMap));
+          }
+        } else {
+          await CodingAssessmentService.createInitialAttempt(user, assessment);
+          localStorage.setItem("codingAssessmentStartTime", now.toString());
+          localStorage.setItem("codingAssessmentTimer", durationSec.toString());
+          localStorage.setItem("codingAssessmentNewLaunch", "true");
+          // Clear previous coding test code map to ensure clean boilerplate setup
+          localStorage.removeItem("codingAssessmentCode");
+        }
+
         localStorage.setItem("codingAssessmentData", JSON.stringify({
           assessment: {
             ...assessment,
@@ -1251,9 +1305,6 @@ const StudentDashboard = () => {
           },
           questions: resolvedQuestions
         }));
-        localStorage.setItem("codingAssessmentNewLaunch", "true");
-        // Clear previous coding test code map to ensure clean boilerplate setup
-        localStorage.removeItem("codingAssessmentCode");
         localStorage.setItem('codingCourseCtx', JSON.stringify({
           courseId: assessment.courseId || '',
           seriesId: assessment.seriesId || '',

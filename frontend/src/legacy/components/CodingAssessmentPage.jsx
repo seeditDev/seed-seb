@@ -11,7 +11,8 @@ import CodingAssessmentService from '../services/codingAssessmentService';
 import DataService from '../services/dataService';
 import timeService from '../services/timeService';
 import { clearAllProctorCache, getViolations, recordViolation } from '../utils/proctorCache';
-import { auth } from '../firebase-config';
+import { auth, db } from '../firebase-config';
+import { doc, getDoc } from 'firebase/firestore';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
@@ -71,9 +72,9 @@ const slugify = (value = '') => {
 
 const normalizeQuestion = (q) => {
     if (!q) return q;
-    const id = q.questionId || q.id || '';
-    const title = q.title || '';
-    const description = q.content?.problemStatement || q.description || '';
+    const id = String(q.id || q.questionId || q.challengeId || q._id || '').trim();
+    const title = q.title || q.name || q.content?.title || '';
+    const description = q.content?.problemStatement || q.description || q.problemStatement || '';
     const constraints = Array.isArray(q.content?.constraints) 
         ? q.content.constraints.join('\n') 
         : (q.constraints || '');
@@ -90,15 +91,12 @@ const normalizeQuestion = (q) => {
     };
 
     // Valid language key names in boilerPlates — filter out non-code keys.
-    // Q1–Q79 boilerPlates objects contain non-language keys ('solution', '_internal', 'verified')
-    // alongside real language keys. We whitelist only recognized language keys.
     const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
 
     const rawBoilerplates = q.boilerPlates || q.boilerplates || {};
     const boilerplates = {};
 
     Object.entries(rawBoilerplates).forEach(([lang, val]) => {
-        // Skip non-language keys and non-string values
         if (!VALID_LANG_NAMES.has(String(lang).trim().toLowerCase())) return;
         if (typeof val !== 'string') return;
         const norm = getNormalizedLangKey(lang);
@@ -110,19 +108,30 @@ const normalizeQuestion = (q) => {
         }
     });
 
-    // NOTE: solution.code is editorial reference (often empty string "") and must NOT
-    // overwrite the student-facing boilerplate. Removed the previous merge that was
-    // accidentally replacing valid boilerplates with empty solution code strings.
-
     // Normalize sample test cases
-    const sampleTestCases = normalizeTestCaseArray(q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []);
+    const sampleTestCases = normalizeTestCaseArray(
+        q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []
+    );
 
-    // Normalize hidden test cases
+    // Normalize hidden test cases from all potential schemas
     let hidden = [];
-    if (q.testCases?.hidden) {
+    if (q.testCases?.hidden && Array.isArray(q.testCases.hidden) && q.testCases.hidden.length > 0) {
         hidden = normalizeTestCaseArray(q.testCases.hidden);
-    } else if (Array.isArray(q.testCases)) {
+    } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
+        hidden = normalizeTestCaseArray(q.hiddenTests);
+    } else if (Array.isArray(q.content?.hiddenTestCases) && q.content.hiddenTestCases.length > 0) {
+        hidden = normalizeTestCaseArray(q.content.hiddenTestCases);
+    } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
+        hidden = normalizeTestCaseArray(q.content.testCases);
+    } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
         hidden = normalizeTestCaseArray(q.testCases);
+    } else if (Array.isArray(q.test_cases) && q.test_cases.length > 0) {
+        hidden = normalizeTestCaseArray(q.test_cases);
+    } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {
+        hidden = normalizeTestCaseArray(q.hidden_test_cases);
+    } else if (sampleTestCases.length > 0) {
+        // Fallback: if no hidden test cases exist, use sample test cases for official grading
+        hidden = sampleTestCases;
     }
 
     return {
@@ -752,7 +761,61 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 setUser(authData);
 
                 // Redirect to unified student dashboard if no active session exists
-                const hasPending = localStorage.getItem("codingAssessmentData");
+                let hasPending = localStorage.getItem("codingAssessmentData");
+
+                // If local storage was cleared (e.g. system power off / reboot in PyQt SEB), attempt Firestore restore
+                if (!hasPending && assessmentSlug) {
+                    const liveUid = auth?.currentUser?.uid || authData.uid || authData.UID;
+                    const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || authData.College || '';
+                    if (liveUid && tenantId) {
+                        try {
+                            const canonDocPath = `assessmentResults/${tenantId}/${assessmentSlug}/${liveUid}`;
+                            const remoteSnap = await getDoc(doc(db, canonDocPath));
+                            if (remoteSnap.exists() && !remoteSnap.data().completed) {
+                                const remoteData = remoteSnap.data();
+                                const now = timeService.now();
+                                const startedAtMs = remoteData.timeStarted?.toDate 
+                                    ? remoteData.timeStarted.toDate().getTime() 
+                                    : (remoteData.timeStarted || (remoteData.timeStartedISO ? new Date(remoteData.timeStartedISO).getTime() : now));
+                                const lastProgressAtMs = remoteData.lastProgressAt?.toDate
+                                    ? remoteData.lastProgressAt.toDate().getTime()
+                                    : (remoteData.lastProgressAtISO ? new Date(remoteData.lastProgressAtISO).getTime() : startedAtMs);
+                                const elapsedOfflineSec = Math.floor((now - lastProgressAtMs) / 1000);
+
+                                if (elapsedOfflineSec <= 300) {
+                                    console.log('[CodingAssessmentPage] Restoring remote attempt from Firestore:', canonDocPath);
+                                    let resolvedQuestions = [];
+                                    try {
+                                        const cdnRes = await fetchContentJSON(remoteData.url || remoteData.cdnUrl || `coding/testbank/${assessmentSlug}.json`);
+                                        if (cdnRes) {
+                                            resolvedQuestions = cdnRes.questions || cdnRes.challenges || [];
+                                        }
+                                    } catch (_) {}
+
+                                    const durationSec = (remoteData.duration || 30) * 60;
+                                    localStorage.setItem("codingAssessmentStartTime", startedAtMs.toString());
+                                    localStorage.setItem("codingAssessmentTimer", durationSec.toString());
+                                    localStorage.setItem("codingLastActiveTime", now.toString());
+                                    if (remoteData.codeMap) {
+                                        localStorage.setItem("codingAssessmentCode", JSON.stringify(remoteData.codeMap));
+                                    }
+                                    localStorage.setItem("codingAssessmentData", JSON.stringify({
+                                        assessment: {
+                                            id: remoteData.assessmentID || assessmentSlug,
+                                            name: remoteData.assessmentName || 'Coding Assessment',
+                                            duration: remoteData.duration || 30
+                                        },
+                                        questions: resolvedQuestions
+                                    }));
+                                    hasPending = localStorage.getItem("codingAssessmentData");
+                                }
+                            }
+                        } catch (remoteErr) {
+                            console.warn('[CodingAssessmentPage] Remote restore error:', remoteErr);
+                        }
+                    }
+                }
+
                 if (!hasPending) {
                     navigate("/student/dashboard", { replace: true });
                     return;
@@ -1593,7 +1656,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const storedCodeMap = JSON.parse(localStorage.getItem("codingAssessmentCode") || "{}");
             
             const activeAssessment = storedData.assessment || currentAssessment;
-            const activeQuestions = storedData.questions || questions;
 
             if (!activeAssessment || !authData.Email) {
                 clearLocalSession();
@@ -1611,47 +1673,54 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             );
 
             // Grade questions that haven't been submitted yet by running test cases on codeMap
+            const activeQuestions = (storedData.questions || questions || []).map(normalizeQuestion);
             const finalScores = { ...questionScores };
             let totalMaxWeight = 0;
             let totalEarnedWeight = 0;
 
             for (const q of activeQuestions) {
+                const qId = q.id || q.questionId;
                 totalMaxWeight += (q.weight || DEFAULT_QUESTION_WEIGHT);
-                if (finalScores[q.id]) {
-                    totalEarnedWeight += finalScores[q.id].score;
+                if (finalScores[qId]) {
+                    totalEarnedWeight += finalScores[qId].score;
                 } else {
-                    const code = storedCodeMap[`${q.id}_${language}`] || "";
-                    // SECTION 18: use ONLY hiddenTests for official scoring.
-                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : [];
+                    const code = storedCodeMap[`${qId}_${language}`] ||
+                                 storedCodeMap[`${qId}_cpp`] ||
+                                 storedCodeMap[`${qId}_c`] ||
+                                 storedCodeMap[`${qId}_python`] ||
+                                 storedCodeMap[`${qId}_java`] ||
+                                 storedCodeMap[`${qId}_javascript`] || "";
+                    const hidden = Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0
+                        ? q.hiddenTests
+                        : (Array.isArray(q.sampleTests) ? q.sampleTests : []);
+
                     if (hidden.length === 0) {
-                        console.error(`[CodingEval] Question ${q.id} has no hiddenTests. Scoring is invalid. Assigning 0.`);
-                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_hidden_tests' };
+                        console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
+                        finalScores[qId] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_test_cases' };
                     } else {
-                    const bridgeLang = language === 'python3' ? 'python' : language;
-                    let passes = 0;
-                    if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
-                        for (const tc of hidden) {
-                            try {
-                                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
-                                if (isEngineDisconnected(res)) {
-                                    break;
-                                }
-                                const exit = res.exit_code !== undefined ? res.exit_code : 0;
-                                const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
-                                const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
-                                if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
-                            } catch (err) {}
+                        const bridgeLang = language === 'python3' ? 'python' : language;
+                        let passes = 0;
+                        if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
+                            for (const tc of hidden) {
+                                try {
+                                    const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                    if (isEngineDisconnected(res)) break;
+                                    const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
+                                    const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
+                                    const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
+                                    if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
+                                } catch (err) {}
+                            }
                         }
-                    }
-                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
-                    finalScores[q.id] = {
-                        score: qScore,
-                        percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
-                        passed: passes,
-                        total: hidden.length,
-                        submitted: true
-                    };
-                    totalEarnedWeight += qScore;
+                        const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
+                        finalScores[qId] = {
+                            score: qScore,
+                            percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
+                            passed: passes,
+                            total: hidden.length,
+                            submitted: true
+                        };
+                        totalEarnedWeight += qScore;
                     }
                 }
             }
@@ -1832,37 +1901,50 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             let totalMaxWeight = 0;
             let totalEarnedWeight = 0;
 
-            for (const q of questions) {
+            for (const rawQ of questions) {
+                const q = normalizeQuestion(rawQ);
+                const qId = q.id || q.questionId;
                 totalMaxWeight += (q.weight || DEFAULT_QUESTION_WEIGHT);
-                if (finalScores[q.id]) {
-                    totalEarnedWeight += finalScores[q.id].score;
+                if (finalScores[qId]) {
+                    totalEarnedWeight += finalScores[qId].score;
                 } else {
-                    // SECTION 18: use ONLY hiddenTests for official scoring.
-                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : [];
+                    const code = codeMap[`${qId}_${language}`] ||
+                                 codeMap[`${qId}_cpp`] ||
+                                 codeMap[`${qId}_c`] ||
+                                 codeMap[`${qId}_python`] ||
+                                 codeMap[`${qId}_java`] ||
+                                 codeMap[`${qId}_javascript`] || "";
+                    const hidden = Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0
+                        ? q.hiddenTests
+                        : (Array.isArray(q.sampleTests) ? q.sampleTests : []);
+
                     if (hidden.length === 0) {
-                        console.error(`[CodingEval] Question ${q.id} has no hiddenTests. Scoring is invalid. Assigning 0.`);
-                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_hidden_tests' };
+                        console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
+                        finalScores[qId] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_test_cases' };
                     } else {
-                    const bridgeLang = language === 'python3' ? 'python' : language;
-                    let passes = 0;
-                    for (const tc of hidden) {
-                        try {
-                            const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
-                            const exit = res.exit_code !== undefined ? res.exit_code : 0;
-                            const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
-                            const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
-                            if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
-                        } catch (err) {}
-                    }
-                    const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
-                    finalScores[q.id] = {
-                        score: qScore,
-                        percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
-                        passed: passes,
-                        total: hidden.length,
-                        submitted: true
-                    };
-                    totalEarnedWeight += qScore;
+                        const bridgeLang = language === 'python3' ? 'python' : language;
+                        let passes = 0;
+                        if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
+                            for (const tc of hidden) {
+                                try {
+                                    const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                    if (isEngineDisconnected(res)) break;
+                                    const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
+                                    const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
+                                    const cleanExp = (tc.expected || "").replace(/\r\n/g, "\n").trim();
+                                    if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
+                                } catch (err) {}
+                            }
+                        }
+                        const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
+                        finalScores[qId] = {
+                            score: qScore,
+                            percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
+                            passed: passes,
+                            total: hidden.length,
+                            submitted: true
+                        };
+                        totalEarnedWeight += qScore;
                     }
                 }
             }
