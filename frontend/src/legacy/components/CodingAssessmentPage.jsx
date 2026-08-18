@@ -771,18 +771,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     setLoading(false);
                 }
 
-                // Background fetch access control and attempts (non-blocking)
+                // Background fetch access control (non-blocking)
                 DataService.getAccessControl().then(accessControlData => {
                     setAccessControl(accessControlData);
-                    if (authData.Email) {
-                        const tid = authData.tenantId || authData.College;
-                        CodingAssessmentService.fetchUserAttempts(
-                            authData.Email,
-                            tid,
-                            authData.Year,
-                            authData.Department
-                        ).then(setUserAttempts).catch(() => {});
-                    }
                 }).catch(() => {});
             } catch (err) {
                 console.error("Error initializing coding assessment list:", err);
@@ -2789,7 +2780,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 <div className="footer-right">
                                     <button
                                         className="solve-question-btn"
-                                        onClick={evaluateQuestion}
+                                        onClick={handleSubmitQuestion}
                                         disabled={isRunning || isEvaluating}
                                     >
                                         {isEvaluating ? (

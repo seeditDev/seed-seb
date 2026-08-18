@@ -2852,16 +2852,6 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                     setShowSubmittingPopup(false);
                                     setSubmissionStep('');
                                     setIsSubmitting(false);
-                                    
-                                    // Refresh user attempts in background
-                                    if (user) {
-                                        MCQService.fetchUserAttempts(
-                                            user.Email,
-                                            user.College,
-                                            user.Year,
-                                            user.Department
-                                        ).then(attempts => setUserAttempts(attempts));
-                                    }
                                 }}
                             >
                                 View Results
