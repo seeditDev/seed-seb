@@ -742,59 +742,9 @@ class PreLaunchDialog(QDialog):
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def check_version(self):
-        # 1. Try Firebase Admin SDK verification if service account key exists locally
-        possible_sa_keys = [
-            os.path.join(os.path.dirname(__file__), "..", "serviceAccountKey.json"),
-            os.path.join(os.path.dirname(__file__), "serviceAccountKey.json"),
-            r"C:\Users\ashok\Downloads\Development Works\SEED-IT Platform Source folder\SEED SEB CENTRAL\serviceAccountKey.json",
-        ]
-        sa_path = next((p for p in possible_sa_keys if os.path.exists(p)), None)
-        
-        if sa_path:
-            try:
-                import firebase_admin
-                from firebase_admin import credentials, firestore
-                if not firebase_admin._apps:
-                    cred = credentials.Certificate(sa_path)
-                    firebase_admin.initialize_app(cred, {"projectId": FIREBASE_CONFIG["projectId"]})
-                db = firestore.client()
-                
-                # Check app_build_hashes first
-                doc = db.collection("app_build_hashes").document(CURRENT_VERSION).get()
-                if doc.exists:
-                    data = doc.to_dict()
-                    if data.get("is_active", True):
-                        self.version_check_passed = True
-                        self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Security Verified)")
-                        self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
-                        self.progress_bar.setValue(self.progress_bar.value() + 1)
-                        return
-                
-                # Check version_seedit collection
-                vdocs = list(db.collection("version_seedit").stream())
-                if vdocs:
-                    vdata = vdocs[0].to_dict()
-                    target_v = vdata.get("versionId")
-                    if target_v == CURRENT_VERSION:
-                        self.version_check_passed = True
-                        self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Up to date)")
-                        self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
-                        self.progress_bar.setValue(self.progress_bar.value() + 1)
-                        return
-                    elif target_v:
-                        self.version_check_passed = False
-                        self.version_label.setText(f" <b>Application Version:</b> Outdated (Installed: v{CURRENT_VERSION} • Required: v{target_v})")
-                        self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
-                        self.show_error(f"Application update required: Please upgrade to version {target_v}.")
-                        self.progress_bar.setValue(self.progress_bar.value() + 1)
-                        return
-            except Exception as e:
-                logging.info(f"Local Admin SDK version check fallback: {e}")
-
-        # 2. REST API verification for client deployments
         try:
             url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_CONFIG['projectId']}/databases/(default)/documents/version_seedit"
-            response = requests.get(url, params={"key": FIREBASE_CONFIG["apiKey"]}, timeout=8)
+            response = requests.get(url, params={"key": FIREBASE_CONFIG["apiKey"]}, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 documents = data.get("documents", [])
@@ -813,30 +763,25 @@ class PreLaunchDialog(QDialog):
                             self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
                             self.show_error(f"Application update required: Please upgrade to version {version_id}.")
                     else:
-                        self.version_check_passed = True
-                        self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Active)")
-                        self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                        self.version_check_passed = False
+                        self.version_label.setText(f" <b>Application Version:</b> Version configuration missing")
+                        self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                        self.show_error("Could not verify application version with server.")
                 else:
-                    self.version_check_passed = True
-                    self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Active)")
-                    self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
-            elif response.status_code in (401, 403):
-                # Firestore security rules restrict unauthenticated collection queries prior to student sign-in
-                self.version_check_passed = True
-                self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Security Verified)")
-                self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
-            elif response.status_code == 404:
-                self.version_check_passed = True
-                self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Active)")
-                self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                    self.version_check_passed = False
+                    self.version_label.setText(f" <b>Application Version:</b> Version record not found")
+                    self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                    self.show_error("Version record not found on server.")
             else:
-                self.version_check_passed = True
-                self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Verified)")
-                self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                self.version_check_passed = False
+                self.version_label.setText(f" <b>Application Version:</b> Server verification failed (HTTP {response.status_code})")
+                self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+                self.show_error(f"Version check failed with status {response.status_code}.")
         except Exception as e:
-            self.version_check_passed = True
-            self.version_label.setText(f" <b>Application Version:</b> v{CURRENT_VERSION} (Offline Grace)")
-            self.version_label.setStyleSheet("color: #15803d; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+            self.version_check_passed = False
+            self.version_label.setText(f" <b>Application Version:</b> Network check error")
+            self.version_label.setStyleSheet("color: #dc2626; font-size: 13px; font-weight: 500; border: none; background: transparent; font-family: 'Segoe UI', sans-serif;")
+            self.show_error("Could not reach version verification service.")
         self.progress_bar.setValue(self.progress_bar.value() + 1)
 
     def update_launch_button(self):

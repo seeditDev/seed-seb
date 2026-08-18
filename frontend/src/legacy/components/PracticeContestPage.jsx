@@ -20,6 +20,7 @@ const PracticeContestPage = () => {
   const [contest, setContest] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [solvedIds, setSolvedIds] = useState([]);
+  const [attemptedIds, setAttemptedIds] = useState([]);
   const [problemDetails, setProblemDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,14 +45,15 @@ const PracticeContestPage = () => {
           const uid = authData?.uid;
           if (!uid) {
             console.warn('[PracticeContestPage] Firebase UID not available — progress not loaded');
-            return Promise.resolve({ solvedProblems: [], problemDetails: {} });
+            return Promise.resolve({ completedQuestions: [], solvedProblems: [], attemptedQuestions: [], problemDetails: {} });
           }
-          return getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} }));
+          return getFullProgress(uid).catch(() => ({ completedQuestions: [], solvedProblems: [], attemptedQuestions: [], problemDetails: {} }));
         })(),
       ]);
 
       setContest(contestData);
-      setSolvedIds(progressData.solvedProblems || []);
+      setSolvedIds(progressData.completedQuestions || progressData.solvedProblems || []);
+      setAttemptedIds(progressData.attemptedQuestions || []);
       setProblemDetails(progressData.problemDetails || {});
 
       // Fetch actual question data
@@ -79,7 +81,7 @@ const PracticeContestPage = () => {
 
   // Progress stats
   const statCounts = questions.reduce((acc, q) => {
-    const st = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.metadata?.isPremium, isPremiumUser);
+    const st = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.metadata?.isPremium, isPremiumUser, attemptedIds);
     acc[st] = (acc[st] || 0) + 1;
     return acc;
   }, {});
@@ -158,7 +160,7 @@ const PracticeContestPage = () => {
           </div>
         ) : (
           questions.map((q, idx) => {
-            const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.metadata?.isPremium, isPremiumUser);
+            const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.metadata?.isPremium, isPremiumUser, attemptedIds);
             const bestScore = problemDetails[q.questionId]?.bestScore;
             const lang = problemDetails[q.questionId]?.language;
 

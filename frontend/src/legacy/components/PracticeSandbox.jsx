@@ -197,6 +197,7 @@ const PracticeSandbox = () => {
   const [showDefaultResetConfirm, setShowDefaultResetConfirm] = useState(false);
   const [sidebarQuestions, setSidebarQuestions] = useState([]);
   const [solvedIds, setSolvedIds] = useState([]);
+  const [attemptedIds, setAttemptedIds] = useState([]);
   const [problemDetails, setProblemDetails] = useState({});
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [sidebarDifficulty, setSidebarDifficulty] = useState('All');
@@ -303,7 +304,8 @@ const PracticeSandbox = () => {
           } catch (e) {}
         }
         setSidebarQuestions(indexQs);
-        setSolvedIds(progress.solvedProblems || []);
+        setSolvedIds(progress.completedQuestions || progress.solvedProblems || []);
+        setAttemptedIds(progress.attemptedQuestions || []);
         setProblemDetails(progress.problemDetails || {});
       } catch (err) {
         console.warn('Failed to load sidebar data:', err);
@@ -729,6 +731,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
         if (score === 100) {
           await markQuestionSolved(uid, questionId, language, score, currentCode);
           setSolvedIds(prev => [...new Set([...prev, questionId])]);
+          setAttemptedIds(prev => prev.filter(id => id !== questionId));
 
           // LeetCode-style: store accepted solution in Firestore
           await saveSolution(uid, {
@@ -744,6 +747,9 @@ const isCodeBlankOrEmpty = (codeStr) => {
           });
         } else {
           await markQuestionAttempted(uid, questionId, language, score, currentCode);
+          if (!solvedIds.includes(questionId)) {
+            setAttemptedIds(prev => [...new Set([...prev, questionId])]);
+          }
 
           // Store wrong-answer submission too
           await saveSolution(uid, {
@@ -802,7 +808,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
   // Filter sidebar questions
   const filteredSidebarQuestions = sidebarQuestions.filter(q => {
     const isSolved = solvedIds.includes(q.questionId);
-    const isAttempted = Object.keys(problemDetails).includes(q.questionId) && !isSolved;
+    const isAttempted = attemptedIds.includes(q.questionId) || (Object.keys(problemDetails).includes(q.questionId) && !isSolved);
     const status = isSolved ? 'SOLVED' : isAttempted ? 'ATTEMPTED' : 'UNSOLVED';
 
     const matchesSearch = !sidebarSearch ||
@@ -908,7 +914,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
           <div className="psb-sidebar-list">
             {filteredSidebarQuestions.map((q, idx) => {
               const isActive = q.questionId === questionId;
-              const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium || q.metadata?.isPremium, isPremiumUser);
+              const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium || q.metadata?.isPremium, isPremiumUser, attemptedIds);
 
               return (
                 <div

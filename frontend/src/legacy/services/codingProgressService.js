@@ -4,19 +4,30 @@
  * Local Storage First service for tracking student practice progress,
  * with sync hooks to Firebase Firestore for cross-device persistence.
  *
- * Local storage format:
- *   Key: `practice_progress_{uid}` -> {
- *     solvedProblems: string[],
- *     problemDetails: {
- *       [questionId]: {
- *         status: 'SOLVED' | 'ATTEMPTED',
- *         language: string,
- *         attempts: number,
- *         bestScore: number,
- *         lastSolvedAt: string
- *       }
+ * Schema: codingProgress/{uid}
+ * {
+ *   completedQuestions: string[],    // Array of completed / solved question IDs
+ *   attemptedQuestions: string[],    // Array of attempted question IDs
+ *   solvedProblems: string[],        // Backward compatibility mirror of completedQuestions
+ *   solvedCount: number,             // Total completed count
+ *   attemptedCount: number,          // Total attempted count
+ *   cacheId: number,                 // Monotonically incrementing cache sequence ID
+ *   problemDetails: {
+ *     [questionId]: {
+ *       status: 'SOLVED' | 'ATTEMPTED' | 'IN_PROGRESS',
+ *       language: string,
+ *       attempts: number,
+ *       bestScore: number,
+ *       lastSolvedAt?: string,
+ *       lastAttemptedAt?: string,
+ *       totalTimeMs?: number
  *     }
- *   }
+ *   },
+ *   activity: { [dateStr]: { hours: number, problemsSolved: number } },
+ *   activityByDate: { [dateStr]: { questionsAttempted: number, timeSpentMs: number } },
+ *   sheetSolvedDicts: { [sheetId]: { [problemId]: boolean } },
+ *   updatedAt: string
+ * }
  */
 
 import { db } from '../firebase-config';
@@ -37,46 +48,100 @@ const resolveEffectiveUid = (uid) => {
   return '';
 };
 
+// Helper: Standardize local progress structure
+const normalizeProgressStructure = (rawObj) => {
+  const parsed = rawObj && typeof rawObj === 'object' ? rawObj : {};
+  
+  // Normalize completed/solved list
+  const solved = Array.isArray(parsed.completedQuestions) 
+    ? parsed.completedQuestions 
+    : (Array.isArray(parsed.solvedProblems) ? parsed.solvedProblems : []);
+  const uniqueSolved = [...new Set(solved.map(String))].filter(Boolean);
+
+  // Normalize attempted list
+  const attempted = Array.isArray(parsed.attemptedQuestions) 
+    ? parsed.attemptedQuestions 
+    : [];
+  // Exclude solved from attempted
+  const uniqueAttempted = [...new Set(attempted.map(String))].filter(id => id && !uniqueSolved.includes(id));
+
+  const details = parsed.problemDetails || {};
+  const cacheId = Number(parsed.cacheId) || 1;
+
+  return {
+    completedQuestions: uniqueSolved,
+    solvedProblems: uniqueSolved, // backward compatibility
+    attemptedQuestions: uniqueAttempted,
+    solvedCount: uniqueSolved.length,
+    attemptedCount: uniqueAttempted.length,
+    cacheId,
+    problemDetails: details,
+    activity: parsed.activity || {},
+    activityByDate: parsed.activityByDate || {},
+    sheetSolvedDicts: parsed.sheetSolvedDicts || {},
+    updatedAt: parsed.updatedAt || new Date().toISOString()
+  };
+};
+
 // Helper: Get local progress structure
 const getLocalProgress = (uid) => {
   const effectiveUid = resolveEffectiveUid(uid);
-  if (!effectiveUid) return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
+  if (!effectiveUid) return normalizeProgressStructure({});
   try {
     let raw = localStorage.getItem(`practice_progress_${effectiveUid}`);
     if (!raw && uid && uid !== effectiveUid) {
       raw = localStorage.getItem(`practice_progress_${uid}`);
     }
-    if (!raw) return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
+    if (!raw) return normalizeProgressStructure({});
     const parsed = JSON.parse(raw);
-    return {
-      solvedProblems: Array.isArray(parsed.solvedProblems) ? parsed.solvedProblems : [],
-      problemDetails: parsed.problemDetails || {},
-      activity: parsed.activity || {},
-      sheetSolvedDicts: parsed.sheetSolvedDicts || {}
-    };
+    return normalizeProgressStructure(parsed);
   } catch (_) {
-    return { solvedProblems: [], problemDetails: {}, activity: {}, sheetSolvedDicts: {} };
+    return normalizeProgressStructure({});
   }
 };
 
-// Helper: Save local progress structure
+// Helper: Save local progress structure with incrementing cacheId
 const saveLocalProgress = (uid, progress) => {
   const effectiveUid = resolveEffectiveUid(uid);
   if (!effectiveUid) return;
-  localStorage.setItem(`practice_progress_${effectiveUid}`, JSON.stringify(progress));
+
+  // Bump cacheId and update summary counts
+  progress.cacheId = (Number(progress.cacheId) || 0) + 1;
+  progress.solvedCount = (progress.completedQuestions || []).length;
+  progress.attemptedCount = (progress.attemptedQuestions || []).length;
+  progress.updatedAt = new Date().toISOString();
+
+  const serialized = JSON.stringify(progress);
+  localStorage.setItem(`practice_progress_${effectiveUid}`, serialized);
   if (uid && uid !== effectiveUid) {
-    localStorage.setItem(`practice_progress_${uid}`, JSON.stringify(progress));
+    localStorage.setItem(`practice_progress_${uid}`, serialized);
   }
 };
 
 // ── Read Operations ────────────────────────────────────────────────────────────
 
 /**
- * Get solved question IDs from Local Storage.
+ * Get completed / solved question IDs from Local Storage.
+ */
+export const getCompletedQuestionIds = async (uid) => {
+  const local = getLocalProgress(uid);
+  return local.completedQuestions;
+};
+
+/**
+ * Backward-compatible alias for getCompletedQuestionIds.
  */
 export const getSolvedQuestionIds = async (uid) => {
   const local = getLocalProgress(uid);
-  return local.solvedProblems;
+  return local.completedQuestions;
+};
+
+/**
+ * Get attempted question IDs from Local Storage.
+ */
+export const getAttemptedQuestionIds = async (uid) => {
+  const local = getLocalProgress(uid);
+  return local.attemptedQuestions;
 };
 
 /**
@@ -84,6 +149,29 @@ export const getSolvedQuestionIds = async (uid) => {
  */
 export const getFullProgress = async (uid) => {
   return getLocalProgress(uid);
+};
+
+/**
+ * Get quick summary stats (solvedCount, attemptedCount, cacheId).
+ */
+export const getProgressSummary = async (uid) => {
+  const local = getLocalProgress(uid);
+  return {
+    solvedCount: local.solvedCount,
+    attemptedCount: local.attemptedCount,
+    completedQuestions: local.completedQuestions,
+    attemptedQuestions: local.attemptedQuestions,
+    cacheId: local.cacheId,
+    updatedAt: local.updatedAt
+  };
+};
+
+/**
+ * Get the current incrementing cacheId.
+ */
+export const getCacheId = (uid) => {
+  const local = getLocalProgress(uid);
+  return local.cacheId;
 };
 
 /**
@@ -97,75 +185,92 @@ export const getQuestionProgress = async (uid, questionId) => {
 // ── Write Operations ───────────────────────────────────────────────────────────
 
 /**
- * Mark a question as solved locally.
+ * Mark a question as solved / completed.
  */
 export const markQuestionSolved = async (uid, questionId, language, score, attempts = 1) => {
   if (!uid || !questionId) return { success: false };
   
+  const strQId = String(questionId).trim();
   const local = getLocalProgress(uid);
-  const existing = local.problemDetails[questionId];
+  const existing = local.problemDetails[strQId];
   const now = new Date().toISOString();
 
   const detail = {
     status: 'SOLVED',
-    language,
-    attempts: (existing?.attempts || 0) + attempts,
-    bestScore: Math.max(score, existing?.bestScore || 0),
+    language: language || existing?.language || 'cpp',
+    attempts: (existing?.attempts || 0) + (typeof attempts === 'number' ? attempts : 1),
+    bestScore: Math.max(typeof score === 'number' ? score : 100, existing?.bestScore || 0),
     lastSolvedAt: now,
+    lastAttemptedAt: now
   };
 
-  local.problemDetails[questionId] = detail;
+  local.problemDetails[strQId] = detail;
+  
+  // Add to completedQuestions / solvedProblems
+  if (!local.completedQuestions.includes(strQId)) {
+    local.completedQuestions.push(strQId);
+  }
+  local.solvedProblems = local.completedQuestions;
+
+  // Remove from attemptedQuestions since it's now completed
+  local.attemptedQuestions = local.attemptedQuestions.filter(id => id !== strQId);
   
   // Track activity solved count
-  if (!local.solvedProblems.includes(questionId)) {
-    local.solvedProblems.push(questionId);
-    
-    if (!local.activity) local.activity = {};
-    const today = new Date().toISOString().split('T')[0];
-    if (!local.activity[today]) {
-      local.activity[today] = { hours: 0, problemsSolved: 0 };
-    }
-    local.activity[today].problemsSolved += 1;
+  if (!local.activity) local.activity = {};
+  const today = now.split('T')[0];
+  if (!local.activity[today]) {
+    local.activity[today] = { hours: 0, problemsSolved: 0 };
   }
+  local.activity[today].problemsSolved += 1;
 
   saveLocalProgress(uid, local);
-  console.log(`[CodingProgressService] ${questionId} marked as SOLVED in Local Storage`);
+  console.log(`[CodingProgressService] ${strQId} marked as SOLVED (cacheId: ${local.cacheId})`);
 
-  // Fire-and-forget auto sync if online
+  // Background sync with Firestore if online
   if (navigator.onLine) {
     try {
       const docRef = doc(db, COLLECTION, uid);
       await setDoc(docRef, local, { merge: true });
     } catch (e) {
-      console.warn('[CodingProgressService] Background sync failed (will be synced later):', e.message);
+      console.warn('[CodingProgressService] Background sync failed (will sync later):', e.message);
     }
   }
 
-  return { success: true };
+  return { success: true, progress: local };
 };
 
 /**
- * Mark a question as attempted locally.
+ * Mark a question as attempted / in-progress.
  */
 export const markQuestionAttempted = async (uid, questionId, language, score) => {
   if (!uid || !questionId) return { success: false };
   
+  const strQId = String(questionId).trim();
   const local = getLocalProgress(uid);
-  const existing = local.problemDetails[questionId];
+  const existing = local.problemDetails[strQId];
   const now = new Date().toISOString();
 
+  const isAlreadySolved = local.completedQuestions.includes(strQId) || existing?.status === 'SOLVED';
+
   const detail = {
-    status: existing?.status === 'SOLVED' ? 'SOLVED' : 'ATTEMPTED',
-    language,
+    status: isAlreadySolved ? 'SOLVED' : 'ATTEMPTED',
+    language: language || existing?.language || 'cpp',
     attempts: (existing?.attempts || 0) + 1,
-    bestScore: Math.max(score, existing?.bestScore || 0),
-    lastSolvedAt: now,
+    bestScore: Math.max(typeof score === 'number' ? score : 0, existing?.bestScore || 0),
+    lastAttemptedAt: now,
+    lastSolvedAt: existing?.lastSolvedAt || (isAlreadySolved ? now : undefined)
   };
 
-  local.problemDetails[questionId] = detail;
+  local.problemDetails[strQId] = detail;
+
+  // If not already completed, add to attemptedQuestions
+  if (!isAlreadySolved && !local.attemptedQuestions.includes(strQId)) {
+    local.attemptedQuestions.push(strQId);
+  }
+
   saveLocalProgress(uid, local);
 
-  // Fire-and-forget auto sync if online
+  // Background sync with Firestore if online
   if (navigator.onLine) {
     try {
       const docRef = doc(db, COLLECTION, uid);
@@ -175,26 +280,23 @@ export const markQuestionAttempted = async (uid, questionId, language, score) =>
     }
   }
 
-  return { success: true };
+  return { success: true, progress: local };
 };
 
 /**
  * Track time spent on a specific question (accumulated across sessions).
- * Called each time the student leaves a question or submits.
- *
- * @param {string} uid
- * @param {string} questionId
- * @param {number} timeSpentMs - Milliseconds spent in this session
  */
 export const trackQuestionTimeSpent = async (uid, questionId, timeSpentMs) => {
   if (!uid || !questionId || !timeSpentMs || timeSpentMs <= 0) return;
+  const strQId = String(questionId).trim();
   const local = getLocalProgress(uid);
-  const existing = local.problemDetails[questionId] || {};
-  local.problemDetails[questionId] = {
+  const existing = local.problemDetails[strQId] || {};
+  local.problemDetails[strQId] = {
     ...existing,
     totalTimeMs: (existing.totalTimeMs || 0) + timeSpentMs,
   };
   saveLocalProgress(uid, local);
+
   // Background sync
   if (navigator.onLine) {
     try {
@@ -205,10 +307,6 @@ export const trackQuestionTimeSpent = async (uid, questionId, timeSpentMs) => {
 
 /**
  * Record daily practice activity — questions attempted and time spent today.
- * Called on each submission or significant practice action.
- *
- * @param {string} uid
- * @param {{ questionsAttempted?: number, timeSpentMs?: number }} delta
  */
 export const trackDailyActivity = async (uid, delta = {}) => {
   if (!uid) return;
@@ -239,17 +337,7 @@ export const trackDailyActivity = async (uid, delta = {}) => {
 
 /**
  * Synchronize Local Storage progress with Firebase Firestore.
- * Merges both copies taking the best results.
- *
- * @param {string} uid - Firebase Auth UID (canonical). Legacy callers that passed
- *   email will be routed here after the caller-side fix; this function now strictly
- *   expects a UID and writes to codingProgress/{uid}.
- *
- * BACKWARD COMPATIBILITY: On first sync for a user, if codingProgress/{uid} does
- * not yet exist, we check for a legacy codingProgress/{emailKey} document and
- * merge it non-destructively into codingProgress/{uid}. Migration is idempotent:
- * once the UID doc has any data the legacy check is skipped. Old email docs are
- * NOT deleted (historical data preserved).
+ * Merges both copies taking the union of completed and attempted questions.
  */
 export const syncProgressWithFirebase = async (uid) => {
   if (!uid) return { success: false, error: 'No user ID' };
@@ -262,29 +350,33 @@ export const syncProgressWithFirebase = async (uid) => {
     const local = getLocalProgress(uid);
 
     // ── Legacy migration (idempotent) ───────────────────────────────────────
-    // If the UID document has no solvedProblems yet, look for a legacy email-based
-    // doc. We only do this once: as soon as the UID doc has content we stop.
-    let remote = docSnap.exists() ? docSnap.data() : { solvedProblems: [], problemDetails: {} };
-    if (!docSnap.exists() || !(remote.solvedProblems?.length > 0)) {
+    let remote = docSnap.exists() ? docSnap.data() : { completedQuestions: [], solvedProblems: [], problemDetails: {} };
+    if (!docSnap.exists() || !((remote.completedQuestions?.length > 0) || (remote.solvedProblems?.length > 0))) {
       try {
         const { auth } = await import('../firebase-config');
         const email = auth.currentUser?.email;
         if (email) {
-          const legacyKey = email.replace(/[@.]/g, '_'); // same normalization as old code
-          // Try both the raw email and the normalized key as the doc ID
+          const legacyKey = email.replace(/[@.]/g, '_');
           const legacyCandidates = [email, legacyKey];
           for (const candidate of legacyCandidates) {
-            if (candidate === uid) continue; // already the same, skip
+            if (candidate === uid) continue;
             try {
               const legacySnap = await getDoc(doc(db, COLLECTION, candidate));
               if (legacySnap.exists()) {
                 const legacyData = legacySnap.data();
-                console.log('[CodingProgressService] Migrating legacy email-based progress to UID doc:', candidate, '→', uid);
-                // Merge legacy into remote (remote wins on conflict since it may have newer data)
+                console.log('[CodingProgressService] Migrating legacy email-based progress:', candidate, '->', uid);
                 remote = {
+                  completedQuestions: [...new Set([
+                    ...(legacyData.completedQuestions || legacyData.solvedProblems || []),
+                    ...(remote.completedQuestions || remote.solvedProblems || []),
+                  ])],
+                  attemptedQuestions: [...new Set([
+                    ...(legacyData.attemptedQuestions || []),
+                    ...(remote.attemptedQuestions || []),
+                  ])],
                   solvedProblems: [...new Set([
-                    ...(legacyData.solvedProblems || []),
-                    ...(remote.solvedProblems || []),
+                    ...(legacyData.solvedProblems || legacyData.completedQuestions || []),
+                    ...(remote.solvedProblems || remote.completedQuestions || []),
                   ])],
                   problemDetails: { ...(legacyData.problemDetails || {}), ...(remote.problemDetails || {}) },
                   activity: { ...(legacyData.activity || {}), ...(remote.activity || {}) },
@@ -292,32 +384,37 @@ export const syncProgressWithFirebase = async (uid) => {
                 };
                 break;
               }
-            } catch (_) {} // legacy doc inaccessible — skip silently
+            } catch (_) {}
           }
         }
-      } catch (_) {} // auth not available — skip migration silently
+      } catch (_) {}
     }
-    // ── End legacy migration ────────────────────────────────────────────────
 
-    // Merge solvedProblems array
-    const mergedSolved = [...new Set([...(local.solvedProblems || []), ...(remote.solvedProblems || [])])];
+    // Merge completedQuestions / solvedProblems
+    const remoteSolved = remote.completedQuestions || remote.solvedProblems || [];
+    const mergedSolved = [...new Set([...(local.completedQuestions || []), ...remoteSolved])];
 
-    // Merge problemDetails
+    // Merge attemptedQuestions (exclude completed)
+    const remoteAttempted = remote.attemptedQuestions || [];
+    const mergedAttempted = [...new Set([...(local.attemptedQuestions || []), ...remoteAttempted])]
+      .filter(id => !mergedSolved.includes(id));
+
+    // Merge problemDetails taking highest attempts and best score
     const mergedDetails = { ...(remote.problemDetails || {}), ...(local.problemDetails || {}) };
-    
-    // Resolve conflicts by taking the best score and total attempts
-    const allKeys = new Set([...Object.keys(local.problemDetails), ...Object.keys(remote.problemDetails || {})]);
+    const allKeys = new Set([...Object.keys(local.problemDetails || {}), ...Object.keys(remote.problemDetails || {})]);
     for (const key of allKeys) {
-      const lDet = local.problemDetails[key];
+      const lDet = local.problemDetails?.[key];
       const rDet = remote.problemDetails?.[key];
 
       if (lDet && rDet) {
+        const isSolved = lDet.status === 'SOLVED' || rDet.status === 'SOLVED' || mergedSolved.includes(key);
         mergedDetails[key] = {
-          status: (lDet.status === 'SOLVED' || rDet.status === 'SOLVED') ? 'SOLVED' : 'ATTEMPTED',
-          language: lDet.bestScore >= rDet.bestScore ? lDet.language : rDet.language,
+          status: isSolved ? 'SOLVED' : 'ATTEMPTED',
+          language: lDet.bestScore >= (rDet.bestScore || 0) ? lDet.language : (rDet.language || lDet.language),
           attempts: Math.max(lDet.attempts || 1, rDet.attempts || 1),
           bestScore: Math.max(lDet.bestScore || 0, rDet.bestScore || 0),
-          lastSolvedAt: new Date(lDet.lastSolvedAt) > new Date(rDet.lastSolvedAt) ? lDet.lastSolvedAt : rDet.lastSolvedAt
+          lastSolvedAt: lDet.lastSolvedAt || rDet.lastSolvedAt,
+          lastAttemptedAt: lDet.lastAttemptedAt || rDet.lastAttemptedAt
         };
       }
     }
@@ -345,19 +442,27 @@ export const syncProgressWithFirebase = async (uid) => {
       mergedSheets[sheetId] = { ...(remoteSheets[sheetId] || {}), ...(localSheets[sheetId] || {}) };
     }
 
+    const nextCacheId = Math.max(Number(local.cacheId) || 0, Number(remote.cacheId) || 0) + 1;
+
     const mergedProgress = {
+      completedQuestions: mergedSolved,
       solvedProblems: mergedSolved,
+      attemptedQuestions: mergedAttempted,
+      solvedCount: mergedSolved.length,
+      attemptedCount: mergedAttempted.length,
+      cacheId: nextCacheId,
       problemDetails: mergedDetails,
       activity: mergedActivity,
       sheetSolvedDicts: mergedSheets,
       updatedAt: new Date().toISOString()
     };
 
-    // Save to both locations
-    saveLocalProgress(uid, mergedProgress);
+    // Save to LocalStorage and Firestore
+    const effectiveUid = resolveEffectiveUid(uid);
+    localStorage.setItem(`practice_progress_${effectiveUid}`, JSON.stringify(mergedProgress));
     await setDoc(docRef, mergedProgress, { merge: true });
 
-    console.log('[CodingProgressService] Sync completed successfully');
+    console.log('[CodingProgressService] Sync completed. Solved:', mergedProgress.solvedCount, 'Attempted:', mergedProgress.attemptedCount, 'cacheId:', nextCacheId);
     return { success: true, progress: mergedProgress };
   } catch (error) {
     console.error('[CodingProgressService] Sync failed:', error);
@@ -367,15 +472,27 @@ export const syncProgressWithFirebase = async (uid) => {
 
 /**
  * Get question status for UI display.
+ * Returns: 'SOLVED' | 'ATTEMPTED' | 'IN_PROGRESS' | 'UNSOLVED' | 'LOCKED'
  */
-export const getQuestionDisplayStatus = (questionId, solvedIds = [], problemDetails = {}, isPremium = false, userIsPremium = false) => {
-  if (questionId && String(questionId).startsWith('Q0.')) {
+export const getQuestionDisplayStatus = (
+  questionId, 
+  solvedIds = [], 
+  problemDetails = {}, 
+  isPremium = false, 
+  userIsPremium = false,
+  attemptedIds = []
+) => {
+  if (!questionId) return 'UNSOLVED';
+  const strId = String(questionId);
+
+  if (strId.startsWith('Q0.')) {
     isPremium = false;
   }
   if (isPremium && !userIsPremium) return 'LOCKED';
-  if (solvedIds.includes(questionId)) return 'SOLVED';
-  const detail = problemDetails[questionId];
-  if (detail?.status === 'ATTEMPTED') return 'ATTEMPTED';
+
+  if (solvedIds.includes(strId) || problemDetails[strId]?.status === 'SOLVED') return 'SOLVED';
+  if (attemptedIds.includes(strId) || problemDetails[strId]?.status === 'ATTEMPTED') return 'ATTEMPTED';
+  if (problemDetails[strId]?.status === 'IN_PROGRESS') return 'IN_PROGRESS';
   return 'UNSOLVED';
 };
 
@@ -406,7 +523,7 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
   if (navigator.onLine) {
     try {
       const { auth } = await import('../firebase-config');
-      if (!auth.currentUser) return { success: true }; // skip if not authenticated
+      if (!auth.currentUser) return { success: true };
       const docRef = doc(db, COLLECTION, uid);
       await setDoc(docRef, local, { merge: true });
     } catch (e) {
@@ -446,8 +563,12 @@ export const saveSheetProgress = async (uid, sheetId, problemId, isSolved) => {
 };
 
 export default {
+  getCompletedQuestionIds,
   getSolvedQuestionIds,
+  getAttemptedQuestionIds,
   getFullProgress,
+  getProgressSummary,
+  getCacheId,
   getQuestionProgress,
   markQuestionSolved,
   markQuestionAttempted,

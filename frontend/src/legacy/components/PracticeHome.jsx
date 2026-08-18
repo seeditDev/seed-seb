@@ -149,6 +149,8 @@ const PracticeHome = () => {
   const [activeTab, setActiveTab] = useState('paths'); // 'paths' or 'bank'
   const [questions, setQuestions] = useState([]);
   const [solvedIds, setSolvedIds] = useState([]);
+  const [attemptedIds, setAttemptedIds] = useState([]);
+  const [cacheId, setCacheId] = useState(1);
   const [problemDetails, setProblemDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -566,8 +568,12 @@ const PracticeHome = () => {
       setCourseQuestionIds(courseQidsMap || {});
 
       setQuestions(indexQs);
-      setSolvedIds(progress.solvedProblems || []);
+      const completedList = progress.completedQuestions || progress.solvedProblems || [];
+      const attemptedList = progress.attemptedQuestions || [];
+      setSolvedIds(completedList);
+      setAttemptedIds(attemptedList);
       setProblemDetails(progress.problemDetails || {});
+      setCacheId(progress.cacheId || 1);
       if (progress.sheetSolvedDicts) {
         setSheetSolvedDicts(prev => ({ ...prev, ...progress.sheetSolvedDicts }));
       }
@@ -1450,13 +1456,17 @@ const PracticeHome = () => {
       if (!matchesDifficulty) return false;
 
       if (selectedStatus !== 'All') {
-        const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser);
-        if (status !== selectedStatus) return false;
+        const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser, attemptedIds);
+        if (selectedStatus === 'ATTEMPTED' || selectedStatus === 'IN_PROGRESS') {
+          if (status !== 'ATTEMPTED' && status !== 'IN_PROGRESS') return false;
+        } else if (status !== selectedStatus) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, solvedIds, problemDetails, isPremiumUser]);
+  }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, solvedIds, attemptedIds, problemDetails, isPremiumUser]);
 
   const totalPages = Math.ceil(filteredQuestions.length / PAGE_SIZE) || 1;
 
@@ -1551,7 +1561,7 @@ const PracticeHome = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {contestQuestions.map((q, idx) => {
                 const isPremiumQ = !!q.isPremium;
-                const status = getQuestionDisplayStatus(q.id, solvedIds, problemDetails, isPremiumQ, isPremiumUser);
+                const status = getQuestionDisplayStatus(q.id, solvedIds, problemDetails, isPremiumQ, isPremiumUser, attemptedIds);
                 const bestScore = problemDetails[q.id]?.bestScore;
 
                 return (
@@ -1810,7 +1820,7 @@ const PracticeHome = () => {
                                           if (modIdx === 0 && first4ProblemIds.includes(prob.id)) {
                                             isPremiumQ = false;
                                           }
-                                          const status = getQuestionDisplayStatus(prob.id, solvedIds, problemDetails, isPremiumQ, isPremiumUser);
+                                          const status = getQuestionDisplayStatus(prob.id, solvedIds, problemDetails, isPremiumQ, isPremiumUser, attemptedIds);
                                           const isAptitude = course.id === 'learn_aptitude';
                                           const articleSlug = getCorrectArticleForProblem(course.id, prob);
 
@@ -2177,7 +2187,7 @@ const PracticeHome = () => {
                                         {qList.map((p, pIdx) => {
                                           const isSolved = solvedIdsSet.has(p.id);
                                           const isPremiumQ = p.isPremium;
-                                          const status = getQuestionDisplayStatus(p.id, solvedIds, problemDetails, isPremiumQ, isPremiumUser);
+                                          const status = getQuestionDisplayStatus(p.id, solvedIds, problemDetails, isPremiumQ, isPremiumUser, attemptedIds);
                                           const diffClass = p.difficulty?.toLowerCase() || 'easy';
 
                                           return (
@@ -2855,15 +2865,15 @@ const PracticeHome = () => {
                 onChange={e => setSelectedStatus(e.target.value)}
                 className="ph-problems-select"
               >
-                <option value="All">Status</option>
-                <option value="SOLVED">Solved</option>
-                <option value="ATTEMPTED">Attempted</option>
+                <option value="All">Status: All</option>
+                <option value="SOLVED">Solved ({solvedIds.length})</option>
+                <option value="ATTEMPTED">Attempted ({attemptedIds.length})</option>
                 <option value="UNSOLVED">Todo</option>
               </select>
 
               {/* Count */}
               <span className="ph-problems-count">
-                {filteredQuestions.length} / {questions.length}
+                {filteredQuestions.length} / {questions.length} (Solved: {solvedIds.length}, Attempted: {attemptedIds.length})
               </span>
             </div>
 
@@ -2893,7 +2903,7 @@ const PracticeHome = () => {
                   </thead>
                   <tbody>
                     {paginatedQuestions.map((q, idx) => {
-                      const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser);
+                      const status = getQuestionDisplayStatus(q.questionId, solvedIds, problemDetails, q.isPremium, isPremiumUser, attemptedIds);
                       const bestScore = problemDetails[q.questionId]?.bestScore;
 
                       const diffClass = q.difficulty === 'Hard' ? 'hard'

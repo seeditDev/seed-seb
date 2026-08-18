@@ -1208,7 +1208,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             // Sync navigation to slug
             navigate(`${CODING_ROUTE_BASE}/${assessment.slug}`);
         } catch (err) {
-}
+            console.error("[CodingAssessmentPage] Error starting assessment:", err);
+            setError(err?.message || "Failed to initialize coding workspace.");
+            setLoading(false);
+        }
     };
 
     // Restore state from reload / exit with 5-minute grace check
@@ -1256,13 +1259,31 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             setRemainingTime(remaining);
             
             if (storedCodeMap) {
-                setCodeMap(JSON.parse(storedCodeMap));
+                try {
+                    setCodeMap(typeof storedCodeMap === 'string' ? JSON.parse(storedCodeMap) : storedCodeMap);
+                } catch (_) {
+                    setCodeMap({});
+                }
+            } else {
+                // Initialize default boilerplate codes for all questions and all languages
+                const initialCodeMap = {};
+                const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
+                normalizedQuestions.forEach(q => {
+                    const qId = q.id || q.questionId;
+                    availableLanguages.forEach(lang => {
+                        initialCodeMap[`${qId}_${lang}`] = q.boilerplates?.[lang] || FREE_BOILERPLATES[lang] || "";
+                    });
+                });
+                setCodeMap(initialCodeMap);
             }
 
             // Restore active indexes and color visited questions
             setActiveQuestionIndex(0);
-            if (questions && questions.length > 0) {
-                setVisitedQuestions({ [questions[0].id]: true });
+            if (normalizedQuestions && normalizedQuestions.length > 0) {
+                const firstQId = normalizedQuestions[0]?.id || normalizedQuestions[0]?.questionId;
+                if (firstQId) {
+                    setVisitedQuestions({ [firstQId]: true });
+                }
             }
         } catch (e) {
             console.error("Error restoring local state:", e);

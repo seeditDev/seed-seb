@@ -45,21 +45,50 @@ const fetchJson = async (path) => {
 let questionMapCache = null;
 
 export const fetchQuestion = async (questionId) => {
-  if (questionId.startsWith('Q_apt_')) {
+  if (!questionId) return null;
+
+  // If already a full question object passed in
+  if (typeof questionId === 'object') {
+    if (questionId.content?.problemStatement || questionId.problemStatement || questionId.description || questionId.testCases) {
+      return questionId;
+    }
+    questionId = questionId.questionId || questionId.id || '';
+  }
+
+  const rawId = String(questionId).trim();
+  if (!rawId) return null;
+
+  // Normalized ID forms
+  let normId = rawId;
+  if (/^\d+$/.test(rawId)) {
+    normId = `Q${rawId}`;
+  } else if (/^q\d+$/i.test(rawId)) {
+    normId = `Q${rawId.slice(1)}`;
+  }
+
+  // 1. Aptitude questions
+  if (normId.startsWith('Q_apt_')) {
     try {
-      const res = await fetchArticleFile(`course/AptitudeCourses/${questionId}.json`);
-      if (res.ok) {
-        return await res.json();
-      }
+      const res = await fetchArticleFile(`course/AptitudeCourses/${normId}.json`);
+      if (res.ok) return await res.json();
     } catch (_) {}
   }
 
-  if (questionId.startsWith('Q0.') || /^[Q]\d+$/.test(questionId)) {
+  // 2. Direct coding/questions/ path
+  try {
+    const qDoc = await fetchJson(`coding/questions/${normId}.json`);
+    if (qDoc) return qDoc;
+  } catch (_) {}
+
+  // Try rawId if different from normId
+  if (rawId !== normId) {
     try {
-      return await fetchJson(`coding/questions/${questionId}.json`);
+      const qDoc = await fetchJson(`coding/questions/${rawId}.json`);
+      if (qDoc) return qDoc;
     } catch (_) {}
   }
 
+  // 3. Technical courses mapped lookup
   if (!questionMapCache) {
     try {
       const mapRes = await fetchArticleFile('course/TechnicalCourses/question_map.json');
@@ -69,26 +98,25 @@ export const fetchQuestion = async (questionId) => {
     } catch (_) {}
   }
 
-  const mappedFolder = questionMapCache?.[questionId];
+  const mappedFolder = questionMapCache?.[normId] || questionMapCache?.[rawId];
   if (mappedFolder) {
     try {
-      const res = await fetchArticleFile(`course/TechnicalCourses/${mappedFolder}/Questionbank/${questionId}.json`);
-      if (res.ok) {
-        return await res.json();
-      }
+      const res = await fetchArticleFile(`course/TechnicalCourses/${mappedFolder}/Questionbank/${normId}.json`);
+      if (res.ok) return await res.json();
     } catch (_) {}
   }
 
+  // 4. Search technical courses folders
   const folders = ['c', 'java', 'cpp', 'dsa'];
   for (const f of folders) {
     try {
-      const res = await fetchArticleFile(`course/TechnicalCourses/${f}/Questionbank/${questionId}.json`);
-      if (res.ok) {
-        return await res.json();
-      }
+      const res = await fetchArticleFile(`course/TechnicalCourses/${f}/Questionbank/${normId}.json`);
+      if (res.ok) return await res.json();
     } catch (_) {}
   }
-  return fetchJson(`coding/questions/${questionId}.json`);
+
+  // 5. Last resort fetch
+  return fetchJson(`coding/questions/${normId}.json`);
 };
 
 /**
@@ -104,29 +132,39 @@ export const fetchQuestionsIndex = async () => {
 
 /**
  * Fetch multiple questions by ID in parallel.
- * Accepts either plain string IDs or {id, cdnUrl} objects from the new slim slug format.
+ * Accepts either plain string IDs, {id, cdnUrl} objects, or full question objects.
  * Failed fetches return null (graceful degradation).
- * @param {string[]|{id:string,cdnUrl?:string}[]} questionIds
+ * @param {string[]|object[]} questionIds
  * @returns {Promise<Object[]>} Array of question data (nulls filtered out)
  */
 export const fetchQuestionsForContest = async (questionIds = []) => {
   const results = await Promise.allSettled(questionIds.map(item => {
     if (item && typeof item === 'object') {
+      // If already a complete question object, return immediately
+      if (item.content?.problemStatement || item.problemStatement || (item.title && (item.sampleTestCases || item.testCases))) {
+        return Promise.resolve(item);
+      }
       // New slim slug format: { id, cdnUrl, title, difficulty, category }
-      const { id, cdnUrl } = item;
+      const qId = item.id || item.questionId || '';
+      const { cdnUrl } = item;
       if (cdnUrl) {
         return fetchJson(cdnUrl.replace(/^https?:\/\/raw\.githubusercontent\.com\/seeditDev\/seed-contents\/main\//, ''))
-          .catch(() => fetchQuestion(id)); // fallback to id-based if cdnUrl fails
+          .catch(() => fetchQuestion(qId || item));
       }
-      return fetchQuestion(id);
+      return fetchQuestion(qId || item);
     }
-    return fetchQuestion(item); // plain string ID
+    return fetchQuestion(item); // plain string or number ID
   }));
+
   return results
     .map((r, i) => {
-      if (r.status === 'fulfilled') return r.value;
-      const id = typeof questionIds[i] === 'object' ? questionIds[i]?.id : questionIds[i];
-      console.warn(`[QuestionBankService] Failed to fetch ${id}:`, r.reason?.message);
+      if (r.status === 'fulfilled' && r.value) return r.value;
+      const originalItem = questionIds[i];
+      if (originalItem && typeof originalItem === 'object' && (originalItem.title || originalItem.id)) {
+        return originalItem; // preserve inline object if fetch failed
+      }
+      const id = typeof originalItem === 'object' ? (originalItem?.id || originalItem?.questionId) : originalItem;
+      console.warn(`[QuestionBankService] Failed to fetch question ${id}:`, r.reason?.message);
       return null;
     })
     .filter(Boolean);

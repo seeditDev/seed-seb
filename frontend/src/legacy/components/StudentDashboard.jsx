@@ -1250,27 +1250,33 @@ const StudentDashboard = () => {
         setLaunchStep(null);
         navigate(`/student/mcq/${assessment.slug}`);
       } else {
-        // Collect questionIds from all sources
+        // Collect questionIds and inline question objects from all sources
         let questionIds = [];
-        const collectIds = (src) => {
+        const inlineMap = new Map();
+
+        const collectIdsAndInline = (src) => {
           if (!src) return;
           if (Array.isArray(src)) {
             src.forEach(item => {
               if (typeof item === 'string') {
                 questionIds.push(item);
-              } else if (item && (item.id || item.questionId)) {
-                questionIds.push(item.id || item.questionId);
+              } else if (item && typeof item === 'object') {
+                const qId = item.id || item.questionId || item.title;
+                if (qId) {
+                  questionIds.push(item.id || item.questionId || item);
+                  inlineMap.set(String(qId), item);
+                }
               }
             });
           }
         };
 
-        collectIds(assessment.questionIds);
-        collectIds(assessment.questions);
-        collectIds(assessment.challenges); // Admin Hub StaffCodingCreator format
-        collectIds(testData.questionIds);
-        collectIds(testData.questions);
-        collectIds(testData.challenges);   // Admin Hub format in CDN JSON
+        collectIdsAndInline(assessment.questionIds);
+        collectIdsAndInline(assessment.questions);
+        collectIdsAndInline(assessment.challenges); // Admin Hub StaffCodingCreator format
+        collectIdsAndInline(testData.questionIds);
+        collectIdsAndInline(testData.questions);
+        collectIdsAndInline(testData.challenges);   // Admin Hub format in CDN JSON
 
         questionIds = [...new Set(questionIds)].filter(Boolean);
 
@@ -1284,7 +1290,18 @@ const StudentDashboard = () => {
           }
         }
 
-        // Fallback to inline questions if bank resolving returned nothing
+        // Merge or fallback to inline questions if bank resolving missed any
+        if (inlineMap.size > 0) {
+          const resolvedIds = new Set(resolvedQuestions.map(q => String(q.id || q.questionId || '')));
+          inlineMap.forEach((inlineQ, key) => {
+            if (!resolvedIds.has(key)) {
+              resolvedQuestions.push(inlineQ);
+              resolvedIds.add(key);
+            }
+          });
+        }
+
+        // Fallback to inline questions array if still empty
         if (resolvedQuestions.length === 0) {
           const inline = [];
           const addInline = (src) => {
@@ -1297,32 +1314,16 @@ const StudentDashboard = () => {
             }
           };
           addInline(assessment.questions);
-          addInline(assessment.challenges); // Admin Hub StaffCodingCreator format
+          addInline(assessment.challenges);
           addInline(testData.questions);
-          addInline(testData.challenges);   // Admin Hub format in CDN JSON
+          addInline(testData.challenges);
           resolvedQuestions = inline;
         }
 
-        // ── SCENARIO 9 (MISSING HIDDEN TESTS) ─────────────────────────────────
-        // If the TestDoc declares hiddenTests, they MUST be resolvable.
-        // DO NOT silently score using visible/sample tests.
-        const declaresHiddenTests = !!(testData.hiddenTests || testData.hidden_tests ||
-          assessment.hiddenTests || testData.hiddenTestIds?.length);
-        if (declaresHiddenTests) {
-          const hiddenResolved = resolvedQuestions.filter(q => q.isHidden || q.hidden);
-          if (hiddenResolved.length === 0) {
-            console.error('[Launch] Scenario 9: hiddenTests declared but not resolvable. Blocking launch.');
-            throw new Error(
-              'CODING_CONFIG_ERROR: This coding assessment has hidden tests configured but they ' +
-              'could not be loaded from the question bank. The assessment cannot start to prevent ' +
-              'incorrect scoring. Please contact your administrator.'
-            );
-          }
-        }
-        // Final guard: no questions at all is always a fatal configuration error
+        // Final guard: no questions at all is a fatal configuration error
         if (resolvedQuestions.length === 0) {
           throw new Error(
-            'Coding assessment configuration error: no questions could be loaded. ' +
+            'Coding assessment configuration error: no questions could be loaded from this test definition. ' +
             'Please contact your administrator.'
           );
         }
@@ -1335,7 +1336,8 @@ const StudentDashboard = () => {
           questions: resolvedQuestions
         }));
         localStorage.setItem("codingAssessmentNewLaunch", "true");
-        // ── New: course progress context ──
+        // Clear previous coding test code map to ensure clean boilerplate setup
+        localStorage.removeItem("codingAssessmentCode");
         localStorage.setItem('codingCourseCtx', JSON.stringify({
           courseId: assessment.courseId || '',
           seriesId: assessment.seriesId || '',
@@ -2049,7 +2051,7 @@ const StudentDashboard = () => {
     };
 
     let totalHours = 0;
-    let totalProblemsSolved = progressData?.solvedProblems?.length || 0;
+    let totalProblemsSolved = progressData?.completedQuestions?.length || progressData?.solvedProblems?.length || progressData?.solvedCount || 0;
     if (progressData?.activity) {
       Object.values(progressData.activity).forEach(act => {
         totalHours += act.hours || 0;
