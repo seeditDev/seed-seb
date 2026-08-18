@@ -662,6 +662,82 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         return Math.round((timeService.now() - startTime) / 1000);
     }, [startTime]);
 
+    // Restore state from reload / exit with 5-minute grace check
+    const restoreAssessmentState = useCallback(() => {
+        try {
+            const storedStartTime = localStorage.getItem("codingAssessmentStartTime");
+            const storedDuration = localStorage.getItem("codingAssessmentTimer");
+            const storedData = localStorage.getItem("codingAssessmentData");
+            const storedCodeMap = localStorage.getItem("codingAssessmentCode");
+            const storedLastActive = localStorage.getItem("codingLastActiveTime");
+
+            if (!storedStartTime || !storedDuration || !storedData) {
+                return;
+            }
+
+            const now = timeService.now();
+            const lastActiveMs = parseInt(storedLastActive || storedStartTime, 10);
+            const elapsedOfflineSec = Math.floor((now - lastActiveMs) / 1000);
+
+            if (elapsedOfflineSec > 300) {
+                console.warn(`[CodingAssessmentPage] Offline exit (${elapsedOfflineSec}s) exceeded 5-minute grace period (300s).`);
+                toast.warning("Your assessment was auto-submitted because your offline window exceeded the 5-minute grace period.");
+                autoSubmitAttemptRef.current?.("grace-period-exceeded-5min");
+                return;
+            }
+
+            const startTimeMs = parseInt(storedStartTime, 10);
+            const durationSec = parseInt(storedDuration, 10);
+            const { assessment, questions } = JSON.parse(storedData);
+
+            const totalElapsed = Math.floor((now - startTimeMs) / 1000);
+            const remaining = Math.max(0, durationSec - totalElapsed);
+
+            if (remaining <= 0) {
+                autoSubmitAttemptRef.current?.("grace-expired");
+                return;
+            }
+
+            const normalizedQuestions = (questions || []).map(normalizeQuestion);
+
+            setCurrentAssessment(assessment);
+            setQuestions(normalizedQuestions);
+            setStartTime(startTimeMs);
+            setTestDuration(durationSec);
+            setRemainingTime(remaining);
+            
+            if (storedCodeMap) {
+                try {
+                    setCodeMap(typeof storedCodeMap === 'string' ? JSON.parse(storedCodeMap) : storedCodeMap);
+                } catch (_) {
+                    setCodeMap({});
+                }
+            } else {
+                // Initialize default boilerplate codes for all questions and all languages
+                const initialCodeMap = {};
+                const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
+                normalizedQuestions.forEach(q => {
+                    const qId = q.id || q.questionId;
+                    availableLanguages.forEach(lang => {
+                        initialCodeMap[`${qId}_${lang}`] = q.boilerplates?.[lang] || FREE_BOILERPLATES[lang] || "";
+                    });
+                });
+                setCodeMap(initialCodeMap);
+            }
+
+            // Restore active indexes and color visited questions
+            setActiveQuestionIndex(0);
+            if (normalizedQuestions && normalizedQuestions.length > 0) {
+                const firstQId = normalizedQuestions[0]?.id || normalizedQuestions[0]?.questionId;
+                if (firstQId) {
+                    setVisitedQuestions({ [firstQId]: true });
+                }
+            }
+        } catch (e) {
+            console.error("Error restoring local state:", e);
+        }
+    }, []);
+
     // Load initial data
     useEffect(() => {
         if (isEmbedded) return; // Skip standard loading flow
@@ -1208,82 +1284,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             setLoading(false);
         }
     };
-
-    // Restore state from reload / exit with 5-minute grace check
-    const restoreAssessmentState = useCallback(() => {
-        try {
-            const storedStartTime = localStorage.getItem("codingAssessmentStartTime");
-            const storedDuration = localStorage.getItem("codingAssessmentTimer");
-            const storedData = localStorage.getItem("codingAssessmentData");
-            const storedCodeMap = localStorage.getItem("codingAssessmentCode");
-            const storedLastActive = localStorage.getItem("codingLastActiveTime");
-
-            if (!storedStartTime || !storedDuration || !storedData) {
-                return;
-            }
-
-            const now = timeService.now();
-            const lastActiveMs = parseInt(storedLastActive || storedStartTime, 10);
-            const elapsedOfflineSec = Math.floor((now - lastActiveMs) / 1000);
-
-            if (elapsedOfflineSec > 300) {
-                console.warn(`[CodingAssessmentPage] Offline exit (${elapsedOfflineSec}s) exceeded 5-minute grace period (300s).`);
-                toast.warning("Your assessment was auto-submitted because your offline window exceeded the 5-minute grace period.");
-                autoSubmitAttemptRef.current?.("grace-period-exceeded-5min");
-                return;
-            }
-
-            const startTimeMs = parseInt(storedStartTime, 10);
-            const durationSec = parseInt(storedDuration, 10);
-            const { assessment, questions } = JSON.parse(storedData);
-
-            const totalElapsed = Math.floor((now - startTimeMs) / 1000);
-            const remaining = Math.max(0, durationSec - totalElapsed);
-
-            if (remaining <= 0) {
-                autoSubmitAttemptRef.current?.("grace-expired");
-                return;
-            }
-
-            const normalizedQuestions = (questions || []).map(normalizeQuestion);
-
-            setCurrentAssessment(assessment);
-            setQuestions(normalizedQuestions);
-            setStartTime(startTimeMs);
-            setTestDuration(durationSec);
-            setRemainingTime(remaining);
-            
-            if (storedCodeMap) {
-                try {
-                    setCodeMap(typeof storedCodeMap === 'string' ? JSON.parse(storedCodeMap) : storedCodeMap);
-                } catch (_) {
-                    setCodeMap({});
-                }
-            } else {
-                // Initialize default boilerplate codes for all questions and all languages
-                const initialCodeMap = {};
-                const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
-                normalizedQuestions.forEach(q => {
-                    const qId = q.id || q.questionId;
-                    availableLanguages.forEach(lang => {
-                        initialCodeMap[`${qId}_${lang}`] = q.boilerplates?.[lang] || FREE_BOILERPLATES[lang] || "";
-                    });
-                });
-                setCodeMap(initialCodeMap);
-            }
-
-            // Restore active indexes and color visited questions
-            setActiveQuestionIndex(0);
-            if (normalizedQuestions && normalizedQuestions.length > 0) {
-                const firstQId = normalizedQuestions[0]?.id || normalizedQuestions[0]?.questionId;
-                if (firstQId) {
-                    setVisitedQuestions({ [firstQId]: true });
-                }
-            }
-        } catch (e) {
-            console.error("Error restoring local state:", e);
-        }
-    }, []);
 
     // Timer Tick
     useEffect(() => {

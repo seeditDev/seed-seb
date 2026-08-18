@@ -322,12 +322,14 @@ class MCQService {
             // no score at all. `status: 'submitting'` is enough to block a
             // refresh re-attempt (checkExistingAttempt treats it as taken),
             // while leaving the document writable for the final result.
-            const update = {
-                status: 'submitting',
-                submittingAt: serverTimestamp(),
-                submittingAtISO: timeService.getNow().toISOString()
-            };
-            await this.writeBothPaths(update, { testID, college, year, department, email });
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const liveUid = auth?.currentUser?.uid || authData.uid || authData.UID || email.replace(/[@.]/g, '_');
+            const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || college || '';
+            await this.writeCanonicalResult(update, {
+                assessmentId: testID,
+                userId: liveUid,
+                userProfile: { ...authData, tenantId, email }
+            });
             console.log('[MCQService] Marked test as submitting to prevent refresh reattempts');
             return true;
         } catch (error) {

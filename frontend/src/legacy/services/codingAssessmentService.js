@@ -126,12 +126,15 @@ class CodingAssessmentService {
                 createdAt: serverTimestamp()
             };
 
-            const canonPath = await this.writeBothPaths(initialData, {
-                assessmentID, college: College, year: Year, department: Department, email: Email
-            });
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const liveUid = auth?.currentUser?.uid || authData.uid || authData.UID || Email.replace(/[@.]/g, '_');
+            const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || userData?.tenantId || College || '';
 
-            // Note: Supabase sync (coding_results / assessment_results tables) was removed.
-            // Firestore at assessmentResults/{assessmentId}/students/{uid} is the single source of truth.
+            const canonPath = await this.writeCanonicalResult(initialData, {
+                assessmentId: assessmentID,
+                userId: liveUid,
+                userProfile: { ...userData, tenantId }
+            });
 
             console.log('[CodingAssessmentService] Initial attempt created:', canonPath);
             return { success: true, docPath: canonPath };
@@ -147,17 +150,18 @@ class CodingAssessmentService {
      */
     static async markAsSubmitting(email, assessmentID, college, year, department) {
         try {
-            // BUG FIXED: setting `completed: true` before the result existed
-            // both locked the document under the new attempt-immutability rule
-            // and left crashed submissions marked complete with no score.
-            // `status: 'submitting'` already blocks the refresh re-attempt.
             const update = {
                 status: 'submitting',
                 submittingAt: serverTimestamp(),
                 submittingAtISO: timeService.getNow().toISOString()
             };
-            const canonPath = await this.writeBothPaths(update, {
-                assessmentID, college, year, department, email
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const liveUid = auth?.currentUser?.uid || authData.uid || authData.UID || email.replace(/[@.]/g, '_');
+            const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || college || '';
+            const canonPath = await this.writeCanonicalResult(update, {
+                assessmentId: assessmentID,
+                userId: liveUid,
+                userProfile: { ...authData, tenantId, email }
             });
 
             return true;
@@ -168,8 +172,7 @@ class CodingAssessmentService {
     }
 
     /**
-     * Save result to Firestore — writes to canonical AssessmentResults path (primary)
-     * and legacy colleges/... path (secondary for backward compat).
+     * Save result to Firestore — writes to canonical AssessmentResults path
      */
     static async saveResultToFirestore(resultData) {
         try {
@@ -238,11 +241,15 @@ class CodingAssessmentService {
                 updatedAt: serverTimestamp()
             };
 
-            // Canonical + legacy written atomically; see writeBothPaths.
-            const canonPath = await this.writeBothPaths(resultDocument, {
-                assessmentID, college, year, department, email
+            const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            const liveUid = auth?.currentUser?.uid || authData.uid || authData.UID || email.replace(/[@.]/g, '_');
+            const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || resultData.tenantId || college || '';
+            const canonPath = await this.writeCanonicalResult(resultDocument, {
+                assessmentId: assessmentID,
+                userId: liveUid,
+                userProfile: { ...authData, tenantId, email }
             });
-            console.log('[CodingAssessmentService] Result saved atomically to:', canonPath);
+            console.log('[CodingAssessmentService] Result saved to canonical path:', canonPath);
 
             return { success: true, docId: canonPath };
         } catch (error) {
@@ -288,10 +295,10 @@ class CodingAssessmentService {
                 codeMap
             } = progressData;
 
-            // Derive userId the same way as writeCanonicalResult / checkExistingAttempt
             const authDataSync = JSON.parse(localStorage.getItem('auth_data') || '{}');
-            const userId = authDataSync.uid || email.replace(/[@.]/g, '_');
-            const canonPath = this.canonicalPath(assessmentID, userId);
+            const liveUid = auth?.currentUser?.uid || authDataSync.uid || authDataSync.UID || email.replace(/[@.]/g, '_');
+            const tenantId = authDataSync.tenantId || authDataSync.TenantId || authDataSync.tenant_id || college || '';
+            const canonPath = this.canonicalPath(assessmentID, liveUid, tenantId);
             const canonRef = doc(db, canonPath);
             try {
                 const docSnap = await getDoc(canonRef);
@@ -323,8 +330,10 @@ class CodingAssessmentService {
                 updatedAt: serverTimestamp()
             };
 
-            await this.writeBothPaths(progressDocument, {
-                assessmentID, college, year, department, email
+            await this.writeCanonicalResult(progressDocument, {
+                assessmentId: assessmentID,
+                userId: liveUid,
+                userProfile: { ...authDataSync, tenantId, email }
             });
 
             return { success: true };

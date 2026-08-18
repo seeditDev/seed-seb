@@ -341,17 +341,17 @@ class DataService {
      */
     static async getAllowedTestDocs() {
         try {
-            // ── UID guard: auth_data cache must belong to the live Firebase Auth user ──
+            let authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
             const liveUid = auth?.currentUser?.uid;
-            if (!liveUid) {
+            const effectiveUid = liveUid || authData.uid;
+
+            if (!effectiveUid) {
                 console.warn('[DataService] getAllowedTestDocs: no authenticated Firebase user. Returning empty.');
                 return [];
             }
 
-            let authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-
-            // If cached UID doesn't match live Auth UID, rebuild cache from Firestore
-            if (authData.uid && authData.uid !== liveUid) {
+            // If cached UID exists and doesn't match live Auth UID, rebuild cache from Firestore
+            if (liveUid && authData.uid && authData.uid !== liveUid) {
                 console.warn(
                     '[DataService] getAllowedTestDocs: auth_data.uid mismatch — ' +
                     `cached="${authData.uid}" live="${liveUid}". Refreshing auth_data.`
