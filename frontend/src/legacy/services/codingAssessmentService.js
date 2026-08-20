@@ -19,8 +19,9 @@ class CodingAssessmentService {
      * Canonical Firestore path — tenant-first scoped (4 segments).
      * assessmentResults/{tenantId}/{assessmentId}/{userId}
      */
-    static canonicalPath(assessmentId, userId, tenantId = '_unknown_') {
-        const tid = tenantId || '_unknown_';
+    static canonicalPath(assessmentId, userId, tenantId = 'SEED-SEB') {
+        const rawTid = String(tenantId || '').trim();
+        const tid = (rawTid && !rawTid.includes(' ') && rawTid !== '_unknown_') ? rawTid : 'SEED-SEB';
         return `assessmentResults/${tid}/${assessmentId}/${userId}`;
     }
 
@@ -33,9 +34,12 @@ class CodingAssessmentService {
      * This is the ONLY Firestore write on submission. No secondary mirrors.
      */
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
-        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.TenantId || userProfile?.tenant_id || '';
+        let tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.TenantId || userProfile?.tenant_id || userProfile?.collegeCode || '';
+        if (!tenantId || tenantId.includes(' ')) {
+            tenantId = 'SEED-SEB';
+        }
         const canonRef = doc(db, this.canonicalPath(assessmentId, userId, tenantId));
-        await setDoc(canonRef, { ...payload, userId, tenantId }, { merge: true });
+        await setDoc(canonRef, { ...payload, id: assessmentId, assessmentId, userId, tenantId }, { merge: true });
         return this.canonicalPath(assessmentId, userId, tenantId);
     }
 
@@ -98,7 +102,7 @@ class CodingAssessmentService {
     static async createInitialAttempt(userData, assessmentData) {
         try {
             const { Email, College, Year, Department, Name, "Roll Number": rollNumber } = userData;
-            const assessmentID = assessmentData.id || 'unknown';
+            const assessmentID = assessmentData.id || assessmentData.testId || assessmentData.testID || assessmentData.assessmentId || 'unknown';
 
             // Check if already exists and is completed
             const existing = await this.checkExistingAttempt(Email, assessmentID, College, Year, Department);
@@ -107,13 +111,17 @@ class CodingAssessmentService {
             }
 
             const initialData = {
+                id: assessmentID,
+                assessmentId: assessmentID,
+                assessmentID: assessmentID,
+                testId: assessmentID,
+                testID: assessmentID,
                 rollNumber: rollNumber || '',
                 name: Name || '',
                 email: Email,
                 college: College,
                 year: Year,
                 department: Department,
-                assessmentID: assessmentID,
                 assessmentName: assessmentData.name || assessmentData.title || 'Unknown Coding Assessment',
                 timeStarted: serverTimestamp(),
                 timeStartedISO: timeService.getNow().toISOString(),
@@ -128,7 +136,10 @@ class CodingAssessmentService {
 
             const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
             const liveUid = auth?.currentUser?.uid || authData.uid || authData.UID || Email.replace(/[@.]/g, '_');
-            const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || userData?.tenantId || College || '';
+            let tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || userData?.tenantId || authData.collegeCode || '';
+            if (!tenantId || tenantId.includes(' ')) {
+                tenantId = 'SEED-SEB';
+            }
 
             const canonPath = await this.writeCanonicalResult(initialData, {
                 assessmentId: assessmentID,
@@ -181,7 +192,6 @@ class CodingAssessmentService {
                 college,
                 year,
                 department,
-                assessmentID,
                 rollNumber,
                 name,
                 assessmentName,
@@ -201,16 +211,21 @@ class CodingAssessmentService {
                 executionStats
             } = resultData;
 
+            const targetId = resultData.id || resultData.testId || resultData.testID || resultData.assessmentId || resultData.assessmentID || 'unknown';
             const { partialScore, fullScore } = this.computeScoreFields(score, resultData.totalMarks || 0, percentage);
 
             const resultDocument = {
+                id: targetId,
+                assessmentId: targetId,
+                assessmentID: targetId,
+                testId: targetId,
+                testID: targetId,
                 rollNumber: rollNumber || '',
                 name: name || '',
                 email: email,
                 college: college,
                 year: year,
                 department: department,
-                assessmentID: assessmentID,
                 assessmentName: assessmentName || 'Unknown Coding Assessment',
                 type: 'coding',
                 score: score || 0,
@@ -243,9 +258,12 @@ class CodingAssessmentService {
 
             const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
             const liveUid = auth?.currentUser?.uid || authData.uid || authData.UID || email.replace(/[@.]/g, '_');
-            const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || resultData.tenantId || college || '';
+            let tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || resultData.tenantId || authData.collegeCode || '';
+            if (!tenantId || tenantId.includes(' ')) {
+                tenantId = 'SEED-SEB';
+            }
             const canonPath = await this.writeCanonicalResult(resultDocument, {
-                assessmentId: assessmentID,
+                assessmentId: targetId,
                 userId: liveUid,
                 userProfile: { ...authData, tenantId, email }
             });
@@ -285,7 +303,6 @@ class CodingAssessmentService {
                 college,
                 year,
                 department,
-                assessmentID,
                 rollNumber,
                 name,
                 assessmentName,
@@ -295,10 +312,14 @@ class CodingAssessmentService {
                 codeMap
             } = progressData;
 
+            const targetId = progressData.id || progressData.testId || progressData.testID || progressData.assessmentId || progressData.assessmentID || 'unknown';
             const authDataSync = JSON.parse(localStorage.getItem('auth_data') || '{}');
             const liveUid = auth?.currentUser?.uid || authDataSync.uid || authDataSync.UID || email.replace(/[@.]/g, '_');
-            const tenantId = authDataSync.tenantId || authDataSync.TenantId || authDataSync.tenant_id || college || '';
-            const canonPath = this.canonicalPath(assessmentID, liveUid, tenantId);
+            let tenantId = authDataSync.tenantId || authDataSync.TenantId || authDataSync.tenant_id || authDataSync.collegeCode || '';
+            if (!tenantId || tenantId.includes(' ')) {
+                tenantId = 'SEED-SEB';
+            }
+            const canonPath = this.canonicalPath(targetId, liveUid, tenantId);
             const canonRef = doc(db, canonPath);
             try {
                 const docSnap = await getDoc(canonRef);
@@ -308,13 +329,17 @@ class CodingAssessmentService {
             } catch (e) { }
 
             const progressDocument = {
+                id: targetId,
+                assessmentId: targetId,
+                assessmentID: targetId,
+                testId: targetId,
+                testID: targetId,
                 rollNumber: rollNumber || '',
                 name: name || '',
                 email,
                 college,
                 year,
                 department,
-                assessmentID,
                 assessmentName: assessmentName || 'Unknown Coding Assessment',
                 type: 'coding',
                 progressTimeTaken: timeTaken || 0,
@@ -331,7 +356,7 @@ class CodingAssessmentService {
             };
 
             await this.writeCanonicalResult(progressDocument, {
-                assessmentId: assessmentID,
+                assessmentId: targetId,
                 userId: liveUid,
                 userProfile: { ...authDataSync, tenantId, email }
             });

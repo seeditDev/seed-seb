@@ -1,7 +1,4 @@
-/**
- * storageUtils.js
- * Safe LocalStorage helpers with automatic JSON parsing and fallback error handling.
- */
+import { normalizeUser } from '../models/canonicalModels';
 
 export const getStorageJson = (key, fallback = {}) => {
   try {
@@ -23,10 +20,18 @@ export const setStorageJson = (key, value) => {
 };
 
 export const getAuthData = () => {
-  const data = getStorageJson('auth_data', {});
+  const data = getStorageJson('auth_data', null);
+  if (!data) return normalizeUser({});
   const resolvedUid = data?.uid || data?.UID || data?.userId || (typeof window !== 'undefined' && window.firebaseUser?.uid) || '';
   if (resolvedUid && !data.uid) {
     data.uid = resolvedUid;
   }
-  return data;
+  return normalizeUser(data);
 };
+
+export const setAuthData = (data) => {
+  const normalized = normalizeUser(data);
+  setStorageJson('auth_data', normalized);
+  return normalized;
+};
+

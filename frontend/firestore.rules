@@ -159,7 +159,8 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════
 
     match /tenants/{tenantId} {
-      allow read:           if isPortal() || isTenantMember(tenantId);
+      allow get:            if isSignedIn();
+      allow list:           if isPortal();
       allow create, update: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
       allow delete:         if isAdmin();
 
@@ -257,7 +258,9 @@ service cloud.firestore {
 
       match /{assessmentId}/{userId} {
         allow read:   if isPortal() || (isSignedIn() && isUser(userId));
-        allow create: if isSignedIn() && (isUser(userId) || isPortal());
+        allow create: if (isSignedIn() && (isUser(userId) || isPortal()))
+          || (request.resource.data.get('isGuest', false) == true)
+          || userId.matches('guest_.*');
         allow update: if isPortal()
           || (isSignedIn()
               && isUser(userId)
@@ -276,7 +279,7 @@ service cloud.firestore {
         allow delete: if isAdmin();
       }
 
-      // Guest results fallback
+      // Guest results fallback (5 segments)
       match /{assessmentId}/guests/{guestId} {
         allow create: if true;
         allow read:   if isPortal();
@@ -303,7 +306,9 @@ service cloud.firestore {
 
       match /{assessmentId}/{userId} {
         allow read: if isAdmin() || (isStaff() && tenantAllowed(tenantId)) || (isSignedIn() && isUser(userId));
-        allow create, update: if isSignedIn() && (isUser(userId) || isPortal());
+        allow create, update: if (isSignedIn() && (isUser(userId) || isPortal()))
+          || (request.resource.data.get('isGuest', false) == true)
+          || userId.matches('guest_.*');
         allow delete: if isAdmin();
       }
     }
@@ -315,18 +320,27 @@ service cloud.firestore {
 
     match /proctoringLogs/{attemptId} {
       allow read: if isPortal()
-        || (isSignedIn() && attemptId.matches('.*_' + request.auth.uid));
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
-      allow update: if isPortal();
+        || (isSignedIn() && (attemptId.matches('.*_' + request.auth.uid) || attemptId.matches(request.auth.uid + '_.*') || attemptId.matches('.*' + request.auth.uid + '.*')));
+      allow create, update: if isSignedIn()
+        && (request.resource.data.get('userId', '') == request.auth.uid || request.resource.data.get('uid', '') == request.auth.uid || isPortal());
       allow delete: if isAdmin();
 
       match /events/{eventId} {
         allow read: if isPortal()
-          || (isSignedIn() && attemptId.matches('.*_' + request.auth.uid));
+          || (isSignedIn() && (attemptId.matches('.*_' + request.auth.uid) || attemptId.matches(request.auth.uid + '_.*') || attemptId.matches('.*' + request.auth.uid + '.*')));
         allow create: if isSignedIn();
         allow update: if false;
         allow delete: if isAdmin();
+      }
+
+      match /summary {
+        allow read: if isPortal()
+          || (isSignedIn() && (attemptId.matches('.*_' + request.auth.uid) || attemptId.matches(request.auth.uid + '_.*') || attemptId.matches('.*' + request.auth.uid + '.*')));
+        allow write: if isSignedIn();
+      }
+
+      match /{subPath=**} {
+        allow read, write: if isSignedIn() && (attemptId.matches('.*' + request.auth.uid + '.*') || isPortal());
       }
     }
 
@@ -342,14 +356,18 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════
 
     match /codingProgress/{uid} {
-      allow read, write: if isUser(uid) || isPortal();
+      allow read, write: if isSignedIn() && (request.auth.uid == uid || isUser(uid) || isPortal());
+
+      match /{document=**} {
+        allow read, write: if isSignedIn() && (request.auth.uid == uid || isUser(uid) || isPortal());
+      }
     }
 
     match /userActivities/{uid} {
-      allow read, write: if isUser(uid) || isPortal();
+      allow read, write: if isSignedIn() && (request.auth.uid == uid || isUser(uid) || isPortal());
 
       match /{allPaths=**} {
-        allow read, write: if isUser(uid) || isPortal();
+        allow read, write: if isSignedIn() && (request.auth.uid == uid || isUser(uid) || isPortal());
       }
     }
 

@@ -1,6 +1,7 @@
 import { db, auth } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import timeService from './timeService';
+import { normalizeUser } from '../models/canonicalModels';
 
 
 /**
@@ -53,10 +54,11 @@ class MCQService {
      * @param {string} userId      — MUST be Firebase Auth UID
      * @param {string} tenantId   — student's college/tenant code (e.g. "KGKITE")
      */
-    static canonicalPath(assessmentId, userId, tenantId = '_unknown_') {
+    static canonicalPath(assessmentId, userId, tenantId = 'SEED-SEB') {
         if (!assessmentId) throw new Error('[MCQService] canonicalPath: assessmentId is required');
         if (!userId) throw new Error('[MCQService] canonicalPath: userId (Firebase Auth UID) is required');
-        const tid = tenantId || '_unknown_';
+        const rawTid = String(tenantId || '').trim();
+        const tid = (rawTid && !rawTid.includes(' ') && rawTid !== '_unknown_') ? rawTid : 'SEED-SEB';
         return `assessmentResults/${tid}/${assessmentId}/${userId}`;
     }
 
@@ -76,16 +78,17 @@ class MCQService {
     static async writeCanonicalResult(payload, { assessmentId, userId, userProfile }) {
         // Belt-and-braces: validate UID one more time at write boundary
         const canonicalUid = getCanonicalUid(userId);
-        const tenantId = payload.tenantId || userProfile?.tenantId || userProfile?.TenantId || userProfile?.tenant_id || '';
+        const normUser = normalizeUser(userProfile || {});
+        const tenantId = payload.tenantId || normUser.tenantId || '';
         const canonRef = doc(db, this.canonicalPath(assessmentId, canonicalUid, tenantId));
         await setDoc(canonRef, { ...payload, userId: canonicalUid, tenantId }, { merge: true });
 
         // Mark attempt in the completion index so dashboard shows Completed
         try {
             const { markAssessmentCompleted, invalidateCompletionCache } = await import('./attemptStatusService');
-            const email = userProfile?.email || userProfile?.Email || payload.email || '';
+            const email = normUser.email || payload.email || '';
             if (email) {
-                await markAssessmentCompleted(userProfile || { email }, assessmentId);
+                await markAssessmentCompleted(normUser, assessmentId);
                 invalidateCompletionCache(email);
             }
         } catch (_) { /* non-fatal */ }
@@ -524,7 +527,16 @@ class MCQService {
         } = progressData;
 
         // Canonical path now uses Firebase Auth UID and tenantId
-        const tenantId = progressData.tenantId || progressData.college || '_unknown_';
+        let tenantId = progressData.tenantId || progressData.collegeCode || '';
+        if (!tenantId || tenantId.includes(' ')) {
+            try {
+                const storedAuth = JSON.parse(localStorage.getItem('auth_data') || '{}');
+                tenantId = storedAuth.tenantId || storedAuth.collegeCode || '';
+            } catch (_) {}
+        }
+        if (!tenantId || tenantId.includes(' ')) {
+            tenantId = 'SEED-SEB';
+        }
         const canonPath = this.canonicalPath(testID, uid, tenantId);
         const docRef = doc(db, canonPath);
 

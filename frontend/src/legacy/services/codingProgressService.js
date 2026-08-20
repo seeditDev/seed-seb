@@ -122,6 +122,13 @@ const saveLocalProgress = (uid, progress) => {
   try {
     desktopBridge.saveUserProfileCache(effectiveUid, 'daily_activity', progress);
   } catch (_) {}
+
+  // Broadcast change event to dashboard & other tabs in the window
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('coding_progress_updated', {
+      detail: { uid: effectiveUid, progress }
+    }));
+  }
 };
 
 // ── Read Operations ────────────────────────────────────────────────────────────
@@ -230,7 +237,7 @@ export const getQuestionProgress = async (uid, questionId) => {
 /**
  * Mark a question as solved / completed.
  */
-export const markQuestionSolved = async (uid, questionId, language, score, attempts = 1) => {
+export const markQuestionSolved = async (uid, questionId, language, score, attempts = 1, metadata = {}) => {
   if (!uid || !questionId) return { success: false };
   
   const strQId = String(questionId).trim();
@@ -238,10 +245,16 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
   const existing = local.problemDetails[strQId];
   const now = new Date().toISOString();
 
+  const meta = (typeof attempts === 'object' && attempts !== null) ? attempts : (metadata || {});
+  const numAttempts = typeof attempts === 'number' ? attempts : (typeof attempts === 'string' && !isNaN(attempts) ? Number(attempts) : 1);
+
   const detail = {
     status: 'SOLVED',
     language: language || existing?.language || 'cpp',
-    attempts: (existing?.attempts || 0) + (typeof attempts === 'number' ? attempts : 1),
+    difficulty: meta.difficulty || existing?.difficulty || (strQId.startsWith('Q0.') ? 'Easy' : 'Easy'),
+    category: meta.category || existing?.category || '',
+    title: meta.title || meta.name || existing?.title || strQId,
+    attempts: (existing?.attempts || 0) + numAttempts,
     bestScore: Math.max(typeof score === 'number' ? score : 100, existing?.bestScore || 0),
     lastSolvedAt: now,
     lastAttemptedAt: now
@@ -271,7 +284,7 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
 
   // Log activity to userActivities/{uid}/
   import('./activityLoggerService').then(mod => {
-    mod.logUserActivity(uid, 'QUESTION_SOLVED', { questionId: strQId, language, score, attempts });
+    mod.logUserActivity(uid, 'QUESTION_SOLVED', { questionId: strQId, language, score, attempts: numAttempts });
   }).catch(() => {});
 
   // Background sync with Firestore if online
@@ -290,7 +303,7 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
 /**
  * Mark a question as attempted / in-progress.
  */
-export const markQuestionAttempted = async (uid, questionId, language, score) => {
+export const markQuestionAttempted = async (uid, questionId, language, score, attempts = 1, metadata = {}) => {
   if (!uid || !questionId) return { success: false };
   
   const strQId = String(questionId).trim();
@@ -298,12 +311,18 @@ export const markQuestionAttempted = async (uid, questionId, language, score) =>
   const existing = local.problemDetails[strQId];
   const now = new Date().toISOString();
 
+  const meta = (typeof attempts === 'object' && attempts !== null) ? attempts : (metadata || {});
+  const numAttempts = typeof attempts === 'number' ? attempts : 1;
+
   const isAlreadySolved = local.completedQuestions.includes(strQId) || existing?.status === 'SOLVED';
 
   const detail = {
     status: isAlreadySolved ? 'SOLVED' : 'ATTEMPTED',
     language: language || existing?.language || 'cpp',
-    attempts: (existing?.attempts || 0) + 1,
+    difficulty: meta.difficulty || existing?.difficulty || (strQId.startsWith('Q0.') ? 'Easy' : 'Easy'),
+    category: meta.category || existing?.category || '',
+    title: meta.title || meta.name || existing?.title || strQId,
+    attempts: (existing?.attempts || 0) + numAttempts,
     bestScore: Math.max(typeof score === 'number' ? score : 0, existing?.bestScore || 0),
     lastAttemptedAt: now,
     lastSolvedAt: existing?.lastSolvedAt || (isAlreadySolved ? now : undefined)

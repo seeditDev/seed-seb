@@ -67,6 +67,7 @@ import {
   clearLocalSubmissionEnvelope,
   calcAuthoritativeRemainingSeconds,
 } from './attemptStateMachine';
+import { normalizeUser } from '../models/canonicalModels';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Identity
@@ -165,9 +166,9 @@ export async function startAssessmentSession(assessment, slug = '') {
     try {
       const userSnap = await getDoc(doc(db, 'users', uid));
       if (userSnap.exists()) {
-        const p = userSnap.data();
-        authProfile.tenantId = p.tenantId || '';
-        authProfile.cohortId = p.cohortId || '';
+        const user = normalizeUser(userSnap.data());
+        authProfile.tenantId = user.tenantId || '';
+        authProfile.cohortId = user.cohortId || '';
       }
     } catch (profileErr) {
       console.warn('[SessionService] Could not read user profile for attempt envelope:', profileErr?.message);
@@ -267,7 +268,7 @@ export async function markSectionStarted(assessmentId, section) {
   if (!uid || !assessmentId) return;
   try {
     const now = new Date().toISOString();
-    await updateDoc(getAttemptRef(uid, assessmentId), {
+    await setDoc(getAttemptRef(uid, assessmentId), {
       [`sections.${section.sectionId}.status`]:          ATTEMPT_STATES.IN_PROGRESS,
       [`sections.${section.sectionId}.startedAt`]:       now,
       [`sections.${section.sectionId}.durationSeconds`]: (section.durationMinutes || 30) * 60,
@@ -279,7 +280,7 @@ export async function markSectionStarted(assessmentId, section) {
         durationSeconds: (section.durationMinutes || 30) * 60,
       },
       lastSavedAt: serverTimestamp(),
-    });
+    }, { merge: true });
     console.log('[SessionService] Section started:', section.sectionId);
   } catch (err) {
     console.warn('[SessionService] markSectionStarted failed (non-fatal):', err?.message);
@@ -298,10 +299,10 @@ export async function saveSessionProgress(assessmentId, sectionId, answers) {
   const uid = getCanonicalUid();
   if (!uid || !assessmentId) return;
   try {
-    await updateDoc(getAttemptRef(uid, assessmentId), {
+    await setDoc(getAttemptRef(uid, assessmentId), {
       [`sectionAnswers.${sectionId}`]: answers || {},
       lastSavedAt: serverTimestamp(),
-    });
+    }, { merge: true });
     console.log('[SessionService] Progress saved for section', sectionId);
   } catch (err) {
     console.warn('[SessionService] saveSessionProgress failed (non-fatal):', err?.message);
@@ -323,6 +324,13 @@ export async function markSectionCompleted(assessmentId, sectionId) {
       [`sectionAnswers.${sectionId}`]:       deleteField(), // already in results collection
       activeSection:                         null,
       lastSavedAt:                           serverTimestamp(),
+    }).catch(async () => {
+      await setDoc(getAttemptRef(uid, assessmentId), {
+        [`sections.${sectionId}.status`]:      ATTEMPT_STATES.SUBMITTED,
+        [`sections.${sectionId}.completedAt`]: new Date().toISOString(),
+        activeSection:                         null,
+        lastSavedAt:                           serverTimestamp(),
+      }, { merge: true });
     });
   } catch (err) {
     console.warn('[SessionService] markSectionCompleted failed (non-fatal):', err?.message);

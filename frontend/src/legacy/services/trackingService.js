@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import timeService from './timeService';
 import { resolveTenant } from '../utils/tenant';
+import { normalizeUser } from '../models/canonicalModels';
 
 const HEARTBEAT_MS = 30000;
 const LIVE_COUNT_POLL_MS = 60000;
@@ -100,18 +101,20 @@ class TrackingService {
     }
 
     async startTracking(userData) {
-        if (!userData || !(userData.email || userData.Email)) return;
+        if (!userData) return;
+        const normUser = normalizeUser(userData);
+        if (!normUser.email && !normUser.uid) return;
 
-        const email = userData.email || userData.Email;
-        const uid = userData.uid || email.replace(/[@.]/g, '_');
+        const email = normUser.email;
+        const uid = normUser.uid || email.replace(/[@.]/g, '_');
 
         // Idempotent: restarting for the same student must not stack intervals.
-        if (this.currentUser && (this.currentUser.uid === uid || this.currentUser.Email === email) && this.heartbeatTimer) {
+        if (this.currentUser && (this.currentUser.uid === uid || this.currentUser.email === email) && this.heartbeatTimer) {
             return;
         }
         if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
 
-        this.currentUser = { ...userData, uid };
+        this.currentUser = { ...normUser, uid, email };
         this.sessionId = null; // reset so currentSessionRef() generates a fresh one
         this.sessionStartTime = timeService.now();
         this.lastHeartbeatTime = timeService.now();
@@ -138,9 +141,9 @@ class TrackingService {
             await setDoc(sessionRef, {
                 userId: uid,
                 email: email,
-                displayName: userData.displayName || userData.Name || '',
-                tenantId: userData.tenantId || userData.College || '',
-                cohortId: userData.cohortId || '',
+                displayName: normUser.name || normUser.displayName || '',
+                tenantId: normUser.tenantId || 'SEED-SEB',
+                cohortId: normUser.cohortId || '',
                 assessmentId: null,
                 page: typeof window !== 'undefined' ? window.location.pathname : '/',
                 connectedAt: serverTimestamp(),

@@ -322,6 +322,11 @@ const PracticeSandbox = () => {
     setError(null);
     try {
       const qRaw = await fetchQuestion(questionId);
+      if (!qRaw) {
+        setError('Question not found or unavailable');
+        setLoading(false);
+        return;
+      }
       const qData = normalizeQuestion(qRaw);
       setQuestion(qData);
 
@@ -574,7 +579,10 @@ const PracticeSandbox = () => {
       await yieldFrame();
 
       if (useCustomInput || !question.sampleTestCases || question.sampleTestCases.length === 0) {
-        const result = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, customInput);
+        const result = await Promise.race([
+          desktopBridge.runDirectSandbox(bridgeLang, currentCode, customInput),
+          new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', stderr: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+        ]);
         setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? 'Execution completed with no output.' : ''));
         setStderr(result.stderr || result.error || '');
         setExitCode(result.exit_code === undefined ? null : result.exit_code);
@@ -585,7 +593,10 @@ const PracticeSandbox = () => {
           const tc = samples[i];
           // Yield between each test case to keep UI responsive
           if (i > 0) await yieldFrame();
-          const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+          const res = await Promise.race([
+            desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input),
+            new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', stderr: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+          ]);
 
           if (isEngineDisconnected(res)) {
             results.push({
@@ -656,11 +667,11 @@ const isCodeBlankOrEmpty = (codeStr) => {
     let totalWeight = 0;
     let earnedWeight = 0;
 
-    // STRICT UID: canonical Practice identity is Firebase Auth UID only.
-    // If UID is absent the user is not authenticated — skip all progress writes.
-    const uid = user?.uid;
+    // Canonical Practice identity: user prop -> getAuthData() -> Firebase Auth UID
+    const authStorage = getAuthData();
+    const uid = user?.uid || user?.UID || authStorage?.uid || authStorage?.UID;
     if (!uid) {
-      console.warn('[PracticeSandbox] No Firebase UID at submit — progress not saved');
+      console.warn('[PracticeSandbox] No authenticated UID at submit — progress may not sync');
     }
 
     try {
@@ -678,7 +689,10 @@ const isCodeBlankOrEmpty = (codeStr) => {
         if (i > 0) await yieldFrame();
         const res = isBlank
           ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
-          : await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+          : await Promise.race([
+              desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input),
+              new Promise(resolve => setTimeout(() => resolve({ error: 'Time Limit Exceeded (5s)', stderr: 'Time Limit Exceeded (5s)', exit_code: -1 }), 5000))
+            ]);
 
         if (isEngineDisconnected(res)) {
           results.push({
@@ -728,8 +742,14 @@ const isCodeBlankOrEmpty = (codeStr) => {
         const questionOpenedAt = window._practiceQuestionOpenedAt || nowMs;
         const timeSpentMs = nowMs - questionOpenedAt;
 
+        const qMeta = {
+          difficulty: question?.difficulty || 'Easy',
+          category: question?.category || '',
+          title: question?.title || question?.name || questionId
+        };
+
         if (score === 100) {
-          await markQuestionSolved(uid, questionId, language, score, currentCode);
+          await markQuestionSolved(uid, questionId, language, score, 1, qMeta);
           setSolvedIds(prev => [...new Set([...prev, questionId])]);
           setAttemptedIds(prev => prev.filter(id => id !== questionId));
 
@@ -746,7 +766,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
             isPractice: true,
           });
         } else {
-          await markQuestionAttempted(uid, questionId, language, score, currentCode);
+          await markQuestionAttempted(uid, questionId, language, score, 1, qMeta);
           if (!solvedIds.includes(questionId)) {
             setAttemptedIds(prev => [...new Set([...prev, questionId])]);
           }
@@ -975,12 +995,18 @@ const isCodeBlankOrEmpty = (codeStr) => {
                   <div className="psb-section-label">Output Format</div>
                   <div className="psb-problem-text">{question.content?.outputFormat || 'Print standard output.'}</div>
 
-                  {question.content?.constraints && question.content.constraints.length > 0 && (
+                  {question.content?.constraints && (
                     <>
                       <div className="psb-section-label">Constraints</div>
-                      <ul className="psb-constraints-list">
-                        {question.content.constraints.map((c, i) => <li key={i}>{c}</li>)}
-                      </ul>
+                      {Array.isArray(question.content.constraints) ? (
+                        question.content.constraints.length > 0 && (
+                          <ul className="psb-constraints-list">
+                            {question.content.constraints.map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        )
+                      ) : (
+                        <div className="psb-problem-text">{String(question.content.constraints)}</div>
+                      )}
                     </>
                   )}
 

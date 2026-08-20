@@ -264,6 +264,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [violationCount, setViolationCount] = useState(0);
     const [proctorWarning, setProctorWarning] = useState(null);
     const [isLockedOut, setIsLockedOut] = useState(false);
+    const [lockoutReason, setLockoutReason] = useState('tab_switch');
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     // 'evaluating' | 'submitting' | null — tracks which phase of the submit flow is active
@@ -664,6 +665,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Set auto-submit notice message
     const setAutoSubmitMessage = useCallback((msg) => {
+        sessionStorage.setItem(AUTO_SUBMIT_NOTICE_KEY, msg);
         localStorage.setItem(AUTO_SUBMIT_NOTICE_KEY, msg);
         setAutoSubmitNotice(msg);
     }, []);
@@ -1468,8 +1470,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             for (let i = 0; i < sampleTests.length; i++) {
                 const tc = sampleTests[i];
 
-                // Run process on python sandbox backend
-                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                // Run process on python sandbox backend with 6000ms safety timeout
+                const res = await Promise.race([
+                    desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
+                    new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+                ]);
 
                 if (isEngineDisconnected(res)) {
                     results.push({
@@ -1500,7 +1505,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             // Run Custom Input if checked (only if engine was not disconnected)
             if (useCustomInput && (results.length === 0 || !isEngineDisconnected(results[results.length - 1]))) {
-                const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, code, customInput);
+                const resRaw = await Promise.race([
+                    desktopBridge.runDirectSandbox(bridgeLang, code, customInput),
+                    new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+                ]);
                 const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
                 if (isEngineDisconnected(res)) {
                     results.push({
@@ -1570,7 +1578,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     results.push({ index: i + 1, passed: false, error: "No code submitted in editor." });
                     continue;
                 }
-                const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                const res = await Promise.race([
+                    desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
+                    new Promise(resolve => setTimeout(() => resolve({ error: 'Time Limit Exceeded (5s)', exit_code: -1 }), 5000))
+                ]);
 
                 if (isEngineDisconnected(res)) {
                     evalError = "Evaluation engine not connected. Please restart the application or rerun the code.";
@@ -1706,7 +1717,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
                             for (const tc of hidden) {
                                 try {
-                                    const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                    const res = await Promise.race([
+                                        desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
+                                        new Promise(resolve => setTimeout(() => resolve({ error: 'timeout', exit_code: -1 }), 2500))
+                                    ]);
                                     if (isEngineDisconnected(res)) break;
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                                     const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
@@ -1754,15 +1768,22 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 };
             });
 
+            const targetAssessmentId = activeAssessment.id || activeAssessment.testId || activeAssessment.testID || activeAssessment.assessmentId;
             const rawResultData = {
-                email: authData.Email,
-                college: authData.College,
-                year: authData.Year,
-                department: authData.Department,
-                rollNumber: authData["Roll Number"] || '',
-                name: authData.Name || '',
-                assessmentID: activeAssessment.id,
-                assessmentName: activeAssessment.name,
+                email: authData.Email || authData.email || '',
+                college: authData.College || authData.college || '',
+                year: authData.Year || authData.year || '',
+                department: authData.Department || authData.department || '',
+                rollNumber: authData["Roll Number"] || authData.rollNumber || '',
+                name: authData.Name || authData.name || '',
+                tenantId: authData.tenantId || authData.collegeCode || authData.TenantId || '',
+                cohortId: authData.cohortId || authData.CohortId || '',
+                id: targetAssessmentId,
+                assessmentId: targetAssessmentId,
+                assessmentID: targetAssessmentId,
+                testId: targetAssessmentId,
+                testID: targetAssessmentId,
+                assessmentName: activeAssessment.name || activeAssessment.title || 'Coding Assessment',
                 testType: 'coding',
                 score: totalEarnedWeight,
                 totalQuestions: activeQuestions.length,
@@ -1815,7 +1836,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const noticeMsg = reason === 'timer' 
                 ? 'Your coding assessment was auto-submitted because the duration expired.' 
                 : (reason === 'proctoring_violations'
-                    ? 'Your coding assessment was auto-submitted due to webcam proctoring violations.'
+                    ? 'Your coding assessment was auto-submitted due to proctoring violations.'
                     : 'Your coding assessment was auto-submitted due to excessive tab switching violations.');
             
             setAutoSubmitMessage(noticeMsg);
@@ -1930,7 +1951,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
                             for (const tc of hidden) {
                                 try {
-                                    const res = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
+                                    const res = await Promise.race([
+                                        desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
+                                        new Promise(resolve => setTimeout(() => resolve({ error: 'timeout', exit_code: -1 }), 2500))
+                                    ]);
                                     if (isEngineDisconnected(res)) break;
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                                     const cleanOut = (res.stdout || "").replace(/\r\n/g, "\n").trim();
@@ -1990,15 +2014,22 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 };
             });
 
+            const targetAssessmentId = currentAssessment.id || currentAssessment.testId || currentAssessment.testID || currentAssessment.assessmentId;
             const rawResultData = {
-                email: user.Email,
-                college: user.College,
-                year: user.Year,
-                department: user.Department,
-                rollNumber: user["Roll Number"] || '',
-                name: user.Name || '',
-                assessmentID: currentAssessment.id,
-                assessmentName: currentAssessment.name,
+                email: user.Email || user.email || '',
+                college: user.College || user.college || '',
+                year: user.Year || user.year || '',
+                department: user.Department || user.department || '',
+                rollNumber: user["Roll Number"] || user.rollNumber || '',
+                name: user.Name || user.name || '',
+                tenantId: user.tenantId || user.collegeCode || user.TenantId || '',
+                cohortId: user.cohortId || user.CohortId || '',
+                id: targetAssessmentId,
+                assessmentId: targetAssessmentId,
+                assessmentID: targetAssessmentId,
+                testId: targetAssessmentId,
+                testID: targetAssessmentId,
+                assessmentName: currentAssessment.name || currentAssessment.title || 'Coding Assessment',
                 testType: 'coding',
                 score: totalEarnedWeight,
                 totalQuestions: questions.length,
@@ -2038,7 +2069,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const resultData = buildUnifiedResultPayload(rawResultData);
 
             await CodingAssessmentService.submitCodingResult(resultData);
+            await markAssessmentCompleted(user, targetAssessmentId);
             clearLocalSession();
+            toast.success('Coding assessment submitted successfully!', { id: 'coding-submit' });
 
             // Build per-question summary for success screen
             const perQuestionSummary = questions.map(q => ({
@@ -2574,8 +2607,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // RENDER: WORKSPACE VIEW
     // ==========================================
     const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-    const candidateRoll = authData.rollNumber || authData['Roll Number'] || authData.rollNo || authData.RollNo || authData.regNo || authData.registerNumber || user?.rollNumber || authData.uid || 'CANDIDATE';
-    const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || authData.collegeCode || authData.college || user?.tenantId || 'SEED-SEB';
+    const candidateRoll = authData.rollNumber || authData['Roll Number'] || user?.rollNumber || authData.uid || 'CANDIDATE';
+    const tenantId = authData.tenantId || authData.TenantId || authData.collegeCode || user?.tenantId || 'SEED-SEB';
 
     return (
         <div className="coding-workspace-page">
@@ -2585,7 +2618,15 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 <ProctoringEngine
                     studentID={user.Email}
                     testID={currentAssessment.id || 'unknown'}
-                    onAutoSubmit={() => autoSubmitAttempt('proctoring_violations')}
+                    onAutoSubmit={() => {
+                        window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+                        stopAllMediaAndAI();
+                        setIsLockedOut(true);
+                        setLockoutReason('camera_violations');
+                        setTimeout(() => {
+                            autoSubmitAttempt('proctoring_violations');
+                        }, 300);
+                    }}
                     isTestActive={!!currentAssessment && !submissionSuccess}
                     maxViolations={Number(currentAssessment.maxViolations) || 5}
                     onReady={() => {
@@ -2593,6 +2634,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     }}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
+                        const maxLimit = Number(currentAssessment.maxViolations) || 5;
+                        const currentCount = typeof violationInfo.violationCount === 'number' ? violationInfo.violationCount : 0;
+                        if (currentCount >= maxLimit) {
+                            window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+                            stopAllMediaAndAI();
+                            setIsLockedOut(true);
+                            setLockoutReason('camera_violations');
+                            setTimeout(() => {
+                                autoSubmitAttempt('proctoring_violations');
+                            }, 300);
+                        }
                         setProctoringData(prev => ({
                             ...prev,
                             violationCount: typeof violationInfo.violationCount === 'number'
@@ -2624,10 +2676,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             const nextAudioCount = (prev.audioViolationCount || 0) + 1;
                             const maxLimit = Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 5;
                             if (nextAudioCount >= maxLimit) {
+                                window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+                                stopAllMediaAndAI();
+                                setIsLockedOut(true);
+                                setLockoutReason('audio_violations');
                                 setTimeout(() => {
-                                    setIsLockedOut(true);
                                     autoSubmitAttempt("proctoring_violations");
-                                }, 1000);
+                                }, 300);
                             }
                             return {
                                 ...prev,
@@ -3302,13 +3357,28 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         <FaLock className="lock-icon" />
                         <h2>WORKSPACE LOCKED OUT</h2>
                         <p>
-                            Your access to this coding assessment has been revoked because you have switched tabs/minimized windows 3 times.
+                            {lockoutReason === 'audio_violations'
+                                ? 'Your access has been revoked due to excessive audio / noise violations.'
+                                : lockoutReason === 'camera_violations'
+                                ? 'Your access has been revoked due to repeated webcam proctoring violations.'
+                                : 'Your access to this coding assessment has been revoked because you have switched tabs/minimized windows 3 times.'}
                         </p>
                         <p>
-                            Your progress has been automatically calculated and submitted.
+                            {isSubmitting ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#38bdf8' }}>
+                                    Evaluating and submitting your code... Please wait.
+                                </span>
+                            ) : (
+                                'Your progress has been automatically calculated and submitted.'
+                            )}
                         </p>
-                        <button onClick={() => navigate(CODING_ROUTE_BASE)} className="exit-btn">
-                            Exit Assessment
+                        <button 
+                            onClick={() => navigate(CODING_ROUTE_BASE)} 
+                            className="exit-btn"
+                            disabled={isSubmitting}
+                            style={{ opacity: isSubmitting ? 0.6 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+                        >
+                            {isSubmitting ? 'Submitting...' : 'Exit Assessment'}
                         </button>
                     </div>
                 </div>

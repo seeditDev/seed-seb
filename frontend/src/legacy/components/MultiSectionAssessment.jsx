@@ -28,6 +28,7 @@ import { getViolations, writeViolationToFirestore } from '../utils/proctorCache'
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
+import { normalizeUser } from '../models/canonicalModels';
 import SecurityWatermark from './SecurityWatermark';
 import { requireTenant, resolveTenant } from '../utils/tenant';
 import {
@@ -401,9 +402,17 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const pct = total > 0 ? Math.round((attempted / total) * 100) : 0;
   const isLocked = lockedQuestions.includes(questionIndex);
 
-  const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-  const candidateRoll = authData.rollNumber || authData['Roll Number'] || authData.rollNo || authData.RollNo || authData.regNo || authData.registerNumber || authData.uid || 'CANDIDATE';
-  const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || authData.collegeCode || authData.college || authData.College || 'SEED-SEB';
+  const { candidateRoll, tenantId } = useMemo(() => {
+    try {
+      const authData = normalizeUser(JSON.parse(localStorage.getItem('auth_data') || '{}'));
+      return {
+        candidateRoll: authData.rollNumber || authData.uid || 'CANDIDATE',
+        tenantId: authData.tenantId || 'SEED-SEB'
+      };
+    } catch (_) {
+      return { candidateRoll: 'CANDIDATE', tenantId: 'SEED-SEB' };
+    }
+  }, []);
 
   return (
     <div className="mcq-ref-app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -1062,32 +1071,30 @@ const MultiSectionAssessment = () => {
 
       const attemptData = buildUnifiedResultPayload(rawAttemptData);
 
-      const userId = auth?.currentUser?.uid;
+      const userId = auth?.currentUser?.uid || effectiveUser?.uid || null;
       if (!userId) {
         console.error('[MSA] autoSubmitEntireExam: not authenticated, refusing Firestore write.');
-        return;
+      } else {
+        const tenantId = effectiveUser?.tenantId || 'SEED-SEB';
+        const v2DocPath = `assessmentResults/${tenantId}/${effectiveAssessment.id}/${userId}`;
+
+        // SECTION 13: Final submission MUST be reliable. Await the write.
+        // On failure: save pending envelope for recovery on next login.
+        try {
+          await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
+          console.log('[MSA] Final result saved to Firestore canonical path');
+        } catch (writeErr) {
+          console.error('[MSA] Final Firestore write failed — preserving pending envelope:', writeErr);
+          const envKey = `msa_pending_submission_${userId}_${effectiveAssessment.id}`;
+          savePendingEnvelope(envKey, {
+            uid: userId,
+            assessmentId: effectiveAssessment.id,
+            resultPayload: attemptData,
+            savedAt: new Date().toISOString(),
+            retryCount: 0,
+          }).catch(() => {});
+        }
       }
-
-      const tenantId = authData?.tenantId || authData?.TenantId || authData?.tenant_id || effectiveUser?.tenantId || '';
-      const v2DocPath = `assessmentResults/${tenantId}/${effectiveAssessment.id}/${userId}`;
-
-      // SECTION 13: Final submission MUST be reliable. Await the write.
-      // On failure: save pending envelope for recovery on next login.
-      try {
-        await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
-        console.log('[MSA] Final result saved to Firestore canonical path');
-      } catch (writeErr) {
-        console.error('[MSA] Final Firestore write failed — preserving pending envelope:', writeErr);
-        const envKey = `msa_pending_submission_${userId}_${effectiveAssessment.id}`;
-        savePendingEnvelope(envKey, {
-          uid: userId,
-          assessmentId: effectiveAssessment.id,
-          resultPayload: attemptData,
-          savedAt: new Date().toISOString(),
-          retryCount: 0,
-        }).catch(() => {});
-      }
-
     }
 
 
@@ -1097,7 +1104,7 @@ const MultiSectionAssessment = () => {
     localStorage.removeItem(`msaProgress_${effectiveAssessment?.id}`);
 
     // ── Mark attempt completed (Firestore session + completion index) ──
-    completeAssessmentSession(effectiveUser, effectiveAssessment?.id, { autoSubmitted: true, reason: reason || 'proctoring_violations' }).catch(() => {});
+    completeAssessmentSession(effectiveAssessment?.id, { autoSubmitted: true, reason: reason || 'proctoring_violations' }).catch(() => {});
     markAssessmentCompleted(effectiveUser, effectiveAssessment?.id).catch(() => {});
     if (effectiveUser?.Email) invalidateCompletionCache(effectiveUser.Email);
 
@@ -1108,7 +1115,7 @@ const MultiSectionAssessment = () => {
         import('../services/mcqService').then(({ default: MCQService }) => {
           const totalScore = Object.values(examResults || {}).reduce((s, sec) => s + (sec.score || 0), 0);
           MCQService.markCourseProgress({
-            uid: effectiveUser?.uid || effectiveUser?.UID || '',
+            uid: effectiveUser?.uid || '',
             courseId: courseCtx.courseId,
             seriesId: courseCtx.seriesId,
             testId: courseCtx.testId || effectiveAssessment?.id || '',
@@ -1161,9 +1168,11 @@ const MultiSectionAssessment = () => {
       const nextCount = typeof info.violationCount === 'number' ? info.violationCount : (prev.violationCount + 1);
       if (maxViolations > 0 && nextCount >= maxViolations) {
         console.warn(`[MSA] maxViolations (${maxViolations}) reached (count: ${nextCount}). Auto-submitting exam...`);
+        window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+        stopAllMediaAndAI();
         setTimeout(() => {
           autoSubmitEntireExam('proctoring_violations');
-        }, 500);
+        }, 300);
       }
       return {
         ...prev,
@@ -1175,7 +1184,11 @@ const MultiSectionAssessment = () => {
 
 
   const handleProctorAutoSubmit = useCallback(() => {
-    autoSubmitEntireExam('proctoring_violations');
+    window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+    stopAllMediaAndAI();
+    setTimeout(() => {
+      autoSubmitEntireExam('proctoring_violations');
+    }, 300);
   }, [autoSubmitEntireExam]);
 
   const handleAudioProctorReady = useCallback(() => {
@@ -1199,9 +1212,11 @@ const MultiSectionAssessment = () => {
     setProctoringData(prev => {
       const nextAudioCount = (prev.audioViolationCount || 0) + 1;
       if (nextAudioCount >= maxAudioViolations) {
+        window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+        stopAllMediaAndAI();
         setTimeout(() => {
           autoSubmitEntireExam('proctoring_violations');
-        }, 1000);
+        }, 300);
       }
       return {
         ...prev,
@@ -1223,6 +1238,7 @@ const MultiSectionAssessment = () => {
     return () => {
       window.removeEventListener('popstate', handler);
       window.__seedHideNavControls = false;
+      try { stopAllMediaAndAI(); } catch (_) {}
     };
   }, []);
 
@@ -1231,7 +1247,7 @@ const MultiSectionAssessment = () => {
     let authData = {};
     let assessmentData = null;
     try {
-      authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+      authData = normalizeUser(JSON.parse(localStorage.getItem('auth_data') || '{}'));
       assessmentData = JSON.parse(sessionStorage.getItem('multisectionAssessmentData') || 'null');
 
       // Fallback to persistent localStorage backup if sessionStorage was cleared by browser exit/tab close
@@ -1254,7 +1270,7 @@ const MultiSectionAssessment = () => {
       console.error('[MSA] Failed to parse localStorage:', e);
     }
 
-    if (!authData?.Email || !assessmentData) {
+    if (!authData?.email || !assessmentData) {
       navigate('/student/dashboard', { replace: true });
       return;
     }
@@ -1281,12 +1297,12 @@ const MultiSectionAssessment = () => {
     const checkAttempt = async () => {
       try {
         // CANONICAL: use Firebase Auth UID for the result path.
-        const uid = auth?.currentUser?.uid;
+        const uid = auth?.currentUser?.uid || authData.uid;
         if (!uid) {
           console.warn('[MSA] checkAttempt: not authenticated, skipping server check.');
           return;
         }
-        const tenantId = authData?.tenantId || authData?.TenantId || authData?.tenant_id || user?.tenantId || '';
+        const tenantId = authData.tenantId || 'SEED-SEB';
         const canonDocPath = `assessmentResults/${tenantId}/${assessmentData.id}/${uid}`;
         const docSnap = await getDoc(doc(db, canonDocPath));
         if (docSnap.exists()) {
@@ -1313,6 +1329,10 @@ const MultiSectionAssessment = () => {
     const progressKey = `msaProgress_${assessmentData.id}`;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(progressKey) || 'null'); } catch (_) {}
+    if (saved && saved.email && authData.Email && saved.email !== authData.Email) {
+      localStorage.removeItem(progressKey);
+      saved = null;
+    }
     if (saved && saved.email === authData.Email) {
       const nowMs = new Date().getTime();
       const lastActiveMs = saved.lastActiveTimestamp || (saved.savedAt ? new Date(saved.savedAt).getTime() : nowMs);
@@ -1345,7 +1365,7 @@ const MultiSectionAssessment = () => {
     loadAllSections(assessmentData).then(() => {
       // Start Firestore-backed session AFTER sections are loaded
       const slug = sessionStorage.getItem('msaSlug') || assessmentData.id || '';
-      startAssessmentSession(authData, assessmentData, slug).catch(() => {});
+      startAssessmentSession(assessmentData, slug).catch(() => {});
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1682,7 +1702,7 @@ const MultiSectionAssessment = () => {
     const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
     if (assessment?.sections?.[idx] && authData?.Email) {
       const sec = assessment.sections[idx];
-      markSectionStarted(authData, assessment.id, {
+      markSectionStarted(assessment.id, {
         sectionId: sec.sectionId || sec.id || sec.name,
         name:      sec.name || '',
         secIdx:    idx,
@@ -1751,7 +1771,7 @@ const MultiSectionAssessment = () => {
     // ── Firestore: mark section completed ──
     const authDataSec = JSON.parse(localStorage.getItem('auth_data') || '{}');
     if (authDataSec?.Email && assessment?.id) {
-      markSectionCompleted(authDataSec, assessment.id, activeSection.sectionId || activeSection.name).catch(() => {});
+      markSectionCompleted(assessment.id, activeSection.sectionId || activeSection.name).catch(() => {});
     }
 
     const nextIdx = currentSecIdx + 1;
@@ -1784,7 +1804,7 @@ const MultiSectionAssessment = () => {
         } else {
           setDoc(doc(db, `assessmentResults/${tenantId}/${assessment.id}/${userId}`), {
             userId, email: user.Email, rollNumber: user['Roll Number'] || '', name: user.Name || '',
-            tenantId: tenantId, cohortId: year,
+            tenantId: tenantId, cohortId: user?.cohortId || user?.year || year || '',
             testID: assessment.id, testName: assessment.name,
             assessmentId: assessment.id, assessmentName: assessment.name,
             type: 'multisection', status: 'partial',
@@ -1907,8 +1927,11 @@ const MultiSectionAssessment = () => {
         if (!userId) {
           console.error('[MSA] autoSubmitSection final: not authenticated, refusing Firestore write.');
         } else {
-          const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || authData?.tenantId || '';
-          const v2DocPath = `assessmentResults/${tenantId}/${assessment.id}/${userId}`;
+          let rawTid = String(user?.tenantId || user?.collegeCode || user?.TenantId || tenant?.tenantId || '').trim();
+          if (!rawTid || rawTid.includes(' ')) {
+            rawTid = 'SEED-SEB';
+          }
+          const v2DocPath = `assessmentResults/${rawTid}/${assessment.id}/${userId}`;
 
           try {
             await setDoc(doc(db, v2DocPath), attemptData, { merge: true });
@@ -1943,7 +1966,7 @@ const MultiSectionAssessment = () => {
         localStorage.removeItem(`msaActiveAssessment_${assessment?.id}`);
 
         // ── Mark attempt fully completed (Firestore session + completion index) ──
-        completeAssessmentSession(user, assessment?.id).catch(() => {});
+        completeAssessmentSession(assessment?.id).catch(() => {});
         markAssessmentCompleted(user, assessment?.id).catch(() => {});
         if (user?.Email) invalidateCompletionCache(user.Email);
       } finally {
@@ -2087,7 +2110,8 @@ const MultiSectionAssessment = () => {
           key={`spoken-${activeSection.sectionId}`}
           assessmentData={{ ...activeSecData, name: activeSection.name }}
           user={user}
-          onBack={() => autoSubmitSection()}
+          onSectionSubmit={(res) => autoSubmitSection(res)}
+          onBack={(res) => autoSubmitSection(res)}
         />
       )
       : activeSection.type === 'mcq'

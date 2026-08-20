@@ -8,6 +8,7 @@
  *   Local public path → fetch → JSON parse → return data
  */
 import { fetchArticleFile } from '../utils/articleFetcher';
+import { normalizeCodingQuestion } from '../models/canonicalModels';
 
 const GITHUB_SEED_CONTENTS_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
 const LOCAL_BASE = '/seed-contents';
@@ -39,8 +40,8 @@ const fetchJson = async (path) => {
 
 /**
  * Fetch a single coding question by ID.
- * @param {string} questionId - e.g. 'Q1001'
- * @returns {Promise<Object>} Question data object
+ * @param {string|object} questionId - e.g. 'Q1001'
+ * @returns {Promise<Object>} Canonical Coding Question
  */
 let questionMapCache = null;
 
@@ -50,7 +51,7 @@ export const fetchQuestion = async (questionId) => {
   // If already a full question object passed in
   if (typeof questionId === 'object') {
     if (questionId.content?.problemStatement || questionId.problemStatement || questionId.description || questionId.testCases) {
-      return questionId;
+      return normalizeCodingQuestion(questionId);
     }
     questionId = questionId.questionId || questionId.id || '';
   }
@@ -66,58 +67,74 @@ export const fetchQuestion = async (questionId) => {
     normId = `Q${rawId.slice(1)}`;
   }
 
+  let result = null;
+
   // 1. Aptitude questions
   if (normId.startsWith('Q_apt_')) {
     try {
       const res = await fetchArticleFile(`course/AptitudeCourses/${normId}.json`);
-      if (res.ok) return await res.json();
+      if (res.ok) result = await res.json();
     } catch (_) {}
   }
 
   // 2. Direct coding/questions/ path
-  try {
-    const qDoc = await fetchJson(`coding/questions/${normId}.json`);
-    if (qDoc) return qDoc;
-  } catch (_) {}
+  if (!result) {
+    try {
+      result = await fetchJson(`coding/questions/${normId}.json`);
+    } catch (_) {}
+  }
 
   // Try rawId if different from normId
-  if (rawId !== normId) {
+  if (!result && rawId !== normId) {
     try {
-      const qDoc = await fetchJson(`coding/questions/${rawId}.json`);
-      if (qDoc) return qDoc;
+      result = await fetchJson(`coding/questions/${rawId}.json`);
     } catch (_) {}
   }
 
   // 3. Technical courses mapped lookup
-  if (!questionMapCache) {
-    try {
-      const mapRes = await fetchArticleFile('course/TechnicalCourses/question_map.json');
-      if (mapRes.ok) {
-        questionMapCache = await mapRes.json();
-      }
-    } catch (_) {}
-  }
+  if (!result) {
+    if (!questionMapCache) {
+      try {
+        const mapRes = await fetchArticleFile('course/TechnicalCourses/question_map.json');
+        if (mapRes.ok) {
+          questionMapCache = await mapRes.json();
+        }
+      } catch (_) {}
+    }
 
-  const mappedFolder = questionMapCache?.[normId] || questionMapCache?.[rawId];
-  if (mappedFolder) {
-    try {
-      const res = await fetchArticleFile(`course/TechnicalCourses/${mappedFolder}/Questionbank/${normId}.json`);
-      if (res.ok) return await res.json();
-    } catch (_) {}
+    const mappedFolder = questionMapCache?.[normId] || questionMapCache?.[rawId];
+    if (mappedFolder) {
+      try {
+        const res = await fetchArticleFile(`course/TechnicalCourses/${mappedFolder}/Questionbank/${normId}.json`);
+        if (res.ok) result = await res.json();
+      } catch (_) {}
+    }
   }
 
   // 4. Search technical courses folders
-  const folders = ['c', 'java', 'cpp', 'dsa'];
-  for (const f of folders) {
-    try {
-      const res = await fetchArticleFile(`course/TechnicalCourses/${f}/Questionbank/${normId}.json`);
-      if (res.ok) return await res.json();
-    } catch (_) {}
+  if (!result) {
+    const folders = ['c', 'java', 'cpp', 'dsa'];
+    for (const f of folders) {
+      try {
+        const res = await fetchArticleFile(`course/TechnicalCourses/${f}/Questionbank/${normId}.json`);
+        if (res.ok) {
+          result = await res.json();
+          break;
+        }
+      } catch (_) {}
+    }
   }
 
   // 5. Last resort fetch
-  return fetchJson(`coding/questions/${normId}.json`);
+  if (!result) {
+    try {
+      result = await fetchJson(`coding/questions/${normId}.json`);
+    } catch (_) {}
+  }
+
+  return result ? normalizeCodingQuestion(result) : null;
 };
+
 
 /**
  * Fetch the central coding questions index manifest.
@@ -158,10 +175,10 @@ export const fetchQuestionsForContest = async (questionIds = []) => {
 
   return results
     .map((r, i) => {
-      if (r.status === 'fulfilled' && r.value) return r.value;
+      if (r.status === 'fulfilled' && r.value) return normalizeCodingQuestion(r.value);
       const originalItem = questionIds[i];
       if (originalItem && typeof originalItem === 'object' && (originalItem.title || originalItem.id)) {
-        return originalItem; // preserve inline object if fetch failed
+        return normalizeCodingQuestion(originalItem); // preserve inline object if fetch failed
       }
       const id = typeof originalItem === 'object' ? (originalItem?.id || originalItem?.questionId) : originalItem;
       console.warn(`[QuestionBankService] Failed to fetch question ${id}:`, r.reason?.message);

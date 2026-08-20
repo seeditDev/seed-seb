@@ -13,7 +13,7 @@ import desktopBridge from "./utils/desktopBridge";
 import { logPortalActivityTime } from "./services/codingProgressService";
 import { useLocation, useNavigate } from "./router-compat";
 import { auth, onAuthStateChanged, db } from "./firebase-config";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import ProctorService from "./services/proctorService";
 
 import { Toaster } from "sonner";
@@ -253,26 +253,60 @@ export default function AppShell({ children }) {
 
       // Single-System Login Guard: Monitor activeSessionId to prevent multi-device logins
       if (firebaseUser?.uid) {
-        const localSessionId = localStorage.getItem("active_session_id") || sessionStorage.getItem("active_session_id");
-        if (localSessionId) {
-          if (sessionUnsubscribeRef.current) {
-            sessionUnsubscribeRef.current();
-          }
-          sessionUnsubscribeRef.current = onSnapshot(doc(db, "users", firebaseUser.uid), (docSnap) => {
-            if (!docSnap.exists()) return;
-            const remoteData = docSnap.data();
-            const remoteSessionId = remoteData.activeSessionId;
-            if (remoteSessionId && remoteSessionId !== localSessionId) {
-              console.warn("[SessionGuard] Simultaneous login detected on another system! Terminating current session.");
-              clearAllStudentLocalData();
-              auth.signOut().catch(() => {});
-              alert("Simultaneous Login Detected: Your account has been logged in on another machine. For exam security, this session has been ended.");
-              window.location.href = "/login";
-            }
-          }, (err) => {
-            console.warn("[SessionGuard] Session listener non-fatal error:", err);
-          });
+        if (sessionUnsubscribeRef.current) {
+          sessionUnsubscribeRef.current();
         }
+        sessionUnsubscribeRef.current = onSnapshot(doc(db, "users", firebaseUser.uid), (docSnap) => {
+          if (!docSnap.exists()) return;
+          const remoteData = docSnap.data();
+          const remoteSessionId = remoteData?.activeSessionId;
+
+          // If currently in the middle of a login handshake or on the login page, do NOT trigger eviction
+          const isLoggingIn = sessionStorage.getItem("is_logging_in") === "true";
+          const isLoginPage = typeof window !== 'undefined' && (
+            window.location.pathname === '/login' ||
+            window.location.pathname === '/' ||
+            window.location.pathname.endsWith('/login')
+          );
+
+          let currentLocal = localStorage.getItem("active_session_id") || sessionStorage.getItem("active_session_id");
+
+          // If local session ID is not set yet on this client, adopt or register:
+          if (!currentLocal) {
+            if (remoteSessionId) {
+              localStorage.setItem("active_session_id", remoteSessionId);
+              sessionStorage.setItem("active_session_id", remoteSessionId);
+              currentLocal = remoteSessionId;
+            } else {
+              const newSessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+              localStorage.setItem("active_session_id", newSessionId);
+              sessionStorage.setItem("active_session_id", newSessionId);
+              setDoc(doc(db, "users", firebaseUser.uid), {
+                activeSessionId: newSessionId,
+                lastLoginAt: serverTimestamp()
+              }, { merge: true }).catch(() => {});
+              currentLocal = newSessionId;
+            }
+          }
+
+          if (isLoggingIn || isLoginPage) {
+            return;
+          }
+
+          // Conflict: remote session ID has changed (logged in on another device / browser)
+          if (remoteSessionId && currentLocal && remoteSessionId !== currentLocal) {
+            console.warn("[SessionGuard] Simultaneous login detected on another system! Terminating current session.");
+            try { desktopBridge.clearStudentSession(); } catch(_) {}
+            try { TrackingService.stopTracking(); } catch(_) {}
+            clearAllStudentLocalData();
+            auth.signOut().catch(() => {});
+            sessionStorage.setItem("session_terminated_reason", "simultaneous_login");
+            alert("Simultaneous Login Detected: Your account has been logged in on another machine or browser. For exam security, this session has been ended.");
+            window.location.href = "/login?reason=simultaneous_login";
+          }
+        }, (err) => {
+          console.warn("[SessionGuard] Session listener non-fatal error:", err);
+        });
       }
     });
 
@@ -299,28 +333,65 @@ export default function AppShell({ children }) {
 
   /** Clear all localStorage keys that belong to the active student session. */
   function clearAllStudentLocalData() {
+    const prefixes = [
+      'msaProgress_',
+      'msaActiveAssessment_',
+      'msa_',
+      'proctor_',
+      'proctor_offline_',
+      'proctor_snapshots_offline_',
+      'proctor_unsynced_',
+      'seed_submission_envelope_',
+      'completed_assessments_',
+      'mcqCompleted_',
+      'mcq_',
+      'mcqTest',
+      'practice_progress_',
+      'user_activities_',
+      'user_profile_',
+      'seed_daily_goals_',
+      'assessment_',
+      'assessmentCompletion_',
+      'codingAssessment',
+      'coding_',
+      'guest_',
+      'seed_'
+    ];
+    const exactKeys = [
+      'auth_data',
+      'role',
+      'active_session_id',
+      'cache_version',
+      'rememberedUser',
+      'codingAssessmentData',
+      'codingAssessmentStartTime',
+      'codingAssessmentTimer',
+      'codingLastActiveTime',
+      'mcqTestCourseCtx',
+      'mcqTestStartTime',
+      'mcqTestStartTimeISO',
+      'mcqTestDuration',
+      'mcqTestData',
+      'mcqTestAnswers',
+      'mcqActiveTestSlug',
+      'mcqLastProgressSync',
+      'mcqLastActiveTime',
+      'mcqPendingSubmission',
+      'mcqReloadGraceDeadline',
+      'mcqAutoSubmitNotice',
+    ];
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
-      // Remove session-scoped keys
-      if (
-        key === 'auth_data' ||
-        key === 'rememberedUser' ||
-        key.startsWith('msaProgress_') ||
-        key.startsWith('msaActiveAssessment_') ||
-        key === 'codingAssessmentData' ||
-        key === 'codingAssessmentStartTime' ||
-        key === 'codingAssessmentTimer' ||
-        key === 'codingLastActiveTime' ||
-        key.startsWith('proctor_offline_') ||
-        key.startsWith('proctor_snapshots_offline_') ||
-        key.startsWith('seed_submission_envelope_')
-      ) {
+      if (exactKeys.includes(key) || prefixes.some((p) => key.startsWith(p))) {
         keysToRemove.push(key);
       }
     }
     keysToRemove.forEach((k) => localStorage.removeItem(k));
+    try {
+      sessionStorage.clear();
+    } catch (_) {}
     console.log('[AppShell] Cleared', keysToRemove.length, 'student session keys from localStorage.');
   }
 

@@ -13,20 +13,19 @@ import { toast } from 'sonner';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import SecurityWatermark from './SecurityWatermark';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
+import { normalizeUser } from '../models/canonicalModels';
 import '../styles/SpokenEnglishAssessment.css';
 
 const CALIBRATION_TEXT = "Checking microphone clarity and background noise levels.";
 
-const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
+const SpokenEnglishAssessment = ({ assessmentData, user, onBack, onComplete, onSectionSubmit }) => {
   // Stages: 'preflight' | 'exam' | 'completed' | 'limit_reached'
   const [stage, setStage] = useState('preflight');
   const [micPermission, setMicPermission] = useState('pending'); // 'pending' | 'granted' | 'denied'
   const [micVolume, setMicVolume] = useState(0);
-  const [calibrationPassed, setCalibrationPassed] = useState(false);
-
-  // AI Readiness Check States
   const [speechEngineReady, setSpeechEngineReady] = useState(true);
   const [aiEngineReady, setAiEngineReady] = useState(true);
+  const [calibrationPassed, setCalibrationPassed] = useState(false);
 
   // Exam State
   const [questions, setQuestions] = useState([]);
@@ -51,6 +50,8 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [finalEvaluation, setFinalEvaluation] = useState(null);
 
+  const lastEvaluationRef = useRef(null);
+
   // Audio Context & Media Recorder Refs
   const audioCtxRef = useRef(null);
   const analyserRef = useRef(null);
@@ -62,17 +63,26 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
   const qTimerIntervalRef = useRef(null);
 
   // User Resolution
-  const currentUser = user || (() => {
+  const currentUser = normalizeUser(user || (() => {
     try { return JSON.parse(localStorage.getItem("auth_data")); } catch (_) { return null; }
-  })();
+  })());
 
-  const userEmail = (currentUser?.Email || currentUser?.email || '').toLowerCase();
+  const userEmail = (currentUser?.email || '').toLowerCase();
   const testId = assessmentData?.id || 'AS003_T001';
 
-  const handleBack = onBack || (() => {
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = '/student/dashboard';
-  });
+  const handleBack = useCallback(() => {
+    const resData = lastEvaluationRef.current;
+    if (onSectionSubmit) {
+      onSectionSubmit(resData);
+    } else if (onComplete) {
+      onComplete(resData);
+    } else if (onBack) {
+      onBack(resData);
+    } else {
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = '/student/dashboard';
+    }
+  }, [onBack, onComplete, onSectionSubmit]);
 
   // Pre-Launch Engine Readiness
   useEffect(() => {
@@ -423,6 +433,15 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
 
     const evaluation = evaluateSpokenEnglishSession(allResp, 1200 - examTimeLeft, questions.length);
     setFinalEvaluation(evaluation);
+    lastEvaluationRef.current = {
+      score: evaluation.percentage || 0,
+      totalMarks: 100,
+      maxScore: 100,
+      totalQuestions: questions.length || 1,
+      percentage: evaluation.percentage || 0,
+      evaluation,
+      responses: allResp,
+    };
 
     // ── Resolve canonical identifiers ─────────────────────────────────────────
     // CANONICAL: Firebase Auth UID — never email / localStorage fallback
@@ -431,6 +450,8 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     if (!userId) {
       console.error('[SEA] Not authenticated — cannot write result. Aborting finishAssessment.');
       setIsSubmitting(false);
+      stopAllMediaAndAI();
+      setStage('completed');
       return;
     }
 
@@ -447,11 +468,11 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       userId,
       uid: userId,
       email: userEmail,
-      studentName: currentUser?.Name || currentUser?.name || 'Candidate',
-      rollNumber: currentUser?.RollNumber || currentUser?.rollNumber || '',
-      college: currentUser?.College || currentUser?.college || '',
-      department: currentUser?.Department || currentUser?.department || '',
-      year: currentUser?.Year || currentUser?.year || '',
+      studentName: currentUser?.name || 'Candidate',
+      rollNumber: currentUser?.rollNumber || '',
+      college: currentUser?.tenantId || '',
+      department: currentUser?.department || '',
+      year: currentUser?.year || '',
       testID: testId,
       assessmentId: testId,
       testName: assessmentData?.name || 'Spoken English Assessment',
@@ -486,7 +507,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     };
 
     // Canonical Firestore path: assessmentResults/{tenantId}/{testId}/{userId}
-    const tenantId = currentUser?.tenantId || currentUser?.TenantId || currentUser?.tenant_id || '';
+    const tenantId = currentUser?.tenantId || '';
     try {
       const v2DocPath = `assessmentResults/${tenantId}/${testId}/${userId}`;
       const unifiedPayload = buildUnifiedResultPayload({
@@ -539,8 +560,8 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
   const currentAttemptsUsed = attemptsMap[currentQId] || 0;
   const attemptsRemaining = Math.max(0, maxAttempts - currentAttemptsUsed);
 
-  const candidateDisplayName = currentUser?.Name || currentUser?.name || 'Candidate';
-  const candidateRollNo = currentUser?.RollNumber || currentUser?.rollNumber || '';
+  const candidateDisplayName = currentUser?.name || 'Candidate';
+  const candidateRollNo = currentUser?.rollNumber || '';
 
   // Render Attempt Limit Reached View
   if (stage === 'limit_reached') {
@@ -708,7 +729,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
   // Render Interactive Exam Stage (Forward-Only Placement Rigor + Question Timers + MCQ Header Parity)
   return (
     <div className="spe-root">
-      <SecurityWatermark email={currentUser?.Email || user?.Email} />
+      <SecurityWatermark email={userEmail} />
       <header className="spe-header">
         <div className="spe-header-title">
           <FaMicrophone /> {assessmentData?.name || 'Spoken English Assessment'}

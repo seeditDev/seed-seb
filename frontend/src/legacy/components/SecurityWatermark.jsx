@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import '../styles/SecurityWatermark.css';
+import { getAuthData } from '../utils/storageUtils';
+import { normalizeUser } from '../models/canonicalModels';
 
 /**
  * Synchronously read initial auth data from localStorage so watermark
@@ -7,28 +9,13 @@ import '../styles/SecurityWatermark.css';
  */
 const getInitialAuth = () => {
   try {
-    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-    const roll =
-      authData.rollNumber ||
-      authData['Roll Number'] ||
-      authData.rollNo ||
-      authData.RollNo ||
-      authData.regNo ||
-      authData.registerNumber ||
-      authData.uid ||
-      authData.email ||
-      '';
-    const tenant =
-      authData.tenantId ||
-      authData.TenantId ||
-      authData.tenant_id ||
-      authData.collegeCode ||
-      authData.college ||
-      authData.College ||
-      '';
+    const authData = getAuthData();
+    const user = normalizeUser(authData);
+    const roll = user.rollNumber || user.uid || user.email || '';
+    const tenant = user.tenantId || 'SEED-SEB';
     return { roll, tenant };
   } catch (_) {
-    return { roll: '', tenant: '' };
+    return { roll: '', tenant: 'SEED-SEB' };
   }
 };
 
@@ -47,28 +34,9 @@ const SecurityWatermark = ({ email: propEmail, rollNumber: propRoll, tenantId: p
     if (propTenant) setCandidateTenant(propTenant);
 
     try {
-      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      const resolvedRoll =
-        propRoll ||
-        authData.rollNumber ||
-        authData['Roll Number'] ||
-        authData.rollNo ||
-        authData.RollNo ||
-        authData.regNo ||
-        authData.registerNumber ||
-        authData.uid ||
-        authData.email ||
-        propEmail ||
-        '';
-
-      const resolvedTenant =
-        propTenant ||
-        authData.tenantId ||
-        authData.TenantId ||
-        authData.tenant_id ||
-        authData.collegeCode ||
-        authData.college ||
-        'SEED-SEB';
+      const user = normalizeUser(getAuthData());
+      const resolvedRoll = propRoll || user.rollNumber || user.uid || user.email || propEmail || '';
+      const resolvedTenant = propTenant || user.tenantId || 'SEED-SEB';
 
       if (resolvedRoll) setCandidateRoll(resolvedRoll);
       if (resolvedTenant) setCandidateTenant(resolvedTenant);

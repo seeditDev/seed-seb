@@ -71,6 +71,8 @@ import { RESUMABLE_STATES, ATTEMPT_STATES } from '../services/attemptStateMachin
 import { validateAssessmentPayload, validateTestDoc, validateMSASections } from '../utils/assessmentValidator';
 import { loadUserDailyGoals, saveUserDailyGoals, getDailyGoalsForDate } from '../utils/dailyGoalsPool';
 import { toast } from 'sonner';
+import { getAuthData } from '../utils/storageUtils';
+import { normalizeUser } from '../models/canonicalModels';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -92,7 +94,7 @@ const StudentDashboard = () => {
     return location.state?.tab || "dashboard";
   });
   const [collapsed, setCollapsed] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getAuthData());
   const [dailyGoals, setDailyGoals] = useState([]);
   const [seedCredits, setSeedCredits] = useState(2450);
   const [todayCreditsGained, setTodayCreditsGained] = useState(120);
@@ -145,10 +147,10 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     if (user) {
-      setEditName(user.Name || user.name || user.displayName || '');
-      setEditRollNo(user['Roll Number'] || user.rollNumber || user.rollNo || '');
-      setEditPhone(user.phone || user.phoneNumber || '+91 98765 43210');
-      setAvatarUrl(user.photoURL || user.avatarUrl || '');
+      setEditName(user.name || user.displayName || user.Name || '');
+      setEditRollNo(user.rollNumber || '');
+      setEditPhone(user.phone || '+91 98765 43210');
+      setAvatarUrl(user.photoURL || '');
     }
   }, [user]);
 
@@ -262,119 +264,162 @@ const StudentDashboard = () => {
   };
 
   // ─── Live Progress, Dynamic Streak & Daily Goals Lifecycle ───────────
-  useEffect(() => {
-    const initProgressAndGoals = async () => {
-      const uid = user?.uid || auth?.currentUser?.uid || 'guest';
-      
-      // 1. Load Coding Progress
-      try {
-        const { getFullProgress } = await import('../services/codingProgressService');
-        const prog = getFullProgress(uid);
-        if (prog) {
-          setProgressData(prog);
+  const initProgressAndGoals = useCallback(async () => {
+    const uid = user?.uid || auth?.currentUser?.uid || 'guest';
+    
+    // 1. Load Coding Progress
+    let prog = null;
+    try {
+      const { getFullProgress } = await import('../services/codingProgressService');
+      prog = await getFullProgress(uid);
+      if (prog) {
+        setProgressData(prog);
 
-          // Calculate Live Streak from actual activity dates
-          const activity = prog.activity || {};
-          const details = prog.problemDetails || {};
-          const activeDates = new Set();
-          Object.keys(activity).forEach(d => {
-            if (activity[d]?.problemsSolved > 0 || activity[d]?.hours > 0) activeDates.add(d);
-          });
-          Object.values(details).forEach(p => {
-            if ((p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt) {
-              activeDates.add(p.lastSolvedAt.split('T')[0]);
-            }
-          });
-
-          const todayStr = new Date().toISOString().split('T')[0];
-          let computedStreak = 0;
-          let currDate = new Date();
-
-          if (activeDates.has(todayStr)) {
-            computedStreak++;
-            currDate.setDate(currDate.getDate() - 1);
-          } else {
-            currDate.setDate(currDate.getDate() - 1);
+        // Calculate Live Streak from actual activity dates
+        const activity = prog.activity || {};
+        const details = prog.problemDetails || {};
+        const activeDates = new Set();
+        Object.keys(activity).forEach(d => {
+          if (activity[d]?.problemsSolved > 0 || activity[d]?.hours > 0) activeDates.add(d);
+        });
+        Object.values(details).forEach(p => {
+          if ((p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt) {
+            activeDates.add(p.lastSolvedAt.split('T')[0]);
           }
-
-          while (true) {
-            const dStr = currDate.toISOString().split('T')[0];
-            if (activeDates.has(dStr)) {
-              computedStreak++;
-              currDate.setDate(currDate.getDate() - 1);
-            } else {
-              break;
-            }
-          }
-
-          const finalStreak = Math.max(1, computedStreak, user?.streak || 1);
-          setUserStreak(finalStreak);
-        }
-      } catch (err) {
-        console.warn('[Dashboard] Could not calculate live streak:', err);
-      }
-
-      // 2. Load and Dynamically Evaluate Daily Goals
-      try {
-        const data = await loadUserDailyGoals(uid);
-        const todayStr = new Date().toISOString().split('T')[0];
-        let baseGoals = (data && Array.isArray(data.goals)) ? data.goals : getDailyGoalsForDate(todayStr, uid, 0);
-        
-        // Evaluate each goal against live progress data
-        const localProg = progressData || (await import('../services/codingProgressService')).getFullProgress(uid);
-        const solvedToday = Object.entries(localProg?.problemDetails || {})
-          .filter(([id, p]) => p.status === 'SOLVED' && p.lastSolvedAt && p.lastSolvedAt.startsWith(todayStr));
-        const todaySolvedCount = (localProg?.activity?.[todayStr]?.problemsSolved || 0) || solvedToday.length;
-        const todayTimeMins = Math.round((localProg?.activity?.[todayStr]?.hours || 0) * 60);
-
-        const evaluated = baseGoals.map(g => {
-          let isComp = g.completed || false;
-          let curr = g.current || 0;
-          const tgt = g.target || 1;
-          let progLabel = '';
-
-          if (g.type === 'solve') {
-            curr = todaySolvedCount;
-            if (curr >= tgt) isComp = true;
-            progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
-          } else if (g.type === 'time') {
-            curr = todayTimeMins;
-            if (curr >= tgt) isComp = true;
-            progLabel = ` (${Math.min(curr, tgt)}/${tgt} mins)`;
-          } else if (g.type === 'difficulty') {
-            const reqDiff = (g.difficulty || '').toLowerCase();
-            const diffCount = solvedToday.filter(([id, p]) => {
-              const pDiff = (p.difficulty || '').toLowerCase();
-              if (reqDiff === 'easy') return pDiff === 'easy' || pDiff === 'beginner';
-              if (reqDiff === 'medium') return pDiff === 'medium';
-              return pDiff === reqDiff;
-            }).length;
-            curr = diffCount;
-            if (curr >= tgt) isComp = true;
-            progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
-          } else if (g.type === 'category') {
-            const catCount = solvedToday.filter(([id, p]) => (p.category || '').toLowerCase() === (g.category || '').toLowerCase()).length;
-            curr = catCount;
-            if (curr >= tgt) isComp = true;
-            progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
-          }
-
-          return { ...g, current: curr, target: tgt, completed: isComp, displayProgress: progLabel };
         });
 
-        setDailyGoals(evaluated);
+        const todayStr = new Date().toISOString().split('T')[0];
+        let computedStreak = 0;
+        let currDate = new Date();
 
-        if (user) {
-          if (user.seedCredits !== undefined) setSeedCredits(user.seedCredits);
-          else if (user.credits !== undefined) setSeedCredits(user.credits);
+        if (activeDates.has(todayStr)) {
+          computedStreak++;
+          currDate.setDate(currDate.getDate() - 1);
+        } else {
+          currDate.setDate(currDate.getDate() - 1);
         }
-      } catch (err) {
-        console.warn('[Dashboard] Daily goals evaluation skipped:', err);
+
+        let daysChecked = 0;
+        while (daysChecked < 365) {
+          const dStr = currDate.toISOString().split('T')[0];
+          if (activeDates.has(dStr)) {
+            computedStreak++;
+            currDate.setDate(currDate.getDate() - 1);
+            daysChecked++;
+          } else {
+            break;
+          }
+        }
+
+        const finalStreak = computedStreak;
+        setUserStreak(finalStreak);
       }
+    } catch (err) {
+      console.warn('[Dashboard] Could not calculate live streak:', err);
+    }
+
+    // 2. Load and Dynamically Evaluate Daily Goals
+    try {
+      const data = await loadUserDailyGoals(uid);
+      const todayStr = new Date().toISOString().split('T')[0];
+      let baseGoals = (data && Array.isArray(data.goals)) ? data.goals : getDailyGoalsForDate(todayStr, uid, 0);
+      
+      // Evaluate each goal against live progress data
+      const localProg = prog || (await (await import('../services/codingProgressService')).getFullProgress(uid));
+      const solvedToday = Object.entries(localProg?.problemDetails || {})
+        .filter(([id, p]) => (p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt && p.lastSolvedAt.startsWith(todayStr));
+      const todaySolvedCount = Math.max((localProg?.activity?.[todayStr]?.problemsSolved || 0), solvedToday.length);
+      const todayTimeMins = Math.round((localProg?.activity?.[todayStr]?.hours || 0) * 60);
+
+      let allCompleted = true;
+      const evaluated = baseGoals.map(g => {
+        let isComp = g.completed || false;
+        let curr = g.current || 0;
+        const tgt = g.target || 1;
+        let progLabel = '';
+
+        if (g.type === 'solve') {
+          curr = todaySolvedCount;
+          if (curr >= tgt) isComp = true;
+          progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
+        } else if (g.type === 'time') {
+          curr = todayTimeMins;
+          if (curr >= tgt) isComp = true;
+          progLabel = ` (${Math.min(curr, tgt)}/${tgt} mins)`;
+        } else if (g.type === 'difficulty') {
+          const reqDiff = (g.difficulty || '').toLowerCase();
+          const diffCount = solvedToday.filter(([id, p]) => {
+            const pDiff = (p.difficulty || '').toLowerCase();
+            if (reqDiff === 'easy') return pDiff === 'easy' || pDiff === 'beginner' || !pDiff || id.startsWith('Q0.');
+            if (reqDiff === 'medium') return pDiff === 'medium';
+            return pDiff === reqDiff;
+          }).length;
+          curr = Math.max(diffCount, reqDiff === 'easy' ? todaySolvedCount : 0);
+          if (curr >= tgt) isComp = true;
+          progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
+        } else if (g.type === 'category') {
+          const catCount = solvedToday.filter(([id, p]) => (p.category || '').toLowerCase() === (g.category || '').toLowerCase()).length;
+          curr = catCount;
+          if (curr >= tgt) isComp = true;
+          progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
+        }
+
+        if (!isComp) allCompleted = false;
+        return { ...g, current: curr, target: tgt, completed: isComp, displayProgress: progLabel };
+      });
+
+      setDailyGoals(evaluated);
+
+      // If all goals are completed today, ensure streak and rewards are persisted (ONCE per day)
+      if (evaluated.length > 0 && allCompleted && uid && uid !== 'guest') {
+        const wereAllCompletedBefore = baseGoals.every(g => g.completed);
+        const alreadyAwardedToday = data?.allCompleted === true || user?.lastStreakDate === todayStr;
+        if (!wereAllCompletedBefore && !alreadyAwardedToday) {
+          setUserStreak(prev => {
+            const nextStreak = prev + 1;
+            setSeedCredits(credPrev => {
+              const nextCredits = credPrev + 100;
+              setTodayCreditsGained(t => t + 100);
+              saveUserDailyGoals(uid, todayStr, evaluated, nextStreak, nextCredits).catch(() => {});
+              return nextCredits;
+            });
+            return nextStreak;
+          });
+        }
+      }
+
+      if (user) {
+        if (user.seedCredits !== undefined) setSeedCredits(user.seedCredits);
+        else if (user.credits !== undefined) setSeedCredits(user.credits);
+      }
+    } catch (err) {
+      console.warn('[Dashboard] Daily goals evaluation skipped:', err);
+    }
+  }, [user?.uid, user?.lastStreakDate]);
+
+  useEffect(() => {
+    initProgressAndGoals();
+
+    const handleProgressUpdate = () => {
+      initProgressAndGoals();
     };
 
-    initProgressAndGoals();
-  }, [user]);
+    window.addEventListener('coding_progress_updated', handleProgressUpdate);
+    window.addEventListener('storage', handleProgressUpdate);
+    window.addEventListener('focus', handleProgressUpdate);
+
+    return () => {
+      window.removeEventListener('coding_progress_updated', handleProgressUpdate);
+      window.removeEventListener('storage', handleProgressUpdate);
+      window.removeEventListener('focus', handleProgressUpdate);
+    };
+  }, [initProgressAndGoals]);
+
+  useEffect(() => {
+    if (activeTab === 'dashboard' || activeTab === 'profile') {
+      initProgressAndGoals();
+    }
+  }, [activeTab, initProgressAndGoals]);
 
   // Log activity on Tab Change
   useEffect(() => {
@@ -595,7 +640,7 @@ const StudentDashboard = () => {
   const rawCoursesList = useMemo(() => {
     const list = [
       {
-        id: 'learn-c',
+        id: 'learn_c',
         title: 'Learn C',
         subtitle: 'Foundations & Pointers',
         icon: <FaCode />,
@@ -605,7 +650,7 @@ const StudentDashboard = () => {
         defaultTotal: 42
       },
       {
-        id: 'learn-java',
+        id: 'learn_java',
         title: 'Learn Java',
         subtitle: 'OOP & Collections',
         icon: <FaThLarge />,
@@ -615,7 +660,7 @@ const StudentDashboard = () => {
         defaultTotal: 40
       },
       {
-        id: 'learn-cpp',
+        id: 'learn_cpp',
         title: 'Learn C++',
         subtitle: 'STL & Competitive Coding',
         icon: <FaRocket />,
@@ -625,7 +670,7 @@ const StudentDashboard = () => {
         defaultTotal: 39
       },
       {
-        id: 'learn-dsa',
+        id: 'learn_dsa',
         title: 'Data Structures & Algorithms',
         subtitle: 'Trees, Graphs & DP',
         icon: <FaGem />,
@@ -1088,26 +1133,17 @@ const StudentDashboard = () => {
             const effectiveCollege = p.college || p.institution || authData.College
               || p.tenantId || authData.tenantId || '';
 
-            const enriched = {
+            const enriched = normalizeUser({
               ...authData,
-              Name: p.name || p.displayName || authData.Name || '',
-              Email: p.email || userEmail || '',
-              College: effectiveCollege,
+              ...p,
+              uid: p.uid || userUid || lookupId,
+              tenantId: effectiveCollege,
               college: effectiveCollege,
-              Department: p.department || p.dept || authData.Department || '',
-              department: p.department || p.dept || authData.department || '',
-              Year: derivedYear,
-              year: derivedYear,
-              'Roll Number': p.rollNumber || p.rollNo || authData['Roll Number'] || '',
-              rollNumber: p.rollNumber || p.rollNo || authData.rollNumber || '',
-              photoURL: p.photoURL || authData.photoURL || '',
-              tenantId: p.tenantId || authData.tenantId || '',
               cohortId: p.cohortId || authData.cohortId || '',
-              isPremium: p.isPremium ?? authData.isPremium ?? false,
+              year: derivedYear || p.year || authData.year || authData.Year || '',
               seedCredits: p.seedCredits ?? p.credits ?? authData.seedCredits ?? 2450,
               streak: p.streak ?? authData.streak ?? 1,
-              uid: p.uid || userUid || lookupId,
-            };
+            });
             setUser(enriched);
             if (enriched.seedCredits !== undefined) setSeedCredits(enriched.seedCredits);
             if (enriched.streak !== undefined) setUserStreak(enriched.streak);

@@ -153,6 +153,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     }, [onSectionSubmit]);
     const setAutoSubmitMessage = useCallback((message) => {
         sessionStorage.setItem(AUTO_SUBMIT_NOTICE_KEY, message);
+        localStorage.setItem(AUTO_SUBMIT_NOTICE_KEY, message);
         setAutoSubmitNotice(message);
     }, []);
     const stopGlobalCameraStream = useCallback(() => {
@@ -161,10 +162,6 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         } catch (_) { }
     }, []);
     const clearTestSessionStorage = useCallback(() => {
-        if (currentTest?.id || currentTest?.testInfo?.id) {
-            const tId = currentTest?.id || currentTest?.testInfo?.id;
-            localStorage.setItem(`mcqCompleted_${tId}`, 'true');
-        }
         localStorage.removeItem('mcqTestStartTime');
         localStorage.removeItem('mcqTestStartTimeISO');
         localStorage.removeItem('mcqTestDuration');
@@ -175,6 +172,8 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         localStorage.removeItem('mcqLastActiveTime');
         localStorage.removeItem('mcqPendingSubmission');
         localStorage.removeItem('mcqReloadGraceDeadline');
+        localStorage.removeItem('mcqTestCourseCtx');
+        localStorage.removeItem('mcqAutoSubmitNotice');
         setLastProgressSync(null);
         networkTimeoutTriggeredRef.current = false;
 
@@ -247,6 +246,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             if (networkPopupDebounceRef.current) clearTimeout(networkPopupDebounceRef.current);
         };
     }, []);
+
+    useEffect(() => {
+        return () => {
+            if (!isEmbedded) {
+                try { stopAllMediaAndAI(); } catch (_) {}
+            }
+        };
+    }, [isEmbedded]);
 
     // Load user data and access control
     useEffect(() => {
@@ -1346,21 +1353,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             }
             return;
         }
-        if (!showReviewAnswers && !showConfirmSubmit) {
-            setShowConfirmSubmit(true);
-            return;
-        }
-
-        if (showConfirmSubmit) {
-            setShowReviewAnswers(true);
-            setShowConfirmSubmit(false);
-            return;
-        }
-
-        if (showReviewAnswers) {
-            // Final submission - save to Firestore and Sheets
-            handleFinalSubmit();
-        }
+        handleFinalSubmit();
     };
 
     // Final submission handler
@@ -1369,13 +1362,18 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         // concurrent timer auto-submit.
         if (!submitGuard.begin('manual')) {
             console.warn('[MCQPage] Submit already in progress, ignoring duplicate manual submit');
+            toast.info('Submission is already being processed...');
             return;
         }
         
         if (!currentTest || !user) {
             setError('Missing test or user data. Cannot submit.');
+            toast.error('Missing test or user data. Cannot submit.');
+            submitGuard.fail();
             return;
         }
+
+        toast.loading('Submitting your assessment...', { id: 'mcq-submit' });
 
         // Make sure throttled progress writes have landed before we grade.
         flushThrottledWrites();
@@ -1452,12 +1450,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             });
 
             const rawResultData = {
-                email: user.Email,
-                college: user.College,
-                year: user.Year,
-                department: user.Department,
-                rollNumber: user["Roll Number"] || '',
-                name: user.Name || '',
+                email: user.Email || user.email || '',
+                college: user.College || user.college || '',
+                year: user.Year || user.year || '',
+                department: user.Department || user.department || '',
+                rollNumber: user["Roll Number"] || user.rollNumber || '',
+                name: user.Name || user.name || '',
+                tenantId: user.tenantId || user.collegeCode || user.TenantId || '',
+                cohortId: user.cohortId || user.CohortId || '',
                 assessmentID: currentTest.testInfo?.id || currentTest.id || 'unknown',
                 assessmentName: currentTest.name || currentTest.testInfo?.name || 'Unknown Test',
                 testType: 'mcq',
@@ -1503,6 +1503,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 clearTestSessionStorage();
                 setActiveTestSlug(null);
                 stopGlobalCameraStream();
+                toast.success('Assessment submitted successfully!', { id: 'mcq-submit' });
                 return;
             }
 
@@ -1553,12 +1554,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 clearTestSessionStorage();
                 setActiveTestSlug(null);
                 stopGlobalCameraStream();
+                toast.success('Assessment submitted successfully!', { id: 'mcq-submit' });
                 // Removed immediate reload so the success popup can be seen
             } else {
                 throw new Error('Submission failed. Please try again.');
             }
         } catch (error) {
             console.error('[MCQPage] Submission error:', error);
+            toast.error(error?.message || 'Submission failed. Please try again.', { id: 'mcq-submit' });
             setShowSubmittingPopup(false);
 
             if (error.message.includes('DUPLICATE_SUBMISSION') || error.message.includes('already been completed')) {
@@ -2309,9 +2312,9 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         const flaggedCount = bookmarkedQuestions.length;
         const progressPercentage = totalQs > 0 ? Math.round((attemptedQs / totalQs) * 100) : 0;
 
-        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-        const candidateRoll = authData.rollNumber || authData['Roll Number'] || authData.rollNo || authData.RollNo || authData.regNo || authData.registerNumber || authData.uid || 'CANDIDATE';
-        const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || authData.collegeCode || authData.college || authData.College || 'SEED-SEB';
+        const authUser = getAuthData();
+        const candidateRoll = authUser.rollNumber || authUser.email || 'CANDIDATE';
+        const tenantId = authUser.tenantId || 'SEED-SEB';
         const currentQ = currentTest.questions[questionIndex] || {};
 
         return (
@@ -3292,7 +3295,13 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 <ProctoringEngine
                     studentID={user.Email}
                     testID={currentTest.testInfo?.id || currentTest.id || 'unknown'}
-                    onAutoSubmit={handleAutoSubmit}
+                    onAutoSubmit={() => {
+                        window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+                        stopGlobalCameraStream();
+                        setTimeout(() => {
+                            handleAutoSubmit({ reason: 'proctoring_violations' });
+                        }, 300);
+                    }}
                     isTestActive={!!currentTest && !currentTest.submitted}
                     maxViolations={Number(currentTest.testInfo?.maxViolations) || 5}
                     onReady={() => {
@@ -3300,6 +3309,15 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     }}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
+                        const maxLimit = Number(currentTest.testInfo?.maxViolations) || 5;
+                        const count = typeof violationInfo.violationCount === 'number' ? violationInfo.violationCount : 0;
+                        if (count >= maxLimit) {
+                            window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+                            stopGlobalCameraStream();
+                            setTimeout(() => {
+                                handleAutoSubmit({ reason: 'proctoring_violations' });
+                            }, 300);
+                        }
                         setProctoringData(prev => {
                             const isRealViolation = ['no_face', 'multiple_faces', 'tab_switch'].includes(violationInfo.violationType);
                             return {
@@ -3337,9 +3355,11 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                             const nextAudioCount = (prev.audioViolationCount || 0) + 1;
                             const maxLimit = Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 5;
                             if (nextAudioCount >= maxLimit) {
+                                window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+                                stopGlobalCameraStream();
                                 setTimeout(() => {
                                     handleAutoSubmit({ reason: 'proctoring_violations' });
-                                }, 1000);
+                                }, 300);
                             }
                             return {
                                 ...prev,

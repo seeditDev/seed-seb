@@ -8,6 +8,7 @@ import {
   runTransaction,
 } from 'firebase/firestore';
 import { requireTenant } from '../utils/tenant';
+import { normalizeUser } from '../models/canonicalModels';
 
 
 /**
@@ -159,10 +160,11 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
 
   // 1. Fast path — denormalised completion list on the user doc (1 read).
   let denormalisedComplete = false;
-  const userKey = userData?.uid || userData?.UID || tenant.email;
+  const user = normalizeUser(userData);
+  const userKey = user.uid || tenant.email;
   try {
     let userSnap = await getDoc(doc(db, 'users', userKey));
-    if (!userSnap.exists() && userKey !== tenant.email) {
+    if (!userSnap.exists() && userKey !== tenant.email && tenant.email) {
       userSnap = await getDoc(doc(db, 'users', tenant.email));
     }
     const list = userSnap.exists() ? userSnap.data()?.completedAssessmentIds : null;

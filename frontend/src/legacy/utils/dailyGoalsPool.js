@@ -76,7 +76,7 @@ export const loadUserDailyGoals = async (uid) => {
   // If still no valid goals for today, generate 3 fresh deterministic goals
   if (!savedGoals || savedGoals.length < 3) {
     savedGoals = getDailyGoalsForDate(todayStr, uid);
-    saveUserDailyGoals(uid, todayStr, savedGoals).catch(() => {});
+    await saveUserDailyGoals(uid, todayStr, savedGoals).catch(() => {});
   }
 
   return {

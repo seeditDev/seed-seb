@@ -149,7 +149,7 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(initialTab || 'paths'); // 'paths' or 'bank'
-  const [selectedCourse, setSelectedCourse] = useState(initialCourse || null);
+  const [selectedCourse, setSelectedCourse] = useState(() => initialCourse ? String(initialCourse).replace(/-/g, '_') : null);
 
   useEffect(() => {
     if (initialTab) {
@@ -158,7 +158,18 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
   }, [initialTab]);
 
   useEffect(() => {
-    setSelectedCourse(initialCourse || null);
+    if (initialCourse) {
+      const norm = String(initialCourse).replace(/-/g, '_');
+      setSelectedCourse(norm);
+      setActiveTab('paths');
+      if (norm === 'learn_aptitude') {
+        setCurriculumSubTab('aptitude');
+      } else {
+        setCurriculumSubTab('technical');
+      }
+    } else {
+      setSelectedCourse(null);
+    }
   }, [initialCourse]);
 
   const [questions, setQuestions] = useState([]);
@@ -222,13 +233,20 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
       setScrapedSyllabus(null);
       return;
     }
-    const course = courses.find(c => c.id === selectedCourse);
+    const norm = selectedCourse.replace(/-/g, '_');
+    const course = courses.find(c => c.id === selectedCourse || c.id === norm || c.id.replace(/-/g, '_') === norm);
     if (course && course.isScrapedCourse && course.syllabusUrl) {
       setLoading(true);
       fetchArticleJson(course.syllabusUrl)
         .then(data => {
           setScrapedSyllabus(data);
           setLoading(false);
+          if (data && Array.isArray(data.modules) && data.modules.length > 0) {
+            setExpandedTopics(prev => ({
+              ...prev,
+              [`scraped-${course.id}-0`]: true
+            }));
+          }
         })
         .catch(err => {
           console.error("Failed to load scraped course syllabus:", err);
@@ -236,6 +254,12 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
         });
     } else {
       setScrapedSyllabus(null);
+      if (course && Array.isArray(course.modules) && course.modules.length > 0) {
+        setExpandedTopics(prev => ({
+          ...prev,
+          [`paths-${course.id}-${course.modules[0].id}`]: true
+        }));
+      }
     }
   }, [selectedCourse, courses]);
 
@@ -1665,7 +1689,8 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
           ) : selectedCourse ? (
             // ─── COURSE DETAIL VIEW ───
             (() => {
-              const course = courses.find(c => c.id === selectedCourse);
+              const norm = selectedCourse.replace(/-/g, '_');
+              const course = courses.find(c => c.id === selectedCourse || c.id === norm || c.id.replace(/-/g, '_') === norm);
               if (!course) return null;
 
               if (course.isScrapedCourse) {

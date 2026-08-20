@@ -29,6 +29,13 @@ const Login = () => {
       setEmail(saved.email || "");
       setPassword(saved.password || "");
     }
+
+    const params = new URLSearchParams(window.location.search);
+    const reason = params.get("reason") || sessionStorage.getItem("session_terminated_reason");
+    if (reason === "simultaneous_login") {
+      setError("Simultaneous login detected: Your account was signed in on another machine or browser. For exam security, your previous session was terminated.");
+      sessionStorage.removeItem("session_terminated_reason");
+    }
   }, []);
 
   const handleLogin = async (e) => {

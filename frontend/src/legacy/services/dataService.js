@@ -16,6 +16,7 @@ import {
 import {
     doc,
     getDoc,
+    setDoc,
     collection,
     query,
     where,
@@ -26,7 +27,7 @@ import {
 } from 'firebase/firestore';
 import { COLLECTIONS, ROLES } from '../config/constants';
 import { cacheManager } from '../utils/cacheManager';
-import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
+import { normalizeUser } from '../models/canonicalModels';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -37,47 +38,32 @@ import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
  * object that the rest of the app reads from localStorage.
  */
 function buildAuthData(firebaseUser, profile) {
-    // Primary fields written explicitly by new provisionAccount:
-    //   college / collegeName = human-readable college name
-    //   collegeCode / tenantId = Firestore key (e.g. TN000026)
-    //   year = 4-digit graduation year (e.g. "2027")
-    //   cohortId = batch code (e.g. "2K27")
-    const tenantId      = profile?.tenantId      || '';
-    const cohortId      = profile?.cohortId      || '';
-    const rawCollege    = profile?.college       || profile?.collegeName   || '';
-    const rawYear       = profile?.year          || '';
+    const rawCollege    = profile?.college       || profile?.collegeName   || profile?.College || '';
+    const tenantId      = profile?.tenantId      || profile?.collegeCode   || profile?.TenantId || '';
+    const cohortId      = profile?.cohortId      || profile?.CohortId      || '';
+    const rawYear       = profile?.year          || profile?.Year          || '';
 
-    // Last-resort derivation for legacy accounts provisioned before explicit fields were added:
-    // Derive year from cohortId: "2K27" -> "2027"
-    let derivedYear = rawYear;
-    if (!derivedYear && cohortId) {
-        const m = cohortId.match(/^2K(\d{2})/i);
-        if (m) derivedYear = `20${m[1]}`;
-    }
-    // Use tenantId (= collegeCode) as College fallback if name is empty
-    const effectiveCollege = rawCollege || profile?.collegeCode || tenantId;
-
-    return {
+    return normalizeUser({
         uid:          firebaseUser.uid,
         email:        firebaseUser.email,
-        displayName:  profile?.displayName || firebaseUser.displayName || '',
-        photoUrl:     profile?.photoUrl    || firebaseUser.photoURL    || '',
+        name:         profile?.displayName || profile?.name || firebaseUser.displayName || '',
+        displayName:  profile?.displayName || profile?.name || firebaseUser.displayName || '',
+        photoURL:     profile?.photoUrl    || profile?.photoURL || firebaseUser.photoURL || '',
         role:         profile?.role        || ROLES.STUDENT,
-        tenantId,
+        tenantId:     tenantId || (rawCollege && !rawCollege.includes(' ') ? rawCollege : 'SEED-SEB'),
+        college:      rawCollege || tenantId || 'SEED-SEB',
         cohortId,
-        department:   profile?.department  || '',
-        year:         derivedYear,
-        college:      effectiveCollege,
-        rollNumber:   profile?.rollNumber  || '',
-        // Legacy CAPITALISED fields read by tenant.js resolveTenant() and older components
-        Name:         profile?.displayName || '',
-        Email:        firebaseUser.email,
-        College:      effectiveCollege,
-        Year:         derivedYear,
-        Department:   profile?.department  || '',
+        department:   profile?.department  || profile?.Department || '',
+        year:         rawYear,
+        rollNumber:   profile?.rollNumber  || profile?.['Roll Number'] || profile?.rollNo || '',
+        isPremium:    profile?.isPremium   || profile?.Premium,
+        seedCredits:  profile?.seedCredits || profile?.credits,
+        streak:       profile?.streak      || profile?.currentStreak,
+        lastStreakDate: profile?.lastStreakDate,
         isAuthenticated: true,
-    };
+    });
 }
+
 
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -92,20 +78,22 @@ class DataService {
      */
     static async validateCredentials(email, password /*, role (ignored — role from Firestore) */) {
         try {
-            // 1. Firebase Auth sign-in
-            const credential = await signInWithEmailAndPassword(auth, email, password);
-            const firebaseUser = credential.user;
+            sessionStorage.setItem('is_logging_in', 'true');
 
-            // 2. Read Firestore profile
-            const profile = await DataService.getUserProfile(firebaseUser.uid);
-
-            // 3. Single-System Login Enforcement: Generate activeSessionId & log activity
+            // 1. Single-System Login Enforcement: Generate activeSessionId immediately
             const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
             localStorage.setItem('active_session_id', sessionId);
             sessionStorage.setItem('active_session_id', sessionId);
 
+            // 2. Firebase Auth sign-in
+            const credential = await signInWithEmailAndPassword(auth, email, password);
+            const firebaseUser = credential.user;
+
+            // 3. Read Firestore profile
+            const profile = await DataService.getUserProfile(firebaseUser.uid);
+
             try {
-                await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
+                await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
                     activeSessionId: sessionId,
                     lastLoginAt: serverTimestamp(),
                     lastLoginDevice: {
@@ -113,7 +101,7 @@ class DataService {
                         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'SEED-SEB Desktop',
                         loginTimeISO: new Date().toISOString()
                     }
-                });
+                }, { merge: true });
 
                 // Record session in activityLogging subcollection
                 await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid, 'activityLogging', sessionId), {
@@ -124,14 +112,20 @@ class DataService {
                     platform: typeof navigator !== 'undefined' ? navigator.platform : 'desktop',
                     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'SEED-SEB Desktop'
                 });
-            } catch (_) {
-                // Non-fatal
+            } catch (writeErr) {
+                console.warn('[DataService] Failed to record active session in Firestore:', writeErr);
             }
 
             const authData = buildAuthData(firebaseUser, profile);
             localStorage.setItem('auth_data', JSON.stringify(authData));
+
+            setTimeout(() => {
+                sessionStorage.removeItem('is_logging_in');
+            }, 3000);
+
             return authData;
         } catch (error) {
+            sessionStorage.removeItem('is_logging_in');
             console.error('[DataService] validateCredentials error:', error?.code || error);
             return null;
         }
@@ -179,27 +173,62 @@ class DataService {
         const prefixes = [
             'msaProgress_',
             'msaActiveAssessment_',
+            'msa_',
+            'proctor_',
             'proctor_offline_',
             'proctor_snapshots_offline_',
             'proctor_unsynced_',
             'seed_submission_envelope_',
+            'completed_assessments_',
+            'mcqCompleted_',
+            'mcq_',
+            'mcqTest',
+            'practice_progress_',
+            'user_activities_',
+            'user_profile_',
+            'seed_daily_goals_',
+            'assessment_',
+            'assessmentCompletion_',
+            'codingAssessment',
+            'coding_',
+            'guest_',
+            'seed_'
         ];
         const exactKeys = [
             'auth_data',
+            'role',
+            'active_session_id',
+            'cache_version',
             'rememberedUser',
             'codingAssessmentData',
             'codingAssessmentStartTime',
             'codingAssessmentTimer',
             'codingLastActiveTime',
+            'mcqTestCourseCtx',
+            'mcqTestStartTime',
+            'mcqTestStartTimeISO',
+            'mcqTestDuration',
+            'mcqTestData',
+            'mcqTestAnswers',
+            'mcqActiveTestSlug',
+            'mcqLastProgressSync',
+            'mcqLastActiveTime',
+            'mcqPendingSubmission',
+            'mcqReloadGraceDeadline',
+            'mcqAutoSubmitNotice',
         ];
         const toRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (!key) continue;
-            if (exactKeys.includes(key)) { toRemove.push(key); continue; }
-            if (prefixes.some((p) => key.startsWith(p))) toRemove.push(key);
+            if (exactKeys.includes(key) || prefixes.some((p) => key.startsWith(p))) {
+                toRemove.push(key);
+            }
         }
         toRemove.forEach((k) => localStorage.removeItem(k));
+        try {
+            sessionStorage.clear();
+        } catch (_) {}
         console.log('[DataService] Cleared', toRemove.length, 'student session keys on sign-out.');
     }
 
@@ -293,13 +322,37 @@ class DataService {
 
     /**
      * Read tenants/{tenantId}/cohorts/{cohortId} from Firestore.
+     * Supports direct tenant ID document lookup and name-based tenant resolution.
      */
     static async getTenantCohort(tenantId, cohortId) {
         try {
+            if (!tenantId || !cohortId) return null;
+
+            // 1. Direct lookup by tenantId document
             const snap = await getDoc(
                 doc(db, COLLECTIONS.TENANTS, tenantId, 'cohorts', cohortId)
             );
-            return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+            if (snap.exists()) return { id: snap.id, ...snap.data(), tenantId };
+
+            // 2. Fallback: if tenantId was passed as a human-readable College Name (e.g. "KGISL Institute of Technology")
+            try {
+                const q = query(
+                    collection(db, 'publicTenants'),
+                    where('name', '==', tenantId)
+                );
+                const nameSnap = await getDocs(q);
+                if (!nameSnap.empty) {
+                    const actualTenantId = nameSnap.docs[0].id;
+                    const cohortSnap = await getDoc(
+                        doc(db, COLLECTIONS.TENANTS, actualTenantId, 'cohorts', cohortId)
+                    );
+                    if (cohortSnap.exists()) {
+                        return { id: cohortSnap.id, ...cohortSnap.data(), tenantId: actualTenantId };
+                    }
+                }
+            } catch (_) {}
+
+            return null;
         } catch (error) {
             console.error('[DataService] getTenantCohort error:', error);
             return null;

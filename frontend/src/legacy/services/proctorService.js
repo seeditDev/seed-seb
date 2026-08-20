@@ -23,6 +23,7 @@
 import { db, storage } from '../firebase-config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, setDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { normalizeProctorEvent } from '../models/canonicalModels';
 
 // ─── Offline Queue ─────────────────────────────────────────────────────────────
 
@@ -151,14 +152,15 @@ class ProctorService {
       return null;
     }
 
+    const normEvent = normalizeProctorEvent(eventData);
     const {
-      eventType, severity, misbehaviorCount,
-      snapshotUrl, timestamp, sectionId,
+      eventType, misbehaviorCount,
+      snapshotUrl, sectionId,
     } = eventData;
 
     const attemptId      = `${assessmentId}_${uid}`;
     const eventId        = generateEventId();
-    const eventTimestamp = timestamp || new Date().toISOString();
+    const eventTimestamp = (normEvent.timestamp ? new Date(normEvent.timestamp).toISOString() : null) || new Date().toISOString();
     const seqNum         = nextSequence(uid, assessmentId);
 
     const logData = {
@@ -170,8 +172,8 @@ class ProctorService {
 
       // ── Event data ───────────────────────────────────────────────────────
       eventId,
-      type:            eventType,
-      severity:        severity || 'low',
+      type:            normEvent.type !== 'unknown' ? normEvent.type : (eventType || 'violation'),
+      severity:        normEvent.severity,
       sequence:        seqNum,
 
       // ── Timestamps ───────────────────────────────────────────────────────
@@ -182,7 +184,7 @@ class ProctorService {
       sectionId:       sectionId || null,
       snapshotUrl:     snapshotUrl || null,
       metadata: {
-        confidence:       eventData.confidence    || null,
+        confidence:       normEvent.confidence,
         faceCount:        eventData.faceCount     || null,
         misbehaviorCount: misbehaviorCount        || 0,
       },

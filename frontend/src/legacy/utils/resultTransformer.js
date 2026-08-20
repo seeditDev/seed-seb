@@ -43,11 +43,11 @@ export const buildUnifiedResultPayload = (rawPayload) => {
     const cohortId   = rawPayload.cohortId   || '';
 
     // ── Assessment / Test Identifiers ─────────────────────────────────────────
-    // Canonical field is 'assessmentId' (camelCase, no trailing D)
-    const assessmentId    = rawPayload.assessmentId    || rawPayload.assessmentID || rawPayload.testID || rawPayload.id || '';
+    // Canonical field is 'id' / 'assessmentId' (prioritize 'id')
+    const assessmentId    = rawPayload.id || rawPayload.assessmentId || rawPayload.assessmentID || rawPayload.testID || '';
     const assessmentTitle = rawPayload.assessmentTitle || rawPayload.assessmentName || rawPayload.testName || rawPayload.name || '';
     const assessmentType  = rawPayload.assessmentType  || rawPayload.testType || rawPayload.type || 'mcq';
-    const testId          = rawPayload.testId          || rawPayload.testID   || assessmentId;
+    const testId          = rawPayload.id || rawPayload.testId || rawPayload.testID || assessmentId;
     const courseId        = rawPayload.courseId        || '';
     const seriesId        = rawPayload.seriesId        || '';
     const assessmentVersion = rawPayload.assessmentVersion || '';
@@ -220,6 +220,7 @@ export const buildUnifiedResultPayload = (rawPayload) => {
         cohortId,
 
         // Assessment identifiers
+        id: assessmentId,
         assessmentId,
         assessmentTitle,
         assessmentType,

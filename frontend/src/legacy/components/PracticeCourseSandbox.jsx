@@ -194,7 +194,7 @@ const PracticeCourseSandbox = () => {
   const [syllabusQuestions, setSyllabusQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getAuthData());
 
   // Editor & Compile states
   const [language, setLanguage] = useState('cpp');
@@ -268,13 +268,18 @@ const PracticeCourseSandbox = () => {
       setError(null);
       try {
         // STRICT UID: canonical Practice identity is Firebase Auth UID only.
-        const uid = authData?.uid || authData?.UID || authData?.userId || '';
+        const uid = authData?.uid || '';
         if (!uid) {
           console.warn('[PracticeCourseSandbox] Firebase UID not available — progress not loaded');
         }
 
         // 1. Fetch current question
         const qRaw = await fetchQuestion(questionId);
+        if (!qRaw) {
+          setError('Question not found or unavailable');
+          setLoading(false);
+          return;
+        }
         const qData = normalizeQuestion(qRaw);
         setQuestion(qData);
 
@@ -570,7 +575,10 @@ const PracticeCourseSandbox = () => {
 
       await yieldFrame();
         if (useCustomInput || !question?.sampleTestCases || question.sampleTestCases.length === 0) {
-        const result = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, customInput);
+        const result = await Promise.race([
+          desktopBridge.runDirectSandbox(bridgeLang, currentCode, customInput),
+          new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', stderr: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+        ]);
         setStdout(result.stdout || (result.exit_code === 0 && !result.stderr ? 'Execution completed successfully with no output.' : ''));
         setStderr(result.stderr || result.error || '');
         setExitCode(result.exit_code === undefined ? null : result.exit_code);
@@ -580,7 +588,10 @@ const PracticeCourseSandbox = () => {
         for (let i = 0; i < samples.length; i++) {
           const tc = samples[i];
           if (i > 0) await yieldFrame();
-          const res = await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+          const res = await Promise.race([
+            desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input),
+            new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', stderr: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+          ]);
 
           if (isEngineDisconnected(res)) {
             results.push({
@@ -635,7 +646,12 @@ const PracticeCourseSandbox = () => {
     if (!uid || !questionId) return;
 
     try {
-      await markQuestionSolved(uid, questionId, 'concept', 100);
+      const pMeta = {
+        difficulty: problem?.difficulty || 'Easy',
+        category: problem?.category || '',
+        title: problem?.title || problem?.name || questionId
+      };
+      await markQuestionSolved(uid, questionId, 'concept', 100, 1, pMeta);
       const updatedSolved = [...new Set([...solvedIds, questionId])];
       setSolvedIds(updatedSolved);
       checkCourseCompletion(updatedSolved);
@@ -687,7 +703,10 @@ const isCodeBlankOrEmpty = (codeStr) => {
         if (i > 0) await yieldFrame();
         const res = isBlank
           ? { stdout: '', stderr: 'No code submitted in editor.', exit_code: 1 }
-          : await desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input);
+          : await Promise.race([
+              desktopBridge.runDirectSandbox(bridgeLang, currentCode, tc.input),
+              new Promise(resolve => setTimeout(() => resolve({ error: 'Time Limit Exceeded (5s)', stderr: 'Time Limit Exceeded (5s)', exit_code: -1 }), 5000))
+            ]);
 
         if (isEngineDisconnected(res)) {
           results.push({
@@ -728,14 +747,20 @@ const isCodeBlankOrEmpty = (codeStr) => {
       setSubmitScore(score);
 
       if (uid) {
+        const pMeta = {
+          difficulty: problem?.difficulty || 'Easy',
+          category: problem?.category || '',
+          title: problem?.title || problem?.name || questionId
+        };
+
         if (score === 100) {
-          await markQuestionSolved(uid, questionId, language, score);
+          await markQuestionSolved(uid, questionId, language, score, 1, pMeta);
           const updatedSolved = [...new Set([...solvedIds, questionId])];
           setSolvedIds(updatedSolved);
           checkCourseCompletion(updatedSolved);
           toast.success(` Problem Solved! 100% test cases passed.`);
         } else {
-          await markQuestionAttempted(uid, questionId, language, score);
+          await markQuestionAttempted(uid, questionId, language, score, 1, pMeta);
           toast.info(`Tests completed: ${passedCount}/${testCases.length} passed (${score}%).`);
         }
       }
