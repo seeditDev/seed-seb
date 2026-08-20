@@ -1226,12 +1226,9 @@ const StudentDashboard = () => {
             }
           }
 
-          // Derive type key used by launch wizard (spoken-english -> spoken_english)
-          const rawType = t.type || 'mcq';
-          const isMultiSection = rawType === 'msa';
-          const engineType = rawType === 'spoken-english' ? 'spoken_english'
-            : rawType === 'msa' ? 'MSA'
-              : rawType; // 'mcq' | 'coding' | 'sea'
+          // All assessments use the unified Assessment runtime (MSA).
+          // 'type' is always 'assessment'; MCQ/Coding/SEA are section-level types.
+          const isMultiSection = true; // every assessment routes through MultiSectionAssessment
 
           return {
             // ── identity ──
@@ -1245,12 +1242,12 @@ const StudentDashboard = () => {
             seriesKey: t.seriesId,
             difficulty: t.difficulty || 'Medium',
             // ── engine routing ──
-            type: engineType,
+            type: 'assessment',
             isMultiSection,
             slug: t.assessmentId || t.id,
             url: t.cdnUrl || '',
             cdnUrl: t.cdnUrl || '',
-            // ── sections (MSA) ──
+            // ── sections ──
             sections: t.sections || [],
             // ── timing ──
             duration: t.duration_minutes || 60,
@@ -1537,28 +1534,12 @@ const StudentDashboard = () => {
       if (!liveUid) throw new Error('Authentication required. Please log in again.');
 
       // 2. Instant eligibility / duplicate check
-      let check;
-      if (selectedAssessment.isMultiSection || selectedAssessment.type === 'multisection' || selectedAssessment.type === 'MSA') {
-        const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || '';
-        const canonDocPath = `assessmentResults/${tenantId}/${selectedAssessment.id}/${liveUid}`;
-        const docSnap = await getDoc(doc(db, canonDocPath));
-        const isCompleted = docSnap.exists() && (docSnap.data().completed === true || docSnap.data().status === 'submitted');
-        check = { exists: docSnap.exists(), completed: isCompleted };
-      } else if (selectedAssessment.type === 'spoken_english' || selectedAssessment.type === 'sea' || selectedAssessment.type === 'SPOKEN_ENGLISH') {
-        const seaTenantId = user?.tenantId || user?.TenantId || user?.tenant_id || '';
-        const seaCanonDocPath = `assessmentResults/${seaTenantId}/${selectedAssessment.id}/${liveUid}`;
-        const seaDocSnap = await getDoc(doc(db, seaCanonDocPath));
-        const isCompleted = seaDocSnap.exists() && (seaDocSnap.data().completed === true || seaDocSnap.data().status === 'submitted');
-        check = { exists: seaDocSnap.exists(), completed: isCompleted };
-      } else if (selectedAssessment.type === 'mcq') {
-        check = await MCQService.checkExistingAttempt(
-          user.Email, selectedAssessment.id, user.College, user.Year, user.Department
-        );
-      } else {
-        check = await CodingAssessmentService.checkExistingAttempt(
-          user.Email, selectedAssessment.id, user.College, user.Year, user.Department
-        );
-      }
+      // All assessments write their result to the canonical assessmentResults path.
+      const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || '';
+      const canonDocPath = `assessmentResults/${tenantId}/${selectedAssessment.id}/${liveUid}`;
+      const docSnap = await getDoc(doc(db, canonDocPath));
+      const isCompleted = docSnap.exists() && (docSnap.data().completed === true || docSnap.data().status === 'submitted');
+      const check = { exists: docSnap.exists(), completed: isCompleted };
 
       if (check.exists && check.completed) {
         setIsLaunching(false);
@@ -1588,246 +1569,21 @@ const StudentDashboard = () => {
       const nowISO = timeService.getNow().toISOString();
       const durationSec = assessment.duration * 60;
 
-      // ── UNIFIED PRE-LAUNCH VALIDATION (all types) ──────────────────────────
-      // validateTestDoc runs for every assessment type before any early-return.
-      // Catches: missing id, assessmentId, cdnUrl, duration, type (Scenario 7 & 8).
-      const testDocForValidation = {
-        id: assessment.id,
-        assessmentId: assessment.slug || assessment.id,
-        cdnUrl: assessment.cdnUrl || assessment.url || assessment.id || '',
-        type: (assessment.type || 'mcq').replace('MSA', 'msa').replace('spoken_english', 'sea'),
-        duration_minutes: assessment.duration,
-        totalMarks: assessment.totalMarks,
-        schedule: assessment.schedule
-          ? {
-            start: assessment.schedule.startDate && assessment.schedule.startTime
-              ? `${assessment.schedule.startDate}T${assessment.schedule.startTime}` : null,
-            end: assessment.schedule.endDate && assessment.schedule.endTime
-              ? `${assessment.schedule.endDate}T${assessment.schedule.endTime}` : null,
-          }
-          : null,
-      };
-
-      // Lightweight doc check — catches misconfiguration before any CDN fetch or navigation.
-      // For MSA/SEA, cdnUrl may be per-section/Firestore; relax the cdnUrl requirement.
-      const isNoCDNType = assessment.isMultiSection
-        || ['msa', 'MSA', 'spoken_english', 'SPOKEN_ENGLISH', 'sea'].includes(assessment.type);
-      const docCheck = isNoCDNType
-        ? validateTestDoc({ ...testDocForValidation, cdnUrl: testDocForValidation.cdnUrl || assessment.id || 'no-cdn' })
-        : validateTestDoc(testDocForValidation);
-
-      if (!docCheck.valid) {
-        throw new Error(`Assessment configuration error:\n${docCheck.errors.join('\n')}`);
-      }
-
-      // ── MSA: sections carry their own cdnUrls — no top-level JSON needed ────
-      if (assessment.isMultiSection || assessment.type === 'MSA' || assessment.type === 'msa') {
-        const sections = assessment.sections || [];
-        const msaCheck = validateMSASections(sections, {
-          id: assessment.id,
-          name: assessment.name || assessment.slug,
-        });
-        if (!msaCheck.valid) {
-          console.error('[Launch] validateMSASections FAILED:', msaCheck.errors);
-          throw new Error(
-            `Assessment configuration error:\n${msaCheck.errors.join('\n')}`
-          );
-        }
-        if (msaCheck.warnings?.length) {
-          console.warn('[Launch] validateMSASections warnings:', msaCheck.warnings);
-        }
-        const canonicalAss = normalizeAssessment(assessment);
-        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
-        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
-          courseId: assessment.courseId || '',
-          seriesId: assessment.seriesId || '',
-          testId: assessment.id || '',
-          totalMarks: assessment.totalMarks || 100,
-          settings: assessment.settings || {},
-        }));
-        setLaunchStep(null);
-        navigate(`/student/assessment/multisection/${assessment.slug}`);
-        return;
-      }
-
-      // ── SEA: 1-section Spoken English assessment ───────────────────────────
-      if (assessment.type === 'spoken_english' || assessment.type === 'SPOKEN_ENGLISH' || assessment.type === 'sea') {
-        const canonicalAss = normalizeAssessment({
-          ...assessment,
-          type: 'spoken_english',
-          sections: [
-            {
-              id: `sec_${assessment.id}_1`,
-              sectionId: `sec_${assessment.id}_1`,
-              name: assessment.name || 'Spoken English',
-              type: 'spoken_english',
-              durationMinutes: assessment.duration || 20,
-              totalMarks: assessment.totalMarks || 100,
-              questions: assessment.prompts || assessment.questions || []
-            }
-          ]
-        });
-        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
-        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
-          courseId: assessment.courseId || '',
-          seriesId: assessment.seriesId || '',
-          testId: assessment.id || '',
-          totalMarks: assessment.totalMarks || 100,
-        }));
-        setLaunchStep(null);
-        navigate(`/student/assessment/multisection/${assessment.slug}`);
-        return;
-      }
-
-      // ── MCQ / Coding: fetch the CDN JSON ──
-      const testData = await fetchJSONFile(assessment.url || assessment.cdnUrl);
-
-      // ── SCENARIO 5 (WRONG TEST): Validate CDN payload matches TestDoc ────────
-      const payloadCheck = validateAssessmentPayload(testDocForValidation, testData);
-      if (!payloadCheck.valid) {
-        console.error('[Launch] assessmentValidator FAILED:', payloadCheck.errors);
-        throw new Error(`Assessment mismatch detected:\n${payloadCheck.errors.join('\n')}`);
-      }
-      if (payloadCheck.warnings?.length) {
-        console.warn('[Launch] assessmentValidator warnings:', payloadCheck.warnings);
-      }
-
-      if (assessment.type === 'mcq') {
-        const canonicalAss = normalizeAssessment({
-          ...assessment,
-          ...testData,
-          name: assessment.name || testData.name,
-          title: assessment.name || testData.name,
-          duration: assessment.duration || testData.duration || 30,
-          type: 'mcq',
-          sections: [
-            {
-              id: `sec_${assessment.id}_1`,
-              sectionId: `sec_${assessment.id}_1`,
-              name: assessment.name || testData.name || 'MCQ Section',
-              type: 'mcq',
-              durationMinutes: assessment.duration || testData.duration || 30,
-              totalMarks: assessment.totalMarks || testData.totalMarks || (testData.questions?.length || 100),
-              questions: testData.questions || []
-            }
-          ]
-        });
-        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
-        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
-          courseId: assessment.courseId || '',
-          seriesId: assessment.seriesId || '',
-          testId: assessment.id || '',
-          totalMarks: assessment.totalMarks || testData.totalMarks || 100,
-          settings: assessment.settings || {},
-        }));
-        setLaunchStep(null);
-        navigate(`/student/assessment/multisection/${assessment.slug}`);
-      } else {
-        // Collect questionIds and inline question objects from all sources
-        let questionIds = [];
-        const inlineMap = new Map();
-
-        const collectIdsAndInline = (src) => {
-          if (!src) return;
-          if (Array.isArray(src)) {
-            src.forEach(item => {
-              if (typeof item === 'string') {
-                questionIds.push(item);
-              } else if (item && typeof item === 'object') {
-                const qId = item.id || item.questionId || item.title;
-                if (qId) {
-                  questionIds.push(item.id || item.questionId || item);
-                  inlineMap.set(String(qId), item);
-                }
-              }
-            });
-          }
-        };
-
-        collectIdsAndInline(assessment.questionIds);
-        collectIdsAndInline(assessment.questions);
-        collectIdsAndInline(assessment.challenges);
-        collectIdsAndInline(testData.questionIds);
-        collectIdsAndInline(testData.questions);
-        collectIdsAndInline(testData.challenges);
-
-        questionIds = [...new Set(questionIds)].filter(Boolean);
-
-        let resolvedQuestions = [];
-        if (questionIds.length > 0) {
-          try {
-            const { fetchQuestionsForContest } = await import('../services/codingQuestionBankService');
-            resolvedQuestions = await fetchQuestionsForContest(questionIds);
-          } catch (resErr) {
-            console.error("Failed to resolve assessment questions from bank:", resErr);
-          }
-        }
-
-        if (inlineMap.size > 0) {
-          const resolvedIds = new Set(resolvedQuestions.map(q => String(q.id || q.questionId || '')));
-          inlineMap.forEach((inlineQ, key) => {
-            if (!resolvedIds.has(key)) {
-              resolvedQuestions.push(inlineQ);
-              resolvedIds.add(key);
-            }
-          });
-        }
-
-        if (resolvedQuestions.length === 0) {
-          const inline = [];
-          const addInline = (src) => {
-            if (Array.isArray(src)) {
-              src.forEach(item => {
-                if (item && typeof item === 'object' && (item.id || item.questionId || item.title || item.problemStatement)) {
-                  inline.push(item);
-                }
-              });
-            }
-          };
-          addInline(assessment.questions);
-          addInline(assessment.challenges);
-          addInline(testData.questions);
-          addInline(testData.challenges);
-          resolvedQuestions = inline;
-        }
-
-        if (resolvedQuestions.length === 0) {
-          throw new Error(
-            'Coding assessment configuration error: no questions could be loaded from this test definition. ' +
-            'Please contact your administrator.'
-          );
-        }
-
-        const canonicalAss = normalizeAssessment({
-          ...assessment,
-          ...testData,
-          name: assessment.name || testData.title || testData.name,
-          title: assessment.name || testData.title || testData.name,
-          duration: assessment.duration || testData.durationMinutes || 30,
-          type: 'coding',
-          sections: [
-            {
-              id: `sec_${assessment.id}_1`,
-              sectionId: `sec_${assessment.id}_1`,
-              name: assessment.name || testData.title || testData.name || 'Coding Challenge',
-              type: 'coding',
-              durationMinutes: assessment.duration || testData.durationMinutes || 30,
-              totalMarks: assessment.totalMarks || 100,
-              questions: resolvedQuestions
-            }
-          ]
-        });
-        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
-        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
-          courseId: assessment.courseId || '',
-          seriesId: assessment.seriesId || '',
-          testId: assessment.id || '',
-          totalMarks: assessment.totalMarks || 100,
-          settings: assessment.settings || {},
-        }));
-        setLaunchStep(null);
-        navigate(`/student/assessment/multisection/${assessment.slug}`);
-      }
+      // ── UNIFIED LAUNCH (all assessments go through MultiSectionAssessment) ──
+      // normalizeAssessment guarantees sections always exist. If the Firestore doc
+      // has inline questions (legacy MCQ) they are wrapped in a 1-section Assessment.
+      const canonicalAss = normalizeAssessment(assessment);
+      sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(canonicalAss));
+      sessionStorage.setItem('msaCourseCtx', JSON.stringify({
+        courseId: assessment.courseId || '',
+        seriesId: assessment.seriesId || '',
+        testId: assessment.id || '',
+        totalMarks: assessment.totalMarks || 100,
+        settings: assessment.settings || {},
+      }));
+      setLaunchStep(null);
+      navigate(`/student/assessment/multisection/${assessment.slug}`);
+      return;
     } catch (err) {
       console.error("Launch setup failed:", err);
       setLaunchStep(null);
@@ -2578,7 +2334,7 @@ const StudentDashboard = () => {
                           key={a.id}
                           className="ps-sheet-card"
                           style={{
-                            '--theme-border-color': a.type === 'mcq' ? 'var(--accent-mcq)' : 'var(--accent-coding)',
+                            '--theme-border-color': 'var(--accent-primary, #4f46e5)',
                             border: a.completed ? '1px solid var(--accent-coding)' : '1px solid var(--border-color)',
                             boxShadow: a.completed ? '0 4px 20px rgba(21, 128, 61, 0.08)' : 'none',
                             minHeight: '200px'
@@ -2598,7 +2354,7 @@ const StudentDashboard = () => {
                               )}
                             </h3>
                             <p className="ps-card-desc" style={{ fontSize: '12px', marginTop: '6px', color: 'var(--text-muted)' }}>
-                              {a.description || `Assessment test covering various ${a.type} questions and topics.`}
+                              {a.description || `Timed, proctored assessment. ${a.sections?.length > 1 ? `${a.sections.length} sections` : ''}`}
                             </p>
 
                             <div className="ps-meta-tags" style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -2606,7 +2362,8 @@ const StudentDashboard = () => {
                                 <FaClock style={{ fontSize: '10px' }} /> {a.timeLimit ? `${a.timeLimit} mins` : '60 mins'}
                               </span>
                               <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <FaAward style={{ fontSize: '10px' }} /> {a.type.toUpperCase()}
+                                Assessment
+                                {a.sections?.length > 1 && ` · ${a.sections.length} Sections`}
                               </span>
                             </div>
                           </div>
@@ -2640,14 +2397,14 @@ const StudentDashboard = () => {
                                     fontSize: '13px',
                                     fontWeight: '700',
                                     color: '#ffffff',
-                                    backgroundColor: a.type === 'mcq' ? '#4f46e5' : '#15803d',
-                                    border: `1px solid ${a.type === 'mcq' ? '#4f46e5' : '#15803d'}`,
+                                    backgroundColor: '#4f46e5',
+                                    border: '1px solid #4f46e5',
                                     borderRadius: '8px',
                                     cursor: 'pointer',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    boxShadow: `0 2px 6px ${a.type === 'mcq' ? 'rgba(79, 70, 229, 0.25)' : 'rgba(21, 128, 61, 0.25)'}`
+                                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)'
                                   }}
                                 >
                                   Start Test
@@ -2748,29 +2505,15 @@ const StudentDashboard = () => {
 
       // 2. Assessment modules completion
       if (assessments && assessments.length > 0) {
-        const mcqAssessments = assessments.filter(a => a.type === 'mcq');
-        const codingAssessments = assessments.filter(a => a.type === 'coding');
+        const completed = assessments.filter(a => a.completed);
 
-        const completedMcqs = mcqAssessments.filter(a => a.completed);
-        const completedCodings = codingAssessments.filter(a => a.completed);
-
-        if (completedMcqs.length > 0 && completedMcqs.length === mcqAssessments.length) {
+        if (completed.length > 0 && completed.length >= Math.ceil(assessments.length / 2)) {
           badges.push({
-            id: 'mcq_conqueror',
-            title: 'MCQ Conqueror',
-            desc: 'Completed all mapped MCQ courses.',
+            id: 'assessment_achiever',
+            title: 'Assessment Achiever',
+            desc: `Completed ${completed.length} of ${assessments.length} assessments.`,
             icon: <FaClipboardList />,
             color: '#34d399'
-          });
-        }
-
-        if (completedCodings.length > 0 && completedCodings.length === codingAssessments.length) {
-          badges.push({
-            id: 'assessment_master',
-            title: 'Assessment Master',
-            desc: 'Completed all mapped Coding courses.',
-            icon: <FaShieldAlt />,
-            color: '#fbbf24'
           });
         }
 

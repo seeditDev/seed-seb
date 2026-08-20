@@ -1,3 +1,17 @@
+/**
+ * @deprecated mcqService.js
+ *
+ * This service is DEPRECATED as of the One Assessment Module consolidation.
+ * MCQ is no longer a top-level assessment type — it is a section type within
+ * the unified Assessment runtime (MultiSectionAssessment.jsx).
+ *
+ * All new result writes go to:
+ *   assessmentResults/{tenantId}/{assessmentId}/{uid}
+ * via assessmentSessionService.js and MultiSectionAssessment.jsx.
+ *
+ * This file is kept in place for historical reference only.
+ * Do NOT call these methods from any new code.
+ */
 import { db, auth } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import timeService from './timeService';

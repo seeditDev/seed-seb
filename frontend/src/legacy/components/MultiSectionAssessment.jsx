@@ -954,6 +954,10 @@ const MultiSectionAssessment = () => {
   const [restoredProgress, setRestoredProgress] = useState(null);
 
   const timerRef = useRef(null);
+  /** Absolute wall-clock ms when the current section timer expires. Set on section start. */
+  const sectionEndTimeMsRef = useRef(0);
+  /** Idempotency lock: prevents timer + violation + button from all calling finalSubmit concurrently. */
+  const finalSubmitLockRef = useRef(false);
   const examFinishedRef = useRef(examFinished);
   useEffect(() => { examFinishedRef.current = examFinished; }, [examFinished]);
   // Keep userRef/assessmentRef in sync with state for callback closures
@@ -963,6 +967,14 @@ const MultiSectionAssessment = () => {
   const gracePeriodFiredRef = useRef(false);
 
   const autoSubmitEntireExam = useCallback(async (reason) => {
+    // P0-04: Idempotency guard — prevents timer, violation handler, and button click
+    // from all racing to finalize the exam simultaneously.
+    if (finalSubmitLockRef.current) {
+      console.warn(`[MSA] Final submit already in progress (reason=${reason}), ignoring duplicate call.`);
+      return;
+    }
+    finalSubmitLockRef.current = true;
+
     if (examFinishedRef.current) return;
     examFinishedRef.current = true;
     setSecStarted(false);
@@ -1566,19 +1578,17 @@ const MultiSectionAssessment = () => {
     }
   };
 
-  // ── Section timer countdown loop
+  // ── Section timer countdown loop (drift-resistant: uses wall-clock anchor, not decrement)
   useEffect(() => {
-    if (secStarted && secTimer > 0) {
-      timerRef.current = setInterval(() => {
-        setSecTimer(prev => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (!secStarted || sectionEndTimeMsRef.current <= 0) return;
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      const remaining = Math.max(0, Math.round((sectionEndTimeMsRef.current - Date.now()) / 1000));
+      setSecTimer(remaining);
+      if (remaining <= 0) {
+        clearInterval(timerRef.current);
+      }
+    }, 500); // poll at 500ms for smooth display without significant CPU cost
     return () => clearInterval(timerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secStarted, currentSecIdx]);
@@ -1722,7 +1732,12 @@ const MultiSectionAssessment = () => {
 
     if (assessment && assessment.sections) {
       const section = assessment.sections[idx];
-      if (section) setSecTimer((section.duration_minutes || 30) * 60);
+      if (section) {
+        const durationSecs = (section.durationMinutes || section.duration_minutes || section.duration || 30) * 60;
+        // Anchor the wall-clock end time so the timer is drift-resistant
+        sectionEndTimeMsRef.current = Date.now() + durationSecs * 1000;
+        setSecTimer(durationSecs);
+      }
     }
   }, [assessment]);
 

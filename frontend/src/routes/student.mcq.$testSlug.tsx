@@ -1,26 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { createLegacyRoute } from "@/legacy/legacyRoute";
-
+/**
+ * Legacy MCQ route — redirects seamlessly to the unified Assessment runtime.
+ * The assessment data is already in sessionStorage from the dashboard launch,
+ * so MultiSectionAssessment picks it up at the new URL without re-fetching.
+ */
 export const Route = createFileRoute("/student/mcq/$testSlug")({
   head: () => ({
     meta: [
-      { title: "MCQ test — SEED-SEB" },
-      {
-        name: "description",
-        content:
-          "Attempt your timed, proctored multiple-choice test in the SEED-SEB secure exam portal.",
-      },
-      { property: "og:title", content: "MCQ test — SEED-SEB" },
-      {
-        property: "og:description",
-        content:
-          "Attempt your timed, proctored multiple-choice test in the SEED-SEB secure exam portal.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { title: "Assessment — SEED-SEB" },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: createLegacyRoute(() => import("@/legacy/components/MCQPage")),
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/student/assessment/multisection/$assessmentSlug",
+      params: { assessmentSlug: params.testSlug },
+      replace: true,
+    });
+  },
+  component: () => null,
 });
