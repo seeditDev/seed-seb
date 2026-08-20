@@ -72,7 +72,7 @@ import { validateAssessmentPayload, validateTestDoc, validateMSASections } from 
 import { loadUserDailyGoals, saveUserDailyGoals, getDailyGoalsForDate } from '../utils/dailyGoalsPool';
 import { toast } from 'sonner';
 import { getAuthData } from '../utils/storageUtils';
-import { normalizeUser } from '../models/canonicalModels';
+import { normalizeUser, normalizeAssessment } from '../models/canonicalModels';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -865,44 +865,16 @@ const StudentDashboard = () => {
   const handleResumeSession = (session) => {
     if (!session) return;
     if (session.isRemoteRestored && session.remoteSnapshot) {
-      if (session.type === 'multisection') {
-        localStorage.setItem(`msaProgress_${session.id}`, JSON.stringify(session.remoteSnapshot));
-        sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.remoteSnapshot.assessmentData || { id: session.id, name: session.name }));
-        navigate(`/student/assessment/multisection/${session.slug}`);
-        return;
-      }
-      if (session.type === 'coding') {
-        const snap = session.remoteSnapshot;
-        const now = timeService.now();
-        const startedAtMs = snap.timeStarted?.toDate 
-          ? snap.timeStarted.toDate().getTime() 
-          : (snap.timeStarted || (snap.timeStartedISO ? new Date(snap.timeStartedISO).getTime() : now));
-        const durationSec = (snap.duration || 30) * 60;
-        localStorage.setItem("codingAssessmentStartTime", startedAtMs.toString());
-        localStorage.setItem("codingAssessmentTimer", durationSec.toString());
-        localStorage.setItem("codingLastActiveTime", now.toString());
-        if (snap.codeMap) {
-          localStorage.setItem("codingAssessmentCode", JSON.stringify(snap.codeMap));
-        }
-        localStorage.setItem("codingAssessmentData", JSON.stringify({
-          assessment: {
-            id: snap.assessmentID || session.id,
-            name: snap.assessmentName || session.name,
-            duration: snap.duration || 30
-          },
-          questions: snap.questions || []
-        }));
-        navigate(`/student/coding/${session.slug}`);
-        return;
-      }
+      localStorage.setItem(`msaProgress_${session.id}`, JSON.stringify(session.remoteSnapshot));
+      sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.remoteSnapshot.assessmentData || { id: session.id, name: session.name }));
+      navigate(`/student/assessment/multisection/${session.slug}`);
+      return;
     }
 
-    if (session.type === 'multisection') {
+    if (session.assessmentData) {
       sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.assessmentData));
-      navigate(`/student/assessment/multisection/${session.slug}`);
-    } else if (session.type === 'coding') {
-      navigate(`/student/coding/${session.slug}`);
     }
+    navigate(`/student/assessment/multisection/${session.slug}`);
   };
 
   useEffect(() => {
@@ -1650,9 +1622,6 @@ const StudentDashboard = () => {
 
       // ── MSA: sections carry their own cdnUrls — no top-level JSON needed ────
       if (assessment.isMultiSection || assessment.type === 'MSA' || assessment.type === 'msa') {
-        // ── MSA: run per-section configuration validator ─────────────────────
-        // Returns specific errors per section (missing cdnUrl, invalid duration, etc.)
-        // rather than a generic "mismatch" message.
         const sections = assessment.sections || [];
         const msaCheck = validateMSASections(sections, {
           id: assessment.id,
@@ -1667,7 +1636,8 @@ const StudentDashboard = () => {
         if (msaCheck.warnings?.length) {
           console.warn('[Launch] validateMSASections warnings:', msaCheck.warnings);
         }
-        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(assessment));
+        const canonicalAss = normalizeAssessment(assessment);
+        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
         sessionStorage.setItem('msaCourseCtx', JSON.stringify({
           courseId: assessment.courseId || '',
           seriesId: assessment.seriesId || '',
@@ -1680,19 +1650,32 @@ const StudentDashboard = () => {
         return;
       }
 
-      // ── SEA: data is in Firestore / passed via assessment object ─────────────
-      // validateAssessmentPayload is NOT run for SEA — there is no CDN JSON payload.
-      // The validateTestDoc above already confirmed the assessment is correctly configured.
+      // ── SEA: 1-section Spoken English assessment ───────────────────────────
       if (assessment.type === 'spoken_english' || assessment.type === 'SPOKEN_ENGLISH' || assessment.type === 'sea') {
-        sessionStorage.setItem("spokenEnglishAssessmentData", JSON.stringify(assessment));
-        sessionStorage.setItem('seaCourseCtx', JSON.stringify({
+        const canonicalAss = normalizeAssessment({
+          ...assessment,
+          type: 'spoken_english',
+          sections: [
+            {
+              id: `sec_${assessment.id}_1`,
+              sectionId: `sec_${assessment.id}_1`,
+              name: assessment.name || 'Spoken English',
+              type: 'spoken_english',
+              durationMinutes: assessment.duration || 20,
+              totalMarks: assessment.totalMarks || 100,
+              questions: assessment.prompts || assessment.questions || []
+            }
+          ]
+        });
+        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
+        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
           courseId: assessment.courseId || '',
           seriesId: assessment.seriesId || '',
           testId: assessment.id || '',
           totalMarks: assessment.totalMarks || 100,
         }));
         setLaunchStep(null);
-        navigate(`/student/spoken-english/${assessment.slug}`);
+        navigate(`/student/assessment/multisection/${assessment.slug}`);
         return;
       }
 
@@ -1700,8 +1683,6 @@ const StudentDashboard = () => {
       const testData = await fetchJSONFile(assessment.url || assessment.cdnUrl);
 
       // ── SCENARIO 5 (WRONG TEST): Validate CDN payload matches TestDoc ────────
-      // validateTestDoc already ran above for all types.
-      // Here we run validateAssessmentPayload — the CDN content cross-check.
       const payloadCheck = validateAssessmentPayload(testDocForValidation, testData);
       if (!payloadCheck.valid) {
         console.error('[Launch] assessmentValidator FAILED:', payloadCheck.errors);
@@ -1712,24 +1693,27 @@ const StudentDashboard = () => {
       }
 
       if (assessment.type === 'mcq') {
-        const testInfo = {
+        const canonicalAss = normalizeAssessment({
+          ...assessment,
           ...testData,
-          name: testData.name || assessment.name,
-          difficulty: testData.difficulty || assessment.difficulty,
-          duration: testData.duration || assessment.duration,
-          totalQuestions: testData.totalQuestions || testData.questions?.length || assessment.questions,
-          questions: testData.questions || [],
-          testInfo: assessment,
-          slug: assessment.slug
-        };
-        await MCQService.createInitialAttempt(user, testInfo);
-        localStorage.setItem('mcqTestStartTime', now.toString());
-        localStorage.setItem('mcqTestStartTimeISO', nowISO);
-        localStorage.setItem('mcqTestDuration', durationSec.toString());
-        localStorage.setItem('mcqTestData', JSON.stringify({ test: assessment, testData }));
-        localStorage.setItem('mcqActiveTestSlug', assessment.slug);
-        localStorage.setItem('mcqTestNewLaunch', 'true');
-        localStorage.setItem('mcqTestCourseCtx', JSON.stringify({
+          name: assessment.name || testData.name,
+          title: assessment.name || testData.name,
+          duration: assessment.duration || testData.duration || 30,
+          type: 'mcq',
+          sections: [
+            {
+              id: `sec_${assessment.id}_1`,
+              sectionId: `sec_${assessment.id}_1`,
+              name: assessment.name || testData.name || 'MCQ Section',
+              type: 'mcq',
+              durationMinutes: assessment.duration || testData.duration || 30,
+              totalMarks: assessment.totalMarks || testData.totalMarks || (testData.questions?.length || 100),
+              questions: testData.questions || []
+            }
+          ]
+        });
+        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
+        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
           courseId: assessment.courseId || '',
           seriesId: assessment.seriesId || '',
           testId: assessment.id || '',
@@ -1737,7 +1721,7 @@ const StudentDashboard = () => {
           settings: assessment.settings || {},
         }));
         setLaunchStep(null);
-        navigate(`/student/mcq/${assessment.slug}`);
+        navigate(`/student/assessment/multisection/${assessment.slug}`);
       } else {
         // Collect questionIds and inline question objects from all sources
         let questionIds = [];
@@ -1762,10 +1746,10 @@ const StudentDashboard = () => {
 
         collectIdsAndInline(assessment.questionIds);
         collectIdsAndInline(assessment.questions);
-        collectIdsAndInline(assessment.challenges); // Admin Hub StaffCodingCreator format
+        collectIdsAndInline(assessment.challenges);
         collectIdsAndInline(testData.questionIds);
         collectIdsAndInline(testData.questions);
-        collectIdsAndInline(testData.challenges);   // Admin Hub format in CDN JSON
+        collectIdsAndInline(testData.challenges);
 
         questionIds = [...new Set(questionIds)].filter(Boolean);
 
@@ -1779,7 +1763,6 @@ const StudentDashboard = () => {
           }
         }
 
-        // Merge or fallback to inline questions if bank resolving missed any
         if (inlineMap.size > 0) {
           const resolvedIds = new Set(resolvedQuestions.map(q => String(q.id || q.questionId || '')));
           inlineMap.forEach((inlineQ, key) => {
@@ -1790,7 +1773,6 @@ const StudentDashboard = () => {
           });
         }
 
-        // Fallback to inline questions array if still empty
         if (resolvedQuestions.length === 0) {
           const inline = [];
           const addInline = (src) => {
@@ -1809,7 +1791,6 @@ const StudentDashboard = () => {
           resolvedQuestions = inline;
         }
 
-        // Final guard: no questions at all is a fatal configuration error
         if (resolvedQuestions.length === 0) {
           throw new Error(
             'Coding assessment configuration error: no questions could be loaded from this test definition. ' +
@@ -1817,50 +1798,27 @@ const StudentDashboard = () => {
           );
         }
 
-        const liveUid = auth?.currentUser?.uid || user?.uid || user?.UID;
-        const tenantId = user?.tenantId || user?.TenantId || user?.tenant_id || user?.College || '';
-        let existingRemoteAttempt = null;
-        if (liveUid && tenantId) {
-          try {
-            const canonDocPath = `assessmentResults/${tenantId}/${assessment.id}/${liveUid}`;
-            const docSnap = await getDoc(doc(db, canonDocPath));
-            if (docSnap.exists() && !docSnap.data().completed) {
-              existingRemoteAttempt = docSnap.data();
+        const canonicalAss = normalizeAssessment({
+          ...assessment,
+          ...testData,
+          name: assessment.name || testData.title || testData.name,
+          title: assessment.name || testData.title || testData.name,
+          duration: assessment.duration || testData.durationMinutes || 30,
+          type: 'coding',
+          sections: [
+            {
+              id: `sec_${assessment.id}_1`,
+              sectionId: `sec_${assessment.id}_1`,
+              name: assessment.name || testData.title || testData.name || 'Coding Challenge',
+              type: 'coding',
+              durationMinutes: assessment.duration || testData.durationMinutes || 30,
+              totalMarks: assessment.totalMarks || 100,
+              questions: resolvedQuestions
             }
-          } catch (_) {}
-        }
-
-        if (existingRemoteAttempt) {
-          console.log('[StudentDashboard] Resuming existing in-progress attempt for coding assessment:', assessment.id);
-          const startedAtMs = existingRemoteAttempt.timeStarted?.toDate 
-            ? existingRemoteAttempt.timeStarted.toDate().getTime() 
-            : (existingRemoteAttempt.timeStarted || (existingRemoteAttempt.timeStartedISO ? new Date(existingRemoteAttempt.timeStartedISO).getTime() : now));
-          localStorage.setItem("codingAssessmentStartTime", startedAtMs.toString());
-          localStorage.setItem("codingAssessmentTimer", durationSec.toString());
-          localStorage.setItem("codingLastActiveTime", now.toString());
-          if (existingRemoteAttempt.codeMap) {
-            localStorage.setItem("codingAssessmentCode", JSON.stringify(existingRemoteAttempt.codeMap));
-          }
-        } else {
-          await CodingAssessmentService.createInitialAttempt(user, assessment);
-          localStorage.setItem("codingAssessmentStartTime", now.toString());
-          localStorage.setItem("codingAssessmentTimer", durationSec.toString());
-          localStorage.setItem("codingAssessmentNewLaunch", "true");
-          // Clear previous coding test code map to ensure clean boilerplate setup
-          localStorage.removeItem("codingAssessmentCode");
-        }
-
-        localStorage.setItem("codingAssessmentData", JSON.stringify({
-          assessment: {
-            ...assessment,
-            ...testData,
-            name: assessment.name || testData.title || testData.name,
-            title: assessment.name || testData.title || testData.name,
-            duration: assessment.duration || testData.durationMinutes || 30
-          },
-          questions: resolvedQuestions
-        }));
-        localStorage.setItem('codingCourseCtx', JSON.stringify({
+          ]
+        });
+        sessionStorage.setItem("multisectionAssessmentData", JSON.stringify(canonicalAss));
+        sessionStorage.setItem('msaCourseCtx', JSON.stringify({
           courseId: assessment.courseId || '',
           seriesId: assessment.seriesId || '',
           testId: assessment.id || '',
@@ -1868,7 +1826,7 @@ const StudentDashboard = () => {
           settings: assessment.settings || {},
         }));
         setLaunchStep(null);
-        navigate(`/student/coding/${assessment.slug}`);
+        navigate(`/student/assessment/multisection/${assessment.slug}`);
       }
     } catch (err) {
       console.error("Launch setup failed:", err);

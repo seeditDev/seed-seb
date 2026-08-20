@@ -2,6 +2,8 @@ import React from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
+import DOMPurify from 'dompurify';
+
 /**
  * Safely renders LaTeX mathematical expressions and code blocks in question & option text.
  * Handles \frac{a}{b}, \sqrt{x}, \pm, \times, \div, exponents (^), subscripts (_),
@@ -65,11 +67,11 @@ export const renderMathAndCode = (text, isOption = false) => {
         return parts.map((part, index) => {
           if (part.startsWith('$$') && part.endsWith('$$')) {
             const math = part.slice(2, -2).trim();
-            const html = katex.renderToString(math, { displayMode: true, throwOnError: false });
+            const html = DOMPurify.sanitize(katex.renderToString(math, { displayMode: true, throwOnError: false }));
             return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
           } else if (part.startsWith('$') && part.endsWith('$')) {
             const math = part.slice(1, -1).trim();
-            const html = katex.renderToString(math, { displayMode: false, throwOnError: false });
+            const html = DOMPurify.sanitize(katex.renderToString(math, { displayMode: false, throwOnError: false }));
             return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
           }
           return (
@@ -87,7 +89,7 @@ export const renderMathAndCode = (text, isOption = false) => {
         });
       } else {
         // Direct LaTeX string (e.g. \frac{15}{4} or \pm \sqrt{30})
-        const html = katex.renderToString(str, { displayMode: false, throwOnError: false });
+        const html = DOMPurify.sanitize(katex.renderToString(str, { displayMode: false, throwOnError: false }));
         return (
           <span
             style={{

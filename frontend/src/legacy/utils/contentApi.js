@@ -101,4 +101,5 @@ export async function fetchContentJSON(url, options = {}) {
   throw new Error(`Could not download content file: ${path}`);
 }
 
+export const fetchJSONFile = fetchContentJSON;
 export default fetchContentJSON;

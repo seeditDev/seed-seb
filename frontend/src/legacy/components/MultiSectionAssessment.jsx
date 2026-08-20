@@ -28,9 +28,12 @@ import { getViolations, writeViolationToFirestore } from '../utils/proctorCache'
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
-import { normalizeUser } from '../models/canonicalModels';
+import { normalizeUser, normalizeAssessment, normalizeMCQQuestion, normalizeCodingQuestion } from '../models/canonicalModels';
 import SecurityWatermark from './SecurityWatermark';
 import { requireTenant, resolveTenant } from '../utils/tenant';
+import { fetchContentJSON, fetchJSONFile } from '../utils/contentApi';
+import { createSubmitGuard } from '../utils/submitGuard';
+import DOMPurify from 'dompurify';
 import {
   startAssessmentSession,
   markSectionStarted,
@@ -1226,6 +1229,57 @@ const MultiSectionAssessment = () => {
     });
   }, [maxAudioViolations, autoSubmitEntireExam]);
 
+  // ── Tab switch & visibility change proctoring listeners (P0-06 / P1) ─────────
+  useEffect(() => {
+    if (!shouldUseProctoring || currentSecIdx < 0 || !secStarted || examFinished) return;
+
+    let hiddenStartTime = 0;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenStartTime = Date.now();
+      } else {
+        const awayDuration = hiddenStartTime ? Math.round((Date.now() - hiddenStartTime) / 1000) : 0;
+        hiddenStartTime = 0;
+        const eventData = {
+          violationType: 'tab_switch',
+          timestamp: new Date().toISOString(),
+          awayDuration
+        };
+        handleProctorViolationUpdate(eventData);
+      }
+    };
+
+    const handleWindowBlur = () => {
+      const eventData = {
+        violationType: 'tab_switch',
+        timestamp: new Date().toISOString(),
+        reason: 'window_blur'
+      };
+      handleProctorViolationUpdate(eventData);
+    };
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        const eventData = {
+          violationType: 'fullscreen_exit',
+          timestamp: new Date().toISOString()
+        };
+        handleProctorViolationUpdate(eventData);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, [shouldUseProctoring, currentSecIdx, secStarted, examFinished, handleProctorViolationUpdate]);
+
   // ── Block back/forward navigation during exam & hide PyQt SEB nav buttons
   useEffect(() => {
     window.history.pushState({ msaActive: true }, '');
@@ -1438,55 +1492,18 @@ const MultiSectionAssessment = () => {
     try {
       await Promise.all(
         (exam.sections || []).map(async (sec, idx) => {
-          // Firestore stores the section's CDN URL in cdnUrl (not url)
-          let fetchUrl = sec.cdnUrl || sec.url || sec.assessmentId || sec.slug || '';
-          if (!fetchUrl || (!fetchUrl.endsWith('.json') && !fetchUrl.startsWith('http'))) {
-            fetchUrl = sec.type === 'mcq'
-              ? `/seed-contents/mcq/testbank/${slugify(sec.name)}.json`
-              : `/seed-contents/coding/testbank/${slugify(sec.name)}.json`;
-          }
-          let cleanPath = fetchUrl;
-          if (cleanPath.startsWith('http')) {
-            if (cleanPath.includes('/seed-contents/main/')) {
-              cleanPath = cleanPath.split('/seed-contents/main/')[1];
-            } else if (cleanPath.includes('/SEEDDB/main/')) {
-              cleanPath = cleanPath.split('/SEEDDB/main/')[1];
-            } else if (cleanPath.includes('/contents/')) {
-              cleanPath = cleanPath.split('/contents/')[1];
-            }
-          }
-          if (cleanPath.startsWith('/seed-contents/')) cleanPath = cleanPath.substring('/seed-contents/'.length);
-          else if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
-
-          const fetchViaGitHubAPI = async (repo, path) => {
-            const pat = import.meta.env?.VITE_GITHUB_PAT;
-            const headers = { Accept: 'application/vnd.github.v3+json' };
-            if (pat) headers['Authorization'] = `token ${pat}`;
-            const res = await fetch(`https://api.github.com/repos/seeditDev/${repo}/contents/${path}`, { headers });
-            if (!res.ok) return null;
-            const data = await res.json();
-            if (!data.content) return null;
-            return JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))));
-          };
-
           const processData = async (data, secType) => {
               if (secType === 'mcq') {
-                data.questions = (data.questions || []).map(q => ({
-                  ...q,
-                  text: q.question || q.text || '',     // ensure .text field
-                  question: q.question || q.text || '', // keep .question field
-                  options: q.options || [],
-                  correctAnswer: q.correctAnswer || q.answer || '',
-                }));
+                data.questions = (data.questions || []).map((q, qIdx) => normalizeMCQQuestion(q, qIdx, { isStudentView: true }));
               } else if (secType === 'coding') {
                 // Prefer challenges array (has cdnUrl) or questionIds
                 let questionRefs = [];
                 if (Array.isArray(data.challenges) && data.challenges.length > 0) {
-                  questionRefs = data.challenges; // [{id, cdnUrl, title, ...}]
+                  questionRefs = data.challenges;
                 } else if (Array.isArray(data.questionIds)) {
-                  questionRefs = data.questionIds; // plain string IDs
+                  questionRefs = data.questionIds;
                 } else if (Array.isArray(data.questions) && data.questions.length > 0 && typeof data.questions[0] === 'string') {
-                  questionRefs = data.questions; // old format: ["Q0.319","Q0.339"]
+                  questionRefs = data.questions;
                 }
 
                 if (questionRefs.length > 0) {
@@ -1511,56 +1528,31 @@ const MultiSectionAssessment = () => {
               });
           };
 
+          // 0. If section already contains inline questions/challenges, use them directly
+          if (Array.isArray(sec.questions) && sec.questions.length > 0) {
+            await processData({ questions: sec.questions }, sec.type);
+            return;
+          }
+          if (Array.isArray(sec.challenges) && sec.challenges.length > 0) {
+            await processData({ challenges: sec.challenges }, sec.type);
+            return;
+          }
+
+          // 1. Fetch via contentApi or cdnUrl
+          let fetchUrl = sec.cdnUrl || sec.url || sec.assessmentId || sec.slug || '';
+          if (!fetchUrl || (!fetchUrl.endsWith('.json') && !fetchUrl.startsWith('http'))) {
+            fetchUrl = sec.type === 'mcq'
+              ? `mcq/testbank/${slugify(sec.name)}.json`
+              : `coding/testbank/${slugify(sec.name)}.json`;
+          }
+
           try {
-            // 1st: direct fetch if URL is absolute
-            if (fetchUrl.startsWith('https://')) {
-              const res = await fetch(`${fetchUrl}${fetchUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`, { cache: 'no-store' });
-              if (res.ok) {
-                const data = await res.json();
-                await processData(data, sec.type);
-                return;
-              }
+            const data = await fetchContentJSON(fetchUrl);
+            if (data) {
+              await processData(data, sec.type);
+              return;
             }
-
-            const candidatePaths = [
-              cleanPath,
-              cleanPath.endsWith('.json') ? null : `${cleanPath}.json`,
-              cleanPath.includes('/') ? null : `coding/testbank/${cleanPath}.json`,
-              cleanPath.includes('/') ? null : `coding/testbank/${cleanPath}`,
-              cleanPath.includes('/') ? null : `mcq/testbank/${cleanPath}.json`,
-              cleanPath.includes('/') ? null : `mcq/testbank/${cleanPath}`
-            ].filter(Boolean);
-
-            for (const cPath of candidatePaths) {
-              const githubUrl = `https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cPath}`;
-              const seedDbUrl = `https://raw.githubusercontent.com/seeditDev/SEEDDB/main/${cPath}`;
-              const localUrl = `/seed-contents/${cPath}`;
-
-              let res = await fetch(`${githubUrl}?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => null);
-              if (!res || !res.ok) res = await fetch(`${seedDbUrl}?_t=${Date.now()}`, { cache: 'no-store' }).catch(() => null);
-
-              if (res && res.ok) {
-                const data = await res.json();
-                await processData(data, sec.type);
-                return;
-              }
-
-              let apiData = await fetchViaGitHubAPI('seed-contents', cPath).catch(() => null);
-              if (!apiData) apiData = await fetchViaGitHubAPI('SEEDDB', cPath).catch(() => null);
-              if (apiData) {
-                await processData(apiData, sec.type);
-                return;
-              }
-
-              const localRes = await fetch(localUrl).catch(() => null);
-              if (localRes && localRes.ok) {
-                const data = await localRes.json();
-                await processData(data, sec.type);
-                return;
-              }
-            }
-
-            console.warn(`[MSA] Could not load section "${sec.name}" from candidate paths.`);
+            console.warn(`[MSA] Could not load section "${sec.name}" via contentApi.`);
           } catch (e) {
             console.error(`[MSA] Failed to load section "${sec.name}":`, e);
           }

@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminQuestionsRouteImport } from './routes/admin.questions'
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
+import { Route as StudentAssessmentAssessmentSlugRouteImport } from './routes/student.assessment.$assessmentSlug'
 import { Route as StudentCodingIndexRouteImport } from './routes/student.coding.index'
 import { Route as StudentCodingAssessmentSlugRouteImport } from './routes/student.coding.$assessmentSlug'
 import { Route as StudentMcqIndexRouteImport } from './routes/student.mcq.index'
@@ -67,6 +68,12 @@ const StudentDashboardRoute = StudentDashboardRouteImport.update({
   path: '/student/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentAssessmentAssessmentSlugRoute =
+  StudentAssessmentAssessmentSlugRouteImport.update({
+    id: '/student/assessment/$assessmentSlug',
+    path: '/student/assessment/$assessmentSlug',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const StudentCodingIndexRoute = StudentCodingIndexRouteImport.update({
   id: '/student/coding/',
   path: '/student/coding/',
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/admin/questions': typeof AdminQuestionsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin/': typeof AdminIndexRoute
+  '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
   '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
   '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
   '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
@@ -147,6 +155,7 @@ export interface FileRoutesByTo {
   '/admin/questions': typeof AdminQuestionsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin': typeof AdminIndexRoute
+  '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
   '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
   '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
   '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
@@ -167,6 +176,7 @@ export interface FileRoutesById {
   '/admin/questions': typeof AdminQuestionsRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin/': typeof AdminIndexRoute
+  '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
   '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
   '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
   '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/admin/questions'
     | '/student/dashboard'
     | '/admin/'
+    | '/student/assessment/$assessmentSlug'
     | '/student/coding/$assessmentSlug'
     | '/student/mcq/$testSlug'
     | '/student/sea/$assessmentSlug'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/admin/questions'
     | '/student/dashboard'
     | '/admin'
+    | '/student/assessment/$assessmentSlug'
     | '/student/coding/$assessmentSlug'
     | '/student/mcq/$testSlug'
     | '/student/sea/$assessmentSlug'
@@ -226,6 +238,7 @@ export interface FileRouteTypes {
     | '/admin/questions'
     | '/student/dashboard'
     | '/admin/'
+    | '/student/assessment/$assessmentSlug'
     | '/student/coding/$assessmentSlug'
     | '/student/mcq/$testSlug'
     | '/student/sea/$assessmentSlug'
@@ -246,6 +259,7 @@ export interface RootRouteChildren {
   AdminQuestionsRoute: typeof AdminQuestionsRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  StudentAssessmentAssessmentSlugRoute: typeof StudentAssessmentAssessmentSlugRoute
   StudentCodingAssessmentSlugRoute: typeof StudentCodingAssessmentSlugRoute
   StudentMcqTestSlugRoute: typeof StudentMcqTestSlugRoute
   StudentSeaAssessmentSlugRoute: typeof StudentSeaAssessmentSlugRoute
@@ -313,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/student/dashboard'
       fullPath: '/student/dashboard'
       preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/student/assessment/$assessmentSlug': {
+      id: '/student/assessment/$assessmentSlug'
+      path: '/student/assessment/$assessmentSlug'
+      fullPath: '/student/assessment/$assessmentSlug'
+      preLoaderRoute: typeof StudentAssessmentAssessmentSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/student/coding/': {
@@ -390,6 +411,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminQuestionsRoute: AdminQuestionsRoute,
   StudentDashboardRoute: StudentDashboardRoute,
   AdminIndexRoute: AdminIndexRoute,
+  StudentAssessmentAssessmentSlugRoute: StudentAssessmentAssessmentSlugRoute,
   StudentCodingAssessmentSlugRoute: StudentCodingAssessmentSlugRoute,
   StudentMcqTestSlugRoute: StudentMcqTestSlugRoute,
   StudentSeaAssessmentSlugRoute: StudentSeaAssessmentSlugRoute,

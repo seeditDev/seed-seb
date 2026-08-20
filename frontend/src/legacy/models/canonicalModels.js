@@ -123,6 +123,7 @@ export function normalizeUser(raw = {}) {
 // ── 2. Assessment Entity Normalizer ─────────────────────────────────────────────
 /**
  * Normalizes any assessment / test object into a CanonicalAssessment.
+ * Guarantees every assessment contains a non-empty sections array.
  * @param {Object} raw 
  * @returns {Object}
  */
@@ -134,9 +135,43 @@ export function normalizeAssessment(raw = {}) {
   const description = String(raw.description || raw.desc || '');
   const durationMinutes = Number(raw.durationMinutes || raw.duration || raw.timeLimit || 60);
 
-  const sections = Array.isArray(raw.sections)
+  let sections = Array.isArray(raw.sections) && raw.sections.length > 0
     ? raw.sections.map((s, idx) => normalizeSection(s, idx))
-    : (Array.isArray(raw.sectionsList) ? raw.sectionsList.map((s, idx) => normalizeSection(s, idx)) : []);
+    : (Array.isArray(raw.sectionsList) && raw.sectionsList.length > 0 ? raw.sectionsList.map((s, idx) => normalizeSection(s, idx)) : []);
+
+  // Guarantee every assessment is unified into an assessment with >= 1 section
+  if (sections.length === 0) {
+    const rawType = String(raw.type || raw.testType || 'mcq').toLowerCase().trim();
+    let secType = 'mcq';
+    let secQuestions = [];
+    if (rawType.includes('coding') || raw.challenges || raw.coding) {
+      secType = 'coding';
+      secQuestions = raw.challenges || raw.questions || raw.coding || [];
+    } else if (rawType.includes('spoken') || rawType.includes('sea') || raw.prompts) {
+      secType = 'spoken_english';
+      secQuestions = raw.prompts || raw.questions || [];
+    } else {
+      secType = 'mcq';
+      secQuestions = raw.questions || [];
+    }
+    sections = [
+      normalizeSection({
+        id: `sec_${id || 'default'}_1`,
+        sectionId: `sec_${id || 'default'}_1`,
+        name: title || 'Assessment Section',
+        title: title || 'Assessment Section',
+        type: secType,
+        durationMinutes,
+        durationSeconds: durationMinutes * 60,
+        totalMarks: Number(raw.totalMarks || raw.maxMarks || 100),
+        questions: secQuestions,
+        proctored: Boolean(raw.proctored),
+        audioProctored: Boolean(raw.audioProctored),
+        forwardOnly: Boolean(raw.forwardOnly),
+        timerRestrictedSubmit: Boolean(raw.timerRestrictedSubmit)
+      }, 0)
+    ];
+  }
 
   const totalMarks = Number(
     raw.totalMarks ?? raw.maxMarks ?? raw.totalScore ?? 
@@ -157,6 +192,7 @@ export function normalizeAssessment(raw = {}) {
     maxMarks: totalMarks,
     passkey: String(raw.passkey || raw.passKey || raw.password || raw.key || '').trim(),
     sections,
+    isMultiSection: sections.length > 1,
     proctored: Boolean(raw.proctored),
     audioProctored: Boolean(raw.audioProctored),
     maxViolations: Number(raw.maxViolations || 7),
@@ -207,15 +243,17 @@ export function normalizeSection(sec = {}, idx = 0) {
 }
 
 // ── 4. MCQ Question Normalizer ──────────────────────────────────────────────────
-export function normalizeMCQQuestion(q = {}, idx = 0) {
+export function normalizeMCQQuestion(q = {}, idx = 0, options = {}) {
+  const isStudentView = Boolean(options.isStudentView);
   const id = String(q.id || q.questionId || q.qid || `mcq_${idx + 1}`).trim();
   const prompt = String(q.prompt || q.question || q.questionText || q.text || q.title || '').trim();
-  const options = Array.isArray(q.options) ? q.options : (Array.isArray(q.choices) ? q.choices : []);
-  const correctAnswer = String(q.correctAnswer ?? q.correctOption ?? q.correct_option ?? q.answer ?? q.ans ?? '').trim();
+  const optionsList = Array.isArray(q.options) ? q.options : (Array.isArray(q.choices) ? q.choices : []);
+  // Security P0-01: Strip correctAnswer from student payloads during active assessment
+  const correctAnswer = isStudentView ? '' : String(q.correctAnswer ?? q.correctOption ?? q.correct_option ?? q.answer ?? q.ans ?? '').trim();
   const topic = String(q.topic || q.tag || (Array.isArray(q.tags) ? q.tags[0] : q.tags) || 'General').trim();
   const marks = Number(q.marks || q.weight || 1);
   const negativeMarks = Number(q.negativeMarks || 0);
-  const explanation = String(q.explanation || q.solution || q.hint || '').trim();
+  const explanation = isStudentView ? '' : String(q.explanation || q.solution || q.hint || '').trim();
 
   return {
     ...q,
@@ -225,17 +263,17 @@ export function normalizeMCQQuestion(q = {}, idx = 0) {
     question: prompt, // canonical + alias for template strings
     questionText: prompt,
     text: prompt,
-    options,
-    choices: options,
+    options: optionsList,
+    choices: optionsList,
     correctAnswer,
-    correctOption: correctAnswer,
-    answer: correctAnswer,
     topic,
+    tag: topic,
     difficulty: String(q.difficulty || 'Medium'),
     marks,
     negativeMarks,
     explanation,
-    hint: explanation
+    hint: explanation,
+    isStudentView
   };
 }
 
