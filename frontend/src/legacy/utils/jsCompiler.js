@@ -7,9 +7,36 @@
  * - Provides mocks for require('fs').readFileSync(0, 'utf-8') & require('readline')
  * - Infinite loop protection with configurable execution timeout
  * - Standardized output format matching SEED-IT platform runners
+ *
+ * SECURITY NOTE:
+ * This module uses new Function() to execute student-submitted code.
+ * It MUST only be called from within the PyQt Desktop host where
+ * window.__SEED_DESKTOP_HOST__ is set to true by the Python bridge.
+ * Calling this from a real browser (without the Desktop host flag) is
+ * blocked by a hard guard below.
  */
 
+/** Maximum bytes allowed in combined stdout + stderr output. */
+const MAX_OUTPUT_BYTES = 256 * 1024; // 256 KB
+
 export async function executeJavaScript(code, stdin = "", timeoutMs = 3000) {
+  // ── Security guard ───────────────────────────────────────────────────────
+  // Prevent execution in any context that is not the SEED Desktop host.
+  // The PyQt bridge sets window.__SEED_DESKTOP_HOST__ = true on startup.
+  if (
+    typeof window !== 'undefined' &&
+    !window.__SEED_DESKTOP_HOST__
+  ) {
+    return {
+      stdout: "",
+      stderr: "[SECURITY] Code execution is only permitted in the SEED Desktop host.",
+      output: "[SECURITY] Code execution is only permitted in the SEED Desktop host.",
+      exit_code: 1,
+      error: "SecurityError: execution outside Desktop host"
+    };
+  }
+  // ── End security guard ───────────────────────────────────────────────────
+
   const trimmedCode = String(code || "").trim();
   const noComments = trimmedCode
     .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')
@@ -32,6 +59,22 @@ export async function executeJavaScript(code, stdin = "", timeoutMs = 3000) {
   const stdinLines = cleanStdin.split(/\r?\n/);
   let stdinLineIndex = 0;
 
+  /** Accumulated output size in bytes (UTF-16 code units × 2 is a safe upper bound). */
+  let outputBytes = 0;
+  let outputTruncated = false;
+
+  const appendOutput = (buffer, value) => {
+    if (outputTruncated) return;
+    const size = value.length * 2; // rough byte estimate
+    if (outputBytes + size > MAX_OUTPUT_BYTES) {
+      buffer.push(`\n[Output truncated after ${MAX_OUTPUT_BYTES / 1024} KB]`);
+      outputTruncated = true;
+      return;
+    }
+    outputBytes += size;
+    buffer.push(value);
+  };
+
   // Format helper for arguments
   const formatArg = (arg) => {
     if (arg === undefined) return 'undefined';
@@ -49,16 +92,16 @@ export async function executeJavaScript(code, stdin = "", timeoutMs = 3000) {
   // Mock console methods
   const mockConsole = {
     log: (...args) => {
-      stdoutBuffer.push(args.map(formatArg).join(' '));
+      appendOutput(stdoutBuffer, args.map(formatArg).join(' '));
     },
     info: (...args) => {
-      stdoutBuffer.push(args.map(formatArg).join(' '));
+      appendOutput(stdoutBuffer, args.map(formatArg).join(' '));
     },
     warn: (...args) => {
-      stderrBuffer.push(`[WARN] ${args.map(formatArg).join(' ')}`);
+      appendOutput(stderrBuffer, `[WARN] ${args.map(formatArg).join(' ')}`);
     },
     error: (...args) => {
-      stderrBuffer.push(args.map(formatArg).join(' '));
+      appendOutput(stderrBuffer, args.map(formatArg).join(' '));
     }
   };
 
@@ -88,12 +131,12 @@ export async function executeJavaScript(code, stdin = "", timeoutMs = 3000) {
     },
     stdout: {
       write: (data) => {
-        stdoutBuffer.push(String(data));
+        appendOutput(stdoutBuffer, String(data));
       }
     },
     stderr: {
       write: (data) => {
-        stderrBuffer.push(String(data));
+        appendOutput(stderrBuffer, String(data));
       }
     },
     argv: ['node', 'solution.js'],
@@ -183,7 +226,7 @@ export async function executeJavaScript(code, stdin = "", timeoutMs = 3000) {
     if (err.message && err.message.startsWith('__PROCESS_EXIT_')) {
       // Process exited cleanly via process.exit(code)
     } else {
-      stderrBuffer.push(err.stack || err.toString());
+      appendOutput(stderrBuffer, err.stack || err.toString());
     }
   } finally {
     if (timerId) clearTimeout(timerId);

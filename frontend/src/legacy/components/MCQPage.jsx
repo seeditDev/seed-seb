@@ -585,23 +585,24 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             const testID = test?.id || testData?.id || 'unknown';
             const testName = testData?.name || test?.name || 'Unknown Test';
 
-            const questionsDetails = questionSet.map((q, idx) => {
+            // P1-MCQ: derive questionsDetails from gradeMcqAttempt() output.
+            // This removes the last raw `selectedAnswer === q.correctAnswer`
+            // comparison, leaving a single scoring authority throughout MCQPage.
+            const questionsDetails = (recoveryGrade.questionsDetails || questionSet.map((q, idx) => {
                 const selectedIdx = restoredAnswers[idx];
                 const selectedAnswer = selectedIdx !== undefined ? (q.options?.[selectedIdx] || '') : '';
-                const isCorrect = selectedAnswer === q.correctAnswer;
-                const timeSpent = 0;
                 return {
                     questionNumber: idx + 1,
                     questionText: q.question || q.text || '',
                     difficulty: (q.difficulty || testData?.difficulty || test?.difficulty || 'medium').toLowerCase(),
                     topic: q.topic || q.tag || (q.tags ? (Array.isArray(q.tags) ? q.tags[0] : q.tags) : 'General'),
                     tags: Array.isArray(q.tags) ? q.tags : (q.tags ? [q.tags] : (q.topic ? [q.topic] : ['General'])),
-                    isCorrect,
+                    isCorrect: recoveryGrade.questionResults?.[idx]?.isCorrect ?? false,
                     selectedAnswer,
-                    correctAnswer: q.correctAnswer || '',
-                    timeSpent
+                    correctAnswer: '',  // never sent — scoring is server-authoritative
+                    timeSpent: 0
                 };
-            });
+            }));
 
             const resultData = {
                 email: user.Email,
@@ -1761,35 +1762,36 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         }
     }, [currentTest, calculateScore, startTime, user, answers, testStartTimeISO, clearTestSessionStorage, navigate, setAutoSubmitMessage, isEmbedded, timeSpentPerQ, submitGuard]);
 
-    // Timer effect - countdown timer
+    // Timer effect — wall-clock anchored countdown
+    // BUG FIXED (P1 timer drift): the previous implementation used
+    // elapsedTime + 1 per tick. On backgrounded tabs or under CPU load,
+    // setInterval fires late and the displayed time drifts behind real time.
+    // Fix: record the absolute end timestamp once when the test starts and
+    // derive remaining = Math.round((endTime - Date.now()) / 1000) on every
+    // tick. The interval is still 1 s — only the remaining calculation changed.
     useEffect(() => {
-        let timer;
-        if (currentTest && !currentTest.submitted && testDuration > 0 && !isEmbedded) {
-            timer = setInterval(() => {
-                // BUG FIXED (P1 main-thread jank): this wrote to localStorage on
-                // every single timer tick. localStorage is synchronous, so a 1s
-                // write cadence stalled rendering on low-end exam machines.
-                // Throttled to once every 5s, which is still well inside the
-                // reload-recovery tolerance.
-                throttledLocalStorageSet('mcqLastActiveTime', timeService.now().toString(), 5000);
-                setElapsedTime(prev => {
-                    const newElapsed = prev + 1;
-                    const newRemaining = testDuration - newElapsed;
-                    setRemainingTime(Math.max(0, newRemaining));
+        if (!currentTest || currentTest.submitted || testDuration <= 0 || isEmbedded) return;
 
-                    // Auto-submit when time runs out
-                    if (newRemaining <= 0) {
-                        handleAutoSubmit({ reason: 'timer' });
-                    }
+        // Wall-clock end timestamp for this test.
+        // startTime is set when the test begins (ms epoch).
+        const endTimeMs = (startTime || timeService.now()) + testDuration * 1000;
 
-                    return newElapsed;
-                });
-            }, 1000);
-        }
-        return () => {
-            if (timer) clearInterval(timer);
-        };
-    }, [currentTest, testDuration, handleAutoSubmit, isEmbedded]);
+        const timer = setInterval(() => {
+            // Throttled autosave (once every 5 s)
+            throttledLocalStorageSet('mcqLastActiveTime', timeService.now().toString(), 5000);
+
+            const newRemaining = Math.round((endTimeMs - timeService.now()) / 1000);
+            setRemainingTime(Math.max(0, newRemaining));
+            // Keep elapsedTime in sync for any code that reads it
+            setElapsedTime(testDuration - Math.max(0, newRemaining));
+
+            if (newRemaining <= 0) {
+                handleAutoSubmit({ reason: 'timer' });
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [currentTest, testDuration, startTime, handleAutoSubmit, isEmbedded]);
 
     // Synchronize section remainingTime in embedded mode
     useEffect(() => {

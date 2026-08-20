@@ -1898,6 +1898,9 @@ const MultiSectionAssessment = () => {
           college, year, department: user?.Department || '',
           testID: assessment.id, testName: assessment.name,
           assessmentId: assessment.id, assessmentName: assessment.name,
+          // P1-02: deterministic attemptId = assessmentId_uid_startEpochMs
+          // Allows future attempt history lookup without changing the doc path.
+          attemptId: `${assessment.id}_${auth?.currentUser?.uid || 'anon'}_${new Date(timeStartedISO).getTime()}`,
           startedAt: timeStartedISO,
           startedAtISO: timeStartedISO,
           submittedAt: serverTimestamp(), submittedAtISO: timeEndedISO,
