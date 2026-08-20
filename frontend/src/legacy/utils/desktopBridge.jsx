@@ -122,6 +122,22 @@ const desktopBridge = {
         }
     },
 
+    setContestContext: async (contestId, keyHex = "") => {
+        const backend = await initBridge();
+        if (backend && typeof backend.setContestContext === 'function') {
+            return await backend.setContestContext(String(contestId || ""), String(keyHex || ""));
+        }
+        return false;
+    },
+
+    setContestKey: async (contestId, keyHex) => {
+        const backend = await initBridge();
+        if (backend && typeof backend.setContestKey === 'function') {
+            return await backend.setContestKey(String(contestId || ""), String(keyHex || ""));
+        }
+        return false;
+    },
+
     runCode: async (language, code, stdin = "") => {
         const cleanLang = String(language || "").toLowerCase().trim();
         const isJs = cleanLang === 'javascript' || cleanLang === 'js' || cleanLang === 'node' || cleanLang === 'nodejs';
@@ -383,6 +399,46 @@ const desktopBridge = {
                     category: "Algorithms"
                 }
             ];
+        }
+    },
+
+    saveUserProfileCache: async (uid, dataType, data) => {
+        if (!uid) return false;
+        const serialized = typeof data === 'string' ? data : JSON.stringify(data);
+        const backend = await initBridge();
+        if (backend && typeof backend.saveUserProfileCache === 'function') {
+            try {
+                return await backend.saveUserProfileCache(String(uid), String(dataType || 'daily_activity'), serialized);
+            } catch (err) {
+                console.warn('[DesktopBridge] saveUserProfileCache backend error:', err);
+            }
+        }
+        // LocalStorage fallback
+        try {
+            localStorage.setItem(`user_profile_${uid}_${dataType}`, serialized);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    },
+
+    loadUserProfileCache: async (uid, dataType) => {
+        if (!uid) return null;
+        const backend = await initBridge();
+        if (backend && typeof backend.loadUserProfileCache === 'function') {
+            try {
+                const raw = await backend.loadUserProfileCache(String(uid), String(dataType || 'daily_activity'));
+                if (raw) return safeJsonParse(raw, null);
+            } catch (err) {
+                console.warn('[DesktopBridge] loadUserProfileCache backend error:', err);
+            }
+        }
+        // LocalStorage fallback
+        try {
+            const raw = localStorage.getItem(`user_profile_${uid}_${dataType}`);
+            return safeJsonParse(raw, null);
+        } catch (_) {
+            return null;
         }
     }
 };

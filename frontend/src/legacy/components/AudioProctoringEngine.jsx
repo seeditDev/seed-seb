@@ -147,12 +147,15 @@ const AudioProctoringEngine = ({
     }
   }, [isTestActive, isProctorActive, initMicrophone, startSampling, stopSampling]);
 
-  // ── Teardown on unmount only ──────────────────────────────────────────────
+  // ── Teardown on unmount or submission event ──────────────────────────────
   useEffect(() => {
-    return () => {
-      console.log("[AudioProctor] Unmounting — releasing mic resources");
+    const handleHardwareTeardown = () => {
+      console.log("[AudioProctor] Hardware teardown event received — stopping microphone");
       stopSampling();
-      streamRef.current?.getTracks().forEach(t => t.stop());
+      streamRef.current?.getTracks().forEach(t => {
+        t.onended = null;
+        t.stop();
+      });
       streamRef.current = null;
       audioCtxRef.current?.close().catch(() => {});
       audioCtxRef.current = null;
@@ -160,7 +163,25 @@ const AudioProctoringEngine = ({
       initializedRef.current = false;
       initStartedRef.current = false;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    window.addEventListener('seb:stop-proctoring-hardware', handleHardwareTeardown);
+
+    return () => {
+      console.log("[AudioProctor] Unmounting — releasing mic resources");
+      window.removeEventListener('seb:stop-proctoring-hardware', handleHardwareTeardown);
+      stopSampling();
+      streamRef.current?.getTracks().forEach(t => {
+        t.onended = null;
+        t.stop();
+      });
+      streamRef.current = null;
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+      analyserRef.current = null;
+      initializedRef.current = false;
+      initStartedRef.current = false;
+    };
+  }, [stopSampling]);
 
   return null;
 };

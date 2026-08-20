@@ -12,4 +12,21 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      include: [
+        "react-icons/fa",
+        "dompurify",
+        "sonner",
+        "axios",
+        "katex",
+        "firebase/app",
+        "firebase/auth",
+        "firebase/firestore",
+        "firebase/database",
+        "firebase/storage",
+        "@tanstack/react-query",
+      ],
+    },
+  },
 });

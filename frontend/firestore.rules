@@ -1,59 +1,50 @@
 rules_version = '2';
 
 // ════════════════════════════════════════════════════════════════════════════
-// SEED-IT Platform — Master Firestore Security Rules
+// SEED-IT Platform — Master Firestore Security Rules  v4.1 (Unified)
 //
 // Shared by:
-//   • SEED Admin Portal  (SEEDADMIN-LOVABLE)
-//   • SEED SEB Platform  (seed-website-desktop-edition)
-//
-// Deploy: firebase deploy --only firestore:rules
-//         (place this file at the Firebase project root as firestore.rules)
+//   • SEED Admin Portal  (seed-it-admin-hub)
+//   • SEED SEB Platform  (seed-seb / seed-website-desktop-edition)
 // ════════════════════════════════════════════════════════════════════════════
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ════════════════════════════════════════════════════════════════════════
+    // ──────────────────────────────────────────────────────────────────────
     // Helper Functions
-    // ════════════════════════════════════════════════════════════════════════
+    // ──────────────────────────────────────────────────────────────────────
 
-    /** True when ANY authenticated session exists (including anonymous). */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * True when the authenticated UID matches the given userId.
-     * Also accepts email-keyed documents (legacy SEB pattern: users/{email}).
-     */
     function isUser(userId) {
       return isSignedIn() && (
         request.auth.uid == userId ||
-        request.auth.token.email == userId
+        (request.auth.token.email != null && (
+          request.auth.token.email == userId ||
+          request.auth.token.email.lower() == userId.lower() ||
+          userId.matches('(?i)' + request.auth.token.email.split('@')[0] + '.*')
+        ))
       );
     }
 
-    /** Fetches the calling user's Firestore profile document. */
-    function myProfile() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    /** True when the calling user has a profile document in Firestore. */
     function hasProfile() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    /**
-     * Role of the calling user — checked in Firestore profile first,
-     * then in the JWT custom claim (set by Cloud Functions on login).
-     * Falls back to 'none' so unauthenticated callers always fail role checks.
-     */
+    function myProfile() {
+      return hasProfile()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : {};
+    }
+
     function myRole() {
       return hasProfile()
-        ? myProfile().role
-        : (isSignedIn() ? request.auth.token.get('role', 'none') : 'none');
+        ? myProfile().get('role', 'student')
+        : (isSignedIn() ? request.auth.token.get('role', 'student') : 'none');
     }
 
     function isAdmin() {
@@ -64,385 +55,363 @@ service cloud.firestore {
       return myRole() == 'staff';
     }
 
-    /**
-     * isPortal — any portal user (admin or staff).
-     * Used by Admin Portal write operations.
-     */
     function isPortal() {
       return isAdmin() || isStaff();
     }
 
-    /**
-     * isStaffOrAdmin — alias of isPortal(), kept for SEB call sites.
-     */
-    function isStaffOrAdmin() {
-      return isPortal();
-    }
-
-    /** Tenant scoping: admins are unrestricted; staff limited to own tenant. */
     function myTenant() {
-      return hasProfile() ? myProfile().get('tenantId', '') : '';
+      return hasProfile()
+        ? myProfile().get('tenantId', myProfile().get('collegeCode', myProfile().get('college', '')))
+        : request.auth.token.get('tenantId', '');
     }
 
     function tenantAllowed(tenantId) {
-      return isAdmin() || (isStaff() && tenantId == myTenant());
+      return isAdmin() || (isStaff() && (tenantId == myTenant() || myTenant() == ''));
     }
 
-    function isTenantUser(tenantId) {
-      return isSignedIn() && (
-        myProfile().get('tenantId', '') == tenantId ||
-        myProfile().get('college', '')  == tenantId ||
-        isAdmin()
-      );
+    function isTenantMember(tenantId) {
+      return isSignedIn() && (isPortal() || myTenant() == tenantId || myTenant() == '');
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 1. Users
-    //    Admin Portal: granular tenant-scoped staff rules
-    //    SEB:          subcollections (assessmentAttempts, contestAttempts,
-    //                  courseProgress)
-    // ════════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════
+    // 0. Public Version & Build Hash (Pre-Launch Checks)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /version_seedit/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /app_build_hashes/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /assessment_keys/{contestId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 1. Users   users/{userId}
+    // ══════════════════════════════════════════════════════════════════════
 
     match /users/{userId} {
-      // Any signed-in user may read their own doc; portal users read all.
-      allow get: if isSignedIn() && (request.auth.uid == userId || isPortal());
-      allow list: if isPortal();
+      allow get:    if isUser(userId) || isPortal();
+      allow list:   if isPortal();
 
-      // Admins provision anyone.
-      // Staff provision students inside their tenant.
-      // A new student may self-seed their own doc on first sign-in.
-      allow create: if isAdmin()
-        || (isStaff()
-            && request.resource.data.role == 'student'
-            && request.resource.data.tenantId == myTenant())
-        || (isSignedIn() && request.auth.uid == userId
-            && request.resource.data.role == 'student');
+      allow create: if isSignedIn() && (isUser(userId) || isPortal());
 
-      // Admins update anything.
-      // Staff update within their tenant, no role escalation.
-      // Users may update their own doc — but cannot change role, tenantId or premium.
+      // Allow users to update their own metadata (completions, profile) without changing role/tenant/college/email
       allow update: if isAdmin()
-        || (isStaff() && tenantAllowed(resource.data.tenantId)
-            && request.resource.data.role == resource.data.role)
-        || (isSignedIn() && request.auth.uid == userId
-            && request.resource.data.role     == resource.data.role
-            && request.resource.data.tenantId == resource.data.tenantId
-            && request.resource.data.get('premium', false) == resource.data.get('premium', false));
+        || (isStaff() && tenantAllowed(resource.data.get('tenantId', '')))
+        || (isUser(userId)
+            && request.resource.data.get('role', resource.data.get('role', 'student')) == resource.data.get('role', 'student')
+            && request.resource.data.get('tenantId', resource.data.get('tenantId', '')) == resource.data.get('tenantId', '')
+            && request.resource.data.get('collegeCode', resource.data.get('collegeCode', '')) == resource.data.get('collegeCode', '')
+            && request.resource.data.get('email', resource.data.get('email', '')) == resource.data.get('email', ''));
 
       allow delete: if isAdmin();
 
-      // Assessment attempt mirror (written by SEB on every submit).
-      match /assessmentAttempts/{attemptId} {
-        allow read, write: if isUser(userId) || isStaffOrAdmin();
-      }
-
-      // Legacy contest attempts subcollection (SEB resume-session detection).
+      // Active exam session — student writes their own; portal reads
       match /contestAttempts/{attemptId} {
-        allow read, write: if isUser(userId) || isStaffOrAdmin();
+        allow read: if isUser(userId) || isPortal();
+        allow create: if isUser(userId);
+        allow update: if isPortal()
+          || (isUser(userId)
+              && !(resource.data.get('completed', false) == true
+                   && request.resource.data.get('completed', false) == false));
+        allow delete: if isPortal();
       }
 
-      // Multi-section attempt subcollection (SEB MSA).
-      match /multiSectionAttempts/{attemptId} {
-        allow read, write: if isUser(userId) || isStaffOrAdmin();
+      // Completed summary mirror
+      match /assessmentAttempts/{attemptId} {
+        allow read, write: if isUser(userId) || isPortal();
       }
 
-      // Course completion progress (written by SEB markCourseProgress()).
+      // Practice / course progress
       match /courseProgress/{courseId} {
-        allow read, write: if isUser(userId) || isStaffOrAdmin();
+        allow read, write: if isUser(userId) || isPortal();
+      }
+
+      // Device session audit & single-system login logging
+      match /activityLogging/{sessionId} {
+        allow read, write: if isUser(userId) || isPortal();
       }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 2. Tenants & Cohorts
-    // ════════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════
+    // 2. CollectionGroup: contestAttempts (Live Monitor)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /{path=**}/contestAttempts/{attemptId} {
+      allow read:   if isPortal() || (isSignedIn() && isUser(path[1]));
+      allow create: if isSignedIn() && isUser(path[1]);
+      allow update: if isPortal()
+        || (isSignedIn() && isUser(path[1])
+            && !(resource.data.get('completed', false) == true
+                 && request.resource.data.get('completed', false) == false));
+      allow delete: if isPortal();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 3. Tenants & Cohorts
+    // ══════════════════════════════════════════════════════════════════════
 
     match /tenants/{tenantId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read:           if isPortal() || isTenantMember(tenantId);
+      allow create, update: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+      allow delete:         if isAdmin();
 
       match /cohorts/{cohortId} {
-        allow read: if isSignedIn();
-        allow create, delete: if isAdmin();
-        // Staff may update cohorts within their own tenant.
-        allow update: if isAdmin() || (isStaff() && tenantId == myTenant());
+        allow read:   if true;
+        allow create, delete: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+        allow update: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+      }
+
+      match /customMCQs/{slugId} {
+        allow read:   if isPortal() || isTenantMember(tenantId);
+        allow write:  if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+      }
+
+      match /customCoding/{slugId} {
+        allow read:   if isPortal() || isTenantMember(tenantId);
+        allow write:  if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+      }
+
+      match /customSEA/{slugId} {
+        allow read:   if isPortal() || isTenantMember(tenantId);
+        allow write:  if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+      }
+
+      match /customAssessments/{assessmentId} {
+        allow read:   if isPortal() || isTenantMember(tenantId);
+        allow write:  if isAdmin() || (isStaff() && tenantAllowed(tenantId));
       }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 3. Assessments (legacy top-level collection, kept for backward compat)
-    //    New assessments live under courses/.../tests/
-    // ════════════════════════════════════════════════════════════════════════
+    match /publicTenants/{tenantId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
 
-    match /assessments/{assessmentId} {
-      // Signed-in users read all assessments.
-      allow read: if isSignedIn();
-      // Unauthenticated guest access: only when assessment has guestEnabled = true.
-      allow read: if resource.data.guestEnabled == true;
+    // ══════════════════════════════════════════════════════════════════════
+    // 4. Courses / Series / Tests
+    // ══════════════════════════════════════════════════════════════════════
 
+    match /courses/{courseId} {
+      allow read:               if isSignedIn();
       allow create, update, delete: if isPortal();
 
+      match /series/{seriesId} {
+        allow read:               if isSignedIn();
+        allow create, update, delete: if isPortal();
+
+        match /tests/{testId} {
+          allow read:               if isSignedIn();
+          allow create, update, delete: if isPortal();
+        }
+
+        match /_meta/{trackerId} {
+          allow read:  if isPortal();
+          allow write: if isPortal();
+        }
+      }
+    }
+
+    match /tenantCourses/{tenantId} {
+      allow read:  if isPortal() || isTenantMember(tenantId);
+      allow write: if isPortal();
+
+      match /tests/{testId} {
+        allow read: if isPortal()
+          || isTenantMember(tenantId)
+          || resource.data.guestEnabled == true;
+        allow create, update, delete: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 5. Assessments (Authoring store)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /assessments/{assessmentId} {
+      allow list: if isPortal();
+      allow create, update, delete: if isPortal();
+      allow get: if isSignedIn();
+
       match /{document=**} {
-        allow read: if isSignedIn() || resource.data.guestEnabled == true;
+        allow read:  if isSignedIn();
         allow write: if isPortal();
       }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 4. Assessment Results (v2 canonical single path)
-    //    assessmentResults/{testId}/students/{userId}  ← registered students
-    //    assessmentResults/{testId}/guests/{guestId}   ← guest submissions
-    // ════════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════
+    // 6. Assessment Results (Unified 4-Segment Structure)
+    //   Path: assessmentResults/{tenantId}/{assessmentId}/{userId}
+    // ══════════════════════════════════════════════════════════════════════
 
-    match /assessmentResults/{assessmentId} {
-      // Portal users can list/read at the top level (report downloads).
-      allow read: if isPortal();
-      allow write: if isAdmin();
+    match /assessmentResults/{tenantId} {
+      allow read:  if isPortal() || isTenantMember(tenantId);
+      allow write: if isPortal();
 
-      match /students/{userId} {
-        // Student writes their own result; portal reads/updates all.
-        allow read:          if isPortal() || request.auth.uid == userId;
-        allow create, update: if (isSignedIn() && request.auth.uid == userId) || isPortal();
-        allow delete:        if isAdmin();
+      match /{assessmentId}/{userId} {
+        allow read:   if isPortal() || (isSignedIn() && isUser(userId));
+        allow create: if isSignedIn() && (isUser(userId) || isPortal());
+        allow update: if isPortal()
+          || (isSignedIn()
+              && isUser(userId)
+              && (
+                resource.data.get('status', '') != 'submitted' ||
+                request.resource.data.get('status', '') == 'submitted'
+              ));
+        allow delete: if isAdmin();
       }
 
-      match /guests/{guestId} {
-        // Guests are unauthenticated -- no Firebase Auth token.
-        // allow create: open to anyone (guest identity verified by guestId derivation).
-        // allow read of own doc: for re-attempt detection (check if already submitted).
-        // Portal-only for list/update/delete.
-        allow create:        if true;   // guest submissions (no auth token)
-        allow read:          if isStaffOrAdmin() || request.auth == null || request.auth != null;
-        allow update, delete: if isStaffOrAdmin();
+      // Legacy/Alternate 4-segment structure: assessmentResults/{assessmentId}/students/{userId}
+      match /students/{userId} {
+        allow read:   if isPortal() || (isSignedIn() && isUser(userId));
+        allow create: if isSignedIn() && (isUser(userId) || isPortal());
+        allow update: if isPortal() || (isSignedIn() && isUser(userId));
+        allow delete: if isAdmin();
+      }
+
+      // Guest results fallback
+      match /{assessmentId}/guests/{guestId} {
+        allow create: if true;
+        allow read:   if isPortal();
+        allow update, delete: if isPortal();
       }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 5. Proctoring Logs
-    // ════════════════════════════════════════════════════════════════════════
+    // CollectionGroup for backwards compatibility with reporting queries
+    match /{path=**}/students/{userId} {
+      allow read:   if isPortal() || (isSignedIn() && isUser(userId));
+      allow create: if isSignedIn() && (isUser(userId) || isPortal());
+      allow update: if isPortal() || (isSignedIn() && isUser(userId));
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 7. Tenant Results — Reporting Projection
+    //   Path: tenantResults/{tenantId}/{assessmentId}/{userId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /tenantResults/{tenantId} {
+      allow read:  if isAdmin() || (isStaff() && tenantAllowed(tenantId));
+      allow write: if isPortal();
+
+      match /{assessmentId}/{userId} {
+        allow read: if isAdmin() || (isStaff() && tenantAllowed(tenantId)) || (isSignedIn() && isUser(userId));
+        allow create, update: if isSignedIn() && (isUser(userId) || isPortal());
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 8. Proctoring Logs
+    //   Path: proctoringLogs/{attemptId}/events/{eventId}
+    // ══════════════════════════════════════════════════════════════════════
 
     match /proctoringLogs/{attemptId} {
-      allow read: if isPortal();
-      allow write: if isSignedIn();
+      allow read: if isPortal()
+        || (isSignedIn() && attemptId.matches('.*_' + request.auth.uid));
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isPortal();
+      allow delete: if isAdmin();
 
       match /events/{eventId} {
-        allow read: if isPortal();
-        // Append-only from the student runtime; never editable afterwards.
+        allow read: if isPortal()
+          || (isSignedIn() && attemptId.matches('.*_' + request.auth.uid));
         allow create: if isSignedIn();
         allow update: if false;
         allow delete: if isAdmin();
       }
     }
 
-    // Legacy proctoring paths (SEB backward compat — 30-day grace)
-    match /proctor_logs/{studentId}/{testId}/{docId=**} {
-      allow read, write: if isSignedIn();
+    match /{path=**}/events/{eventId} {
+      allow read:   if isPortal();
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 6. Module Assignments  (Admin Portal only)
-    // ════════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════
+    // 9. Practice, Progress & Banks
+    // ══════════════════════════════════════════════════════════════════════
 
-    match /moduleAssignments/{assignmentId} {
-      allow read: if isSignedIn();
-      allow write: if isPortal();
+    match /codingProgress/{uid} {
+      allow read, write: if isUser(uid) || isPortal();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 7. Courses / Series / Tests  (Admin Portal writes, SEB reads)
-    //
-    //    courses/{courseId}
-    //      series/{seriesId}
-    //        tests/{testId}          ← cdnUrl, schedule, passkey, settings …
-    //        __tracker__             ← question usage dedup tracker
-    // ════════════════════════════════════════════════════════════════════════
+    match /userActivities/{uid} {
+      allow read, write: if isUser(uid) || isPortal();
 
-    match /courses/{courseId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isPortal();
-
-      match /series/{seriesId} {
-        allow read: if isSignedIn();
-        allow create, update, delete: if isPortal();
-
-        match /tests/{testId} {
-          // SEB reads test metadata to start a test.
-          // Guest portal also reads when guestEnabled = true (uses collectionGroup query).
-          allow read: if isSignedIn() || resource.data.guestEnabled == true;
-          allow create, update, delete: if isPortal();
-        }
-
-        // Question usage tracker — stored in _meta subcollection to get
-        // a valid 6-segment path: courses/.../series/.../_meta/__tracker__
-        match /_meta/{trackerId} {
-          allow read: if isSignedIn();
-          allow write: if isPortal();
-        }
+      match /{allPaths=**} {
+        allow read, write: if isUser(uid) || isPortal();
       }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // CollectionGroup: tests — required for findTestByCode (guest portal)
-    //
-    // NOTE: resource.data.guestEnabled cannot be used here for unauthenticated
-    // callers — Firestore evaluates rules before fetching the doc, so
-    // resource.data is unavailable for collectionGroup queries without auth.
-    // The public read is safe because test metadata has no sensitive fields.
-    // Per-doc writes are still restricted to isPortal() above.
-    // ════════════════════════════════════════════════════════════════════════
-    match /{path=**}/tests/{testId} {
-      // Public read: allows unauthenticated guest portal to run findTestByCode.
-      // Individual test data (passkey etc.) is never in this doc — it's in the
-      // assessment slug on CDN.
-      allow read: if true;
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // 8. Coding Challenges Bank
-    // ════════════════════════════════════════════════════════════════════════
-
     match /codingChallenges/{challengeId} {
-      allow read: if isSignedIn();
+      allow get:    if isSignedIn();
+      allow list:   if isPortal();
       allow create, update, delete: if isPortal();
     }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // 9. Content URLs Registry  (Admin Portal: write on publish; both: read)
-    // ════════════════════════════════════════════════════════════════════════
-
-    match /contentUrls/{urlId} {
-      // SEB needs to read cdnUrl slugs; portal needs to write them.
-      allow read: if isSignedIn();
-      allow create, update, delete: if isPortal();
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // 10. Coding Progress  (SEB practice tracking — localStorage + Firestore sync)
-    // ════════════════════════════════════════════════════════════════════════
-
-    match /codingProgress/{docId} {
-      allow read, write: if isSignedIn();
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // 11. User Solutions  (LeetCode-style accepted + all submissions store)
-    //     userSolutions/{uid}/solutions/{questionId}    ← best accepted
-    //     userSolutions/{uid}/allSubmissions/{autoId}   ← every run
-    // ════════════════════════════════════════════════════════════════════════
-
-    match /userSolutions/{uid}/{sub=**} {
-      allow read, write: if isUser(uid) || isStaffOrAdmin();
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // 12. Question Bank  (MCQ questions)
-    // ════════════════════════════════════════════════════════════════════════
 
     match /questionBank/{questionId} {
-      allow read: if isSignedIn();
+      allow get:    if isSignedIn();
+      allow list:   if isPortal();
       allow create, update, delete: if isPortal();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 13. Live Presence  (SEB active session heartbeat)
-    // ════════════════════════════════════════════════════════════════════════
-
-    match /livePresence/{dateStr}/sessions/{sessionId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
-      allow delete: if isStaffOrAdmin();
+    match /userSolutions/{uid}/{sub=**} {
+      allow read, write: if isUser(uid) || isPortal();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 14. System Config  (read-only for all signed-in; write admin only)
-    // ════════════════════════════════════════════════════════════════════════
+    match /livePresence/{dateStr}/sessions/{sessionId} {
+      allow read:   if isPortal();
+      allow create: if isSignedIn()
+        && request.resource.data.get('userId', '') == request.auth.uid;
+      allow update: if isPortal()
+        || (isSignedIn()
+            && resource.data.get('userId', '') == request.auth.uid);
+      allow delete: if isPortal();
+    }
+
+    match /contentUrls/{urlId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isPortal();
+    }
 
     match /systemConfig/{docId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 15. User API Keys  (Gemini / NVIDIA keys stored per user)
-    // ════════════════════════════════════════════════════════════════════════
-
-    match /userApiKeys/{userEmail} {
-      allow read, write: if isSignedIn() && request.auth.token.email == userEmail;
-      // Admin can audit/delete any API key doc.
+    match /userApiKeys/{docId} {
+      allow read, write: if isSignedIn()
+        && (request.auth.token.email == docId || request.auth.uid == docId);
       allow read, delete: if isAdmin();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 16. Backward Compatibility — Legacy Collection Paths (30-day grace)
-    //     To be removed once all data is migrated to v2 paths.
-    // ════════════════════════════════════════════════════════════════════════
+    match /moduleAssignments/{assignmentId} {
+      allow read:  if isPortal();
+      allow write: if isPortal();
+    }
 
-    // Legacy assessment results (old per-college/year paths)
+    // ══════════════════════════════════════════════════════════════════════
+    // 10. Legacy Fallbacks Blocked
+    // ══════════════════════════════════════════════════════════════════════
+
     match /AssessmentResults/{testId}/colleges/{college}/years/{year}/students/{email} {
-      allow read, write: if isSignedIn();
-    }
-
-    // Legacy per-student result docs
-    match /colleges/{college}/years/{year}/departments/{dept}/students/{email}/{resultType}/{testId} {
-      allow read, write: if isSignedIn();
-    }
-
-    // Legacy live user presence
-    match /LiveUsers/{dateStr}/colleges/{college}/years/{year}/users/{email} {
-      allow read, write: if isSignedIn();
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // Everything else is denied by default.
-    // ════════════════════════════════════════════════════════════════════════
-
-    // ════════════════════════════════════════════════════════════════════════
-    // CollectionGroup: contestAttempts / multiSectionAttempts
-    // Required for Live Assessment Monitor (admin collectionGroup query).
-    // Named wildcard {userId} extracts the owner UID from the path so we
-    // can verify ownership — path.split() is NOT valid in Firestore rules.
-    // ════════════════════════════════════════════════════════════════════════
-    // ═══════════════════════════════════════════════════════════════════════
-    // 17. Tenant Courses  (tenantCourses) — per-college test registry
-    //
-    //  tenantCourses/{tenantId}/tests/{testId}
-    //
-    //  Written by admin/staff when targeting is set on a test.
-    //  Read publicly: guest portal has no Firebase Auth token.
-    //  Test metadata (name, duration, type, guestEnabled) is non-sensitive.
-    // ═══════════════════════════════════════════════════════════════════════
-
-    match /tenantCourses/{tenantId} {
-      allow read: if true;
+      allow read:  if isAdmin();
       allow write: if false;
-
-      match /tests/{testId} {
-        allow read: if true;   // guest portal (unauthenticated) + SEB students
-        allow write: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
-        allow delete: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
-      }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // 18. Tenant Results  (tenantResults) — denormalized per-college results
-    //
-    //  tenantResults/{tenantId}/results/{autoId}
-    //
-    //  Written at submit time by MSA / Coding / MCQ engines.
-    //  Read by staff (own tenant) and admin (all tenants).
-    // ═══════════════════════════════════════════════════════════════════════
-
-    match /tenantResults/{tenantId} {
-      allow read: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
-      allow write: if false; // writes only via subcollection
-
-      match /results/{resultId} {
-        allow read: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
-        // Students write their own result at submit time.
-        // Also allows guest (unauthenticated) via create-only:
-        allow create: if true;
-        allow update, delete: if isAdmin() || (isStaff() && tenantAllowed(tenantId));
-      }
+    match /colleges/{college}/years/{year}/departments/{dept}/students/{email}/{resultType}/{testId} {
+      allow read:  if isAdmin();
+      allow write: if false;
     }
-
   }
 }

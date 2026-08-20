@@ -92,13 +92,13 @@ def verify_binary_integrity():
     """
     Verify the running executable against the Firestore-registered hash.
 
-    Logic:
+    Logic (FAIL-CLOSED):
     - Compute SHA-256 of the running EXE.
     - Query Firebase Firestore document app_build_hashes/{CURRENT_VERSION}
     - If the document exists AND sha256_hash matches AND is_active = true -> allow launch.
-    - If document does not match or is revoked -> BLOCK.
-    - If Firestore is UNREACHABLE (network error) -> fail-open (offline grace).
-    - If not running as a compiled exe (no sys.executable path) -> skip check.
+    - If document does not match or is revoked -> BLOCK (return False).
+    - If 404, network error, or server error -> BLOCK (return False).
+    - If not running as a compiled exe (no sys.executable path in dev mode) -> skip check.
     """
     exe_hash = compute_exe_hash()
     if not exe_hash:
@@ -133,22 +133,22 @@ def verify_binary_integrity():
                 return False
 
         elif resp.status_code == 404:
-            logging.warning(
-                f"Integrity check: No hash document found in Firestore for version {CURRENT_VERSION} - "
-                f"allowing launch."
+            logging.error(
+                f"INTEGRITY ERROR: No registered build hash document found in Firestore for version {CURRENT_VERSION}. "
+                f"Launch blocked. Please reinstall the official release."
             )
-            return True
+            return False
 
         else:
-            logging.warning(
-                f"Integrity check: Firestore returned HTTP {resp.status_code} - "
-                f"failing open to preserve availability."
+            logging.error(
+                f"INTEGRITY ERROR: Firestore returned HTTP {resp.status_code}. "
+                f"Cannot verify binary authenticity. Launch blocked."
             )
-            return True
+            return False
 
     except Exception as e:
-        logging.info(f"Integrity check skipped (Firestore unreachable): {e}")
-        return True
+        logging.error(f"INTEGRITY ERROR: Network unreachable while verifying binary integrity: {e}. Launch blocked.")
+        return False
 
 
 # Firebase Configuration
@@ -1604,7 +1604,7 @@ window.QWebChannel = QWebChannel;
         script.setSourceCode(full_injection)
         script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentCreation)
         script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
-        script.setRunsOnSubFrames(True)
+        script.setRunsOnSubFrames(False)
         self.web_view.page().profile().scripts().insert(script)
 
 
@@ -1891,19 +1891,6 @@ window.QWebChannel = QWebChannel;
         threading.Thread(target=_shutdown_server, args=(self.local_server,), daemon=True).start()
         threading.Thread(target=_shutdown_server, args=(self.model_server,), daemon=True).start()
 
-        os._exit(0)
-        def _shutdown_server(srv):
-            try:
-                if srv:
-                    srv.shutdown()
-                    srv.server_close()
-            except Exception:
-                pass
-
-        threading.Thread(target=_shutdown_server, args=(self.local_server,), daemon=True).start()
-        threading.Thread(target=_shutdown_server, args=(self.model_server,), daemon=True).start()
-
-        # Show the countdown dialog - the main thread stays responsive throughout.
         logging.info("Logout: exiting immediately.")
         os._exit(0)
 

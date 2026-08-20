@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, Link, useLocation } from '../router-compat';
 import { APP_VERSION } from "../AppShell";
 import { fetchArticleFile } from '../utils/articleFetcher';
@@ -20,6 +20,7 @@ import {
   FaCheck,
   FaCheckCircle,
   FaArrowLeft,
+  FaArrowUp,
   FaExclamationTriangle,
   FaWifi,
   FaPlug,
@@ -38,7 +39,17 @@ import {
   FaGem,
   FaSyncAlt,
   FaChevronDown,
-  FaChevronRight
+  FaChevronRight,
+  FaBell,
+  FaSun,
+  FaMoon,
+  FaFire,
+  FaBullseye,
+  FaKey,
+  FaThLarge,
+  FaTachometerAlt,
+  FaMobileAlt,
+  FaCode
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
@@ -58,6 +69,8 @@ import { fetchCompletionMap, invalidateCompletionCache } from '../services/attem
 import { requireTenant } from '../utils/tenant';
 import { RESUMABLE_STATES, ATTEMPT_STATES } from '../services/attemptStateMachine';
 import { validateAssessmentPayload, validateTestDoc, validateMSASections } from '../utils/assessmentValidator';
+import { loadUserDailyGoals, saveUserDailyGoals, getDailyGoalsForDate } from '../utils/dailyGoalsPool';
+import { toast } from 'sonner';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -76,10 +89,15 @@ const slugify = (value = '') => {
 const StudentDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => {
-    return location.state?.tab || "assessments";
-  }); // "assessments" or "profile"
+    return location.state?.tab || "dashboard";
+  });
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(null);
+  const [dailyGoals, setDailyGoals] = useState([]);
+  const [seedCredits, setSeedCredits] = useState(2450);
+  const [todayCreditsGained, setTodayCreditsGained] = useState(120);
+  const [userStreak, setUserStreak] = useState(1);
+  const [goalOffset, setGoalOffset] = useState(0);
   const [progressData, setProgressData] = useState(null);
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -87,6 +105,15 @@ const StudentDashboard = () => {
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [userPremiumState, setUserPremiumState] = useState(null);
+  const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'password'
+  const [practiceInitialTab, setPracticeInitialTab] = useState('paths');
+  const [practiceInitialCourse, setPracticeInitialCourse] = useState(null);
+  const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('portal_primary_color') || 'green');
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('portal_font_size') || 'medium');
+  const [emailNotifs, setEmailNotifs] = useState(true);
+  const [practiceReminders, setPracticeReminders] = useState(true);
+  const [assessmentAlerts, setAssessmentAlerts] = useState(true);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => {
     return localStorage.getItem('portal_theme') || 'seed-seb';
   });
@@ -107,6 +134,314 @@ const StudentDashboard = () => {
   });
   const [saveSuccessMessage, setSaveSuccessMessage] = useState('');
 
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('+91 98765 43210');
+  const [editRollNo, setEditRollNo] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.Name || user.name || user.displayName || '');
+      setEditRollNo(user['Roll Number'] || user.rollNumber || user.rollNo || '');
+      setEditPhone(user.phone || user.phoneNumber || '+91 98765 43210');
+      setAvatarUrl(user.photoURL || user.avatarUrl || '');
+    }
+  }, [user]);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size must be less than 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const b64 = event.target?.result;
+      if (b64) {
+        setAvatarUrl(b64);
+        const updated = { ...user, photoURL: b64 };
+        setUser(updated);
+        localStorage.setItem('auth_data', JSON.stringify(updated));
+        if (user?.uid) {
+          updateDoc(doc(db, 'users', user.uid), { photoURL: b64 }).catch(() => {});
+        }
+        toast.success('Profile photo updated!');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editName.trim()) {
+      toast.error('Name cannot be empty.');
+      return;
+    }
+    const updated = {
+      ...user,
+      Name: editName.trim(),
+      name: editName.trim(),
+      displayName: editName.trim(),
+      'Roll Number': editRollNo.trim(),
+      rollNumber: editRollNo.trim(),
+      phone: editPhone.trim(),
+      photoURL: avatarUrl
+    };
+    setUser(updated);
+    localStorage.setItem('auth_data', JSON.stringify(updated));
+    if (user?.uid) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          displayName: editName.trim(),
+          name: editName.trim(),
+          rollNumber: editRollNo.trim(),
+          phone: editPhone.trim(),
+          photoURL: avatarUrl
+        });
+      } catch (e) {
+        console.warn('Failed to update user profile in Firestore:', e);
+      }
+    }
+    setIsEditingProfile(false);
+    toast.success('Profile details saved successfully!');
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match.');
+      return;
+    }
+    try {
+      if (auth.currentUser) {
+        const { updatePassword: fbUpdatePassword } = await import('firebase/auth');
+        await fbUpdatePassword(auth.currentUser, newPassword);
+        toast.success('Password updated successfully!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        toast.success('Password updated successfully!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to update password. Please re-authenticate.');
+    }
+  };
+
+  const handleSyncProfileProgress = async () => {
+    setLoadingProfileProgress(true);
+    try {
+      const uid = user?.uid;
+      if (uid) {
+        const { syncProgressWithFirebase } = await import('../services/codingProgressService');
+        const res = await syncProgressWithFirebase(uid);
+        if (res.success && res.progress) {
+          setProgressData(res.progress);
+          toast.success('Progress synced with cloud!');
+        } else {
+          toast.info('Local progress is up to date.');
+        }
+      } else {
+        toast.info('Progress up to date.');
+      }
+    } catch (err) {
+      toast.error('Failed to sync progress.');
+    } finally {
+      setLoadingProfileProgress(false);
+    }
+  };
+
+  // ─── Live Progress, Dynamic Streak & Daily Goals Lifecycle ───────────
+  useEffect(() => {
+    const initProgressAndGoals = async () => {
+      const uid = user?.uid || auth?.currentUser?.uid || 'guest';
+      
+      // 1. Load Coding Progress
+      try {
+        const { getFullProgress } = await import('../services/codingProgressService');
+        const prog = getFullProgress(uid);
+        if (prog) {
+          setProgressData(prog);
+
+          // Calculate Live Streak from actual activity dates
+          const activity = prog.activity || {};
+          const details = prog.problemDetails || {};
+          const activeDates = new Set();
+          Object.keys(activity).forEach(d => {
+            if (activity[d]?.problemsSolved > 0 || activity[d]?.hours > 0) activeDates.add(d);
+          });
+          Object.values(details).forEach(p => {
+            if ((p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt) {
+              activeDates.add(p.lastSolvedAt.split('T')[0]);
+            }
+          });
+
+          const todayStr = new Date().toISOString().split('T')[0];
+          let computedStreak = 0;
+          let currDate = new Date();
+
+          if (activeDates.has(todayStr)) {
+            computedStreak++;
+            currDate.setDate(currDate.getDate() - 1);
+          } else {
+            currDate.setDate(currDate.getDate() - 1);
+          }
+
+          while (true) {
+            const dStr = currDate.toISOString().split('T')[0];
+            if (activeDates.has(dStr)) {
+              computedStreak++;
+              currDate.setDate(currDate.getDate() - 1);
+            } else {
+              break;
+            }
+          }
+
+          const finalStreak = Math.max(1, computedStreak, user?.streak || 1);
+          setUserStreak(finalStreak);
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Could not calculate live streak:', err);
+      }
+
+      // 2. Load and Dynamically Evaluate Daily Goals
+      try {
+        const data = await loadUserDailyGoals(uid);
+        const todayStr = new Date().toISOString().split('T')[0];
+        let baseGoals = (data && Array.isArray(data.goals)) ? data.goals : getDailyGoalsForDate(todayStr, uid, 0);
+        
+        // Evaluate each goal against live progress data
+        const localProg = progressData || (await import('../services/codingProgressService')).getFullProgress(uid);
+        const solvedToday = Object.entries(localProg?.problemDetails || {})
+          .filter(([id, p]) => p.status === 'SOLVED' && p.lastSolvedAt && p.lastSolvedAt.startsWith(todayStr));
+        const todaySolvedCount = (localProg?.activity?.[todayStr]?.problemsSolved || 0) || solvedToday.length;
+        const todayTimeMins = Math.round((localProg?.activity?.[todayStr]?.hours || 0) * 60);
+
+        const evaluated = baseGoals.map(g => {
+          let isComp = g.completed || false;
+          let curr = g.current || 0;
+          const tgt = g.target || 1;
+          let progLabel = '';
+
+          if (g.type === 'solve') {
+            curr = todaySolvedCount;
+            if (curr >= tgt) isComp = true;
+            progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
+          } else if (g.type === 'time') {
+            curr = todayTimeMins;
+            if (curr >= tgt) isComp = true;
+            progLabel = ` (${Math.min(curr, tgt)}/${tgt} mins)`;
+          } else if (g.type === 'difficulty') {
+            const reqDiff = (g.difficulty || '').toLowerCase();
+            const diffCount = solvedToday.filter(([id, p]) => {
+              const pDiff = (p.difficulty || '').toLowerCase();
+              if (reqDiff === 'easy') return pDiff === 'easy' || pDiff === 'beginner';
+              if (reqDiff === 'medium') return pDiff === 'medium';
+              return pDiff === reqDiff;
+            }).length;
+            curr = diffCount;
+            if (curr >= tgt) isComp = true;
+            progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
+          } else if (g.type === 'category') {
+            const catCount = solvedToday.filter(([id, p]) => (p.category || '').toLowerCase() === (g.category || '').toLowerCase()).length;
+            curr = catCount;
+            if (curr >= tgt) isComp = true;
+            progLabel = ` (${Math.min(curr, tgt)}/${tgt})`;
+          }
+
+          return { ...g, current: curr, target: tgt, completed: isComp, displayProgress: progLabel };
+        });
+
+        setDailyGoals(evaluated);
+
+        if (user) {
+          if (user.seedCredits !== undefined) setSeedCredits(user.seedCredits);
+          else if (user.credits !== undefined) setSeedCredits(user.credits);
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Daily goals evaluation skipped:', err);
+      }
+    };
+
+    initProgressAndGoals();
+  }, [user]);
+
+  // Log activity on Tab Change
+  useEffect(() => {
+    const uid = user?.uid || auth?.currentUser?.uid || 'guest';
+    if (uid && uid !== 'guest') {
+      import('../services/activityLoggerService').then(mod => {
+        mod.logUserActivity(uid, 'PAGE_VIEW', { tab: activeTab });
+      }).catch(() => {});
+    }
+  }, [activeTab, user]);
+
+  const handleToggleGoal = async (idx) => {
+    if (!dailyGoals || !dailyGoals[idx]) return;
+    const goal = dailyGoals[idx];
+    
+    // Toggle goal and update Firestore + Local Profile cache
+    const updated = dailyGoals.map((g, i) => (i === idx ? { ...g, completed: !g.completed } : g));
+    setDailyGoals(updated);
+
+    const uid = user?.uid || auth?.currentUser?.uid || 'guest';
+    const todayStr = new Date().toISOString().split('T')[0];
+    const wereAllCompletedBefore = dailyGoals.every(g => g.completed);
+    const areAllCompletedNow = updated.every(g => g.completed);
+
+    let nextStreak = userStreak;
+    let nextCredits = seedCredits;
+
+    // Activity Log for Goal Toggle
+    import('../services/activityLoggerService').then(mod => {
+      mod.logUserActivity(uid, 'GOAL_TOGGLED', { goalId: goal.id, title: goal.title, completed: !goal.completed });
+    }).catch(() => {});
+
+    if (!wereAllCompletedBefore && areAllCompletedNow) {
+      nextStreak = userStreak + 1;
+      nextCredits = seedCredits + 100;
+      setUserStreak(nextStreak);
+      setSeedCredits(nextCredits);
+      setTodayCreditsGained(prev => prev + 100);
+      toast.success('🔥 Streak Approved! All daily goals completed! +100 SEED Credits awarded!');
+
+      // Activity Log for Streak Approval
+      import('../services/activityLoggerService').then(mod => {
+        mod.logUserActivity(uid, 'STREAK_APPROVED', { streak: nextStreak, credits: nextCredits, date: todayStr });
+      }).catch(() => {});
+    } else if (wereAllCompletedBefore && !areAllCompletedNow) {
+      nextStreak = Math.max(1, userStreak - 1);
+      nextCredits = Math.max(0, seedCredits - 100);
+      setUserStreak(nextStreak);
+      setSeedCredits(nextCredits);
+      setTodayCreditsGained(prev => Math.max(0, prev - 100));
+    }
+
+    await saveUserDailyGoals(uid, todayStr, updated, nextStreak, nextCredits);
+  };
+
+  const handleRefreshOrEditGoals = async () => {
+    const uid = user?.uid || auth?.currentUser?.uid || 'guest';
+    const todayStr = new Date().toISOString().split('T')[0];
+    const nextOffset = goalOffset + 1;
+    setGoalOffset(nextOffset);
+    const newGoals = getDailyGoalsForDate(todayStr, uid, nextOffset);
+    setDailyGoals(newGoals);
+    await saveUserDailyGoals(uid, todayStr, newGoals, userStreak, seedCredits);
+    toast.info('Refreshed 3 new daily goals for today!');
+  };
+
+  // ─── Course Syllabi & Dynamic Progress Mapping ───────────────────────
   const [cQuestionIds, setCQuestionIds] = useState([]);
   const [javaQuestionIds, setJavaQuestionIds] = useState([]);
   const [cppQuestionIds, setCppQuestionIds] = useState([]);
@@ -120,20 +455,20 @@ const StudentDashboard = () => {
       fetchArticleFile('CourseMappingFiles/learn-dsa-syllabus.json').then(r => r.json()).catch(() => null),
     ]).then(([cSyllabus, javaSyllabus, cppSyllabus, dsaSyllabus]) => {
       const cQids = [];
-      if (cSyllabus) {
-        cSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => cQids.push(p.id))));
+      if (cSyllabus && cSyllabus.modules) {
+        cSyllabus.modules.forEach(m => (m.submodules || []).forEach(s => (s.problems || []).forEach(p => cQids.push(p.id))));
       }
       const javaQids = [];
-      if (javaSyllabus) {
-        javaSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => javaQids.push(p.id))));
+      if (javaSyllabus && javaSyllabus.modules) {
+        javaSyllabus.modules.forEach(m => (m.submodules || []).forEach(s => (s.problems || []).forEach(p => javaQids.push(p.id))));
       }
       const cppQids = [];
-      if (cppSyllabus) {
-        cppSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => cppQids.push(p.id))));
+      if (cppSyllabus && cppSyllabus.modules) {
+        cppSyllabus.modules.forEach(m => (m.submodules || []).forEach(s => (s.problems || []).forEach(p => cppQids.push(p.id))));
       }
       const dsaQids = [];
-      if (dsaSyllabus) {
-        dsaSyllabus.modules.forEach(m => m.submodules.forEach(s => s.problems.forEach(p => dsaQids.push(p.id))));
+      if (dsaSyllabus && dsaSyllabus.modules) {
+        dsaSyllabus.modules.forEach(m => (m.submodules || []).forEach(s => (s.problems || []).forEach(p => dsaQids.push(p.id))));
       }
       setCQuestionIds(cQids);
       setJavaQuestionIds(javaQids);
@@ -141,6 +476,186 @@ const StudentDashboard = () => {
       setDsaQuestionIds(dsaQids);
     });
   }, []);
+
+  // ─── Dynamic Current Week Activity Calculation ──────────────────────
+  const currentWeekDays = useMemo(() => {
+    const today = new Date();
+    const currentDayOfWeek = today.getDay(); // 0: Sunday, 1: Monday, ... 6: Saturday
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - currentDayOfWeek);
+
+    const activity = progressData?.activity || {};
+    const details = progressData?.problemDetails || {};
+    
+    // Set of active date strings "YYYY-MM-DD"
+    const activeDateSet = new Set();
+    Object.keys(activity).forEach(d => {
+      if (activity[d]?.problemsSolved > 0 || activity[d]?.hours > 0) activeDateSet.add(d);
+    });
+    Object.values(details).forEach(p => {
+      if ((p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt) {
+        activeDateSet.add(p.lastSolvedAt.split('T')[0]);
+      }
+    });
+
+    const days = [];
+    let activeDaysCount = 0;
+    const todayStr = today.toISOString().split('T')[0];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sunday);
+      d.setDate(sunday.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const isToday = dateStr === todayStr;
+      const isActive = activeDateSet.has(dateStr);
+
+      if (isActive) activeDaysCount++;
+
+      days.push({
+        dayLetter: ['S', 'M', 'T', 'W', 'T', 'F', 'S'][i],
+        dateNum: d.getDate(),
+        dateStr,
+        isActive,
+        isToday
+      });
+    }
+
+    return { days, activeDaysCount };
+  }, [progressData]);
+
+  // ─── Dynamic Activity Snapshot Stats ────────────────────────────────
+  const activitySnapshotStats = useMemo(() => {
+    const details = progressData?.problemDetails || {};
+    const activity = progressData?.activity || {};
+    const solvedList = progressData?.solvedProblems || progressData?.completedQuestions || [];
+    const totalSolved = solvedList.length;
+
+    // Accuracy Calculation
+    const problemEntries = Object.values(details);
+    let totalAttempts = 0;
+    let totalScore = 0;
+    let scoredProblemsCount = 0;
+
+    problemEntries.forEach(p => {
+      const attempts = typeof p.attempts === 'number' && p.attempts > 0 ? p.attempts : 1;
+      totalAttempts += attempts;
+      if (typeof p.bestScore === 'number') {
+        totalScore += p.bestScore;
+        scoredProblemsCount++;
+      }
+    });
+
+    let accuracy = 0;
+    if (scoredProblemsCount > 0) {
+      // Average score percentage across attempted problems
+      accuracy = Math.round(totalScore / scoredProblemsCount);
+    } else if (totalAttempts > 0) {
+      // Solved vs total attempts ratio
+      accuracy = Math.min(100, Math.round((totalSolved / totalAttempts) * 100));
+    } else if (totalSolved > 0) {
+      accuracy = 100;
+    } else {
+      accuracy = 0;
+    }
+
+    // Today vs Yesterday Time & Problems
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const yest = new Date(today);
+    yest.setDate(yest.getDate() - 1);
+    const yestStr = yest.toISOString().split('T')[0];
+
+    const todayHours = activity[todayStr]?.hours || 0;
+    const todayMins = Math.round(todayHours * 60);
+    const yestHours = activity[yestStr]?.hours || 0;
+    const yestMins = Math.round(yestHours * 60);
+
+    const todaySolvedCount = activity[todayStr]?.problemsSolved || 0;
+    const yestSolvedCount = activity[yestStr]?.problemsSolved || 0;
+
+    const solvedDiff = todaySolvedCount - yestSolvedCount;
+    const timeDiffMins = todayMins - yestMins;
+
+    return {
+      totalSolved,
+      todayMins,
+      todayMinsFormatted: todayMins >= 60 ? `${(todayMins / 60).toFixed(1)} hrs` : `${todayMins} mins`,
+      accuracy,
+      solvedTrend: solvedDiff > 0 ? `+${solvedDiff} vs yesterday` : solvedDiff < 0 ? `${solvedDiff} vs yesterday` : '0 vs yesterday',
+      timeTrend: timeDiffMins > 0 ? `+${timeDiffMins}m vs yesterday` : timeDiffMins < 0 ? `${timeDiffMins}m vs yesterday` : '0m vs yesterday',
+      accuracyTrend: accuracy > 0 ? `${accuracy}% overall` : 'No attempts yet'
+    };
+  }, [progressData]);
+
+  const solvedIdsSet = useMemo(() => {
+    const ids = progressData?.solvedProblems || progressData?.completedQuestions || [];
+    return new Set(ids.map(String));
+  }, [progressData]);
+
+  const rawCoursesList = useMemo(() => {
+    const list = [
+      {
+        id: 'learn-c',
+        title: 'Learn C',
+        subtitle: 'Foundations & Pointers',
+        icon: <FaCode />,
+        boxClass: 'box-green',
+        barClass: 'bar-green',
+        qids: cQuestionIds,
+        defaultTotal: 42
+      },
+      {
+        id: 'learn-java',
+        title: 'Learn Java',
+        subtitle: 'OOP & Collections',
+        icon: <FaThLarge />,
+        boxClass: 'box-blue',
+        barClass: 'bar-blue',
+        qids: javaQuestionIds,
+        defaultTotal: 40
+      },
+      {
+        id: 'learn-cpp',
+        title: 'Learn C++',
+        subtitle: 'STL & Competitive Coding',
+        icon: <FaRocket />,
+        boxClass: 'box-purple',
+        barClass: 'bar-purple',
+        qids: cppQuestionIds,
+        defaultTotal: 39
+      },
+      {
+        id: 'learn-dsa',
+        title: 'Data Structures & Algorithms',
+        subtitle: 'Trees, Graphs & DP',
+        icon: <FaGem />,
+        boxClass: 'box-orange',
+        barClass: 'bar-orange',
+        qids: dsaQuestionIds,
+        defaultTotal: 38
+      }
+    ];
+
+    return list.map(c => {
+      const totalTopics = c.qids.length || c.defaultTotal;
+      const completedTopics = c.qids.filter(id => solvedIdsSet.has(String(id))).length;
+      const pct = Math.min(100, Math.round((completedTopics / Math.max(1, totalTopics)) * 100));
+      return {
+        ...c,
+        totalTopics,
+        completedTopics,
+        percentage: pct,
+        isStarted: completedTopics > 0
+      };
+    });
+  }, [cQuestionIds, javaQuestionIds, cppQuestionIds, dsaQuestionIds, solvedIdsSet]);
+
+  const displayedCourses = useMemo(() => {
+    const started = rawCoursesList.filter(c => c.isStarted);
+    const unstarted = rawCoursesList.filter(c => !c.isStarted);
+    const combined = [...started, ...unstarted];
+    return combined.slice(0, 4);
+  }, [rawCoursesList]);
 
   // Assessments List State
   const [assessments, setAssessments] = useState([]);
@@ -589,9 +1104,13 @@ const StudentDashboard = () => {
               tenantId: p.tenantId || authData.tenantId || '',
               cohortId: p.cohortId || authData.cohortId || '',
               isPremium: p.isPremium ?? authData.isPremium ?? false,
+              seedCredits: p.seedCredits ?? p.credits ?? authData.seedCredits ?? 2450,
+              streak: p.streak ?? authData.streak ?? 1,
               uid: p.uid || userUid || lookupId,
             };
             setUser(enriched);
+            if (enriched.seedCredits !== undefined) setSeedCredits(enriched.seedCredits);
+            if (enriched.streak !== undefined) setUserStreak(enriched.streak);
             localStorage.setItem('auth_data', JSON.stringify(enriched));
 
             // Re-load assessments if College or Year was missing before enrichment
@@ -1360,11 +1879,438 @@ const StudentDashboard = () => {
   };
 
   const name = user?.Name || user?.name || "Student";
-  const email = user?.Email || user?.email || "N/A";
-  const college = user?.College || user?.college || "N/A";
-  const rollNumber = user?.["Roll Number"] || user?.roll || "N/A";
-  const year = user?.Year || "N/A";
-  const dept = user?.Department || "N/A";
+  const email = user?.Email || user?.email || "ashokmarquez@gmail.com";
+  const college = user?.College || user?.college || "KGISL Institute of Technology";
+  const rollNumber = user?.["Roll Number"] || user?.roll || "22CSE001";
+  const year = user?.Year || "2027";
+  const dept = user?.Department || "CSE";
+
+  const renderDashboardHome = () => {
+    return (
+      <div className="dashboard-grid-layout">
+        {/* ── Left / Center Main Feed Column ── */}
+        <div className="dashboard-main-col">
+          {/* Welcome Header */}
+          <div className="home-welcome-header">
+            <h1 className="home-welcome-title">Welcome back, {name}! 👋</h1>
+            <p className="home-welcome-subtitle">Stay consistent and keep building your problem solving skills.</p>
+          </div>
+
+          {/* 1. Quick Start */}
+          <div className="home-section-block">
+            <h3 className="home-section-heading">Quick Start</h3>
+            <div className="quick-start-grid">
+              <div
+                className="quick-start-card"
+                onClick={() => {
+                  setPracticeInitialTab('bank');
+                  setActiveTab('practice');
+                }}
+              >
+                <div className="qs-icon-box qs-blue">
+                  <FaClipboardList />
+                </div>
+                <div className="qs-info">
+                  <h4 className="qs-title">Practice Bank</h4>
+                  <span className="qs-sub">9000+ Questions</span>
+                </div>
+                <FaChevronRight className="qs-arrow" />
+              </div>
+
+              <div
+                className="quick-start-card"
+                onClick={() => {
+                  setPracticeInitialTab('paths');
+                  setPracticeInitialCourse(null);
+                  setActiveTab('practice');
+                }}
+              >
+                <div className="qs-icon-box qs-green">
+                  <FaLaptopCode />
+                </div>
+                <div className="qs-info">
+                  <h4 className="qs-title">Course Curriculum</h4>
+                  <span className="qs-sub">Explore all modules</span>
+                </div>
+                <FaChevronRight className="qs-arrow" />
+              </div>
+
+              <div
+                className="quick-start-card"
+                onClick={() => setActiveTab('assessments')}
+              >
+                <div className="qs-icon-box qs-purple">
+                  <FaBookOpen />
+                </div>
+                <div className="qs-info">
+                  <h4 className="qs-title">Assessments</h4>
+                  <span className="qs-sub">Attempt tests</span>
+                </div>
+                <FaChevronRight className="qs-arrow" />
+              </div>
+
+              <div
+                className="quick-start-card"
+                onClick={() => {
+                  setPracticeInitialTab('bank');
+                  setPracticeInitialCourse(null);
+                  setActiveTab('practice');
+                }}
+              >
+                <div className="qs-icon-box qs-orange">
+                  <FaBullseye />
+                </div>
+                <div className="qs-info">
+                  <h4 className="qs-title">Weak Areas</h4>
+                  <span className="qs-sub">Improve your skills</span>
+                </div>
+                <FaChevronRight className="qs-arrow" />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Your Activity Snapshot */}
+          <div className="home-section-block">
+            <h3 className="home-section-heading">Your Activity Snapshot</h3>
+            <div className="activity-snapshot-grid">
+              <div className="activity-snapshot-card">
+                <div className="snapshot-icon-box icon-green">
+                  <FaThLarge />
+                </div>
+                <div className="snapshot-stat-val">{activitySnapshotStats.totalSolved}</div>
+                <div className="snapshot-stat-lbl">Problems Solved</div>
+                <div className="snapshot-stat-trend trend-green">
+                  <FaArrowUp style={{ fontSize: '10px' }} /> {activitySnapshotStats.solvedTrend}
+                </div>
+              </div>
+
+              <div className="activity-snapshot-card">
+                <div className="snapshot-icon-box icon-blue">
+                  <FaClock />
+                </div>
+                <div className="snapshot-stat-val">{activitySnapshotStats.todayMinsFormatted}</div>
+                <div className="snapshot-stat-lbl">Time Spent Today</div>
+                <div className="snapshot-stat-trend trend-blue">
+                  <FaArrowUp style={{ fontSize: '10px' }} /> {activitySnapshotStats.timeTrend}
+                </div>
+              </div>
+
+              <div className="activity-snapshot-card">
+                <div className="snapshot-icon-box icon-orange">
+                  <FaFire />
+                </div>
+                <div className="snapshot-stat-val">{userStreak} Day{userStreak === 1 ? '' : 's'}</div>
+                <div className="snapshot-stat-lbl">Current Streak</div>
+                <div className="snapshot-stat-trend trend-orange">
+                  <FaArrowUp style={{ fontSize: '10px' }} /> {userStreak > 1 ? `${userStreak} days active` : 'Active today'}
+                </div>
+              </div>
+
+              <div className="activity-snapshot-card">
+                <div className="snapshot-icon-box icon-purple">
+                  <FaBullseye />
+                </div>
+                <div className="snapshot-stat-val">{activitySnapshotStats.accuracy}%</div>
+                <div className="snapshot-stat-lbl">Accuracy</div>
+                <div className="snapshot-stat-trend trend-purple">
+                  <FaArrowUp style={{ fontSize: '10px' }} /> {activitySnapshotStats.accuracyTrend}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Continue Learning */}
+          <div className="home-section-block">
+            <div className="home-section-header-row">
+              <h3 className="home-section-heading">Continue Learning</h3>
+              <button
+                className="home-section-link-btn"
+                onClick={() => {
+                  setPracticeInitialTab('paths');
+                  setPracticeInitialCourse(null);
+                  setActiveTab('practice');
+                }}
+              >
+                View All
+              </button>
+            </div>
+
+            <div className="continue-learning-grid">
+              {displayedCourses.map(course => (
+                <div
+                  key={course.id}
+                  className="continue-course-card"
+                  onClick={() => {
+                    setPracticeInitialTab('paths');
+                    setPracticeInitialCourse(course.id);
+                    setActiveTab('practice');
+                  }}
+                >
+                  <div className="course-card-top">
+                    <div className={`course-icon-box ${course.boxClass}`}>
+                      {course.icon}
+                    </div>
+                    <button className="course-menu-btn" onClick={(e) => e.stopPropagation()}>
+                      ⋮
+                    </button>
+                  </div>
+                  <h4 className="course-card-title">{course.title}</h4>
+                  <p className="course-card-sub">{course.subtitle}</p>
+                  <div className="course-progress-track">
+                    <div className={`course-progress-bar ${course.barClass}`} style={{ width: `${course.percentage}%` }} />
+                  </div>
+                  <div className="course-card-footer">
+                    <span className="course-pct-label">{course.percentage}% Completed</span>
+                    <span className="course-topics-count">{course.completedTopics}/{course.totalTopics} Topics</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 4. Recent Activity */}
+          <div className="home-section-block">
+            <div className="home-section-header-row">
+              <h3 className="home-section-heading">Recent Activity</h3>
+              <button
+                className="home-section-link-btn"
+                onClick={() => setActiveTab('practice')}
+              >
+                View All
+              </button>
+            </div>
+
+            <div className="recent-activity-rows-list">
+              <div
+                className="recent-activity-row-item"
+                onClick={() => {
+                  setPracticeInitialTab('bank');
+                  setActiveTab('practice');
+                }}
+              >
+                <div className="act-avatar-box act-green">
+                  <FaLaptopCode />
+                </div>
+                <div className="act-info-col">
+                  <h4 className="act-item-title">Visited Practice Bank</h4>
+                  <span className="act-item-sub">Math • 2 hours ago</span>
+                </div>
+                <FaChevronRight className="act-arrow" />
+              </div>
+
+              <div
+                className="recent-activity-row-item"
+                onClick={() => setActiveTab('profile')}
+              >
+                <div className="act-avatar-box act-purple">
+                  <FaUser />
+                </div>
+                <div className="act-info-col">
+                  <h4 className="act-item-title">Profile Updated</h4>
+                  <span className="act-item-sub">Today</span>
+                </div>
+                <FaChevronRight className="act-arrow" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right Column (Widgets Feed) ── */}
+        <div className="dashboard-side-col">
+          {/* Card 1: This Week */}
+          <div className="dashboard-widget-card">
+            <div className="widget-card-header">
+              <span className="widget-card-title">This Week</span>
+              <button
+                className="widget-link-btn"
+                onClick={() => setActiveTab('profile')}
+              >
+                View Report
+              </button>
+            </div>
+
+            <div className="week-tracker-days-grid">
+              {currentWeekDays.days.map((d, idx) => (
+                <span key={idx} className={`week-day-letter ${d.isToday ? 'today' : ''}`}>{d.dayLetter}</span>
+              ))}
+            </div>
+
+            <div className="week-tracker-circles-grid">
+              {currentWeekDays.days.map((d, idx) => (
+                <div
+                  key={idx}
+                  className={`week-date-circle ${d.isActive ? 'active' : ''} ${d.isToday ? 'today' : ''}`}
+                  title={`${d.dateStr}: ${d.isActive ? 'Activity logged' : 'No activity logged'}`}
+                >
+                  {d.dateNum}
+                </div>
+              ))}
+            </div>
+
+            <div className="week-streak-footer">
+              {currentWeekDays.activeDaysCount > 0
+                ? `Great job! ${currentWeekDays.activeDaysCount} active day${currentWeekDays.activeDaysCount === 1 ? '' : 's'} this week. 🔥`
+                : `No activity yet this week. Solve a problem to light up your streak! 🔥`}
+            </div>
+          </div>
+
+          {/* Card 2: Progress Overview */}
+          <div className="dashboard-widget-card">
+            <div className="widget-card-header">
+              <span className="widget-card-title">Progress Overview</span>
+            </div>
+
+            <div className="progress-overview-wrap">
+              <div className="po-donut-box">
+                <svg viewBox="0 0 36 36" className="po-donut-svg">
+                  <path
+                    className="po-donut-bg"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="po-donut-fill"
+                    strokeDasharray="2, 100"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div className="po-center-text">
+                  <span className="po-num">0</span>
+                  <span className="po-denom">/9328</span>
+                </div>
+              </div>
+
+              <div className="po-legend-col">
+                <div className="po-legend-item">
+                  <span className="po-dot dot-green" />
+                  <span className="po-label">Solved</span>
+                  <span className="po-val">0 (0%)</span>
+                </div>
+                <div className="po-legend-item">
+                  <span className="po-dot dot-blue" />
+                  <span className="po-label">Attempted</span>
+                  <span className="po-val">0 (0%)</span>
+                </div>
+                <div className="po-legend-item">
+                  <span className="po-dot dot-grey" />
+                  <span className="po-label">Unattempted</span>
+                  <span className="po-val">9328 (100%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Skills Overview */}
+          <div className="dashboard-widget-card">
+            <div className="widget-card-header">
+              <span className="widget-card-title">Skills Overview</span>
+              <button
+                className="widget-link-btn"
+                onClick={() => setActiveTab('profile')}
+              >
+                View All
+              </button>
+            </div>
+
+            <div className="skills-bar-chart-container">
+              <div className="skills-y-axis">
+                <span>100%</span>
+                <span>75%</span>
+                <span>50%</span>
+                <span>25%</span>
+                <span>0%</span>
+              </div>
+
+              <div className="skills-bars-area">
+                <div className="skills-grid-lines">
+                  <div className="grid-line" />
+                  <div className="grid-line" />
+                  <div className="grid-line" />
+                  <div className="grid-line" />
+                  <div className="grid-line" />
+                </div>
+
+                <div className="skills-bar-cols">
+                  {/* Math */}
+                  <div className="skill-col">
+                    <span className="skill-pct-tag">72%</span>
+                    <div className="skill-bar-track">
+                      <div className="skill-bar-fill fill-green" style={{ height: '72%' }} />
+                    </div>
+                    <span className="skill-col-label">Math</span>
+                  </div>
+
+                  {/* DSA */}
+                  <div className="skill-col">
+                    <span className="skill-pct-tag">58%</span>
+                    <div className="skill-bar-track">
+                      <div className="skill-bar-fill fill-blue" style={{ height: '58%' }} />
+                    </div>
+                    <span className="skill-col-label">DSA</span>
+                  </div>
+
+                  {/* Logic */}
+                  <div className="skill-col">
+                    <span className="skill-pct-tag">64%</span>
+                    <div className="skill-bar-track">
+                      <div className="skill-bar-fill fill-purple" style={{ height: '64%' }} />
+                    </div>
+                    <span className="skill-col-label">Logic</span>
+                  </div>
+
+                  {/* Chem */}
+                  <div className="skill-col">
+                    <span className="skill-pct-tag">40%</span>
+                    <div className="skill-bar-track">
+                      <div className="skill-bar-fill fill-orange" style={{ height: '40%' }} />
+                    </div>
+                    <span className="skill-col-label">Chem</span>
+                  </div>
+
+                  {/* Physics */}
+                  <div className="skill-col">
+                    <span className="skill-pct-tag">30%</span>
+                    <div className="skill-bar-track">
+                      <div className="skill-bar-fill fill-teal" style={{ height: '30%' }} />
+                    </div>
+                    <span className="skill-col-label">Physics</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Top Achievements */}
+          <div className="dashboard-widget-card">
+            <div className="widget-card-header">
+              <span className="widget-card-title">Top Achievements</span>
+              <button
+                className="widget-link-btn"
+                onClick={() => setActiveTab('profile')}
+              >
+                View All
+              </button>
+            </div>
+
+            <div className="top-achievement-item">
+              <div className="achievement-hex-badge">
+                <span className="hex-num">1</span>
+              </div>
+              <div className="achievement-info-col">
+                <h4 className="achievement-title">Getting Started</h4>
+                <p className="achievement-desc">Complete your first question</p>
+                <div className="achievement-progress-row">
+                  <div className="achievement-bar-bg">
+                    <div className="achievement-bar-fill" style={{ width: '100%' }} />
+                  </div>
+                  <span className="achievement-count-label">1/1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderAssessments = () => {
     // 1. Group all loaded assessments by series key
@@ -1388,11 +2334,12 @@ const StudentDashboard = () => {
 
     return (
       <div className="assessments-tab-content">
-        <div className="dashboard-welcome">
-          <h1>Welcome, {name}!</h1>
-          <p>Complete your scheduled MCQ quizzes and coding assessments below.</p>
+        <div className="home-welcome-header" style={{ marginBottom: '20px' }}>
+          <h1 className="home-welcome-title">Assigned Assessments</h1>
+          <p className="home-welcome-subtitle">Review scheduled test series and start your proctored evaluation modules.</p>
         </div>
 
+        {/* Resumable Session Banner if active */}
         {activeResumeSession && (
           <div style={{
             background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
@@ -1413,7 +2360,7 @@ const StudentDashboard = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '22px', fontWeight: 'bold'
               }}>
-                
+                ⚡
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: '16px', color: '#FBBF24', fontWeight: '700' }}>
@@ -1442,9 +2389,8 @@ const StudentDashboard = () => {
         {selectedSeries === null ? (
           // ─── SERIES TILE VIEW ───
           <>
-            {/* Filters Panel for Series */}
-            <div className="dashboard-filters-bar">
-              <div className="search-box-wrapper">
+            <div className="dashboard-filters-bar" style={{ marginBottom: '16px' }}>
+              <div className="search-box-wrapper" style={{ width: '100%' }}>
                 <FaSearch className="search-icon" />
                 <input
                   type="text"
@@ -1466,7 +2412,7 @@ const StudentDashboard = () => {
                 <FaExclamationTriangle /> {error}
               </div>
             ) : seriesList.length > 0 ? (
-              <div className="ps-cards-grid">
+              <div className="ps-cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
                 {seriesList
                   .filter(s => !searchTerm || s.title.toLowerCase().includes(searchTerm.toLowerCase()))
                   .map(series => {
@@ -1498,9 +2444,22 @@ const StudentDashboard = () => {
                             <button
                               onClick={() => setSelectedSeries(series.key)}
                               className="ps-action-btn primary"
-                              style={{ padding: '6px 16px', fontSize: '13px', color: '#ffffff', background: 'var(--accent-coding)' }}
+                              style={{
+                                padding: '8px 18px',
+                                fontSize: '13px',
+                                fontWeight: '700',
+                                color: '#ffffff',
+                                backgroundColor: '#15803d',
+                                border: '1px solid #15803d',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                boxShadow: '0 2px 6px rgba(21, 128, 61, 0.25)'
+                              }}
                             >
-                              Start Test
+                              Explore Series →
                             </button>
                           </div>
                         </div>
@@ -1509,7 +2468,7 @@ const StudentDashboard = () => {
                   })}
               </div>
             ) : (
-              <div className="no-contests-message" style={{ textAlign: 'center', padding: '60px' }}>
+              <div className="no-contests-message" style={{ textAlign: 'center', padding: '40px' }}>
                 No assessment series assigned to you.
               </div>
             )}
@@ -1648,34 +2607,31 @@ const StudentDashboard = () => {
                               {a.description || `Assessment test covering various ${a.type} questions and topics.`}
                             </p>
 
-                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <FaClock /> {a.duration} Mins
+                            <div className="ps-meta-tags" style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <FaClock style={{ fontSize: '10px' }} /> {a.timeLimit ? `${a.timeLimit} mins` : '60 mins'}
                               </span>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <FaClipboardList /> {a.isMultiSection || a.type === 'MSA' ? `${a.sections?.length || 0} Sections` : `${a.questions} ${a.type === 'mcq' ? 'Questions' : 'Coding Tasks'}`}
+                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <FaAward style={{ fontSize: '10px' }} /> {a.type.toUpperCase()}
                               </span>
-                              {a.schedule && (
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <FaCalendarAlt /> {a.schedule.startDate}
-                                </span>
-                              )}
                             </div>
                           </div>
 
-                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '16px' }}>
-                            <span className="ps-card-stats" style={{ textTransform: 'uppercase', fontSize: '11px', fontWeight: 'bold', color: a.type === 'mcq' ? 'var(--accent-mcq)' : 'var(--accent-coding)' }}>
-                              {a.type.toUpperCase()}
-                            </span>
+                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '14px' }}>
+                            <div className="ps-schedule-status">
+                              <span className={`status-pill ${sched.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px' }}>
+                                {sched.status}
+                              </span>
+                            </div>
 
                             <div className="ps-card-actions">
                               {a.completed ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'var(--soft-green, rgba(21, 128, 61, 0.1))', color: 'var(--accent-coding, #15803d)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
-                                  <FaCheckCircle /> Submitted
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'default', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                  <FaCheck /> Done
                                 </button>
                               ) : isExpired ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '13px' }}>
-                                  Expired
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                  <FaLock /> Expired
                                 </button>
                               ) : isUpcoming ? (
                                 <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
@@ -1686,10 +2642,18 @@ const StudentDashboard = () => {
                                   onClick={() => handleStartClick(a)}
                                   className="ps-action-btn primary"
                                   style={{
-                                    padding: '6px 16px',
+                                    padding: '7px 18px',
                                     fontSize: '13px',
+                                    fontWeight: '700',
                                     color: '#ffffff',
-                                    background: a.type === 'mcq' ? 'var(--accent-mcq)' : 'var(--accent-coding)'
+                                    backgroundColor: a.type === 'mcq' ? '#4f46e5' : '#15803d',
+                                    border: `1px solid ${a.type === 'mcq' ? '#4f46e5' : '#15803d'}`,
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    boxShadow: `0 2px 6px ${a.type === 'mcq' ? 'rgba(79, 70, 229, 0.25)' : 'rgba(21, 128, 61, 0.25)'}`
                                   }}
                                 >
                                   Start Test
@@ -1884,98 +2848,6 @@ const StudentDashboard = () => {
       return badges;
     };
 
-    // Check if progressData is loaded, if not show loading/placeholder card
-    if (!progressData) {
-      return (
-        <div className="profile-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div className="dashboard-welcome">
-            <h1>Student Profile & Utilisation</h1>
-            <p>Manage your academic registration info and review your daily practice dashboard.</p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
-
-            {/* Card 1: Registration Details */}
-            <div className="premium-profile-card">
-              <div className="profile-avatar-row">
-                <div className="profile-avatar-large">
-                  {name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                </div>
-                <div className="profile-meta-title">
-                  <h2>{name}</h2>
-                  <span
-                    className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium</> : <>Student</>}
-                  </span>
-                </div>
-              </div>
-
-              <div className="profile-details-table-grid" style={{ marginTop: '20px' }}>
-                <div className="profile-detail-grid-item">
-                  <span className="grid-item-label">Roll Number</span>
-                  <span className="grid-item-value">{rollNumber}</span>
-                </div>
-                <div className="profile-detail-grid-item">
-                  <span className="grid-item-label">College</span>
-                  <span className="grid-item-value">{college}</span>
-                </div>
-                <div className="profile-detail-grid-item">
-                  <span className="grid-item-label">Department</span>
-                  <span className="grid-item-value">{dept}</span>
-                </div>
-                <div className="profile-detail-grid-item">
-                  <span className="grid-item-label">Graduation Year</span>
-                  <span className="grid-item-value">{year}</span>
-                </div>
-                <div className="profile-detail-grid-item" style={{ gridColumn: 'span 2' }}>
-                  <span className="grid-item-label">Registered Email Address</span>
-                  <span className="grid-item-value">{email}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Placeholder Load Dashboard */}
-            <div className="premium-profile-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', textAlign: 'center', gap: '16px' }}>
-              <FaAward style={{ color: 'var(--accent-coding)', fontSize: '48px' }} />
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Practice Utilisation Dashboard & Heatmap</h3>
-              <p style={{ color: 'var(--ps-text-dim)', maxWidth: '400px', fontSize: '13px', lineHeight: '1.6' }}>
-                Track your active hours, streaks, and solved problems over the last 6 months in a calendar heatmap.
-              </p>
-              <button
-                onClick={loadProfileProgress}
-                disabled={loadingProfileProgress}
-                className="solve-btn active"
-                style={{
-                  padding: '12px 28px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                {loadingProfileProgress ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '1rem', height: '1rem' }}></span>
-                    Loading...
-                  </>
-                ) : 'Load Utilisation Heatmap'}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      );
-    }
-
     // Heatmap date generation helper
     const getHeatmapDates = () => {
       const dates = [];
@@ -2067,271 +2939,443 @@ const StudentDashboard = () => {
     });
 
     return (
-      <div className="profile-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div className="dashboard-welcome">
-          <h1>Student Profile & Utilisation</h1>
-          <p>Manage your academic registration info and review your daily practice dashboard.</p>
+      <div className="profile-tab-content">
+        {/* Top Profile Subtabs */}
+        <div className="profile-subtabs-nav">
+          <button
+            className={`profile-subtab-btn ${profileSubTab === 'info' ? 'active' : ''}`}
+            onClick={() => setProfileSubTab('info')}
+          >
+            Profile Information
+          </button>
+          <button
+            className={`profile-subtab-btn ${profileSubTab === 'utilisation' ? 'active' : ''}`}
+            onClick={() => setProfileSubTab('utilisation')}
+          >
+            Academic Details
+          </button>
+          <button
+            className={`profile-subtab-btn ${profileSubTab === 'password' ? 'active' : ''}`}
+            onClick={() => setProfileSubTab('password')}
+          >
+            Change Password
+          </button>
         </div>
 
-        {/* Info Grid row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+        {profileSubTab === 'info' ? (
+          /* ─── VIEW FROM IMAGE 5: Profile Information ─── */
+          <div className="profile-info-cards-stack">
+            {/* Hidden file input for photo upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoUpload}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
 
-          {/* Card 1: Registration Details */}
-          <div className="premium-profile-card" style={{ height: '100%' }}>
-            <div className="profile-avatar-row">
-              <div className="profile-avatar-large">
-                {name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-              </div>
-              <div className="profile-meta-title">
-                <h2>{name}</h2>
-                <span
-                  className={`status-badge-premium ${isPremium ? 'premium' : 'basic'}`}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  {isPremium ? <><FaStar style={{ color: '#fbbf24' }} /> Premium</> : <>Student</>}
-                </span>
-              </div>
-            </div>
-
-            <div className="profile-details-table-grid" style={{ marginTop: '20px' }}>
-              <div className="profile-detail-grid-item">
-                <span className="grid-item-label">Roll Number</span>
-                <span className="grid-item-value">{rollNumber}</span>
-              </div>
-              <div className="profile-detail-grid-item">
-                <span className="grid-item-label">College</span>
-                <span className="grid-item-value">{college}</span>
-              </div>
-              <div className="profile-detail-grid-item">
-                <span className="grid-item-label">Department</span>
-                <span className="grid-item-value">{dept}</span>
-              </div>
-              <div className="profile-detail-grid-item">
-                <span className="grid-item-label">Graduation Year</span>
-                <span className="grid-item-value">{year}</span>
-              </div>
-              <div className="profile-detail-grid-item" style={{ gridColumn: 'span 2' }}>
-                <span className="grid-item-label">Registered Email Address</span>
-                <span className="grid-item-value">{email}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Practice Statistics & Heatmap */}
-          <div className="premium-profile-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-            {/* Row of stats */}
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ps-success)' }}>{totalProblemsSolved}</div>
-                <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Problems Solved</div>
-              </div>
-              <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#38bdf8' }}>{formatUsageTime(totalHours)}</div>
-                <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Time Spent Active</div>
-              </div>
-              <div style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fb923c' }}>{activeStreak} Days</div>
-                <div style={{ fontSize: '12px', color: 'var(--ps-text-dim)', marginTop: '4px' }}>Active Streak</div>
-              </div>
-            </div>
-
-            {/* Heatmap Grid Wrapper */}
-            <div style={{ flex: 1, position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <h4 style={{ fontSize: '15px', color: 'var(--ps-text-dim)', margin: 0, fontWeight: '600' }}>Practice portal activity tracker (last 6 months)</h4>
+            {/* Card 1: Personal Information */}
+            <div className="profile-info-card">
+              <div className="card-header-with-edit">
+                <h3 className="profile-card-section-title">Personal Information</h3>
                 <button
-                  onClick={loadProfileProgress}
-                  disabled={loadingProfileProgress}
-                  style={{
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
-                    borderRadius: '6px',
-                    color: 'var(--ps-success)',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    padding: '4px 10px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.2s'
+                  className="btn-edit-pill"
+                  onClick={() => {
+                    if (isEditingProfile) {
+                      handleSaveProfile();
+                    } else {
+                      setIsEditingProfile(true);
+                    }
                   }}
                 >
-                  {loadingProfileProgress ? 'Syncing...' : <><FaSyncAlt style={{ marginRight: '4px' }} /> Sync with Cloud</>}
+                  {isEditingProfile ? 'Save Changes' : 'Edit'}
                 </button>
               </div>
 
-              {/* Heatmap layout */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-
-                {/* Y-axis: days of week */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '9px', color: '#475569', marginTop: '16px', width: '22px' }}>
-                  <span>Sun</span>
-                  <span style={{ visibility: 'hidden' }}>Mon</span>
-                  <span>Tue</span>
-                  <span style={{ visibility: 'hidden' }}>Wed</span>
-                  <span>Thu</span>
-                  <span style={{ visibility: 'hidden' }}>Fri</span>
-                  <span>Sat</span>
+              <div className="personal-info-grid">
+                <div className="personal-fields-col">
+                  <div className="info-field-row">
+                    <span className="field-label">Full Name</span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
+                      />
+                    ) : (
+                      <span className="field-value">{user?.Name || user?.name || user?.displayName || name}</span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label">Roll Number</span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        value={editRollNo}
+                        onChange={(e) => setEditRollNo(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
+                      />
+                    ) : (
+                      <span className="field-value">{user?.['Roll Number'] || user?.rollNumber || rollNumber}</span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label">Email Address</span>
+                    <span className="field-value">{email}</span>
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label">Phone Number</span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
+                      />
+                    ) : (
+                      <span className="field-value">{user?.phone || editPhone || '+91 98765 43210'}</span>
+                    )}
+                  </div>
+                  {isEditingProfile && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                      <button
+                        className="feature-cta-btn btn-green-solid"
+                        onClick={handleSaveProfile}
+                        style={{ padding: '6px 16px', fontSize: '12px' }}
+                      >
+                        Save Profile
+                      </button>
+                      <button
+                        className="btn-edit-pill"
+                        onClick={() => setIsEditingProfile(false)}
+                        style={{ padding: '6px 14px', fontSize: '12px' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* X-axis: weeks columns */}
-                <div style={{ flex: 1, overflowX: 'auto' }}>
-
-                  {/* Month headers Row */}
-                  <div style={{ position: 'relative', height: '14px', marginBottom: '4px', fontSize: '10px', color: '#475569' }}>
-                    {monthHeaders.map(hdr => (
-                      <span key={hdr.index} style={{
-                        position: 'absolute',
-                        left: `${hdr.index * 14}px`,
-                        whiteSpace: 'nowrap'
-                      }}>{hdr.label}</span>
-                    ))}
-                  </div>
-
-                  {/* Grid of Weeks */}
-                  <div style={{ display: 'flex', gap: '2px' }}>
-                    {weeks.map((wk, wkIdx) => (
-                      <div key={wkIdx} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        {wk.map((day, dIdx) => {
-                          const dateStr = day.toISOString().split('T')[0];
-                          const dayInfo = progressData?.activity?.[dateStr] || { hours: 0, problemsSolved: 0 };
-                          const solved = getSolvedCountForDate(dateStr);
-
-                          // Color selector
-                          let color = 'rgba(255, 255, 255, 0.04)'; // 0 solves
-                          if (solved === 1) color = '#0e4429';
-                          if (solved === 2) color = '#006d32';
-                          if (solved === 3) color = '#26a641';
-                          if (solved >= 4) color = '#39d353';
-
-                          return (
-                            <div
-                              key={dIdx}
-                              style={{
-                                width: '12px',
-                                height: '12px',
-                                background: color,
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '2px',
-                                transition: 'all 0.1s'
-                              }}
-                              onMouseEnter={(e) => {
-                                const rect = e.target.getBoundingClientRect();
-                                setTooltipPos({
-                                  x: rect.left + window.scrollX + 6,
-                                  y: rect.top + window.scrollY - 8
-                                });
-                                setHoveredDay({
-                                  dateStr: day.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-                                  dayInfo: {
-                                    ...dayInfo,
-                                    problemsSolved: solved
-                                  }
-                                });
-                              }}
-                              onMouseLeave={() => setHoveredDay(null)}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-
+                <div className="personal-avatar-col">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile Avatar"
+                      style={{
+                        width: '72px',
+                        height: '72px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid #10b981'
+                      }}
+                    />
+                  ) : (
+                    <div className="profile-avatar-circle-green">
+                      {name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <button
+                    className="btn-upload-photo"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Upload Photo
+                  </button>
+                  <span className="upload-photo-hint">JPG, PNG up to 2MB</span>
                 </div>
-
               </div>
-
-              {/* Heatmap Legend */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#475569', marginTop: '12px' }}>
-                <span>Less</span>
-                <div style={{ width: '10px', height: '10px', background: 'rgba(255,255,255,0.04)', borderRadius: '2px' }}></div>
-                <div style={{ width: '10px', height: '10px', background: '#0e4429', borderRadius: '2px' }}></div>
-                <div style={{ width: '10px', height: '10px', background: '#006d32', borderRadius: '2px' }}></div>
-                <div style={{ width: '10px', height: '10px', background: '#26a641', borderRadius: '2px' }}></div>
-                <div style={{ width: '10px', height: '10px', background: '#39d353', borderRadius: '2px' }}></div>
-                <span>More</span>
-              </div>
-
             </div>
 
+            {/* Card 2: Academic Information */}
+            <div className="profile-info-card">
+              <div className="card-header-with-edit">
+                <h3 className="profile-card-section-title">Academic Information</h3>
+              </div>
+              <div className="academic-fields-stack">
+                <div className="info-field-row">
+                  <span className="field-label">College</span>
+                  <span className="field-value">{college}</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Department</span>
+                  <span className="field-value">{dept}</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Graduation Year</span>
+                  <span className="field-value">{year}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Account Information */}
+            <div className="profile-info-card">
+              <h3 className="profile-card-section-title" style={{ marginBottom: '16px' }}>Account Information</h3>
+              <div className="account-fields-stack">
+                <div className="info-field-row">
+                  <span className="field-label">Member Since</span>
+                  <span className="field-value">12 Jan 2024</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Account Status</span>
+                  <span className="status-badge-active">Active</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Last Login</span>
+                  <span className="field-value">Today, 10:32 AM</span>
+                </div>
+              </div>
+            </div>
           </div>
-
-        </div>
-
-        {/* Achievements & Badges Card */}
-        <div className="premium-profile-card" style={{ padding: '24px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '16px', color: 'var(--ph-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FaTrophy style={{ color: '#fbbf24', fontSize: '18px' }} /> Achievements & Badges
-          </h3>
-
-          {getCompletedCourses().length === 0 ? (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '30px 20px',
-              textAlign: 'center',
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px dashed var(--border-color)',
-              borderRadius: '12px'
-            }}>
-              <FaAward style={{ fontSize: '32px', marginBottom: '8px', color: 'var(--ps-text-dim)' }} />
-              <h4 style={{ color: 'var(--ph-text)', marginBottom: '4px' }}>No Badges Earned Yet</h4>
-              <p style={{ color: 'var(--ps-text-dim)', fontSize: '13px', maxWidth: '400px', margin: '0 auto' }}>
-                Complete your assigned courses, coding assessments, or solve practice problems in the sandbox to unlock special merit badges.
-              </p>
+        ) : profileSubTab === 'utilisation' ? (
+          /* ─── VIEW FROM IMAGE 1 ROW 2 COL 1: Academic Details & Utilisation ─── */
+          <div className="profile-utilisation-container">
+            <div className="home-welcome-header" style={{ marginBottom: '20px' }}>
+              <h1 className="home-welcome-title">Student Profile & Utilisation</h1>
+              <p className="home-welcome-subtitle">Manage your academic registration info and review your daily practice dashboard.</p>
             </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-              gap: '16px'
-            }}>
-              {getCompletedCourses().map(badge => (
-                <div
-                  key={badge.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '14px',
-                    background: 'var(--bg-secondary, rgba(255,255,255,0.03))',
-                    border: `1px solid ${badge.color}`,
-                    borderRadius: '12px',
-                    boxShadow: `0 4px 12px ${badge.color}15`,
-                    transition: 'transform 0.2s'
-                  }}
-                  className="badge-item-hover"
-                >
-                  <div style={{
-                    fontSize: '28px',
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '10px',
-                    background: `${badge.color}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    {badge.icon}
+
+            <div className="profile-view-layout">
+              {/* Left Student Registration Details Card */}
+              <div className="profile-card-left">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile Avatar"
+                    style={{
+                      width: '72px',
+                      height: '72px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #10b981',
+                      margin: '0 auto 12px'
+                    }}
+                  />
+                ) : (
+                  <div className="profile-avatar-large">
+                    {name.charAt(0).toUpperCase()}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ph-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {badge.title}
-                    </h4>
-                    <p style={{ fontSize: '11px', color: 'var(--text-muted, #94a3b8)', margin: '4px 0 0', lineHeight: '1.3' }}>
-                      {badge.desc}
-                    </p>
+                )}
+                <h3 className="profile-name-title">{name}</h3>
+                <span className="profile-student-badge">STUDENT</span>
+
+                <div className="profile-details-table">
+                  <div className="profile-detail-row">
+                    <span className="profile-detail-label">Roll Number</span>
+                    <span className="profile-detail-val">{rollNumber}</span>
+                  </div>
+                  <div className="profile-detail-row">
+                    <span className="profile-detail-label">College</span>
+                    <span className="profile-detail-val">{college}</span>
+                  </div>
+                  <div className="profile-detail-row">
+                    <span className="profile-detail-label">Department</span>
+                    <span className="profile-detail-val">{dept}</span>
+                  </div>
+                  <div className="profile-detail-row">
+                    <span className="profile-detail-label">Graduation Year</span>
+                    <span className="profile-detail-val">{year}</span>
+                  </div>
+                  <div className="profile-detail-row">
+                    <span className="profile-detail-label">Registered Email</span>
+                    <span className="profile-detail-val">{email}</span>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Right Column: 3 Top Stats + Heatmap */}
+              <div className="profile-right-column">
+                <div className="profile-three-stats-row">
+                  <div className="util-stat-card">
+                    <span className="util-stat-val val-green">{totalProblemsSolved}</span>
+                    <span className="util-stat-lbl">Problems Solved</span>
+                  </div>
+                  <div className="util-stat-card">
+                    <span className="util-stat-val val-blue">{formatUsageTime(totalHours)}</span>
+                    <span className="util-stat-lbl">Time Spent Active</span>
+                  </div>
+                  <div className="util-stat-card">
+                    <span className="util-stat-val val-orange">{activeStreak} Day{activeStreak === 1 ? '' : 's'}</span>
+                    <span className="util-stat-lbl">Active Streak</span>
+                  </div>
+                </div>
+
+                {/* Heatmap Card */}
+                <div className="heatmap-card">
+                  <div className="analytics-card-header" style={{ marginBottom: '14px' }}>
+                    <h4 className="widget-section-title" style={{ margin: 0 }}>
+                      Practice portal activity tracker (last 6 months)
+                    </h4>
+                    <button
+                      className="btn-sync-cloud"
+                      onClick={handleSyncProfileProgress}
+                      disabled={loadingProfileProgress}
+                    >
+                      <FaSyncAlt /> {loadingProfileProgress ? 'Syncing...' : 'Sync with Cloud'}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    {/* Y-axis days */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '9px', color: '#94a3b8', marginTop: '18px', width: '22px' }}>
+                      <span>Sun</span>
+                      <span style={{ visibility: 'hidden' }}>Mon</span>
+                      <span>Tue</span>
+                      <span style={{ visibility: 'hidden' }}>Wed</span>
+                      <span>Thu</span>
+                      <span style={{ visibility: 'hidden' }}>Fri</span>
+                      <span>Sat</span>
+                    </div>
+
+                    {/* X-axis weeks */}
+                    <div style={{ flex: 1, overflowX: 'auto' }}>
+                      {/* Months Row */}
+                      <div style={{ position: 'relative', height: '14px', marginBottom: '6px', fontSize: '10px', color: '#94a3b8' }}>
+                        {monthHeaders.map(hdr => (
+                          <span key={hdr.index} style={{
+                            position: 'absolute',
+                            left: `${hdr.index * 14}px`,
+                            whiteSpace: 'nowrap'
+                          }}>{hdr.label}</span>
+                        ))}
+                      </div>
+
+                      {/* Grid of Weeks */}
+                      <div style={{ display: 'flex', gap: '3px' }}>
+                        {weeks.map((wk, wkIdx) => (
+                          <div key={wkIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            {wk.map((day, dIdx) => {
+                              const dateStr = day.toISOString().split('T')[0];
+                              const dayInfo = progressData?.activity?.[dateStr] || { hours: 0, problemsSolved: 0 };
+                              const solved = getSolvedCountForDate(dateStr);
+
+                              let color = '#ebedf0';
+                              if (solved === 1) color = '#9be9a8';
+                              if (solved === 2) color = '#40c463';
+                              if (solved === 3) color = '#30a14e';
+                              if (solved >= 4) color = '#216e39';
+
+                              return (
+                                <div
+                                  key={dIdx}
+                                  style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    background: color,
+                                    border: '1px solid rgba(0,0,0,0.06)',
+                                    borderRadius: '2px',
+                                    cursor: 'pointer'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    const rect = e.target.getBoundingClientRect();
+                                    setTooltipPos({
+                                      x: rect.left + window.scrollX + 6,
+                                      y: rect.top + window.scrollY - 8
+                                    });
+                                    setHoveredDay({
+                                      dateStr: day.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                                      dayInfo: {
+                                        ...dayInfo,
+                                        problemsSolved: solved
+                                      }
+                                    });
+                                  }}
+                                  onMouseLeave={() => setHoveredDay(null)}
+                                />
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Heatmap Legend */}
+                  <div className="heatmap-footer-legend" style={{ marginTop: '12px' }}>
+                    <span>Less</span>
+                    <div style={{ width: '11px', height: '11px', background: '#ebedf0', borderRadius: '2px' }}></div>
+                    <div style={{ width: '11px', height: '11px', background: '#9be9a8', borderRadius: '2px' }}></div>
+                    <div style={{ width: '11px', height: '11px', background: '#40c463', borderRadius: '2px' }}></div>
+                    <div style={{ width: '11px', height: '11px', background: '#30a14e', borderRadius: '2px' }}></div>
+                    <div style={{ width: '11px', height: '11px', background: '#216e39', borderRadius: '2px' }}></div>
+                    <span>More</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Performance Overview (4 Cards Row) */}
+            <div className="performance-overview-section" style={{ marginTop: '28px' }}>
+              <h3 className="home-section-heading">Performance Overview</h3>
+              <div className="activity-snapshot-grid">
+                <div className="activity-snapshot-card">
+                  <div className="snapshot-icon-box icon-purple"><FaBullseye /></div>
+                  <div className="snapshot-stat-val">72%</div>
+                  <div className="snapshot-stat-lbl">Accuracy</div>
+                </div>
+                <div className="activity-snapshot-card">
+                  <div className="snapshot-icon-box icon-blue"><FaCheck /></div>
+                  <div className="snapshot-stat-val">0</div>
+                  <div className="snapshot-stat-lbl">Assessments Taken</div>
+                </div>
+                <div className="activity-snapshot-card">
+                  <div className="snapshot-icon-box icon-green"><FaCode /></div>
+                  <div className="snapshot-stat-val">{totalProblemsSolved}</div>
+                  <div className="snapshot-stat-lbl">Coding Submissions</div>
+                </div>
+                <div className="activity-snapshot-card">
+                  <div className="snapshot-icon-box icon-orange"><FaCalendarAlt /></div>
+                  <div className="snapshot-stat-val">0</div>
+                  <div className="snapshot-stat-lbl">Days in Platform</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ─── CHANGE PASSWORD ─── */
+          <div className="profile-info-card" style={{ maxWidth: '520px' }}>
+            <h3 className="profile-card-section-title" style={{ marginBottom: '18px' }}>Change Password</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>Current Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>New Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter new password (min 6 characters)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>Confirm New Password</label>
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)' }}
+                />
+              </div>
+              <button
+                type="button"
+                className="feature-cta-btn btn-green-solid"
+                onClick={handleUpdatePassword}
+                style={{ marginTop: '8px', width: 'auto', alignSelf: 'flex-start', padding: '10px 20px' }}
+              >
+                Update Password
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Absolute Floating Tooltip Card */}
         {hoveredDay && (
@@ -2609,55 +3653,75 @@ const StudentDashboard = () => {
   };
 
   const renderSettings = () => {
-    const themes = [
+    const allThemes = [
       {
         id: 'seed-seb',
         name: 'SEED-SEB Academic (Default)',
         desc: 'Clean, distraction-free examination theme with institutional SEED green accents.',
-        preview: ['#f8fafc', '#ffffff', '#15803d']
+        colors: ['#f8fafc', '#ffffff', '#15803d']
       },
       {
         id: 'dark',
         name: 'Midnight Space (Dark)',
         desc: 'Futuristic slate theme with indigo highlights.',
-        preview: ['#090d16', '#111827', '#6366f1']
+        colors: ['#090d16', '#111827', '#6366f1']
       },
       {
         id: 'light',
         name: 'Classic Ice (Light)',
         desc: 'Sleek, high-contrast light mode for daytime coding.',
-        preview: ['#f3f4f6', '#ffffff', '#4f46e5']
+        colors: ['#f3f4f6', '#ffffff', '#4f46e5']
       },
       {
         id: 'crimson',
         name: 'Crimson Cyber (Red/Black)',
         desc: 'Pitch-black cyberpunk dashboard with blood-red accents.',
-        preview: ['#0c0808', '#180f0f', '#ef4444']
+        colors: ['#0c0808', '#180f0f', '#ef4444']
       },
       {
         id: 'emerald',
         name: 'Emerald Matrix (Green/Black)',
         desc: 'Retro-terminal dark design with vibrant emerald highlights.',
-        preview: ['#022c22', '#064e3b', '#10b981']
+        colors: ['#022c22', '#064e3b', '#10b981']
       },
       {
         id: 'red-light',
         name: 'Crimson Frost (Red/White)',
         desc: 'Clean, high-contrast light theme with rich red accents.',
-        preview: ['#fdfafb', '#ffffff', '#dc2626']
+        colors: ['#fdfafb', '#ffffff', '#dc2626']
       },
       {
         id: 'bw',
         name: 'Monochrome Minimalist (B&W)',
         desc: 'High-contrast, clean black & white theme.',
-        preview: ['#ffffff', '#000000', '#000000']
+        colors: ['#ffffff', '#000000', '#000000']
       }
+    ];
+
+    const primaryColorOptions = [
+      { id: 'green', color: '#10b981', name: 'Emerald Green' },
+      { id: 'blue', color: '#3b82f6', name: 'Royal Blue' },
+      { id: 'purple', color: '#8b5cf6', name: 'Amethyst Purple' },
+      { id: 'orange', color: '#f97316', name: 'Sunset Orange' },
+      { id: 'red', color: '#ef4444', name: 'Crimson Red' }
     ];
 
     const handleThemeChange = (themeId) => {
       localStorage.setItem('portal_theme', themeId);
       document.documentElement.setAttribute('data-theme', themeId);
       setCurrentTheme(themeId);
+    };
+
+    const handleColorChange = (colorId) => {
+      localStorage.setItem('portal_primary_color', colorId);
+      document.documentElement.setAttribute('data-color', colorId);
+      setPrimaryColor(colorId);
+    };
+
+    const handleFontSizeChange = (size) => {
+      localStorage.setItem('portal_font_size', size);
+      document.documentElement.setAttribute('data-font-size', size);
+      setFontSize(size);
     };
 
     const toggleSection = (sectionId) => {
@@ -2669,367 +3733,289 @@ const StudentDashboard = () => {
 
     return (
       <div className="settings-tab-content">
-        <div className="dashboard-welcome">
-          <h1>Portal Settings</h1>
-          <p>Personalise your student workspace theme and interface appearance.</p>
+        <div className="home-welcome-header" style={{ marginBottom: '24px' }}>
+          <h1 className="home-welcome-title">Portal Settings</h1>
+          <p className="home-welcome-subtitle">Personalise your student workspace theme and interface appearance.</p>
         </div>
 
-        {/* SECTION 1: WORKSPACE COLOR MODE */}
-        <div className="settings-section-card" style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '24px',
-          marginTop: '24px',
-          boxShadow: '0 4px 20px var(--shadow-color)',
-          overflow: 'hidden'
-        }}>
-          {/* Clickable Header */}
-          <div
-            onClick={() => toggleSection('theme')}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              cursor: 'pointer',
-              userSelect: 'none'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FaLaptopCode style={{ color: 'var(--accent-coding)', fontSize: '20px' }} />
-              <div>
-                <h3 style={{ color: 'var(--text-main)', margin: 0, fontSize: '17px', fontWeight: 600 }}>Workspace Color Mode</h3>
-                <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: '13px' }}>
-                  Choose a visual style that matches your environment.
-                </p>
+        <div className="settings-cards-list" style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '960px' }}>
+          {/* Card 1: Workspace Appearance */}
+          <div className="settings-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
+            <div className="settings-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  <FaSun />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>Workspace Appearance</h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: 'var(--text-muted)' }}>Customise how the platform looks and feels for you.</p>
+                </div>
               </div>
             </div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-              {expandedSettingsSections.theme ? <FaChevronDown /> : <FaChevronRight />}
-            </div>
-          </div>
 
-          {/* Collapsible Body */}
-          {expandedSettingsSections.theme && (
-            <div style={{
-              marginTop: '24px',
-              borderTop: '1px solid var(--border-color)',
-              paddingTop: '20px'
-            }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '20px'
-              }}>
-                {themes.map(t => {
+            {/* Theme Mode row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid var(--border-color)' }}>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Theme Mode</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Choose light or dark theme</div>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', background: 'var(--bg-primary)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <button
+                  type="button"
+                  onClick={() => handleThemeChange('seed-seb')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '6px', border: 'none',
+                    background: (currentTheme === 'seed-seb' || currentTheme === 'light') ? 'var(--bg-secondary)' : 'transparent',
+                    color: (currentTheme === 'seed-seb' || currentTheme === 'light') ? 'var(--text-main)' : 'var(--text-muted)',
+                    fontWeight: 600, fontSize: '12.5px', cursor: 'pointer',
+                    boxShadow: (currentTheme === 'seed-seb' || currentTheme === 'light') ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
+                >
+                  <FaSun style={{ color: '#f59e0b' }} /> Light
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleThemeChange('dark')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '6px', border: 'none',
+                    background: (currentTheme === 'dark' || currentTheme === 'dim' || currentTheme === 'emerald') ? 'var(--bg-secondary)' : 'transparent',
+                    color: (currentTheme === 'dark' || currentTheme === 'dim' || currentTheme === 'emerald') ? 'var(--text-main)' : 'var(--text-muted)',
+                    fontWeight: 600, fontSize: '12.5px', cursor: 'pointer',
+                    boxShadow: (currentTheme === 'dark' || currentTheme === 'dim' || currentTheme === 'emerald') ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                  }}
+                >
+                  <FaMoon style={{ color: '#6366f1' }} /> Dark
+                </button>
+              </div>
+            </div>
+
+            {/* Themes Grid */}
+            <div style={{ marginTop: '18px' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>Platform Themes (7 Themes)</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>Select an optimized color palette designed for high productivity.</div>
+              <div className="theme-options-grid">
+                {allThemes.map(t => {
                   const active = currentTheme === t.id;
                   return (
                     <div
                       key={t.id}
+                      className={`theme-preview-card ${active ? 'active' : ''}`}
                       onClick={() => handleThemeChange(t.id)}
-                      style={{
-                        background: active ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
-                        border: `2px solid ${active ? 'var(--accent-coding)' : 'var(--border-color)'}`,
-                        borderRadius: '14px',
-                        padding: '20px',
-                        cursor: 'pointer',
-                        transition: 'all 0.25s ease',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                      className={`theme-card-option ${active ? 'active' : ''}`}
                     >
-                      {/* Theme Preview Bubbles */}
-                      <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
-                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[0], border: '1px solid rgba(255,255,255,0.08)' }} title="Primary BG" />
-                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[1], border: '1px solid rgba(255,255,255,0.08)' }} title="Secondary BG" />
-                        <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: t.preview[2], border: '1px solid rgba(255,255,255,0.08)' }} title="Accent Color" />
+                      <div className="theme-card-top-row">
+                        <span className="theme-name-text">{t.name}</span>
+                        {active && <FaCheckCircle className="theme-check-icon" />}
                       </div>
-
-                      <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>{t.name}</h4>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '12px', margin: 0, lineHeight: '1.4' }}>{t.desc}</p>
-
-                      {active && (
-                        <span style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '12px',
-                          fontSize: '12px',
-                          color: 'var(--accent-coding)',
-                          fontWeight: 600
-                        }}>
-                          Active
-                        </span>
-                      )}
+                      <div className="theme-color-bubbles">
+                        {t.colors.map((c, cIdx) => (
+                          <div key={cIdx} className="theme-bubble" style={{ background: c }} />
+                        ))}
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
-          )}
-        </div>
 
-        {/* SECTION 2: AI - API CONNECTION */}
-        <div className="settings-section-card" style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '16px',
-          padding: '24px',
-          marginTop: '24px',
-          boxShadow: '0 4px 20px var(--shadow-color)',
-          overflow: 'hidden'
-        }}>
-          {/* Clickable Header */}
-          <div
-            onClick={() => toggleSection('aiApi')}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              cursor: 'pointer',
-              userSelect: 'none'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FaGem style={{ color: 'var(--accent-coding)', fontSize: '20px' }} />
-              <div>
-                <h3 style={{ color: 'var(--text-main)', margin: 0, fontSize: '17px', fontWeight: 600 }}>AI - API Connection</h3>
-                <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: '13px' }}>
-                  Configure Google Gemini and NVIDIA NIM API keys for tutor acceleration.
-                </p>
+            {/* Primary Color Picker */}
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Primary Color</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Choose your preferred accent color</div>
+              <div className="color-picker-row">
+                {primaryColorOptions.map(p => (
+                  <button
+                    key={p.id}
+                    className={`color-dot-btn ${primaryColor === p.id ? 'active' : ''}`}
+                    style={{ background: p.color }}
+                    onClick={() => handleColorChange(p.id)}
+                    title={p.name}
+                  >
+                    {primaryColor === p.id && <FaCheck style={{ color: '#ffffff', fontSize: '12px' }} />}
+                  </button>
+                ))}
               </div>
             </div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-              {expandedSettingsSections.aiApi ? <FaChevronDown /> : <FaChevronRight />}
+
+            {/* Font Size Selector */}
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Font Size</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Adjust the platform font size</div>
+              <div className="font-size-group">
+                <button
+                  className={`font-size-btn ${fontSize === 'small' ? 'active' : ''}`}
+                  onClick={() => handleFontSizeChange('small')}
+                >
+                  A- Small
+                </button>
+                <button
+                  className={`font-size-btn ${fontSize === 'medium' ? 'active' : ''}`}
+                  onClick={() => handleFontSizeChange('medium')}
+                >
+                  Medium
+                </button>
+                <button
+                  className={`font-size-btn ${fontSize === 'large' ? 'active' : ''}`}
+                  onClick={() => handleFontSizeChange('large')}
+                >
+                  A+ Large
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Collapsible Body */}
-          {expandedSettingsSections.aiApi && (
-            <div style={{
-              marginTop: '24px',
-              borderTop: '1px solid var(--border-color)',
-              paddingTop: '20px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-                <button
-                  onClick={() => setShowInstructionsModal(true)}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--accent-coding)',
-                    padding: '6px 14px',
-                    borderRadius: '8px',
-                    fontSize: '12.5px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <FaGraduationCap /> How to Get Keys?
-                </button>
+          {/* Card 2: Notifications */}
+          <div className="settings-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
+            <div className="settings-card-header" style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#fff7ed', color: '#f97316', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                <FaBell />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>Notifications</h3>
+                <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: 'var(--text-muted)' }}>Manage how you receive important updates.</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Email Notifications</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Receive updates on assessments and results</div>
+                </div>
+                <label className="toggle-switch-wrapper">
+                  <input
+                    type="checkbox"
+                    checked={emailNotifs}
+                    onChange={e => setEmailNotifs(e.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
               </div>
 
-              {/* Connected Keys List */}
-              <div style={{ marginBottom: '28px' }}>
-                <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '14px' }}>Connected API Keys</h4>
-                {apiKeysList.length === 0 ? (
-                  <div style={{
-                    background: 'var(--bg-primary)',
-                    border: '1px dashed var(--border-color)',
-                    borderRadius: '10px',
-                    padding: '20px',
-                    textAlign: 'center',
-                    color: 'var(--text-muted)',
-                    fontSize: '13.5px'
-                  }}>
-                    No API keys connected yet. Fill out the form below to connect your first key.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Practice Reminders</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Get reminded about your daily practice goals</div>
+                </div>
+                <label className="toggle-switch-wrapper">
+                  <input
+                    type="checkbox"
+                    checked={practiceReminders}
+                    onChange={e => setPracticeReminders(e.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+                <div>
+                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Assessment Alerts</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Receive alerts for assessment deadlines</div>
+                </div>
+                <label className="toggle-switch-wrapper">
+                  <input
+                    type="checkbox"
+                    checked={assessmentAlerts}
+                    onChange={e => setAssessmentAlerts(e.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: AI - API Connection */}
+          <div className="settings-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
+            <div className="settings-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#faf5ff', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  <FaKey />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>AI - API Connection</h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: 'var(--text-muted)' }}>Configure Google Gemini and NVIDIA NIM API keys for tutor acceleration.</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{
+                  background: apiKeysList.length > 0 ? '#ecfdf5' : '#f1f5f9',
+                  color: apiKeysList.length > 0 ? '#10b981' : '#94a3b8',
+                  border: `1px solid ${apiKeysList.length > 0 ? '#a7f3d0' : '#cbd5e1'}`,
+                  padding: '4px 12px',
+                  borderRadius: '9999px',
+                  fontSize: '12px',
+                  fontWeight: '700'
+                }}>
+                  {apiKeysList.length > 0 ? `Configured (${apiKeysList.length})` : 'Not Configured'}
+                </span>
+                <button
+                  className="feature-cta-btn btn-green-outline"
+                  style={{ width: 'auto', padding: '6px 14px', fontSize: '12.5px' }}
+                  onClick={() => toggleSection('aiApi')}
+                >
+                  Configure +
+                </button>
+              </div>
+            </div>
+
+            {/* Collapsible API Key Management Form */}
+            {expandedSettingsSections.aiApi && (
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                  <button
+                    onClick={() => setShowInstructionsModal(true)}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <FaGraduationCap /> How to Get Keys?
+                  </button>
+                </div>
+
+                {apiKeysList.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                     {apiKeysList.map(k => (
-                      <div
-                        key={k.id}
-                        style={{
-                          background: 'var(--bg-primary)',
-                          border: `1px solid ${k.active ? 'var(--accent-coding)' : 'var(--border-color)'}`,
-                          borderRadius: '10px',
-                          padding: '12px 18px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '12px'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span style={{
-                            background: k.type === 'gemini' ? '#10b981' : '#6366f1',
-                            color: 'white',
-                            fontSize: '10.5px',
-                            fontWeight: '700',
-                            padding: '3px 8px',
-                            borderRadius: '12px',
-                            textTransform: 'uppercase'
-                          }}>
-                            {k.type}
-                          </span>
-                          <div>
-                            <div style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: '600' }}>{k.label}</div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'monospace' }}>
-                              {k.value.substring(0, 8)}...{k.value.substring(k.value.length - 4)}
-                            </div>
-                          </div>
+                      <div key={k.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ background: k.type === 'gemini' ? '#10b981' : '#6366f1', color: '#fff', fontSize: '10px', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700, textTransform: 'uppercase' }}>{k.type}</span>
+                          <span style={{ fontSize: '13px', fontWeight: 600 }}>{k.label}</span>
                         </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          {k.active ? (
-                            <span style={{
-                              color: '#10b981',
-                              fontSize: '12.5px',
-                              fontWeight: '700',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}>
-                              <FaCheckCircle /> Active
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleSetActiveApiKey(k.id, k.type)}
-                              style={{
-                                background: 'transparent',
-                                border: '1px solid var(--border-color)',
-                                color: 'var(--text-main)',
-                                padding: '4px 10px',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              Set Active
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => handleDeleteApiKey(k.id)}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#ef4444',
-                              fontSize: '16px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: '4px'
-                            }}
-                            title="Delete Key"
-                          >
-                            <FaTimes />
-                          </button>
-                        </div>
+                        <button onClick={() => handleDeleteApiKey(k.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><FaTimes /></button>
                       </div>
                     ))}
                   </div>
                 )}
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <select value={newKeyProvider} onChange={e => setNewKeyProvider(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px' }}>
+                    <option value="gemini">Google Gemini</option>
+                    <option value="nvidia">NVIDIA NIM</option>
+                  </select>
+                  <input type="text" placeholder="Key Label" value={newKeyLabel} onChange={e => setNewKeyLabel(e.target.value)} style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px' }} />
+                  <input type="password" placeholder="API Key Value" value={newKeyValue} onChange={e => setNewKeyValue(e.target.value)} style={{ flex: 2, padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px' }} />
+                  <button onClick={handleAddApiKey} className="feature-cta-btn btn-green-solid" style={{ width: 'auto', padding: '8px 16px' }}>Add</button>
+                </div>
+                {saveSuccessMessage && <p style={{ color: '#10b981', fontSize: '12px', marginTop: '6px' }}>{saveSuccessMessage}</p>}
               </div>
+            )}
+          </div>
 
-              {/* Add New Key Form */}
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
-                <h4 style={{ color: 'var(--text-main)', fontSize: '15px', fontWeight: 600, marginBottom: '16px' }}>Add New API Key</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px' }}>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>Provider</label>
-                      <select
-                        value={newKeyProvider}
-                        onChange={(e) => setNewKeyProvider(e.target.value)}
-                        style={{
-                          padding: '10px',
-                          background: 'var(--bg-primary)',
-                          border: '1px solid var(--border-color)',
-                          color: 'var(--text-main)',
-                          borderRadius: '8px',
-                          fontSize: '13.5px',
-                          outline: 'none'
-                        }}
-                      >
-                        <option value="gemini">Google Gemini</option>
-                        <option value="nvidia">NVIDIA NIM</option>
-                      </select>
-                    </div>
-
-                    <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>Key Label / Name</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. My Personal Key, Class Key"
-                        value={newKeyLabel}
-                        onChange={(e) => setNewKeyLabel(e.target.value)}
-                        style={{
-                          padding: '10px 14px',
-                          background: 'var(--bg-primary)',
-                          border: '1px solid var(--border-color)',
-                          color: 'var(--text-main)',
-                          borderRadius: '8px',
-                          fontSize: '13.5px',
-                          outline: 'none'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ color: 'var(--text-main)', fontSize: '13px', fontWeight: 600 }}>API Key Value</label>
-                    <input
-                      type="password"
-                      placeholder={newKeyProvider === 'gemini' ? 'Enter Gemini API key (starts with AIzaSy...)' : 'Enter NVIDIA API key (starts with nvapi-...)'}
-                      value={newKeyValue}
-                      onChange={(e) => setNewKeyValue(e.target.value)}
-                      style={{
-                        padding: '10px 14px',
-                        background: 'var(--bg-primary)',
-                        border: '1px solid var(--border-color)',
-                        color: 'var(--text-main)',
-                        borderRadius: '8px',
-                        fontSize: '13.5px',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-
-                  {saveSuccessMessage && (
-                    <div style={{ color: 'var(--accent-coding)', fontSize: '14px', fontWeight: 600 }}>
-                      {saveSuccessMessage}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleAddApiKey}
-                    style={{
-                      alignSelf: 'flex-start',
-                      background: 'var(--accent-coding)',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '10px 24px',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'opacity 0.2s',
-                      marginTop: '6px'
-                    }}
-                    onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-                    onMouseLeave={(e) => e.target.style.opacity = '1'}
-                  >
-                    Add Key
-                  </button>
+          {/* Card 4: Privacy & Data */}
+          <div className="settings-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
+            <div className="settings-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  <FaShieldAlt />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>Privacy & Data</h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: 'var(--text-muted)' }}>Manage your data and account privacy.</p>
                 </div>
               </div>
+
+              <button className="feature-cta-btn btn-slate-outline" style={{ width: 'auto', padding: '8px 18px', fontSize: '13px' }}>
+                Manage <FaChevronRight style={{ fontSize: '10px' }} />
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
         {/* SETUP INSTRUCTIONS MODAL */}
@@ -3500,72 +4486,215 @@ const StudentDashboard = () => {
 
       {/* Top Header Bar */}
       <header className="dashboard-header">
-        <div className="header-brand">
-          <button className="sidebar-toggle" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle Sidebar">
+        <div className="header-left">
+          <button className="sidebar-toggle-btn" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle Sidebar">
             <FaBars />
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img src="/SEED_Logo_Transparent.png" alt="SEED Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-            <span className="brand-title">SEED <span>SEB</span></span>
+          <div className="header-brand" onClick={() => setActiveTab('dashboard')} style={{ cursor: 'pointer' }}>
+            <img
+              src="/SEED_Logo_Transparent.png"
+              alt="SEED Logo"
+              className="brand-logo-img"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/SEED_Logo.png';
+              }}
+            />
+            <div>
+              <div className="brand-title">SEED <span>SEB</span></div>
+              <span className="brand-subtitle-badge">Practice Platform</span>
+            </div>
           </div>
         </div>
-        <div className="header-profile">
-          <FaUser className="user-icon" />
-          <span className="user-name">{name}</span>
+
+        <div className="header-center-search">
+          <FaSearch className="header-search-icon" />
+          <input
+            type="text"
+            placeholder="Search assessments, topics, courses..."
+            className="header-search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <span className="header-search-shortcut-badge">⌘K</span>
+        </div>
+
+        <div className="header-right-actions">
+          <button className="header-action-icon-btn" title="Notifications">
+            <FaBell />
+            <span className="header-notif-count-badge">3</span>
+          </button>
+          <button className="header-action-icon-btn" title="Settings" onClick={() => setActiveTab('settings')}>
+            <FaCog />
+          </button>
+          <div className="header-user-avatar-pill" onClick={() => setActiveTab('profile')}>
+            <div className="header-user-avatar-circle">
+              {name.charAt(0).toUpperCase()}
+            </div>
+            <span className="header-user-name-text">{name.toUpperCase()}</span>
+            <FaChevronDown style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '2px' }} />
+          </div>
         </div>
       </header>
 
       {/* Workspace Body */}
       <div className="dashboard-body">
         {/* Sidebar Navigation */}
-        <aside className="dashboard-sidebar">
-          <nav className="sidebar-menu">
-            <button
-              className={`menu-item ${activeTab === "assessments" ? "active" : ""}`}
-              onClick={() => setActiveTab("assessments")}
-            >
-              <FaClipboardList />
-              <span className="menu-text">Assessments</span>
-            </button>
-            <button
-              className={`menu-item ${activeTab === "practice" ? "active" : ""}`}
-              onClick={() => setActiveTab("practice")}
-            >
-              <FaLaptopCode />
-              <span className="menu-text">Practice</span>
-            </button>
-            <button
-              className={`menu-item ${activeTab === "profile" ? "active" : ""}`}
-              onClick={() => setActiveTab("profile")}
-            >
-              <FaUser />
-              <span className="menu-text">Profile</span>
-            </button>
-            {isAiInterviewAllowed && (
+        <aside className={`dashboard-sidebar ${collapsed ? "collapsed" : ""}`}>
+          <div className="sidebar-top-scrollable">
+            <nav className="sidebar-nav-group">
               <button
-                className={`menu-item ${activeTab === "ai-interview" ? "active" : ""}`}
-                onClick={() => setActiveTab("ai-interview")}
+                className={`sidebar-nav-pill ${activeTab === "dashboard" ? "active" : ""}`}
+                onClick={() => setActiveTab("dashboard")}
               >
-                <FaUserTie />
-                <span className="menu-text">AI Interview</span>
+                <FaThLarge />
+                {!collapsed && <span>Dashboard</span>}
               </button>
+              <button
+                className={`sidebar-nav-pill ${activeTab === "assessments" ? "active" : ""}`}
+                onClick={() => setActiveTab("assessments")}
+              >
+                <FaClipboardList />
+                {!collapsed && <span>Assessments</span>}
+              </button>
+              <button
+                className={`sidebar-nav-pill ${activeTab === "practice" ? "active" : ""}`}
+                onClick={() => {
+                  setPracticeInitialTab('bank');
+                  setPracticeInitialCourse(null);
+                  setActiveTab("practice");
+                }}
+              >
+                <FaLaptopCode />
+                {!collapsed && <span>Practice</span>}
+              </button>
+              <button
+                className={`sidebar-nav-pill ${activeTab === "profile" ? "active" : ""}`}
+                onClick={() => setActiveTab("profile")}
+              >
+                <FaUser />
+                {!collapsed && <span>Profile</span>}
+              </button>
+              {isAiInterviewAllowed && (
+                <button
+                  className={`sidebar-nav-pill ${activeTab === "ai-interview" ? "active" : ""}`}
+                  onClick={() => setActiveTab("ai-interview")}
+                >
+                  <FaUserTie />
+                  {!collapsed && <span>AI Interview</span>}
+                </button>
+              )}
+              <button
+                className={`sidebar-nav-pill ${activeTab === "settings" ? "active" : ""}`}
+                onClick={() => setActiveTab("settings")}
+              >
+                <FaCog />
+                {!collapsed && <span>Settings</span>}
+              </button>
+            </nav>
+
+            {!collapsed && (
+              <div className="sidebar-widgets-section">
+                {/* ── 1. SEED Credits Card ── */}
+                <div
+                  className="sidebar-credits-card"
+                  onClick={() => toast.info('SEED Credits: Earn credits by practicing problems and completing daily goals!')}
+                  title="SEED Credits balance"
+                >
+                  <div className="credits-icon-box">
+                    <div className="gold-coin-circle">S</div>
+                  </div>
+                  <div className="credits-info-col">
+                    <span className="credits-card-title">SEED Credits</span>
+                    <span className="credits-card-val">{(seedCredits || 2450).toLocaleString()}</span>
+                    <span className="credits-daily-badge">+{todayCreditsGained || 120} today</span>
+                  </div>
+                  <FaChevronRight className="credits-arrow-icon" />
+                </div>
+
+                {/* ── 2. Today's Goal Card (Automated 3 Regular Tasks) ── */}
+                <div className="sidebar-goals-card">
+                  <div className="goals-card-header">
+                    <span className="goals-title">Today's Goal</span>
+                    <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '600' }}>Automated</span>
+                  </div>
+
+                  <div className="goals-progress-summary">
+                    <div className="goals-mini-ring">
+                      <svg viewBox="0 0 36 36" className="goals-ring-svg">
+                        <path
+                          className="goals-ring-bg"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          className="goals-ring-fill"
+                          strokeDasharray={`${Math.round(((dailyGoals.filter(g => g.completed).length) / (dailyGoals.length || 3)) * 100)}, 100`}
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <span className="goals-ring-text">
+                        {dailyGoals.filter(g => g.completed).length}/{dailyGoals.length || 3}
+                      </span>
+                    </div>
+                    <div className="goals-progress-text">
+                      <span className="goals-completed-label">
+                        {dailyGoals.filter(g => g.completed).length}/{dailyGoals.length || 3}
+                      </span>
+                      <span className="goals-sub-label">Goals Completed</span>
+                    </div>
+                  </div>
+
+                  <div className="goals-items-list">
+                    {dailyGoals.map((goal, idx) => (
+                      <div
+                        key={goal.id || idx}
+                        className={`goal-checkbox-row ${goal.completed ? 'completed' : ''}`}
+                        onClick={() => {
+                          if (goal.completed) {
+                            toast.success(`✓ "${goal.title}" is completed for today!`);
+                          } else {
+                            toast.info(`"${goal.title}" progress: ${goal.current || 0}/${goal.target || 1}. Complete it in Practice Bank!`);
+                            setPracticeInitialTab('bank');
+                            setPracticeInitialCourse(null);
+                            setActiveTab('practice');
+                          }
+                        }}
+                        title={goal.completed ? 'Goal completed today' : `Automated goal (${goal.current || 0}/${goal.target || 1}) — click to practice`}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className={`goal-check-circle ${goal.completed ? 'checked' : ''}`}>
+                          {goal.completed ? <FaCheck /> : null}
+                        </div>
+                        <span className="goal-item-label">{goal.title} {goal.displayProgress || ''}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {dailyGoals.length > 0 && dailyGoals.every(g => g.completed) && (
+                    <div className="streak-approved-badge">
+                      <FaFire style={{ color: '#f59e0b' }} /> Streak Approved for Today!
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-            <button
-              className={`menu-item ${activeTab === "settings" ? "active" : ""}`}
-              onClick={() => setActiveTab("settings")}
-            >
-              <FaCog />
-              <span className="menu-text">Settings</span>
-            </button>
-            <button className="menu-item logout-btn" onClick={handleLogout}>
+          </div>
+
+          <div className="sidebar-bottom-group">
+            <button className="sidebar-logout-pill" onClick={handleLogout}>
               <FaSignOutAlt />
-              <span className="menu-text">Logout</span>
+              {!collapsed && <span>Logout</span>}
             </button>
-          </nav>
+          </div>
         </aside>
 
         <main className="dashboard-main">
-          {activeTab === "assessments" ? renderAssessments() : activeTab === "practice" ? <PracticeHome /> : activeTab === "settings" ? renderSettings() : activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> : renderProfile()}
+          {activeTab === "dashboard" ? renderDashboardHome() :
+           activeTab === "assessments" ? renderAssessments() :
+           activeTab === "practice" ? <PracticeHome initialTab={practiceInitialTab} initialCourse={practiceInitialCourse} /> :
+           activeTab === "settings" ? renderSettings() :
+           activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
+           renderProfile()}
         </main>
       </div>
 

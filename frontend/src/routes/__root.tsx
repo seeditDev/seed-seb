@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -11,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import SecurityWatermark from "@/legacy/components/SecurityWatermark";
 
 function NotFoundComponent() {
   return (
@@ -122,9 +124,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const isAssessmentRoute =
+    pathname.startsWith('/student/assessment') ||
+    pathname.startsWith('/student/mcq') ||
+    pathname.startsWith('/student/coding') ||
+    pathname.startsWith('/student/sea') ||
+    pathname.startsWith('/student/spoken-english') ||
+    pathname.startsWith('/student/practice');
 
   return (
     <QueryClientProvider client={queryClient}>
+      {isAssessmentRoute && <SecurityWatermark />}
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

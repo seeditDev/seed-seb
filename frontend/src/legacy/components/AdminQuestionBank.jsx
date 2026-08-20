@@ -169,16 +169,37 @@ const AdminQuestionBank = () => {
 
     const handleSaveContest = async (e) => {
         e.preventDefault();
-        if (!contestForm.id.trim() || !contestForm.title.trim()) {
+        const contestId = contestForm.id.trim();
+        if (!contestId || !contestForm.title.trim()) {
             toast.warning("ID and Title are required.");
             return;
         }
         try {
-            await setDoc(doc(db, "contests", contestForm.id.trim()), {
+            // 1. Save Contest details
+            await setDoc(doc(db, "contests", contestId), {
                 ...contestForm,
-                id: contestForm.id.trim()
+                id: contestId
             });
-            toast.success("Contest saved successfully.");
+
+            // 2. Automatically generate and provision 256-bit AES-GCM encryption key
+            const randomBytes = new Uint8Array(32);
+            if (window.crypto && window.crypto.getRandomValues) {
+                window.crypto.getRandomValues(randomBytes);
+            } else {
+                for (let i = 0; i < 32; i++) randomBytes[i] = Math.floor(Math.random() * 256);
+            }
+            const generatedKeyHex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+            await setDoc(doc(db, "assessment_keys", contestId), {
+                contestId: contestId,
+                encryptionKey: generatedKeyHex,
+                algorithm: "AES-256-GCM",
+                createdAt: new Date().toISOString(),
+                validFrom: contestForm.startTime || null,
+                validUntil: contestForm.endTime || null
+            }, { merge: true });
+
+            toast.success("Contest and secure encryption key saved successfully.");
             setIsContestModalOpen(false);
             fetchContests();
         } catch (err) {
@@ -190,7 +211,11 @@ const AdminQuestionBank = () => {
         if (window.confirm("Are you sure you want to delete this contest?")) {
             try {
                 await deleteDoc(doc(db, "contests", id));
+                try {
+                    await deleteDoc(doc(db, "assessment_keys", id));
+                } catch (_) {}
                 fetchContests();
+                toast.success("Contest deleted successfully.");
             } catch (err) {
                 toast.error(`Delete failed: ${err.message}`);
             }

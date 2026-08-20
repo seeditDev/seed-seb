@@ -11,6 +11,8 @@ import { db } from '../firebase-config';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
+import SecurityWatermark from './SecurityWatermark';
+import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 import '../styles/SpokenEnglishAssessment.css';
 
 const CALIBRATION_TEXT = "Checking microphone clarity and background noise levels.";
@@ -86,6 +88,13 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
       console.warn('[AI Pre-Launch Engine Verification]', err);
       setAiEngineReady(true);
     }
+
+    return () => {
+      stopAllMediaAndAI();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
   }, []);
 
   // Initialize Questions from assessmentData or Default Flow
@@ -513,6 +522,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
     } catch (_) { /* non-fatal */ }
 
     setIsSubmitting(false);
+    stopAllMediaAndAI();
     setStage('completed');
   };
 
@@ -698,6 +708,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack }) => {
   // Render Interactive Exam Stage (Forward-Only Placement Rigor + Question Timers + MCQ Header Parity)
   return (
     <div className="spe-root">
+      <SecurityWatermark email={currentUser?.Email || user?.Email} />
       <header className="spe-header">
         <div className="spe-header-title">
           <FaMicrophone /> {assessmentData?.name || 'Spoken English Assessment'}

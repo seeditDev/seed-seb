@@ -237,6 +237,7 @@ const ProctoringEngine = ({
   const retryCountRef = useRef(0);
   const detectionInProgressRef = useRef(false);
   const sequenceInProgressRef = useRef(false);
+  const selectedDeviceIdRef = useRef(null);
 
   const [violationCount, setViolationCount] = useState(() => {
     // Guarded: proctorCache is a plain localStorage utility — no async deps.
@@ -515,14 +516,45 @@ const ProctoringEngine = ({
     try {
       console.log('[ProctoringEngine] Requesting webcam access...');
       
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         video: {
           width: { ideal: 640 },
           height: { ideal: 480 },
-          facingMode: 'user'
+          facingMode: 'user',
+          ...(selectedDeviceIdRef.current ? { deviceId: { exact: selectedDeviceIdRef.current } } : {})
         },
         audio: false
-      });
+      };
+
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (deviceConstraintErr) {
+        if (selectedDeviceIdRef.current && (deviceConstraintErr.name === 'OverconstrainedError' || deviceConstraintErr.name === 'NotFoundError')) {
+          console.warn('[ProctoringEngine] Specific camera deviceId not found, falling back to default camera:', deviceConstraintErr.message);
+          selectedDeviceIdRef.current = null;
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: 'user'
+            },
+            audio: false
+          });
+        } else {
+          throw deviceConstraintErr;
+        }
+      }
+
+      // Save active camera deviceId for consistent reconnection
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        const settings = typeof videoTrack.getSettings === 'function' ? videoTrack.getSettings() : {};
+        if (settings.deviceId) {
+          selectedDeviceIdRef.current = settings.deviceId;
+          console.log('[ProctoringEngine] Saved active camera deviceId:', settings.deviceId);
+        }
+      }
 
       // Store stream globally so it can be reused
       window.cameraStream = stream;
@@ -872,12 +904,24 @@ const ProctoringEngine = ({
 
     init();
 
+    const handleHardwareTeardown = () => {
+      console.log('[ProctoringEngine] Hardware teardown event received, stopping camera and AI...');
+      stopDetectionLoop();
+      cleanupStream();
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      initializedRef.current = false;
+      setIsInitialized(false);
+    };
+
+    window.addEventListener('seb:stop-proctoring-hardware', handleHardwareTeardown);
+
     // Cleanup
     return () => {
       console.log('[ProctoringEngine] Cleanup running...');
-      
+      window.removeEventListener('seb:stop-proctoring-hardware', handleHardwareTeardown);
       stopDetectionLoop();
-      
       cleanupStream();
       
       if (videoRef.current) {

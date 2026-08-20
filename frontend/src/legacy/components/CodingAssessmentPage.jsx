@@ -2,9 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from '../router-compat';
 import Editor from '@monaco-editor/react';
 import { 
-    FaArrowLeft, FaPlay, FaCheck, FaTimes, FaUndo, FaBookmark, 
-    FaClock, FaLock, FaExclamationTriangle, FaCheckCircle, 
-    FaSearch, FaChevronLeft, FaChevronRight, FaSignOutAlt, FaUser 
+    FaArrowLeft, FaArrowRight, FaPlay, FaCheck, FaTimes, FaUndo, FaBookmark, 
+    FaClock, FaLock, FaExclamationTriangle, FaCheckCircle, FaTimesCircle,
+    FaSearch, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp,
+    FaSignOutAlt, FaUser, FaShieldAlt, FaFlag, FaFileAlt, FaListUl, 
+    FaCode, FaTerminal, FaCog, FaExpand, FaCompress, FaBookOpen, FaComments,
+    FaRegCheckCircle, FaRegCircle, FaLightbulb, FaSyncAlt
 } from 'react-icons/fa';
 import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import CodingAssessmentService from '../services/codingAssessmentService';
@@ -26,6 +29,8 @@ import { createSubmitGuard } from '../utils/submitGuard';
 import { readJSON } from '../utils/safeStorage';
 import { throttledLocalStorageSet, flushThrottledWrites } from '../utils/throttle';
 import { markAssessmentCompleted } from '../services/attemptStatusService';
+import SecurityWatermark from './SecurityWatermark';
+import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 import { toast } from 'sonner';
 
 const LOCAL_BASE_URL = '/seed-contents';
@@ -241,7 +246,16 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [runResults, setRunResults] = useState(null); // Results for sample test runs
     const [evalResults, setEvalResults] = useState(null); // Results for hidden test runs
-    const [activeResultTab, setActiveResultTab] = useState('input'); // 'input', 'output', 'results'
+    const [activeResultTab, setActiveResultTab] = useState('output'); // 'output', 'console', 'input', 'results'
+
+    // Reference UI States
+    const [expandedTestCaseIndex, setExpandedTestCaseIndex] = useState(0);
+    const [activeRightTab, setActiveRightTab] = useState('testcases'); // 'testcases' | 'solution'
+    const [selectedTestCaseSet, setSelectedTestCaseSet] = useState('sample');
+    const [editorTheme, setEditorTheme] = useState('vs-dark'); // 'vs-dark' | 'light'
+    const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
+    const [showEditorialModal, setShowEditorialModal] = useState(false);
+    const [showDiscussModal, setShowDiscussModal] = useState(false);
 
     // Timer & Proctoring
     const [startTime, setStartTime] = useState(null);
@@ -337,24 +351,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     useEffect(() => {
         return () => {
-            // Stop the camera stream when CodingAssessmentPage unmounts —
-            // BUT only when running standalone (not embedded inside MultiSectionAssessment).
-            // In embedded mode the parent ProctoringEngine owns the camera for the full exam;
-            // stopping it here would kill proctoring when the coding section ends.
-            if (!isEmbedded && window.cameraStream) {
-                console.log('[CodingAssessmentPage] Component unmounted. Cleaning up camera stream...');
-                try {
-                    window.cameraStream.getTracks().forEach(track => {
-                        track.onended = null;
-                        track.stop();
-                    });
-                } catch (e) {
-                    console.warn('[CodingAssessmentPage] Error cleaning up camera stream:', e);
-                }
-                window.cameraStream = null;
+            // Stop camera, mic, and AI when CodingAssessmentPage unmounts standalone
+            if (!isEmbedded) {
+                console.log('[CodingAssessmentPage] Component unmounted standalone. Cleaning up media & AI...');
+                stopAllMediaAndAI();
             }
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isEmbedded]);
 
     useEffect(() => {
         let qTimer;
@@ -2069,6 +2072,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Clean local variables
     const clearLocalSession = () => {
+        if (!isEmbedded) {
+            stopAllMediaAndAI();
+        }
         if (currentAssessment?.id) {
             localStorage.setItem(`codingCompleted_${currentAssessment.id}`, "true");
             submitGuard.complete();
@@ -2567,8 +2573,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // ==========================================
     // RENDER: WORKSPACE VIEW
     // ==========================================
+    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    const candidateRoll = authData.rollNumber || authData['Roll Number'] || authData.rollNo || authData.RollNo || authData.regNo || authData.registerNumber || user?.rollNumber || authData.uid || 'CANDIDATE';
+    const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || authData.collegeCode || authData.college || user?.tenantId || 'SEED-SEB';
+
     return (
         <div className="coding-workspace-page">
+            <SecurityWatermark rollNumber={candidateRoll} tenantId={tenantId} />
             {/* Proctoring Engine - Active only when assessment is running and proctored is enabled (standalone mode only) */}
             {!isEmbedded && shouldUseProctoring && currentAssessment && user && (
                 <ProctoringEngine
@@ -2628,162 +2639,298 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 />
             )}
             {/* Top Workspace Header Bar */}
-            <header className="workspace-header">
-                <div className="header-left">
-                    {!isEmbedded && (
-                        <button className="exit-workspace-btn" onClick={() => setShowSubmitModal(true)}>
-                            <FaArrowLeft /> Exit Portal
-                        </button>
-                    )}
-                    <span className="assessment-title-label">
-                        {currentAssessment?.name || "SEED-IT Assessment"}
-                    </span>
+            <header className="coding-ref-header">
+                <div className="mcq-ref-header-left">
+                    <div className="mcq-brand-badge">
+                        <div className="mcq-brand-icon">
+                            <FaShieldAlt />
+                        </div>
+                        <div className="mcq-brand-text">
+                            <span className="mcq-brand-title">SEED-SEB</span>
+                            <span className="mcq-brand-subtitle">SECURE EXAMINATION &amp; BENCHMARKING</span>
+                        </div>
+                    </div>
                 </div>
-                
-                <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+
+                <div className="mcq-ref-header-center">
+                    <h2 className="mcq-ref-assessment-title">{currentAssessment?.name || "Coding Assessment"}</h2>
+                    <div className="mcq-ref-assessment-meta">
+                        <span>Section {activeQuestionIndex + 1} of {questions.length}</span>
+                        <span className="meta-dot">•</span>
+                        <span>{questions.length} Questions</span>
+                        <span className="meta-dot">•</span>
+                        <span>Programming</span>
+                        <span className="meta-dot">•</span>
+                        <span>{currentQuestion?.marks ? `${currentQuestion.marks} Marks` : '100 Marks'}</span>
+                    </div>
+                </div>
+
+                <div className="mcq-ref-header-right">
                     {(shouldUseProctoring || shouldUseAudioProctoring) && (
-                        <div className="proctoring-stats-container" style={{ display: 'flex', gap: '10px' }}>
+                        <div className="mcq-proctor-pills-wrap">
                             {shouldUseAudioProctoring && (
-                                <div className="proctor-stat-pill audio-violation-pill" style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    background: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
-                                    color: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? '#ef4444' : '#10b981',
-                                    border: (isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.65rem',
-                                    fontWeight: '700'
-                                }}>
-                                    <span> Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 5}</span>
+                                <div className="mcq-proctor-badge" title="Audio Proctoring">
+                                    <span className={`status-dot ${(isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? 'bad' : 'good'}`} />
+                                    Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 5}
                                 </div>
                             )}
                             {shouldUseProctoring && (
-                                <div className="proctor-stat-pill ai-violation-pill" style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    background: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
-                                    color: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? '#ef4444' : '#10b981',
-                                    border: (isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.65rem',
-                                    fontWeight: '700'
-                                }}>
-                                    <span> Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}</span>
+                                <div className="mcq-proctor-badge" title="Camera Proctoring">
+                                    <span className={`status-dot ${(isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? 'bad' : 'good'}`} />
+                                    Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}
                                 </div>
                             )}
                         </div>
                     )}
-                    <div className="timer-pill">
-                        <FaClock />
-                        <span className="remaining-timer-span">{formatRemainingTime()}</span>
+
+                    {/* Timer Box */}
+                    <div className="mcq-ref-timer-box">
+                        <div className="mcq-timer-icon-wrap">
+                            <FaClock />
+                        </div>
+                        <div className="mcq-timer-details">
+                            <span className="mcq-timer-label">Time Remaining</span>
+                            <span className={`mcq-timer-value ${remainingTime <= 300 ? 'warning' : ''} ${remainingTime <= 60 ? 'danger' : ''}`}>
+                                {formatRemainingTime()}
+                            </span>
+                        </div>
                     </div>
-                    <button className="submit-assessment-btn" onClick={() => setShowSubmitModal(true)}>
-                        {isEmbedded ? "Submit Section" : "Submit Assessment"}
+
+                    {/* Auto Save badge */}
+                    <div className="coding-autosave-badge">
+                        <span className="autosave-dot" />
+                        <div className="autosave-text">
+                            <span className="autosave-title">Auto Save</span>
+                            <span className="autosave-sub">Saved</span>
+                        </div>
+                    </div>
+
+                    {/* Flag for Review */}
+                    <button
+                        type="button"
+                        className={`mcq-ref-flag-btn ${currentQuestion && bookmarkedQuestions[currentQuestion.id] ? 'flagged' : ''}`}
+                        onClick={() => currentQuestion && toggleBookmark(currentQuestion.id)}
+                    >
+                        <FaFlag />
+                        <span>{currentQuestion && bookmarkedQuestions[currentQuestion.id] ? 'Flagged' : 'Flag for Review'}</span>
+                    </button>
+
+                    {/* End Section / Submit Button */}
+                    <button
+                        type="button"
+                        className="coding-end-section-btn"
+                        onClick={() => setShowSubmitModal(true)}
+                    >
+                        <FaSignOutAlt />
+                        <span>{isEmbedded ? "End Section" : "Submit Assessment"}</span>
                     </button>
                 </div>
             </header>
 
-            {/* Main Workspace Column Split — resizable */}
+            {/* Main 4-Pane Workspace Dashboard */}
             {currentQuestion ? (
-                <div className="workspace-body" ref={workspaceBodyRef}>
+                <>
+                    <div className="coding-ref-layout-4pane">
+                        {/* 1. LEFT SIDEBAR */}
+                        <aside className="coding-ref-col-sidebar">
+                            {/* Section Overview Card */}
+                            <div className="mcq-ref-card">
+                                <div className="mcq-card-head">
+                                    <div className="mcq-card-head-icon">
+                                        <FaListUl />
+                                    </div>
+                                    <h4>Section Overview</h4>
+                                </div>
+                                <div className="mcq-overview-table">
+                                    <div className="overview-row">
+                                        <span className="overview-label">Total Questions</span>
+                                        <strong className="overview-val">{questions.length}</strong>
+                                    </div>
+                                    <div className="overview-row">
+                                        <span className="overview-label">Attempted</span>
+                                        <strong className="overview-val text-emerald">
+                                            {questions.filter(q => questionScores[q.id]?.submitted).length}
+                                        </strong>
+                                    </div>
+                                    <div className="overview-row">
+                                        <span className="overview-label">Not Attempted</span>
+                                        <strong className="overview-val text-muted">
+                                            {Math.max(0, questions.length - questions.filter(q => questionScores[q.id]?.submitted).length)}
+                                        </strong>
+                                    </div>
+                                    <div className="overview-row">
+                                        <span className="overview-label">Flagged</span>
+                                        <strong className="overview-val text-amber">
+                                            {Object.keys(bookmarkedQuestions).filter(k => bookmarkedQuestions[k]).length}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {/* ─── LEFT PANE: Question nav + full problem statement ─── */}
-                    <div className="workspace-left-pane" style={{ width: `${leftPaneWidth}%` }}>
-                        {/* Question navigation bubbles */}
-                        <div className="left-pane-card question-nav-card">
-                            <div className="card-header-label">Question Navigation</div>
-                            <div className="question-grid">
-                                {questions.map((q, idx) => (
+                            {/* Question Navigator Card */}
+                            <div className="mcq-ref-card">
+                                <div className="mcq-card-head">
+                                    <h4>Question Navigator</h4>
+                                </div>
+                                <div className="coding-qnav-list">
+                                    {questions.map((q, idx) => {
+                                        const isCurrent = idx === activeQuestionIndex;
+                                        const isAttempted = questionScores[q.id]?.submitted;
+                                        const isFlagged = bookmarkedQuestions[q.id];
+
+                                        let itemClass = 'coding-qnav-item';
+                                        if (isCurrent) itemClass += ' current';
+                                        else if (isFlagged) itemClass += ' flagged';
+                                        else if (isAttempted) itemClass += ' attempted';
+                                        else itemClass += ' unattempted';
+
+                                        return (
+                                            <button
+                                                key={q.id ? `${q.id}-${idx}` : `q-${idx}`}
+                                                type="button"
+                                                className={itemClass}
+                                                onClick={() => {
+                                                    setActiveQuestionIndex(idx);
+                                                    setVisitedQuestions(prev => ({ ...prev, [q.id]: true }));
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span className="qnav-badge">{idx + 1}</span>
+                                                    <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {q.title || q.name || `Question ${idx + 1}`}
+                                                    </span>
+                                                </div>
+                                                <div className="qnav-status-icon">
+                                                    {isCurrent ? (
+                                                        <FaCode style={{ color: '#3b82f6' }} />
+                                                    ) : isFlagged ? (
+                                                        <FaFlag style={{ color: '#f59e0b' }} />
+                                                    ) : isAttempted ? (
+                                                        <FaCheckCircle style={{ color: '#10b981' }} />
+                                                    ) : (
+                                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Not Attempted</span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Legend Card */}
+                            <div className="mcq-ref-card">
+                                <div className="mcq-card-head">
+                                    <div className="mcq-card-head-icon">
+                                        <FaShieldAlt />
+                                    </div>
+                                    <h4>Legend</h4>
+                                </div>
+                                <div className="mcq-legend-list">
+                                    <div className="legend-item">
+                                        <span className="legend-dot answered" />
+                                        <span>Attempted</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="legend-dot current" />
+                                        <span>Current Question</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="legend-dot not-answered" />
+                                        <span>Not Attempted</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="legend-dot flagged" />
+                                        <span>Flagged for Review</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+
+                        {/* 2. MIDDLE-LEFT: PROBLEM STATEMENT PANE */}
+                        <main className="coding-ref-col-problem">
+                            <div className="problem-pane-header">
+                                <span className="q-badge-indicator">
+                                    <span>◇</span> Question {activeQuestionIndex + 1} of {questions.length}
+                                </span>
+                                <div className="problem-nav-arrows">
                                     <button
-                                        key={q.id ? `${q.id}-${idx}` : `q-${idx}`}
-                                        onClick={() => {
-                                            setActiveQuestionIndex(idx);
-                                            setVisitedQuestions(prev => ({ ...prev, [q.id]: true }));
-                                        }}
-                                        className={`grid-bubble ${idx === activeQuestionIndex ? 'grid-bubble-active' : ''} ${getGridBubbleClass(q)}`}
+                                        type="button"
+                                        className="q-nav-arrow"
+                                        disabled={activeQuestionIndex === 0}
+                                        onClick={() => setActiveQuestionIndex(i => i - 1)}
+                                        title="Previous Question"
                                     >
-                                        Q{idx + 1}
+                                        <FaArrowLeft />
                                     </button>
+                                    <button
+                                        type="button"
+                                        className="q-nav-arrow"
+                                        disabled={activeQuestionIndex === questions.length - 1}
+                                        onClick={() => setActiveQuestionIndex(i => i + 1)}
+                                        title="Next Question"
+                                    >
+                                        <FaArrowRight />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="problem-pane-body">
+                                <div className="problem-title-block">
+                                    <h3>{currentQuestion.title || currentQuestion.name || 'Problem Statement'}</h3>
+                                    <div className="problem-tags-row">
+                                        <span className={`diff-pill ${(currentQuestion.difficulty || 'easy').toLowerCase()}`}>
+                                            {currentQuestion.difficulty || 'Easy'}
+                                        </span>
+                                        <span className="marks-pill">
+                                            {currentQuestion.marks ? `${currentQuestion.marks} Marks` : '100 Marks'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="problem-desc-text">
+                                    <p>{currentQuestion.description || currentQuestion.content?.problemStatement || 'Solve the challenge as specified below.'}</p>
+                                </div>
+
+                                {/* Sample Test Case Example Blocks */}
+                                {(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []).map((st, i) => (
+                                    <div key={i} className="example-box">
+                                        <span className="example-title">Example {i + 1}:</span>
+                                        <div className="example-line"><strong>Input:</strong> {st.input || "No Input"}</div>
+                                        <div className="example-line"><strong>Output:</strong> {st.expected}</div>
+                                        {st.explanation && (
+                                            <div className="example-line"><strong>Explanation:</strong> {st.explanation}</div>
+                                        )}
+                                    </div>
                                 ))}
+
+                                {/* Constraints */}
+                                {currentQuestion.constraints && (
+                                    <div className="constraints-section">
+                                        <h4>Constraints:</h4>
+                                        <ul>
+                                            {currentQuestion.constraints.split('\n').filter(Boolean).map((c, idx) => (
+                                                <li key={idx}>{c}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
-                        </div>
 
-                        {/* Problem statement — takes all remaining height */}
-                        <div className="left-pane-card problem-statement-card">
-                            <div className="card-header-flex">
-                                <div className="card-header-label">{currentQuestion.title}</div>
-                                <div className="header-tags-row">
-                                    <span className={`difficulty-badge diff-${currentQuestion.difficulty?.toLowerCase() || 'medium'}`}>
-                                        {currentQuestion.difficulty}
-                                    </span>
-                                    <button
-                                        onClick={() => toggleBookmark(currentQuestion.id)}
-                                        className={`bookmark-btn ${bookmarkedQuestions[currentQuestion.id] ? 'bookmarked' : ''}`}
-                                        title="Bookmark question"
-                                    >
-                                        <FaBookmark />
-                                    </button>
-                                </div>
+                            <div className="problem-bottom-actions">
+                                <button type="button" className="btn-editorial" onClick={() => setShowEditorialModal(true)}>
+                                    <FaBookOpen /> Editorial
+                                </button>
+                                <button type="button" className="btn-discuss" onClick={() => setShowDiscussModal(true)}>
+                                    <FaComments /> Discuss
+                                </button>
                             </div>
-                            <div className="problem-content-scroll">
-                                <div className="problem-statement-text">
-                                    <p>{currentQuestion.description}</p>
+                        </main>
 
-                                    {currentQuestion.instructions && (
-                                        <>
-                                            <h4>Input Format &amp; Instructions</h4>
-                                            <p>{currentQuestion.instructions}</p>
-                                        </>
-                                    )}
-
-                                    {currentQuestion.constraints && (
-                                        <>
-                                            <h4>Constraints</h4>
-                                            <pre className="constraints-block">{currentQuestion.constraints}</pre>
-                                        </>
-                                    )}
-
-                                    {currentQuestion.sampleTests && currentQuestion.sampleTests.map((st, i) => (
-                                        <div key={i} className="example-io-block">
-                                            <h4>Sample Test Case {i + 1}</h4>
-                                            <div className="io-row">
-                                                <div className="io-col">
-                                                    <strong>Input:</strong>
-                                                    <pre>{st.input || "No Input"}</pre>
-                                                </div>
-                                                <div className="io-col">
-                                                    <strong>Expected Output:</strong>
-                                                    <pre>{st.expected}</pre>
-                                                </div>
-                                            </div>
-                                            {st.explanation && (
-                                                <div className="io-explanation">
-                                                    <strong>Explanation:</strong>
-                                                    <p>{st.explanation}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* ─── VERTICAL DRAG DIVIDER ─── */}
-                    <div className="pane-divider-vertical" onMouseDown={startVertDrag} title="Drag to resize" />
-
-                    {/* ─── RIGHT PANE: Editor (top) + Output (bottom) ─── */}
-                    <div className="workspace-right-pane" ref={rightPaneRef} style={{ width: `${100 - leftPaneWidth}%` }}>
-
-                        {/* Editor section — takes remaining height above output */}
-                        <div className="editor-container-card" style={{ flex: 1, minHeight: 0 }}>
-                            {/* Language toolbar */}
-                            <div className="editor-toolbar">
-                                <div className="toolbar-left">
+                        {/* 3. MIDDLE-RIGHT: CODE EDITOR & OUTPUT CONSOLE PANE */}
+                        <section className="coding-ref-col-editor">
+                            <div className="editor-ref-toolbar">
+                                <div className="editor-toolbar-left">
+                                    <span className="editor-select-label">Language</span>
                                     <select
                                         value={language}
                                         onChange={(e) => {
@@ -2795,26 +2942,41 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                                 setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
                                             }
                                         }}
-                                        className="language-selector"
+                                        className="editor-select"
                                     >
+                                        <option value="python">Python 3.10</option>
                                         <option value="cpp">C++ (GCC G++)</option>
                                         <option value="c">C (GCC GCC)</option>
-                                        <option value="python">Python 3 (Python)</option>
                                         <option value="java">Java (OpenJDK javac)</option>
                                         <option value="javascript">JavaScript (Node.js 18)</option>
                                     </select>
+
+                                    <span className="editor-select-label" style={{ marginLeft: '8px' }}>Theme</span>
+                                    <select
+                                        value={editorTheme}
+                                        onChange={(e) => setEditorTheme(e.target.value)}
+                                        className="editor-select"
+                                    >
+                                        <option value="vs-dark">Dark</option>
+                                        <option value="light">Light</option>
+                                    </select>
                                 </div>
-                                <div className="toolbar-right">
-                                    <button className="editor-control-btn reset-btn" onClick={handleResetCode}>
-                                        <FaUndo /> Reset Boilerplate
+
+                                <div className="editor-toolbar-right">
+                                    <button
+                                        type="button"
+                                        className="editor-icon-btn"
+                                        onClick={() => setIsEditorFullscreen(f => !f)}
+                                        title={isEditorFullscreen ? "Exit Fullscreen" : "Fullscreen Editor"}
+                                    >
+                                        {isEditorFullscreen ? <FaCompress /> : <FaExpand />}
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Monaco Editor */}
-                            <div className="monaco-wrapper">
+                            <div className="editor-monaco-body">
                                 <Editor
-                                    key={`${currentQuestion.id}_${language}`}
+                                    key={`${currentQuestion.id}_${language}_${editorTheme}`}
                                     height="100%"
                                     language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
                                     defaultValue={codeMap[`${currentQuestion.id}_${language}`] || ""}
@@ -2822,10 +2984,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     onMount={(editor) => {
                                         editorRef.current = editor;
                                     }}
-                                    theme={['light', 'red-light'].includes(localStorage.getItem('portal_theme')) ? 'light' : 'vs-dark'}
+                                    theme={editorTheme}
                                     options={{
                                         fontSize: 14,
-                                        fontFamily: "'JetBrains Mono', Courier, monospace",
+                                        fontFamily: "'JetBrains Mono', 'Fira Code', Courier, monospace",
                                         minimap: { enabled: false },
                                         scrollbar: { vertical: 'visible', horizontal: 'visible' },
                                         automaticLayout: true,
@@ -2835,155 +2997,301 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 />
                             </div>
 
-                            {/* Action buttons */}
-                            <div className="editor-footer-actions">
-                                <div className="footer-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div className="editor-ref-action-bar">
+                                <div className="action-bar-left">
                                     <button
-                                        className="run-btn"
+                                        type="button"
+                                        className="btn-run-code"
                                         onClick={runSampleTestCases}
                                         disabled={isRunning || isEvaluating}
                                     >
                                         {isRunning ? (
-                                            <><div className="button-spinner"></div> Compiling...</>
+                                            <><div className="button-spinner" /> Compiling...</>
                                         ) : (
                                             <><FaPlay /> Run Code</>
                                         )}
                                     </button>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#94a3b8', userSelect: 'none', margin: 0 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={useCustomInput}
-                                            onChange={(e) => setUseCustomInput(e.target.checked)}
-                                            style={{ cursor: 'pointer', width: '15px', height: '15px', margin: 0 }}
-                                        />
-                                        Run along with sample test cases
-                                    </label>
-                                </div>
-                                <div className="footer-right">
+
                                     <button
-                                        className="solve-question-btn"
+                                        type="button"
+                                        className="btn-submit-code"
                                         onClick={handleSubmitQuestion}
                                         disabled={isRunning || isEvaluating}
                                     >
                                         {isEvaluating ? (
-                                            <><div className="button-spinner"></div> Evaluating...</>
+                                            <><div className="button-spinner" /> Evaluating...</>
                                         ) : (
-                                            <>Submit Question</>
+                                            <><FaCheck /> Submit Code</>
                                         )}
                                     </button>
                                 </div>
+
+                                <div className="action-bar-right">
+                                    <button type="button" className="btn-editor-action" onClick={handleResetCode} title="Reset to boilerplate code">
+                                        <FaUndo /> Reset
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`btn-editor-action ${useCustomInput ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setUseCustomInput(prev => !prev);
+                                            if (!useCustomInput) setActiveResultTab('input');
+                                        }}
+                                    >
+                                        <FaCog /> Custom Input
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* ─── HORIZONTAL DRAG DIVIDER ─── */}
-                        <div className="pane-divider-horizontal" onMouseDown={startHorizDrag} title="Drag to resize output panel" />
+                            {/* Output / Console Tabbed Box */}
+                            <div className="editor-output-console-box">
+                                <div className="console-tabs-bar">
+                                    <button
+                                        type="button"
+                                        className={`console-tab-btn ${activeResultTab === 'output' ? 'active' : ''}`}
+                                        onClick={() => setActiveResultTab('output')}
+                                    >
+                                        Output
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`console-tab-btn ${activeResultTab === 'console' ? 'active' : ''}`}
+                                        onClick={() => setActiveResultTab('console')}
+                                    >
+                                        Console
+                                    </button>
+                                    {useCustomInput && (
+                                        <button
+                                            type="button"
+                                            className={`console-tab-btn ${activeResultTab === 'input' ? 'active' : ''}`}
+                                            onClick={() => setActiveResultTab('input')}
+                                        >
+                                            Custom Input
+                                        </button>
+                                    )}
+                                </div>
 
-                        {/* Output / Console panel — below editor */}
-                        <div className="console-output-card" style={{ height: `${outputPaneHeight}px`, flexShrink: 0 }}>
-                            <div className="tabs-header">
-                                <button
-                                    className={`tab-btn ${activeResultTab === 'input' ? 'active' : ''}`}
-                                    onClick={() => setActiveResultTab('input')}
-                                >Custom Input</button>
-                                <button
-                                    className={`tab-btn ${activeResultTab === 'output' ? 'active' : ''}`}
-                                    onClick={() => setActiveResultTab('output')}
-                                >Stdout Logs</button>
-                                <button
-                                    className={`tab-btn ${activeResultTab === 'results' ? 'active' : ''}`}
-                                    onClick={() => setActiveResultTab('results')}
-                                >Test Results</button>
+                                <div className="console-tab-body">
+                                    {activeResultTab === 'input' ? (
+                                        <textarea
+                                            className="custom-stdin-input"
+                                            placeholder="Type standard input (stdin) values here..."
+                                            value={customInput}
+                                            onChange={(e) => setCustomInput(e.target.value)}
+                                            style={{ width: '100%', height: '100%', background: '#0f172a', border: '1px solid #334155', color: '#f8fafc', padding: '8px', borderRadius: '6px', fontFamily: "'JetBrains Mono', monospace", resize: 'none' }}
+                                        />
+                                    ) : stderr ? (
+                                        <pre className="output-stderr-pre" style={{ color: '#fca5a5', margin: 0 }}>
+                                            <strong>Error Output:</strong><br />
+                                            {stderr}
+                                        </pre>
+                                    ) : stdout ? (
+                                        <pre className="output-stdout-pre" style={{ color: '#f8fafc', margin: 0 }}>
+                                            <strong>Standard Output:</strong><br />
+                                            {stdout}
+                                        </pre>
+                                    ) : (
+                                        <div className="terminal-empty-state">
+                                            <div className="terminal-icon"><FaTerminal /></div>
+                                            <strong style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Run your code to see the output here</strong>
+                                            <span style={{ fontSize: '0.75rem' }}>Your results will appear here after running the code.</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="tab-body-scroll">
-                                {activeResultTab === 'input' && (
-                                    <textarea
-                                        className="custom-stdin-input"
-                                        placeholder="Type standard input (stdin) values here..."
-                                        value={customInput}
-                                        onChange={(e) => setCustomInput(e.target.value)}
-                                    />
-                                )}
+                        </section>
 
-                                {activeResultTab === 'output' && (
-                                    <div className="compiler-output-display">
-                                        {stderr && (
-                                            <pre className="output-stderr-pre">
-                                                <strong>Stderr / Errors:</strong><br />
-                                                {stderr}
-                                            </pre>
-                                        )}
-                                        {stdout && (
-                                            <pre className="output-stdout-pre">
-                                                <strong>Stdout:</strong><br />
-                                                {stdout}
-                                            </pre>
-                                        )}
-                                        {!stdout && !stderr && (
-                                            <span className="no-output-hint">Click 'Run Code' to compile and execute program.</span>
-                                        )}
+                        {/* 4. RIGHT SIDEBAR: TEST CASES PANE */}
+                        <aside className="coding-ref-col-testcases">
+                            <div className="testcases-tabs-bar">
+                                <button
+                                    type="button"
+                                    className={`tc-tab-btn ${activeRightTab === 'testcases' ? 'active' : ''}`}
+                                    onClick={() => setActiveRightTab('testcases')}
+                                >
+                                    Test Cases
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`tc-tab-btn ${activeRightTab === 'solution' ? 'active' : ''}`}
+                                    onClick={() => setActiveRightTab('solution')}
+                                >
+                                    Solution
+                                </button>
+                            </div>
+
+                            {activeRightTab === 'testcases' ? (
+                                <>
+                                    <div className="testcases-set-selector">
+                                        <label>Test Case Set</label>
+                                        <select
+                                            value={selectedTestCaseSet}
+                                            onChange={(e) => setSelectedTestCaseSet(e.target.value)}
+                                            className="tc-set-dropdown"
+                                        >
+                                            <option value="sample">
+                                                Sample Test Cases ({(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []).length})
+                                            </option>
+                                            <option value="all">All Test Cases</option>
+                                        </select>
                                     </div>
-                                )}
 
-                                {activeResultTab === 'results' && (
-                                    <div className="test-results-list">
-                                        {runResults && (
-                                            <div className="results-group">
-                                                <h4>Sample Test Cases Execution Logs:</h4>
-                                                <table className="results-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Case</th>
-                                                            <th>Status</th>
-                                                            <th>Actual</th>
-                                                            <th>Expected</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {runResults.map(r => (
-                                                            <tr key={r.index}>
-                                                                <td>Case {r.index}</td>
-                                                                <td className={r.passed ? 'pass-cell' : 'fail-cell'}>
-                                                                    {r.passed ? 'PASSED' : 'FAILED'}
-                                                                </td>
-                                                                <td><pre className="inline-io">{r.actual || '[Empty]'}</pre></td>
-                                                                <td><pre className="inline-io">{r.expected}</pre></td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
+                                    <div className="testcases-accordion-list">
+                                        {(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []).map((tc, idx) => {
+                                            const runItem = runResults?.find(r => r.index === idx + 1);
+                                            const isPassed = runItem?.passed;
+                                            const isFailed = runItem && !runItem.passed;
+                                            const isExpanded = expandedTestCaseIndex === idx;
+                                            const actualOut = runItem?.actual || '';
 
-                                        {evalResults && (
-                                            <div className="results-group">
-                                                <h4>Hidden Test Cases Evaluation Result:</h4>
-                                                <div className="hidden-cases-badges">
-                                                    {evalResults.map(r => (
-                                                        <span
-                                                            key={r.index}
-                                                            className={`hidden-badge ${r.passed ? 'badge-pass' : 'badge-fail'}`}
-                                                            title={r.error ? r.error : 'Passed Case'}
-                                                        >
-                                                            Case {r.index}: {r.passed ? 'PASS' : 'FAIL'}
-                                                        </span>
-                                                    ))}
+                                            let cardClass = 'tc-accordion-card';
+                                            if (isPassed) cardClass += ' passed';
+                                            else if (isFailed) cardClass += ' failed';
+
+                                            return (
+                                                <div key={idx} className={cardClass}>
+                                                    <div className="tc-card-header" onClick={() => setExpandedTestCaseIndex(isExpanded ? -1 : idx)}>
+                                                        <div className="tc-card-header-left">
+                                                            {isPassed ? (
+                                                                <FaCheckCircle style={{ color: '#10b981', fontSize: '0.9rem' }} />
+                                                            ) : isFailed ? (
+                                                                <FaTimesCircle style={{ color: '#ef4444', fontSize: '0.9rem' }} />
+                                                            ) : (
+                                                                <FaChevronRight style={{ color: '#94a3b8', fontSize: '0.75rem' }} />
+                                                            )}
+                                                            <span>Test Case {idx + 1}</span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span className={`tc-status-pill ${isPassed ? 'passed' : isFailed ? 'failed' : 'not-run'}`}>
+                                                                {isPassed ? '✓ Passed' : isFailed ? '✗ Failed' : 'Not Run'}
+                                                            </span>
+                                                            {isExpanded ? <FaChevronUp style={{ fontSize: '0.75rem', color: '#94a3b8' }} /> : <FaChevronDown style={{ fontSize: '0.75rem', color: '#94a3b8' }} />}
+                                                        </div>
+                                                    </div>
+
+                                                    {isExpanded && (
+                                                        <div className="tc-card-body">
+                                                            <div className="tc-field-group">
+                                                                <label>Input</label>
+                                                                <div className="tc-field-box">{tc.input || 'No Input'}</div>
+                                                            </div>
+                                                            <div className="tc-field-group">
+                                                                <label>Expected Output</label>
+                                                                <div className="tc-field-box">{tc.expected}</div>
+                                                            </div>
+                                                            <div className="tc-field-group">
+                                                                <label>Your Output</label>
+                                                                <div className="tc-field-box" style={isFailed ? { borderColor: '#ef4444', color: '#ef4444' } : isPassed ? { borderColor: '#10b981', color: '#10b981' } : { color: '#64748b' }}>
+                                                                    {actualOut || (runItem ? '[Empty]' : 'Not run yet')}
+                                                                </div>
+                                                            </div>
+                                                            <div className="tc-metrics-row">
+                                                                <span>Execution Time: <strong>{runItem ? '4 ms' : '-'}</strong></span>
+                                                                <span>Memory Used: <strong>{runItem ? '16.2 MB' : '-'}</strong></span>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        )}
-
-                                        {!runResults && !evalResults && (
-                                            <span className="no-output-hint">Run Code or Submit to view verified test cases.</span>
-                                        )}
+                                            );
+                                        })}
                                     </div>
-                                )}
-                            </div>
-                        </div>
+                                </>
+                            ) : (
+                                <div style={{ padding: '16px', overflowY: 'auto', fontSize: '0.85rem', color: '#475569', lineHeight: '1.6' }}>
+                                    <h4 style={{ margin: '0 0 8px', color: '#0f172a' }}>Solution Approach</h4>
+                                    <p>Analyze constraints and time complexity carefully before coding. For array hashing or two-pointer patterns, ensure boundary checks are handled properly.</p>
+                                </div>
+                            )}
+                        </aside>
                     </div>
-                </div>
+
+                    {/* ── BOTTOM NAVIGATION FOOTER ── */}
+                    <footer className="coding-ref-bottom-footer">
+                        <button
+                            type="button"
+                            className="btn-prev-question"
+                            disabled={activeQuestionIndex === 0}
+                            onClick={() => setActiveQuestionIndex(i => i - 1)}
+                        >
+                            <FaArrowLeft /> Previous Question
+                        </button>
+
+                        <label className="chk-mark-review-label">
+                            <input
+                                type="checkbox"
+                                checked={!!bookmarkedQuestions[currentQuestion?.id]}
+                                onChange={() => currentQuestion && toggleBookmark(currentQuestion.id)}
+                            />
+                            <span>Mark for Review</span>
+                        </label>
+
+                        <button
+                            type="button"
+                            className="btn-save-next-question"
+                            onClick={() => {
+                                if (activeQuestionIndex === questions.length - 1) {
+                                    setShowSubmitModal(true);
+                                } else {
+                                    setActiveQuestionIndex(i => i + 1);
+                                }
+                            }}
+                        >
+                            <span>{activeQuestionIndex === questions.length - 1 ? 'Submit Section' : 'Save & Next Question'}</span>
+                            <FaArrowRight />
+                        </button>
+                    </footer>
+                </>
             ) : (
                 <div className="workspace-loading-fallback">
                     <div className="learn-spinner"></div>
                     <p>Loading Workspace Questions...</p>
+                </div>
+            )}
+
+            {/* Editorial Modal Overlay */}
+            {showEditorialModal && (
+                <div className="mcq-confirm-dialog" style={{ zIndex: 10008 }}>
+                    <div className="mcq-confirm-content" style={{ maxWidth: '600px', textAlign: 'left' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <FaBookOpen style={{ color: '#10b981' }} /> Editorial &amp; Algorithm Notes
+                            </h3>
+                            <button type="button" onClick={() => setShowEditorialModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.2rem' }}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <p style={{ color: '#cbd5e1', lineHeight: '1.6', fontSize: '0.9rem' }}>
+                            <strong>Problem:</strong> {currentQuestion?.title || 'Current Challenge'}<br />
+                            <strong>Approach:</strong> Optimize solution using efficient data structures (such as hash maps or binary search) to achieve $O(n)$ or $O(n \log n)$ time complexity.
+                        </p>
+                        <div className="mcq-confirm-buttons" style={{ justifyContent: 'flex-end', marginTop: '16px' }}>
+                            <button type="button" className="btn-confirm-submit" onClick={() => setShowEditorialModal(false)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Discuss Modal Overlay */}
+            {showDiscussModal && (
+                <div className="mcq-confirm-dialog" style={{ zIndex: 10008 }}>
+                    <div className="mcq-confirm-content" style={{ maxWidth: '600px', textAlign: 'left' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <FaComments style={{ color: '#3b82f6' }} /> Discussion &amp; Clarifications
+                            </h3>
+                            <button type="button" onClick={() => setShowDiscussModal(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.2rem' }}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <p style={{ color: '#cbd5e1', lineHeight: '1.6', fontSize: '0.9rem' }}>
+                            <strong>Clarifications:</strong><br />
+                            • Pay attention to large input constraints to avoid Time Limit Exceeded (TLE).<br />
+                            • Handle edge cases: single-element inputs, negative values, and integer overflow.
+                        </p>
+                        <div className="mcq-confirm-buttons" style={{ justifyContent: 'flex-end', marginTop: '16px' }}>
+                            <button type="button" className="btn-confirm-submit" onClick={() => setShowDiscussModal(false)}>Understood</button>
+                        </div>
+                    </div>
                 </div>
             )}
 

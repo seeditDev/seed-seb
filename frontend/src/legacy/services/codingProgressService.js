@@ -32,6 +32,7 @@
 
 import { db } from '../firebase-config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import desktopBridge from '../utils/desktopBridge';
 
 const COLLECTION = 'codingProgress';
 
@@ -116,6 +117,11 @@ const saveLocalProgress = (uid, progress) => {
   if (uid && uid !== effectiveUid) {
     localStorage.setItem(`practice_progress_${uid}`, serialized);
   }
+
+  // Persist to local disk under user_profile/{uid}/daily_activity.json
+  try {
+    desktopBridge.saveUserProfileCache(effectiveUid, 'daily_activity', progress);
+  } catch (_) {}
 };
 
 // ── Read Operations ────────────────────────────────────────────────────────────
@@ -145,10 +151,47 @@ export const getAttemptedQuestionIds = async (uid) => {
 };
 
 /**
- * Get full progress from Local Storage.
+ * Get full progress from Local Storage or disk user_profile cache.
  */
 export const getFullProgress = async (uid) => {
-  return getLocalProgress(uid);
+  return await loadPersistedUserActivity(uid);
+};
+
+/**
+ * Load persisted user daily activity & coding progress from:
+ * 1. Local memory / localStorage
+ * 2. Disk user_profile/{uid}/daily_activity.json
+ * 3. Remote Firebase Firestore (if online and cache miss)
+ */
+export const loadPersistedUserActivity = async (uid) => {
+  const effectiveUid = resolveEffectiveUid(uid);
+  if (!effectiveUid) return normalizeProgressStructure({});
+
+  // 1. Check in-memory / localStorage first
+  const local = getLocalProgress(effectiveUid);
+  if ((local.completedQuestions && local.completedQuestions.length > 0) || (local.activityByDate && Object.keys(local.activityByDate).length > 0)) {
+    return local;
+  }
+
+  // 2. Check local disk cache in user_profile/{uid}/daily_activity.json
+  try {
+    const diskCache = await desktopBridge.loadUserProfileCache(effectiveUid, 'daily_activity');
+    if (diskCache && typeof diskCache === 'object') {
+      const normalized = normalizeProgressStructure(diskCache);
+      saveLocalProgress(effectiveUid, normalized);
+      return normalized;
+    }
+  } catch (_) {}
+
+  // 3. Fallback to Firebase sync
+  if (navigator.onLine) {
+    try {
+      const res = await syncProgressWithFirebase(effectiveUid);
+      if (res?.progress) return res.progress;
+    } catch (_) {}
+  }
+
+  return local;
 };
 
 /**
@@ -226,6 +269,11 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
   saveLocalProgress(uid, local);
   console.log(`[CodingProgressService] ${strQId} marked as SOLVED (cacheId: ${local.cacheId})`);
 
+  // Log activity to userActivities/{uid}/
+  import('./activityLoggerService').then(mod => {
+    mod.logUserActivity(uid, 'QUESTION_SOLVED', { questionId: strQId, language, score, attempts });
+  }).catch(() => {});
+
   // Background sync with Firestore if online
   if (navigator.onLine) {
     try {
@@ -269,6 +317,11 @@ export const markQuestionAttempted = async (uid, questionId, language, score) =>
   }
 
   saveLocalProgress(uid, local);
+
+  // Log activity to userActivities/{uid}/
+  import('./activityLoggerService').then(mod => {
+    mod.logUserActivity(uid, 'QUESTION_ATTEMPT', { questionId: strQId, language, score });
+  }).catch(() => {});
 
   // Background sync with Firestore if online
   if (navigator.onLine) {
@@ -483,15 +536,18 @@ export const getQuestionDisplayStatus = (
   attemptedIds = []
 ) => {
   if (!questionId) return 'UNSOLVED';
-  const strId = String(questionId);
+  const strId = String(questionId).trim();
 
   if (strId.startsWith('Q0.')) {
     isPremium = false;
   }
   if (isPremium && !userIsPremium) return 'LOCKED';
 
-  if (solvedIds.includes(strId) || problemDetails[strId]?.status === 'SOLVED') return 'SOLVED';
-  if (attemptedIds.includes(strId) || problemDetails[strId]?.status === 'ATTEMPTED') return 'ATTEMPTED';
+  const solvedSet = Array.isArray(solvedIds) ? new Set(solvedIds.map(String)) : (solvedIds instanceof Set ? solvedIds : new Set());
+  const attemptedSet = Array.isArray(attemptedIds) ? new Set(attemptedIds.map(String)) : (attemptedIds instanceof Set ? attemptedIds : new Set());
+
+  if (solvedSet.has(strId) || problemDetails[strId]?.status === 'SOLVED' || problemDetails[strId]?.lastSolvedAt) return 'SOLVED';
+  if (attemptedSet.has(strId) || problemDetails[strId]?.status === 'ATTEMPTED') return 'ATTEMPTED';
   if (problemDetails[strId]?.status === 'IN_PROGRESS') return 'IN_PROGRESS';
   return 'UNSOLVED';
 };
@@ -518,6 +574,11 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
   local.activity[today].hours = (local.activity[today].hours || 0) + (minutes / 60);
   
   saveLocalProgress(uid, local);
+
+  // Log activity to userActivities/{uid}/
+  import('./activityLoggerService').then(mod => {
+    mod.logUserActivity(uid, 'TIME_SPENT', { minutes, totalHoursToday: local.activity[today].hours });
+  }).catch(() => {});
   
   // Fire-and-forget sync — only if user is authenticated
   if (navigator.onLine) {

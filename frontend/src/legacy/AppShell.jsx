@@ -3,7 +3,7 @@
  * Owns cache/time-service bootstrap, session tracking, the desktop-only gate
  * and the top-level error boundary. Routing itself lives in src/routes.
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Cookies from "js-cookie";
 
 import cacheManager from "./utils/cacheManager";
@@ -12,9 +12,11 @@ import timeService from "./services/timeService";
 import desktopBridge from "./utils/desktopBridge";
 import { logPortalActivityTime } from "./services/codingProgressService";
 import { useLocation, useNavigate } from "./router-compat";
-import { auth, onAuthStateChanged } from "./firebase-config";
+import { auth, onAuthStateChanged, db } from "./firebase-config";
+import { doc, onSnapshot } from "firebase/firestore";
 import ProctorService from "./services/proctorService";
 
+import { Toaster } from "sonner";
 import "./index.css";
 import "./styles/Login.css";
 
@@ -98,7 +100,7 @@ function PortalActivityTracker() {
           console.warn("Activity tracking failed:", err),
         );
       }
-    }, 60000);
+    }, 60_000);
 
     return () => clearInterval(interval);
   }, [location.pathname]);
@@ -115,6 +117,7 @@ export default function AppShell({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDesktopApp, setIsDesktopApp] = useState(true);
+  const sessionUnsubscribeRef = useRef(null);
 
   useEffect(() => {
     const activeTheme = localStorage.getItem("portal_theme") || "seed-seb";
@@ -247,6 +250,30 @@ export default function AppShell({ children }) {
           localStorage.removeItem("auth_data");
         }
       }
+
+      // Single-System Login Guard: Monitor activeSessionId to prevent multi-device logins
+      if (firebaseUser?.uid) {
+        const localSessionId = localStorage.getItem("active_session_id") || sessionStorage.getItem("active_session_id");
+        if (localSessionId) {
+          if (sessionUnsubscribeRef.current) {
+            sessionUnsubscribeRef.current();
+          }
+          sessionUnsubscribeRef.current = onSnapshot(doc(db, "users", firebaseUser.uid), (docSnap) => {
+            if (!docSnap.exists()) return;
+            const remoteData = docSnap.data();
+            const remoteSessionId = remoteData.activeSessionId;
+            if (remoteSessionId && remoteSessionId !== localSessionId) {
+              console.warn("[SessionGuard] Simultaneous login detected on another system! Terminating current session.");
+              clearAllStudentLocalData();
+              auth.signOut().catch(() => {});
+              alert("Simultaneous Login Detected: Your account has been logged in on another machine. For exam security, this session has been ended.");
+              window.location.href = "/login";
+            }
+          }, (err) => {
+            console.warn("[SessionGuard] Session listener non-fatal error:", err);
+          });
+        }
+      }
     });
 
     // FIX P2: The previous code had TWO return statements — the second one (with
@@ -257,6 +284,9 @@ export default function AppShell({ children }) {
     return () => {
       isMounted = false;
       unsubscribeAuth();
+      if (sessionUnsubscribeRef.current) {
+        sessionUnsubscribeRef.current();
+      }
       window.removeEventListener("beforeunload", handleUnload);
       if (timeoutId) clearTimeout(timeoutId);
       try {
@@ -477,6 +507,7 @@ function EngineDisconnectedPopup() {
 
   return (
     <ErrorBoundary>
+      <Toaster richColors position="top-right" />
       <PortalActivityTracker />
       <EngineDisconnectedPopup />
       {children}

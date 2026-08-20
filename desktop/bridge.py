@@ -19,6 +19,26 @@ class DesktopBridge(QObject):
         except Exception as e:
             print(f"[DesktopBridge] Error parsing student session: {e}")
 
+    @pyqtSlot(str, str, result=bool)
+    def setContestContext(self, contest_id, key_hex=""):
+        """Registers active contest ID and optional in-memory decryption key."""
+        try:
+            self.engine.set_contest_context(contest_id, key_hex)
+            return True
+        except Exception as e:
+            print(f"[DesktopBridge] Error setting contest context: {e}")
+            return False
+
+    @pyqtSlot(str, str, result=bool)
+    def setContestKey(self, contest_id, key_hex):
+        """Registers in-memory AES decryption key for an assessment."""
+        try:
+            self.engine.set_contest_context(contest_id, key_hex)
+            return True
+        except Exception as e:
+            print(f"[DesktopBridge] Error registering contest key: {e}")
+            return False
+
     @pyqtSlot(str, str, str, result=str)
     def runCode(self, language, code, stdin):
         """
@@ -215,4 +235,22 @@ class DesktopBridge(QObject):
             self.engine.cleanup_student_session_data()
         except Exception as e:
             print(f"[DesktopBridge] Error ending student session: {e}")
+
+    @pyqtSlot(str, str, str, result=bool)
+    def saveUserProfileCache(self, uid, data_type, json_data):
+        """Persists user profile / daily activity JSON to disk under user_profile/{uid}/."""
+        try:
+            return self.engine.save_user_profile_cache(uid, data_type, json_data)
+        except Exception as e:
+            print(f"[DesktopBridge] Error in saveUserProfileCache: {e}")
+            return False
+
+    @pyqtSlot(str, str, result=str)
+    def loadUserProfileCache(self, uid, data_type):
+        """Loads persisted user profile / daily activity JSON from user_profile/{uid}/."""
+        try:
+            return self.engine.load_user_profile_cache(uid, data_type)
+        except Exception as e:
+            print(f"[DesktopBridge] Error in loadUserProfileCache: {e}")
+            return ""
 

@@ -4,8 +4,21 @@ import json
 import time
 import base64
 import re
+import requests
 from executor import code_executor
 from runtime_manager import runtime_manager
+
+try:
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+
+# Firebase Configuration for Firestore Key Retrieval
+FIREBASE_CONFIG = {
+    "apiKey": "AIzaSyANO2d-RUXV0x5fvTjRT1UkpssP-T_Qz1Q",
+    "projectId": "daily-tracker-a4092",
+}
 
 
 class AssessmentEngine:
@@ -18,10 +31,15 @@ class AssessmentEngine:
         os.makedirs(os.path.join(self.questions_dir, "hidden"), exist_ok=True)
         os.makedirs(self.student_dir, exist_ok=True)
 
-        # Holds active student auth_data dict.
-        # NOTE: This is for session scoping (file naming) only.
-        # The Firebase Auth UID in the auth_data dict is the canonical identity.
+        # Persistent user profile & daily activity cache directory (adjacent to runtimes)
+        runtimes_base = os.path.dirname(runtime_manager.runtimes_dir) if hasattr(runtime_manager, 'runtimes_dir') else self.app_root
+        self.user_profile_dir = os.path.join(runtimes_base, "user_profile")
+        os.makedirs(self.user_profile_dir, exist_ok=True)
+
+        # Holds active student auth_data dict and active contest keys in RAM
         self.current_student = None
+        self._active_keys = {}  # {contest_id: bytes_key}
+        self._active_contest_id = None
 
     def set_student_session(self, auth_data):
         """Sets the active student profile session.
@@ -38,6 +56,45 @@ class AssessmentEngine:
         else:
             self.current_student = auth_data
         print(f"[AssessmentEngine] Active session set for uid: {self.current_student.get('uid') if self.current_student else 'Guest'}")
+
+    def set_contest_context(self, contest_id, key_hex=""):
+        """Registers active contest ID and optional in-memory decryption key."""
+        self._active_contest_id = contest_id
+        if key_hex:
+            try:
+                self._active_keys[contest_id] = bytes.fromhex(key_hex)
+                print(f"[AssessmentEngine] Registered in-memory decryption key for contest: {contest_id}")
+            except Exception as e:
+                print(f"[AssessmentEngine] Error parsing hex key for contest {contest_id}: {e}")
+
+    def fetch_contest_key_from_firestore(self, contest_id):
+        """Fetches dynamic AES-256 decryption key from Firestore assessment_keys/{contest_id}."""
+        if not contest_id:
+            return None
+        if contest_id in self._active_keys:
+            return self._active_keys[contest_id]
+
+        url = (
+            f"https://firestore.googleapis.com/v1/projects/{FIREBASE_CONFIG['projectId']}/databases/(default)/"
+            f"documents/assessment_keys/{contest_id}"
+        )
+        params = {"key": FIREBASE_CONFIG["apiKey"]}
+        try:
+            resp = requests.get(url, params=params, timeout=6)
+            if resp.status_code == 200:
+                doc = resp.json()
+                fields = doc.get("fields", {})
+                raw_key = fields.get("encryptionKey", {}).get("stringValue", "") or fields.get("key", {}).get("stringValue", "")
+                if raw_key:
+                    key_bytes = bytes.fromhex(raw_key) if len(raw_key) == 64 else raw_key.encode('utf-8').ljust(32, b'0')[:32]
+                    self._active_keys[contest_id] = key_bytes
+                    print(f"[AssessmentEngine] Successfully fetched dynamic AES key for contest: {contest_id}")
+                    return key_bytes
+            else:
+                print(f"[AssessmentEngine] Notice: No remote key doc in assessment_keys/{contest_id} (status: {resp.status_code})")
+        except Exception as e:
+            print(f"[AssessmentEngine] Warning: Could not fetch remote contest key for {contest_id}: {e}")
+        return None
 
     def get_student_id(self):
         """Returns normalized, path-safe student file identifier.
@@ -76,33 +133,87 @@ class AssessmentEngine:
         except Exception as err:
             print(f"[AssessmentEngine] Cleanup error: {err}")
 
-    # ── Local cache encoding (NOT cryptographic security) ────────────────────
-    #
-    # The following two methods apply XOR-based encoding to hidden test files
-    # stored on the local disk. This is a DETERRENT against casual inspection,
-    # NOT cryptographic protection. A determined user with local machine access
-    # can reverse this trivially. It MUST NOT be described as "secure" or
-    # "encrypted" in any user-facing context.
-    #
-    # For true hidden-test secrecy, the code judge must run as a remote trusted
-    # service that the client never contacts directly.
-    #
-    def _encode_local_cache(self, data_str):
-        """Applies XOR-based local cache encoding to hidden test data.
+    def get_user_profile_dir(self, uid=None):
+        """Returns the user-specific profile cache directory (keyed by UID)."""
+        target_uid = uid or self.get_student_id()
+        sanitized = re.sub(r'[^a-zA-Z0-9_-]', '_', str(target_uid or "guest"))
+        user_dir = os.path.join(self.user_profile_dir, sanitized)
+        os.makedirs(user_dir, exist_ok=True)
+        return user_dir
 
-        WARNING: This is NOT cryptographic encryption. It provides no
-        meaningful security against a local attacker. The key is hardcoded
-        and the algorithm is trivially reversible.
-        """
+    def save_user_profile_cache(self, uid, data_type, json_data):
+        """Saves cached daily activity or profile data for a specific UID."""
+        try:
+            user_dir = self.get_user_profile_dir(uid)
+            clean_type = re.sub(r'[^a-zA-Z0-9_-]', '_', str(data_type or "daily_activity"))
+            fpath = os.path.join(user_dir, f"{clean_type}.json")
+            parsed = json.loads(json_data) if isinstance(json_data, str) else json_data
+            with open(fpath, "w", encoding="utf-8") as f:
+                json.dump(parsed, f, indent=2)
+            return True
+        except Exception as e:
+            print(f"[AssessmentEngine] Error saving user_profile cache for {uid}: {e}")
+            return False
+
+    def load_user_profile_cache(self, uid, data_type):
+        """Loads cached daily activity or profile data for a specific UID."""
+        try:
+            user_dir = self.get_user_profile_dir(uid)
+            clean_type = re.sub(r'[^a-zA-Z0-9_-]', '_', str(data_type or "daily_activity"))
+            fpath = os.path.join(user_dir, f"{clean_type}.json")
+            if os.path.exists(fpath):
+                with open(fpath, "r", encoding="utf-8") as f:
+                    return f.read()
+            return ""
+        except Exception as e:
+            print(f"[AssessmentEngine] Error loading user_profile cache for {uid}: {e}")
+            return ""
+
+    # ── Dynamic AES-256 & Local Cache Decryption ──────────────────────────────
+    def _encode_local_cache(self, data_str, key_hex=None):
+        """Encodes test data using AES-256-GCM if key provided, with fallback to XOR."""
+        if HAS_CRYPTOGRAPHY and key_hex:
+            try:
+                key_bytes = bytes.fromhex(key_hex) if len(key_hex) == 64 else key_hex.encode('utf-8').ljust(32, b'0')[:32]
+                iv = os.urandom(12)
+                aesgcm = AESGCM(key_bytes)
+                ct = aesgcm.encrypt(iv, data_str.encode('utf-8'), None)
+                payload = {
+                    "algorithm": "AES-256-GCM",
+                    "iv": iv.hex(),
+                    "ciphertext": ct.hex()
+                }
+                return json.dumps(payload)
+            except Exception as e:
+                print(f"[AssessmentEngine] AES encryption error: {e}")
+
         key = "KITE_SECURE_KEY_2026"
         xored = "".join(chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(data_str))
         return base64.b64encode(xored.encode("utf-8")).decode("utf-8")
 
-    def _decode_local_cache(self, encoded_str):
-        """Decodes XOR-encoded local cache data.
+    def _decode_local_cache(self, encoded_str, question_id=None, contest_id=None):
+        """Decodes test data in memory using AES-256-GCM or XOR."""
+        # 1. Try parsing as AES-256-GCM JSON envelope
+        if HAS_CRYPTOGRAPHY and encoded_str.startswith("{"):
+            try:
+                payload = json.loads(encoded_str)
+                if isinstance(payload, dict) and payload.get("algorithm") == "AES-256-GCM":
+                    iv = bytes.fromhex(payload["iv"])
+                    ct = bytes.fromhex(payload["ciphertext"])
+                    
+                    target_contest = contest_id or self._active_contest_id
+                    key = self._active_keys.get(target_contest) or self.fetch_contest_key_from_firestore(target_contest)
+                    if not key:
+                        # Default fallback key for standard offline question banks
+                        key = b"KITE_SECURE_SEED_AES_KEY_2026_00"[:32]
+                    
+                    aesgcm = AESGCM(key)
+                    decrypted_bytes = aesgcm.decrypt(iv, ct, None)
+                    return decrypted_bytes.decode('utf-8')
+            except Exception as e:
+                print(f"[AssessmentEngine] Notice: AES decode failed or invalid key: {e}")
 
-        WARNING: This is NOT cryptographic decryption. See _encode_local_cache.
-        """
+        # 2. XOR legacy / standard fallback
         try:
             key = "KITE_SECURE_KEY_2026"
             decoded = base64.b64decode(encoded_str.encode("utf-8")).decode("utf-8")
@@ -110,7 +221,7 @@ class AssessmentEngine:
             return xored
         except Exception as e:
             print(f"[AssessmentEngine] Error decoding local cache for hidden tests: {e}")
-            return None  # Return None, not "[]" — callers must handle None as a failure
+            return None
 
     def load_question(self, question_id):
         """Loads and returns public question details (excluding hidden test cases)."""
@@ -179,11 +290,8 @@ class AssessmentEngine:
         print(f"[AssessmentEngine] Wrote locally-encoded hidden test cases for: {question_id}")
 
     def run_code_against_samples(self, language, code, question_id):
-        """Runs the student's code against the public SAMPLE test cases.
-
-        This is for PRACTICE/PREVIEW only. Results from this method MUST NOT
-        be used as official assessment scores. Use submit_code_assessment() for
-        official scoring against hidden tests.
+        """Runs the student's code against the public SAMPLE test cases
+        PLUS the first 6 HIDDEN test cases (without leaking hidden input/expected).
         """
         question = self.load_question(question_id)
         if not question:
@@ -193,12 +301,13 @@ class AssessmentEngine:
         time_limit = question.get("timeLimit", 2.0)
 
         results = []
+
+        # 1. Run all sample test cases (full input/expected/actual visibility)
         for index, test in enumerate(sample_tests):
             stdin = test.get("input", "")
             expected = test.get("expected", "")
 
             exec_res = code_executor.execute(language, code, stdin=stdin, time_limit=time_limit)
-
             passed = exec_res["stdout"].strip() == expected.strip() and not exec_res["error"]
 
             results.append({
@@ -210,8 +319,36 @@ class AssessmentEngine:
                 "passed":        passed,
                 "executionTime": exec_res["execution_time"],
                 "error":         exec_res["error"],
-                "isSampleTest":  True,  # Always mark — these are NEVER official hidden tests
+                "isSampleTest":  True,  # Mark sample test cases
             })
+
+        # 2. Run first 6 hidden test cases (inputs/expected outputs remain hidden)
+        try:
+            hidden_tests = self.load_hidden_tests(question_id)
+            if hidden_tests and isinstance(hidden_tests, list):
+                first_6_hidden = hidden_tests[:6]
+                for h_idx, test in enumerate(first_6_hidden):
+                    stdin = test.get("input", "")
+                    expected = test.get("expected", "")
+
+                    exec_res = code_executor.execute(language, code, stdin=stdin, time_limit=time_limit)
+                    passed = exec_res["stdout"].strip() == expected.strip() and not exec_res["error"]
+
+                    results.append({
+                        "caseNumber":    len(sample_tests) + h_idx + 1,
+                        "input":         "[Hidden Test Case]",
+                        "expected":      "[Hidden Output]",
+                        "actual":        "[Hidden Output]" if not exec_res["error"] else (exec_res["error"] or "[Error]"),
+                        "stderr":        exec_res["stderr"],
+                        "passed":        passed,
+                        "executionTime": exec_res["execution_time"],
+                        "error":         exec_res["error"],
+                        "isSampleTest":  False,
+                        "isHiddenTest":  True,
+                        "hiddenIndex":   h_idx + 1,
+                    })
+        except Exception as e:
+            print(f"[AssessmentEngine] Notice: could not load hidden tests for preview execution: {e}")
 
         return results
 

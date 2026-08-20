@@ -99,10 +99,30 @@ class DataService {
             // 2. Read Firestore profile
             const profile = await DataService.getUserProfile(firebaseUser.uid);
 
-            // 3. Update lastLoginAt
+            // 3. Single-System Login Enforcement: Generate activeSessionId & log activity
+            const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+            localStorage.setItem('active_session_id', sessionId);
+            sessionStorage.setItem('active_session_id', sessionId);
+
             try {
                 await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
+                    activeSessionId: sessionId,
                     lastLoginAt: serverTimestamp(),
+                    lastLoginDevice: {
+                        platform: typeof navigator !== 'undefined' ? navigator.platform : 'desktop',
+                        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'SEED-SEB Desktop',
+                        loginTimeISO: new Date().toISOString()
+                    }
+                });
+
+                // Record session in activityLogging subcollection
+                await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid, 'activityLogging', sessionId), {
+                    sessionId: sessionId,
+                    loginAt: serverTimestamp(),
+                    loginAtISO: new Date().toISOString(),
+                    status: 'active',
+                    platform: typeof navigator !== 'undefined' ? navigator.platform : 'desktop',
+                    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'SEED-SEB Desktop'
                 });
             } catch (_) {
                 // Non-fatal

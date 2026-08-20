@@ -7,10 +7,12 @@ import { fetchArticleFile, fetchArticleJson } from '../utils/articleFetcher';
 import {
   FaSearch, FaCheckCircle,
   FaFileAlt, FaBookOpen,
-  FaAngleRight, FaAngleDown, FaChevronLeft,
+  FaAngleRight, FaAngleDown, FaChevronLeft, FaChevronRight, FaChevronDown,
   FaLock, FaStar, FaFolderOpen, FaFolder,
   FaRocket, FaPython, FaCoffee, FaDatabase,
-  FaReact, FaHtml5, FaJs, FaTerminal, FaRust, FaBrain, FaNetworkWired, FaCode, FaLaptopCode
+  FaReact, FaHtml5, FaJs, FaTerminal, FaRust, FaBrain, FaNetworkWired, FaCode, FaLaptopCode,
+  FaThLarge, FaTasks, FaTachometerAlt, FaClock, FaCheck,
+  FaCheckSquare, FaChartLine, FaSyncAlt, FaEye
 } from 'react-icons/fa';
 import roadmapsData from './roadmaps_data.json';
 import '../styles/PracticeHome.css';
@@ -143,10 +145,22 @@ const getCorrectArticleForProblem = (courseId, prob) => {
   return 'gfg-dsa';
 };
 
-const PracticeHome = () => {
+const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('paths'); // 'paths' or 'bank'
+  const [activeTab, setActiveTab] = useState(initialTab || 'paths'); // 'paths' or 'bank'
+  const [selectedCourse, setSelectedCourse] = useState(initialCourse || null);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  useEffect(() => {
+    setSelectedCourse(initialCourse || null);
+  }, [initialCourse]);
+
   const [questions, setQuestions] = useState([]);
   const [solvedIds, setSolvedIds] = useState([]);
   const [attemptedIds, setAttemptedIds] = useState([]);
@@ -165,7 +179,8 @@ const PracticeHome = () => {
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [tabLoading, setTabLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 50;
+  const [pageSize, setPageSize] = useState(10);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Structured Learning Paths State
   const [courses, setCourses] = useState([]);
@@ -179,7 +194,6 @@ const PracticeHome = () => {
   const [contestLoading, setContestLoading] = useState(false);
 
   const [selectedSheet, setSelectedSheet] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState(null);
   const [curriculumSubTab, setCurriculumSubTab] = useState('technical');
   const [expandedTopics, setExpandedTopics] = useState({});
   const [sheetSolvedDicts, setSheetSolvedDicts] = useState({});
@@ -582,168 +596,184 @@ const PracticeHome = () => {
         const departmentAccess = accessControl?.access_control?.colleges?.[authData.College]?.[authData.Year]?.[authData.Department];
         const allowedIds = departmentAccess?.allowed_modules || [];
         setAllowedModuleIds(allowedIds);
+      }
 
-        // Process courses from access_control.json
-        const pfCourse = {
-          id: 'programming_fundamentals',
-          title: 'Programming Fundamentals',
-          display_order: 0,
+      // Process courses (always available by default)
+      const pfCourse = {
+        id: 'programming_fundamentals',
+        title: 'Programming Fundamentals',
+        display_order: 0,
+        hasSubcourses: false,
+        subcourses: [],
+        modules: [
+          { id: 'FPS001', name: 'Basic Datatypes & Variables', url: 'seed-contents/coding/basic-datatypes.json', type: 'coding', display_order: 1 },
+          { id: 'FPS002', name: 'Conditional Statements', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 2 },
+          { id: 'FPS003', name: 'Looping', url: 'seed-contents/coding/looping.json', type: 'coding', display_order: 3 },
+          { id: 'FPS004', name: 'Number Crunching', url: 'seed-contents/coding/number-crunching.json', type: 'coding', display_order: 4 },
+          { id: 'FPS005', name: 'Number Based Problems', url: 'seed-contents/coding/number-based-problems.json', type: 'coding', display_order: 5 },
+          { id: 'FPS006', name: 'Arrays', url: 'seed-contents/coding/arrays.json', type: 'coding', display_order: 6 },
+          { id: 'FPS007', name: 'Strings', url: 'seed-contents/coding/strings.json', type: 'coding', display_order: 7 }
+        ]
+      };
+      const scrapedConfigs = [
+        { id: 'learn_c', title: 'Learn C', syllabusUrl: 'seed-contents/coding/learn-c-syllabus.json' },
+        { id: 'learn_cpp', title: 'Learn C++ & DSA Foundations', syllabusUrl: 'seed-contents/coding/learn-cpp-syllabus.json' },
+        { id: 'learn_dsa', title: 'Master Data Structures & Algorithms', syllabusUrl: 'seed-contents/coding/learn-dsa-syllabus.json' },
+        { id: 'learn_java', title: 'Learn Java', syllabusUrl: 'seed-contents/coding/learn-java-syllabus.json' },
+        { id: 'learn_become-5-star', title: 'Become a 5-Star Coder (Roadmap)', syllabusUrl: 'seed-contents/coding/learn-become-5-star-syllabus.json' },
+        { id: 'learn_python-dsa', title: 'Python Data Structures & Algorithms (Roadmap)', syllabusUrl: 'seed-contents/coding/learn-python-dsa-syllabus.json' },
+        { id: 'learn_javascript-dsa', title: 'JavaScript Data Structures & Algorithms (Roadmap)', syllabusUrl: 'seed-contents/coding/learn-javascript-dsa-syllabus.json' },
+        { id: 'learn_git-github', title: 'Git & GitHub', syllabusUrl: 'seed-contents/coding/learn-git-github-syllabus.json' },
+        { id: 'learn_python-beginner-v2-p1', title: 'Python Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-python-beginner-v2-p1-syllabus.json' },
+        { id: 'learn_html', title: 'Learn HTML Basics', syllabusUrl: 'seed-contents/coding/learn-html-syllabus.json' },
+        { id: 'learn_java-beginner-v2-p1', title: 'Java Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-java-beginner-v2-p1-syllabus.json' },
+        { id: 'learn_javascript', title: 'Learn JavaScript Essentials', syllabusUrl: 'seed-contents/coding/learn-javascript-syllabus.json' },
+        { id: 'learn_cpp-beginner-v2-p1', title: 'C++ Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-cpp-beginner-v2-p1-syllabus.json' },
+        { id: 'learn_linked-lists-new', title: 'Linked Lists Practice', syllabusUrl: 'seed-contents/coding/learn-linked-lists-new-syllabus.json' },
+        { id: 'learn_c-beginner-v2-p1', title: 'C Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-c-beginner-v2-p1-syllabus.json' },
+        { id: 'learn_stacks-and-queues-new', title: 'Stacks & Queues Practice', syllabusUrl: 'seed-contents/coding/learn-stacks-and-queues-new-syllabus.json' },
+        { id: 'learn_time-complexity', title: 'Time & Space Complexity', syllabusUrl: 'seed-contents/coding/learn-time-complexity-syllabus.json' },
+        { id: 'learn_java-development', title: 'Java Development Mastery', syllabusUrl: 'seed-contents/coding/learn-java-development-syllabus.json' },
+        { id: 'learn_sql-intermediate', title: 'SQL Intermediate', syllabusUrl: 'seed-contents/coding/learn-sql-intermediate-syllabus.json' },
+        { id: 'learn_python-beginner-v2-p2', title: 'Python Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-python-beginner-v2-p2-syllabus.json' },
+        { id: 'learn_sql-at-work', title: 'SQL at Work', syllabusUrl: 'seed-contents/coding/learn-sql-at-work-syllabus.json' },
+        { id: 'learn_cpp-beginner-v2-p2', title: 'C++ Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-cpp-beginner-v2-p2-syllabus.json' },
+        { id: 'learn_binary-search-new', title: 'Binary Search Practice', syllabusUrl: 'seed-contents/coding/learn-binary-search-new-syllabus.json' },
+        { id: 'learn_greedy-algorithms', title: 'Greedy Algorithms', syllabusUrl: 'seed-contents/coding/learn-greedy-algorithms-syllabus.json' },
+        { id: 'learn_hashing', title: 'Hashing Practice', syllabusUrl: 'seed-contents/coding/learn-hashing-syllabus.json' },
+        { id: 'learn_web-dev-js', title: 'Web Development with JS', syllabusUrl: 'seed-contents/coding/learn-web-dev-js-syllabus.json' },
+        { id: 'learn_cpp-development', title: 'C++ Development Mastery', syllabusUrl: 'seed-contents/coding/learn-cpp-development-syllabus.json' },
+        { id: 'learn_nodejs', title: 'NodeJS Backend Foundations', syllabusUrl: 'seed-contents/coding/learn-nodejs-syllabus.json' },
+        { id: 'learn_college-oops-java', title: 'Object-Oriented Programming (Java)', syllabusUrl: 'seed-contents/coding/learn-college-oops-java-syllabus.json' },
+        { id: 'learn_ux', title: 'UX/UI Design Foundations', syllabusUrl: 'seed-contents/coding/learn-ux-syllabus.json' },
+        { id: 'learn_java-beginner-v2-p2', title: 'Java Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-java-beginner-v2-p2-syllabus.json' },
+        { id: 'learn_dynamic-programming-new', title: 'Dynamic Programming Practice', syllabusUrl: 'seed-contents/coding/learn-dynamic-programming-new-syllabus.json' },
+        { id: 'learn_c-beginner-v2-p2', title: 'C Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-c-beginner-v2-p2-syllabus.json' },
+        { id: 'learn_machine-learning', title: 'Machine Learning Basics', syllabusUrl: 'seed-contents/coding/learn-machine-learning-syllabus.json' },
+        { id: 'learn_css', title: 'CSS Styles & Layouts', syllabusUrl: 'seed-contents/coding/learn-css-syllabus.json' },
+        { id: 'learn_advanced-python', title: 'Advanced Python', syllabusUrl: 'seed-contents/coding/learn-advanced-python-syllabus.json' },
+        { id: 'learn_college-oops-cpp', title: 'Object-Oriented Programming (C++)', syllabusUrl: 'seed-contents/coding/learn-college-oops-cpp-syllabus.json' },
+        { id: 'learn_graphs-new', title: 'Graphs Practice', syllabusUrl: 'seed-contents/coding/learn-graphs-new-syllabus.json' },
+        { id: 'learn_cpp-stl', title: 'C++ Standard Template Library', syllabusUrl: 'seed-contents/coding/learn-cpp-stl-syllabus.json' },
+        { id: 'learn_django', title: 'Django Web Development', syllabusUrl: 'seed-contents/coding/learn-django-syllabus.json' },
+        { id: 'learn_oops-concepts-in-python', title: 'OOP Concepts in Python', syllabusUrl: 'seed-contents/coding/learn-oops-concepts-in-python-syllabus.json' },
+        { id: 'learn_numpy', title: 'Numerical Python (NumPy)', syllabusUrl: 'seed-contents/coding/learn-numpy-syllabus.json' },
+        { id: 'learn_springboot', title: 'Spring Boot Foundations', syllabusUrl: 'seed-contents/coding/learn-springboot-syllabus.json' },
+        { id: 'learn_college-programming-c', title: 'College Programming with C', syllabusUrl: 'seed-contents/coding/learn-college-programming-c-syllabus.json' },
+        { id: 'learn_pandas', title: 'Data Analysis with Pandas', syllabusUrl: 'seed-contents/coding/learn-pandas-syllabus.json' },
+        { id: 'learn_deep-learning-ai', title: 'Deep Learning & AI', syllabusUrl: 'seed-contents/coding/learn-deep-learning-ai-syllabus.json' },
+        { id: 'learn_number-theory', title: 'Number Theory', syllabusUrl: 'seed-contents/coding/learn-number-theory-syllabus.json' },
+        { id: 'learn_heaps', title: 'Heaps Practice', syllabusUrl: 'seed-contents/coding/learn-heaps-syllabus.json' },
+        { id: 'learn_bit-manipulation', title: 'Bit Manipulation', syllabusUrl: 'seed-contents/coding/learn-bit-manipulation-syllabus.json' },
+        { id: 'learn_go', title: 'Go Programming Language', syllabusUrl: 'seed-contents/coding/learn-go-syllabus.json' },
+        { id: 'learn_kotlin', title: 'Kotlin Programming', syllabusUrl: 'seed-contents/coding/learn-kotlin-syllabus.json' },
+        { id: 'learn_rust', title: 'Rust Programming', syllabusUrl: 'seed-contents/coding/learn-rust-syllabus.json' },
+        { id: 'learn_c-sharp-beginner-part-1', title: 'C# Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-c-sharp-beginner-part-1-syllabus.json' },
+        { id: 'learn_tries', title: 'Tries Data Structure', syllabusUrl: 'seed-contents/coding/learn-tries-syllabus.json' },
+        { id: 'learn_combinatorics', title: 'Combinatorics', syllabusUrl: 'seed-contents/coding/learn-combinatorics-syllabus.json' },
+        { id: 'learn_flask', title: 'Flask Web Framework', syllabusUrl: 'seed-contents/coding/learn-flask-syllabus.json' },
+        { id: 'learn_matplotlib', title: 'Data Visualization with Matplotlib', syllabusUrl: 'seed-contents/coding/learn-matplotlib-syllabus.json' },
+        { id: 'learn_php', title: 'PHP Basics', syllabusUrl: 'seed-contents/coding/learn-php-syllabus.json' },
+        { id: 'learn_r', title: 'R Programming', syllabusUrl: 'seed-contents/coding/learn-r-syllabus.json' },
+        { id: 'learn_dsu', title: 'Disjoint Set Union (DSU)', syllabusUrl: 'seed-contents/coding/learn-dsu-syllabus.json' },
+        { id: 'learn_college-programming-cpp', title: 'College Programming with C++', syllabusUrl: 'seed-contents/coding/learn-college-programming-cpp-syllabus.json' },
+        { id: 'learn_pl-sql', title: 'PL/SQL Databases', syllabusUrl: 'seed-contents/coding/learn-pl-sql-syllabus.json' },
+        { id: 'learn_operating-system', title: 'Operating Systems', syllabusUrl: 'seed-contents/coding/learn-operating-system-syllabus.json' },
+        { id: 'learn_kotlin-beginner-part-1', title: 'Kotlin Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-kotlin-beginner-part-1-syllabus.json' },
+        { id: 'learn_kotlin-beginner-part-2', title: 'Kotlin Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-kotlin-beginner-part-2-syllabus.json' },
+        { id: 'learn_advanced-javascript', title: 'Advanced JavaScript', syllabusUrl: 'seed-contents/coding/learn-advanced-javascript-syllabus.json' },
+        { id: 'learn_dynamic-programming-advanced', title: 'Advanced Dynamic Programming', syllabusUrl: 'seed-contents/coding/learn-dynamic-programming-advanced-syllabus.json' },
+        { id: 'learn_sorting-intermediate', title: 'Sorting Intermediate', syllabusUrl: 'seed-contents/coding/learn-sorting-intermediate-syllabus.json' },
+        { id: 'learn_graphs-advanced', title: 'Advanced Graphs', syllabusUrl: 'seed-contents/coding/learn-graphs-advanced-syllabus.json' },
+        { id: 'learn_recursion-new', title: 'Recursion Practice', syllabusUrl: 'seed-contents/coding/learn-recursion-new-syllabus.json' },
+        { id: 'learn_searching-sorting-new', title: 'Searching & Sorting', syllabusUrl: 'seed-contents/coding/learn-searching-sorting-new-syllabus.json' },
+        { id: 'learn_c-sharp', title: 'C# Mastery', syllabusUrl: 'seed-contents/coding/learn-c-sharp-syllabus.json' },
+        { id: 'learn_react-js', title: 'ReactJS Development', syllabusUrl: 'seed-contents/coding/learn-react-js-syllabus.json' },
+        { id: 'learn_trees-new', title: 'Trees & Binary Trees Practice', syllabusUrl: 'seed-contents/coding/learn-trees-new-syllabus.json' },
+        { id: 'learn_arrays', title: 'Arrays Practice', syllabusUrl: 'seed-contents/coding/learn-arrays-syllabus.json' },
+        { id: 'learn_advance-java', title: 'Advanced Java', syllabusUrl: 'seed-contents/coding/learn-advance-java-syllabus.json' }
+      ];
+
+      const mockCourses = [
+        pfCourse,
+        ...scrapedConfigs.map((cfg, idx) => ({
+          id: cfg.id,
+          title: cfg.title,
+          display_order: idx + 1,
           hasSubcourses: false,
-          subcourses: [],
+          isScrapedCourse: true,
+          syllabusUrl: cfg.syllabusUrl.replace('seed-contents/coding/', 'articles/CourseMappingFiles/'),
+          modules: []
+        })),
+        {
+          id: 'learn_python',
+          title: 'Learn Python',
+          display_order: 1000,
+          hasSubcourses: false,
           modules: [
-            { id: 'FPS001', name: 'Basic Datatypes & Variables', url: 'seed-contents/coding/basic-datatypes.json', type: 'coding', display_order: 1 },
-            { id: 'FPS002', name: 'Conditional Statements', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 2 },
-            { id: 'FPS003', name: 'Looping', url: 'seed-contents/coding/looping.json', type: 'coding', display_order: 3 },
-            { id: 'FPS004', name: 'Number Crunching', url: 'seed-contents/coding/number-crunching.json', type: 'coding', display_order: 4 },
-            { id: 'FPS005', name: 'Number Based Problems', url: 'seed-contents/coding/number-based-problems.json', type: 'coding', display_order: 5 },
-            { id: 'FPS006', name: 'Arrays', url: 'seed-contents/coding/arrays.json', type: 'coding', display_order: 6 },
-            { id: 'FPS007', name: 'Strings', url: 'seed-contents/coding/strings.json', type: 'coding', display_order: 7 }
+            { id: 'PY001', name: 'Python Basics', url: 'seed-contents/coding/basic-datatypes.json', type: 'coding', display_order: 1 },
+            { id: 'PY002', name: 'Control Flow in Python', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 2 }
           ]
-        };
-        const scrapedConfigs = [
-          { id: 'learn_c', title: 'Learn C', syllabusUrl: 'seed-contents/coding/learn-c-syllabus.json' },
-          { id: 'learn_cpp', title: 'Learn C++ & DSA Foundations', syllabusUrl: 'seed-contents/coding/learn-cpp-syllabus.json' },
-          { id: 'learn_dsa', title: 'Master Data Structures & Algorithms', syllabusUrl: 'seed-contents/coding/learn-dsa-syllabus.json' },
-          { id: 'learn_java', title: 'Learn Java', syllabusUrl: 'seed-contents/coding/learn-java-syllabus.json' },
-          { id: 'learn_become-5-star', title: 'Become a 5-Star Coder (Roadmap)', syllabusUrl: 'seed-contents/coding/learn-become-5-star-syllabus.json' },
-          { id: 'learn_python-dsa', title: 'Python Data Structures & Algorithms (Roadmap)', syllabusUrl: 'seed-contents/coding/learn-python-dsa-syllabus.json' },
-          { id: 'learn_javascript-dsa', title: 'JavaScript Data Structures & Algorithms (Roadmap)', syllabusUrl: 'seed-contents/coding/learn-javascript-dsa-syllabus.json' },
-          { id: 'learn_git-github', title: 'Git & GitHub', syllabusUrl: 'seed-contents/coding/learn-git-github-syllabus.json' },
-          { id: 'learn_python-beginner-v2-p1', title: 'Python Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-python-beginner-v2-p1-syllabus.json' },
-          { id: 'learn_html', title: 'Learn HTML Basics', syllabusUrl: 'seed-contents/coding/learn-html-syllabus.json' },
-          { id: 'learn_java-beginner-v2-p1', title: 'Java Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-java-beginner-v2-p1-syllabus.json' },
-          { id: 'learn_javascript', title: 'Learn JavaScript Essentials', syllabusUrl: 'seed-contents/coding/learn-javascript-syllabus.json' },
-          { id: 'learn_cpp-beginner-v2-p1', title: 'C++ Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-cpp-beginner-v2-p1-syllabus.json' },
-          { id: 'learn_linked-lists-new', title: 'Linked Lists Practice', syllabusUrl: 'seed-contents/coding/learn-linked-lists-new-syllabus.json' },
-          { id: 'learn_c-beginner-v2-p1', title: 'C Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-c-beginner-v2-p1-syllabus.json' },
-          { id: 'learn_stacks-and-queues-new', title: 'Stacks & Queues Practice', syllabusUrl: 'seed-contents/coding/learn-stacks-and-queues-new-syllabus.json' },
-          { id: 'learn_time-complexity', title: 'Time & Space Complexity', syllabusUrl: 'seed-contents/coding/learn-time-complexity-syllabus.json' },
-          { id: 'learn_java-development', title: 'Java Development Mastery', syllabusUrl: 'seed-contents/coding/learn-java-development-syllabus.json' },
-          { id: 'learn_sql-intermediate', title: 'SQL Intermediate', syllabusUrl: 'seed-contents/coding/learn-sql-intermediate-syllabus.json' },
-          { id: 'learn_python-beginner-v2-p2', title: 'Python Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-python-beginner-v2-p2-syllabus.json' },
-          { id: 'learn_sql-at-work', title: 'SQL at Work', syllabusUrl: 'seed-contents/coding/learn-sql-at-work-syllabus.json' },
-          { id: 'learn_cpp-beginner-v2-p2', title: 'C++ Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-cpp-beginner-v2-p2-syllabus.json' },
-          { id: 'learn_binary-search-new', title: 'Binary Search Practice', syllabusUrl: 'seed-contents/coding/learn-binary-search-new-syllabus.json' },
-          { id: 'learn_greedy-algorithms', title: 'Greedy Algorithms', syllabusUrl: 'seed-contents/coding/learn-greedy-algorithms-syllabus.json' },
-          { id: 'learn_hashing', title: 'Hashing Practice', syllabusUrl: 'seed-contents/coding/learn-hashing-syllabus.json' },
-          { id: 'learn_web-dev-js', title: 'Web Development with JS', syllabusUrl: 'seed-contents/coding/learn-web-dev-js-syllabus.json' },
-          { id: 'learn_cpp-development', title: 'C++ Development Mastery', syllabusUrl: 'seed-contents/coding/learn-cpp-development-syllabus.json' },
-          { id: 'learn_nodejs', title: 'NodeJS Backend Foundations', syllabusUrl: 'seed-contents/coding/learn-nodejs-syllabus.json' },
-          { id: 'learn_college-oops-java', title: 'Object-Oriented Programming (Java)', syllabusUrl: 'seed-contents/coding/learn-college-oops-java-syllabus.json' },
-          { id: 'learn_ux', title: 'UX/UI Design Foundations', syllabusUrl: 'seed-contents/coding/learn-ux-syllabus.json' },
-          { id: 'learn_java-beginner-v2-p2', title: 'Java Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-java-beginner-v2-p2-syllabus.json' },
-          { id: 'learn_dynamic-programming-new', title: 'Dynamic Programming Practice', syllabusUrl: 'seed-contents/coding/learn-dynamic-programming-new-syllabus.json' },
-          { id: 'learn_c-beginner-v2-p2', title: 'C Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-c-beginner-v2-p2-syllabus.json' },
-          { id: 'learn_machine-learning', title: 'Machine Learning Basics', syllabusUrl: 'seed-contents/coding/learn-machine-learning-syllabus.json' },
-          { id: 'learn_css', title: 'CSS Styles & Layouts', syllabusUrl: 'seed-contents/coding/learn-css-syllabus.json' },
-          { id: 'learn_advanced-python', title: 'Advanced Python', syllabusUrl: 'seed-contents/coding/learn-advanced-python-syllabus.json' },
-          { id: 'learn_college-oops-cpp', title: 'Object-Oriented Programming (C++)', syllabusUrl: 'seed-contents/coding/learn-college-oops-cpp-syllabus.json' },
-          { id: 'learn_graphs-new', title: 'Graphs Practice', syllabusUrl: 'seed-contents/coding/learn-graphs-new-syllabus.json' },
-          { id: 'learn_cpp-stl', title: 'C++ Standard Template Library', syllabusUrl: 'seed-contents/coding/learn-cpp-stl-syllabus.json' },
-          { id: 'learn_django', title: 'Django Web Development', syllabusUrl: 'seed-contents/coding/learn-django-syllabus.json' },
-          { id: 'learn_oops-concepts-in-python', title: 'OOP Concepts in Python', syllabusUrl: 'seed-contents/coding/learn-oops-concepts-in-python-syllabus.json' },
-          { id: 'learn_numpy', title: 'Numerical Python (NumPy)', syllabusUrl: 'seed-contents/coding/learn-numpy-syllabus.json' },
-          { id: 'learn_springboot', title: 'Spring Boot Foundations', syllabusUrl: 'seed-contents/coding/learn-springboot-syllabus.json' },
-          { id: 'learn_college-programming-c', title: 'College Programming with C', syllabusUrl: 'seed-contents/coding/learn-college-programming-c-syllabus.json' },
-          { id: 'learn_pandas', title: 'Data Analysis with Pandas', syllabusUrl: 'seed-contents/coding/learn-pandas-syllabus.json' },
-          { id: 'learn_deep-learning-ai', title: 'Deep Learning & AI', syllabusUrl: 'seed-contents/coding/learn-deep-learning-ai-syllabus.json' },
-          { id: 'learn_number-theory', title: 'Number Theory', syllabusUrl: 'seed-contents/coding/learn-number-theory-syllabus.json' },
-          { id: 'learn_heaps', title: 'Heaps Practice', syllabusUrl: 'seed-contents/coding/learn-heaps-syllabus.json' },
-          { id: 'learn_bit-manipulation', title: 'Bit Manipulation', syllabusUrl: 'seed-contents/coding/learn-bit-manipulation-syllabus.json' },
-          { id: 'learn_go', title: 'Go Programming Language', syllabusUrl: 'seed-contents/coding/learn-go-syllabus.json' },
-          { id: 'learn_kotlin', title: 'Kotlin Programming', syllabusUrl: 'seed-contents/coding/learn-kotlin-syllabus.json' },
-          { id: 'learn_rust', title: 'Rust Programming', syllabusUrl: 'seed-contents/coding/learn-rust-syllabus.json' },
-          { id: 'learn_c-sharp-beginner-part-1', title: 'C# Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-c-sharp-beginner-part-1-syllabus.json' },
-          { id: 'learn_tries', title: 'Tries Data Structure', syllabusUrl: 'seed-contents/coding/learn-tries-syllabus.json' },
-          { id: 'learn_combinatorics', title: 'Combinatorics', syllabusUrl: 'seed-contents/coding/learn-combinatorics-syllabus.json' },
-          { id: 'learn_flask', title: 'Flask Web Framework', syllabusUrl: 'seed-contents/coding/learn-flask-syllabus.json' },
-          { id: 'learn_matplotlib', title: 'Data Visualization with Matplotlib', syllabusUrl: 'seed-contents/coding/learn-matplotlib-syllabus.json' },
-          { id: 'learn_php', title: 'PHP Basics', syllabusUrl: 'seed-contents/coding/learn-php-syllabus.json' },
-          { id: 'learn_r', title: 'R Programming', syllabusUrl: 'seed-contents/coding/learn-r-syllabus.json' },
-          { id: 'learn_dsu', title: 'Disjoint Set Union (DSU)', syllabusUrl: 'seed-contents/coding/learn-dsu-syllabus.json' },
-          { id: 'learn_college-programming-cpp', title: 'College Programming with C++', syllabusUrl: 'seed-contents/coding/learn-college-programming-cpp-syllabus.json' },
-          { id: 'learn_pl-sql', title: 'PL/SQL Databases', syllabusUrl: 'seed-contents/coding/learn-pl-sql-syllabus.json' },
-          { id: 'learn_operating-system', title: 'Operating Systems', syllabusUrl: 'seed-contents/coding/learn-operating-system-syllabus.json' },
-          { id: 'learn_kotlin-beginner-part-1', title: 'Kotlin Programming (Part 1)', syllabusUrl: 'seed-contents/coding/learn-kotlin-beginner-part-1-syllabus.json' },
-          { id: 'learn_kotlin-beginner-part-2', title: 'Kotlin Programming (Part 2)', syllabusUrl: 'seed-contents/coding/learn-kotlin-beginner-part-2-syllabus.json' },
-          { id: 'learn_advanced-javascript', title: 'Advanced JavaScript', syllabusUrl: 'seed-contents/coding/learn-advanced-javascript-syllabus.json' },
-          { id: 'learn_dynamic-programming-advanced', title: 'Advanced Dynamic Programming', syllabusUrl: 'seed-contents/coding/learn-dynamic-programming-advanced-syllabus.json' },
-          { id: 'learn_sorting-intermediate', title: 'Sorting Intermediate', syllabusUrl: 'seed-contents/coding/learn-sorting-intermediate-syllabus.json' },
-          { id: 'learn_graphs-advanced', title: 'Advanced Graphs', syllabusUrl: 'seed-contents/coding/learn-graphs-advanced-syllabus.json' },
-          { id: 'learn_recursion-new', title: 'Recursion Practice', syllabusUrl: 'seed-contents/coding/learn-recursion-new-syllabus.json' },
-          { id: 'learn_searching-sorting-new', title: 'Searching & Sorting', syllabusUrl: 'seed-contents/coding/learn-searching-sorting-new-syllabus.json' },
-          { id: 'learn_c-sharp', title: 'C# Mastery', syllabusUrl: 'seed-contents/coding/learn-c-sharp-syllabus.json' },
-          { id: 'learn_react-js', title: 'ReactJS Development', syllabusUrl: 'seed-contents/coding/learn-react-js-syllabus.json' },
-          { id: 'learn_trees-new', title: 'Trees & Binary Trees Practice', syllabusUrl: 'seed-contents/coding/learn-trees-new-syllabus.json' },
-          { id: 'learn_arrays', title: 'Arrays Practice', syllabusUrl: 'seed-contents/coding/learn-arrays-syllabus.json' },
-          { id: 'learn_advance-java', title: 'Advanced Java', syllabusUrl: 'seed-contents/coding/learn-advance-java-syllabus.json' }
-        ];
-
-        const mockCourses = [
-          pfCourse,
-          ...scrapedConfigs.map((cfg, idx) => ({
-            id: cfg.id,
-            title: cfg.title,
-            display_order: idx + 1,
-            hasSubcourses: false,
-            isScrapedCourse: true,
-            syllabusUrl: cfg.syllabusUrl.replace('seed-contents/coding/', 'articles/CourseMappingFiles/'),
-            modules: []
-          })),
-          {
-            id: 'learn_python',
-            title: 'Learn Python',
-            display_order: 1000,
-            hasSubcourses: false,
-            modules: [
-              { id: 'PY001', name: 'Python Basics', url: 'seed-contents/coding/basic-datatypes.json', type: 'coding', display_order: 1 },
-              { id: 'PY002', name: 'Control Flow in Python', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 2 }
-            ]
-          },
-          {
-            id: 'python_problem_solving',
-            title: 'Problem solving in Python',
-            display_order: 1001,
-            hasSubcourses: false,
-            modules: [
-              { id: 'PYS001', name: 'Logic building exercises', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 1 },
-              { id: 'PYS002', name: 'Math & Number based logic', url: 'seed-contents/coding/looping.json', type: 'coding', display_order: 2 }
-            ]
-          },
-          {
-            id: 'learn_sql',
-            title: 'Learn SQL',
-            display_order: 1002,
-            hasSubcourses: false,
-            modules: [
-              { id: 'SQL001', name: 'SQL Query Basics', url: 'seed-contents/coding/basic-datatypes.json', type: 'coding', display_order: 1 },
-              { id: 'SQL002', name: 'Advanced Queries & Joins', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 2 }
-            ]
-          },
-          {
-            id: 'learn_aptitude',
-            title: 'Aptitude & Reasoning Mastery',
-            display_order: 1005,
-            hasSubcourses: false,
-            isScrapedCourse: true,
-            syllabusUrl: 'articles/course/AptitudeCourses/learn-aptitude-syllabus.json',
-            modules: []
-          }
-        ];
-
-        const coursesList = [...mockCourses];
-        setCourses(coursesList);
-
-        // Auto-expand first course
-        if (coursesList.length > 0) {
-          setExpandedCourses({ [coursesList[0].id]: true });
+        },
+        {
+          id: 'python_problem_solving',
+          title: 'Problem solving in Python',
+          display_order: 1001,
+          hasSubcourses: false,
+          modules: [
+            { id: 'PYS001', name: 'Logic building exercises', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 1 },
+            { id: 'PYS002', name: 'Math & Number based logic', url: 'seed-contents/coding/looping.json', type: 'coding', display_order: 2 }
+          ]
+        },
+        {
+          id: 'learn_sql',
+          title: 'Learn SQL',
+          display_order: 1002,
+          hasSubcourses: false,
+          modules: [
+            { id: 'SQL001', name: 'SQL Query Basics', url: 'seed-contents/coding/basic-datatypes.json', type: 'coding', display_order: 1 },
+            { id: 'SQL002', name: 'Advanced Queries & Joins', url: 'seed-contents/coding/conditional-statements.json', type: 'coding', display_order: 2 }
+          ]
+        },
+        {
+          id: 'learn_aptitude',
+          title: 'Aptitude & Reasoning Mastery',
+          display_order: 1005,
+          hasSubcourses: false,
+          isScrapedCourse: true,
+          syllabusUrl: 'articles/course/AptitudeCourses/learn-aptitude-syllabus.json',
+          modules: []
         }
+      ];
+
+      const coursesList = [...mockCourses];
+      setCourses(coursesList);
+
+      // Auto-expand first course
+      if (coursesList.length > 0) {
+        setExpandedCourses({ [coursesList[0].id]: true });
       }
     } catch (err) {
       console.error('[PracticeHome] Error loading data:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getRoadmapStyle = (slug) => {
+    const map = {
+      'become-5-star': { color: '#10b981', icon: '⭐' },
+      'python-dsa': { color: '#3b82f6', icon: '🐍' },
+      'javascript-dsa': { color: '#f59e0b', icon: '⚡' },
+      'cpp-dsa': { color: '#8b5cf6', icon: '⚙️' },
+      'java-dsa': { color: '#ef4444', icon: '☕' }
+    };
+    return map[slug] || { color: '#10b981', icon: '🚀' };
+  };
+
+  const closeArticle = () => {
+    setActiveArticle(null);
+    setActiveArticleMeta(null);
   };
 
   const handleSync = async () => {
@@ -1468,12 +1498,12 @@ const PracticeHome = () => {
     });
   }, [questions, searchQuery, selectedCategory, selectedDifficulty, selectedStatus, solvedIds, attemptedIds, problemDetails, isPremiumUser]);
 
-  const totalPages = Math.ceil(filteredQuestions.length / PAGE_SIZE) || 1;
+  const totalPages = Math.ceil(filteredQuestions.length / pageSize) || 1;
 
   const paginatedQuestions = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredQuestions.slice(start, start + PAGE_SIZE);
-  }, [filteredQuestions, currentPage]);
+    const start = (currentPage - 1) * pageSize;
+    return filteredQuestions.slice(start, start + pageSize);
+  }, [filteredQuestions, currentPage, pageSize]);
 
   return (
     <div className="ph-root">
@@ -1664,80 +1694,76 @@ const PracticeHome = () => {
                 const dashOffset = 251.2 - (251.2 * (solvedQs / totalQs || 0));
 
                 return (
-                  <div className="ps-sheet-detail" style={{ marginTop: '20px' }}>
-                    {/* Header back button */}
-                    <button
-                      onClick={() => setSelectedCourse(null)}
-                      className="ph-topbar-btn"
-                      style={{
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        marginBottom: '20px',
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        color: 'var(--ph-text)'
-                      }}
-                    >
-                      <FaChevronLeft /> Back to Courses
-                    </button>
+                  <div className="ps-sheet-detail" style={{ marginTop: '10px' }}>
+                    {/* Breadcrumb Navigation (View 4) */}
+                    <div className="course-breadcrumb-bar">
+                      <button
+                        onClick={() => setSelectedCourse(null)}
+                        className="breadcrumb-back-btn"
+                      >
+                        <FaChevronLeft />
+                      </button>
+                      <span className="breadcrumb-parent" onClick={() => setSelectedCourse(null)}>Course Curriculum</span>
+                      <span className="breadcrumb-sep">&gt;</span>
+                      <span className="breadcrumb-current">{course.title}</span>
+                    </div>
 
-                    {/* Course syllabus metadata header */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr',
-                      gap: '24px',
-                      background: 'var(--ph-surface)',
-                      border: '1px solid var(--ph-border)',
-                      borderRadius: '16px',
-                      padding: '24px',
-                      marginBottom: '30px'
-                    }}>
-                      <div>
-                        <span style={{
-                          background: 'rgba(124,107,255,0.15)',
-                          color: '#7c6bff',
-                          fontSize: '11px',
-                          fontWeight: 'bold',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          padding: '4px 10px',
-                          borderRadius: '4px',
-                          display: 'inline-block',
-                          marginBottom: '10px'
-                        }}>Premium SEED-IT Course</span>
-                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{scrapedSyllabus.title}</h2>
-                        <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                          {scrapedSyllabus.description}
-                        </p>
+                    {/* Course Hero Emerald Banner Card (View 4) */}
+                    <div className="course-detail-hero-card">
+                      <div className="course-hero-left">
+                        <div className="course-hero-badge-row">
+                          <span className="course-hero-type-badge">Technical Course</span>
+                          <span className="course-hero-stat-pill">{(course.modules || []).length} Modules</span>
+                          <span className="course-hero-stat-pill">Beginner</span>
+                          <span className="course-hero-stat-pill">{solvedQs}/{totalQs} Solved</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
+                          <div className="course-hero-icon-box">
+                            <FaCode />
+                          </div>
+                          <div>
+                            <h2 className="course-hero-title">{course.title}</h2>
+                            <p className="course-hero-desc">
+                              {course.id === 'programming_fundamentals'
+                                ? 'Master core programming fundamentals: basic datatypes, operators, conditionals, loops, crunching, arrays, and strings.'
+                                : course.id === 'learn_aptitude'
+                                  ? 'Master Quantitative Aptitude, Logical Reasoning, and Verbal Ability with standard MCQ practice sets.'
+                                  : `Learn and master problem solving, logic building, and algorithms for ${course.title}.`}
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
-                        <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                            <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
+                      <div className="course-hero-right-gauge">
+                        <div className="circular-gauge-container">
+                          <svg width="84" height="84" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                            <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="transparent" />
                             <circle
                               cx="50"
                               cy="50"
                               r="40"
-                              stroke="#7c6bff"
+                              stroke="#ffffff"
                               strokeWidth="8"
                               fill="transparent"
                               strokeDasharray={251.2}
                               strokeDashoffset={dashOffset}
                               strokeLinecap="round"
-                              style={{ transition: 'stroke-dashoffset 0.8s ease-in-out' }}
+                              style={{ transition: 'stroke-dashoffset 0.5s ease' }}
                             />
                           </svg>
-                          <div style={{ position: 'absolute', fontSize: '15px', fontWeight: 'bold', color: 'var(--ph-text)' }}>
-                            {percentage}%
+                          <div className="circular-gauge-text">
+                            <span className="gauge-pct">{percentage}%</span>
+                            <span className="gauge-lbl">Progress</span>
                           </div>
                         </div>
-                        <div style={{ color: 'var(--ph-text-dim)', fontSize: '12px', marginTop: '10px', fontWeight: '600' }}>
-                          {solvedQs}/{totalQs} Solved
-                        </div>
                       </div>
+                    </div>
+
+                    {/* Sub-tabs Row (View 4) */}
+                    <div className="course-subtabs-row">
+                      <button className="course-subtab-btn active">Modules</button>
+                      <button className="course-subtab-btn">About</button>
+                      <button className="course-subtab-btn">Resources</button>
                     </div>
 
                     {/* Modules Accordion */}
@@ -1939,81 +1965,77 @@ const PracticeHome = () => {
               const dashOffset = 251.2 - (251.2 * (solvedQs / totalQs || 0));
 
               return (
-                <div className="ps-sheet-detail" style={{ marginTop: '20px' }}>
-                  <button
-                    onClick={() => setSelectedCourse(null)}
-                    className="ph-topbar-btn"
-                    style={{
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      marginBottom: '20px',
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      color: 'var(--ph-text)'
-                    }}
-                  >
-                    <FaChevronLeft /> Back to Courses
-                  </button>
-
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr',
-                    gap: '24px',
-                    background: 'var(--ph-surface)',
-                    border: '1px solid var(--ph-border)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    marginBottom: '30px'
-                  }}>
-                    <div>
-                      <span style={{
-                        background: 'rgba(124,107,255,0.15)',
-                        color: '#7c6bff',
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        padding: '4px 10px',
-                        borderRadius: '4px',
-                        display: 'inline-block',
-                        marginBottom: '10px'
-                      }}>COURSE</span>
-                      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--ph-text)', margin: '0 0 10px 0' }}>{course.title}</h2>
-                      <p style={{ color: 'var(--ph-text-dim)', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-                        {course.id === 'programming_fundamentals'
-                          ? 'Master core programming fundamentals in C, Python, and Java. Work through basic datatypes, operators, conditionals, loops, crunching, arrays, and strings.'
-                          : 'Complete the assigned structural curriculum module.'}
-                      </p>
+                <div className="ps-sheet-detail" style={{ marginTop: '10px' }}>
+                  {/* Breadcrumb Navigation (View 4) */}
+                  <div className="course-breadcrumb-bar">
+                      <button
+                        onClick={() => setSelectedCourse(null)}
+                        className="breadcrumb-back-btn"
+                      >
+                        <FaChevronLeft />
+                      </button>
+                      <span className="breadcrumb-parent" onClick={() => setSelectedCourse(null)}>Course Curriculum</span>
+                      <span className="breadcrumb-sep">&gt;</span>
+                      <span className="breadcrumb-current">{course.title}</span>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--ph-border)' }}>
-                      <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="90" height="90" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                          <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="transparent" />
-                          <circle
-                            cx="50"
-                            cy="50"
-                            r="40"
-                            stroke="#7c6bff"
-                            strokeWidth="8"
-                            fill="transparent"
-                            strokeDasharray={251.2}
-                            strokeDashoffset={dashOffset}
-                            strokeLinecap="round"
-                            style={{ transition: 'stroke-dashoffset 0.3s ease' }}
-                          />
-                        </svg>
-                        <div style={{ position: 'absolute', fontSize: '18px', fontWeight: 'bold', color: 'var(--ph-text)' }}>
-                          {percentage}%
+                    {/* Course Hero Emerald Banner Card (View 4) */}
+                    <div className="course-detail-hero-card">
+                      <div className="course-hero-left">
+                        <div className="course-hero-badge-row">
+                          <span className="course-hero-type-badge">Technical Course</span>
+                          <span className="course-hero-stat-pill">{(course.modules || []).length} Modules</span>
+                          <span className="course-hero-stat-pill">Beginner</span>
+                          <span className="course-hero-stat-pill">{solvedQs}/{totalQs} Solved</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
+                          <div className="course-hero-icon-box">
+                            <FaCode />
+                          </div>
+                          <div>
+                            <h2 className="course-hero-title">{course.title}</h2>
+                            <p className="course-hero-desc">
+                              {course.id === 'programming_fundamentals'
+                                ? 'Master core programming fundamentals: basic datatypes, operators, conditionals, loops, crunching, arrays, and strings.'
+                                : course.id === 'learn_aptitude'
+                                  ? 'Master Quantitative Aptitude, Logical Reasoning, and Verbal Ability with standard MCQ practice sets.'
+                                  : `Learn and master problem solving, logic building, and algorithms for ${course.title}.`}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div style={{ color: 'var(--ph-text-dim)', fontSize: '12px', marginTop: '10px', fontWeight: '600' }}>
-                        {solvedQs}/{totalQs} Solved
+
+                      <div className="course-hero-right-gauge">
+                        <div className="circular-gauge-container">
+                          <svg width="84" height="84" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                            <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="transparent" />
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              stroke="#ffffff"
+                              strokeWidth="8"
+                              fill="transparent"
+                              strokeDasharray={251.2}
+                              strokeDashoffset={dashOffset}
+                              strokeLinecap="round"
+                              style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                            />
+                          </svg>
+                          <div className="circular-gauge-text">
+                            <span className="gauge-pct">{percentage}%</span>
+                            <span className="gauge-lbl">Progress</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+
+                    {/* Sub-tabs Row (View 4) */}
+                    <div className="course-subtabs-row">
+                      <button className="course-subtab-btn active">Modules</button>
+                      <button className="course-subtab-btn">About</button>
+                      <button className="course-subtab-btn">Resources</button>
+                    </div>
 
                   <div style={{ padding: '0px' }}>
                     {course.id === 'programming_fundamentals' ? (
@@ -2816,11 +2838,60 @@ const PracticeHome = () => {
           {/* Left Content Area */}
           <div className="ph-problems-main">
 
+            {/* Header Title & Subtitle */}
+            <div className="qb-header" style={{ marginBottom: '20px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ph-text)', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Question Bank</h1>
+              <p style={{ fontSize: '13.5px', color: 'var(--ph-text-dim)', margin: 0 }}>Explore and practice from our comprehensive question collection.</p>
+            </div>
+
+            {/* Summary Metrics Banner Bar (View 2) - 4 Cards matching design */}
+            <div className="practice-summary-metrics-bar">
+              <div className="practice-metric-item">
+                <div className="metric-icon-box green">
+                  <FaBookOpen />
+                </div>
+                <div className="metric-info-col">
+                  <span className="metric-val">{questions.length || 9328}</span>
+                  <span className="metric-lbl">Total Questions</span>
+                </div>
+              </div>
+
+              <div className="practice-metric-item">
+                <div className="metric-icon-box blue">
+                  <FaThLarge />
+                </div>
+                <div className="metric-info-col">
+                  <span className="metric-val">{CATEGORIES.length}</span>
+                  <span className="metric-lbl">Categories</span>
+                </div>
+              </div>
+
+              <div className="practice-metric-item">
+                <div className="metric-icon-box purple">
+                  <FaCheckSquare />
+                </div>
+                <div className="metric-info-col">
+                  <span className="metric-val">{solvedIds.length}</span>
+                  <span className="metric-lbl">Problems Solved</span>
+                </div>
+              </div>
+
+              <div className="practice-metric-item">
+                <div className="metric-icon-box orange">
+                  <FaChartLine />
+                </div>
+                <div className="metric-info-col">
+                  <span className="metric-val">{questions.length > 0 ? Math.round((solvedIds.length / questions.length) * 100) : 0}%</span>
+                  <span className="metric-lbl">Success Rate</span>
+                </div>
+              </div>
+            </div>
+
             {/* Topic Filter Chips */}
             <div className="ph-topic-chips">
               <button
                 className={`ph-topic-chip ${selectedCategory === 'All' ? 'active' : ''}`}
-                onClick={() => setSelectedCategory('All')}
+                onClick={() => { setSelectedCategory('All'); setCurrentPage(1); }}
               >
                 All Topics
               </button>
@@ -2828,7 +2899,7 @@ const PracticeHome = () => {
                 <button
                   key={cat}
                   className={`ph-topic-chip ${selectedCategory === cat ? 'active' : ''}`}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
                 >
                   {cat}
                 </button>
@@ -2836,7 +2907,7 @@ const PracticeHome = () => {
             </div>
 
             {/* Filter Bar */}
-            <div className="ph-problems-filterbar">
+            <div id="practice-problems-table-section" className="ph-problems-filterbar">
               {/* Search Box */}
               <div className="ph-problems-search-wrap">
                 <FaSearch className="ph-problems-search-icon" />
@@ -2844,7 +2915,7 @@ const PracticeHome = () => {
                   type="text"
                   placeholder="Search questions..."
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                   className="ph-problems-search"
                 />
               </div>
@@ -2852,17 +2923,17 @@ const PracticeHome = () => {
               {/* Difficulty Filter */}
               <select
                 value={selectedDifficulty}
-                onChange={e => setSelectedDifficulty(e.target.value)}
+                onChange={e => { setSelectedDifficulty(e.target.value); setCurrentPage(1); }}
                 className="ph-problems-select"
               >
-                <option value="All">Difficulty</option>
+                <option value="All">Difficulty: All</option>
                 {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
 
               {/* Status Filter */}
               <select
                 value={selectedStatus}
-                onChange={e => setSelectedStatus(e.target.value)}
+                onChange={e => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
                 className="ph-problems-select"
               >
                 <option value="All">Status: All</option>
@@ -2875,6 +2946,21 @@ const PracticeHome = () => {
               <span className="ph-problems-count">
                 {filteredQuestions.length} / {questions.length} (Solved: {solvedIds.length}, Attempted: {attemptedIds.length})
               </span>
+
+              {(searchQuery || selectedCategory !== 'All' || selectedDifficulty !== 'All' || selectedStatus !== 'All') && (
+                <button
+                  className="ph-reset-filter-btn"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('All');
+                    setSelectedDifficulty('All');
+                    setSelectedStatus('All');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <FaSyncAlt /> Reset Filters
+                </button>
+              )}
             </div>
 
             {/* Problems Table */}
@@ -2893,12 +2979,13 @@ const PracticeHome = () => {
                 <table className="ph-problems-table">
                   <thead>
                     <tr>
-                      <th className="ph-col-status"></th>
                       <th className="ph-col-num">#</th>
-                      <th className="ph-col-title">Title</th>
-                      <th className="ph-col-category">Category</th>
-                      <th className="ph-col-diff">Difficulty</th>
-                      <th className="ph-col-score">Score</th>
+                      <th className="ph-col-title">TITLE</th>
+                      <th className="ph-col-category">CATEGORY</th>
+                      <th className="ph-col-diff">DIFFICULTY</th>
+                      <th className="ph-col-solvedby">SOLVED BY</th>
+                      <th className="ph-col-score">SCORE</th>
+                      <th className="ph-col-actions">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2911,12 +2998,7 @@ const PracticeHome = () => {
                           : q.difficulty === 'Beginner' ? 'beginner'
                             : 'easy';
 
-                      const statusIcon = status === 'SOLVED' ? <FaCheckCircle style={{ color: 'var(--ph-success)' }} />
-                        : status === 'ATTEMPTED' ? <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: '#fbbf24' }}></span>
-                          : status === 'LOCKED' ? <FaLock style={{ color: 'var(--ph-text-dim)', fontSize: '11px' }} />
-                            : null;
-
-                      const itemIndex = (currentPage - 1) * PAGE_SIZE + idx + 1;
+                      const itemIndex = (currentPage - 1) * pageSize + idx + 1;
 
                       return (
                         <tr
@@ -2924,21 +3006,21 @@ const PracticeHome = () => {
                           className={`ph-problem-row ${status === 'LOCKED' ? 'locked' : ''}`}
                           onClick={() => handleQuestionClick(q, status)}
                         >
-                          <td className="ph-col-status">
-                            <span className="ph-status-icon">{statusIcon}</span>
-                          </td>
                           <td className="ph-col-num">{itemIndex}</td>
                           <td className="ph-col-title">
                             <span className="ph-problem-title-text">
-                              {q.questionId} – {q.title}
+                              {q.questionId ? `${q.questionId} – ` : ''}{q.title}
                             </span>
                             {q.isPremium && <FaStar style={{ color: '#fbbf24', marginLeft: '6px', fontSize: '11px' }} />}
                           </td>
                           <td className="ph-col-category">
-                            <span className="ph-cat-tag">{q.category || '—'}</span>
+                            <span className="ph-cat-tag">{q.category || 'Math'}</span>
                           </td>
                           <td className="ph-col-diff">
-                            <span className={`ph-diff-tag ${diffClass}`}>{q.difficulty || 'Easy'}</span>
+                            <span className={`ph-diff-tag ${diffClass}`}>{q.difficulty || 'Beginner'}</span>
+                          </td>
+                          <td className="ph-col-solvedby">
+                            <span style={{ color: 'var(--ph-text-dim)' }}>—</span>
                           </td>
                           <td className="ph-col-score">
                             {bestScore !== undefined ? (
@@ -2946,8 +3028,17 @@ const PracticeHome = () => {
                                 {bestScore}%
                               </span>
                             ) : (
-                              <span style={{ color: '#475569' }}>—</span>
+                              <span style={{ color: 'var(--ph-text-dim)' }}>—</span>
                             )}
+                          </td>
+                          <td className="ph-col-actions" onClick={e => e.stopPropagation()}>
+                            <button
+                              className="ph-action-eye-btn"
+                              title="Solve Problem"
+                              onClick={() => handleQuestionClick(q, status)}
+                            >
+                              <FaEye />
+                            </button>
                           </td>
                         </tr>
                       );
@@ -2955,67 +3046,133 @@ const PracticeHome = () => {
                   </tbody>
                 </table>
 
-                {filteredQuestions.length > PAGE_SIZE && (
-                  <div className="ph-pagination-bar">
-                    <div className="ph-pagination-info">
-                      Showing <strong>{(currentPage - 1) * PAGE_SIZE + 1}</strong> – <strong>{Math.min(currentPage * PAGE_SIZE, filteredQuestions.length)}</strong> of <strong>{filteredQuestions.length}</strong> questions
-                    </div>
-                    <div className="ph-pagination-btns">
-                      <button
-                        className="ph-pagination-btn"
-                        disabled={currentPage === 1}
-                        onClick={() => {
-                          setCurrentPage(prev => Math.max(prev - 1, 1));
-                          window.scrollTo({ top: 200, behavior: 'smooth' });
-                        }}
-                      >
-                        <FaChevronLeft /> Previous
-                      </button>
-                      <span className="ph-pagination-page-num">
-                        {currentPage} / {totalPages}
-                      </span>
-                      <button
-                        className="ph-pagination-btn"
-                        disabled={currentPage >= totalPages}
-                        onClick={() => {
-                          setCurrentPage(prev => Math.min(prev + 1, totalPages));
-                          window.scrollTo({ top: 200, behavior: 'smooth' });
-                        }}
-                      >
-                        Next <FaAngleRight />
-                      </button>
-                    </div>
+                {/* Pagination matching design */}
+                <div className="ph-pagination-bar">
+                  <div className="ph-pagination-info">
+                    Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to <strong>{Math.min(currentPage * pageSize, filteredQuestions.length)}</strong> of <strong>{filteredQuestions.length}</strong> questions
                   </div>
-                )}
+                  
+                  <div className="ph-pagination-btns">
+                    <button
+                      className="ph-pagination-btn"
+                      disabled={currentPage === 1}
+                      onClick={() => {
+                        setCurrentPage(prev => Math.max(prev - 1, 1));
+                        window.scrollTo({ top: 200, behavior: 'smooth' });
+                      }}
+                    >
+                      <FaChevronLeft />
+                    </button>
+                    
+                    {/* Render page numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) pageNum = i + 1;
+                      else if (currentPage <= 3) pageNum = i + 1;
+                      else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                      else pageNum = currentPage - 2 + i;
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          className={`ph-page-number-btn ${currentPage === pageNum ? 'active' : ''}`}
+                          onClick={() => {
+                            setCurrentPage(pageNum);
+                            window.scrollTo({ top: 200, behavior: 'smooth' });
+                          }}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    {totalPages > 5 && currentPage < totalPages - 2 && (
+                      <>
+                        <span className="ph-page-ellipsis">...</span>
+                        <button
+                          className="ph-page-number-btn"
+                          onClick={() => {
+                            setCurrentPage(totalPages);
+                            window.scrollTo({ top: 200, behavior: 'smooth' });
+                          }}
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      className="ph-pagination-btn"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => {
+                        setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                        window.scrollTo({ top: 200, behavior: 'smooth' });
+                      }}
+                    >
+                      <FaChevronRight />
+                    </button>
+                  </div>
+
+                  <div className="ph-page-size-selector">
+                    <span>Rows per page</span>
+                    <select
+                      value={pageSize}
+                      onChange={e => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="ph-page-size-select"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                </div>
               </>
             )}
           </div>
 
           {/* Right Sidebar Stats */}
           <div className="ph-problems-sidebar">
-            {/* Solved Progress Widget */}
+            {/* Solved Progress Widget with SVG Circular Gauge */}
             <div className="ph-stat-card">
-              <div className="ph-stat-title">My Progress</div>
-              <div className="ph-stat-donut-wrap">
-                <div className="ph-stat-donut">
-                  <span className="ph-stat-solved">{solvedIds.filter(id => questionBankIdsSet.has(id)).length}</span>
-                  <span className="ph-stat-total">/{questions.length}</span>
+              <div className="ph-stat-title">MY PROGRESS</div>
+              
+              <div className="ph-progress-gauge-box">
+                <div className="circular-gauge-container small" style={{ margin: '10px auto' }}>
+                  <svg className="circular-gauge-svg" viewBox="0 0 100 100" width="120" height="120">
+                    <circle className="gauge-bg-circle" cx="50" cy="50" r="42" strokeWidth="8" fill="none" />
+                    <circle
+                      className="gauge-bar-circle"
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      strokeWidth="8"
+                      fill="none"
+                      strokeDasharray="263.89"
+                      strokeDashoffset={263.89 - (263.89 * (questions.length > 0 ? solvedIds.length / questions.length : 0))}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="circular-gauge-text">
+                    <span className="ph-stat-solved" style={{ fontSize: '26px', fontWeight: '800' }}>{solvedIds.filter(id => questionBankIdsSet.has(id)).length}</span>
+                    <span className="ph-stat-total" style={{ fontSize: '13px', color: 'var(--ph-text-dim)' }}>/{questions.length}</span>
+                    <span className="gauge-lbl" style={{ fontSize: '11px', marginTop: '2px' }}>Solved</span>
+                  </div>
                 </div>
-                <div className="ph-stat-donut-label">Solved</div>
               </div>
-              <div className="ph-stat-bars">
+
+              <div className="ph-stat-diff-list" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {DIFFICULTIES.map(d => {
                   const total = questions.filter(q => q.difficulty === d).length;
                   const solved = questions.filter(q => q.difficulty === d && solvedIdsSet.has(q.questionId)).length;
-                  const pct = total > 0 ? Math.round((solved / total) * 100) : 0;
                   const cls = d === 'Hard' ? 'hard' : d === 'Medium' ? 'medium' : d === 'Beginner' ? 'beginner' : 'easy';
                   return (
-                    <div key={d} className="ph-stat-bar-row">
-                      <span className={`ph-stat-bar-label ${cls}`}>{d}</span>
-                      <div className="ph-stat-bar-track">
-                        <div className={`ph-stat-bar-fill ${cls}`} style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="ph-stat-bar-count">{solved}/{total}</span>
+                    <div key={d} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', padding: '4px 0' }}>
+                      <span className={`ph-diff-text ${cls}`} style={{ fontWeight: '700' }}>{d}</span>
+                      <span style={{ color: 'var(--ph-text-dim)', fontWeight: '600' }}>{solved}/{total}</span>
                     </div>
                   );
                 })}
@@ -3024,15 +3181,15 @@ const PracticeHome = () => {
 
             {/* Quick Category Links */}
             <div className="ph-stat-card" style={{ marginTop: '16px' }}>
-              <div className="ph-stat-title">Categories</div>
+              <div className="ph-stat-title">CATEGORIES</div>
               <div className="ph-sidebar-cats">
-                {CATEGORIES.slice(0, 8).map(cat => {
-                  const count = questions.filter(q => q.category === cat).length;
+                {(showAllCategories ? CATEGORIES : CATEGORIES.slice(0, 14)).map(cat => {
+                  const count = questions.filter(q => (q.category || '').toLowerCase() === cat.toLowerCase()).length;
                   return (
                     <div
                       key={cat}
                       className={`ph-sidebar-cat-row ${selectedCategory === cat ? 'active' : ''}`}
-                      onClick={() => setSelectedCategory(cat)}
+                      onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
                     >
                       <span className="ph-sidebar-cat-name">{cat}</span>
                       <span className="ph-sidebar-cat-count">{count}</span>
@@ -3040,6 +3197,29 @@ const PracticeHome = () => {
                   );
                 })}
               </div>
+
+              <button
+                className="ph-view-all-cats-btn"
+                onClick={() => setShowAllCategories(!showAllCategories)}
+                style={{
+                  width: '100%',
+                  marginTop: '14px',
+                  padding: '9px',
+                  borderRadius: '8px',
+                  border: '1px solid #10b981',
+                  background: 'rgba(16, 185, 129, 0.05)',
+                  color: '#10b981',
+                  fontWeight: '700',
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                {showAllCategories ? 'Show Less' : 'View All Categories'} <FaChevronRight style={{ fontSize: '10px' }} />
+              </button>
             </div>
           </div>
 

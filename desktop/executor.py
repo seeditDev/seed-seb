@@ -331,11 +331,15 @@ class CodeExecutor:
                                         ("Affinity", ctypes.c_size_t), ("Priority", wintypes.DWORD), ("Sched", wintypes.DWORD)]
                         class EXTENDED_LIMITS(ctypes.Structure):
                             _fields_ = [("Basic", BASIC_LIMITS), ("Io", IO_COUNTERS),
-                                        ("PProcMem", ctypes.c_size_t), ("PJobMem", ctypes.c_size_t),
-                                        ("PeakProcMem", ctypes.c_size_t), ("PeakJobMem", ctypes.c_size_t)]
+                                        ("ProcessMemoryLimit", ctypes.c_size_t), ("JobMemoryLimit", ctypes.c_size_t),
+                                        ("PeakProcessMemoryUsed", ctypes.c_size_t), ("PeakJobMemoryUsed", ctypes.c_size_t)]
                         
                         limits = EXTENDED_LIMITS()
-                        limits.Basic.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+                        # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE (0x2000) | JOB_OBJECT_LIMIT_PROCESS_MEMORY (0x0100) | JOB_OBJECT_LIMIT_JOB_MEMORY (0x0200)
+                        limits.Basic.LimitFlags = 0x2000 | 0x0100 | 0x0200
+                        mem_limit_bytes = 512 * 1024 * 1024  # 512 MB RAM limit
+                        limits.ProcessMemoryLimit = mem_limit_bytes
+                        limits.JobMemoryLimit = mem_limit_bytes
                         kernel32.SetInformationJobObject(job, 9, ctypes.byref(limits), ctypes.sizeof(limits))
                         kernel32.AssignProcessToJobObject(job, int(proc._handle))
                 except Exception:

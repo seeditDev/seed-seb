@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from '../router-compat';
-import { FaArrowLeft, FaArrowRight, FaCheck, FaSearch, FaBookmark, FaTimes, FaClock, FaChartBar, FaLock, FaExclamationTriangle, FaCheckCircle, FaHome } from 'react-icons/fa';
+import { 
+    FaArrowLeft, FaArrowRight, FaCheck, FaSearch, FaBookmark, FaTimes, 
+    FaClock, FaChartBar, FaLock, FaExclamationTriangle, FaCheckCircle, 
+    FaHome, FaFileAlt, FaListUl, FaShieldAlt, FaLightbulb, FaSignOutAlt, FaFlag 
+} from 'react-icons/fa';
 import '../styles/MCQPage.css';
 import DataService from '../services/dataService';
 import MCQService from '../services/mcqService';
@@ -14,12 +18,14 @@ import { getAuthData } from '../utils/storageUtils';
 import { buildUnifiedResultPayload } from '../utils/resultTransformer';
 import { fetchContentJSON } from '../utils/contentApi';
 import { gradeMcqAttempt } from '../utils/mcqGrading';
-import { readJSON } from '../utils/safeStorage';
+import { readJSON, savePendingEnvelope } from '../utils/safeStorage';
 import { throttledLocalStorageSet, flushThrottledWrites } from '../utils/throttle';
 import { createSubmitGuard } from '../utils/submitGuard';
 import { markAssessmentCompleted } from '../services/attemptStatusService';
 import * as AttemptStatusService from '../services/attemptStatusService';
 import { auth } from '../firebase-config';
+import SecurityWatermark from './SecurityWatermark';
+import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 import { toast } from 'sonner';
 
 // ========================================
@@ -151,10 +157,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     }, []);
     const stopGlobalCameraStream = useCallback(() => {
         try {
-            if (window.cameraStream && window.cameraStream.active) {
-                window.cameraStream.getTracks().forEach(t => t.stop());
-                window.cameraStream = null;
-            }
+            stopAllMediaAndAI();
         } catch (_) { }
     }, []);
     const clearTestSessionStorage = useCallback(() => {
@@ -1526,7 +1529,10 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
 
                 submitGuard.complete();
                 // Denormalise completion so the dashboard needs no per-card reads.
-                await markAssessmentCompleted(user, currentTest.testInfo?.id || currentTest.id);
+                const canonicalMainId = isEmbedded
+                    ? (testData?.assessmentId || testData?.mainAssessmentId || testData?.id)
+                    : (currentTest?.assessmentId || currentTest?.testInfo?.id || currentTest?.id);
+                await markAssessmentCompleted(user, canonicalMainId);
 
                 // ── Course progress tracking ──
                 try {
@@ -1536,7 +1542,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                             uid: user.uid || user.UID || '',
                             courseId: courseCtx.courseId,
                             seriesId: courseCtx.seriesId,
-                            testId: courseCtx.testId || currentTest.testInfo?.id || currentTest.id,
+                            testId: courseCtx.testId || canonicalMainId,
                             score: correctAnswers,
                             maxScore: courseCtx.totalMarks || totalQuestions,
                         });
@@ -1565,16 +1571,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 const uid = auth?.currentUser?.uid || user?.uid || 'unknown';
                 const testID = currentTest?.testInfo?.id || currentTest?.id || 'unknown';
                 const pendingKey = `mcq_pending_submission_${uid}_${testID}`;
-                try {
-                    const pendingPayload = {
-                        uid,
-                        testID,
-                        timestamp: timeService.getNow().toISOString(),
-                        retryCount: 0,
-                    };
-                    localStorage.setItem(pendingKey, JSON.stringify(pendingPayload));
-                    console.warn('[MCQPage] Submission failed — result saved as pending for retry:', pendingKey);
-                } catch (_) {}
+                const pendingPayload = {
+                    uid,
+                    testID,
+                    timestamp: timeService.getNow().toISOString(),
+                    retryCount: 0,
+                };
+                savePendingEnvelope(pendingKey, pendingPayload).catch(() => {});
+                console.warn('[MCQPage] Submission failed — result saved as pending for retry:', pendingKey);
 
                 setSubmissionStatus('pending');
                 setError(
@@ -1731,7 +1735,10 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 }
 
                 submitGuard.complete();
-                await markAssessmentCompleted(user, currentTest.testInfo?.id || currentTest.id);
+                const canonicalMainId = isEmbedded
+                    ? (testData?.assessmentId || testData?.mainAssessmentId || testData?.id)
+                    : (currentTest?.assessmentId || currentTest?.testInfo?.id || currentTest?.id);
+                await markAssessmentCompleted(user, canonicalMainId);
 
                 clearTestSessionStorage();
                 setActiveTestSlug(null);
@@ -2292,274 +2299,439 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         );
     };
 
-    // Render test content (similar to AptitudeTest)
+    // Render test content with 3-column reference UI layout
     const renderTestContent = () => {
         if (!currentTest) return null;
 
         const totalQs = currentTest.questions.length;
         const attemptedQs = Object.keys(answers).length;
+        const unattemptedQs = Math.max(0, totalQs - attemptedQs);
+        const flaggedCount = bookmarkedQuestions.length;
         const progressPercentage = totalQs > 0 ? Math.round((attemptedQs / totalQs) * 100) : 0;
 
-        return (
-            <div className="mcq-test-content">
-                <div className="mcq-test-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="mcq-test-info">
-                        <h1>{currentTest.name || currentTest.testInfo?.name}</h1>
-                    </div>
-                    {ENABLE_PROCTORING && (
-                        <div className="mcq-proctor-stats" style={{ display: 'flex', gap: '8px', paddingRight: '20px' }}>
-                            {shouldUseAudioProctoring && (
-                                <div className="proctor-stat-pill audio-violation-pill" style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    background: proctoringData.audioViolationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
-                                    color: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981',
-                                    border: proctoringData.audioViolationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.65rem',
-                                    fontWeight: '700'
-                                }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: proctoringData.audioViolationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
-                                     Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 5}
-                                </div>
-                            )}
-                            {shouldUseProctoring && (
-                                <div className="proctor-stat-pill ai-violation-pill" style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    background: proctoringData.violationCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
-                                    color: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981',
-                                    border: proctoringData.violationCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.65rem',
-                                    fontWeight: '700'
-                                }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: proctoringData.violationCount > 0 ? '#ef4444' : '#10b981', marginRight: '2px' }} />
-                                     Camera: {proctoringData.violationCount}/{currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+        const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        const candidateRoll = authData.rollNumber || authData['Roll Number'] || authData.rollNo || authData.RollNo || authData.regNo || authData.registerNumber || authData.uid || 'CANDIDATE';
+        const tenantId = authData.tenantId || authData.TenantId || authData.tenant_id || authData.collegeCode || authData.college || authData.College || 'SEED-SEB';
+        const currentQ = currentTest.questions[questionIndex] || {};
 
-                <div className="mcq-workspace-layout">
-                    {/* Main Focus Area (Left Panel) */}
-                    <div className="mcq-workspace-main">
-                        {/* Confirm Dialog */}
-                        {showConfirmSubmit && (
-                            <div className="mcq-confirm-dialog">
-                                <div className="mcq-confirm-content">
-                                    <h3>Submit Test?</h3>
-                                    <p>Are you sure you want to submit your test? You can review your answers before final submission.</p>
-                                    <div className="mcq-confirm-buttons">
-                                        <button onClick={() => setShowConfirmSubmit(false)}>Cancel</button>
-                                        <button onClick={() => {
-                                            setShowReviewAnswers(true);
-                                            setShowConfirmSubmit(false);
-                                        }}>Review Answers</button>
+        return (
+            <div className="mcq-ref-app-container">
+                <SecurityWatermark rollNumber={candidateRoll} tenantId={tenantId} />
+
+                {/* ── TOP HEADER ── */}
+                <header className="mcq-ref-header">
+                    <div className="mcq-ref-header-left">
+                        <div className="mcq-brand-badge">
+                            <div className="mcq-brand-icon">
+                                <FaShieldAlt />
+                            </div>
+                            <div className="mcq-brand-text">
+                                <span className="mcq-brand-title">SEED-SEB</span>
+                                <span className="mcq-brand-subtitle">SECURE EXAMINATION &amp; BENCHMARKING</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mcq-ref-header-center">
+                        <h2 className="mcq-ref-assessment-title">{currentTest.name || currentTest.testInfo?.name || 'MCQ Section Assessment'}</h2>
+                        <div className="mcq-ref-assessment-meta">
+                            <span>Section 1 of 1</span>
+                            <span className="meta-dot">•</span>
+                            <span>{totalQs} Questions</span>
+                            <span className="meta-dot">•</span>
+                            <span>1 Mark Each</span>
+                        </div>
+                    </div>
+
+                    <div className="mcq-ref-header-right">
+                        {ENABLE_PROCTORING && (shouldUseAudioProctoring || shouldUseProctoring) && (
+                            <div className="mcq-proctor-pills-wrap">
+                                {shouldUseAudioProctoring && (
+                                    <div className="mcq-proctor-badge" title="Audio Proctoring">
+                                        <span className={`status-dot ${proctoringData.audioViolationCount > 0 ? 'bad' : 'good'}`} />
+                                        Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 5}
                                     </div>
-                                </div>
+                                )}
+                                {shouldUseProctoring && (
+                                    <div className="mcq-proctor-badge" title="Camera Proctoring">
+                                        <span className={`status-dot ${proctoringData.violationCount > 0 ? 'bad' : 'good'}`} />
+                                        Camera: {proctoringData.violationCount}/{currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
+                                    </div>
+                                )}
                             </div>
                         )}
 
-                        {/* Review Answers */}
-                        {showReviewAnswers ? (
-                            <div className="mcq-review-container">
-                                <h3>Review Your Answers</h3>
-                                <div className="mcq-review-list">
-                                    {currentTest.questions.map((question, index) => (
-                                        <div key={index} className="mcq-review-item">
-                                            <div className="mcq-review-header">
-                                                <span>Question {index + 1}</span>
-                                                <span>{getTimeTaken(index)}s</span>
-                                            </div>
-                                            <div className="mcq-review-question">{renderTextWithCode(question.question)}</div>
-                                            <div className="mcq-review-answer">
-                                                Your answer: {answers[index] !== undefined ? renderMathAndCode(question.options[answers[index]], true) : 'Not answered'}
-                                            </div>
-                                            <div className="mcq-review-actions">
-                                                <button onClick={() => {
-                                                    setQuestionIndex(index);
-                                                    setShowReviewAnswers(false);
-                                                }}>Go to Question</button>
-                                                <button
-                                                    className={bookmarkedQuestions.includes(index) ? 'bookmarked' : ''}
-                                                    onClick={() => toggleBookmark(index)}
-                                                >
-                                                    <FaBookmark /> {bookmarkedQuestions.includes(index) ? 'Bookmarked' : 'Bookmark'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="mcq-review-bottom-nav">
-                                    <button className="mcq-nav-button" onClick={() => {
-                                        setShowReviewAnswers(false);
-                                    }}>Back to Test</button>
-                                    <button className="mcq-submit-button" onClick={handleSubmit} disabled={isSubmitting}>
-                                        {isSubmitting ? 'Submitting...' : 'Submit Test'}
-                                    </button>
-                                </div>
+                        <div className="mcq-ref-timer-box">
+                            <div className="mcq-timer-icon-wrap">
+                                <FaClock />
                             </div>
-                        ) : (
-                            /* Test Questions Area */
-                            <>
-                                <div className="mcq-question-container">
-                                    <div className="mcq-question-header" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                        <span className="mcq-question-number">Question {questionIndex + 1} of {totalQs}</span>
-                                        {isEmbedded && settings.questionTimer > 0 && (
-                                            <span style={{
-                                                fontSize: '0.8rem',
-                                                background: qTimerRemaining <= 10 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-                                                color: qTimerRemaining <= 10 ? '#ef4444' : '#6366f1',
-                                                border: qTimerRemaining <= 10 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(99, 102, 241, 0.3)',
-                                                padding: '3px 8px',
-                                                borderRadius: '12px',
-                                                fontWeight: 'bold'
-                                            }}>
-                                                 Locks in: {qTimerRemaining}s
-                                            </span>
-                                        )}
+                            <div className="mcq-timer-details">
+                                <span className="mcq-timer-label">Time Remaining</span>
+                                <span className={`mcq-timer-value ${remainingTime <= 300 ? 'warning' : ''} ${remainingTime <= 60 ? 'danger' : ''}`}>
+                                    {formatCountdownTime(remainingTime)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            className={`mcq-ref-flag-btn ${bookmarkedQuestions.includes(questionIndex) ? 'flagged' : ''}`}
+                            onClick={() => toggleBookmark(questionIndex)}
+                        >
+                            <FaFlag />
+                            <span>{bookmarkedQuestions.includes(questionIndex) ? 'Flagged' : 'Flag for Review'}</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className="mcq-ref-submit-btn"
+                            onClick={() => setShowConfirmSubmit(true)}
+                            disabled={isSubmitting}
+                        >
+                            <FaSignOutAlt />
+                            <span>Submit Section</span>
+                        </button>
+                    </div>
+                </header>
+
+                {/* Confirm Dialog */}
+                {showConfirmSubmit && (
+                    <div className="mcq-confirm-dialog">
+                        <div className="mcq-confirm-content">
+                            <h3>Submit Assessment Section?</h3>
+                            <p>Are you sure you want to submit your responses? You can review your answers before final submission.</p>
+                            <div className="mcq-confirm-buttons">
+                                <button type="button" className="btn-cancel" onClick={() => setShowConfirmSubmit(false)}>Cancel</button>
+                                <button type="button" className="btn-review" onClick={() => {
+                                    setShowReviewAnswers(true);
+                                    setShowConfirmSubmit(false);
+                                }}>Review Answers</button>
+                                <button type="button" className="btn-confirm-submit" onClick={handleSubmit} disabled={isSubmitting}>
+                                    {isSubmitting ? 'Submitting...' : 'Confirm & Submit'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Review Answers Screen */}
+                {showReviewAnswers ? (
+                    <div className="mcq-review-container">
+                        <h3>Review Your Answers</h3>
+                        <div className="mcq-review-list">
+                            {currentTest.questions.map((question, index) => (
+                                <div key={index} className="mcq-review-item">
+                                    <div className="mcq-review-header">
+                                        <span>Question {index + 1}</span>
+                                        <span>{getTimeTaken(index)}s</span>
+                                    </div>
+                                    <div className="mcq-review-question">{renderTextWithCode(question.question)}</div>
+                                    <div className="mcq-review-answer">
+                                        Your answer: {answers[index] !== undefined ? renderMathAndCode(question.options[answers[index]], true) : <span className="text-muted">Not answered</span>}
+                                    </div>
+                                    <div className="mcq-review-actions">
+                                        <button type="button" onClick={() => {
+                                            setQuestionIndex(index);
+                                            setShowReviewAnswers(false);
+                                        }}>Go to Question</button>
                                         <button
-                                            className={`mcq-bookmark-button ${bookmarkedQuestions.includes(questionIndex) ? 'bookmarked' : ''}`}
-                                            onClick={() => toggleBookmark(questionIndex)}
-                                            style={{ marginLeft: 'auto' }}
+                                            type="button"
+                                            className={bookmarkedQuestions.includes(index) ? 'bookmarked' : ''}
+                                            onClick={() => toggleBookmark(index)}
                                         >
-                                            <FaBookmark />
+                                            <FaBookmark /> {bookmarkedQuestions.includes(index) ? 'Flagged' : 'Flag'}
                                         </button>
                                     </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mcq-review-bottom-nav">
+                            <button type="button" className="mcq-nav-button" onClick={() => setShowReviewAnswers(false)}>Back to Test</button>
+                            <button type="button" className="mcq-submit-button" onClick={handleSubmit} disabled={isSubmitting}>
+                                {isSubmitting ? 'Submitting...' : 'Submit Test'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    /* ── 3-COLUMN WORKSPACE ── */
+                    <div className="mcq-ref-layout-3col">
+                        {/* 1. LEFT SIDEBAR */}
+                        <aside className="mcq-ref-col-left">
+                            {/* Section Overview Card */}
+                            <div className="mcq-ref-card">
+                                <div className="mcq-card-head">
+                                    <div className="mcq-card-head-icon">
+                                        <FaListUl />
+                                    </div>
+                                    <h4>Section Overview</h4>
+                                </div>
+                                <div className="mcq-overview-table">
+                                    <div className="overview-row">
+                                        <span className="overview-label">Total Questions</span>
+                                        <strong className="overview-val">{totalQs}</strong>
+                                    </div>
+                                    <div className="overview-row">
+                                        <span className="overview-label">Attempted</span>
+                                        <strong className="overview-val text-emerald">{attemptedQs}</strong>
+                                    </div>
+                                    <div className="overview-row">
+                                        <span className="overview-label">Not Attempted</span>
+                                        <strong className="overview-val text-muted">{unattemptedQs}</strong>
+                                    </div>
+                                    <div className="overview-row">
+                                        <span className="overview-label">Flagged</span>
+                                        <strong className="overview-val text-amber">{flaggedCount}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Legend Card */}
+                            <div className="mcq-ref-card">
+                                <div className="mcq-card-head">
+                                    <div className="mcq-card-head-icon">
+                                        <FaShieldAlt />
+                                    </div>
+                                    <h4>Legend</h4>
+                                </div>
+                                <div className="mcq-legend-list">
+                                    <div className="legend-item">
+                                        <span className="legend-dot answered" />
+                                        <span>Answered</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="legend-dot not-answered" />
+                                        <span>Not Answered</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="legend-dot current" />
+                                        <span>Current Question</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="legend-dot flagged" />
+                                        <span>Flagged for Review</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Secure Environment Card */}
+                            <div className="mcq-ref-card secure-badge-card">
+                                <div className="mcq-card-head">
+                                    <div className="mcq-card-head-icon">
+                                        <FaLock />
+                                    </div>
+                                    <h4>Secure Environment</h4>
+                                </div>
+                                <p className="secure-badge-text">
+                                    Your activity is being monitored<br />
+                                    <span className="sub">*for a fair assessment.</span>
+                                </p>
+                            </div>
+                        </aside>
+
+                        {/* 2. CENTER QUESTION WORKSPACE */}
+                        <main className="mcq-ref-col-center">
+                            <div className="mcq-center-question-card">
+                                <div className="mcq-center-card-header">
+                                    <h3 className="mcq-q-title">Question {questionIndex + 1} of {totalQs}</h3>
+                                    <button
+                                        type="button"
+                                        className={`mcq-center-flag-btn ${bookmarkedQuestions.includes(questionIndex) ? 'flagged' : ''}`}
+                                        onClick={() => toggleBookmark(questionIndex)}
+                                    >
+                                        <FaBookmark />
+                                        <span>{bookmarkedQuestions.includes(questionIndex) ? 'Flagged for Review' : 'Mark for Review'}</span>
+                                    </button>
+                                </div>
+
+                                <div className="mcq-center-q-body">
                                     {isEmbedded && lockedQuestions.includes(questionIndex) && (
-                                        <div style={{
-                                            background: 'rgba(239, 68, 68, 0.12)',
-                                            border: '1px solid rgba(239, 68, 68, 0.3)',
-                                            borderRadius: '8px',
-                                            padding: '12px 16px',
-                                            color: '#ef4444',
-                                            marginBottom: '15px',
-                                            fontWeight: '600',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px'
-                                        }}>
+                                        <div className="mcq-locked-notice">
                                             <FaLock />
                                             <span>This question is locked because its timer expired. You can no longer modify your answer.</span>
                                         </div>
                                     )}
-                                    <div className="mcq-question-text">{renderTextWithCode(currentTest.questions[questionIndex].question)}</div>
-                                    <div className="mcq-options">
-                                        {currentTest.questions[questionIndex].options.map((option, optionIndex) => {
+
+                                    <div className="mcq-q-text-line">
+                                        <span className="mcq-q-num-badge">Q{questionIndex + 1}.</span>
+                                        <span className="mcq-q-content">{renderTextWithCode(currentQ.question)}</span>
+                                    </div>
+
+                                    <div className="mcq-ref-options-stack">
+                                        {currentQ.options && currentQ.options.map((option, optionIndex) => {
                                             const letter = String.fromCharCode(65 + optionIndex);
                                             const isSelected = answers[questionIndex] === optionIndex;
                                             const isLocked = isEmbedded && lockedQuestions.includes(questionIndex);
                                             return (
                                                 <button
+                                                    type="button"
                                                     key={optionIndex}
-                                                    className={`mcq-option ${isSelected ? 'selected' : ''}`}
+                                                    className={`mcq-ref-option-card ${isSelected ? 'selected' : ''}`}
                                                     onClick={() => handleSelectOption(optionIndex)}
                                                     disabled={isLocked}
                                                     style={isLocked ? { cursor: 'not-allowed', opacity: 0.8 } : {}}
                                                 >
-                                                    <span className="mcq-option-letter">{letter}</span>
-                                                    <span className="mcq-option-text">{renderMathAndCode(option, true)}</span>
+                                                    <div className="option-radio-indicator">
+                                                        <span className="radio-circle" />
+                                                    </div>
+                                                    <div className="option-letter-badge">{letter}</div>
+                                                    <div className="option-text-content">{renderMathAndCode(option, true)}</div>
                                                 </button>
                                             );
                                         })}
                                     </div>
+
+                                    {/* Quick Tip / Hint Box */}
+                                    {(currentQ.hint || currentQ.explanation) ? (
+                                        <div className="mcq-quick-tip-card">
+                                            <div className="tip-icon"><FaLightbulb /></div>
+                                            <div className="tip-content">
+                                                <strong>Quick Tip</strong>
+                                                <p>{currentQ.hint || currentQ.explanation}</p>
+                                            </div>
+                                        </div>
+                                    ) : null}
                                 </div>
-                                <div className="mcq-navigation">
+
+                                {/* Bottom Nav inside Center Card */}
+                                <div className="mcq-center-actions-footer">
                                     <button
-                                        className="mcq-nav-button"
+                                        type="button"
+                                        className="mcq-btn-prev"
                                         onClick={() => handleNavigateQuestion('prev')}
                                         disabled={questionIndex === 0 || isSubmitting || settings.questionTimer > 0}
                                     >
                                         <FaArrowLeft /> Previous
                                     </button>
+
                                     <button
-                                        className="mcq-nav-button"
-                                        onClick={() => handleNavigateQuestion('next')}
-                                        disabled={questionIndex === totalQs - 1 || isSubmitting || settings.questionTimer > 0}
+                                        type="button"
+                                        className="mcq-btn-save-next"
+                                        onClick={() => {
+                                            if (questionIndex === totalQs - 1) {
+                                                setShowConfirmSubmit(true);
+                                            } else {
+                                                handleNavigateQuestion('next');
+                                            }
+                                        }}
+                                        disabled={isSubmitting}
                                     >
-                                        Next <FaArrowRight />
+                                        <span>{questionIndex === totalQs - 1 ? 'Submit Section' : 'Save & Next'}</span>
+                                        <FaArrowRight />
                                     </button>
                                 </div>
-                            </>
-                        )}
+                            </div>
+                        </main>
+
+                        {/* 3. RIGHT SIDEBAR */}
+                        <aside className="mcq-ref-col-right">
+                            {/* Question Navigator Card */}
+                            <div className="mcq-ref-card">
+                                <div className="mcq-card-head">
+                                    <h4>Question Navigator</h4>
+                                </div>
+                                <div className="mcq-navigator-grid">
+                                    {currentTest.questions.map((_, index) => {
+                                        const isAttempted = answers[index] !== undefined;
+                                        const isCurrent = questionIndex === index;
+                                        const isBookmarked = bookmarkedQuestions.includes(index);
+
+                                        let stateClass = '';
+                                        if (isCurrent) stateClass = 'current';
+                                        else if (isBookmarked) stateClass = 'flagged';
+                                        else if (isAttempted) stateClass = 'answered';
+                                        else stateClass = 'unanswered';
+
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={index}
+                                                className={`nav-grid-btn ${stateClass}`}
+                                                onClick={() => {
+                                                    if (isEmbedded && (settings.forwardOnly || settings.questionTimer > 0)) {
+                                                        return; // Locked jumping
+                                                    }
+                                                    setQuestionIndex(index);
+                                                    setShowReviewAnswers(false);
+                                                }}
+                                            >
+                                                {index + 1}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Section Progress Card */}
+                            <div className="mcq-ref-card">
+                                <div className="progress-card-head">
+                                    <h4>Section Progress</h4>
+                                    <span className="progress-fraction">{attemptedQs} / {totalQs}</span>
+                                </div>
+                                <div className="mcq-progress-bar-track">
+                                    <div className="mcq-progress-bar-fill" style={{ width: `${progressPercentage}%` }} />
+                                </div>
+                                <div className="progress-percent-label">{progressPercentage}%</div>
+                            </div>
+
+                            {/* Section Summary Card */}
+                            <div className="mcq-ref-card">
+                                <div className="mcq-card-head">
+                                    <h4>Section Summary</h4>
+                                </div>
+                                <div className="mcq-summary-list">
+                                    <div className="summary-item">
+                                        <div className="summary-left">
+                                            <span className="legend-dot answered" />
+                                            <span>Answered</span>
+                                        </div>
+                                        <span className="summary-stat">{attemptedQs} ({totalQs > 0 ? Math.round((attemptedQs / totalQs) * 100) : 0}%)</span>
+                                    </div>
+                                    <div className="summary-item">
+                                        <div className="summary-left">
+                                            <span className="legend-dot not-answered" />
+                                            <span>Not Answered</span>
+                                        </div>
+                                        <span className="summary-stat">{unattemptedQs} ({totalQs > 0 ? Math.round((unattemptedQs / totalQs) * 100) : 0}%)</span>
+                                    </div>
+                                    <div className="summary-item">
+                                        <div className="summary-left">
+                                            <span className="legend-dot flagged" />
+                                            <span>Flagged</span>
+                                        </div>
+                                        <span className="summary-stat">{flaggedCount} ({totalQs > 0 ? Math.round((flaggedCount / totalQs) * 100) : 0}%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                )}
+
+                {/* ── BOTTOM FOOTER ── */}
+                <footer className="mcq-ref-bottom-footer">
+                    <div className="footer-left-info">
+                        <span>Assessment ID: {isEmbedded ? (testData?.assessmentId || testData?.mainAssessmentId || testData?.id || 'MCQ-ASSESSMENT') : (currentTest.assessmentId || currentTest.testInfo?.id || currentTest.id || testSlug || 'MCQ-ASSESSMENT')}</span>
+                        <span className="footer-sep">•</span>
+                        <span>Tenant: {tenantId}</span>
+                        <span className="footer-sep">•</span>
+                        <span>Candidate: {candidateRoll}</span>
                     </div>
 
-                    {/* Sidebar Overview Panel (Right Column) */}
-                    <div className="mcq-workspace-sidebar">
-                        {/* Timer Card */}
-                        <div className="mcq-sidebar-card">
-                            <h3 className="mcq-sidebar-title">Time Remaining</h3>
-                            <div className="mcq-sidebar-timer">
-                                <FaClock />
-                                <div className={`mcq-timer-clock ${remainingTime <= 300 ? 'warning' : ''} ${remainingTime <= 60 ? 'danger' : ''}`}>
-                                    {formatCountdownTime(remainingTime)}
-                                </div>
-                                {remainingTime <= 60 && <span className="mcq-timer-banner-alert">Time is almost up!</span>}
-                            </div>
-
-                            {/* Progress bar */}
-                            <div className="mcq-progress-container">
-                                <div className="mcq-progress-meta">
-                                    <span>Progress</span>
-                                    <span>{progressPercentage}%</span>
-                                </div>
-                                <div className="mcq-progress-bar-outer">
-                                    <div className="mcq-progress-bar-inner" style={{ width: `${progressPercentage}%` }}></div>
-                                </div>
-                            </div>
-
-                            {/* Mini stats */}
-                            <div className="mcq-stats-grid">
-                                <div className="mcq-stat-card-mini">
-                                    <span>Answered</span>
-                                    <span>{attemptedQs}</span>
-                                </div>
-                                <div className="mcq-stat-card-mini">
-                                    <span>Remaining</span>
-                                    <span>{totalQs - attemptedQs}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Navigation Map Card */}
-                        <div className="mcq-sidebar-card">
-                            <h3 className="mcq-sidebar-title">Question Map</h3>
-                            <div className="mcq-question-nav-grid">
-                                {currentTest.questions.map((_, index) => {
-                                    const isAttempted = answers[index] !== undefined;
-                                    const isCurrent = questionIndex === index;
-                                    const isBookmarked = bookmarkedQuestions.includes(index);
-                                    let itemClass = 'mcq-question-nav-item';
-                                    if (isAttempted) itemClass += ' attempted';
-                                    if (isCurrent) itemClass += ' current';
-                                    if (isBookmarked) itemClass += ' bookmarked';
-
-                                    return (
-                                        <button
-                                            key={index}
-                                            className={itemClass}
-                                            onClick={() => {
-                                                if (isEmbedded && (settings.forwardOnly || settings.questionTimer > 0)) {
-                                                    return; // Lock jumping around
-                                                }
-                                                setQuestionIndex(index);
-                                                setShowReviewAnswers(false);
-                                            }}
-                                        >
-                                            {index + 1}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                    <div className="footer-center-hint">
+                        You can navigate between questions using the Question Navigator
                     </div>
-                </div>
+
+                    <div className="footer-right-actions">
+                        <button
+                            type="button"
+                            className="mcq-footer-end-btn"
+                            onClick={() => setShowConfirmSubmit(true)}
+                            disabled={isSubmitting}
+                        >
+                            <FaSignOutAlt />
+                            <span>End Section</span>
+                        </button>
+                    </div>
+                </footer>
             </div>
         );
     };
