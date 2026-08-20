@@ -128,10 +128,6 @@ function RootComponent() {
 
   const isAssessmentRoute =
     pathname.startsWith('/student/assessment') ||
-    pathname.startsWith('/student/mcq') ||
-    pathname.startsWith('/student/coding') ||
-    pathname.startsWith('/student/sea') ||
-    pathname.startsWith('/student/spoken-english') ||
     pathname.startsWith('/student/practice');
 
   return (

@@ -83,12 +83,7 @@ function PortalActivityTracker() {
     if (!uid) return;
 
     const path = location.pathname;
-    const isAssessment =
-      (path.startsWith("/student/coding/") && path !== "/student/coding") ||
-      path.startsWith("/student/assessment/") ||
-      path.startsWith("/student/spoken-english/") ||
-      path.startsWith("/student/sea/") ||
-      (path.startsWith("/student/mcq/") && path !== "/student/mcq");
+    const isAssessment = path.startsWith("/student/assessment/");
 
     if (isAssessment) return;
 

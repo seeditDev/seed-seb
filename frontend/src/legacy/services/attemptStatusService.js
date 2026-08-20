@@ -180,15 +180,17 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
     }
   }
 
-  // 2. Canonical fallback: read assessmentResults/{id}/students/{uid} for each
-  // unknown assessment. Replaces legacy colleges/... subcollection queries.
+  // 2. Canonical fallback: read assessmentResults/{tenantId}/{id}/{uid} for each
+  // unknown assessment. Capped at 50 items to prevent runaway reads.
   if (!denormalisedComplete) {
-    const unknown = ids.filter((id) => !map[id]);
+    // Only read up to 50 unknown IDs to bound Firestore cost
+    const unknown = ids.filter((id) => !map[id]).slice(0, 50);
     if (unknown.length > 0) {
       // Use live Firebase Auth UID for canonical reads
       const liveUid = auth?.currentUser?.uid || userKey;
+      const tenantId = userData?.tenantId || userData?.TenantId || user?.tenantId || '_unknown_';
       try {
-        const canonFound = await queryCanonicalPaths(liveUid, unknown, tenant.college || '_unknown_');
+        const canonFound = await queryCanonicalPaths(liveUid, unknown, tenantId);
         Object.keys(canonFound).forEach((id) => { map[id] = true; });
       } catch (e) {
         console.warn('[attemptStatusService] canonical fallback failed:', e?.message);

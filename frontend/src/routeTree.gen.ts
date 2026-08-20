@@ -18,13 +18,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminQuestionsRouteImport } from './routes/admin.questions'
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
 import { Route as StudentAssessmentAssessmentSlugRouteImport } from './routes/student.assessment.$assessmentSlug'
-import { Route as StudentCodingIndexRouteImport } from './routes/student.coding.index'
-import { Route as StudentCodingAssessmentSlugRouteImport } from './routes/student.coding.$assessmentSlug'
-import { Route as StudentMcqIndexRouteImport } from './routes/student.mcq.index'
-import { Route as StudentMcqTestSlugRouteImport } from './routes/student.mcq.$testSlug'
-import { Route as StudentSeaAssessmentSlugRouteImport } from './routes/student.sea.$assessmentSlug'
-import { Route as StudentSpokenEnglishAssessmentSlugRouteImport } from './routes/student.spoken-english.$assessmentSlug'
-import { Route as StudentAssessmentMultisectionAssessmentSlugRouteImport } from './routes/student.assessment.multisection.$assessmentSlug'
+import { Route as StudentAssessmentIdAssessmentSlugRouteImport } from './routes/student.assessment.id.$assessmentSlug'
 import { Route as StudentPracticeSolveQuestionIdRouteImport } from './routes/student.practice.solve.$questionId'
 import { Route as StudentPracticeCourseCourseIdQuestionIdRouteImport } from './routes/student.practice.course.$courseId.$questionId'
 
@@ -74,43 +68,10 @@ const StudentAssessmentAssessmentSlugRoute =
     path: '/student/assessment/$assessmentSlug',
     getParentRoute: () => rootRouteImport,
   } as any)
-const StudentCodingIndexRoute = StudentCodingIndexRouteImport.update({
-  id: '/student/coding/',
-  path: '/student/coding/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StudentCodingAssessmentSlugRoute =
-  StudentCodingAssessmentSlugRouteImport.update({
-    id: '/student/coding/$assessmentSlug',
-    path: '/student/coding/$assessmentSlug',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const StudentMcqIndexRoute = StudentMcqIndexRouteImport.update({
-  id: '/student/mcq/',
-  path: '/student/mcq/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StudentMcqTestSlugRoute = StudentMcqTestSlugRouteImport.update({
-  id: '/student/mcq/$testSlug',
-  path: '/student/mcq/$testSlug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StudentSeaAssessmentSlugRoute =
-  StudentSeaAssessmentSlugRouteImport.update({
-    id: '/student/sea/$assessmentSlug',
-    path: '/student/sea/$assessmentSlug',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const StudentSpokenEnglishAssessmentSlugRoute =
-  StudentSpokenEnglishAssessmentSlugRouteImport.update({
-    id: '/student/spoken-english/$assessmentSlug',
-    path: '/student/spoken-english/$assessmentSlug',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const StudentAssessmentMultisectionAssessmentSlugRoute =
-  StudentAssessmentMultisectionAssessmentSlugRouteImport.update({
-    id: '/student/assessment/multisection/$assessmentSlug',
-    path: '/student/assessment/multisection/$assessmentSlug',
+const StudentAssessmentIdAssessmentSlugRoute =
+  StudentAssessmentIdAssessmentSlugRouteImport.update({
+    id: '/student/assessment/id/$assessmentSlug',
+    path: '/student/assessment/id/$assessmentSlug',
     getParentRoute: () => rootRouteImport,
   } as any)
 const StudentPracticeSolveQuestionIdRoute =
@@ -136,13 +97,7 @@ export interface FileRoutesByFullPath {
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin/': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
-  '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
-  '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
-  '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
-  '/student/spoken-english/$assessmentSlug': typeof StudentSpokenEnglishAssessmentSlugRoute
-  '/student/coding/': typeof StudentCodingIndexRoute
-  '/student/mcq/': typeof StudentMcqIndexRoute
-  '/student/assessment/multisection/$assessmentSlug': typeof StudentAssessmentMultisectionAssessmentSlugRoute
+  '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
   '/student/practice/course/$courseId/$questionId': typeof StudentPracticeCourseCourseIdQuestionIdRoute
 }
@@ -156,13 +111,7 @@ export interface FileRoutesByTo {
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
-  '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
-  '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
-  '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
-  '/student/spoken-english/$assessmentSlug': typeof StudentSpokenEnglishAssessmentSlugRoute
-  '/student/coding': typeof StudentCodingIndexRoute
-  '/student/mcq': typeof StudentMcqIndexRoute
-  '/student/assessment/multisection/$assessmentSlug': typeof StudentAssessmentMultisectionAssessmentSlugRoute
+  '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
   '/student/practice/course/$courseId/$questionId': typeof StudentPracticeCourseCourseIdQuestionIdRoute
 }
@@ -177,13 +126,7 @@ export interface FileRoutesById {
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin/': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
-  '/student/coding/$assessmentSlug': typeof StudentCodingAssessmentSlugRoute
-  '/student/mcq/$testSlug': typeof StudentMcqTestSlugRoute
-  '/student/sea/$assessmentSlug': typeof StudentSeaAssessmentSlugRoute
-  '/student/spoken-english/$assessmentSlug': typeof StudentSpokenEnglishAssessmentSlugRoute
-  '/student/coding/': typeof StudentCodingIndexRoute
-  '/student/mcq/': typeof StudentMcqIndexRoute
-  '/student/assessment/multisection/$assessmentSlug': typeof StudentAssessmentMultisectionAssessmentSlugRoute
+  '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
   '/student/practice/course/$courseId/$questionId': typeof StudentPracticeCourseCourseIdQuestionIdRoute
 }
@@ -199,13 +142,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/admin/'
     | '/student/assessment/$assessmentSlug'
-    | '/student/coding/$assessmentSlug'
-    | '/student/mcq/$testSlug'
-    | '/student/sea/$assessmentSlug'
-    | '/student/spoken-english/$assessmentSlug'
-    | '/student/coding/'
-    | '/student/mcq/'
-    | '/student/assessment/multisection/$assessmentSlug'
+    | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
     | '/student/practice/course/$courseId/$questionId'
   fileRoutesByTo: FileRoutesByTo
@@ -219,13 +156,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/admin'
     | '/student/assessment/$assessmentSlug'
-    | '/student/coding/$assessmentSlug'
-    | '/student/mcq/$testSlug'
-    | '/student/sea/$assessmentSlug'
-    | '/student/spoken-english/$assessmentSlug'
-    | '/student/coding'
-    | '/student/mcq'
-    | '/student/assessment/multisection/$assessmentSlug'
+    | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
     | '/student/practice/course/$courseId/$questionId'
   id:
@@ -239,13 +170,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/admin/'
     | '/student/assessment/$assessmentSlug'
-    | '/student/coding/$assessmentSlug'
-    | '/student/mcq/$testSlug'
-    | '/student/sea/$assessmentSlug'
-    | '/student/spoken-english/$assessmentSlug'
-    | '/student/coding/'
-    | '/student/mcq/'
-    | '/student/assessment/multisection/$assessmentSlug'
+    | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
     | '/student/practice/course/$courseId/$questionId'
   fileRoutesById: FileRoutesById
@@ -260,13 +185,7 @@ export interface RootRouteChildren {
   StudentDashboardRoute: typeof StudentDashboardRoute
   AdminIndexRoute: typeof AdminIndexRoute
   StudentAssessmentAssessmentSlugRoute: typeof StudentAssessmentAssessmentSlugRoute
-  StudentCodingAssessmentSlugRoute: typeof StudentCodingAssessmentSlugRoute
-  StudentMcqTestSlugRoute: typeof StudentMcqTestSlugRoute
-  StudentSeaAssessmentSlugRoute: typeof StudentSeaAssessmentSlugRoute
-  StudentSpokenEnglishAssessmentSlugRoute: typeof StudentSpokenEnglishAssessmentSlugRoute
-  StudentCodingIndexRoute: typeof StudentCodingIndexRoute
-  StudentMcqIndexRoute: typeof StudentMcqIndexRoute
-  StudentAssessmentMultisectionAssessmentSlugRoute: typeof StudentAssessmentMultisectionAssessmentSlugRoute
+  StudentAssessmentIdAssessmentSlugRoute: typeof StudentAssessmentIdAssessmentSlugRoute
   StudentPracticeSolveQuestionIdRoute: typeof StudentPracticeSolveQuestionIdRoute
   StudentPracticeCourseCourseIdQuestionIdRoute: typeof StudentPracticeCourseCourseIdQuestionIdRoute
 }
@@ -336,53 +255,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentAssessmentAssessmentSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/student/coding/': {
-      id: '/student/coding/'
-      path: '/student/coding'
-      fullPath: '/student/coding/'
-      preLoaderRoute: typeof StudentCodingIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/student/coding/$assessmentSlug': {
-      id: '/student/coding/$assessmentSlug'
-      path: '/student/coding/$assessmentSlug'
-      fullPath: '/student/coding/$assessmentSlug'
-      preLoaderRoute: typeof StudentCodingAssessmentSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/student/mcq/': {
-      id: '/student/mcq/'
-      path: '/student/mcq'
-      fullPath: '/student/mcq/'
-      preLoaderRoute: typeof StudentMcqIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/student/mcq/$testSlug': {
-      id: '/student/mcq/$testSlug'
-      path: '/student/mcq/$testSlug'
-      fullPath: '/student/mcq/$testSlug'
-      preLoaderRoute: typeof StudentMcqTestSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/student/sea/$assessmentSlug': {
-      id: '/student/sea/$assessmentSlug'
-      path: '/student/sea/$assessmentSlug'
-      fullPath: '/student/sea/$assessmentSlug'
-      preLoaderRoute: typeof StudentSeaAssessmentSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/student/spoken-english/$assessmentSlug': {
-      id: '/student/spoken-english/$assessmentSlug'
-      path: '/student/spoken-english/$assessmentSlug'
-      fullPath: '/student/spoken-english/$assessmentSlug'
-      preLoaderRoute: typeof StudentSpokenEnglishAssessmentSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/student/assessment/multisection/$assessmentSlug': {
-      id: '/student/assessment/multisection/$assessmentSlug'
-      path: '/student/assessment/multisection/$assessmentSlug'
-      fullPath: '/student/assessment/multisection/$assessmentSlug'
-      preLoaderRoute: typeof StudentAssessmentMultisectionAssessmentSlugRouteImport
+    '/student/assessment/id/$assessmentSlug': {
+      id: '/student/assessment/id/$assessmentSlug'
+      path: '/student/assessment/id/$assessmentSlug'
+      fullPath: '/student/assessment/id/$assessmentSlug'
+      preLoaderRoute: typeof StudentAssessmentIdAssessmentSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/student/practice/solve/$questionId': {
@@ -412,15 +289,8 @@ const rootRouteChildren: RootRouteChildren = {
   StudentDashboardRoute: StudentDashboardRoute,
   AdminIndexRoute: AdminIndexRoute,
   StudentAssessmentAssessmentSlugRoute: StudentAssessmentAssessmentSlugRoute,
-  StudentCodingAssessmentSlugRoute: StudentCodingAssessmentSlugRoute,
-  StudentMcqTestSlugRoute: StudentMcqTestSlugRoute,
-  StudentSeaAssessmentSlugRoute: StudentSeaAssessmentSlugRoute,
-  StudentSpokenEnglishAssessmentSlugRoute:
-    StudentSpokenEnglishAssessmentSlugRoute,
-  StudentCodingIndexRoute: StudentCodingIndexRoute,
-  StudentMcqIndexRoute: StudentMcqIndexRoute,
-  StudentAssessmentMultisectionAssessmentSlugRoute:
-    StudentAssessmentMultisectionAssessmentSlugRoute,
+  StudentAssessmentIdAssessmentSlugRoute:
+    StudentAssessmentIdAssessmentSlugRoute,
   StudentPracticeSolveQuestionIdRoute: StudentPracticeSolveQuestionIdRoute,
   StudentPracticeCourseCourseIdQuestionIdRoute:
     StudentPracticeCourseCourseIdQuestionIdRoute,

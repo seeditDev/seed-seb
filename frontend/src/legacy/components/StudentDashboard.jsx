@@ -867,14 +867,14 @@ const StudentDashboard = () => {
     if (session.isRemoteRestored && session.remoteSnapshot) {
       localStorage.setItem(`msaProgress_${session.id}`, JSON.stringify(session.remoteSnapshot));
       sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.remoteSnapshot.assessmentData || { id: session.id, name: session.name }));
-      navigate(`/student/assessment/multisection/${session.slug}`);
+      navigate(`/student/assessment/id/${session.slug}`);
       return;
     }
 
     if (session.assessmentData) {
       sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(session.assessmentData));
     }
-    navigate(`/student/assessment/multisection/${session.slug}`);
+    navigate(`/student/assessment/id/${session.slug}`);
   };
 
   useEffect(() => {
@@ -1582,7 +1582,7 @@ const StudentDashboard = () => {
         settings: assessment.settings || {},
       }));
       setLaunchStep(null);
-      navigate(`/student/assessment/multisection/${assessment.slug}`);
+      navigate(`/student/assessment/id/${assessment.slug}`);
       return;
     } catch (err) {
       console.error("Launch setup failed:", err);

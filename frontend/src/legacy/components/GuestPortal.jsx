@@ -470,7 +470,7 @@ const GuestPortal = () => {
     } else if (type === 'sea' || type === 'spoken-english') {
       navigate(`/student/sea/${selectedTest.testId}`, { state: { guestSession, testDoc: selectedTest } });
     } else if (type === 'msa' || type === 'multisection') {
-      navigate(`/student/assessment/multisection/${selectedTest.testId}`, { state: { guestSession, testDoc: selectedTest } });
+      navigate(`/student/assessment/id/${selectedTest.testId}`, { state: { guestSession, testDoc: selectedTest } });
     } else {
       setError(`Unsupported assessment type: ${type}`);
     }

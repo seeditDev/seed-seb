@@ -1,26 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { createLegacyRoute } from "@/legacy/legacyRoute";
-
+/**
+ * Compatibility route: /student/assessment/:slug → /student/assessment/id/:slug
+ *
+ * This handles any deep-linked or bookmarked URLs that use the shorter path.
+ * The canonical URL is /student/assessment/id/:assessmentSlug.
+ */
 export const Route = createFileRoute("/student/assessment/$assessmentSlug")({
-  head: () => ({
-    meta: [
-      { title: "Assessment — SEED-SEB" },
-      {
-        name: "description",
-        content:
-          "Attempt a proctored assessment.",
-      },
-      { property: "og:title", content: "Assessment — SEED-SEB" },
-      {
-        property: "og:description",
-        content:
-          "Attempt a proctored assessment.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: createLegacyRoute(() => import("@/legacy/components/MultiSectionAssessment")),
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/student/assessment/id/$assessmentSlug",
+      params: { assessmentSlug: params.assessmentSlug },
+      replace: true,
+    });
+  },
+  component: () => null,
 });
