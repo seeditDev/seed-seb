@@ -569,15 +569,35 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Sync embedded questions and assessment settings
     useEffect(() => {
         if (isEmbedded && testData && testData.questions) {
-            // Set questions on initial load
-            if (questions.length === 0 && testData.questions.length > 0) {
-                const normalized = testData.questions.map(normalizeQuestion);
+            let isCancelled = false;
+            const syncEmbeddedQuestions = async () => {
+                if (!Array.isArray(testData.questions) || testData.questions.length === 0) return;
+
+                let fullQuestions = testData.questions;
+                const isStub = fullQuestions.some(q => q && !q.content?.problemStatement && !q.description && !q.problemStatement);
+                if (isStub) {
+                    try {
+                        const { fetchQuestionsForContest } = await import('../services/codingQuestionBankService');
+                        const resolved = await fetchQuestionsForContest(fullQuestions);
+                        if (resolved && resolved.length > 0) {
+                            fullQuestions = resolved;
+                        }
+                    } catch (e) {
+                        console.warn('[CodingAssessmentPage] Error resolving embedded question stubs:', e);
+                    }
+                }
+
+                if (isCancelled) return;
+                const normalized = fullQuestions.map(normalizeQuestion);
                 setQuestions(normalized);
-                setActiveQuestionIndex(0);
                 if (normalized.length > 0) {
-                    setVisitedQuestions({ [normalized[0].id]: true });
+                    setVisitedQuestions(prev => ({ ...prev, [normalized[0].id]: true }));
                 }
                 setLoading(false);
+            };
+
+            if (testData.questions.length > 0) {
+                syncEmbeddedQuestions();
             }
 
             // Sync user details if not set
@@ -603,8 +623,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     audioProctored
                 });
             }
+
+            return () => { isCancelled = true; };
         }
-    }, [isEmbedded, testData, settings, questions.length, user, currentAssessment]);
+    }, [isEmbedded, testData?.questions, settings, user, currentAssessment]);
 
     // Initialize code boilerPlates in embedded mode
     useEffect(() => {
@@ -2914,6 +2936,38 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     );
 
     // ==========================================
+    // RENDER: LOADING STATE (STANDALONE & EMBEDDED)
+    // ==========================================
+    if (loading || (!currentQuestion && !error)) {
+        return (
+            <div className="coding-workspace-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: isEmbedded ? '400px' : '100vh', background: '#020617' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div className="learn-spinner" style={{ width: '48px', height: '48px', borderTopColor: '#10b981', margin: '0 auto 16px' }} />
+                    <p style={{ color: '#94a3b8', fontSize: '0.95rem' }}>Loading coding assessment...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error && !currentQuestion) {
+        return (
+            <div className="coding-workspace-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: isEmbedded ? '400px' : '100vh', background: '#020617', padding: '24px' }}>
+                <div style={{ maxWidth: '500px', width: '100%', background: '#0f172a', border: '1px solid #334155', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
+                    <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '2.5rem', marginBottom: '16px' }} />
+                    <h3 style={{ color: '#f8fafc', marginBottom: '8px' }}>Unable to Load Assessment</h3>
+                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '24px' }}>{error}</p>
+                    <button
+                        onClick={() => navigate('/student/dashboard')}
+                        style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: '600', cursor: 'pointer' }}
+                    >
+                        Back to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ==========================================
     // RENDER: WORKSPACE VIEW
     // ==========================================
     const authData = JSON.parse(localStorage.getItem('auth_data') ?? '{}');
@@ -3248,23 +3302,23 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                             <div className="problem-pane-body">
                                 <div className="problem-title-block">
-                                    <h3>{currentQuestion.title || currentQuestion.name || 'Problem Statement'}</h3>
+                                    <h3>{currentQuestion?.title || currentQuestion?.name || 'Problem Statement'}</h3>
                                     <div className="problem-tags-row">
-                                        <span className={`diff-pill ${(currentQuestion.difficulty || 'easy').toLowerCase()}`}>
-                                            {currentQuestion.difficulty ?? ''}
+                                        <span className={`diff-pill ${(currentQuestion?.difficulty || 'easy').toLowerCase()}`}>
+                                            {currentQuestion?.difficulty ?? ''}
                                         </span>
                                         <span className="marks-pill">
-                                            {currentQuestion.marks ? `${currentQuestion.marks} Marks` : '100 Marks'}
+                                            {currentQuestion?.marks ? `${currentQuestion.marks} Marks` : '100 Marks'}
                                         </span>
                                     </div>
                                 </div>
 
                                 <div className="problem-desc-text">
-                                    <p>{currentQuestion.description || currentQuestion.content?.problemStatement || 'Solve the challenge as specified below.'}</p>
+                                    <p>{currentQuestion?.description || currentQuestion?.content?.problemStatement || 'Solve the challenge as specified below.'}</p>
                                 </div>
 
                                 {/* Sample Test Case Example Blocks */}
-                                {(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []).map((st, i) => (
+                                {(currentQuestion?.sampleTests || currentQuestion?.sampleTestCases || currentQuestion?.content?.sampleTestCases || []).map((st, i) => (
                                     <div key={i} className="example-box">
                                         <span className="example-title">Example {i + 1}:</span>
                                         <div className="example-line"><strong>Input:</strong> {st.input ?? "No Input"}</div>
@@ -3276,7 +3330,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 ))}
 
                                 {/* Constraints */}
-                                {currentQuestion.constraints && (
+                                {currentQuestion?.constraints && (
                                     <div className="constraints-section">
                                         <h4>Constraints:</h4>
                                         <ul>
@@ -3309,7 +3363,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                             saveCurrentEditorToMap();
                                             const newLang = e.target.value;
                                             setLanguage(newLang);
-                                            const codeKey = `${currentQuestion.id}_${newLang}`;
+                                            const codeKey = `${currentQuestion?.id || 'q'}_${newLang}`;
                                             if (!codeMapRef.current[codeKey] && !codeMap[codeKey]) {
                                                 const boilerplate = (FREE_BOILERPLATES[newLang] ?? "");
                                                 codeMapRef.current[codeKey] = boilerplate;
@@ -3350,10 +3404,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                             <div className="editor-monaco-body">
                                 <Editor
-                                    key={`${currentQuestion.id}_${language}_${editorTheme}`}
+                                    key={`${currentQuestion?.id || 'q'}_${language}_${editorTheme}`}
                                     height="100%"
                                     language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
-                                    defaultValue={getCurrentCode(currentQuestion.id, language)}
+                                    defaultValue={getCurrentCode(currentQuestion?.id, language)}
                                     onChange={handleCodeChange}
                                     onMount={(editor) => {
                                         editorRef.current = editor;
