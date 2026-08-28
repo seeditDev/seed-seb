@@ -397,15 +397,23 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Embedded Mode helper to submit scores and code map
     const handleEmbeddedSectionSubmit = async (reason = '') => {
         try {
+            saveCurrentEditorToMap();
             const finalScores = { ...questionScores };
             const allAnswers = {};
             for (const q of questions) {
-                const code = (editorRef.current && currentQuestion?.id === q.id)
+                const qId = q.id || q.questionId;
+                const code = (editorRef.current && currentQuestion?.id === qId)
                     ? editorRef.current.getValue()
-                    : (codeMapRef.current[`${q.id}_${language}`] || codeMap[`${q.id}_${language}`] || "");
-                allAnswers[q.id] = code;
+                    : (codeMapRef.current[`${qId}_${language}`] ||
+                       codeMapRef.current[`${qId}_cpp`] ||
+                       codeMapRef.current[`${qId}_c`] ||
+                       codeMapRef.current[`${qId}_python`] ||
+                       codeMapRef.current[`${qId}_java`] ||
+                       codeMapRef.current[`${qId}_javascript`] ||
+                       codeMap[`${qId}_${language}`] || "");
+                allAnswers[qId] = code;
                 
-                if (!finalScores[q.id]) {
+                if (!finalScores[qId]) {
                     // SECTION 18: use hiddenTests for official scoring, with robust fallbacks
                     const hidden = (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0)
                         ? q.hiddenTests
@@ -418,31 +426,67 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     : (Array.isArray(q.testCases) ? q.testCases : []))));
 
                     if (hidden.length === 0) {
-                        console.error(`[CodingEval] Question ${q.id} has no test cases. Assigning 0.`);
-                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_test_cases' };
+                        console.error(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
+                        finalScores[qId] = {
+                            score: 0,
+                            percentage: 0,
+                            passed: 0,
+                            total: 0,
+                            submitted: true,
+                            code: code,
+                            solution: code,
+                            language: language,
+                            testResults: [],
+                            invalidConfig: true,
+                            invalidReason: 'no_test_cases'
+                        };
                     } else {
                         const bridgeLang = language === 'python3' ? 'python' : language;
                         const isBlank = isCodeBlankOrEmpty(code);
                         let passes = 0;
+                        let evalResults = [];
                         if (!isBlank) {
-                            for (const tc of hidden) {
+                            for (let i = 0; i < hidden.length; i++) {
+                                const tc = hidden[i];
                                 try {
                                     const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
                                     const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : (resRaw || {});
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                                     const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
                                     const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                                    if (cleanOut === cleanExp && !res.error && (exit === 0 || exit === null)) passes++;
-                                } catch (err) {}
+                                    const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
+                                    if (passed) passes++;
+                                    evalResults.push({
+                                        index: i + 1,
+                                        input: tc.input,
+                                        expected: tc.expectedOutput,
+                                        actual: res.stdout ?? "",
+                                        stderr: res.stderr || (res.error ?? ""),
+                                        passed
+                                    });
+                                } catch (err) {
+                                    evalResults.push({
+                                        index: i + 1,
+                                        input: tc.input,
+                                        expected: tc.expectedOutput,
+                                        actual: "",
+                                        stderr: err.message,
+                                        passed: false
+                                    });
+                                }
                             }
                         }
                         const qScore = (!isBlank && hidden.length > 0) ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
-                        finalScores[q.id] = {
+                        finalScores[qId] = {
                             score: qScore,
                             percentage: (!isBlank && hidden.length > 0) ? Math.round((passes / hidden.length) * 100) : 0,
                             passed: isBlank ? 0 : passes,
                             total: hidden.length,
-                            submitted: true
+                            submitted: true,
+                            code: code,
+                            solution: code,
+                            language: language,
+                            testResults: evalResults
                         };
                     }
                 }
@@ -454,31 +498,42 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 let totalMaxWeight = 0;
 
                 const codingDetails = questions.map((q, idx) => {
-                    const scoreObj = finalScores[q.id] || { score: 0, percentage: 0, passed: 0, total: 0 };
+                    const qId = q.id || q.questionId;
+                    const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
                     const passed = scoreObj.passed || 0;
                     const total = scoreObj.total || 0;
-                    const status = total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
+                    const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
                     
+                    const userCode = scoreObj.code || scoreObj.solution || allAnswers[qId] || getCurrentCode(qId, language) || "";
+                    const qLang = scoreObj.language || language || 'c';
+                    const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
+
                     totalEarnedWeight += scoreObj.score || 0;
                     totalMaxWeight += q.weight || DEFAULT_QUESTION_WEIGHT;
 
-                    return {
+                    return buildCodingSubmission({
+                        questionId: qId,
                         questionNumber: idx + 1,
                         problemTitle: q.name || q.title || `Question ${idx + 1}`,
                         title: q.name || q.title || `Question ${idx + 1}`,
                         difficulty: q.difficulty || 'Easy',
-                        language: language ?? '',
+                        language: qLang,
+                        code: userCode,
+                        solution: userCode,
                         status,
                         testsPassed: passed,
                         totalTests: total,
                         score: scoreObj.score || 0,
+                        maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
                         percentage: scoreObj.percentage || 0,
-                        compilationCount: compilationCounts[q.id] || 0,
-                        attempts: compilationCounts[q.id] || 0,
+                        compilationCount: compilationCounts[qId] || 0,
+                        attempts: compilationCounts[qId] || 0,
                         timeComplexity: q.timeComplexity ?? '',
                         spaceComplexity: q.spaceComplexity ?? '',
-                        submittedAt: questionSubmitTimes[q.id] || new Date().toISOString()
-                    };
+                        testResults: testResults,
+                        timeSpentSeconds: timeSpentPerQ[qId] || 0,
+                        submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
+                    });
                 });
 
                 // ── Timing data ──
@@ -497,6 +552,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     timeSpentPerQ: timeSpentPerQ,
                     completed: finalScores,
                     coding: codingDetails,
+                    questions: codingDetails,
                     score: totalEarnedWeight,
                     maxScore: totalMaxWeight,
                     totalQuestions: questions.length,
@@ -1397,6 +1453,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     const editorRef = useRef(null);
     const codeMapRef = useRef(codeMap);
+    const questionRunHistoryRef = useRef({});
     useEffect(() => {
         codeMapRef.current = { ...codeMap, ...codeMapRef.current };
     }, [codeMap]);
@@ -1470,7 +1527,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 timeTaken: getElapsedSeconds(),
                 startedAt: new Date(startTime).toISOString(),
                 answers: questionScores,
-                codeMap: codeMapRef.current
+                codeMap: codeMapRef.current,
+                runHistory: questionRunHistoryRef.current
             };
             await CodingAssessmentService.syncProgress(progress);
         } catch (e) {
@@ -1513,14 +1571,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
         if (isBlank) {
             setStderr("No code submitted. Please write solution code before running test cases.");
-            setRunResults(sampleTests.map((tc, idx) => ({
+            const emptyResults = sampleTests.map((tc, idx) => ({
                 index: idx + 1,
                 input: tc.input,
                 expected: tc.expectedOutput,
                 actual: "",
                 stderr: "No code submitted in editor.",
                 passed: false
-            })));
+            }));
+            setRunResults(emptyResults);
+            questionRunHistoryRef.current[currentQuestion.id] = {
+                questionId: currentQuestion.id,
+                code: "",
+                solution: "",
+                language: language,
+                testsPassed: 0,
+                totalTests: emptyResults.length,
+                status: "Wrong Answer",
+                results: emptyResults,
+                runAt: new Date().toISOString()
+            };
             setActiveResultTab('console');
             setIsRunning(false);
             return;
@@ -1596,6 +1666,42 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             setRunResults(results);
 
+            // Record run history and sync into questionScores so code, language, and run testcase results are preserved
+            const passedCases = results.filter(r => r.passed).length;
+            const totalCases = results.length;
+            const runStatus = totalCases > 0 ? (passedCases === totalCases ? "Accepted" : (passedCases > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
+
+            const runRecord = {
+                questionId: currentQuestion.id,
+                code: code,
+                solution: code,
+                language: language,
+                testsPassed: passedCases,
+                totalTests: totalCases,
+                status: runStatus,
+                results: results,
+                runAt: new Date().toISOString()
+            };
+            questionRunHistoryRef.current[currentQuestion.id] = runRecord;
+
+            setQuestionScores(prev => {
+                const existing = prev[currentQuestion.id];
+                return {
+                    ...prev,
+                    [currentQuestion.id]: {
+                        ...(existing || {}),
+                        code: code,
+                        solution: code,
+                        language: language,
+                        lastRunTestsPassed: passedCases,
+                        lastRunTotalTests: totalCases,
+                        lastRunStatus: runStatus,
+                        lastRunResults: results,
+                        lastRunAt: runRecord.runAt
+                    }
+                };
+            });
+
             // Populate stdout / stderr for console and output tabs
             const firstErrorCase = results.find(r => r.stderr);
             const primaryCase = firstErrorCase || results[0];
@@ -1606,6 +1712,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             setExpandedTestCaseIndex(0);
             setActiveResultTab(firstErrorCase ? 'console' : 'output');
             setActiveRightTab('testcases');
+            backupProgress();
         } catch (err) {
             console.error("Run code error:", err);
             setStderr(`Run Code Error: ${err.message}`);
@@ -1675,6 +1782,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const total = hiddenTests.length;
             const score = (!isEvalBlank && total > 0) ? Math.round((passedCount / total) * 100) : 0;
             const earnedWeight = (!isEvalBlank && total > 0) ? (passedCount / total) * (currentQuestion.weight || DEFAULT_QUESTION_WEIGHT) : 0;
+            const evalStatus = (!isEvalBlank && total > 0) ? (passedCount === total ? "Accepted" : (passedCount > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
 
             const newScores = {
                 ...questionScores,
@@ -1683,7 +1791,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     percentage: score,
                     passed: passedCount,
                     total: total,
-                    submitted: true
+                    submitted: true,
+                    code: code,
+                    solution: code,
+                    language: language,
+                    testResults: results,
+                    status: evalStatus,
+                    submittedAt: new Date().toISOString()
                 }
             };
             setQuestionScores(newScores);
@@ -1699,6 +1813,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             }
             setActiveRightTab('testcases');
             setExpandedTestCaseIndex(0);
+            backupProgress();
         } catch (err) {
             console.error("Submit question evaluation failed:", err);
             evalError = err.message;
@@ -1792,12 +1907,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                     if (hidden.length === 0) {
                         console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
-                        finalScores[qId] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_test_cases' };
+                        finalScores[qId] = {
+                            score: 0,
+                            percentage: 0,
+                            passed: 0,
+                            total: 0,
+                            submitted: true,
+                            code: code,
+                            solution: code,
+                            language: language,
+                            testResults: [],
+                            invalidConfig: true,
+                            invalidReason: 'no_test_cases'
+                        };
                     } else {
                         const bridgeLang = language === 'python3' ? 'python' : language;
                         let passes = 0;
+                        let evalResults = [];
                         if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
-                            for (const tc of hidden) {
+                            for (let i = 0; i < hidden.length; i++) {
+                                const tc = hidden[i];
                                 try {
                                     const res = await Promise.race([
                                         desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
@@ -1807,8 +1936,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                                     const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
                                     const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                                    if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
-                                } catch (err) {}
+                                    const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
+                                    if (passed) passes++;
+                                    evalResults.push({
+                                        index: i + 1,
+                                        input: tc.input,
+                                        expected: tc.expectedOutput,
+                                        actual: res.stdout ?? "",
+                                        stderr: res.stderr || (res.error ?? ""),
+                                        passed
+                                    });
+                                } catch (err) {
+                                    evalResults.push({
+                                        index: i + 1,
+                                        input: tc.input,
+                                        expected: tc.expectedOutput,
+                                        actual: "",
+                                        stderr: err.message,
+                                        passed: false
+                                    });
+                                }
                             }
                         }
                         const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
@@ -1817,7 +1964,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
                             passed: passes,
                             total: hidden.length,
-                            submitted: true
+                            submitted: true,
+                            code: code,
+                            solution: code,
+                            language: language,
+                            testResults: evalResults
                         };
                         totalEarnedWeight += qScore;
                     }
@@ -1829,25 +1980,44 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             // Gather metadata payload
             const codingSubmissions = activeQuestions.map((q, idx) => {
-                const scoreObj = finalScores[q.id] || { score: 0, percentage: 0, passed: 0, total: 0 };
+                const qId = q.id || q.questionId;
+                const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
                 const passed = scoreObj.passed || 0;
                 const total = scoreObj.total || 0;
-                const status = total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
-                return {
+                const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
+                const userCode = scoreObj.code || scoreObj.solution || (storedCodeMap && storedCodeMap[`${qId}_${language}`]) ||
+                                 getCurrentCode(qId, language) ||
+                                 codeMapRef.current[`${qId}_${language}`] ||
+                                 codeMapRef.current[`${qId}_cpp`] ||
+                                 codeMapRef.current[`${qId}_c`] ||
+                                 codeMapRef.current[`${qId}_python`] ||
+                                 codeMapRef.current[`${qId}_java`] ||
+                                 codeMapRef.current[`${qId}_javascript`] || "";
+                const qLang = scoreObj.language || language || 'c';
+                const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
+
+                return buildCodingSubmission({
+                    questionId: qId,
                     questionNumber: idx + 1,
                     problemTitle: q.name || q.title || `Question ${idx + 1}`,
                     title: q.name || q.title || `Question ${idx + 1}`,
                     difficulty: q.difficulty || 'Easy',
-                    language: language ?? '',
+                    language: qLang,
+                    code: userCode,
+                    solution: userCode,
                     status,
                     testsPassed: passed,
                     totalTests: total,
-                    compilationCount: compilationCounts[q.id] || 0,
-                    attempts: compilationCounts[q.id] || 0,
+                    score: scoreObj.score || 0,
+                    maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
+                    percentage: scoreObj.percentage || 0,
+                    compilationCount: compilationCounts[qId] || 0,
+                    attempts: compilationCounts[qId] || 0,
                     timeComplexity: q.timeComplexity ?? '',
                     spaceComplexity: q.spaceComplexity ?? '',
-                    submittedAt: questionSubmitTimes[q.id] || new Date().toISOString()
-                };
+                    testResults: testResults,
+                    submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
+                });
             });
 
             const targetAssessmentId = activeAssessment.id;
@@ -2037,12 +2207,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                     if (hidden.length === 0) {
                         console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
-                        finalScores[qId] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_test_cases' };
+                        finalScores[qId] = {
+                            score: 0,
+                            percentage: 0,
+                            passed: 0,
+                            total: 0,
+                            submitted: true,
+                            code: code,
+                            solution: code,
+                            language: language,
+                            testResults: [],
+                            invalidConfig: true,
+                            invalidReason: 'no_test_cases'
+                        };
                     } else {
                         const bridgeLang = language === 'python3' ? 'python' : language;
                         let passes = 0;
+                        let evalResults = [];
                         if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
-                            for (const tc of hidden) {
+                            for (let i = 0; i < hidden.length; i++) {
+                                const tc = hidden[i];
                                 try {
                                     const res = await Promise.race([
                                         desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
@@ -2052,8 +2236,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                                     const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
                                     const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                                    if (cleanOut === cleanExp && !res.error && exit === 0) passes++;
-                                } catch (err) {}
+                                    const passed = cleanOut === cleanExp && !res.error && exit === 0;
+                                    if (passed) passes++;
+                                    evalResults.push({
+                                        index: i + 1,
+                                        input: tc.input,
+                                        expected: tc.expectedOutput,
+                                        actual: res.stdout ?? "",
+                                        stderr: res.stderr || (res.error ?? ""),
+                                        passed
+                                    });
+                                } catch (err) {
+                                    evalResults.push({
+                                        index: i + 1,
+                                        input: tc.input,
+                                        expected: tc.expectedOutput,
+                                        actual: "",
+                                        stderr: err.message,
+                                        passed: false
+                                    });
+                                }
                             }
                         }
                         const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
@@ -2062,7 +2264,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
                             passed: passes,
                             total: hidden.length,
-                            submitted: true
+                            submitted: true,
+                            code: code,
+                            solution: code,
+                            language: language,
+                            testResults: evalResults
                         };
                         totalEarnedWeight += qScore;
                     }
@@ -2083,28 +2289,47 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 user.department
             );
 
-            const codingSubmissions = questions.map((q, idx) => {
-                const scoreObj = finalScores[q.id] || { score: 0, percentage: 0, passed: 0, total: 0 };
+            const codingSubmissions = questions.map((rawQ, idx) => {
+                const q = normalizeQuestion(rawQ);
+                const qId = q.id || q.questionId;
+                const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
                 const passed = scoreObj.passed || 0;
                 const total = scoreObj.total || 0;
-                const status = total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
-                return {
+                const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
+                const userCode = scoreObj.code || scoreObj.solution || getCurrentCode(qId, language) ||
+                                 codeMapRef.current[`${qId}_${language}`] ||
+                                 codeMapRef.current[`${qId}_cpp`] ||
+                                 codeMapRef.current[`${qId}_c`] ||
+                                 codeMapRef.current[`${qId}_python`] ||
+                                 codeMapRef.current[`${qId}_java`] ||
+                                 codeMapRef.current[`${qId}_javascript`] || "";
+                const qLang = scoreObj.language || language || 'c';
+                const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
+
+                return buildCodingSubmission({
+                    questionId: qId,
                     questionNumber: idx + 1,
                     problemTitle: q.name || q.title || `Question ${idx + 1}`,
                     title: q.name || q.title || `Question ${idx + 1}`,
                     difficulty: q.difficulty || 'Easy',
-                    language: language ?? '',
+                    language: qLang,
+                    code: userCode,
+                    solution: userCode,
                     status,
                     testsPassed: passed,
                     totalTests: total,
-                    compilationCount: compilationCounts[q.id] || 0,
-                    attempts: compilationCounts[q.id] || 0,
+                    score: scoreObj.score || 0,
+                    maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
+                    percentage: scoreObj.percentage || 0,
+                    compilationCount: compilationCounts[qId] || 0,
+                    attempts: compilationCounts[qId] || 0,
                     timeComplexity: q.timeComplexity ?? '',
                     spaceComplexity: q.spaceComplexity ?? '',
-                    timeSpentSeconds: timeSpentPerQ[q.id] || 0,
-                    startedAt: questionStartTimes[q.id] || new Date(startTime).toISOString(),
-                    submittedAt: questionSubmitTimes[q.id] || new Date().toISOString()
-                };
+                    timeSpentSeconds: timeSpentPerQ[qId] || 0,
+                    startedAt: questionStartTimes[qId] || new Date(startTime).toISOString(),
+                    submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString(),
+                    testResults: testResults
+                });
             });
 
             const targetAssessmentId = currentAssessment.id;

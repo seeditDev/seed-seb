@@ -176,15 +176,52 @@ export function buildQuestionResult({ questionId, selectedOption, isCorrect, tim
 /**
  * Builds a canonical CodingSubmission object for coding detail.
  */
-export function buildCodingSubmission({ questionId, language, code, testsPassed, totalTests, score, maxScore, timeSpentSeconds }) {
+export function buildCodingSubmission({
+  questionId,
+  questionNumber,
+  problemTitle,
+  title,
+  difficulty,
+  language,
+  code,
+  solution,
+  testsPassed,
+  totalTests,
+  score,
+  maxScore,
+  percentage,
+  status,
+  compilationCount,
+  attempts,
+  testResults,
+  timeSpentSeconds,
+  startedAt,
+  submittedAt
+}) {
+  const finalCode = code ?? solution ?? '';
+  const passed = typeof testsPassed === 'number' ? testsPassed : 0;
+  const total = typeof totalTests === 'number' ? totalTests : 0;
   return {
     questionId: questionId ?? '',
+    questionNumber: typeof questionNumber === 'number' ? questionNumber : 1,
+    problemTitle: problemTitle || title || '',
+    title: title || problemTitle || '',
+    difficulty: difficulty ?? 'Easy',
     language: language ?? '',
-    code: code ?? '',
-    testsPassed: typeof testsPassed === 'number' ? testsPassed : 0,
-    totalTests: typeof totalTests === 'number' ? totalTests : 0,
+    code: finalCode,
+    solution: finalCode,
+    testsPassed: passed,
+    totalTests: total,
     score: typeof score === 'number' ? score : 0,
     maxScore: typeof maxScore === 'number' ? maxScore : 0,
+    percentage: typeof percentage === 'number' ? percentage : (total > 0 ? Math.round((passed / total) * 100) : 0),
+    status: status || (total > 0 ? (passed === total ? 'Accepted' : (passed > 0 ? 'Partial' : 'Wrong Answer')) : 'Wrong Answer'),
+    compilationCount: typeof compilationCount === 'number' ? compilationCount : 0,
+    attempts: typeof attempts === 'number' ? attempts : (typeof compilationCount === 'number' ? compilationCount : 0),
     timeSpentSeconds: typeof timeSpentSeconds === 'number' ? timeSpentSeconds : 0,
+    startedAt: startedAt ?? '',
+    submittedAt: submittedAt ?? new Date().toISOString(),
+    testResults: Array.isArray(testResults) ? testResults : []
   };
 }
+

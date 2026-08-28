@@ -1116,7 +1116,8 @@ const MultiSectionAssessment = () => {
     const aggregatedCoding = Object.values(combinedResults)
       .filter(sec => sec.type === 'coding')
       .filter(sec => sec.data?.questions?.length || sec.data?.coding?.length)
-      .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), []);
+      .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), [])
+      .map(c => buildCodingSubmission(c));
 
     const totalMarksSum = Object.values(combinedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
     const totalScore = Object.values(combinedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
@@ -1985,7 +1986,8 @@ const MultiSectionAssessment = () => {
 
         const aggregatedCoding = Object.values(updatedResults)
           .filter(sec => sec.type === 'coding' && (sec.data?.questions || sec.data?.coding))
-          .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), []);
+          .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), [])
+          .map(c => buildCodingSubmission(c));
 
         const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
