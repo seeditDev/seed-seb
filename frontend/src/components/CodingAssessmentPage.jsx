@@ -8,7 +8,7 @@ import {
     FaSearch, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp,
     FaSignOutAlt, FaUser, FaShieldAlt, FaFlag, FaFileAlt, FaListUl, 
     FaCode, FaTerminal, FaCog, FaExpand, FaCompress, FaBookOpen, FaComments,
-    FaRegCheckCircle, FaRegCircle, FaLightbulb, FaSyncAlt
+    FaRegCheckCircle, FaRegCircle, FaLightbulb, FaSyncAlt, FaThList, FaFont, FaEdit
 } from 'react-icons/fa';
 import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import CodingAssessmentService from '../services/codingAssessmentService';
@@ -72,6 +72,46 @@ public class Main {
 console.log("Hello, World!");
 `
 };
+
+/**
+ * Helper to retrieve language boilerplate from question or global defaults
+ */
+export function getQuestionBoilerplate(q, lang) {
+  if (!lang) return "";
+  const standardLang = lang === 'python3' ? 'python' : (lang === 'c++' ? 'cpp' : (lang === 'js' ? 'javascript' : lang));
+  const altLang = standardLang === 'python' ? 'python3' : (standardLang === 'cpp' ? 'c++' : (standardLang === 'javascript' ? 'js' : standardLang));
+  
+  if (q) {
+    const candidates = [
+      q.boilerplates,
+      q.boilerPlates,
+      q.boilerplate,
+      q.content?.boilerplates,
+      q.content?.boilerPlates,
+      q.content?.boilerplate,
+      q.starterCode,
+      q.starter_code,
+      q.content?.starterCode,
+      q.templates,
+      q.codeTemplates,
+      q.codeSnippet,
+      q.codeSnippets,
+      q.defaultCode
+    ];
+
+    for (const source of candidates) {
+      if (source && typeof source === 'object') {
+        const val = source[standardLang] || source[altLang] || source[lang] || source[standardLang.toLowerCase()] || source[standardLang.toUpperCase()];
+        if (typeof val === 'string' && val.trim() !== '') {
+          return val;
+        }
+      } else if (typeof source === 'string' && source.trim() !== '' && candidates.indexOf(source) <= 2) {
+        return source;
+      }
+    }
+  }
+  return FREE_BOILERPLATES[standardLang] || FREE_BOILERPLATES[altLang] || FREE_BOILERPLATES[lang] || "";
+}
 
 const slugify = (value = '') => {
     if (!value) return 'coding-test';
@@ -252,6 +292,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [exitCode, setExitCode] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
     const [isEvaluating, setIsEvaluating] = useState(false);
+    const [evalProgressText, setEvalProgressText] = useState('');
     const [runResults, setRunResults] = useState(null); // Results for sample test runs
     const [evalResults, setEvalResults] = useState(null); // Results for hidden test runs
     const [activeResultTab, setActiveResultTab] = useState('output'); // 'output', 'console', 'input', 'results'
@@ -302,9 +343,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [questionResults, setQuestionResults] = useState({});
     const prevQuestionIndexRef = useRef(0);
 
-    // Resizable pane state
-    const [leftPaneWidth, setLeftPaneWidth] = useState(42); // percentage
-    const [outputPaneHeight, setOutputPaneHeight] = useState(220); // pixels
+    // Resizable pane & collapsible sidebar state
+    const [isQuestionsCollapsed, setIsQuestionsCollapsed] = useState(false);
+    const [leftPaneWidth, setLeftPaneWidth] = useState(38); // percentage for problem statement pane
+    const [outputPaneHeight, setOutputPaneHeight] = useState(240); // pixels for test cases pane
     const isDraggingVertRef = useRef(false);
     const isDraggingHorizRef = useRef(false);
     const workspaceBodyRef = useRef(null);
@@ -635,11 +677,20 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Initialize code boilerPlates in embedded mode
     useEffect(() => {
         if (isEmbedded && questions.length > 0 && Object.keys(codeMap).length === 0) {
-            const initialCodeMap = {};
+            let savedMap = {};
+            try {
+                const raw = localStorage.getItem("codingAssessmentCode");
+                if (raw) savedMap = JSON.parse(raw);
+            } catch (_) {}
+
+            const initialCodeMap = { ...savedMap };
             const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
             questions.forEach(q => {
                 availableLanguages.forEach(lang => {
-                    initialCodeMap[`${q.id}_${lang}`] = (FREE_BOILERPLATES[lang] ?? "");
+                    const key = `${q.id}_${lang}`;
+                    if (!initialCodeMap[key]) {
+                        initialCodeMap[key] = getQuestionBoilerplate(q, lang);
+                    }
                 });
             });
             codeMapRef.current = { ...initialCodeMap, ...codeMapRef.current };
@@ -663,10 +714,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         }
     }, [secTimer, isEmbedded]);
 
-    // Vertical divider drag (left/right pane split)
+    // Vertical divider drag (problem pane vs right workspace split)
     const startVertDrag = useCallback((e) => {
         e.preventDefault();
         isDraggingVertRef.current = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
         const startX = e.clientX;
         const startWidth = leftPaneWidth;
         const body = workspaceBodyRef.current;
@@ -675,11 +728,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         const onMove = (mv) => {
             if (!isDraggingVertRef.current) return;
             const delta = mv.clientX - startX;
-            const newPct = Math.min(65, Math.max(25, startWidth + (delta / totalW) * 100));
+            const newPct = Math.min(70, Math.max(20, startWidth + (delta / totalW) * 100));
             setLeftPaneWidth(newPct);
         };
         const onUp = () => {
             isDraggingVertRef.current = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
             window.removeEventListener('mousemove', onMove);
             window.removeEventListener('mouseup', onUp);
         };
@@ -696,23 +751,27 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         }
     }, [currentQuestion]);
 
-    // Horizontal divider drag (editor/output pane split within right pane)
+    // Horizontal divider drag (editor vs test cases split within right pane)
     const startHorizDrag = useCallback((e) => {
         e.preventDefault();
         isDraggingHorizRef.current = true;
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
         const startY = e.clientY;
         const startH = outputPaneHeight;
         const rp = rightPaneRef.current;
-        const totalH = rp ? rp.getBoundingClientRect().height : 500;
+        const totalH = rp ? rp.getBoundingClientRect().height : 600;
 
         const onMove = (mv) => {
             if (!isDraggingHorizRef.current) return;
-            const delta = startY - mv.clientY; // dragging up = larger output
-            const newH = Math.min(totalH * 0.6, Math.max(80, startH + delta));
+            const delta = startY - mv.clientY; // dragging up = larger testcases
+            const newH = Math.min(totalH * 0.75, Math.max(100, startH + delta));
             setOutputPaneHeight(Math.round(newH));
         };
         const onUp = () => {
             isDraggingHorizRef.current = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
             window.removeEventListener('mousemove', onMove);
             window.removeEventListener('mouseup', onUp);
         };
@@ -828,8 +887,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 normalizedQuestions.forEach(q => {
                     const qId = q.id || q.questionId;
                     availableLanguages.forEach(lang => {
-                        // initialCodeMap[`${qId}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang] ?? "");
-                        initialCodeMap[`${qId}_${lang}`] = (FREE_BOILERPLATES[lang] ?? "");
+                        initialCodeMap[`${qId}_${lang}`] = getQuestionBoilerplate(q, lang);
                     });
                 });
                 setCodeMap(initialCodeMap);
@@ -1418,8 +1476,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
             parsedQuestions.forEach(q => {
                 availableLanguages.forEach(lang => {
-                    // initialCodeMap[`${q.id}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang] ?? "");
-                    initialCodeMap[`${q.id}_${lang}`] = (FREE_BOILERPLATES[lang] ?? "");
+                    initialCodeMap[`${q.id}_${lang}`] = getQuestionBoilerplate(q, lang);
                 });
             });
             setCodeMap(initialCodeMap);
@@ -1476,23 +1533,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         codeMapRef.current = { ...codeMap, ...codeMapRef.current };
     }, [codeMap]);
 
-    const getCurrentCode = useCallback((qId = currentQuestion?.id, lang = language) => {
-        if (!qId) return "";
-        const key = `${qId}_${lang}`;
-        if (editorRef.current && currentQuestion?.id === qId && language === lang) {
-            try {
-                const editorVal = editorRef.current.getValue();
-                if (typeof editorVal === 'string' && editorVal !== '') {
-                    codeMapRef.current[key] = editorVal;
-                    return editorVal;
-                }
-            } catch (_) {}
-        }
-        return (codeMapRef.current && codeMapRef.current[key] !== undefined)
-            ? codeMapRef.current[key]
-            : (codeMap[key] || (FREE_BOILERPLATES[lang] ?? ""));
-    }, [currentQuestion?.id, language, codeMap]);
-
     const saveCurrentEditorToMap = useCallback(() => {
         if (editorRef.current && currentQuestion) {
             try {
@@ -1505,6 +1545,70 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             } catch (_) {}
         }
     }, [currentQuestion, language]);
+
+    const handleSwitchQuestion = useCallback((newIdx) => {
+        saveCurrentEditorToMap();
+        let targetIdx = activeQuestionIndex;
+        if (typeof newIdx === 'function') {
+            targetIdx = newIdx(activeQuestionIndex);
+        } else if (typeof newIdx === 'number') {
+            targetIdx = newIdx;
+        }
+        if (targetIdx >= 0 && targetIdx < questions.length) {
+            setActiveQuestionIndex(targetIdx);
+            const targetQ = questions[targetIdx];
+            if (targetQ) {
+                const codeKey = `${targetQ.id}_${language}`;
+                let targetCode = codeMapRef.current[codeKey] || codeMap[codeKey];
+                if (!targetCode || typeof targetCode !== 'string' || targetCode.trim() === '') {
+                    targetCode = getQuestionBoilerplate(targetQ, language);
+                    codeMapRef.current[codeKey] = targetCode;
+                    setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
+                }
+                if (editorRef.current) {
+                    editorRef.current.setValue(targetCode);
+                }
+            }
+        }
+    }, [questions, activeQuestionIndex, language, saveCurrentEditorToMap, codeMap]);
+
+    const handleLanguageChange = useCallback((newLang) => {
+        saveCurrentEditorToMap();
+        setLanguage(newLang);
+        if (!currentQuestion) return;
+        const codeKey = `${currentQuestion.id}_${newLang}`;
+        let targetCode = codeMapRef.current[codeKey] || codeMap[codeKey];
+        if (!targetCode || typeof targetCode !== 'string' || targetCode.trim() === '') {
+            targetCode = getQuestionBoilerplate(currentQuestion, newLang);
+            codeMapRef.current[codeKey] = targetCode;
+            setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
+        }
+        if (editorRef.current) {
+            editorRef.current.setValue(targetCode);
+        }
+    }, [currentQuestion, saveCurrentEditorToMap, codeMap]);
+
+    const getCurrentCode = useCallback((qId = currentQuestion?.id, lang = language) => {
+        if (!qId) return "";
+        const key = `${qId}_${lang}`;
+        if (editorRef.current && currentQuestion?.id === qId && language === lang) {
+            try {
+                const editorVal = editorRef.current.getValue();
+                if (typeof editorVal === 'string' && editorVal !== '') {
+                    codeMapRef.current[key] = editorVal;
+                    return editorVal;
+                }
+            } catch (_) {}
+        }
+        if (codeMapRef.current && codeMapRef.current[key] !== undefined && codeMapRef.current[key] !== null && codeMapRef.current[key].trim?.() !== '') {
+            return codeMapRef.current[key];
+        }
+        if (codeMap && codeMap[key] !== undefined && codeMap[key] !== null && codeMap[key].trim?.() !== '') {
+            return codeMap[key];
+        }
+        const targetQ = questions.find(q => (q.id || q.questionId) === qId) || currentQuestion;
+        return getQuestionBoilerplate(targetQ, lang);
+    }, [currentQuestion, language, codeMap, questions]);
 
     // Handle code editor change: update ref & throttled local storage (0ms typing latency)
     const handleCodeChange = (value) => {
@@ -1521,14 +1625,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
-        const boilerplate = (FREE_BOILERPLATES[language] ?? "");
+        const boilerplate = getQuestionBoilerplate(currentQuestion, language);
+        const codeKey = `${currentQuestion.id}_${language}`;
+        codeMapRef.current[codeKey] = boilerplate;
+        setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
         if (editorRef.current) {
             editorRef.current.setValue(boilerplate);
         }
         handleCodeChange(boilerplate);
     };
 
-    // Backup active state to localStorage & Firestore
+    // Backup active state to localStorage & Firestore (continuous cloud sync for partial attempts)
     const backupProgress = async () => {
         saveCurrentEditorToMap();
         try {
@@ -1537,24 +1644,50 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 localStorage.setItem("codingQuestionRunHistory", JSON.stringify(questionRunHistoryRef.current));
                 localStorage.setItem("codingQuestionScores", JSON.stringify(questionScores));
             }
-            if (isEmbedded || !user || !currentAssessment) return;
+            const authData = JSON.parse(localStorage.getItem('auth_data') ?? '{}');
+            const targetUser = user || authData;
+            const targetAssessment = currentAssessment || assessmentData;
+            if (!targetUser || !targetAssessment) return;
 
-            const progress = {
-                email: user.email,
-                college: user.college,
-                year: user.year,
-                department: user.department,
-                rollNumber: user.rollNumber ?? '',
-                name: user.name ?? '',
-                assessmentID: currentAssessment.id,
-                assessmentTitle: currentAssessment.name,
-                timeTaken: getElapsedSeconds(),
-                startedAt: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
-                answers: questionScores,
-                codeMap: codeMapRef.current,
-                runHistory: questionRunHistoryRef.current
-            };
-            await CodingAssessmentService.syncProgress(progress);
+            const tenantId = targetUser.tenantId || targetUser.college || 'TN000084';
+            const userId = auth?.currentUser?.uid || targetUser.uid || targetUser.userId;
+            const aId = targetAssessment.id || targetAssessment.assessmentId;
+
+            if (userId && aId) {
+                // 1. Sync in-progress scores and code map to assessmentResults
+                setDoc(doc(db, `assessmentResults/${tenantId}/${aId}/${userId}`), {
+                    userId,
+                    email: targetUser.email || '',
+                    rollNumber: targetUser.rollNumber ?? '',
+                    name: targetUser.name ?? '',
+                    tenantId: tenantId,
+                    cohortId: targetUser.cohortId || '2K27',
+                    assessmentId: aId,
+                    assessmentTitle: targetAssessment.name || targetAssessment.title || '',
+                    type: isEmbedded ? 'multisection' : 'coding',
+                    status: 'in_progress',
+                    completed: false,
+                    scores: questionScores,
+                    codeMap: codeMapRef.current,
+                    lastUpdatedAt: serverTimestamp(),
+                    lastUpdatedAtISO: new Date().toISOString()
+                }, { merge: true }).catch(() => {});
+
+                // 2. Sync to contestAttempts
+                const attDocId = `${aId}_${userId}`;
+                setDoc(doc(db, 'users', userId, 'contestAttempts', attDocId), {
+                    uid: userId,
+                    assessmentId: aId,
+                    tenantId: tenantId,
+                    status: 'IN_PROGRESS',
+                    completed: false,
+                    codeMap: codeMapRef.current,
+                    sectionAnswers: {
+                        [sectionData?.sectionId || sectionData?.id || 'coding_section']: questionScores
+                    },
+                    lastSavedAt: serverTimestamp()
+                }, { merge: true }).catch(() => {});
+            }
         } catch (_) {
             // Local state is already securely persisted in localStorage; remote backup is non-blocking
         }
@@ -1572,6 +1705,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         });
 
         setIsRunning(true);
+        setEvalProgressText(`Preparing Test Cases...`);
         setRunResults(null);
         setStderr('');
         setStdout('');
@@ -1612,6 +1746,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             };
             setActiveResultTab('console');
             setIsRunning(false);
+            setEvalProgressText('');
             return;
         }
 
@@ -1619,11 +1754,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const results = [];
             for (let i = 0; i < testsToRun.length; i++) {
                 const tc = testsToRun[i];
+                setEvalProgressText(`Running Sample Test Case ${i + 1} of ${testsToRun.length}...`);
 
-                // Run process on sandbox backend with 6000ms safety timeout
+                // Run process on sandbox backend with 6500ms safety timeout
                 const res = await Promise.race([
                     desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
-                    new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+                    new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6.5s)', exit_code: -1 }), 6500))
                 ]);
 
                 if (isEngineDisconnected(res)) {
@@ -1649,6 +1785,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     stderr: res.stderr || (res.error ?? ""),
                     passed: passed
                 });
+                await new Promise(r => setTimeout(r, 10));
             }
 
             // Run Custom Input if checked (only if engine was not disconnected)
@@ -1657,7 +1794,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 const customStdin = customInput ?? "";
                 const resRaw = await Promise.race([
                     desktopBridge.runDirectSandbox(bridgeLang, code, customStdin),
-                    new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
+                    new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6.5s)', exit_code: -1 }), 6500))
                 ]);
                 const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : (resRaw || {});
                 if (isEngineDisconnected(res)) {
@@ -1752,6 +1889,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             setActiveResultTab('console');
         } finally {
             setIsRunning(false);
+            setEvalProgressText('');
         }
     };
 
@@ -1765,6 +1903,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         });
 
         setIsEvaluating(true);
+        setEvalProgressText(`Preparing Hidden Test Cases...`);
         setEvalResults(null);
 
         const code = getCurrentCode();
@@ -1780,13 +1919,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         try {
             for (let i = 0; i < hiddenTests.length; i++) {
                 const tc = hiddenTests[i];
+                setEvalProgressText(`Evaluating Hidden Test Case ${i + 1} of ${hiddenTests.length}...`);
                 if (isEvalBlank) {
                     results.push({ index: i + 1, passed: false, error: "No code submitted in editor." });
                     continue;
                 }
                 const res = await Promise.race([
                     desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
-                    new Promise(resolve => setTimeout(() => resolve({ error: 'Time Limit Exceeded (5s)', exit_code: -1 }), 5000))
+                    new Promise(resolve => setTimeout(() => resolve({ error: 'Time Limit Exceeded (6.5s)', exit_code: -1 }), 6500))
                 ]);
 
                 if (isEngineDisconnected(res)) {
@@ -1800,6 +1940,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                 if (passed) passedCount++;
                 results.push({ index: i + 1, passed, error: res.error || (res.stderr ?? "") });
+                await new Promise(r => setTimeout(r, 10));
             }
 
             const total = hiddenTests.length;
@@ -1842,6 +1983,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             evalError = err.message;
         } finally {
             setIsEvaluating(false);
+            setEvalProgressText('');
 
             if (evalError) {
                 showCustomAlert("Evaluation Failed", `Evaluation failed: ${evalError}`, "error");
@@ -3070,42 +3212,43 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             )}
             {/* Top Workspace Header Bar */}
             <header className="coding-ref-header">
-                <div className="mcq-ref-header-left">
-                    <div className="mcq-brand-badge">
-                        <div className="mcq-brand-icon">
-                            <FaShieldAlt />
-                        </div>
-                        <div className="mcq-brand-text">
-                            <span className="mcq-brand-title">SEED-SEB</span>
-                            <span className="mcq-brand-subtitle">SECURE EXAMINATION &amp; BENCHMARKING</span>
-                        </div>
+                <div className="coding-ref-header-left">
+                    <div className="coding-brand-logo-wrap">
+                        <img
+                            src="/SEED_Logo_Transparent.png"
+                            alt="SEED Logo"
+                            className="coding-brand-logo-img"
+                            onError={(e) => {
+                                e.target.src = '/SEED_Logo.png';
+                            }}
+                        />
+                    </div>
+                    <div className="coding-header-title-wrap">
+                        <span className="coding-header-brand-title">SEED-SEB</span>
+                        <span className="coding-header-section-title">
+                            {currentAssessment?.name || (isEmbedded ? "Coding Section" : "Coding Assessment")} • {questions.length} Questions • {questions.reduce((sum, q) => sum + (Number(q.marks) || Number(q.weight) || DEFAULT_QUESTION_WEIGHT), 0)} Marks
+                        </span>
                     </div>
                 </div>
 
-                <div className="mcq-ref-header-center">
-                    <h2 className="mcq-ref-assessment-title">{currentAssessment?.name ?? "Coding Assessment"}</h2>
-                    <div className="mcq-ref-assessment-meta">
-                        <span>Section {activeQuestionIndex + 1} of {questions.length}</span>
-                        <span className="meta-dot">•</span>
-                        <span>{questions.length} Questions</span>
-                        <span className="meta-dot">•</span>
-                        <span>Programming</span>
-                        <span className="meta-dot">•</span>
-                        <span>{currentQuestion?.marks ? `${currentQuestion.marks} Marks` : '100 Marks'}</span>
+                <div className="coding-ref-header-right">
+                    {/* Saved indicator */}
+                    <div className="coding-status-saved">
+                        <span className="status-saved-dot" />
+                        <span>Saved</span>
                     </div>
-                </div>
 
-                <div className="mcq-ref-header-right">
+                    {/* Proctoring Badges */}
                     {(shouldUseProctoring || shouldUseAudioProctoring) && (
-                        <div className="mcq-proctor-pills-wrap">
+                        <div className="coding-proctor-pills-wrap">
                             {shouldUseAudioProctoring && (
-                                <div className="mcq-proctor-badge" title="Audio Proctoring">
+                                <div className="coding-proctor-pill" title="Audio Violations">
                                     <span className={`status-dot ${(isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? 'bad' : 'good'}`} />
                                     Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 5}
                                 </div>
                             )}
                             {shouldUseProctoring && (
-                                <div className="mcq-proctor-badge" title="Camera Proctoring">
+                                <div className="coding-proctor-pill" title="Camera Violations">
                                     <span className={`status-dot ${(isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? 'bad' : 'good'}`} />
                                     Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}
                                 </div>
@@ -3113,339 +3256,326 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         </div>
                     )}
 
-                    {/* Timer Box */}
-                    <div className="mcq-ref-timer-box">
-                        <div className="mcq-timer-icon-wrap">
-                            <FaClock />
-                        </div>
-                        <div className="mcq-timer-details">
-                            <span className="mcq-timer-label">Time Remaining</span>
-                            <span className={`mcq-timer-value ${remainingTime <= 300 ? 'warning' : ''} ${remainingTime <= 60 ? 'danger' : ''}`}>
-                                {formatRemainingTime()}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Auto Save badge */}
-                    <div className="coding-autosave-badge">
-                        <span className="autosave-dot" />
-                        <div className="autosave-text">
-                            <span className="autosave-title">Auto Save</span>
-                            <span className="autosave-sub">Saved</span>
-                        </div>
+                    {/* Timer Pill */}
+                    <div className="coding-header-timer-pill">
+                        <FaClock className="timer-icon" />
+                        <span className={`timer-digits ${remainingTime <= 300 ? 'warning' : ''} ${remainingTime <= 60 ? 'danger' : ''}`}>
+                            {formatRemainingTime()}
+                        </span>
                     </div>
 
                     {/* Flag for Review */}
                     <button
                         type="button"
-                        className={`mcq-ref-flag-btn ${currentQuestion && bookmarkedQuestions[currentQuestion.id] ? 'flagged' : ''}`}
+                        className={`coding-header-flag-btn ${currentQuestion && bookmarkedQuestions[currentQuestion.id] ? 'flagged' : ''}`}
                         onClick={() => currentQuestion && toggleBookmark(currentQuestion.id)}
+                        title="Flag question for review"
                     >
                         <FaFlag />
-                        <span>{currentQuestion && bookmarkedQuestions[currentQuestion.id] ? 'Flagged' : 'Flag for Review'}</span>
+                        <span>{currentQuestion && bookmarkedQuestions[currentQuestion.id] ? 'Flagged' : 'Flag'}</span>
                     </button>
 
                     {/* End Section / Submit Button */}
                     <button
                         type="button"
-                        className="coding-end-section-btn"
+                        className="coding-header-end-btn"
                         onClick={() => setShowSubmitModal(true)}
                     >
-                        <FaSignOutAlt />
-                        <span>{isEmbedded ? "End Section" : "Submit Assessment"}</span>
+                        {isEmbedded ? "End Section" : "Submit Assessment"}
                     </button>
                 </div>
             </header>
 
-            {/* Main 4-Pane Workspace Dashboard */}
+            {/* Main 3-Column Workspace Dashboard */}
             {currentQuestion ? (
                 <>
-                    <div className="coding-ref-layout-4pane">
-                        {/* 1. LEFT SIDEBAR */}
-                        <aside className="coding-ref-col-sidebar">
-                            {/* Section Overview Card */}
-                            <div className="mcq-ref-card">
-                                <div className="mcq-card-head">
-                                    <div className="mcq-card-head-icon">
-                                        <FaListUl />
-                                    </div>
-                                    <h4>Section Overview</h4>
-                                </div>
-                                <div className="mcq-overview-table">
-                                    <div className="overview-row">
-                                        <span className="overview-label">Total Questions</span>
-                                        <strong className="overview-val">{questions.length}</strong>
-                                    </div>
-                                    <div className="overview-row">
-                                        <span className="overview-label">Attempted</span>
-                                        <strong className="overview-val text-emerald">
-                                            {questions.filter(q => questionScores[q.id]?.submitted).length}
-                                        </strong>
-                                    </div>
-                                    <div className="overview-row">
-                                        <span className="overview-label">Not Attempted</span>
-                                        <strong className="overview-val text-muted">
-                                            {Math.max(0, questions.length - questions.filter(q => questionScores[q.id]?.submitted).length)}
-                                        </strong>
-                                    </div>
-                                    <div className="overview-row">
-                                        <span className="overview-label">Flagged</span>
-                                        <strong className="overview-val text-amber">
-                                            {Object.keys(bookmarkedQuestions).filter(k => bookmarkedQuestions[k]).length}
-                                        </strong>
-                                    </div>
-                                </div>
+                    <div className="coding-ref-layout-3col" ref={workspaceBodyRef}>
+                        {/* 1. LEFTMOST: Collapsible Questions Sidebar */}
+                        <aside className={`coding-col-questions-sidebar ${isQuestionsCollapsed ? 'collapsed' : ''}`}>
+                            <div className="questions-sidebar-header">
+                                {!isQuestionsCollapsed && <span className="questions-sidebar-title">QUESTIONS</span>}
+                                <button
+                                    type="button"
+                                    className="btn-collapse-sidebar"
+                                    onClick={() => setIsQuestionsCollapsed(prev => !prev)}
+                                    title={isQuestionsCollapsed ? "Expand Questions Panel" : "Collapse Questions Panel"}
+                                >
+                                    {isQuestionsCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
+                                </button>
                             </div>
 
-                            {/* Question Navigator Card */}
-                            <div className="mcq-ref-card">
-                                <div className="mcq-card-head">
-                                    <h4>Question Navigator</h4>
-                                </div>
-                                <div className="coding-qnav-list">
+                            {isQuestionsCollapsed ? (
+                                <div className="questions-collapsed-icons-list">
                                     {questions.map((q, idx) => {
                                         const isCurrent = idx === activeQuestionIndex;
                                         const isAttempted = questionScores[q.id]?.submitted;
-                                        const isFlagged = bookmarkedQuestions[q.id];
+                                        const isVisited = questionScores[q.id]?.lastRunAt;
 
-                                        let itemClass = 'coding-qnav-item';
-                                        if (isCurrent) itemClass += ' current';
-                                        else if (isFlagged) itemClass += ' flagged';
-                                        else if (isAttempted) itemClass += ' attempted';
-                                        else itemClass += ' unattempted';
+                                        let miniClass = 'collapsed-q-btn';
+                                        if (isCurrent) miniClass += ' active';
+                                        else if (isAttempted) miniClass += ' submitted';
+                                        else if (isVisited) miniClass += ' attempted';
 
                                         return (
                                             <button
                                                 key={q.id ? `${q.id}-${idx}` : `q-${idx}`}
                                                 type="button"
-                                                className={itemClass}
+                                                className={miniClass}
                                                 onClick={() => {
-                                                    saveCurrentEditorToMap();
-                                                    setActiveQuestionIndex(idx);
+                                                    handleSwitchQuestion(idx);
                                                     setVisitedQuestions(prev => ({ ...prev, [q.id]: true }));
                                                 }}
+                                                title={`Q${idx + 1}: ${q.title || `Question ${idx + 1}`} (${isAttempted ? 'Submitted' : isVisited ? 'Attempted' : 'Not attempted'})`}
                                             >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span className="qnav-badge">{idx + 1}</span>
-                                                    <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                        {q.title || q.name || `Question ${idx + 1}`}
-                                                    </span>
-                                                </div>
-                                                <div className="qnav-status-icon">
-                                                    {isCurrent ? (
-                                                        <FaCode style={{ color: '#3b82f6' }} />
-                                                    ) : isFlagged ? (
-                                                        <FaFlag style={{ color: '#f59e0b' }} />
-                                                    ) : isAttempted ? (
-                                                        <FaCheckCircle style={{ color: '#10b981' }} />
-                                                    ) : (
-                                                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Not Attempted</span>
-                                                    )}
-                                                </div>
+                                                {idx + 1}
                                             </button>
                                         );
                                     })}
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    <div className="questions-list-scroll">
+                                        {questions.map((q, idx) => {
+                                            const isCurrent = idx === activeQuestionIndex;
+                                            const isAttempted = questionScores[q.id]?.submitted;
 
-                            {/* Legend Card */}
-                            <div className="mcq-ref-card">
-                                <div className="mcq-card-head">
-                                    <div className="mcq-card-head-icon">
-                                        <FaShieldAlt />
+                                            let statusLabel = 'Not attempted';
+                                            let statusClass = 'not-attempted';
+                                            if (isAttempted) {
+                                                statusLabel = 'Submitted';
+                                                statusClass = 'submitted';
+                                            } else if (questionScores[q.id]?.lastRunAt) {
+                                                statusLabel = 'Attempted';
+                                                statusClass = 'attempted';
+                                            }
+
+                                            return (
+                                                <div
+                                                    key={q.id ? `${q.id}-${idx}` : `q-${idx}`}
+                                                    className={`question-sidebar-card ${isCurrent ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        handleSwitchQuestion(idx);
+                                                        setVisitedQuestions(prev => ({ ...prev, [q.id]: true }));
+                                                    }}
+                                                >
+                                                    <div className="q-card-badge">{idx + 1}</div>
+                                                    <div className="q-card-info">
+                                                        <div className="q-card-name" title={q.title || q.name || `Question ${idx + 1}`}>
+                                                            {q.title || q.name || `Question ${idx + 1}`}
+                                                        </div>
+                                                        <div className={`q-card-status ${statusClass}`}>
+                                                            • {statusLabel}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <h4>Legend</h4>
-                                </div>
-                                <div className="mcq-legend-list">
-                                    <div className="legend-item">
-                                        <span className="legend-dot answered" />
-                                        <span>Attempted</span>
+
+                                    {/* Legend Summary */}
+                                    <div className="questions-sidebar-legend">
+                                        <div className="legend-row">
+                                            <span className="legend-dot-indicator submitted" />
+                                            <span className="legend-row-label">Submitted</span>
+                                            <span className="legend-row-count">
+                                                {questions.filter(q => questionScores[q.id]?.submitted).length}
+                                            </span>
+                                        </div>
+                                        <div className="legend-row">
+                                            <span className="legend-dot-indicator attempted" />
+                                            <span className="legend-row-label">Attempted</span>
+                                            <span className="legend-row-count">
+                                                {questions.filter(q => !questionScores[q.id]?.submitted && questionScores[q.id]?.lastRunAt).length}
+                                            </span>
+                                        </div>
+                                        <div className="legend-row">
+                                            <span className="legend-dot-indicator not-attempted" />
+                                            <span className="legend-row-label">Not attempted</span>
+                                            <span className="legend-row-count">
+                                                {questions.filter(q => !questionScores[q.id]?.submitted && !questionScores[q.id]?.lastRunAt).length}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="legend-item">
-                                        <span className="legend-dot current" />
-                                        <span>Current Question</span>
-                                    </div>
-                                    <div className="legend-item">
-                                        <span className="legend-dot not-answered" />
-                                        <span>Not Attempted</span>
-                                    </div>
-                                    <div className="legend-item">
-                                        <span className="legend-dot flagged" />
-                                        <span>Flagged for Review</span>
-                                    </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </aside>
 
-                        {/* 2. MIDDLE-LEFT: PROBLEM STATEMENT PANE */}
-                        <main className="coding-ref-col-problem">
-                            <div className="problem-pane-header">
-                                <span className="q-badge-indicator">
-                                    <span>◇</span> Question {activeQuestionIndex + 1} of {questions.length}
+                        {/* 2. MIDDLE-LEFT: Problem Statement Card (Resizable width) */}
+                        <main
+                            className="coding-col-problem-card"
+                            style={{ width: `${leftPaneWidth}%`, minWidth: '260px', maxWidth: '75%', flex: 'none' }}
+                        >
+                            <div className="problem-card-top-row">
+                                <span className="problem-q-count">
+                                    Question {activeQuestionIndex + 1} of {questions.length}
                                 </span>
-                                <div className="problem-nav-arrows">
+                                <div className="problem-header-arrows">
                                     <button
                                         type="button"
-                                        className="q-nav-arrow"
+                                        className="problem-arrow-btn"
                                         disabled={activeQuestionIndex === 0}
-                                        onClick={() => {
-                                            saveCurrentEditorToMap();
-                                            setActiveQuestionIndex(i => i - 1);
-                                        }}
+                                        onClick={() => handleSwitchQuestion(i => i - 1)}
                                         title="Previous Question"
                                     >
-                                        <FaArrowLeft />
+                                        <FaChevronLeft />
                                     </button>
                                     <button
                                         type="button"
-                                        className="q-nav-arrow"
+                                        className="problem-arrow-btn"
                                         disabled={activeQuestionIndex === questions.length - 1}
-                                        onClick={() => {
-                                            saveCurrentEditorToMap();
-                                            setActiveQuestionIndex(i => i + 1);
-                                        }}
+                                        onClick={() => handleSwitchQuestion(i => i + 1)}
                                         title="Next Question"
                                     >
-                                        <FaArrowRight />
+                                        <FaChevronRight />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="problem-pane-body">
-                                <div className="problem-title-block">
-                                    <h3>{currentQuestion?.title || currentQuestion?.name || 'Problem Statement'}</h3>
-                                    <div className="problem-tags-row">
-                                        <span className={`diff-pill ${(currentQuestion?.difficulty || 'easy').toLowerCase()}`}>
-                                            {currentQuestion?.difficulty ?? ''}
-                                        </span>
-                                        <span className="marks-pill">
-                                            {currentQuestion?.marks ? `${currentQuestion.marks} Marks` : '100 Marks'}
-                                        </span>
-                                    </div>
+                            <div className="problem-card-scroll-body">
+                                <h2 className="problem-title">
+                                    {currentQuestion?.title || currentQuestion?.name || 'Problem Statement'}
+                                </h2>
+
+                                <div className="problem-marks-badge">
+                                    {currentQuestion?.marks ? `${currentQuestion.marks} Marks` : '100 Marks'}
                                 </div>
 
-                                <div className="problem-desc-text">
+                                <div className="problem-description-text">
                                     <p>{currentQuestion?.description || currentQuestion?.content?.problemStatement || 'Solve the challenge as specified below.'}</p>
                                 </div>
 
-                                {/* Sample Test Case Example Blocks */}
-                                {(currentQuestion?.sampleTests || currentQuestion?.sampleTestCases || currentQuestion?.content?.sampleTestCases || []).map((st, i) => (
-                                    <div key={i} className="example-box">
-                                        <span className="example-title">Example {i + 1}:</span>
-                                        <div className="example-line"><strong>Input:</strong> {st.input ?? "No Input"}</div>
-                                        <div className="example-line"><strong>Output:</strong> {st.expected}</div>
-                                        {st.explanation && (
-                                            <div className="example-line"><strong>Explanation:</strong> {st.explanation}</div>
-                                        )}
-                                    </div>
-                                ))}
-
                                 {/* Constraints */}
                                 {currentQuestion?.constraints && (
-                                    <div className="constraints-section">
-                                        <h4>Constraints:</h4>
-                                        <ul>
+                                    <div className="problem-constraints-block">
+                                        <ul className="problem-bullets-list">
                                             {currentQuestion.constraints.split('\n').filter(Boolean).map((c, idx) => (
                                                 <li key={idx}>{c}</li>
                                             ))}
                                         </ul>
                                     </div>
                                 )}
+
+                                {/* Sample Test Case Example Blocks */}
+                                {(currentQuestion?.sampleTests || currentQuestion?.sampleTestCases || currentQuestion?.content?.sampleTestCases || []).map((st, i) => (
+                                    <div key={i} className="problem-example-card">
+                                        <span className="example-card-heading">EXAMPLE {i + 1}</span>
+                                        <div className="example-field-line">
+                                            <strong>Input:</strong> <code>{st.input ?? "No Input"}</code>
+                                        </div>
+                                        <div className="example-field-line">
+                                            <strong>Output:</strong> <code>{st.expected || st.expectedOutput || ''}</code>
+                                        </div>
+                                        {st.explanation && (
+                                            <div className="example-field-line explanation">
+                                                {st.explanation}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
 
-                            <div className="problem-bottom-actions">
-                                <button type="button" className="btn-editorial" onClick={() => setShowEditorialModal(true)}>
+                            <div className="problem-card-footer-actions">
+                                <button type="button" className="btn-problem-action" onClick={() => setShowEditorialModal(true)}>
                                     <FaBookOpen /> Editorial
                                 </button>
-                                <button type="button" className="btn-discuss" onClick={() => setShowDiscussModal(true)}>
+                                <button type="button" className="btn-problem-action" onClick={() => setShowDiscussModal(true)}>
                                     <FaComments /> Discuss
                                 </button>
                             </div>
                         </main>
 
-                        {/* 3. MIDDLE-RIGHT: CODE EDITOR & OUTPUT CONSOLE PANE */}
-                        <section className="coding-ref-col-editor">
-                            <div className="editor-ref-toolbar">
-                                <div className="editor-toolbar-left">
-                                    <span className="editor-select-label">Language</span>
-                                    <select
-                                        value={language}
-                                        onChange={(e) => {
-                                            saveCurrentEditorToMap();
-                                            const newLang = e.target.value;
-                                            setLanguage(newLang);
-                                            const codeKey = `${currentQuestion?.id || 'q'}_${newLang}`;
-                                            if (!codeMapRef.current[codeKey] && !codeMap[codeKey]) {
-                                                const boilerplate = (FREE_BOILERPLATES[newLang] ?? "");
-                                                codeMapRef.current[codeKey] = boilerplate;
-                                                setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
-                                            }
+                        {/* VERTICAL DIVIDER: Drag to resize Problem Card vs Right Workspace */}
+                        <div
+                            className="coding-pane-resizer-vertical"
+                            onMouseDown={startVertDrag}
+                            title="Drag to resize problem statement and workspace panes"
+                        >
+                            <div className="resizer-handle-grip" />
+                        </div>
+
+                        {/* 3. RIGHT WORKSPACE: Code Editor (Top) & Test Cases Pane (Bottom) */}
+                        <section className="coding-col-center-workspace" ref={rightPaneRef} style={{ flex: 1, minWidth: '320px' }}>
+                            {/* Editor Card */}
+                            <div className={`coding-editor-card ${editorTheme === 'light' ? 'light-mode' : 'dark-mode'}`} style={{ flex: 1, minHeight: '180px' }}>
+                                <div className="editor-top-toolbar">
+                                    <div className="editor-toolbar-left-pills">
+                                        <select
+                                            value={language}
+                                            onChange={(e) => handleLanguageChange(e.target.value)}
+                                            className="editor-pill-select"
+                                        >
+                                            <option value="cpp">C++ (GCC G++)</option>
+                                            <option value="c">C (GCC GCC)</option>
+                                            <option value="python">Python 3.10</option>
+                                            <option value="java">Java (OpenJDK)</option>
+                                            <option value="javascript">JavaScript (Node.js 18)</option>
+                                        </select>
+
+                                        <select
+                                            value={editorTheme}
+                                            onChange={(e) => {
+                                                setEditorTheme(e.target.value);
+                                                try { localStorage.setItem('coding_editor_theme', e.target.value); } catch (_) {}
+                                            }}
+                                            className="editor-pill-select"
+                                        >
+                                            <option value="vs-dark">Dark</option>
+                                            <option value="light">Light</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="editor-toolbar-right-icons">
+                                        <button
+                                            type="button"
+                                            className="editor-toolbar-icon-btn"
+                                            onClick={handleResetCode}
+                                            title="Reset Code"
+                                        >
+                                            <FaUndo />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="editor-toolbar-icon-btn"
+                                            onClick={() => setIsEditorFullscreen(f => !f)}
+                                            title={isEditorFullscreen ? "Exit Fullscreen" : "Fullscreen Editor"}
+                                        >
+                                            {isEditorFullscreen ? <FaCompress /> : <FaExpand />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="editor-monaco-body">
+                                    <Editor
+                                        key={`${currentQuestion?.id || 'q'}_${language}_${editorTheme}`}
+                                        height="100%"
+                                        language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
+                                        defaultValue={getCurrentCode(currentQuestion?.id, language)}
+                                        onChange={handleCodeChange}
+                                        onMount={(editor) => {
+                                            editorRef.current = editor;
                                         }}
-                                        className="editor-select"
-                                    >
-                                        <option value="python">Python 3.10</option>
-                                        <option value="cpp">C++ (GCC G++)</option>
-                                        <option value="c">C (GCC GCC)</option>
-                                        <option value="java">Java (OpenJDK javac)</option>
-                                        <option value="javascript">JavaScript (Node.js 18)</option>
-                                    </select>
-
-                                    <span className="editor-select-label" style={{ marginLeft: '8px' }}>Theme</span>
-                                    <select
-                                        value={editorTheme}
-                                        onChange={(e) => setEditorTheme(e.target.value)}
-                                        className="editor-select"
-                                    >
-                                        <option value="vs-dark">Dark</option>
-                                        <option value="light">Light</option>
-                                    </select>
+                                        theme={editorTheme === 'light' ? 'vs' : 'vs-dark'}
+                                        options={{
+                                            fontSize: 14,
+                                            fontFamily: "'JetBrains Mono', 'Fira Code', Courier, monospace",
+                                            minimap: { enabled: false },
+                                            scrollbar: { vertical: 'visible', horizontal: 'visible' },
+                                            automaticLayout: true,
+                                            cursorBlinking: 'smooth',
+                                            wordWrap: 'on'
+                                        }}
+                                    />
                                 </div>
 
-                                <div className="editor-toolbar-right">
+                                <div className="editor-bottom-action-bar">
                                     <button
                                         type="button"
-                                        className="editor-icon-btn"
-                                        onClick={() => setIsEditorFullscreen(f => !f)}
-                                        title={isEditorFullscreen ? "Exit Fullscreen" : "Fullscreen Editor"}
-                                    >
-                                        {isEditorFullscreen ? <FaCompress /> : <FaExpand />}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="editor-monaco-body">
-                                <Editor
-                                    key={`${currentQuestion?.id || 'q'}_${language}_${editorTheme}`}
-                                    height="100%"
-                                    language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
-                                    defaultValue={getCurrentCode(currentQuestion?.id, language)}
-                                    onChange={handleCodeChange}
-                                    onMount={(editor) => {
-                                        editorRef.current = editor;
-                                    }}
-                                    theme={editorTheme}
-                                    options={{
-                                        fontSize: 14,
-                                        fontFamily: "'JetBrains Mono', 'Fira Code', Courier, monospace",
-                                        minimap: { enabled: false },
-                                        scrollbar: { vertical: 'visible', horizontal: 'visible' },
-                                        automaticLayout: true,
-                                        cursorBlinking: 'smooth',
-                                        wordWrap: 'on'
-                                    }}
-                                />
-                            </div>
-
-                            <div className="editor-ref-action-bar">
-                                <div className="action-bar-left">
-                                    <button
-                                        type="button"
-                                        className="btn-run-code"
+                                        className="btn-run-code-emerald"
                                         onClick={runSampleTestCases}
                                         disabled={isRunning || isEvaluating}
                                     >
                                         {isRunning ? (
-                                            <><div className="button-spinner" /> Compiling...</>
+                                            <><div className="button-spinner" /> Running...</>
                                         ) : (
                                             <><FaPlay /> Run Code</>
                                         )}
@@ -3453,7 +3583,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                                     <button
                                         type="button"
-                                        className="btn-submit-code"
+                                        className="btn-submit-code-dark"
                                         onClick={handleSubmitQuestion}
                                         disabled={isRunning || isEvaluating}
                                     >
@@ -3463,15 +3593,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                             <><FaCheck /> Submit Code</>
                                         )}
                                     </button>
-                                </div>
 
-                                <div className="action-bar-right">
-                                    <button type="button" className="btn-editor-action" onClick={handleResetCode} title="Reset to boilerplate code">
-                                        <FaUndo /> Reset
-                                    </button>
                                     <button
                                         type="button"
-                                        className={`btn-editor-action ${useCustomInput ? 'active' : ''}`}
+                                        className={`btn-custom-input-toggle ${useCustomInput ? 'active' : ''}`}
                                         onClick={() => {
                                             setUseCustomInput(prev => !prev);
                                             if (!useCustomInput) setActiveResultTab('input');
@@ -3482,27 +3607,39 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 </div>
                             </div>
 
-                            {/* Output / Console Tabbed Box */}
-                            <div className="editor-output-console-box">
-                                <div className="console-tabs-bar">
+                            {/* HORIZONTAL DIVIDER: Drag to resize Editor vs Testcases Pane */}
+                            <div
+                                className="coding-pane-resizer-horizontal"
+                                onMouseDown={startHorizDrag}
+                                title="Drag to resize test cases and editor panes"
+                            >
+                                <div className="resizer-handle-grip-horiz" />
+                            </div>
+
+                            {/* Test Cases & Output Card (Resizable height) */}
+                            <div
+                                className="coding-testcases-card"
+                                style={{ height: `${outputPaneHeight}px`, flexShrink: 0 }}
+                            >
+                                <div className="testcases-tabs-header">
                                     <button
                                         type="button"
-                                        className={`console-tab-btn ${activeResultTab === 'output' ? 'active' : ''}`}
+                                        className={`testcases-tab-btn ${activeResultTab !== 'console' ? 'active' : ''}`}
                                         onClick={() => setActiveResultTab('output')}
                                     >
-                                        Output
+                                        Test Cases
                                     </button>
                                     <button
                                         type="button"
-                                        className={`console-tab-btn ${activeResultTab === 'console' ? 'active' : ''}`}
+                                        className={`testcases-tab-btn ${activeResultTab === 'console' ? 'active' : ''}`}
                                         onClick={() => setActiveResultTab('console')}
                                     >
-                                        Console {stderr ? '●' : ''}
+                                        Output {stderr ? '●' : ''}
                                     </button>
                                     {useCustomInput && (
                                         <button
                                             type="button"
-                                            className={`console-tab-btn ${activeResultTab === 'input' ? 'active' : ''}`}
+                                            className={`testcases-tab-btn ${activeResultTab === 'input' ? 'active' : ''}`}
                                             onClick={() => setActiveResultTab('input')}
                                         >
                                             Custom Input
@@ -3510,263 +3647,159 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     )}
                                 </div>
 
-                                <div className="console-tab-body">
+                                <div className="testcases-card-body">
                                     {activeResultTab === 'input' ? (
                                         <textarea
-                                            className="custom-stdin-input"
-                                            placeholder="Type standard input (stdin) values here..."
+                                            className="custom-stdin-textarea"
+                                            placeholder="Enter standard input (stdin)..."
                                             value={customInput}
                                             onChange={(e) => setCustomInput(e.target.value)}
-                                            style={{ width: '100%', height: '100%', background: '#0f172a', border: '1px solid #334155', color: '#f8fafc', padding: '8px', borderRadius: '6px', fontFamily: "'JetBrains Mono', monospace", resize: 'none' }}
                                         />
                                     ) : activeResultTab === 'console' ? (
-                                        stderr ? (
-                                            <pre className="output-stderr-pre" style={{ color: '#fca5a5', margin: 0, whiteSpace: 'pre-wrap' }}>
-                                                <strong>Compilation / Runtime Diagnostics:</strong><br />
-                                                {stderr}
-                                            </pre>
-                                        ) : stdout ? (
-                                            <pre className="output-stdout-pre" style={{ color: '#94a3b8', margin: 0, whiteSpace: 'pre-wrap' }}>
-                                                <strong>Console Log:</strong><br />
-                                                Process exited normally with 0 errors.<br />
-                                                {stdout}
-                                            </pre>
-                                        ) : (
-                                            <div className="terminal-empty-state">
-                                                <div className="terminal-icon"><FaTerminal /></div>
-                                                <strong style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Console output &amp; compiler logs will appear here</strong>
-                                                <span style={{ fontSize: '0.75rem' }}>No compiler errors or warnings detected.</span>
-                                            </div>
-                                        )
-                                    ) : (
-                                        stdout ? (
-                                            <pre className="output-stdout-pre" style={{ color: '#f8fafc', margin: 0, whiteSpace: 'pre-wrap' }}>
-                                                <strong>Program Standard Output:</strong><br />
-                                                {stdout}
-                                            </pre>
-                                        ) : stderr ? (
-                                            <pre className="output-stderr-pre" style={{ color: '#fca5a5', margin: 0, whiteSpace: 'pre-wrap' }}>
-                                                <strong>Execution Failed (See Console):</strong><br />
-                                                {stderr}
-                                            </pre>
-                                        ) : (
-                                            <div className="terminal-empty-state">
-                                                <div className="terminal-icon"><FaTerminal /></div>
-                                                <strong style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Run your code to see the output here</strong>
-                                                <span style={{ fontSize: '0.75rem' }}>Your results will appear here after running the code.</span>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* 4. RIGHT SIDEBAR: TEST CASES PANE */}
-                        <aside className="coding-ref-col-testcases">
-                            <div className="testcases-tabs-bar">
-                                <button
-                                    type="button"
-                                    className={`tc-tab-btn ${activeRightTab === 'testcases' ? 'active' : ''}`}
-                                    onClick={() => setActiveRightTab('testcases')}
-                                >
-                                    Test Cases
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`tc-tab-btn ${activeRightTab === 'solution' ? 'active' : ''}`}
-                                    onClick={() => setActiveRightTab('solution')}
-                                >
-                                    Solution
-                                </button>
-                            </div>
-
-                            {activeRightTab === 'testcases' ? (
-                                <>
-                                    <div className="testcases-set-selector">
-                                        <label>Test Case Set</label>
-                                        <select
-                                            value={selectedTestCaseSet}
-                                            onChange={(e) => {
-                                                setSelectedTestCaseSet(e.target.value);
-                                                setExpandedTestCaseIndex(0);
-                                            }}
-                                            className="tc-set-dropdown"
-                                        >
-                                            <option value="sample">
-                                                Sample Test Cases ({getQuestionSampleTestCases(currentQuestion).length || 1})
-                                            </option>
-                                            <option value="all">
-                                                All Test Cases ({getQuestionVisibleAllTestCases(currentQuestion, 6).length})
-                                            </option>
-                                        </select>
-                                    </div>
-
-                                    <div className="testcases-accordion-list">
-                                        {/* Optional Custom Test Case Result */}
-                                        {useCustomInput && (() => {
-                                            const customItem = (runResults || []).find(r => r.isCustom || r.index === 'Custom');
-                                            const isPassed = customItem?.passed === true;
-                                            const isFailed = customItem && customItem.passed === false;
-                                            const isCustomExpanded = expandedTestCaseIndex === 'custom';
-                                            return (
-                                                <div key="custom" className={`tc-accordion-card custom-tc ${isPassed ? 'passed' : isFailed ? 'failed' : ''}`} style={{ border: '1px solid #6366f1', marginBottom: '10px' }}>
-                                                    <div className="tc-card-header" onClick={() => setExpandedTestCaseIndex(isCustomExpanded ? -1 : 'custom')} style={{ background: 'rgba(99, 102, 241, 0.08)' }}>
-                                                        <div className="tc-card-header-left">
-                                                            <FaCog style={{ color: '#818cf8', fontSize: '0.85rem' }} />
-                                                            <span style={{ fontWeight: 600, color: '#c7d2fe' }}>Custom Input</span>
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                            <span className={`tc-status-pill ${customItem ? (isPassed ? 'passed' : 'failed') : 'not-run'}`}>
-                                                                {customItem ? (isPassed ? '✓ Executed' : '✗ Error') : 'Not Run'}
-                                                            </span>
-                                                            {isCustomExpanded ? <FaChevronUp style={{ fontSize: '0.75rem', color: '#94a3b8' }} /> : <FaChevronDown style={{ fontSize: '0.75rem', color: '#94a3b8' }} />}
-                                                        </div>
-                                                    </div>
-
-                                                    {isCustomExpanded && (
-                                                        <div className="tc-card-body">
-                                                            <div className="tc-field-group">
-                                                                <label>Custom Stdin Input</label>
-                                                                <div className="tc-field-box" style={{ whiteSpace: 'pre-wrap' }}>{customInput || '(No stdin provided)'}</div>
-                                                            </div>
-                                                            <div className="tc-field-group">
-                                                                <label>Your Output</label>
-                                                                <div className="tc-field-box" style={isFailed ? { borderColor: '#ef4444', color: '#ef4444' } : isPassed ? { borderColor: '#10b981', color: '#10b981' } : { color: '#64748b' }}>
-                                                                    {customItem?.actual || (customItem ? '[Empty Output]' : 'Click "Run Code" to run with this custom input')}
-                                                                </div>
-                                                            </div>
-                                                            {customItem?.stderr && (
-                                                                <div className="tc-field-group">
-                                                                    <label style={{ color: '#ef4444' }}>Errors / Diagnostics</label>
-                                                                    <div className="tc-field-box" style={{ borderColor: '#ef4444', color: '#fca5a5', whiteSpace: 'pre-wrap' }}>
-                                                                        {customItem.stderr}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                        <div className="console-output-scroll">
+                                            {stderr ? (
+                                                <pre className="output-stderr-pre">
+                                                    <strong>Execution Error:</strong><br />
+                                                    {stderr}
+                                                </pre>
+                                            ) : stdout ? (
+                                                <pre className="output-stdout-pre">
+                                                    <strong>Program Output:</strong><br />
+                                                    {stdout}
+                                                </pre>
+                                            ) : (
+                                                <div className="terminal-empty-state">
+                                                    <span>No output yet. Click "Run Code" to view execution logs.</span>
                                                 </div>
-                                            );
-                                        })()}
-
-                                        {(() => {
-                                            const sampleCases = getQuestionSampleTestCases(currentQuestion);
-                                            const allVisibleCases = getQuestionVisibleAllTestCases(currentQuestion, 6);
-                                            const tcList = selectedTestCaseSet === 'all' ? allVisibleCases : (sampleCases.length > 0 ? sampleCases : allVisibleCases);
-                                            const activeResults = selectedTestCaseSet === 'all' 
-                                                ? (evalResults || runResults || questionScores[currentQuestion?.id]?.testResults) 
-                                                : runResults;
-
-                                            return tcList.map((tc, idx) => {
-                                                const runItem = activeResults?.find(r => r.index === idx + 1);
-                                                const isPassed = runItem?.passed === true;
-                                                const isFailed = runItem && runItem.passed === false;
-                                                const isExpanded = expandedTestCaseIndex === idx;
-                                                const actualOut = runItem?.actual ?? '';
-
-                                                let cardClass = 'tc-accordion-card';
-                                                if (isPassed) cardClass += ' passed';
-                                                else if (isFailed) cardClass += ' failed';
-
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="testcases-accordion-scroll">
+                                            {/* Custom testcase result if active */}
+                                            {useCustomInput && (() => {
+                                                const customItem = (runResults || []).find(r => r.isCustom || r.index === 'Custom');
+                                                const isPassed = customItem?.passed === true;
+                                                const isFailed = customItem && customItem.passed === false;
+                                                const isCustomExpanded = expandedTestCaseIndex === 'custom';
                                                 return (
-                                                    <div key={idx} className={cardClass}>
-                                                        <div className="tc-card-header" onClick={() => setExpandedTestCaseIndex(isExpanded ? -1 : idx)}>
-                                                            <div className="tc-card-header-left">
-                                                                {isPassed ? (
-                                                                    <FaCheckCircle style={{ color: '#10b981', fontSize: '0.9rem' }} />
-                                                                ) : isFailed ? (
-                                                                    <FaTimesCircle style={{ color: '#ef4444', fontSize: '0.9rem' }} />
-                                                                ) : (
-                                                                    <FaChevronRight style={{ color: '#94a3b8', fontSize: '0.75rem' }} />
-                                                                )}
-                                                                <span>Test Case {idx + 1}</span>
+                                                    <div key="custom" className={`tc-item-row custom ${isCustomExpanded ? 'expanded' : ''}`}>
+                                                        <div
+                                                            className="tc-item-header"
+                                                            onClick={() => setExpandedTestCaseIndex(isCustomExpanded ? -1 : 'custom')}
+                                                        >
+                                                            <div className="tc-header-left">
+                                                                {isCustomExpanded ? <FaChevronDown className="tc-chevron" /> : <FaChevronRight className="tc-chevron" />}
+                                                                <span className="tc-title">Custom Input</span>
                                                             </div>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                <span className={`tc-status-pill ${isPassed ? 'passed' : isFailed ? 'failed' : 'not-run'}`}>
-                                                                    {isPassed ? '✓ Passed' : isFailed ? '✗ Failed' : 'Not Run'}
-                                                                </span>
-                                                                {isExpanded ? <FaChevronUp style={{ fontSize: '0.75rem', color: '#94a3b8' }} /> : <FaChevronDown style={{ fontSize: '0.75rem', color: '#94a3b8' }} />}
-                                                            </div>
+                                                            <span className={`tc-status-text ${customItem ? (isPassed ? 'passed' : 'failed') : 'not-run'}`}>
+                                                                {customItem ? (isPassed ? 'Executed' : 'Error') : 'Not Run'}
+                                                            </span>
                                                         </div>
 
-                                                        {isExpanded && (
-                                                            <div className="tc-card-body">
-                                                                <div className="tc-field-group">
-                                                                    <label>Input</label>
-                                                                    <div className="tc-field-box">{tc.input ?? ''}</div>
+                                                        {isCustomExpanded && (
+                                                            <div className="tc-item-expanded-fields">
+                                                                <div className="tc-field-col">
+                                                                    <span className="tc-field-label">INPUT</span>
+                                                                    <div className="tc-field-val-box">{customInput || '(Empty stdin)'}</div>
                                                                 </div>
-                                                                <div className="tc-field-group">
-                                                                    <label>Expected Output</label>
-                                                                    <div className="tc-field-box">{tc.expectedOutput || tc.expected || ''}</div>
+                                                                <div className="tc-field-col">
+                                                                    <span className="tc-field-label">EXPECTED</span>
+                                                                    <div className="tc-field-val-box">N/A (Custom Run)</div>
                                                                 </div>
-                                                                <div className="tc-field-group">
-                                                                    <label>Your Output</label>
-                                                                    <div className="tc-field-box" style={isFailed ? { borderColor: '#ef4444', color: '#ef4444' } : isPassed ? { borderColor: '#10b981', color: '#10b981' } : { color: '#64748b' }}>
-                                                                        {actualOut || (runItem ? '[Empty]' : 'Not run yet')}
+                                                                <div className="tc-field-col">
+                                                                    <span className="tc-field-label">YOUR OUTPUT</span>
+                                                                    <div className={`tc-field-val-box ${isPassed ? 'passed' : isFailed ? 'failed' : 'not-run'}`}>
+                                                                        {customItem?.actual || (customItem ? '[Empty]' : 'Not run yet')}
                                                                     </div>
-                                                                </div>
-                                                                {runItem?.stderr && (
-                                                                    <div className="tc-field-group">
-                                                                        <label style={{ color: '#ef4444' }}>Errors / Diagnostics</label>
-                                                                        <div className="tc-field-box" style={{ borderColor: '#ef4444', color: '#fca5a5', whiteSpace: 'pre-wrap' }}>
-                                                                            {runItem.stderr}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                                <div className="tc-metrics-row">
-                                                                    <span>Execution Time: <strong>{runItem ? '4 ms' : '-'}</strong></span>
-                                                                    <span>Memory Used: <strong>{runItem ? '16.2 MB' : '-'}</strong></span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                     </div>
                                                 );
-                                            });
-                                        })()}
-                                    </div>
-                                </>
-                            ) : (
-                                <div style={{ padding: '16px', overflowY: 'auto', fontSize: '0.85rem', color: '#475569', lineHeight: '1.6' }}>
-                                    <h4 style={{ margin: '0 0 8px', color: '#0f172a' }}>Solution Approach</h4>
-                                    <p>Analyze constraints and time complexity carefully before coding. For array hashing or two-pointer patterns, ensure boundary checks are handled properly.</p>
+                                            })()}
+
+                                            {/* Sample / All Test Cases */}
+                                            {(() => {
+                                                const sampleCases = getQuestionSampleTestCases(currentQuestion);
+                                                const allVisibleCases = getQuestionVisibleAllTestCases(currentQuestion, 6);
+                                                const tcList = selectedTestCaseSet === 'all' ? allVisibleCases : (sampleCases.length > 0 ? sampleCases : allVisibleCases);
+                                                const activeResults = runResults || evalResults || questionScores[currentQuestion?.id]?.testResults;
+
+                                                return tcList.map((tc, idx) => {
+                                                    const runItem = activeResults?.find(r => r.index === idx + 1);
+                                                    const isPassed = runItem?.passed === true;
+                                                    const isFailed = runItem && runItem.passed === false;
+                                                    const isExpanded = expandedTestCaseIndex === idx;
+                                                    const actualOut = runItem?.actual ?? '';
+
+                                                    return (
+                                                        <div key={idx} className={`tc-item-row ${isExpanded ? 'expanded' : ''}`}>
+                                                            <div
+                                                                className="tc-item-header"
+                                                                onClick={() => setExpandedTestCaseIndex(isExpanded ? -1 : idx)}
+                                                            >
+                                                                <div className="tc-header-left">
+                                                                    {isExpanded ? <FaChevronDown className="tc-chevron" /> : <FaChevronRight className="tc-chevron" />}
+                                                                    <span className="tc-title">Test Case {idx + 1}</span>
+                                                                </div>
+                                                                <span className={`tc-status-text ${isPassed ? 'passed' : isFailed ? 'failed' : 'not-run'}`}>
+                                                                    {isPassed ? 'Passed' : isFailed ? 'Failed' : 'Not Run'}
+                                                                </span>
+                                                            </div>
+
+                                                            {isExpanded && (
+                                                                <div className="tc-item-expanded-fields">
+                                                                    <div className="tc-field-col">
+                                                                        <span className="tc-field-label">INPUT</span>
+                                                                        <div className="tc-field-val-box">{tc.input ?? "No Input"}</div>
+                                                                    </div>
+                                                                    <div className="tc-field-col">
+                                                                        <span className="tc-field-label">EXPECTED</span>
+                                                                        <div className="tc-field-val-box">{tc.expectedOutput || tc.expected || ''}</div>
+                                                                    </div>
+                                                                    <div className="tc-field-col">
+                                                                        <span className="tc-field-label">YOUR OUTPUT</span>
+                                                                        <div className={`tc-field-val-box ${isPassed ? 'passed' : isFailed ? 'failed' : 'not-run'}`}>
+                                                                            {actualOut || (runItem ? '[Empty]' : 'Not run yet')}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                });
+                                            })()}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </aside>
+                            </div>
+                        </section>
                     </div>
 
                     {/* ── BOTTOM NAVIGATION FOOTER ── */}
                     <footer className="coding-ref-bottom-footer">
                         <button
                             type="button"
-                            className="btn-prev-question"
+                            className="btn-prev-question-clean"
                             disabled={activeQuestionIndex === 0}
-                            onClick={() => setActiveQuestionIndex(i => i - 1)}
+                            onClick={() => handleSwitchQuestion(i => i - 1)}
                         >
-                            <FaArrowLeft /> Previous Question
+                            <FaChevronLeft /> Previous Question
                         </button>
-
-                        <label className="chk-mark-review-label">
-                            <input
-                                type="checkbox"
-                                checked={!!bookmarkedQuestions[currentQuestion?.id]}
-                                onChange={() => currentQuestion && toggleBookmark(currentQuestion.id)}
-                            />
-                            <span>Mark for Review</span>
-                        </label>
 
                         <button
                             type="button"
-                            className="btn-save-next-question"
+                            className="btn-save-next-emerald"
                             onClick={() => {
                                 if (activeQuestionIndex === questions.length - 1) {
                                     setShowSubmitModal(true);
                                 } else {
-                                    setActiveQuestionIndex(i => i + 1);
+                                    handleSwitchQuestion(i => i + 1);
                                 }
                             }}
                         >
-                            <span>{activeQuestionIndex === questions.length - 1 ? 'Submit Section' : 'Save & Next Question'}</span>
-                            <FaArrowRight />
+                            <span>{activeQuestionIndex === questions.length - 1 ? 'Submit Section' : 'Submit Section'}</span>
+                            <FaChevronRight />
                         </button>
                     </footer>
                 </>
@@ -3967,22 +4000,53 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 </div>
             )}
 
-            {/* Compilation/Evaluation Full-Screen Overlay (Run & Evaluate buttons) - Commented out to run inline inside buttons */}
-            {/*
+            {/* Active Evaluation Pointer-Lock & HUD Progress Overlay */}
             {(isRunning || isEvaluating) && (
-                <div className="compiling-workspace-overlay" style={{ zIndex: 1100 }}>
-                    <div className="compiling-loader-container">
-                        <div className="compiling-spinner"></div>
-                        <span className="compiling-loader-text">
-                            {isRunning ? ' Compiling & Running...' : ' Evaluating Test Cases...'}
+                <div className="compiling-workspace-overlay" style={{ 
+                    zIndex: 1100,
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'all',
+                    cursor: 'wait'
+                }}>
+                    <div className="compiling-loader-container" style={{
+                        background: '#0f172a',
+                        border: '1px solid #334155',
+                        borderRadius: '12px',
+                        padding: '24px 32px',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px',
+                        maxWidth: '420px',
+                        textAlign: 'center'
+                    }}>
+                        <div className="compiling-spinner" style={{
+                            width: '36px',
+                            height: '36px',
+                            border: '3px solid #334155',
+                            borderTopColor: '#3b82f6',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                        }}></div>
+                        <span className="compiling-loader-text" style={{ color: '#f8fafc', fontWeight: 600, fontSize: '1.05rem' }}>
+                            {isRunning ? 'Compiling & Running...' : 'Evaluating Test Cases...'}
                         </span>
-                        <span className="compiling-loader-subtext">
-                            {isRunning ? 'Executing your code against sample test cases...' : 'Running hidden test cases against your solution...'}
+                        <span className="compiling-loader-subtext" style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                            {evalProgressText || (isRunning ? 'Executing your code against sample test cases...' : 'Running hidden test cases against your solution...')}
                         </span>
                     </div>
                 </div>
             )}
-            */}
 
             {/* Custom Alert Modal */}
             {alertConfig && (

@@ -148,7 +148,7 @@ const StudentDashboard = () => {
   const [saveSuccessMessage, setSaveSuccessMessage] = useState('');
 
   const [editName, setEditName] = useState('');
-  const [editPhone, setEditPhone] = useState('+91 98765 43210');
+  const [editPhone, setEditPhone] = useState('');
   const [editRollNo, setEditRollNo] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -158,9 +158,9 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     if (user) {
-      setEditName(user.name ?? '');
-      setEditRollNo(user.rollNumber ?? '');
-      setEditPhone(user.phone || '+91 98765 43210');
+      setEditName(user.name ?? user.Name ?? user.fullName ?? '');
+      setEditRollNo(user.rollNumber ?? user.RollNumber ?? user.rollNo ?? user.RollNo ?? user.regNo ?? user.RegNo ?? '');
+      setEditPhone(user.phone ?? user.phoneNumber ?? user.mobile ?? '');
       setAvatarUrl(user.photoURL ?? '');
     }
   }, [user]);
@@ -1102,13 +1102,14 @@ const StudentDashboard = () => {
               ...p,
               uid: lookupId,
               email: (p.email ?? authData.email ?? userEmail).toLowerCase(),
-              tenantId: p.tenantId ?? authData.tenantId ?? '',
-              college: p.college ?? authData.college ?? '',
+              tenantId: p.tenantId ?? authData.tenantId ?? p.college ?? '',
+              college: p.college ?? authData.college ?? p.tenantId ?? '',
               name: p.name ?? authData.name ?? '',
               rollNumber: p.rollNumber ?? authData.rollNumber ?? '',
-              cohortId: p.cohortId ?? authData.cohortId ?? '',
-              year: p.year ?? authData.year ?? '',
+              cohortId: p.cohortId ?? authData.cohortId ?? p.year ?? '',
+              year: p.year ?? authData.year ?? p.cohortId ?? '',
               department: p.department ?? authData.department ?? '',
+              phone: p.phone ?? authData.phone ?? '',
               role: p.role ?? authData.role ?? 'student',
               isPremium: Boolean(p.isPremium ?? authData.isPremium),
               seedCredits: typeof p.seedCredits === 'number' ? p.seedCredits : (typeof authData.seedCredits === 'number' ? authData.seedCredits : 0),
@@ -1624,12 +1625,12 @@ const StudentDashboard = () => {
     });
   };
 
-  const name = user?.name ?? "Student";
-  const email = user?.email ?? "";
-  const college = user?.college ?? "";
-  const rollNumber = user?.rollNumber ?? "";
-  const year = user?.year ?? "2027";
-  const dept = user?.department ?? "CSE";
+  const name = user?.name || user?.Name || user?.fullName || "Student";
+  const email = user?.email || user?.Email || "";
+  const college = user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || "";
+  const rollNumber = user?.rollNumber || user?.RollNumber || user?.rollNo || user?.RollNo || user?.regNo || user?.RegNo || "";
+  const year = user?.year || user?.Year || user?.cohortId || user?.CohortId || "";
+  const dept = user?.department || user?.Department || user?.dept || user?.Dept || user?.branch || user?.Branch || "";
 
   const renderDashboardHome = () => {
     return (
@@ -2773,12 +2774,13 @@ const StudentDashboard = () => {
                     {isEditingProfile ? (
                       <input
                         type="text"
+                        placeholder="Enter phone number"
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
                         style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
                       />
                     ) : (
-                      <span className="field-value">{user?.phone || editPhone || '+91 98765 43210'}</span>
+                      <span className="field-value">{user?.phone || user?.phoneNumber || user?.mobile || editPhone || "—"}</span>
                     )}
                   </div>
                   {isEditingProfile && (
@@ -2838,15 +2840,15 @@ const StudentDashboard = () => {
               <div className="academic-fields-stack">
                 <div className="info-field-row">
                   <span className="field-label">College</span>
-                  <span className="field-value">{user?.college || college || "—"}</span>
+                  <span className="field-value">{user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || college || "—"}</span>
                 </div>
                 <div className="info-field-row">
                   <span className="field-label">Department</span>
-                  <span className="field-value">{user?.department || dept || "—"}</span>
+                  <span className="field-value">{user?.department || user?.Department || user?.dept || user?.Dept || user?.branch || user?.Branch || dept || "—"}</span>
                 </div>
                 <div className="info-field-row">
-                  <span className="field-label">Graduation Year</span>
-                  <span className="field-value">{user?.year || year || "—"}</span>
+                  <span className="field-label">Graduation Year / Cohort</span>
+                  <span className="field-value">{user?.year || user?.Year || user?.cohortId || user?.CohortId || year || "—"}</span>
                 </div>
               </div>
             </div>
@@ -2856,16 +2858,16 @@ const StudentDashboard = () => {
               <h3 className="profile-card-section-title" style={{ marginBottom: '16px' }}>Account Information</h3>
               <div className="account-fields-stack">
                 <div className="info-field-row">
-                  <span className="field-label">Member Since</span>
-                  <span className="field-value">12 Jan 2024</span>
-                </div>
-                <div className="info-field-row">
                   <span className="field-label">Account Status</span>
                   <span className="status-badge-active">Active</span>
                 </div>
                 <div className="info-field-row">
-                  <span className="field-label">Last Login</span>
-                  <span className="field-value">Today, 10:32 AM</span>
+                  <span className="field-label">Account Role</span>
+                  <span className="field-value" style={{ textTransform: 'capitalize' }}>{user?.role || 'Student'}</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Authentication ID</span>
+                  <span className="field-value" style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>{user?.uid || auth?.currentUser?.uid || '—'}</span>
                 </div>
               </div>
             </div>

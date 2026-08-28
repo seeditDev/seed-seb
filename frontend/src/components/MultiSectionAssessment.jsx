@@ -467,8 +467,15 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
       <header className="mcq-ref-header">
         <div className="mcq-ref-header-left">
           <div className="mcq-brand-badge">
-            <div className="mcq-brand-icon">
-              <FaShieldAlt />
+            <div className="mcq-brand-logo-wrap">
+              <img
+                src="/SEED_Logo_Transparent.png"
+                alt="SEED Logo"
+                className="mcq-brand-logo-img"
+                onError={(e) => {
+                  e.target.src = '/SEED_Logo.png';
+                }}
+              />
             </div>
             <div className="mcq-brand-text">
               <span className="mcq-brand-title">SEED-SEB</span>
@@ -1552,8 +1559,14 @@ const MultiSectionAssessment = () => {
   useEffect(() => {
     if (!assessment || !restoredProgress) return;
     if (restoredProgress.currentSecIdx !== undefined && restoredProgress.currentSecIdx >= 0) {
-      const elapsed = restoredProgress.elapsedOfflineSec || 0;
-      const adjustedTimer = Math.max(0, (restoredProgress.secTimer || 0) - elapsed);
+      let adjustedTimer = 0;
+      if (restoredProgress.sectionEndTimeMs && restoredProgress.sectionEndTimeMs > 0) {
+        adjustedTimer = Math.max(0, Math.round((restoredProgress.sectionEndTimeMs - Date.now()) / 1000));
+      } else {
+        const elapsed = restoredProgress.elapsedOfflineSec || 0;
+        adjustedTimer = Math.max(0, (restoredProgress.secTimer || 0) - elapsed);
+      }
+      sectionEndTimeMsRef.current = Date.now() + adjustedTimer * 1000;
 
       console.log('[MSA] Resuming active section index:', restoredProgress.currentSecIdx, 'Adjusted timer:', adjustedTimer, 's');
 
@@ -1572,7 +1585,6 @@ const MultiSectionAssessment = () => {
         setSectionCountdown(null);
       } else {
         // Was on prelaunch screen — restart prelaunch properly
-        // This prevents the section view from rendering without the overlay
         handleStartSection(restoredProgress.currentSecIdx);
         if (adjustedTimer > 0) setSecTimer(adjustedTimer);
       }
@@ -1589,7 +1601,8 @@ const MultiSectionAssessment = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assessment, restoredProgress]);
 
-  // ── Continuous progress save & heartbeat to localStorage
+  // ── Continuous progress save & heartbeat to localStorage & Firestore cloud backup
+  const lastCloudSyncRef = useRef(0);
   useEffect(() => {
     if (!assessment || currentSecIdx < 0 || !secStarted) return;
     const progressKey = `msaProgress_${assessment.id}`;
@@ -1602,11 +1615,67 @@ const MultiSectionAssessment = () => {
       currentSecIdx,
       secStarted,
       secTimer,
+      sectionEndTimeMs: sectionEndTimeMsRef.current,
       savedAt: new Date().toISOString(),
       lastActiveTimestamp: nowMs
     };
     localStorage.setItem(progressKey, JSON.stringify(snapshot));
     localStorage.setItem(`msaActiveAssessment_${assessment.id}`, JSON.stringify(assessment));
+
+    // Periodic cloud sync to assessmentResults & contestAttempts (throttled every 20s)
+    if (nowMs - lastCloudSyncRef.current > 20000) {
+      lastCloudSyncRef.current = nowMs;
+      try {
+        const tenant = requireTenant(user);
+        const userId = auth?.currentUser?.uid || user?.uid;
+        if (userId && tenant?.tenantId && assessment?.id) {
+          const totalSecs = (assessment.sections || []).length;
+          // 1. Sync in-progress snapshot to assessmentResults
+          setDoc(doc(db, `assessmentResults/${tenant.tenantId}/${assessment.id}/${userId}`), {
+            userId,
+            email: tenant.email || user.email || '',
+            rollNumber: user.rollNumber ?? '',
+            name: user.name ?? '',
+            tenantId: tenant.tenantId,
+            cohortId: tenant.cohortId || '2K27',
+            assessmentId: assessment.id,
+            assessmentTitle: assessment.name || assessment.title || '',
+            type: 'multisection',
+            status: 'in_progress',
+            completed: false,
+            sectionsCompleted: secCompleted.length,
+            totalSections: totalSecs,
+            sections: examResults,
+            activeSection: {
+              idx: currentSecIdx,
+              name: assessment.sections?.[currentSecIdx]?.name || `Section ${currentSecIdx + 1}`,
+              status: 'IN_PROGRESS',
+              timeRemainingSeconds: secTimer
+            },
+            lastUpdatedAt: serverTimestamp(),
+            lastUpdatedAtISO: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+
+          // 2. Sync to contestAttempts
+          const attDocId = `${assessment.id}_${userId}`;
+          setDoc(doc(db, 'users', userId, 'contestAttempts', attDocId), {
+            uid: userId,
+            assessmentId: assessment.id,
+            tenantId: tenant.tenantId,
+            status: 'IN_PROGRESS',
+            completed: false,
+            activeSection: {
+              id: assessment.sections?.[currentSecIdx]?.sectionId || assessment.sections?.[currentSecIdx]?.id || `sec_${currentSecIdx}`,
+              name: assessment.sections?.[currentSecIdx]?.name || `Section ${currentSecIdx + 1}`,
+              idx: currentSecIdx,
+              startedAt: snapshot.savedAt,
+              durationSeconds: (assessment.sections?.[currentSecIdx]?.duration_minutes || 30) * 60
+            },
+            lastSavedAt: serverTimestamp()
+          }, { merge: true }).catch(() => {});
+        }
+      } catch (_) {}
+    }
   }, [assessment, user, secCompleted, examResults, currentSecIdx, secStarted, secTimer]);
 
   // ── Fetch all section JSON files
@@ -2462,32 +2531,6 @@ const MultiSectionAssessment = () => {
           <span></span> {assessment.name}
         </div>
         <div className="msa-candidate-info" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {currentSecIdx === -1 && (
-            <button
-              type="button"
-              className="msa-exit-btn"
-              onClick={() => {
-                try { stopAllMediaAndAI(); } catch (_) {}
-                window.history.replaceState(null, '', '/student/dashboard');
-                navigate('/student/dashboard', { replace: true });
-              }}
-              style={{
-                background: 'rgba(239, 68, 68, 0.12)',
-                color: '#ef4444',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <FaSignOutAlt /> Back to Dashboard
-            </button>
-          )}
           <span>{user?.name ?? ''}</span>
           <span className="msa-email">{user?.email}</span>
         </div>

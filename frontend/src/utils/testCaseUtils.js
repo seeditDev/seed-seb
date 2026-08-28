@@ -133,11 +133,32 @@ function tryEvalJsonLiteral(expr) {
   }
 }
 
+/**
+ * Try to evaluate an IIFE generator expression (e.g. (() => { ... })() or (function() { ... })()).
+ * @param {string} expr
+ * @returns {string|null}
+ */
+function tryEvalIIFE(expr) {
+  const trimmed = expr.trim();
+  if ((trimmed.startsWith('(()') || trimmed.startsWith('(function') || trimmed.startsWith('function')) && trimmed.endsWith(')()')) {
+    try {
+      const fn = new Function('return ' + trimmed);
+      const res = fn();
+      if (res === null || res === undefined) return '';
+      if (typeof res === 'object') return JSON.stringify(res);
+      return String(res);
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /**
  * Resolves a raw test case value string (input or expected output).
- * For type "gen" expressions, uses a strict safe evaluator (no new Function).
+ * For type "gen" expressions, uses safe pattern evaluators including IIFE execution.
  * @param {any} rawVal
  * @param {string} type - e.g. "gen" or "reg"
  * @returns {string} Fully evaluated and resolved string value
@@ -149,7 +170,8 @@ export function resolveTestCaseValue(rawVal, type) {
   const isGen = type === 'gen' ||
                 strVal.includes('.repeat(') ||
                 (strVal.includes('" + "') && strVal.startsWith('"[')) ||
-                (strVal.includes('Array(') && strVal.includes('.fill('));
+                (strVal.includes('Array(') && strVal.includes('.fill(')) ||
+                ((strVal.startsWith('(()') || strVal.startsWith('(function')) && strVal.trim().endsWith(')()'));
 
   if (!isGen) return strVal;
 
@@ -160,12 +182,12 @@ export function resolveTestCaseValue(rawVal, type) {
     tryEvalRepeat(expr) ??
     tryEvalArrayFill(expr) ??
     tryEvalStringConcat(expr) ??
-    tryEvalJsonLiteral(expr);
+    tryEvalJsonLiteral(expr) ??
+    tryEvalIIFE(expr);
 
   if (result !== null) return result;
 
   // Expression didn't match any safe pattern — return raw string.
-  // Do NOT fall back to new Function().
   console.warn(
     '[TestCaseUtils] "gen" expression did not match any safe pattern; returning raw value.',
     { expr: expr.slice(0, 120) }

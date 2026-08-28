@@ -40,21 +40,22 @@ import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
 function buildAuthData(firebaseUser, profile = {}) {
     return {
         ...profile,
-        uid:             firebaseUser.uid,
-        email:           (firebaseUser.email ?? profile.email ?? '').toLowerCase(),
-        tenantId:        profile.tenantId ?? '',
-        college:         profile.college ?? '',
-        name:            profile.name ?? '',
-        rollNumber:      profile.rollNumber ?? '',
-        cohortId:        profile.cohortId ?? '',
-        year:            profile.year ?? '',
-        department:      profile.department ?? '',
-        role:            profile.role ?? 'student',
-        isPremium:       Boolean(profile.isPremium),
-        seedCredits:     typeof profile.seedCredits === 'number' ? profile.seedCredits : 0,
-        streak:          typeof profile.streak === 'number' ? profile.streak : 0,
-        lastStreakDate:  profile.lastStreakDate ?? null,
-        photoURL:        firebaseUser.photoURL ?? profile.photoURL ?? '',
+        uid: firebaseUser.uid,
+        email: (firebaseUser.email ?? profile.email ?? '').toLowerCase(),
+        tenantId: profile.tenantId ?? '',
+        college: profile.college ?? '',
+        name: profile.name ?? '',
+        rollNumber: profile.rollNumber ?? '',
+        cohortId: profile.cohortId ?? '',
+        year: profile.year ?? '',
+        department: profile.department ?? '',
+        phone: profile.phone ?? '',
+        role: profile.role ?? 'student',
+        isPremium: Boolean(profile.isPremium),
+        seedCredits: typeof profile.seedCredits === 'number' ? profile.seedCredits : 0,
+        streak: typeof profile.streak === 'number' ? profile.streak : 0,
+        lastStreakDate: profile.lastStreakDate ?? null,
+        photoURL: firebaseUser.photoURL ?? profile.photoURL ?? '',
         isAuthenticated: true,
     };
 }
@@ -142,7 +143,7 @@ class DataService {
             try {
                 const raw = localStorage.getItem('auth_data');
                 if (raw) prevUid = JSON.parse(raw)?.uid || null;
-            } catch (_) {}
+            } catch (_) { }
 
             await signOut(auth);
 
@@ -151,7 +152,7 @@ class DataService {
                 try {
                     const { default: ProctorService } = await import('./proctorService');
                     ProctorService.clearUserQueues(prevUid);
-                } catch (_) {}
+                } catch (_) { }
             }
 
             // Clear all student session keys from localStorage
@@ -227,7 +228,7 @@ class DataService {
         toRemove.forEach((k) => localStorage.removeItem(k));
         try {
             sessionStorage.clear();
-        } catch (_) {}
+        } catch (_) { }
         console.log('[DataService] Cleared', toRemove.length, 'student session keys on sign-out.');
     }
 
@@ -252,7 +253,7 @@ class DataService {
             return null;
         }
         try {
-            let profile  = await DataService.getUserProfile(firebaseUser.uid);
+            let profile = await DataService.getUserProfile(firebaseUser.uid);
             if (!profile && firebaseUser.email) {
                 profile = await DataService.getUserProfileByEmail(firebaseUser.email.toLowerCase());
             }
@@ -352,7 +353,7 @@ class DataService {
                         return { id: cohortSnap.id, ...cohortSnap.data(), tenantId: actualTenantId };
                     }
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             return null;
         } catch (error) {
@@ -502,7 +503,7 @@ class DataService {
                     const rawRes = await fetch('https://raw.githubusercontent.com/seeditDev/seed-contents/main/courses.json');
                     if (rawRes.ok) coursesData = await rawRes.json();
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             // Ensure assessments section exists
             if (!coursesData.assessments) {
@@ -742,7 +743,7 @@ class DataService {
                     cacheManager.setLocalCache(cacheKey, data);
                     return data;
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             try {
                 const rawResponse = await fetch(`${githubUrl}?t=${Date.now()}`);
@@ -751,7 +752,7 @@ class DataService {
                     cacheManager.setLocalCache(cacheKey, data);
                     return data;
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             try {
                 const parsedData = await fetchContentJSON(githubApiUrl, { localFirst: false, repo: CONTENT_REPOS.SEED_CONTENTS });
@@ -759,7 +760,7 @@ class DataService {
                     cacheManager.setLocalCache(cacheKey, parsedData);
                     return parsedData;
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             throw new Error('All fetch attempts failed');
         } catch (error) {
