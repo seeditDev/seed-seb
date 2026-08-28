@@ -279,12 +279,12 @@ class CodingAssessmentService {
                 codeMap
             } = progressData;
 
-            const targetId = progressData.assessmentId || 'unknown';
+            const targetId = progressData.assessmentId || progressData.assessmentID || 'unknown';
             const authDataSync = JSON.parse(localStorage.getItem('auth_data') || '{}');
             const liveUid = auth?.currentUser?.uid || authDataSync.uid || '';
-            const tenantId = authDataSync.tenantId || progressData.tenantId;
-            if (!tenantId) {
-                throw new Error('[CodingAssessmentService] syncProgress: tenantId is required');
+            const tenantId = authDataSync.tenantId || progressData.tenantId || authDataSync.College || authDataSync.college || 'default';
+            if (!liveUid || !tenantId) {
+                return { success: false, skipped: true, reason: 'Missing liveUid or tenantId' };
             }
 
             const docPath = this.getResultPath(targetId, liveUid, tenantId);
@@ -325,8 +325,8 @@ class CodingAssessmentService {
 
             return { success: true };
         } catch (error) {
-            console.error('[CodingAssessmentService] Progress backup failed:', error);
-            throw error;
+            console.warn('[CodingAssessmentService] Progress backup failed (non-blocking):', error.message || error);
+            return { success: false, error: error.message };
         }
     }
 

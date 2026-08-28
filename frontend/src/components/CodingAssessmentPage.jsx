@@ -1524,11 +1524,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         handleCodeChange(boilerplate);
     };
 
-    // Backup active state to Firestore
+    // Backup active state to localStorage & Firestore
     const backupProgress = async () => {
-        if (!user || !currentAssessment) return;
         saveCurrentEditorToMap();
         try {
+            if (currentQuestion) {
+                localStorage.setItem("codingAssessmentCode", JSON.stringify(codeMapRef.current));
+                localStorage.setItem("codingQuestionRunHistory", JSON.stringify(questionRunHistoryRef.current));
+                localStorage.setItem("codingQuestionScores", JSON.stringify(questionScores));
+            }
+            if (isEmbedded || !user || !currentAssessment) return;
+
             const progress = {
                 email: user.email,
                 college: user.college,
@@ -1539,14 +1545,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 assessmentID: currentAssessment.id,
                 assessmentTitle: currentAssessment.name,
                 timeTaken: getElapsedSeconds(),
-                startedAt: new Date(startTime).toISOString(),
+                startedAt: startTime ? new Date(startTime).toISOString() : new Date().toISOString(),
                 answers: questionScores,
                 codeMap: codeMapRef.current,
                 runHistory: questionRunHistoryRef.current
             };
             await CodingAssessmentService.syncProgress(progress);
-        } catch (e) {
-            console.warn("Failed syncing in-progress codes to DB:", e);
+        } catch (_) {
+            // Local state is already securely persisted in localStorage; remote backup is non-blocking
         }
     };
 
