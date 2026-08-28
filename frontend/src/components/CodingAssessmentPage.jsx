@@ -399,6 +399,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             saveCurrentEditorToMap();
             const finalScores = { ...questionScores };
             const allAnswers = {};
+            let totalEarnedWeight = 0;
+            let totalMaxWeight = 0;
+
             for (const q of questions) {
                 const qId = q.id || q.questionId;
                 const code = (editorRef.current && currentQuestion?.id === qId)
@@ -483,14 +486,15 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                             language: language,
                             testResults: evalResults
                         };
+                        totalEarnedWeight += qScore;
                     }
                 }
             }
 
             const targetSubmit = onSectionSubmitRef.current || onSectionSubmit;
             if (typeof targetSubmit === 'function') {
-                let totalEarnedWeight = 0;
-                let totalMaxWeight = 0;
+                totalEarnedWeight = 0;
+                totalMaxWeight = 0;
 
                 const codingDetails = questions.map((q, idx) => {
                     const qId = q.id || q.questionId;
