@@ -698,6 +698,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setAlertConfig({ title, message, type, onClose });
     }, []);
 
+    const currentQuestionStateRef = useRef({ stdout: '', stderr: '', runResults: null, evalResults: null, activeResultTab: 'output' });
+    currentQuestionStateRef.current = { stdout, stderr, runResults, evalResults, activeResultTab };
+
     // Save and load console results when switching questions
     useEffect(() => {
         const prevIdx = prevQuestionIndexRef.current;
@@ -708,13 +711,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             // Save previous question's console results
             setQuestionResults(prev => ({
                 ...prev,
-                [prevQ.id]: {
-                    stdout,
-                    stderr,
-                    runResults,
-                    evalResults,
-                    activeResultTab
-                }
+                [prevQ.id]: currentQuestionStateRef.current
             }));
 
             // Load current question's console results
@@ -723,17 +720,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 stderr: '',
                 runResults: null,
                 evalResults: null,
-                activeResultTab: 'input'
+                activeResultTab: 'output'
             };
-            setStdout(currentRes.stdout);
-            setStderr(currentRes.stderr);
+            setStdout(currentRes.stdout || '');
+            setStderr(currentRes.stderr || '');
             setRunResults(currentRes.runResults);
             setEvalResults(currentRes.evalResults);
-            setActiveResultTab(currentRes.activeResultTab);
+            setActiveResultTab(currentRes.activeResultTab || 'output');
         }
 
         prevQuestionIndexRef.current = activeQuestionIndex;
-    }, [activeQuestionIndex, questions, stdout, stderr, runResults, evalResults, activeResultTab, questionResults]);
+    }, [activeQuestionIndex, questions]);
 
     // Set auto-submit notice message
     const setAutoSubmitMessage = useCallback((msg) => {
@@ -1547,18 +1544,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setStderr('');
         setStdout('');
 
-        const code = getCurrentCode();
-        let sampleTests = currentQuestion.sampleTests || currentQuestion.sampleTestCases || [];
-        if (!Array.isArray(sampleTests) || sampleTests.length === 0) {
-            if (Array.isArray(currentQuestion.hiddenTests) && currentQuestion.hiddenTests.length > 0) {
-                sampleTests = currentQuestion.hiddenTests.slice(0, 2);
-            } else if (Array.isArray(currentQuestion.testCases?.sample) && currentQuestion.testCases.sample.length > 0) {
-                sampleTests = currentQuestion.testCases.sample;
-            } else if (Array.isArray(currentQuestion.testCases) && currentQuestion.testCases.length > 0) {
-                sampleTests = currentQuestion.testCases.slice(0, 2);
-            } else {
-                sampleTests = [{ input: "", expectedOutput: "" }];
-            }
+        const isRunAll = selectedTestCaseSet === 'all';
+        const sampleTests = getQuestionSampleTestCases(currentQuestion);
+        const allTests = getQuestionHiddenTestCases(currentQuestion);
+        let testsToRun = isRunAll ? allTests : (sampleTests.length > 0 ? sampleTests : allTests);
+        if (!Array.isArray(testsToRun) || testsToRun.length === 0) {
+            testsToRun = [{ input: "", expectedOutput: "" }];
         }
 
         const bridgeLang = language === 'python3' ? 'python' : language;
@@ -1566,10 +1557,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
         if (isBlank) {
             setStderr("No code submitted. Please write solution code before running test cases.");
-            const emptyResults = sampleTests.map((tc, idx) => ({
+            const emptyResults = testsToRun.map((tc, idx) => ({
                 index: idx + 1,
                 input: tc.input,
-                expected: tc.expectedOutput,
+                expected: tc.expectedOutput || tc.expected,
                 actual: "",
                 stderr: "No code submitted in editor.",
                 passed: false
@@ -1593,10 +1584,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
         try {
             const results = [];
-            for (let i = 0; i < sampleTests.length; i++) {
-                const tc = sampleTests[i];
+            for (let i = 0; i < testsToRun.length; i++) {
+                const tc = testsToRun[i];
 
-                // Run process on python sandbox backend with 6000ms safety timeout
+                // Run process on sandbox backend with 6000ms safety timeout
                 const res = await Promise.race([
                     desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
                     new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
@@ -1606,7 +1597,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     results.push({
                         index: i + 1,
                         input: tc.input,
-                        expected: tc.expectedOutput,
+                        expected: tc.expectedOutput || tc.expected || "",
                         actual: "",
                         stderr: "Evaluation engine not connected. Please restart the application or rerun the code.",
                         passed: false
@@ -1620,7 +1611,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 results.push({
                     index: i + 1,
                     input: tc.input,
-                    expected: tc.expectedOutput,
+                    expected: tc.expectedOutput || tc.expected || "",
                     actual: res.stdout ?? "",
                     stderr: res.stderr || (res.error ?? ""),
                     passed: passed
@@ -1628,40 +1619,49 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             }
 
             // Run Custom Input if checked (only if engine was not disconnected)
+            let customCase = null;
             if (useCustomInput && (results.length === 0 || !isEngineDisconnected(results[results.length - 1]))) {
+                const customStdin = customInput ?? "";
                 const resRaw = await Promise.race([
-                    desktopBridge.runDirectSandbox(bridgeLang, code, customInput),
+                    desktopBridge.runDirectSandbox(bridgeLang, code, customStdin),
                     new Promise(resolve => setTimeout(() => resolve({ error: 'Execution Timed Out (Limit 6s)', exit_code: -1 }), 6000))
                 ]);
-                const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : resRaw;
+                const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : (resRaw || {});
                 if (isEngineDisconnected(res)) {
-                    results.push({
+                    customCase = {
                         index: 'Custom',
-                        input: customInput,
+                        isCustom: true,
+                        input: customStdin,
                         expected: 'N/A (Custom Run)',
                         actual: "",
                         stderr: "Evaluation engine not connected. Please restart the application or rerun the code.",
                         passed: false
-                    });
+                    };
+                    results.push(customCase);
                 } else {
                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
                     const passed = !res.error && (exit === 0 || exit === null);
-                    results.push({
+                    customCase = {
                         index: 'Custom',
-                        input: customInput,
+                        isCustom: true,
+                        input: customStdin,
                         expected: 'N/A (Custom Run)',
                         actual: res.stdout ?? "",
                         stderr: res.stderr || (res.error ?? ""),
                         passed: passed
-                    });
+                    };
+                    results.push(customCase);
                 }
             }
 
             setRunResults(results);
+            if (isRunAll) {
+                setEvalResults(results);
+            }
 
             // Record run history and sync into questionScores so code, language, and run testcase results are preserved
-            const passedCases = results.filter(r => r.passed).length;
-            const totalCases = results.length;
+            const passedCases = results.filter(r => r.passed && !r.isCustom).length;
+            const totalCases = results.filter(r => !r.isCustom).length;
             const runStatus = totalCases > 0 ? (passedCases === totalCases ? "Accepted" : (passedCases > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
 
             const runRecord = {
@@ -1696,14 +1696,21 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             });
 
             // Populate stdout / stderr for console and output tabs
-            const firstErrorCase = results.find(r => r.stderr);
-            const primaryCase = firstErrorCase || results[0];
-            if (primaryCase) {
-                setStdout(primaryCase.actual || "");
-                setStderr(primaryCase.stderr || "");
+            if (useCustomInput && customCase) {
+                setStdout(customCase.actual || "");
+                setStderr(customCase.stderr || "");
+                setActiveResultTab(customCase.stderr ? 'console' : 'output');
+                setExpandedTestCaseIndex('custom');
+            } else {
+                const firstErrorCase = results.find(r => r.stderr);
+                const primaryCase = firstErrorCase || results[0];
+                if (primaryCase) {
+                    setStdout(primaryCase.actual || "");
+                    setStderr(primaryCase.stderr || "");
+                }
+                setExpandedTestCaseIndex(0);
+                setActiveResultTab(firstErrorCase ? 'console' : 'output');
             }
-            setExpandedTestCaseIndex(0);
-            setActiveResultTab(firstErrorCase ? 'console' : 'output');
             setActiveRightTab('testcases');
             backupProgress();
         } catch (err) {
@@ -3514,42 +3521,81 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         <label>Test Case Set</label>
                                         <select
                                             value={selectedTestCaseSet}
-                                            onChange={(e) => setSelectedTestCaseSet(e.target.value)}
+                                            onChange={(e) => {
+                                                setSelectedTestCaseSet(e.target.value);
+                                                setExpandedTestCaseIndex(0);
+                                            }}
                                             className="tc-set-dropdown"
                                         >
                                             <option value="sample">
-                                                Sample Test Cases ({((currentQuestion.sampleTests?.length ? currentQuestion.sampleTests : (currentQuestion.sampleTestCases?.length ? currentQuestion.sampleTestCases : (currentQuestion.content?.sampleTestCases?.length ? currentQuestion.content.sampleTestCases : (currentQuestion.hiddenTests?.length ? currentQuestion.hiddenTests.slice(0, 2) : (currentQuestion.testCases?.length ? currentQuestion.testCases.slice(0, 2) : [{ input: "", expectedOutput: "" }]))))))?.length || 1})
+                                                Sample Test Cases ({getQuestionSampleTestCases(currentQuestion).length || 1})
                                             </option>
-                                            <option value="all">All Test Cases</option>
+                                            <option value="all">
+                                                All Test Cases ({getQuestionHiddenTestCases(currentQuestion).length})
+                                            </option>
                                         </select>
                                     </div>
 
                                     <div className="testcases-accordion-list">
+                                        {/* Optional Custom Test Case Result */}
+                                        {useCustomInput && (() => {
+                                            const customItem = (runResults || []).find(r => r.isCustom || r.index === 'Custom');
+                                            const isPassed = customItem?.passed === true;
+                                            const isFailed = customItem && customItem.passed === false;
+                                            const isCustomExpanded = expandedTestCaseIndex === 'custom';
+                                            return (
+                                                <div key="custom" className={`tc-accordion-card custom-tc ${isPassed ? 'passed' : isFailed ? 'failed' : ''}`} style={{ border: '1px solid #6366f1', marginBottom: '10px' }}>
+                                                    <div className="tc-card-header" onClick={() => setExpandedTestCaseIndex(isCustomExpanded ? -1 : 'custom')} style={{ background: 'rgba(99, 102, 241, 0.08)' }}>
+                                                        <div className="tc-card-header-left">
+                                                            <FaCog style={{ color: '#818cf8', fontSize: '0.85rem' }} />
+                                                            <span style={{ fontWeight: 600, color: '#c7d2fe' }}>Custom Input</span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span className={`tc-status-pill ${customItem ? (isPassed ? 'passed' : 'failed') : 'not-run'}`}>
+                                                                {customItem ? (isPassed ? '✓ Executed' : '✗ Error') : 'Not Run'}
+                                                            </span>
+                                                            {isCustomExpanded ? <FaChevronUp style={{ fontSize: '0.75rem', color: '#94a3b8' }} /> : <FaChevronDown style={{ fontSize: '0.75rem', color: '#94a3b8' }} />}
+                                                        </div>
+                                                    </div>
+
+                                                    {isCustomExpanded && (
+                                                        <div className="tc-card-body">
+                                                            <div className="tc-field-group">
+                                                                <label>Custom Stdin Input</label>
+                                                                <div className="tc-field-box" style={{ whiteSpace: 'pre-wrap' }}>{customInput || '(No stdin provided)'}</div>
+                                                            </div>
+                                                            <div className="tc-field-group">
+                                                                <label>Your Output</label>
+                                                                <div className="tc-field-box" style={isFailed ? { borderColor: '#ef4444', color: '#ef4444' } : isPassed ? { borderColor: '#10b981', color: '#10b981' } : { color: '#64748b' }}>
+                                                                    {customItem?.actual || (customItem ? '[Empty Output]' : 'Click "Run Code" to run with this custom input')}
+                                                                </div>
+                                                            </div>
+                                                            {customItem?.stderr && (
+                                                                <div className="tc-field-group">
+                                                                    <label style={{ color: '#ef4444' }}>Errors / Diagnostics</label>
+                                                                    <div className="tc-field-box" style={{ borderColor: '#ef4444', color: '#fca5a5', whiteSpace: 'pre-wrap' }}>
+                                                                        {customItem.stderr}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+
                                         {(() => {
-                                            let tcList = [];
-                                            if (selectedTestCaseSet === 'all') {
-                                                tcList = [
-                                                    ...(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []),
-                                                    ...(currentQuestion.hiddenTests || currentQuestion.testCases?.hidden || [])
-                                                ];
-                                            }
-                                            if (!Array.isArray(tcList) || tcList.length === 0) {
-                                                tcList = currentQuestion.sampleTests?.length
-                                                    ? currentQuestion.sampleTests
-                                                    : (currentQuestion.sampleTestCases?.length
-                                                        ? currentQuestion.sampleTestCases
-                                                        : (currentQuestion.content?.sampleTestCases?.length
-                                                            ? currentQuestion.content.sampleTestCases
-                                                            : (currentQuestion.hiddenTests?.length
-                                                                ? currentQuestion.hiddenTests.slice(0, 2)
-                                                                : (currentQuestion.testCases?.length
-                                                                    ? currentQuestion.testCases.slice(0, 2)
-                                                                    : [{ input: "", expectedOutput: "" }]))));
-                                            }
+                                            const sampleCases = getQuestionSampleTestCases(currentQuestion);
+                                            const allCases = getQuestionHiddenTestCases(currentQuestion);
+                                            const tcList = selectedTestCaseSet === 'all' ? allCases : (sampleCases.length > 0 ? sampleCases : allCases);
+                                            const activeResults = selectedTestCaseSet === 'all' 
+                                                ? (evalResults || runResults || questionScores[currentQuestion?.id]?.testResults) 
+                                                : runResults;
+
                                             return tcList.map((tc, idx) => {
-                                                const runItem = runResults?.find(r => r.index === idx + 1);
-                                                const isPassed = runItem?.passed;
-                                                const isFailed = runItem && !runItem.passed;
+                                                const runItem = activeResults?.find(r => r.index === idx + 1);
+                                                const isPassed = runItem?.passed === true;
+                                                const isFailed = runItem && runItem.passed === false;
                                                 const isExpanded = expandedTestCaseIndex === idx;
                                                 const actualOut = runItem?.actual ?? '';
 
