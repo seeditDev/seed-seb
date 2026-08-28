@@ -74,6 +74,7 @@ import { validateAssessmentPayload, validateTestDoc, validateMSASections } from 
 import { loadUserDailyGoals, saveUserDailyGoals, getDailyGoalsForDate } from '../utils/dailyGoalsPool';
 import { toast } from 'sonner';
 import { getAuthData } from '../utils/storageUtils';
+import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -90,7 +91,16 @@ const slugify = (value = '') => {
 };
 
 const StudentDashboard = () => {
+  const navigate = useNavigate();
   const location = useLocation();
+
+  // Guarantee that all camera, microphone, AudioContext, and AI proctoring engines are cleanly shut down when on dashboard
+  useEffect(() => {
+    try {
+      stopAllMediaAndAI();
+    } catch (_) {}
+  }, []);
+
   const [activeTab, setActiveTab] = useState(() => {
     return location.state?.tab || "dashboard";
   });
@@ -1059,8 +1069,6 @@ const StudentDashboard = () => {
     secureEnv: 'pass'
   });
   // ─────────────────────────────────────────────────────────────────
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const authData = getAuthData() || {};

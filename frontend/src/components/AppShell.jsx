@@ -15,6 +15,7 @@ import { useLocation, useNavigate } from "./router-compat";
 import { auth, onAuthStateChanged, db } from '../lib/firebase-config';
 import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import ProctorService from '../services/proctorService';
+import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 
 import { Toaster } from "sonner";
 import '../styles/index.css';
@@ -28,8 +29,10 @@ export const compareVersions = (v1, v2) => {
   const parts1 = v1.split(".").map(Number);
   const parts2 = v2.split(".").map(Number);
   for (let i = 0; i < 3; i++) {
-    if (parts1[i] > parts2[i]) return 1;
-    if (parts1[i] < parts2[i]) return -1;
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p1 < p2) return -1;
   }
   return 0;
 };
@@ -65,10 +68,87 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+function TrackingBridge() {
+  useEffect(() => {
+    TrackingService.startTracking();
+    return () => TrackingService.stopTracking();
+  }, []);
+  return null;
+}
+
+function VersionUpdateWatcher({ onVersionMismatch }) {
+  useEffect(() => {
+    const unsub = onSnapshot(
+      doc(db, "app_metadata", "version_config"),
+      (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const serverVersion = data.current_version;
+        if (!serverVersion) return;
+        if (compareVersions(serverVersion, APP_VERSION) > 0) {
+          onVersionMismatch(serverVersion);
+        }
+      },
+      (err) => console.warn("Version config listener warning:", err),
+    );
+    return () => unsub();
+  }, [onVersionMismatch]);
+
+  return null;
+}
+
+function VersionMismatchOverlay({ serverVersion, onUpdateNow }) {
+  return (
+    <div className="login-overlay">
+      <div className="login-dialog">
+        <h2 style={{ color: "#ef4444", marginBottom: "0.5rem" }}>
+          Update Required
+        </h2>
+        <p
+          style={{ color: "#4b5563", fontSize: "0.95rem", lineHeight: "1.5" }}
+        >
+          A new version of SEED SEB (v{serverVersion}) is available. You are
+          running v{APP_VERSION}.
+        </p>
+        <p
+          style={{
+            color: "#6b7280",
+            fontSize: "0.85rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          Please update to continue using the application.
+        </p>
+        <button
+          onClick={onUpdateNow}
+          className="login-submit-btn"
+          style={{ width: "100%", padding: "0.75rem" }}
+        >
+          Update &amp; Reload Now
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PortalActivityTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    const path = location.pathname;
+    const isAssessment =
+      path.startsWith("/student/assessment/") ||
+      path.startsWith("/student/coding/") ||
+      path.startsWith("/student/mcq/") ||
+      path.startsWith("/student/practice/");
+
+    // Unconditionally terminate any lingering camera/mic/AI workers when navigating away from tests
+    if (!isAssessment) {
+      try {
+        stopAllMediaAndAI();
+      } catch (_) {}
+    }
+
     const authRaw = localStorage.getItem("auth_data");
     if (!authRaw) return;
     let authUser;
@@ -81,9 +161,6 @@ function PortalActivityTracker() {
     // Do NOT fall back to Email — that writes to a different/legacy document.
     const uid = authUser?.uid;
     if (!uid) return;
-
-    const path = location.pathname;
-    const isAssessment = path.startsWith("/student/assessment/");
 
     if (isAssessment) return;
 

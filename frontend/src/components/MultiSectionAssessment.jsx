@@ -2213,6 +2213,7 @@ const MultiSectionAssessment = () => {
         )}
         <button
           onClick={() => {
+            try { stopAllMediaAndAI(); } catch (_) {}
             window.history.replaceState(null, '', '/student/dashboard');
             navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
           }}
@@ -2466,6 +2467,7 @@ const MultiSectionAssessment = () => {
               type="button"
               className="msa-exit-btn"
               onClick={() => {
+                try { stopAllMediaAndAI(); } catch (_) {}
                 window.history.replaceState(null, '', '/student/dashboard');
                 navigate('/student/dashboard', { replace: true });
               }}
@@ -2555,6 +2557,7 @@ const MultiSectionAssessment = () => {
                 <button
                   type="button"
                   onClick={() => {
+                    try { stopAllMediaAndAI(); } catch (_) {}
                     window.history.replaceState(null, '', '/student/dashboard');
                     navigate('/student/dashboard', { replace: true });
                   }}

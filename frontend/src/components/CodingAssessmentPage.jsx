@@ -2097,10 +2097,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     : 'Your coding assessment was auto-submitted due to excessive tab switching violations.');
             
             setAutoSubmitMessage(noticeMsg);
+            try { stopAllMediaAndAI(); } catch (_) {}
             navigate('/student/dashboard', { replace: true });
         } catch (e) {
             console.error("Auto submit failed:", e);
             clearLocalSession();
+            try { stopAllMediaAndAI(); } catch (_) {}
             navigate('/student/dashboard', { replace: true });
         } finally {
             setIsSubmitting(false);

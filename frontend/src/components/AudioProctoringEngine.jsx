@@ -101,6 +101,7 @@ const AudioProctoringEngine = ({
       console.log("[AudioProctor] Requesting mic permission...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       streamRef.current = stream;
+      window.micStream = stream;
 
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       if (ctx.state === "suspended") await ctx.resume().catch(() => {});
@@ -110,6 +111,7 @@ const AudioProctoringEngine = ({
       ctx.createMediaStreamSource(stream).connect(analyser);
 
       audioCtxRef.current = ctx;
+      window.__sebAudioContext = ctx;
       analyserRef.current = analyser;
       initializedRef.current = true;
 
@@ -142,8 +144,28 @@ const AudioProctoringEngine = ({
         startSampling();
       }
     } else {
-      // Pause sampling but keep the mic stream alive
       stopSampling();
+      if (!isTestActive) {
+        // Exam finished or not active: completely release mic hardware
+        streamRef.current?.getTracks().forEach(t => {
+          t.onended = null;
+          t.stop();
+        });
+        streamRef.current = null;
+        if (window.micStream) {
+          try { window.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+          window.micStream = null;
+        }
+        audioCtxRef.current?.close().catch(() => {});
+        audioCtxRef.current = null;
+        if (window.__sebAudioContext) {
+          try { window.__sebAudioContext.close().catch(() => {}); } catch (_) {}
+          window.__sebAudioContext = null;
+        }
+        analyserRef.current = null;
+        initializedRef.current = false;
+        initStartedRef.current = false;
+      }
     }
   }, [isTestActive, isProctorActive, initMicrophone, startSampling, stopSampling]);
 
@@ -157,8 +179,16 @@ const AudioProctoringEngine = ({
         t.stop();
       });
       streamRef.current = null;
+      if (window.micStream) {
+        try { window.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+        window.micStream = null;
+      }
       audioCtxRef.current?.close().catch(() => {});
       audioCtxRef.current = null;
+      if (window.__sebAudioContext) {
+        try { window.__sebAudioContext.close().catch(() => {}); } catch (_) {}
+        window.__sebAudioContext = null;
+      }
       analyserRef.current = null;
       initializedRef.current = false;
       initStartedRef.current = false;
@@ -175,8 +205,16 @@ const AudioProctoringEngine = ({
         t.stop();
       });
       streamRef.current = null;
+      if (window.micStream) {
+        try { window.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+        window.micStream = null;
+      }
       audioCtxRef.current?.close().catch(() => {});
       audioCtxRef.current = null;
+      if (window.__sebAudioContext) {
+        try { window.__sebAudioContext.close().catch(() => {}); } catch (_) {}
+        window.__sebAudioContext = null;
+      }
       analyserRef.current = null;
       initializedRef.current = false;
       initStartedRef.current = false;
