@@ -20,8 +20,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
-import { getAuthData } from '../utils/storageUtils';
-import { normalizeTestCaseArray } from '../utils/testCaseUtils';
+import { normalizeTestCaseArray, isTestCasePassed, getQuestionHiddenTestCases, getQuestionSampleTestCases } from '../utils/testCaseUtils';
 import '../styles/CodingAssessmentPage.css';
 import { fetchContentJSON } from '../utils/contentApi';
 import { useTabSwitchGuard } from '../utils/tabSwitchGuard';
@@ -411,19 +410,17 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                        codeMapRef.current[`${qId}_java`] ||
                        codeMapRef.current[`${qId}_javascript`] ||
                        codeMap[`${qId}_${language}`] || "");
-                allAnswers[qId] = code;
+                const hasEvaluatedScore = finalScores[qId] && 
+                                          finalScores[qId].testResults && 
+                                          finalScores[qId].testResults.length > 0 && 
+                                          finalScores[qId].submitted && 
+                                          typeof finalScores[qId].score === 'number' && 
+                                          finalScores[qId].total > 0;
                 
-                if (!finalScores[qId]) {
-                    // SECTION 18: use hiddenTests for official scoring, with robust fallbacks
-                    const hidden = (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0)
-                        ? q.hiddenTests
-                        : ((Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0)
-                            ? q.testCases.hidden
-                            : ((Array.isArray(q.sampleTests) && q.sampleTests.length > 0)
-                                ? q.sampleTests
-                                : ((Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0)
-                                    ? q.sampleTestCases
-                                    : (Array.isArray(q.testCases) ? q.testCases : []))));
+                if (hasEvaluatedScore) {
+                    totalEarnedWeight += finalScores[qId].score;
+                } else {
+                    const hidden = getQuestionHiddenTestCases(q);
 
                     if (hidden.length === 0) {
                         console.error(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
@@ -452,9 +449,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
                                     const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : (resRaw || {});
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                                    const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
-                                    const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                                    const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
+                                    const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
                                     if (passed) passes++;
                                     evalResults.push({
                                         index: i + 1,
@@ -1620,9 +1615,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 }
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
-                const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
+                const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
 
                 results.push({
                     index: i + 1,
@@ -1735,15 +1728,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setEvalResults(null);
 
         const code = getCurrentCode();
-        let hiddenTests = (Array.isArray(currentQuestion.hiddenTests) && currentQuestion.hiddenTests.length > 0)
-            ? currentQuestion.hiddenTests
-            : ((Array.isArray(currentQuestion.testCases?.hidden) && currentQuestion.testCases.hidden.length > 0)
-                ? currentQuestion.testCases.hidden
-                : ((Array.isArray(currentQuestion.sampleTests) && currentQuestion.sampleTests.length > 0)
-                    ? currentQuestion.sampleTests
-                    : ((Array.isArray(currentQuestion.sampleTestCases) && currentQuestion.sampleTestCases.length > 0)
-                        ? currentQuestion.sampleTestCases
-                        : (Array.isArray(currentQuestion.testCases) ? currentQuestion.testCases : [{ input: "", expectedOutput: "" }]))));
+        let hiddenTests = getQuestionHiddenTestCases(currentQuestion);
 
         const bridgeLang = language === 'python3' ? 'python' : language;
         const isEvalBlank = isCodeBlankOrEmpty(code);
@@ -1771,9 +1756,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 }
 
                 const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
-                const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
+                const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
 
                 if (passed) passedCount++;
                 results.push({ index: i + 1, passed, error: res.error || (res.stderr ?? "") });
@@ -1884,8 +1867,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             for (const q of activeQuestions) {
                 const qId = q.id || q.questionId;
-                totalMaxWeight += (q.weight || DEFAULT_QUESTION_WEIGHT);
-                if (finalScores[qId]) {
+                const hasEvaluatedScore = finalScores[qId] && 
+                                          finalScores[qId].testResults && 
+                                          finalScores[qId].testResults.length > 0 && 
+                                          finalScores[qId].submitted && 
+                                          typeof finalScores[qId].score === 'number' && 
+                                          finalScores[qId].total > 0;
+                
+                if (hasEvaluatedScore) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
                     const code = (storedCodeMap && storedCodeMap[`${qId}_${language}`]) ||
@@ -1895,15 +1884,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                  codeMapRef.current[`${qId}_python`] ||
                                  codeMapRef.current[`${qId}_java`] ||
                                  codeMapRef.current[`${qId}_javascript`] || "";
-                    const hidden = (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0)
-                        ? q.hiddenTests
-                        : ((Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0)
-                            ? q.testCases.hidden
-                            : ((Array.isArray(q.sampleTests) && q.sampleTests.length > 0)
-                                ? q.sampleTests
-                                : ((Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0)
-                                    ? q.sampleTestCases
-                                    : (Array.isArray(q.testCases) ? q.testCases : []))));
+                    const hidden = getQuestionHiddenTestCases(q);
 
                     if (hidden.length === 0) {
                         console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
@@ -1934,9 +1915,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     ]);
                                     if (isEngineDisconnected(res)) break;
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                                    const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
-                                    const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                                    const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
+                                    const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
                                     if (passed) passes++;
                                     evalResults.push({
                                         index: i + 1,
@@ -2187,8 +2166,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             for (const rawQ of questions) {
                 const q = normalizeQuestion(rawQ);
                 const qId = q.id || q.questionId;
-                totalMaxWeight += (q.weight || DEFAULT_QUESTION_WEIGHT);
-                if (finalScores[qId]) {
+                const hasEvaluatedScore = finalScores[qId] && 
+                                          finalScores[qId].testResults && 
+                                          finalScores[qId].testResults.length > 0 && 
+                                          finalScores[qId].submitted && 
+                                          typeof finalScores[qId].score === 'number' && 
+                                          finalScores[qId].total > 0;
+                
+                if (hasEvaluatedScore) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
                     const code = getCurrentCode(qId, language) ||
@@ -2197,15 +2182,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                  codeMapRef.current[`${qId}_python`] ||
                                  codeMapRef.current[`${qId}_java`] ||
                                  codeMapRef.current[`${qId}_javascript`] || "";
-                    const hidden = (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0)
-                        ? q.hiddenTests
-                        : ((Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0)
-                            ? q.testCases.hidden
-                            : ((Array.isArray(q.sampleTests) && q.sampleTests.length > 0)
-                                ? q.sampleTests
-                                : ((Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0)
-                                    ? q.sampleTestCases
-                                    : (Array.isArray(q.testCases) ? q.testCases : []))));
+                    const hidden = getQuestionHiddenTestCases(q);
 
                     if (hidden.length === 0) {
                         console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
@@ -2236,9 +2213,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     ]);
                                     if (isEngineDisconnected(res)) break;
                                     const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                                    const cleanOut = (res.stdout ?? "").replace(/\r\n/g, "\n").trim();
-                                    const cleanExp = (tc.expectedOutput ?? "").replace(/\r\n/g, "\n").trim();
-                                    const passed = cleanOut === cleanExp && !res.error && exit === 0;
+                                    const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
                                     if (passed) passes++;
                                     evalResults.push({
                                         index: i + 1,

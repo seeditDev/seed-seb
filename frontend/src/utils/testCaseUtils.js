@@ -208,3 +208,150 @@ export function normalizeTestCaseArray(testCases) {
   if (!Array.isArray(testCases)) return [];
   return testCases.map(normalizeTestCase);
 }
+
+/**
+ * Intelligent output matcher for coding assessments.
+ * Handles:
+ * 1. Strict equality after trimming CRLF / extra newlines
+ * 2. Token / whitespace-normalized equality
+ * 3. Structural JSON/bracket/comma spacing normalization (e.g. "[0, 1]" vs "[0,1]")
+ * 4. Deep JSON equality and array permutation matching (e.g. "[1, 0]" vs "[0, 1]" when order doesn't matter)
+ * 5. Floating point numerical tolerance (within 1e-5)
+ * 6. Two-Sum / Target Sum index pair semantic verification (handles questions with multiple valid pairs or duplicate complements)
+ *
+ * @param {any} actualRaw - Actual program output (stdout)
+ * @param {any} expectedRaw - Expected testcase output
+ * @param {any} inputRaw - Testcase input (used for semantic validation)
+ * @returns {boolean} True if the actual output satisfies the expected test case
+ */
+export function isOutputMatching(actualRaw, expectedRaw, inputRaw = null) {
+  if (actualRaw === undefined || actualRaw === null || expectedRaw === undefined || expectedRaw === null) {
+    return false;
+  }
+  const actual = String(actualRaw).replace(/\r\n/g, '\n').trim();
+  const expected = String(expectedRaw).replace(/\r\n/g, '\n').trim();
+
+  // 1. Exact match after trim
+  if (actual === expected) return true;
+
+  // 2. Whitespace-normalized match (collapsing runs of spaces/tabs per line)
+  const normAct = actual.replace(/[ \t]+/g, ' ').replace(/\s*\n\s*/g, '\n');
+  const normExp = expected.replace(/[ \t]+/g, ' ').replace(/\s*\n\s*/g, '\n');
+  if (normAct === normExp) return true;
+
+  // 3. Structural JSON/bracket/comma spacing normalization (e.g. "[0, 1]" vs "[0,1]")
+  const structNorm = (s) => s.replace(/\s*([,:[\]{}])\s*/g, '$1');
+  if (structNorm(actual) === structNorm(expected)) return true;
+
+  // 4. Deep JSON parsing and comparison
+  try {
+    const pAct = JSON.parse(actual);
+    const pExp = JSON.parse(expected);
+
+    if (JSON.stringify(pAct) === JSON.stringify(pExp)) return true;
+
+    // Array permutation match (e.g. [1, 0] vs [0, 1])
+    if (Array.isArray(pAct) && Array.isArray(pExp) && pAct.length === pExp.length) {
+      const sortedAct = [...pAct].sort((a, b) => (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))));
+      const sortedExp = [...pExp].sort((a, b) => (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))));
+      if (JSON.stringify(sortedAct) === JSON.stringify(sortedExp)) return true;
+    }
+  } catch (_) {}
+
+  // 5. Numerical / float tolerance
+  if (actual !== '' && expected !== '' && !isNaN(Number(actual)) && !isNaN(Number(expected))) {
+    if (Math.abs(Number(actual) - Number(expected)) < 1e-5) return true;
+  }
+
+  // 6. Semantic verification fallback for Two-Sum / Target Sum index pair problems
+  if (inputRaw) {
+    try {
+      const parsedInput = typeof inputRaw === 'string' ? JSON.parse(inputRaw) : inputRaw;
+      if (Array.isArray(parsedInput) && parsedInput.length >= 2 && Array.isArray(parsedInput[0]) && typeof parsedInput[1] === 'number') {
+        const nums = parsedInput[0];
+        const target = parsedInput[1];
+        const parsedActual = JSON.parse(actual);
+        if (Array.isArray(parsedActual) && parsedActual.length === 2) {
+          const [i, j] = parsedActual;
+          if (typeof i === 'number' && typeof j === 'number' && i !== j && i >= 0 && i < nums.length && j >= 0 && j < nums.length) {
+            if (nums[i] + nums[j] === target) return true;
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  return false;
+}
+
+/**
+ * Checks whether a single test case run has passed.
+ *
+ * @param {any} actualOutput - Actual program output
+ * @param {any} expectedOutput - Expected testcase output
+ * @param {any} input - Testcase input
+ * @param {number|null} exitCode - Process exit code
+ * @param {any} error - Any process execution error / exception
+ * @returns {boolean} True if test case passed
+ */
+export function isTestCasePassed(actualOutput, expectedOutput, input = null, exitCode = 0, error = null) {
+  if (error) return false;
+  if (exitCode !== 0 && exitCode !== null && exitCode !== undefined) return false;
+  return isOutputMatching(actualOutput, expectedOutput, input);
+}
+
+export const compareOutputs = isOutputMatching;
+
+/**
+ * Extracts and normalizes sample test cases from a question object.
+ *
+ * @param {Object} q - Question object
+ * @returns {Array} Array of normalized sample test cases
+ */
+export function getQuestionSampleTestCases(q) {
+  if (!q) return [];
+  let raw = [];
+  if (Array.isArray(q.sampleTests) && q.sampleTests.length > 0) {
+    raw = q.sampleTests;
+  } else if (Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0) {
+    raw = q.sampleTestCases;
+  } else if (Array.isArray(q.content?.sampleTestCases) && q.content.sampleTestCases.length > 0) {
+    raw = q.content.sampleTestCases;
+  } else if (Array.isArray(q.content?.sampleTests) && q.content.sampleTests.length > 0) {
+    raw = q.content.sampleTests;
+  }
+  return normalizeTestCaseArray(raw);
+}
+
+/**
+ * Extracts and normalizes hidden test cases from a question object.
+ * Checks all possible schemas (q.hiddenTests, q.testCases.hidden, q.content.testCases, etc.)
+ * and falls back to sample test cases if no hidden test cases are present.
+ *
+ * @param {Object} q - Question object
+ * @returns {Array} Array of normalized hidden test cases
+ */
+export function getQuestionHiddenTestCases(q) {
+  if (!q) return [];
+  let raw = [];
+  if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
+    raw = q.hiddenTests;
+  } else if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
+    raw = q.testCases.hidden;
+  } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
+    raw = q.content.testCases;
+  } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
+    raw = q.testCases;
+  } else if (Array.isArray(q.test_cases) && q.test_cases.length > 0) {
+    raw = q.test_cases;
+  } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {
+    raw = q.hidden_test_cases;
+  } else {
+    // Fallback to sample test cases
+    const samples = getQuestionSampleTestCases(q);
+    if (samples.length > 0) return samples;
+  }
+  return normalizeTestCaseArray(raw);
+}
+
+

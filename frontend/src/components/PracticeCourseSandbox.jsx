@@ -12,6 +12,7 @@ import {
   getFullProgress 
 } from '../services/codingProgressService';
 import { getAuthData } from '../utils/storageUtils';
+import { isTestCasePassed } from '../utils/testCaseUtils';
 import { fetchArticleFile } from '../utils/articleFetcher';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
@@ -612,9 +613,8 @@ const PracticeCourseSandbox = () => {
             break; // Stop running further sample test cases!
           }
 
-          const actualClean = (res.stdout ?? '').replace(/\r\n/g, '\n').trim();
           const expectedClean = (tc.expected || (tc.expectedOutput ?? '')).toString().replace(/\r\n/g, '\n').trim();
-          const isPassed = actualClean === expectedClean && res.exit_code === 0;
+          const isPassed = isTestCasePassed(res.stdout, tc.expected || tc.expectedOutput, tc.input, res.exit_code, res.error);
 
           results.push({
             index: i + 1,
@@ -726,12 +726,11 @@ const isCodeBlankOrEmpty = (codeStr) => {
           break; // Stop running further hidden test cases!
         }
 
-        const actualClean = (res.stdout ?? '').replace(/\r\n/g, '\n').trim();
         const expectedClean = (tc.expected || (tc.expectedOutput ?? '')).toString().replace(/\r\n/g, '\n').trim();
         
         // Handle placeholder test cases gracefully (code runs successfully & compiles)
         const isPlaceholder = expectedClean === 'expected' || expectedClean === 'expectedoutput';
-        const isPassed = !isBlank && (isPlaceholder ? actualClean.length > 0 : actualClean === expectedClean) && res.exit_code === 0 && !res.error;
+        const isPassed = !isBlank && (isPlaceholder ? actualClean.length > 0 : isTestCasePassed(res.stdout, tc.expected || tc.expectedOutput, tc.input, res.exit_code, res.error));
 
         if (isPassed) {
           passedCount++;
