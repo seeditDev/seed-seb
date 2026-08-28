@@ -1566,6 +1566,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setStderr('');
         setStdout('');
 
+        const code = getCurrentCode();
         const isRunAll = selectedTestCaseSet === 'all';
         const sampleTests = getQuestionSampleTestCases(currentQuestion);
         const allVisibleTests = getQuestionVisibleAllTestCases(currentQuestion, 6);
