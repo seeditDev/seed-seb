@@ -12,7 +12,8 @@ import { toast } from 'sonner';
 import {
   FaClock, FaCheckCircle, FaLock, FaBookOpen, FaCode,
   FaArrowLeft, FaArrowRight, FaBookmark,
-  FaChevronRight, FaFileAlt, FaListUl, FaShieldAlt, FaLightbulb, FaSignOutAlt, FaFlag
+  FaChevronRight, FaFileAlt, FaListUl, FaShieldAlt, FaLightbulb, FaSignOutAlt, FaFlag,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
@@ -397,6 +398,19 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
 
   const renderTextWithCode = (text) => renderMathAndCode(text, false);
 
+  const { candidateRoll, tenantId } = useMemo(() => {
+    try {
+      if (typeof window === 'undefined') return { candidateRoll: '', tenantId: '' };
+      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+      return {
+        candidateRoll: authData.rollNumber || authData.uid || '',
+        tenantId: authData.tenantId || ''
+      };
+    } catch (_) {
+      return { candidateRoll: '', tenantId: '' };
+    }
+  }, []);
+
   if (questions.length === 0) {
     return (
       <div className="msa-loading">
@@ -413,19 +427,6 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const flaggedCount = bookmarked.length;
   const pct = total > 0 ? Math.round((attempted / total) * 100) : 0;
   const isLocked = lockedQuestions.includes(questionIndex);
-
-  const { candidateRoll, tenantId } = useMemo(() => {
-    try {
-      if (typeof window === 'undefined') return { candidateRoll: 'CANDIDATE', tenantId: 'SEED-SEB' };
-      const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-      return {
-        candidateRoll: authData.rollNumber || authData.uid || 'CANDIDATE',
-        tenantId: authData.tenantId || 'SEED-SEB'
-      };
-    } catch (_) {
-      return { candidateRoll: 'CANDIDATE', tenantId: 'SEED-SEB' };
-    }
-  }, []);
 
   return (
     <div className="mcq-ref-app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -770,17 +771,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
               </div>
             </div>
 
-            {/* Section Progress Card */}
-            <div className="mcq-ref-card">
-              <div className="progress-card-head">
-                <h4>Section Progress</h4>
-                <span className="progress-fraction">{attempted} / {total}</span>
-              </div>
-              <div className="mcq-progress-bar-track">
-                <div className="mcq-progress-bar-fill" style={{ width: `${pct}%` }} />
-              </div>
-              <div className="progress-percent-label">{pct}%</div>
-            </div>
+
 
             {/* Section Summary Card */}
             <div className="mcq-ref-card">
@@ -935,6 +926,7 @@ const MultiSectionAssessment = () => {
     audioViolationCount: 0,
     violations: []
   });
+  const [submissionReason, setSubmissionReason] = useState(null);
 
   const shouldUseProctoring = useMemo(() => {
     if (!assessment) return false;
@@ -980,7 +972,7 @@ const MultiSectionAssessment = () => {
   const teardownHardwareAndProctoring = useCallback(() => {
     try {
       window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
-    } catch (_) {}
+    } catch (_) { }
 
     // Explicitly stop all camera tracks
     if (window.cameraStream) {
@@ -1021,7 +1013,7 @@ const MultiSectionAssessment = () => {
           el.srcObject = null;
         }
       });
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
   // Global unmount teardown
@@ -1039,231 +1031,204 @@ const MultiSectionAssessment = () => {
       return;
     }
     finalSubmitLockRef.current = true;
+    setSubmissionReason(reason || 'auto_submit');
+    setIsSubmittingEntireExam(true);
 
-    if (examFinishedRef.current) return;
+    if (examFinishedRef.current) {
+      setIsSubmittingEntireExam(false);
+      return;
+    }
     examFinishedRef.current = true;
     setSecStarted(false);
     clearInterval(timerRef.current);
     try {
       stopAllMediaAndAI();
       teardownHardwareAndProctoring();
-    } catch (_) {}
+    } catch (_) { }
 
-    // Use refs so this works even when called before the first React state flush
-    // (e.g. the grace-period path calls this 500ms after mount when state is still null)
-    const effectiveUser = userRef.current;
-    const effectiveAssessment = assessmentRef.current;
-
-    // BUG FIXED (P0 cross-tenant write): `user.college || 'KGKITE'` wrote one
-    // college's attempt into another college's document path whenever the
-    // profile field was blank. Skip the remote write instead of substituting —
-    // local progress is still kept so nothing is silently lost.
-    const tenant = resolveTenant(effectiveUser);
-    if (effectiveUser?.email && effectiveAssessment && !tenant.valid) {
-      console.error('[MSA] Incomplete profile, refusing remote write:', tenant.missing);
+    const effectiveUser = userRef.current || user;
+    if (!effectiveUser) {
+      throw new Error('[MSA] autoSubmitEntireExam: User profile is missing.');
     }
-    if (effectiveUser?.email && effectiveAssessment && tenant.valid) {
-      const { college, year } = tenant;
+    const effectiveAssessment = assessmentRef.current || assessment;
+    if (!effectiveAssessment?.id) {
+      throw new Error('[MSA] autoSubmitEntireExam: Assessment metadata is missing.');
+    }
 
-      const sectionsList = Object.values(examResults).map(sec => {
-        const secTime = sec.timeSpentSeconds || sec.data?.timeSpentSeconds || 0;
-        const secM = Math.floor(secTime / 60);
-        const secS = secTime % 60;
-        return {
-          sectionName: sec.sectionName ?? '',
-          name: sec.sectionName ?? '',
-          score: sec.data?.score || 0,
-          maxScore: sec.data?.maxScore || sec.data?.totalQuestions || 0,
-          startedAt: sec.startedAt ?? '',
-          submittedAt: sec.submittedAt ?? '',
-          timeSpentSeconds: secTime,
-          timeTaken: secTime,
-          timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`
+    const userId = auth?.currentUser?.uid || effectiveUser.uid;
+    if (!userId) {
+      throw new Error('[MSA] autoSubmitEntireExam: Authenticated userId is required.');
+    }
+
+    const tenant = requireTenant(effectiveUser);
+    const email = tenant.email;
+    const tenantId = tenant.tenantId;
+
+    // Harvest active section if in progress so its score and responses are included
+    const combinedResults = { ...(examResults || {}) };
+    if (effectiveAssessment?.sections && currentSecIdx >= 0 && effectiveAssessment.sections[currentSecIdx]) {
+      const activeSec = effectiveAssessment.sections[currentSecIdx];
+      const activeSecId = activeSec.sectionId || activeSec.id || `sec_${currentSecIdx}`;
+      if (!combinedResults[activeSecId]) {
+        let activeAnswers = {};
+        try {
+          const savedState = localStorage.getItem(`msa_active_mcq_state_${effectiveAssessment.id}_${activeSec.id ?? ''}`);
+          if (savedState) activeAnswers = JSON.parse(savedState).answers || {};
+        } catch (_) { }
+
+        combinedResults[activeSecId] = {
+          sectionId: activeSecId,
+          sectionName: activeSec.name || `Section ${currentSecIdx + 1}`,
+          type: activeSec.type || 'mcq',
+          startedAt: new Date().toISOString(),
+          submittedAt: new Date().toISOString(),
+          timeSpentSeconds: Math.max(0, (activeSec.duration_minutes || 30) * 60 - (secTimer || 0)),
+          data: {
+            score: 0,
+            maxScore: activeSec.duration_minutes || 10,
+            totalQuestions: (activeSec.questions || []).length || 0,
+            answers: activeAnswers,
+            questions: activeSec.questions || [],
+          }
         };
-      });
-
-      const aggregatedQuestions = Object.values(examResults)
-        .filter(sec => sec.type === 'mcq' && sec.data?.questions)
-        .reduce((acc, sec) => acc.concat(sec.data.questions), []);
-
-      const aggregatedCoding = Object.values(examResults)
-        .filter(sec => sec.type === 'coding')
-        // Coding sections store resolved questions in .data.questions (normalized by processData).
-        // Fall back to .data.coding for any legacy result format that used the old field name.
-        .filter(sec => sec.data?.questions?.length || sec.data?.coding?.length)
-        .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), []);
-
-      const totalMarksSum = Object.values(examResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
-
-      const totalScore = Object.values(examResults).reduce((a, s) => a + (s.data?.score || 0), 0);
-      const totalQ = Object.values(examResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
-      // BUG FIX: percentage must use totalMarksSum (max marks), not totalQ (question count).
-      // Example: MCQ=40 marks, Coding=60 marks → totalMarksSum=100, not totalQ=32.
-      const pct = totalMarksSum > 0 ? (totalScore / totalMarksSum) : 0;
-      const totalViolations = proctoringData.violationCount;
-
-      // Scoring fields
-      const partialScore = totalScore;
-      const fullScore = (totalMarksSum > 0 && totalScore >= totalMarksSum) ? totalMarksSum : 0;
-
-      // [Fix Audit-6 P1] Prefer authoritative startedAt from the Firestore attempt document.
-      // examStartTimeRef.current is set when the React component mounts (client clock),
-      // but the canonical attempt uses serverTimestamp() — these can differ by network latency.
-      // We read the attempt here and use its startedAt for the result so that result timing
-      // matches session timing. Fall back to the client ref if the read fails.
-      let authorizedStartedAt = examStartTimeRef.current;
-      try {
-        const attemptSnap = await getActiveAttempt(effectiveAssessment.id);
-        if (attemptSnap?.startedAt) {
-          authorizedStartedAt = attemptSnap.startedAt.toDate
-            ? attemptSnap.startedAt.toDate().toISOString()
-            : new Date(attemptSnap.startedAt).toISOString();
-        }
-      } catch (_) {
-        console.warn('[MSA] autoSubmit: Could not read authoritative startedAt, using client ref fallback');
-      }
-
-      const timeEndedISO = new Date().toISOString();
-      const timeTaken = Math.round((new Date(timeEndedISO).getTime() - new Date(authorizedStartedAt).getTime()) / 1000);
-      const timeM = Math.floor(timeTaken / 60);
-      const timeS = timeTaken % 60;
-      const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
-
-      const totalNoFace = Object.values(examResults).reduce((a, s) => a + (s.data?.totalNoFace || 0), 0) +
-        (proctoringData.violations.filter(v => v.type === 'no_face').length);
-      const totalMultipleFaces = Object.values(examResults).reduce((a, s) => a + (s.data?.totalMultipleFaces || 0), 0) +
-        (proctoringData.violations.filter(v => v.type === 'multiple_faces').length);
-
-      const allViolations = proctoringData.violations;
-
-      const userId = auth?.currentUser?.uid || effectiveUser?.uid;
-      if (!userId) {
-        throw new Error('[MSA] autoSubmitEntireExam: not authenticated, refusing Firestore write.');
-      }
-      const tenantId = effectiveUser?.tenantId || user?.tenantId;
-      if (!tenantId) {
-        throw new Error('[MSA] autoSubmitEntireExam: missing tenantId, refusing Firestore write.');
-      }
-
-      const sessionAttemptId = (() => {
-        try { return attemptDocId(userId, effectiveAssessment.id); } catch (_) { return null; }
-      })();
-
-      const attemptData = buildResultDoc({
-        user: {
-          uid: userId,
-          email: effectiveUser.email || '',
-          name: effectiveUser.name || '',
-          rollNumber: effectiveUser.rollNumber || '',
-          tenantId: tenantId,
-          college: effectiveUser.college || '',
-          department: effectiveUser.department || '',
-          year: effectiveUser.year || '',
-          cohortId: effectiveUser.cohortId || '',
-        },
-        assessment: {
-          id: effectiveAssessment.id,
-          title: effectiveAssessment.name || effectiveAssessment.title || '',
-          assessmentType: 'multi_section',
-        },
-        scores: {
-          totalScore,
-          maxScore: totalMarksSum,
-          percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
-          passed: totalMarksSum > 0 && (totalScore / totalMarksSum >= 0.5),
-        },
-        timing: {
-          startedAt: authorizedStartedAt,
-          timeTakenSeconds: timeTaken,
-        },
-        submission: {
-          autoSubmitted: true,
-          submissionReason: reason || 'proctoring_violations',
-        },
-        sections: sectionsList,
-        questions: aggregatedQuestions,
-        codingSubmissions: aggregatedCoding,
-        proctoring: {
-          violationCount: totalViolations,
-          totalNoFace,
-          totalMultipleFaces,
-          violations: allViolations,
-        },
-        sessionAttemptId,
-      });
-
-      const v2DocPath = `assessmentResults/${tenantId}/${effectiveAssessment.id}/${userId}`;
-
-      // [Fix Audit-7 P1] Transition attempt to SUBMITTING before writing result.
-      // Required by Firestore result-create rule which checks attempt.status ∈ [SUBMITTING, EXPIRED, FAILED_RECOVERABLE].
-      // Non-fatal: if the transition write fails we still proceed with the result write;
-      // FAILED_RECOVERABLE is also an accepted state for result creation.
-      try {
-        await transitionAttemptState(effectiveAssessment?.id, ATTEMPT_STATES.SUBMITTING, {
-          autoSubmitted:    true,
-          autoSubmitReason: reason || 'proctoring_violations',
-        });
-        console.log('[MSA] autoSubmit: attempt transitioned to SUBMITTING');
-      } catch (transErr) {
-        console.warn('[MSA] autoSubmit: SUBMITTING transition failed (non-fatal, proceeding with result write):', transErr?.message);
-      }
-
-      // Final submission write
-      // P0 fix: only proceed to SUBMITTED state after a CONFIRMED Firestore write.
-      // On failure: save pending envelope, set FAILED_RECOVERABLE, stop hardware — do NOT
-      // show the student "submitted" and do NOT call completeAssessmentSession().
-      let resultWriteSuccess = false;
-      try {
-        await setDoc(doc(db, v2DocPath), attemptData);
-        console.log('[MSA] Final result saved to Firestore canonical path:', v2DocPath);
-        resultWriteSuccess = true;
-      } catch (writeErr) {
-        console.error('[MSA] Final Firestore write failed — preserving pending envelope:', writeErr);
-        const envKey = `msa_pending_submission_${userId}_${effectiveAssessment.id}`;
-        savePendingEnvelope(envKey, {
-          uid: userId,
-          assessmentId: effectiveAssessment.id,
-          resultPayload: attemptData,
-          savedAt: new Date().toISOString(),
-          retryCount: 0,
-        }).catch(() => { });
-        // Transition to FAILED_RECOVERABLE so the student can retry on reconnect
-        transitionAttemptState(effectiveAssessment?.id, ATTEMPT_STATES.FAILED_RECOVERABLE).catch(() => { });
-        stopAllMediaAndAI();
-        toast.error(
-          '⚠️ Submission pending — no network. Your answers are saved locally and will sync automatically when you reconnect.',
-          { duration: 12000 }
-        );
-        // Early return: do NOT set examFinished=true or navigate away
-        return;
       }
     }
 
-    if (!resultWriteSuccess) return; // guard — should not be reached, but safety net
+    const sectionsList = Object.values(combinedResults).map(sec => {
+      const secTime = sec.timeSpentSeconds || sec.data?.timeSpentSeconds || 0;
+      const secM = Math.floor(secTime / 60);
+      const secS = secTime % 60;
+      return {
+        sectionName: sec.sectionName ?? '',
+        name: sec.sectionName ?? '',
+        score: sec.data?.score || 0,
+        maxScore: sec.data?.maxScore || sec.data?.totalQuestions || 0,
+        startedAt: sec.startedAt ?? '',
+        submittedAt: sec.submittedAt ?? '',
+        timeSpentSeconds: secTime,
+        timeTaken: secTime,
+        timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`
+      };
+    });
 
-    setExamFinished(true);
-    stopAllMediaAndAI();
-    sessionStorage.removeItem('multisectionAssessmentData');
-    localStorage.removeItem(`msaProgress_${effectiveAssessment?.id}`);
+    const aggregatedQuestions = Object.values(combinedResults)
+      .filter(sec => sec.type === 'mcq' && sec.data?.questions)
+      .reduce((acc, sec) => acc.concat(sec.data.questions), []);
 
-    // ── Mark attempt completed (Firestore session + completion index) ──
-    // Only called AFTER confirmed result write success.
-    // [Fix Audit-6 P1] Surface failure instead of silently swallowing — result is already
-    // saved, so we inform the student that session finalization will retry on next login.
-    completeAssessmentSession(effectiveAssessment?.id, { autoSubmitted: true, reason: reason || 'proctoring_violations' })
-      .catch((err) => {
-        console.error('[MSA] autoSubmit: Session finalization failed — result is saved, attempt state pending:', err);
-        toast('ℹ️ Result saved. Session finalization will complete on next login.', { duration: 6000 });
-      });
-    markAssessmentCompleted(effectiveUser, effectiveAssessment?.id).catch(() => { });
-    if (effectiveUser?.email) invalidateCompletionCache(effectiveUser.email);
+    const aggregatedCoding = Object.values(combinedResults)
+      .filter(sec => sec.type === 'coding')
+      .filter(sec => sec.data?.questions?.length || sec.data?.coding?.length)
+      .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), []);
+
+    const totalMarksSum = Object.values(combinedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
+    const totalScore = Object.values(combinedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
+    const pct = totalMarksSum > 0 ? (totalScore / totalMarksSum) : 0;
+    const totalViolations = proctoringData.violationCount || 0;
+
+    let authorizedStartedAt = examStartTimeRef.current || new Date().toISOString();
+    try {
+      const attemptSnap = await getActiveAttempt(effectiveAssessment.id);
+      if (attemptSnap?.startedAt) {
+        authorizedStartedAt = attemptSnap.startedAt.toDate
+          ? attemptSnap.startedAt.toDate().toISOString()
+          : new Date(attemptSnap.startedAt).toISOString();
+      }
+    } catch (_) {
+      console.warn('[MSA] autoSubmit: Could not read authoritative startedAt, using client ref fallback');
+    }
+
+    const timeEndedISO = new Date().toISOString();
+    const timeTaken = Math.max(0, Math.round((new Date(timeEndedISO).getTime() - new Date(authorizedStartedAt).getTime()) / 1000));
+    const timeM = Math.floor(timeTaken / 60);
+    const timeS = timeTaken % 60;
+    const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
+
+    const totalNoFace = (proctoringData.violations || []).filter(v => v.type === 'no_face').length;
+    const totalMultipleFaces = (proctoringData.violations || []).filter(v => v.type === 'multiple_faces').length;
+
+    const attemptData = buildResultDoc({
+      user: {
+        uid: userId,
+        email: tenant.email,
+        name: effectiveUser.name || '',
+        rollNumber: effectiveUser.rollNumber || '',
+        tenantId: tenant.tenantId,
+        college: tenant.college,
+        department: tenant.department,
+        year: tenant.year,
+        cohortId: tenant.cohortId,
+      },
+      assessment: {
+        id: effectiveAssessment.id,
+        title: effectiveAssessment.name || effectiveAssessment.title || '',
+        assessmentType: 'multi_section',
+      },
+      scores: {
+        totalScore,
+        maxScore: totalMarksSum,
+        percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
+        passed: totalMarksSum > 0 && (totalScore / totalMarksSum >= 0.5),
+      },
+      timing: {
+        startedAt: authorizedStartedAt,
+        timeTakenSeconds: timeTaken,
+      },
+      submission: {
+        autoSubmitted: true,
+        submissionReason: reason || 'proctoring_violations',
+      },
+      sections: sectionsList,
+      questions: aggregatedQuestions,
+      codingSubmissions: aggregatedCoding,
+      proctoring: {
+        violationCount: totalViolations,
+        totalNoFace,
+        totalMultipleFaces,
+        violations: proctoringData.violations || [],
+      },
+      sessionAttemptId: attemptDocId(userId, effectiveAssessment.id),
+    });
+
+    const v2DocPath = `assessmentResults/${tenant.tenantId}/${effectiveAssessment.id}/${userId}`;
+
+    try {
+      await transitionAttemptState(effectiveAssessment?.id, ATTEMPT_STATES.SUBMITTING, {
+        autoSubmitted: true,
+        autoSubmitReason: reason || 'proctoring_violations',
+      }).catch(() => { });
+
+      await setDoc(doc(db, v2DocPath), attemptData);
+      console.log('[MSA] Final result saved to Firestore canonical path:', v2DocPath);
+    } catch (writeErr) {
+      console.error('[MSA] Remote write failed, saving local envelope:', writeErr);
+      const envKey = `msa_pending_submission_${userId}_${effectiveAssessment.id}`;
+      savePendingEnvelope(envKey, {
+        uid: userId,
+        assessmentId: effectiveAssessment.id,
+        resultPayload: attemptData,
+        savedAt: new Date().toISOString(),
+      }).catch(() => { });
+    }
+
+    try {
+      await completeAssessmentSession(effectiveAssessment?.id, { autoSubmitted: true, reason: reason || 'proctoring_violations' });
+    } catch (sErr) {
+      console.warn('[MSA] completeAssessmentSession notice:', sErr);
+    }
+
+    try {
+      await markAssessmentCompleted(effectiveUser, effectiveAssessment?.id);
+      if (email) invalidateCompletionCache(email);
+    } catch (cErr) {
+      console.warn('[MSA] markAssessmentCompleted notice:', cErr);
+    }
 
     // ── Course progress tracking (non-fatal) ──
     try {
       const courseCtx = JSON.parse(sessionStorage.getItem('msaCourseCtx') || '{}');
       if (courseCtx.courseId && courseCtx.seriesId) {
         import('../services/mcqService').then(({ default: MCQService }) => {
-          const totalScore = Object.values(examResults || {}).reduce((s, sec) => s + (sec.totalScore || 0), 0);
+          const totalScore = Object.values(combinedResults || {}).reduce((s, sec) => s + (sec.totalScore || 0), 0);
           MCQService.markCourseProgress({
             uid: effectiveUser?.uid ?? '',
             courseId: courseCtx.courseId,
@@ -1276,7 +1241,6 @@ const MultiSectionAssessment = () => {
         sessionStorage.removeItem('msaCourseCtx');
       }
     } catch (_) { /* non-fatal */ }
-
 
     // Clear MCQ, Coding, and proctoring temporary workspace details
     const keysToRemove = [];
@@ -1293,7 +1257,13 @@ const MultiSectionAssessment = () => {
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
-  }, [assessment, user, examResults, proctoringData]);
+
+    sessionStorage.removeItem('multisectionAssessmentData');
+    localStorage.removeItem(`msaProgress_${effectiveAssessment?.id}`);
+    setIsSubmittingEntireExam(false);
+    setExamFinished(true);
+    stopAllMediaAndAI();
+  }, [assessment, currentSecIdx, examResults, proctoringData, secTimer, user]);
 
   const handleProctorReady = useCallback(() => {
     console.log('[MSA] Camera Proctoring is ready');
@@ -1534,11 +1504,12 @@ const MultiSectionAssessment = () => {
     const progressKey = `msaProgress_${assessmentData.id}`;
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(progressKey) || 'null'); } catch (_) { }
-    if (saved && saved.email && authData.Email && saved.email !== authData.Email) {
+    const currentEmail = authData.email || authData.Email;
+    if (saved && saved.email && currentEmail && saved.email.toLowerCase() !== currentEmail.toLowerCase()) {
       localStorage.removeItem(progressKey);
       saved = null;
     }
-    if (saved && saved.email === authData.Email) {
+    if (saved && saved.email && currentEmail && saved.email.toLowerCase() === currentEmail.toLowerCase()) {
       const nowMs = new Date().getTime();
       const lastActiveMs = saved.lastActiveTimestamp || (saved.savedAt ? new Date(saved.savedAt).getTime() : nowMs);
       const elapsedOfflineSec = Math.floor((nowMs - lastActiveMs) / 1000);
@@ -1933,8 +1904,7 @@ const MultiSectionAssessment = () => {
     clearInterval(timerRef.current);
 
     // ── Firestore: mark section completed ──
-    const authDataSec = JSON.parse(localStorage.getItem('auth_data') ?? '{}');
-    if (authDataSec?.Email && assessment?.id) {
+    if (user?.email && assessment?.id) {
       markSectionCompleted(assessment.id, activeSection.sectionId || activeSection.name).catch(() => { });
     }
 
@@ -1946,7 +1916,7 @@ const MultiSectionAssessment = () => {
       const progressKey = `msaProgress_${assessment.id}`;
       const snapshot = {
         assessmentId: assessment.id,
-        email: user?.email ?? '',
+        email: user.email,
         completedSections: Object.fromEntries(Object.keys(updatedResults).map(id => [id, true])),
         examResults: updatedResults,
         lastSectionIdx: currentSecIdx,
@@ -1954,42 +1924,44 @@ const MultiSectionAssessment = () => {
       };
       localStorage.setItem(progressKey, JSON.stringify(snapshot));
 
-      // See autoSubmitEntireExam: never substitute a tenant, skip the write.
-      const tenant = resolveTenant(user);
-      if (user?.email && !tenant.valid) {
-        console.error('[MSA] Incomplete profile, refusing remote write:', tenant.missing);
+      const tenant = requireTenant(user);
+      const userId = auth?.currentUser?.uid || user.uid;
+      if (!userId) {
+        throw new Error('[MSA] autoSubmitSection partial: missing authenticated userId.');
       }
-      if (user?.email && tenant.valid) {
-        const { year } = tenant;
-        const tenantId = user?.tenantId ?? tenant.tenantId ?? '';
-        const userId = auth?.currentUser?.uid;
-        if (!userId) {
-          console.error('[MSA] autoSubmitSection partial: not authenticated, refusing Firestore write.');
-        } else {
-          setDoc(doc(db, `assessmentResults/${tenantId}/${assessment.id}/${userId}`), {
-            userId, email: user.email, rollNumber: user.rollNumber ?? '', name: user.name ?? '',
-            tenantId: tenantId, cohortId: user?.cohortId ?? year ?? "",
-            assessmentId: assessment.id, assessmentTitle: assessment.name,
-            type: 'multisection', status: 'partial',
-            sectionsCompleted: currentSecIdx + 1, totalSections,
-            sections: updatedResults, lastUpdatedAt: serverTimestamp(),
-            lastUpdatedAtISO: new Date().toISOString()
-          }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
-        }
-      }
+
+      setDoc(doc(db, `assessmentResults/${tenant.tenantId}/${assessment.id}/${userId}`), {
+        userId,
+        email: tenant.email,
+        rollNumber: user.rollNumber ?? '',
+        name: user.name ?? '',
+        tenantId: tenant.tenantId,
+        cohortId: tenant.cohortId,
+        assessmentId: assessment.id,
+        assessmentTitle: assessment.name,
+        type: 'multisection',
+        status: 'partial',
+        sectionsCompleted: currentSecIdx + 1,
+        totalSections,
+        sections: updatedResults,
+        lastUpdatedAt: serverTimestamp(),
+        lastUpdatedAtISO: new Date().toISOString()
+      }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
 
       // ── 15-second inter-section relaxation ──
       const nextSec = assessment.sections[nextIdx];
-      toast.success(` Section submitted! Next: "${nextSec?.name || `Section ${nextIdx + 1}`}" starts in 15 seconds.`, { duration: 5000 });
+      toast.success(`Section submitted! Next: "${nextSec?.name || `Section ${nextIdx + 1}`}" starts in 15 seconds.`, { duration: 5000 });
       setRelaxationNextIdx(nextIdx);
       setRelaxationCountdown(15);
       // handleStartSection(nextIdx) is called by the relaxation countdown useEffect
     } else {
       // All sections done — final submission
       setIsSubmittingEntireExam(true);
-      const tenant = resolveTenant(user);
-      const college = user?.college ?? tenant.college ?? '';
-      const year = user?.year ?? tenant.year ?? '';
+      const tenant = requireTenant(user);
+      const userId = auth?.currentUser?.uid || user.uid;
+      if (!userId) {
+        throw new Error('[MSA] handleFinalSubmit: not authenticated, missing userId.');
+      }
 
       try {
         const sectionsList = Object.values(updatedResults).map(sec => {
@@ -2017,22 +1989,10 @@ const MultiSectionAssessment = () => {
           .filter(sec => sec.type === 'coding' && (sec.data?.questions || sec.data?.coding))
           .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), []);
 
-        const aggregatedSpokenEnglish = Object.values(updatedResults)
-          .filter(sec => (sec.type === 'spoken_english' || sec.type === 'speech' || sec.type === 'sea'))
-          .map(sec => sec.data || {});
-
         const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
-
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
-        const totalQ = Object.values(updatedResults).reduce((a, s) => a + (s.data?.totalQuestions || 0), 0);
         const pct = totalMarksSum > 0 ? totalScore / totalMarksSum : 0;
-        const partialScore = totalScore;
-        const fullScore = (totalMarksSum > 0 && totalScore >= totalMarksSum) ? totalMarksSum : 0;
 
-        // [Fix Audit-6 P1] Prefer authoritative startedAt from the Firestore attempt document.
-        // examStartTimeRef.current is a client-clock ISO string set at mount time; the canonical
-        // attempt writes serverTimestamp(). Using the server value aligns result timing with
-        // session timing. Falls back to client ref if the read fails.
         let authorizedStartedAt = examStartTimeRef.current;
         try {
           const attemptSnap = await getActiveAttempt(assessment.id);
@@ -2051,7 +2011,7 @@ const MultiSectionAssessment = () => {
         const timeS = timeTaken % 60;
         const timeTakenFormatted = `${timeM}:${timeS < 10 ? '0' : ''}${timeS}`;
 
-        const vInfo = getViolations(assessment.id, user.email);
+        const vInfo = getViolations(assessment.id, tenant.email);
         const allViolations = (vInfo.violations && vInfo.violations.length > 0) ? vInfo.violations : (proctoringData.violations || []);
         const totalViolations = Math.max(vInfo.violationCount || 0, proctoringData.violationCount || 0, allViolations.length);
         const totalNoFace = allViolations.filter(v => v.type === 'no_face').length;
@@ -2063,30 +2023,19 @@ const MultiSectionAssessment = () => {
           .filter(Boolean)
           .join(', ');
 
-        const userId = auth?.currentUser?.uid || user?.uid;
-        if (!userId) {
-          throw new Error('[MSA] handleFinalSubmit: not authenticated, refusing Firestore write.');
-        }
-        const tenantId = user?.tenantId || tenant?.tenantId;
-        if (!tenantId) {
-          throw new Error('[MSA] handleFinalSubmit: missing tenantId, refusing Firestore write.');
-        }
-
-        const sessionAttemptId = (() => {
-          try { return attemptDocId(userId, assessment.id); } catch (_) { return null; }
-        })();
+        const sessionAttemptId = attemptDocId(userId, assessment.id);
 
         const attemptData = buildResultDoc({
           user: {
             uid: userId,
-            email: user?.email || '',
-            name: user?.name || '',
-            rollNumber: user?.rollNumber || '',
-            tenantId: tenantId,
-            college: user?.college || '',
-            department: user?.department || '',
-            year: user?.year || '',
-            cohortId: user?.cohortId || '',
+            email: tenant.email,
+            name: user.name || '',
+            rollNumber: user.rollNumber || '',
+            tenantId: tenant.tenantId,
+            college: tenant.college,
+            department: tenant.department,
+            year: tenant.year,
+            cohortId: tenant.cohortId,
           },
           assessment: {
             id: assessment.id,
@@ -2119,7 +2068,7 @@ const MultiSectionAssessment = () => {
           sessionAttemptId,
         });
 
-        const v2DocPath = `assessmentResults/${tenantId}/${assessment.id}/${userId}`;
+        const v2DocPath = `assessmentResults/${tenant.tenantId}/${assessment.id}/${userId}`;
 
         // [Fix Audit-7 P1] Transition attempt to SUBMITTING before writing result.
         // Required by Firestore result-create rule which checks attempt.status ∈ [SUBMITTING, EXPIRED, FAILED_RECOVERABLE].
@@ -2165,10 +2114,10 @@ const MultiSectionAssessment = () => {
         try {
           stopAllMediaAndAI();
           teardownHardwareAndProctoring();
-        } catch (_) {}
+        } catch (_) { }
 
         setExamFinished(true);
-        toast.success('✅ Assessment submitted! Returning to dashboard…', { duration: 4000 });
+        toast.success('Assessment submitted! Returning to dashboard…', { duration: 4000 });
         setTimeout(() => {
           navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
         }, 4000);
@@ -2185,7 +2134,7 @@ const MultiSectionAssessment = () => {
         completeAssessmentSession(assessment?.id)
           .catch((err) => {
             console.error('[MSA] handleFinalSubmit: Session finalization failed — result is saved, attempt state pending:', err);
-            toast('ℹ️ Result saved. Session finalization will complete on next login.', { duration: 6000 });
+            toast('Result saved. Session finalization will complete on next login.', { duration: 6000 });
           });
         markAssessmentCompleted(user, assessment?.id).catch(() => { });
         if (user?.email) invalidateCompletionCache(user.email);
@@ -2238,20 +2187,36 @@ const MultiSectionAssessment = () => {
 
   // Exam finished screen
   if (examFinished) {
+    const isViolationAutoSubmit = submissionReason === 'proctoring_violations';
     return (
-      <div className="msa-finished-container" style={{ maxWidth: '600px', margin: '100px auto', padding: '45px', background: '#1e293b', borderRadius: '12px', color: '#f8fafc', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif", textAlign: 'center' }}>
+      <div className="msa-finished-container" style={{ maxWidth: '620px', margin: '80px auto', padding: '40px 36px', background: '#1e293b', borderRadius: '16px', color: '#f8fafc', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif", textAlign: 'center' }}>
         <SecurityWatermark email={user?.email} />
-        <FaCheckCircle style={{ color: '#10b981', fontSize: '5rem', marginBottom: '20px' }} />
-        <h1 style={{ fontSize: '2.4rem', fontWeight: '800', color: 'white', marginBottom: '15px' }}>Assessment Completed!</h1>
-        <p style={{ color: '#94a3b8', fontSize: '1.2rem', lineHeight: '1.6', marginBottom: '40px' }}>
-          Congratulations <strong>{user?.name}</strong>, your answers have been successfully recorded and submitted. You may now safely return to the dashboard.
-        </p>
+        {isViolationAutoSubmit ? (
+          <>
+            <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '4.5rem', marginBottom: '18px' }} />
+            <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#f87171', marginBottom: '12px' }}>Assessment Auto-Submitted</h1>
+            <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', padding: '14px 18px', marginBottom: '24px', textAlign: 'left', fontSize: '0.92rem', color: '#fca5a5', lineHeight: '1.5' }}>
+              <strong>Notice:</strong> This assessment was automatically finalized and submitted because the proctoring violation limit was exceeded (e.g. window exits, tab switching, or camera/mic anomalies).
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '32px' }}>
+              Your responses and metrics up to this point have been securely recorded and synced to the portal.
+            </p>
+          </>
+        ) : (
+          <>
+            <FaCheckCircle style={{ color: '#10b981', fontSize: '4.5rem', marginBottom: '18px' }} />
+            <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'white', marginBottom: '12px' }}>Assessment Completed!</h1>
+            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '32px' }}>
+              Congratulations <strong>{user?.name}</strong>, your answers have been successfully recorded and submitted. You may now safely return to the dashboard.
+            </p>
+          </>
+        )}
         <button
           onClick={() => {
             window.history.replaceState(null, '', '/student/dashboard');
             navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
           }}
-          style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.1rem', fontWeight: '700', borderRadius: '6px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
+          style={{ background: isViolationAutoSubmit ? '#ef4444' : 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.05rem', fontWeight: '700', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
         >
           Return to Dashboard
         </button>
@@ -2364,9 +2329,9 @@ const MultiSectionAssessment = () => {
     return (
       <>
         <SecurityWatermark email={user?.email} />
-        {shouldUseProctoring && user?.email && (
+        {shouldUseProctoring && (user?.uid || user?.id) && (
           <ProctoringEngine
-            uid={user.email}
+            uid={user.uid || user.id}
             assessmentId={assessment.id}
             isTestActive={currentSecIdx >= 0 && !examFinished}
             maxViolations={maxViolations}
@@ -2375,9 +2340,9 @@ const MultiSectionAssessment = () => {
             onAutoSubmit={handleProctorAutoSubmit}
           />
         )}
-        {shouldUseAudioProctoring && user?.email && (
+        {shouldUseAudioProctoring && (user?.uid || user?.id) && (
           <AudioProctoringEngine
-            uid={user.email}
+            uid={user.uid || user.id}
             assessmentId={assessment.id}
             isTestActive={currentSecIdx >= 0 && !examFinished}
             maxViolations={maxAudioViolations}

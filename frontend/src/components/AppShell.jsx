@@ -616,7 +616,7 @@ export function AppShellLoading() {
           <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
         </div>
       </div>
-      <div className="seb-boot__title">SEED-IT Exam Platform</div>
+      <div className="seb-boot__title">SEED-IT SEB (Secure Examination & Benchmarking)</div>
       <div className="seb-boot__status">
         <span className="seb-boot__dot"></span>
         <span>Initializing Security Sandbox...</span>

@@ -1407,7 +1407,7 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
 
     if (mod.type === 'mcq') {
       // Redirect to MCQ page in practice mode
-      navigate(`/student/mcq/${mod.slug}`, { state: { isPractice: true } });
+      navigate(`/student/assessment/id/${mod.slug}`, { state: { isPractice: true } });
     } else {
       // It is a coding module: Load contest questions list from mod.url
       setSelectedModule(mod);

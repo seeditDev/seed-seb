@@ -141,7 +141,7 @@ const Login = () => {
           </div>
 
           <h1 className="seb-brand-title">SEED<span>-SEB</span></h1>
-          <div className="seb-brand-subtitle">Secure Examination Environment</div>
+          <div className="seb-brand-subtitle">Secure Examination &amp; Benchmarking</div>
 
           <div className="seb-hero-tagline">
             A secure and trusted environment<br />
@@ -364,7 +364,6 @@ const Login = () => {
               </a>
             </div>
 
-            {/* Primary Sign In Button */}
             <button 
               type="submit" 
               className="seb-btn-sign-in"
@@ -373,21 +372,6 @@ const Login = () => {
               {loading ? "Verifying credentials..." : "Sign In"}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="seb-or-divider-row">
-            <span>OR</span>
-          </div>
-
-          {/* Guest Assessment Code Button */}
-          <button 
-            type="button" 
-            className="seb-btn-access-code" 
-            onClick={() => navigate('/guest')}
-          >
-            <svg viewBox="0 0 24 24" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-            <span>Enter Assessment Access Code</span>
-          </button>
 
         </div>
 

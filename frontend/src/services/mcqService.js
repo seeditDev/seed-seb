@@ -300,12 +300,13 @@ class MCQService {
      * Mark attempt as submitting/completed immediately to prevent refresh reattempts.
      * @returns {Promise<boolean>}
      */
-    static async markTestAsSubmitting(email, assessmentId, college, year, department) {
+    static async markTestAsSubmitting(userIdOrEmail, assessmentId, college, year, department) {
         try {
             const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
-            const liveUid = auth?.currentUser?.uid || authData.uid || '';
+            const liveUid = auth?.currentUser?.uid || authData.uid || (typeof userIdOrEmail === 'string' && !userIdOrEmail.includes('@') ? userIdOrEmail : '');
             const tenantId = authData.tenantId || college || '';
             if (!tenantId) return false;
+            const userEmail = (typeof userIdOrEmail === 'string' && userIdOrEmail.includes('@')) ? userIdOrEmail : (authData.email || '');
             const update = {
                 status: 'submitting',
                 lastUpdatedAt: serverTimestamp(),
@@ -313,7 +314,7 @@ class MCQService {
             await this.writeResult(update, {
                 assessmentId: assessmentId,
                 userId: liveUid,
-                userProfile: { ...authData, tenantId, email }
+                userProfile: { ...authData, tenantId, uid: liveUid, email: userEmail }
             });
             console.log('[MCQService] Marked test as submitting to prevent refresh reattempts');
             return true;

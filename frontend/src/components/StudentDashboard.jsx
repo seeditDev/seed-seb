@@ -49,12 +49,14 @@ import {
   FaThLarge,
   FaTachometerAlt,
   FaMobileAlt,
-  FaCode
+  FaCode,
+  FaExpand,
+  FaPlay
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
 import '../styles/PracticeHome.css';
-import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase-config';
 import TrackingService from '../services/trackingService';
 import DataService from '../services/dataService';
@@ -260,7 +262,9 @@ const StudentDashboard = () => {
 
   // ─── Live Progress, Dynamic Streak & Daily Goals Lifecycle ───────────
   const initProgressAndGoals = useCallback(async () => {
-    const uid = user?.uid || auth?.currentUser?.uid || 'guest';
+    const uid = user?.uid || auth?.currentUser?.uid;
+    // Don't load progress without a real UID — avoids writing to a 'guest' localStorage key
+    if (!uid) return;
     
     // 1. Load Coding Progress
     let prog = null;
@@ -919,6 +923,8 @@ const StudentDashboard = () => {
     checkAiInterviewAccess();
   }, [user]);
 
+  // Initial welcome quote fetch (Commented out)
+  /*
   useEffect(() => {
     // Check session storage to only prompt once per browser session
     if (sessionStorage.getItem('welcome_shown')) return;
@@ -1014,6 +1020,7 @@ const StudentDashboard = () => {
 
     fetchWelcomeQuote();
   }, []);
+  */
 
   const handleCloseWelcomeModal = () => {
     if (welcomeInput.trim() === welcomeQuote.trim()) {
@@ -1799,7 +1806,8 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* 4. Recent Activity */}
+          {/* 4. Recent Activity (Commented out) */}
+          {/*
           <div className="home-section-block">
             <div className="home-section-header-row">
               <h3 className="home-section-heading">Recent Activity</h3>
@@ -1844,6 +1852,7 @@ const StudentDashboard = () => {
               </div>
             </div>
           </div>
+          */}
         </div>
 
         {/* ── Right Column (Widgets Feed) ── */}
@@ -1930,7 +1939,8 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* Card 3: Skills Overview */}
+          {/* Card 3: Skills Overview (Commented out) */}
+          {/*
           <div className="dashboard-widget-card">
             <div className="widget-card-header">
               <span className="widget-card-title">Skills Overview</span>
@@ -1961,7 +1971,6 @@ const StudentDashboard = () => {
                 </div>
 
                 <div className="skills-bar-cols">
-                  {/* Math */}
                   <div className="skill-col">
                     <span className="skill-pct-tag">72%</span>
                     <div className="skill-bar-track">
@@ -1970,7 +1979,6 @@ const StudentDashboard = () => {
                     <span className="skill-col-label">Math</span>
                   </div>
 
-                  {/* DSA */}
                   <div className="skill-col">
                     <span className="skill-pct-tag">58%</span>
                     <div className="skill-bar-track">
@@ -1979,7 +1987,6 @@ const StudentDashboard = () => {
                     <span className="skill-col-label">DSA</span>
                   </div>
 
-                  {/* Logic */}
                   <div className="skill-col">
                     <span className="skill-pct-tag">64%</span>
                     <div className="skill-bar-track">
@@ -1988,7 +1995,6 @@ const StudentDashboard = () => {
                     <span className="skill-col-label">Logic</span>
                   </div>
 
-                  {/* Chem */}
                   <div className="skill-col">
                     <span className="skill-pct-tag">40%</span>
                     <div className="skill-bar-track">
@@ -1997,7 +2003,6 @@ const StudentDashboard = () => {
                     <span className="skill-col-label">Chem</span>
                   </div>
 
-                  {/* Physics */}
                   <div className="skill-col">
                     <span className="skill-pct-tag">30%</span>
                     <div className="skill-bar-track">
@@ -2009,8 +2014,10 @@ const StudentDashboard = () => {
               </div>
             </div>
           </div>
+          */}
 
-          {/* Card 4: Top Achievements */}
+          {/* Card 4: Top Achievements (Commented out) */}
+          {/*
           <div className="dashboard-widget-card">
             <div className="widget-card-header">
               <span className="widget-card-title">Top Achievements</span>
@@ -2038,6 +2045,7 @@ const StudentDashboard = () => {
               </div>
             </div>
           </div>
+          */}
         </div>
       </div>
     );
@@ -2629,11 +2637,21 @@ const StudentDashboard = () => {
     const getStreakCount = () => {
       let streak = 0;
       const checkDate = new Date();
+      const todayStr = checkDate.toISOString().split('T')[0];
+      const todaySolved = getSolvedCountForDate(todayStr);
+      const todayActivity = progressData?.activity?.[todayStr];
+      const activeToday = todaySolved > 0 || (todayActivity && (todayActivity.hours > 0 || todayActivity.problemsSolved > 0));
+
+      // If today hasn't been completed yet, check consecutive streak starting from yesterday
+      if (!activeToday) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
       for (let i = 0; i < 365; i++) {
         const dateStr = checkDate.toISOString().split('T')[0];
         const dayInfo = progressData?.activity?.[dateStr];
         const solved = getSolvedCountForDate(dateStr);
-        if ((dayInfo && dayInfo.hours > 0) || solved > 0) {
+        if (solved > 0 || (dayInfo && (dayInfo.hours > 0 || dayInfo.problemsSolved > 0))) {
           streak++;
           checkDate.setDate(checkDate.getDate() - 1);
         } else {
@@ -3846,7 +3864,8 @@ const StudentDashboard = () => {
 
   return (
     <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`}>
-      {/* Welcome Quote Verification Popup */}
+      {/* Welcome Quote Verification Popup (Commented out) */}
+      {/*
       {showWelcomeModal && (
         <div className="lw-overlay" style={{ zIndex: 1500 }}>
           <div className="lw-card" style={{ maxWidth: '550px', padding: '30px', margin: '20px' }}>
@@ -3940,7 +3959,6 @@ const StudentDashboard = () => {
         </div>
       )}
 
-      {/* Platform Updates & Announcements Follow-up Modal */}
       {showUpdatesModal && welcomeUpdates && (
         <div className="lw-overlay" style={{ zIndex: 1500 }}>
           <div className="lw-card" style={{ maxWidth: '550px', padding: '30px', margin: '20px' }}>
@@ -4007,44 +4025,46 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
+      */}
 
       {/* ═══════════════════════════════════════════════════════════
           UNIFIED STREAMLINED ASSESSMENT LAUNCH MODAL
       ═══════════════════════════════════════════════════════════ */}
       {launchStep === 'modal' && selectedAssessment && (
-        <div className="lw-overlay" style={{ zIndex: 1200 }}>
-          <div className="lw-card" style={{ maxWidth: '680px', width: '100%', borderRadius: '20px', overflow: 'hidden' }}>
-            {/* Header with Title & Metadata */}
-            <div className="lw-card-header" style={{ padding: '22px 28px', background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, transparent 100%)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span className="lw-step-badge" style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '11px' }}>
+        <div className="lw-overlay" style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(6px)' }}>
+          <div className="lw-card" style={{ maxWidth: '640px', width: '100%', borderRadius: '18px', background: '#ffffff', color: '#0f172a', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)', border: '1px solid #e2e8f0', fontFamily: "'Inter', sans-serif" }}>
+            
+            {/* Header with Badge, Title & Metadata */}
+            <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <span style={{ background: '#dcfce7', color: '#16a34a', fontWeight: '800', fontSize: '11px', padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                   {selectedAssessment.type?.toUpperCase() || 'ASSESSMENT'}
                 </span>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '4px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <FaClock style={{ color: '#818cf8' }} /> {selectedAssessment.duration} Mins
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <FaClock style={{ color: '#6366f1' }} /> {selectedAssessment.duration} Mins
                   </span>
                   {selectedAssessment.proctored && (
-                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '4px 10px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', background: '#e0f2fe', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <FaShieldAlt /> Monitored
                     </span>
                   )}
                 </div>
               </div>
-              <h3 className="lw-title" style={{ fontSize: '1.4rem', margin: '4px 0 0 0' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '6px 0 0 0', letterSpacing: '-0.02em' }}>
                 {selectedAssessment.name}
-              </h3>
+              </h2>
             </div>
 
-            <div className="lw-card-body" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
               {/* Access Passkey (if mandatory) */}
               {selectedAssessment.passkey ? (
-                <div style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.25)', borderRadius: '14px', padding: '16px 20px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <FaLock style={{ color: '#818cf8', fontSize: '15px' }} />
-                    <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-main)' }}>Access Passkey</span>
-                    <span style={{ fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', padding: '2px 8px', borderRadius: '10px', fontWeight: '600' }}>Mandatory</span>
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <FaLock style={{ color: '#6366f1', fontSize: '14px' }} />
+                    <span style={{ fontWeight: '700', fontSize: '0.92rem', color: '#0f172a' }}>Access Passkey</span>
+                    <span style={{ fontSize: '10.5px', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Required</span>
                   </div>
                   <input
                     type="password"
@@ -4056,12 +4076,11 @@ const StudentDashboard = () => {
                       if (passkeyError) setPasskeyError("");
                     }}
                     onKeyDown={e => e.key === 'Enter' && handleUnifiedLaunch()}
-                    className="lw-input"
-                    style={{ padding: '12px 16px', fontSize: '1.05rem', borderRadius: '10px' }}
+                    style={{ width: '100%', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
                     disabled={isLaunching}
                   />
                   {passkeyError && (
-                    <div className="lw-error-row" style={{ marginTop: '10px', padding: '8px 14px', fontSize: '0.88rem' }}>
+                    <div style={{ marginTop: '8px', padding: '6px 12px', fontSize: '0.84rem', color: '#ef4444', background: '#fef2f2', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <FaExclamationTriangle /> {passkeyError}
                     </div>
                   )}
@@ -4070,62 +4089,99 @@ const StudentDashboard = () => {
 
               {/* Instant System Status Badges */}
               <div>
-                <div style={{ fontSize: '0.82rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748b', marginBottom: '8px' }}>
                   System Status
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
                   {/* Internet */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 12px' }}>
-                    <FaWifi style={{ color: preflightResults.internet === 'pass' ? '#10b981' : '#ef4444' }} />
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>Internet</span>
-                    <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: '700', color: preflightResults.internet === 'pass' ? '#10b981' : '#ef4444' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Internet</span>
+                      <FaWifi style={{ color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444', fontSize: '13px' }} />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444' }}>
                       {preflightResults.internet === 'pass' ? 'Active' : 'Offline'}
                     </span>
                   </div>
 
-                  {/* Camera / Mic (if proctored) */}
-                  {selectedAssessment.proctored && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 12px' }}>
-                      <FaCamera style={{ color: preflightResults.webcam === 'pass' ? '#10b981' : '#f59e0b' }} />
-                      <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>Camera</span>
-                      <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: '700', color: preflightResults.webcam === 'pass' ? '#10b981' : '#f59e0b' }}>
-                        {preflightResults.webcam === 'pass' ? 'Ready' : 'Checking'}
-                      </span>
+                  {/* Camera / Mic */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Camera</span>
+                      <FaCamera style={{ color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b', fontSize: '13px' }} />
                     </div>
-                  )}
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b' }}>
+                      {preflightResults.webcam === 'pass' ? 'Ready' : 'Checking'}
+                    </span>
+                  </div>
 
-                  {/* Secure Sandbox */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '8px 12px' }}>
-                    <FaShieldAlt style={{ color: '#10b981' }} />
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: '500' }}>Secure Shell</span>
-                    <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: '700', color: '#10b981' }}>Enforced</span>
+                  {/* Secure Shell */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Secure Shell</span>
+                      <FaShieldAlt style={{ color: '#16a34a', fontSize: '13px' }} />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
+                      Enforced
+                    </span>
+                  </div>
+
+                  {/* Fullscreen */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Fullscreen</span>
+                      <FaExpand style={{ color: '#16a34a', fontSize: '13px' }} />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
+                      Enforced
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Assessment Section Breakdown (if MSA) */}
-              {selectedAssessment.isMultiSection && selectedAssessment.sections?.length > 0 && (
-                <div style={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '12px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#38bdf8', marginBottom: '8px' }}>
+              {/* Assessment Section Breakdown */}
+              {selectedAssessment.isMultiSection && selectedAssessment.sections?.length > 0 ? (
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#334155', marginBottom: '8px' }}>
                     Sections Breakdown ({selectedAssessment.sections.length})
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '110px', overflowY: 'auto' }}>
                     {selectedAssessment.sections.map((sec, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.84rem', padding: '4px 8px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
-                        <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{idx + 1}. {sec.name}</span>
-                        <span style={{ color: '#94a3b8' }}>{sec.duration_minutes || sec.duration || 0} Mins</span>
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem', padding: '4px 0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
+                            {idx + 1}
+                          </span>
+                          <span style={{ color: '#0f172a', fontWeight: '700' }}>{sec.name}</span>
+                        </div>
+                        <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.84rem' }}>{sec.duration_minutes || sec.duration || 0} Mins &gt;</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#334155', marginBottom: '8px' }}>
+                    Sections Breakdown (1)
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem', padding: '4px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
+                        1
+                      </span>
+                      <span style={{ color: '#0f172a', fontWeight: '700' }}>{selectedAssessment.name}</span>
+                    </div>
+                    <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.84rem' }}>{selectedAssessment.duration} Mins &gt;</span>
                   </div>
                 </div>
               )}
 
               {/* Essential Rules */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '12px', padding: '12px 16px' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#f59e0b', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '10px', padding: '12px 16px' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#d97706', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <FaExclamationTriangle /> Important Guidelines
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.84rem', color: '#94a3b8', lineHeight: '1.5' }}>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.83rem', color: '#78350f', lineHeight: '1.55' }}>
                   <li>Fullscreen mode is enforced. Tab switching and window exits are strictly tracked.</li>
                   <li>The assessment timer runs continuously and will auto-submit when time expires.</li>
                   <li>This is a single-attempt session. Ensure your power adapter is plugged in.</li>
@@ -4135,43 +4191,62 @@ const StudentDashboard = () => {
             </div>
 
             {/* Footer Actions */}
-            <div className="lw-card-footer" style={{ padding: '16px 28px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button
-                className="lw-btn-secondary"
-                onClick={cancelWizard}
-                disabled={isLaunching}
-                style={{ padding: '10px 20px', fontSize: '0.92rem', borderRadius: '10px' }}
-              >
-                Cancel
-              </button>
-              <button
-                className="lw-btn-primary"
-                onClick={handleUnifiedLaunch}
-                disabled={isLaunching}
-                style={{
-                  padding: '12px 28px',
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: isLaunching ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {isLaunching ? (
-                  <>
-                    <span className="lw-mini-spinner" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></span>
-                    Starting Assessment...
-                  </>
-                ) : (
-                  <>
-                    <FaCheck /> Start Assessment
-                  </>
-                )}
-              </button>
+            <div style={{ padding: '16px 28px 20px', borderTop: '1px solid #f1f5f9', background: '#fafafa' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={cancelWizard}
+                  disabled={isLaunching}
+                  style={{
+                    padding: '9px 20px',
+                    fontSize: '0.92rem',
+                    fontWeight: '600',
+                    borderRadius: '8px',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    color: '#334155',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <FaTimes /> Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUnifiedLaunch}
+                  disabled={isLaunching}
+                  style={{
+                    padding: '10px 24px',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    borderRadius: '8px',
+                    background: '#16a34a',
+                    color: '#ffffff',
+                    border: 'none',
+                    boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: isLaunching ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isLaunching ? (
+                    <>
+                      <span className="lw-mini-spinner" style={{ width: '15px', height: '15px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></span>
+                      Starting Assessment...
+                    </>
+                  ) : (
+                    <>
+                      <FaPlay style={{ fontSize: '11px' }} /> Start Assessment
+                    </>
+                  )}
+                </button>
+              </div>
+              <div style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                <FaLock style={{ fontSize: '10px' }} /> Your activity will be monitored throughout this assessment.
+              </div>
             </div>
           </div>
         </div>
@@ -4220,7 +4295,6 @@ const StudentDashboard = () => {
             />
             <div>
               <div className="brand-title">SEED <span>SEB</span></div>
-              <span className="brand-subtitle-badge">Practice Platform</span>
             </div>
           </div>
         </div>
@@ -4313,7 +4387,8 @@ const StudentDashboard = () => {
 
             {!collapsed && (
               <div className="sidebar-widgets-section">
-                {/* ── 1. SEED Credits Card ── */}
+                {/* ── 1. SEED Credits Card (Commented out) ── */}
+                {/*
                 <div
                   className="sidebar-credits-card"
                   onClick={() => toast.info('SEED Credits: Earn credits by practicing problems and completing daily goals!')}
@@ -4329,6 +4404,7 @@ const StudentDashboard = () => {
                   </div>
                   <FaChevronRight className="credits-arrow-icon" />
                 </div>
+                */}
 
                 {/* ── 2. Today's Goal Card (Automated 3 Regular Tasks) ── */}
                 <div className="sidebar-goals-card">
@@ -4426,11 +4502,6 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="dashboard-footer">
-        <p>&copy; {new Date().getFullYear()} SEED Innovating Technologies and Educational Services (SEED-IT). (v{APP_VERSION})</p>
-      </footer>
     </div>
   );
 };

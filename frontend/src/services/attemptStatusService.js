@@ -3,6 +3,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   arrayUnion,
   serverTimestamp,
   runTransaction,
@@ -165,12 +166,13 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
     if (!userSnap.exists() && userKey !== tenant.email && tenant.email) {
       userSnap = await getDoc(doc(db, 'users', tenant.email));
     }
-    const list = userSnap.exists() ? userSnap.data()?.completedAssessmentIds : null;
+    const uData = userSnap.exists() ? userSnap.data() : null;
+    const list = uData?.completedAssessmentIds || uData?.completedAssessments || null;
     if (Array.isArray(list)) {
       list.forEach((id) => {
         if (id in map) map[id] = true;
       });
-      denormalisedComplete = userSnap.data()?.completionIndexComplete === true;
+      denormalisedComplete = uData?.completionIndexComplete === true;
     }
   } catch (e) {
     if (e?.code !== 'permission-denied') {
@@ -229,49 +231,36 @@ export async function markAssessmentCompleted(userData, assessmentId) {
   const cached = readCompletionCache(tenant.email) || {};
   writeCompletionCache(tenant.email, { ...cached, [assessmentId]: true });
 
-  // 2. Try updating Firestore remote user document
-  const userKey = userData?.uid || tenant.email;
-  const ref = doc(db, 'users', userKey);
+  // 2. Try updating Firestore remote user document (users/{uid})
+  const uid = auth?.currentUser?.uid || userData?.uid;
+  if (!uid) {
+    console.warn('[attemptStatusService] no valid uid found for user document update');
+    return true;
+  }
+
+  const ref = doc(db, 'users', uid);
   try {
-    await runTransaction(db, async (tx) => {
-      const snap = await tx.get(ref);
-      const existing = snap.exists() && Array.isArray(snap.data()?.completedAssessmentIds)
-        ? snap.data().completedAssessmentIds
-        : [];
-      if (existing.includes(assessmentId)) return;
-      tx.set(
+    await updateDoc(ref, {
+      completedAssessmentIds: arrayUnion(assessmentId),
+      completedAssessments: arrayUnion(assessmentId),
+      completionIndexUpdatedAt: serverTimestamp(),
+    }).catch(async () => {
+      await setDoc(
         ref,
         {
-          email: tenant.email,
-          college: tenant.college,
-          year: tenant.year,
-          completedAssessmentIds: [...existing, assessmentId],
+          completedAssessmentIds: arrayUnion(assessmentId),
+          completedAssessments: arrayUnion(assessmentId),
           completionIndexUpdatedAt: serverTimestamp(),
         },
         { merge: true }
       );
     });
-  } catch (e) {
-    if (e?.code !== 'permission-denied') {
-      console.warn('[attemptStatusService] transaction failed, using arrayUnion:', e?.message);
-    }
-    try {
-      await setDoc(
-
-        ref,
-        {
-          email: tenant.email,
-          completedAssessmentIds: arrayUnion(assessmentId),
-          completionIndexUpdatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-    } catch (e2) {
-      if (e2?.code === 'permission-denied' || e2?.message?.includes('permission') || e2?.message?.includes('403')) {
-        console.info('[attemptStatusService] Firestore rules restricted remote write for', tenant.email, '- completion saved locally.');
-      } else {
-        console.warn('[attemptStatusService] completion index write failed:', e2?.message);
-      }
+    console.log('[attemptStatusService] Completed assessment', assessmentId, 'indexed in users/', uid);
+  } catch (e2) {
+    if (e2?.code === 'permission-denied' || e2?.message?.includes('permission') || e2?.message?.includes('403')) {
+      console.info('[attemptStatusService] Firestore rules restricted remote write for', tenant.email, '- completion saved locally.');
+    } else {
+      console.warn('[attemptStatusService] completion index write failed:', e2?.message);
     }
   }
 

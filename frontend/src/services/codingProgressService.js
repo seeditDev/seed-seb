@@ -131,27 +131,27 @@ const saveLocalProgress = (uid, progress) => {
 // ── Read Operations ────────────────────────────────────────────────────────────
 
 /**
- * Get completed / solved question IDs from Local Storage.
+ * Get completed / solved question IDs from Local Storage & synced Cloud.
  */
 export const getCompletedQuestionIds = async (uid) => {
-  const local = getLocalProgress(uid);
-  return local.completedQuestions;
+  const prog = await loadPersistedUserActivity(uid);
+  return prog.completedQuestions || prog.solvedProblems || [];
 };
 
 /**
  * Backward-compatible alias for getCompletedQuestionIds.
  */
 export const getSolvedQuestionIds = async (uid) => {
-  const local = getLocalProgress(uid);
-  return local.completedQuestions;
+  const prog = await loadPersistedUserActivity(uid);
+  return prog.completedQuestions || prog.solvedProblems || [];
 };
 
 /**
- * Get attempted question IDs from Local Storage.
+ * Get attempted question IDs from Local Storage & synced Cloud.
  */
 export const getAttemptedQuestionIds = async (uid) => {
-  const local = getLocalProgress(uid);
-  return local.attemptedQuestions;
+  const prog = await loadPersistedUserActivity(uid);
+  return prog.attemptedQuestions || [];
 };
 
 /**
@@ -173,11 +173,33 @@ export const loadPersistedUserActivity = async (uid) => {
 
   // 1. Check in-memory / localStorage first
   const local = getLocalProgress(effectiveUid);
+
+  // 2. On the first call of each browser session per-uid, always sync with Firestore to restore
+  //    progress that may have been recorded on another device or after a fresh login.
+  //    sessionStorage key: `progress_synced_${uid}` guards against repeated network round-trips.
+  const sessionKey = `progress_synced_${effectiveUid}`;
+  const alreadySyncedThisSession = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey) === 'true';
+
+  if (!alreadySyncedThisSession && navigator.onLine) {
+    try {
+      const res = await syncProgressWithFirebase(effectiveUid);
+      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(sessionKey, 'true');
+      if (res?.success && res?.progress) {
+        console.log('[CodingProgressService] Session-start sync from Firestore. Solved:', res.progress.solvedCount);
+        return res.progress;
+      }
+    } catch (syncErr) {
+      console.warn('[CodingProgressService] Session-start Firestore sync failed, using local:', syncErr.message);
+      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(sessionKey, 'true');
+    }
+  }
+
+  // 3. Return localStorage data (already merged if sync ran above)
   if ((local.completedQuestions && local.completedQuestions.length > 0) || (local.activityByDate && Object.keys(local.activityByDate).length > 0)) {
     return local;
   }
 
-  // 2. Check local disk cache in user_profile/{uid}/daily_activity.json
+  // 4. Check local disk cache in user_profile/{uid}/daily_activity.json (SEB desktop app)
   try {
     const diskCache = await desktopBridge.loadUserProfileCache(effectiveUid, 'daily_activity');
     if (diskCache && typeof diskCache === 'object') {
@@ -186,14 +208,6 @@ export const loadPersistedUserActivity = async (uid) => {
       return normalized;
     }
   } catch (_) {}
-
-  // 3. Fallback to Firebase sync
-  if (navigator.onLine) {
-    try {
-      const res = await syncProgressWithFirebase(effectiveUid);
-      if (res?.progress) return res.progress;
-    } catch (_) {}
-  }
 
   return local;
 };
@@ -225,8 +239,8 @@ export const getCacheId = (uid) => {
  * Get question-specific progress from Local Storage.
  */
 export const getQuestionProgress = async (uid, questionId) => {
-  const local = getLocalProgress(uid);
-  return local.problemDetails[questionId] || null;
+  const prog = await loadPersistedUserActivity(uid);
+  return prog.problemDetails?.[questionId] || null;
 };
 
 // ── Write Operations ───────────────────────────────────────────────────────────

@@ -40,24 +40,30 @@ const MONACO_LANG_MAP = {
 const getBoilerplate = (boilerplatesObj, langKey) => {
   if (!langKey) return '';
   const clean = String(langKey).trim().toLowerCase();
-  const b = boilerplatesObj || {};
+  // const b = boilerplatesObj || {};
   
   if (clean === 'java') {
-    return b.java || b.Java || FREE_BOILERPLATES.java;
+    // return b.java || b.Java || FREE_BOILERPLATES.java;
+    return FREE_BOILERPLATES.java;
   }
   if (clean === 'python' || clean === 'python3' || clean === 'py') {
-    return b.python3 || b.Python3 || b.python || b.Python || FREE_BOILERPLATES.python3;
+    // return b.python3 || b.Python3 || b.python || b.Python || FREE_BOILERPLATES.python3;
+    return FREE_BOILERPLATES.python3;
   }
   if (clean === 'cpp' || clean === 'c++') {
-    return b.cpp || b['C++'] || b['c++'] || FREE_BOILERPLATES.cpp;
+    // return b.cpp || b['C++'] || b['c++'] || FREE_BOILERPLATES.cpp;
+    return FREE_BOILERPLATES.cpp;
   }
   if (clean === 'c') {
-    return b.c || b.C || FREE_BOILERPLATES.c;
+    // return b.c || b.C || FREE_BOILERPLATES.c;
+    return FREE_BOILERPLATES.c;
   }
   if (clean === 'javascript' || clean === 'js') {
-    return b.javascript || b.JavaScript || b.js || FREE_BOILERPLATES.javascript;
+    // return b.javascript || b.JavaScript || b.js || FREE_BOILERPLATES.javascript;
+    return FREE_BOILERPLATES.javascript;
   }
-  return b[clean] || (FREE_BOILERPLATES[clean] ?? '');
+  // return b[clean] || (FREE_BOILERPLATES[clean] ?? '');
+  return FREE_BOILERPLATES[clean] ?? '';
 };
 
 
@@ -647,9 +653,9 @@ const PracticeCourseSandbox = () => {
 
     try {
       const pMeta = {
-        difficulty: problem?.difficulty || 'Easy',
-        category: problem?.category ?? '',
-        title: problem?.title || problem?.name || questionId
+        difficulty: question?.difficulty || 'Easy',
+        category: question?.category ?? '',
+        title: question?.title || question?.name || questionId
       };
       await markQuestionSolved(uid, questionId, 'concept', 100, 1, pMeta);
       const updatedSolved = [...new Set([...solvedIds, questionId])];
@@ -748,9 +754,9 @@ const isCodeBlankOrEmpty = (codeStr) => {
 
       if (uid) {
         const pMeta = {
-          difficulty: problem?.difficulty || 'Easy',
-          category: problem?.category ?? '',
-          title: problem?.title || problem?.name || questionId
+          difficulty: question?.difficulty || 'Easy',
+          category: question?.category ?? '',
+          title: question?.title || question?.name || questionId
         };
 
         if (score === 100) {

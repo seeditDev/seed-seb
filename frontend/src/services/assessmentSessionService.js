@@ -448,7 +448,8 @@ export async function completeAssessmentSession(assessmentId, opts = {}) {
 
   const attemptRef = getAttemptRef(uid, assessmentId);
 
-  // Idempotency check: if already submitted, return success immediately
+  let sectionsUpdate = {};
+  // Idempotency check & harvest all sections to mark them finalized
   try {
     const snap = await getDoc(attemptRef);
     if (snap.exists()) {
@@ -458,9 +459,17 @@ export async function completeAssessmentSession(assessmentId, opts = {}) {
         clearLocalSubmissionEnvelope(uid, assessmentId);
         return { success: true, alreadySubmitted: true };
       }
+      const rawSections = current.sections || {};
+      Object.keys(rawSections).forEach(secKey => {
+        const sec = rawSections[secKey] || {};
+        if (sec.status !== ATTEMPT_STATES.SUBMITTED && sec.status !== ATTEMPT_STATES.AUTO_SUBMITTED) {
+          sectionsUpdate[`sections.${secKey}.status`] = targetState;
+          sectionsUpdate[`sections.${secKey}.completedAt`] = new Date().toISOString();
+        }
+      });
     }
   } catch (err) {
-    console.warn('[SessionService] Pre-submission idempotency check notice:', err?.message);
+    console.warn('[SessionService] Pre-submission check notice:', err?.message);
   }
 
   const updateData = {
@@ -473,6 +482,7 @@ export async function completeAssessmentSession(assessmentId, opts = {}) {
     activeSection:    null,
     lastSavedAt:      serverTimestamp(),
     scoring_authority: 'client_provisional',
+    ...sectionsUpdate,
   };
 
   // Persist envelope locally before attempting the write (crash recovery)

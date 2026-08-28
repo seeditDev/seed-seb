@@ -180,7 +180,8 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         // Clear proctoring violation data and photo descriptors from localStorage
         if (user && currentTest) {
             const assessmentId = currentTest.testInfo?.id || currentTest.id || 'unknown';
-            const proctorKey = `proctor_violations_${user.email}_${assessmentId}`;
+            const userIdentifier = user.uid || user.id;
+            const proctorKey = `proctor_violations_${userIdentifier}_${assessmentId}`;
             localStorage.removeItem(proctorKey);
         }
         clearAllProctorCache();
@@ -1395,7 +1396,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             } else {
                 // New: Mark as completed/submitting in DB immediately to prevent refresh reattempts
                 await MCQService.markTestAsSubmitting(
-                    user.email,
+                    user.uid || user.id,
                     currentTest.testInfo?.id || currentTest.id || 'unknown',
                     user.college,
                     user.year,
@@ -1407,18 +1408,32 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             setSubmissionStep('generating');
-            const correctAnswers = calculateScore();
+            // [MED-1 Fix] Use the single canonical gradeMcqAttempt() so that the totalScore
+            // and questionsDetails array are always computed by the same logic and can never
+            // diverge (previously calculateScore() and the inline map used different paths).
+            const graded = gradeMcqAttempt({
+                questions: currentTest.questions || [],
+                answers,
+                timeSpentPerQuestion: timeSpentPerQ,
+                meta: { difficulty: currentTest.difficulty },
+            });
+            const {
+                score: correctAnswers,
+                maxScore: totalQuestions,
+                incorrectAnswers,
+                unanswered,
+                percentage,
+                questionsDetails,
+            } = graded;
             const timeTaken = Math.round((timeService.now() - startTime) / 1000);
-            const totalQuestions = currentTest.questions.length;
-            const incorrectAnswers = totalQuestions - correctAnswers;
-            const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
 
             // Step 2: Generating marks (simulate processing)
             await new Promise(resolve => setTimeout(resolve, 800));
 
             // Prepare result data with proctoring information from local cache + state
             const assessmentId = currentTest.testInfo?.id || currentTest.id || 'unknown';
-            const vInfo = getViolations(assessmentId, user?.email);
+            const userIdentifier = user?.uid || user?.id;
+            const vInfo = getViolations(assessmentId, userIdentifier);
             const allViolations = (vInfo.violations && vInfo.violations.length > 0)
                 ? vInfo.violations
                 : (proctoringData.violations || []);
@@ -1429,24 +1444,6 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 else if (violation.type === 'multiple_faces') acc.totalMultipleFaces++;
                 return acc;
             }, { totalNoFace: 0, totalMultipleFaces: 0 });
-
-            const questionsDetails = (currentTest.questions || []).map((q, idx) => {
-                const selectedIdx = answers[idx];
-                const selectedAnswer = selectedIdx !== undefined ? (q.options?.[selectedIdx] || '') : '';
-                const isCorrect = selectedAnswer === q.correctAnswer;
-                const timeSpent = timeSpentPerQ[idx] || 0;
-                return {
-                    questionNumber: idx + 1,
-                    questionText: q.question || q.text || '',
-                    difficulty: (q.difficulty || currentTest.difficulty || 'medium').toLowerCase(),
-                    topic: q.topic || q.tag || (Array.isArray(q.tags) ? q.tags[0] : (q.tags || 'General')),
-                    tags: Array.isArray(q.tags) ? q.tags : (q.tags ? [q.tags] : [q.topic || 'General']),
-                    isCorrect,
-                    selectedAnswer,
-                    correctAnswer: q.correctAnswer || '',
-                    timeSpent
-                };
-            });
 
             const targetAssessmentId = currentTest.id || currentTest.testInfo?.id;
             const tenantId = user?.tenantId;
@@ -3308,7 +3305,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             {/* Proctoring Engine - Active only when test is running (standalone mode only) */}
             {!isEmbedded && shouldUseProctoring && currentTest && !currentTest.submitted && user && (
                 <ProctoringEngine
-                    uid={user.email}
+                    uid={user.uid || user.id}
                     assessmentId={currentTest.testInfo?.id || currentTest.id || 'unknown'}
                     onAutoSubmit={() => {
                         window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
@@ -3357,7 +3354,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             {/* Audio Proctoring Engine - active alongside camera when audioProctored is set */}
             {!isEmbedded && shouldUseAudioProctoring && currentTest && !currentTest.submitted && user && (
                 <AudioProctoringEngine
-                    uid={user.email}
+                    uid={user.uid || user.id}
                     assessmentId={currentTest.testInfo?.id || currentTest.id || 'unknown'}
                     isTestActive={!!currentTest && !currentTest.submitted}
                     maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 5}

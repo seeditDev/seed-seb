@@ -1,5 +1,5 @@
 import { buildResultDoc } from '../utils/buildResultDoc.js';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   FaMicrophone, FaStop, FaVolumeUp, FaCheckCircle, 
   FaArrowRight, FaClock, FaExclamationTriangle,
@@ -50,6 +50,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack, onComplete, onS
   const [finalEvaluation, setFinalEvaluation] = useState(null);
 
   const lastEvaluationRef = useRef(null);
+  const assessmentStartTimeRef = useRef(Date.now());
 
   // Audio Context & Media Recorder Refs
   const audioCtxRef = useRef(null);
@@ -484,7 +485,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack, onComplete, onS
         },
         assessment: {
           id: testId,
-          title: testName || testId,
+          title: assessmentData?.title || assessmentData?.name || testId,
           assessmentType: 'sea',
         },
         scores: {
@@ -508,7 +509,7 @@ const SpokenEnglishAssessment = ({ assessmentData, user, onBack, onComplete, onS
           fillerCount: evaluation.fillerCount || 0,
         },
         proctoring: {
-          violationCount: totalViolations,
+          violationCount: finalViolationCount,
           totalNoFace,
           totalMultipleFaces,
           violations: allViolations,

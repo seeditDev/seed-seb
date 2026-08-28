@@ -51,6 +51,13 @@ int main() {
     // Write your code here
     return 0;
 }`,
+  'c++': `#include <iostream>
+using namespace std;
+
+int main() {
+    // Write your code here
+    return 0;
+}`,
   java: `import java.util.*;
 
 public class Main {
@@ -59,6 +66,8 @@ public class Main {
     }
 }`,
   python: `# Write your code here
+`,
+  python3: `# Write your code here
 `,
   javascript: `// Write your code here
 console.log("Hello, World!");
@@ -542,7 +551,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
             questions.forEach(q => {
                 availableLanguages.forEach(lang => {
-                    initialCodeMap[`${q.id}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang]  ?? "");
+                    // initialCodeMap[`${q.id}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang] ?? "");
+                    initialCodeMap[`${q.id}_${lang}`] = (FREE_BOILERPLATES[lang] ?? "");
                 });
             });
             setCodeMap(initialCodeMap);
@@ -733,7 +743,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 normalizedQuestions.forEach(q => {
                     const qId = q.id || q.questionId;
                     availableLanguages.forEach(lang => {
-                        initialCodeMap[`${qId}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang]  ?? "");
+                        // initialCodeMap[`${qId}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang] ?? "");
+                        initialCodeMap[`${qId}_${lang}`] = (FREE_BOILERPLATES[lang] ?? "");
                     });
                 });
                 setCodeMap(initialCodeMap);
@@ -1322,7 +1333,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
             parsedQuestions.forEach(q => {
                 availableLanguages.forEach(lang => {
-                    initialCodeMap[`${q.id}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang]  ?? "");
+                    // initialCodeMap[`${q.id}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang] ?? "");
+                    initialCodeMap[`${q.id}_${lang}`] = (FREE_BOILERPLATES[lang] ?? "");
                 });
             });
             setCodeMap(initialCodeMap);
@@ -1393,7 +1405,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
-        const boilerplate = currentQuestion.boilerPlates?.[language] || (FREE_BOILERPLATES[language]  ?? "");
+        // const boilerplate = currentQuestion.boilerPlates?.[language] || (FREE_BOILERPLATES[language] ?? "");
+        const boilerplate = (FREE_BOILERPLATES[language] ?? "");
         if (editorRef.current) {
             editorRef.current.setValue(boilerplate);
         }
@@ -1552,7 +1565,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const handleSubmitQuestion = async () => {
         if (!currentQuestion) return;
 
-        setSubmittedQuestions(prev => {
+        setQuestionSubmitTimes(prev => {
             const updated = { ...prev, [currentQuestion.id]: new Date().toISOString() };
             localStorage.setItem("codingQuestionSubmitTimes", JSON.stringify(updated));
             return updated;
@@ -2629,7 +2642,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             {/* Proctoring Engine - Active only when assessment is running and proctored is enabled (standalone mode only) */}
             {!isEmbedded && shouldUseProctoring && currentAssessment && user && (
                 <ProctoringEngine
-                    uid={user.email}
+                    uid={user.uid || user.id}
                     assessmentId={currentAssessment.id ?? ''}
                     onAutoSubmit={() => {
                         window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
@@ -2676,7 +2689,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             )}
             {!isEmbedded && shouldUseAudioProctoring && currentAssessment && user && (
                 <AudioProctoringEngine
-                    uid={user.email}
+                    uid={user.uid || user.id}
                     assessmentId={currentAssessment.id ?? ''}
                     isTestActive={!!currentAssessment && !submissionSuccess}
                     maxViolations={Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 5}
@@ -3006,7 +3019,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                             setLanguage(newLang);
                                             const codeKey = `${currentQuestion.id}_${newLang}`;
                                             if (!codeMap[codeKey]) {
-                                                const boilerplate = currentQuestion.boilerPlates?.[newLang] || (FREE_BOILERPLATES[newLang]  ?? "");
+                                                // const boilerplate = currentQuestion.boilerPlates?.[newLang] || (FREE_BOILERPLATES[newLang] ?? "");
+                                                const boilerplate = (FREE_BOILERPLATES[newLang] ?? "");
                                                 setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
                                             }
                                         }}

@@ -118,7 +118,9 @@ const DEFAULT_CHALLENGES = [
 const FREE_BOILERPLATES = {
     c: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
     cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
+    'c++': `#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}`,
     python: `print("Hello, World!")`,
+    python3: `print("Hello, World!")`,
     java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
     javascript: `console.log("Hello, World!");`
 };
@@ -557,12 +559,12 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
             let newCode;
             if (savedCode) {
                 newCode = savedCode.replace(/\r\n/g, '\n');
-            } else if (mode === 'free') {
-                newCode = (FREE_BOILERPLATES[language] ?? '').replace(/\r\n/g, '\n');
-            } else if (selectedChallenge?.boilerplates?.[language]) {
-                newCode = selectedChallenge.boilerplates[language].replace(/\r\n/g, '\n');
+            // } else if (mode === 'free') {
+            //     newCode = (FREE_BOILERPLATES[language] ?? '').replace(/\r\n/g, '\n');
+            // } else if (selectedChallenge?.boilerplates?.[language]) {
+            //     newCode = selectedChallenge.boilerplates[language].replace(/\r\n/g, '\n');
             } else {
-                newCode = (FREE_BOILERPLATES[language] ?? '').replace(/\r\n/g, '\n');
+                newCode = (FREE_BOILERPLATES[language] ?? FREE_BOILERPLATES[language === 'python3' ? 'python' : 'python3'] ?? '').replace(/\r\n/g, '\n');
             }
             setCode(newCode);
             if (editorRef.current) editorRef.current.setValue(newCode);
@@ -649,9 +651,10 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
 
     const handleResetCode = () => {
         if (window.confirm("Are you sure you want to reset your code to the default template?")) {
-            const newCode = mode === 'free'
-                ? (FREE_BOILERPLATES[language] ?? '').replace(/\r\n/g, '\n')
-                : (selectedChallenge?.boilerplates?.[language] ?? '').replace(/\r\n/g, '\n');
+            // const newCode = mode === 'free'
+            //     ? (FREE_BOILERPLATES[language] ?? '').replace(/\r\n/g, '\n')
+            //     : (selectedChallenge?.boilerplates?.[language] ?? '').replace(/\r\n/g, '\n');
+            const newCode = (FREE_BOILERPLATES[language] ?? FREE_BOILERPLATES[language === 'python3' ? 'python' : 'python3'] ?? '').replace(/\r\n/g, '\n');
             setCode(newCode);
             if (editorRef.current) editorRef.current.setValue(newCode);
         }

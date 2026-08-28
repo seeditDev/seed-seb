@@ -27,6 +27,7 @@ import {
 } from 'firebase/firestore';
 import { COLLECTIONS, ROLES } from '../config/constants';
 import { cacheManager } from '../utils/cacheManager';
+import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Helpers
