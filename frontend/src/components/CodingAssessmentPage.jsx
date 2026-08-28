@@ -400,15 +400,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const finalScores = { ...questionScores };
             const allAnswers = {};
             for (const q of questions) {
-                const code = codeMap[`${q.id}_${language}`] || "";
+                const code = (editorRef.current && currentQuestion?.id === q.id)
+                    ? editorRef.current.getValue()
+                    : (codeMapRef.current[`${q.id}_${language}`] || codeMap[`${q.id}_${language}`] || "");
                 allAnswers[q.id] = code;
                 
                 if (!finalScores[q.id]) {
-                    // SECTION 18: use ONLY hiddenTests for official scoring.
-                    const hidden = Array.isArray(q.hiddenTests) ? q.hiddenTests : (Array.isArray(q.testCases?.hidden) ? q.testCases.hidden : []);
+                    // SECTION 18: use hiddenTests for official scoring, with robust fallbacks
+                    const hidden = (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0)
+                        ? q.hiddenTests
+                        : ((Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0)
+                            ? q.testCases.hidden
+                            : ((Array.isArray(q.sampleTests) && q.sampleTests.length > 0)
+                                ? q.sampleTests
+                                : ((Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0)
+                                    ? q.sampleTestCases
+                                    : (Array.isArray(q.testCases) ? q.testCases : []))));
+
                     if (hidden.length === 0) {
-                        console.error(`[CodingEval] Question ${q.id} has no hiddenTests. Scoring is invalid. Assigning 0.`);
-                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_hidden_tests' };
+                        console.error(`[CodingEval] Question ${q.id} has no test cases. Assigning 0.`);
+                        finalScores[q.id] = { score: 0, percentage: 0, passed: 0, total: 0, submitted: true, invalidConfig: true, invalidReason: 'no_test_cases' };
                     } else {
                         const bridgeLang = language === 'python3' ? 'python' : language;
                         const isBlank = isCodeBlankOrEmpty(code);
@@ -551,10 +562,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
             questions.forEach(q => {
                 availableLanguages.forEach(lang => {
-                    // initialCodeMap[`${q.id}_${lang}`] = q.boilerPlates?.[lang] || (FREE_BOILERPLATES[lang] ?? "");
                     initialCodeMap[`${q.id}_${lang}`] = (FREE_BOILERPLATES[lang] ?? "");
                 });
             });
+            codeMapRef.current = { ...initialCodeMap, ...codeMapRef.current };
             setCodeMap(initialCodeMap);
         }
     }, [isEmbedded, questions, codeMap]);
@@ -1387,8 +1398,38 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const editorRef = useRef(null);
     const codeMapRef = useRef(codeMap);
     useEffect(() => {
-        codeMapRef.current = codeMap;
+        codeMapRef.current = { ...codeMap, ...codeMapRef.current };
     }, [codeMap]);
+
+    const getCurrentCode = useCallback((qId = currentQuestion?.id, lang = language) => {
+        if (!qId) return "";
+        const key = `${qId}_${lang}`;
+        if (editorRef.current && currentQuestion?.id === qId && language === lang) {
+            try {
+                const editorVal = editorRef.current.getValue();
+                if (typeof editorVal === 'string' && editorVal !== '') {
+                    codeMapRef.current[key] = editorVal;
+                    return editorVal;
+                }
+            } catch (_) {}
+        }
+        return (codeMapRef.current && codeMapRef.current[key] !== undefined)
+            ? codeMapRef.current[key]
+            : (codeMap[key] || (FREE_BOILERPLATES[lang] ?? ""));
+    }, [currentQuestion?.id, language, codeMap]);
+
+    const saveCurrentEditorToMap = useCallback(() => {
+        if (editorRef.current && currentQuestion) {
+            try {
+                const val = editorRef.current.getValue();
+                if (typeof val === 'string') {
+                    const key = `${currentQuestion.id}_${language}`;
+                    codeMapRef.current[key] = val;
+                    throttledLocalStorageSet("codingAssessmentCode", codeMapRef.current);
+                }
+            } catch (_) {}
+        }
+    }, [currentQuestion, language]);
 
     // Handle code editor change: update ref & throttled local storage (0ms typing latency)
     const handleCodeChange = (value) => {
@@ -1405,7 +1446,6 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
-        // const boilerplate = currentQuestion.boilerPlates?.[language] || (FREE_BOILERPLATES[language] ?? "");
         const boilerplate = (FREE_BOILERPLATES[language] ?? "");
         if (editorRef.current) {
             editorRef.current.setValue(boilerplate);
@@ -1416,6 +1456,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     // Backup active state to Firestore
     const backupProgress = async () => {
         if (!user || !currentAssessment) return;
+        saveCurrentEditorToMap();
         try {
             const progress = {
                 email: user.email,
@@ -1429,7 +1470,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 timeTaken: getElapsedSeconds(),
                 startedAt: new Date(startTime).toISOString(),
                 answers: questionScores,
-                codeMap: codeMap
+                codeMap: codeMapRef.current
             };
             await CodingAssessmentService.syncProgress(progress);
         } catch (e) {
@@ -1449,18 +1490,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         });
 
         setIsRunning(true);
-        setActiveResultTab('results');
         setRunResults(null);
         setStderr('');
         setStdout('');
 
-        // Yield to React so the overlay renders before the backend call starts
-        // await new Promise(r => setTimeout(r, 80));
-        // await new Promise(r => setTimeout(r, 80));
+        const code = getCurrentCode();
+        let sampleTests = currentQuestion.sampleTests || currentQuestion.sampleTestCases || [];
+        if (!Array.isArray(sampleTests) || sampleTests.length === 0) {
+            if (Array.isArray(currentQuestion.hiddenTests) && currentQuestion.hiddenTests.length > 0) {
+                sampleTests = currentQuestion.hiddenTests.slice(0, 2);
+            } else if (Array.isArray(currentQuestion.testCases?.sample) && currentQuestion.testCases.sample.length > 0) {
+                sampleTests = currentQuestion.testCases.sample;
+            } else if (Array.isArray(currentQuestion.testCases) && currentQuestion.testCases.length > 0) {
+                sampleTests = currentQuestion.testCases.slice(0, 2);
+            } else {
+                sampleTests = [{ input: "", expectedOutput: "" }];
+            }
+        }
 
-        const code = codeMap[`${currentQuestion.id}_${language}`] || "";
-        const sampleTests = currentQuestion.sampleTests || [];
-        const startTimestamp = Date.now();
         const bridgeLang = language === 'python3' ? 'python' : language;
         const isBlank = isCodeBlankOrEmpty(code);
 
@@ -1474,6 +1521,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 stderr: "No code submitted in editor.",
                 passed: false
             })));
+            setActiveResultTab('console');
             setIsRunning(false);
             return;
         }
@@ -1511,7 +1559,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     input: tc.input,
                     expected: tc.expectedOutput,
                     actual: res.stdout ?? "",
-                    stderr: res.stderr || (res.error  ?? ""),
+                    stderr: res.stderr || (res.error ?? ""),
                     passed: passed
                 });
             }
@@ -1540,7 +1588,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         input: customInput,
                         expected: 'N/A (Custom Run)',
                         actual: res.stdout ?? "",
-                        stderr: res.stderr || (res.error  ?? ""),
+                        stderr: res.stderr || (res.error ?? ""),
                         passed: passed
                     });
                 }
@@ -1548,15 +1596,20 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             setRunResults(results);
 
-            // Set stdout/stderr of the last case for output display tab fallback
-            const lastCase = results[results.length - 1];
-            if (lastCase) {
-                setStdout(lastCase.actual);
-                setStderr(lastCase.stderr);
+            // Populate stdout / stderr for console and output tabs
+            const firstErrorCase = results.find(r => r.stderr);
+            const primaryCase = firstErrorCase || results[0];
+            if (primaryCase) {
+                setStdout(primaryCase.actual || "");
+                setStderr(primaryCase.stderr || "");
             }
+            setExpandedTestCaseIndex(0);
+            setActiveResultTab(firstErrorCase ? 'console' : 'output');
+            setActiveRightTab('testcases');
         } catch (err) {
             console.error("Run code error:", err);
             setStderr(`Run Code Error: ${err.message}`);
+            setActiveResultTab('console');
         } finally {
             setIsRunning(false);
         }
@@ -1573,10 +1626,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
         setIsEvaluating(true);
         setEvalResults(null);
-        setActiveResultTab('results');
 
-        const code = codeMap[`${currentQuestion.id}_${language}`] || "";
-        const hiddenTests = Array.isArray(currentQuestion.hiddenTests) ? currentQuestion.hiddenTests : [];
+        const code = getCurrentCode();
+        let hiddenTests = (Array.isArray(currentQuestion.hiddenTests) && currentQuestion.hiddenTests.length > 0)
+            ? currentQuestion.hiddenTests
+            : ((Array.isArray(currentQuestion.testCases?.hidden) && currentQuestion.testCases.hidden.length > 0)
+                ? currentQuestion.testCases.hidden
+                : ((Array.isArray(currentQuestion.sampleTests) && currentQuestion.sampleTests.length > 0)
+                    ? currentQuestion.sampleTests
+                    : ((Array.isArray(currentQuestion.sampleTestCases) && currentQuestion.sampleTestCases.length > 0)
+                        ? currentQuestion.sampleTestCases
+                        : (Array.isArray(currentQuestion.testCases) ? currentQuestion.testCases : [{ input: "", expectedOutput: "" }]))));
+
         const bridgeLang = language === 'python3' ? 'python' : language;
         const isEvalBlank = isCodeBlankOrEmpty(code);
 
@@ -1608,7 +1669,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 const passed = cleanOut === cleanExp && !res.error && (exit === 0 || exit === null);
 
                 if (passed) passedCount++;
-                results.push({ index: i + 1, passed, error: res.error || (res.stderr  ?? "" )});
+                results.push({ index: i + 1, passed, error: res.error || (res.stderr ?? "") });
             }
 
             const total = hiddenTests.length;
@@ -1627,22 +1688,23 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             };
             setQuestionScores(newScores);
             setEvalResults(results);
+
+            const firstError = results.find(r => r.error);
+            if (firstError) {
+                setStderr(firstError.error);
+                setActiveResultTab('console');
+            } else {
+                setStdout(`Evaluation Completed: ${passedCount}/${total} test cases passed.`);
+                setActiveResultTab('output');
+            }
+            setActiveRightTab('testcases');
+            setExpandedTestCaseIndex(0);
         } catch (err) {
             console.error("Submit question evaluation failed:", err);
             evalError = err.message;
         } finally {
-            // Enforce minimum 5-second evaluating display
-            // const elapsed = Date.now() - startTimestamp;
-            // const remaining = Math.max(0, 5000 - elapsed);
-            // if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
-
-            // Close the evaluating overlay FIRST
             setIsEvaluating(false);
 
-            // Yield another tick so overlay is gone before alert appears
-            // await new Promise(r => setTimeout(r, 60));
-
-            // NOW show the result (after overlay is closed)
             if (evalError) {
                 showCustomAlert("Evaluation Failed", `Evaluation failed: ${evalError}`, "error");
             } else {
@@ -1711,15 +1773,22 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (finalScores[qId]) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
-                    const code = storedCodeMap[`${qId}_${language}`] ||
-                                 storedCodeMap[`${qId}_cpp`] ||
-                                 storedCodeMap[`${qId}_c`] ||
-                                 storedCodeMap[`${qId}_python`] ||
-                                 storedCodeMap[`${qId}_java`] ||
-                                 storedCodeMap[`${qId}_javascript`] || "";
-                    const hidden = Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0
+                    const code = (storedCodeMap && storedCodeMap[`${qId}_${language}`]) ||
+                                 getCurrentCode(qId, language) ||
+                                 codeMapRef.current[`${qId}_cpp`] ||
+                                 codeMapRef.current[`${qId}_c`] ||
+                                 codeMapRef.current[`${qId}_python`] ||
+                                 codeMapRef.current[`${qId}_java`] ||
+                                 codeMapRef.current[`${qId}_javascript`] || "";
+                    const hidden = (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0)
                         ? q.hiddenTests
-                        : (Array.isArray(q.sampleTests) ? q.sampleTests : []);
+                        : ((Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0)
+                            ? q.testCases.hidden
+                            : ((Array.isArray(q.sampleTests) && q.sampleTests.length > 0)
+                                ? q.sampleTests
+                                : ((Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0)
+                                    ? q.sampleTestCases
+                                    : (Array.isArray(q.testCases) ? q.testCases : []))));
 
                     if (hidden.length === 0) {
                         console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
@@ -1950,15 +2019,21 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (finalScores[qId]) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
-                    const code = codeMap[`${qId}_${language}`] ||
-                                 codeMap[`${qId}_cpp`] ||
-                                 codeMap[`${qId}_c`] ||
-                                 codeMap[`${qId}_python`] ||
-                                 codeMap[`${qId}_java`] ||
-                                 codeMap[`${qId}_javascript`] || "";
-                    const hidden = Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0
+                    const code = getCurrentCode(qId, language) ||
+                                 codeMapRef.current[`${qId}_cpp`] ||
+                                 codeMapRef.current[`${qId}_c`] ||
+                                 codeMapRef.current[`${qId}_python`] ||
+                                 codeMapRef.current[`${qId}_java`] ||
+                                 codeMapRef.current[`${qId}_javascript`] || "";
+                    const hidden = (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0)
                         ? q.hiddenTests
-                        : (Array.isArray(q.sampleTests) ? q.sampleTests : []);
+                        : ((Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0)
+                            ? q.testCases.hidden
+                            : ((Array.isArray(q.sampleTests) && q.sampleTests.length > 0)
+                                ? q.sampleTests
+                                : ((Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0)
+                                    ? q.sampleTestCases
+                                    : (Array.isArray(q.testCases) ? q.testCases : []))));
 
                     if (hidden.length === 0) {
                         console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
@@ -2871,6 +2946,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                                 type="button"
                                                 className={itemClass}
                                                 onClick={() => {
+                                                    saveCurrentEditorToMap();
                                                     setActiveQuestionIndex(idx);
                                                     setVisitedQuestions(prev => ({ ...prev, [q.id]: true }));
                                                 }}
@@ -2938,7 +3014,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         type="button"
                                         className="q-nav-arrow"
                                         disabled={activeQuestionIndex === 0}
-                                        onClick={() => setActiveQuestionIndex(i => i - 1)}
+                                        onClick={() => {
+                                            saveCurrentEditorToMap();
+                                            setActiveQuestionIndex(i => i - 1);
+                                        }}
                                         title="Previous Question"
                                     >
                                         <FaArrowLeft />
@@ -2947,7 +3026,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         type="button"
                                         className="q-nav-arrow"
                                         disabled={activeQuestionIndex === questions.length - 1}
-                                        onClick={() => setActiveQuestionIndex(i => i + 1)}
+                                        onClick={() => {
+                                            saveCurrentEditorToMap();
+                                            setActiveQuestionIndex(i => i + 1);
+                                        }}
                                         title="Next Question"
                                     >
                                         <FaArrowRight />
@@ -3015,12 +3097,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     <select
                                         value={language}
                                         onChange={(e) => {
+                                            saveCurrentEditorToMap();
                                             const newLang = e.target.value;
                                             setLanguage(newLang);
                                             const codeKey = `${currentQuestion.id}_${newLang}`;
-                                            if (!codeMap[codeKey]) {
-                                                // const boilerplate = currentQuestion.boilerPlates?.[newLang] || (FREE_BOILERPLATES[newLang] ?? "");
+                                            if (!codeMapRef.current[codeKey] && !codeMap[codeKey]) {
                                                 const boilerplate = (FREE_BOILERPLATES[newLang] ?? "");
+                                                codeMapRef.current[codeKey] = boilerplate;
                                                 setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
                                             }
                                         }}
@@ -3061,7 +3144,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     key={`${currentQuestion.id}_${language}_${editorTheme}`}
                                     height="100%"
                                     language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
-                                    defaultValue={codeMap[`${currentQuestion.id}_${language}`] || ""}
+                                    defaultValue={getCurrentCode(currentQuestion.id, language)}
                                     onChange={handleCodeChange}
                                     onMount={(editor) => {
                                         editorRef.current = editor;
@@ -3140,7 +3223,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         className={`console-tab-btn ${activeResultTab === 'console' ? 'active' : ''}`}
                                         onClick={() => setActiveResultTab('console')}
                                     >
-                                        Console
+                                        Console {stderr ? '●' : ''}
                                     </button>
                                     {useCustomInput && (
                                         <button
@@ -3162,22 +3245,43 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                             onChange={(e) => setCustomInput(e.target.value)}
                                             style={{ width: '100%', height: '100%', background: '#0f172a', border: '1px solid #334155', color: '#f8fafc', padding: '8px', borderRadius: '6px', fontFamily: "'JetBrains Mono', monospace", resize: 'none' }}
                                         />
-                                    ) : stderr ? (
-                                        <pre className="output-stderr-pre" style={{ color: '#fca5a5', margin: 0 }}>
-                                            <strong>Error Output:</strong><br />
-                                            {stderr}
-                                        </pre>
-                                    ) : stdout ? (
-                                        <pre className="output-stdout-pre" style={{ color: '#f8fafc', margin: 0 }}>
-                                            <strong>Standard Output:</strong><br />
-                                            {stdout}
-                                        </pre>
+                                    ) : activeResultTab === 'console' ? (
+                                        stderr ? (
+                                            <pre className="output-stderr-pre" style={{ color: '#fca5a5', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                                <strong>Compilation / Runtime Diagnostics:</strong><br />
+                                                {stderr}
+                                            </pre>
+                                        ) : stdout ? (
+                                            <pre className="output-stdout-pre" style={{ color: '#94a3b8', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                                <strong>Console Log:</strong><br />
+                                                Process exited normally with 0 errors.<br />
+                                                {stdout}
+                                            </pre>
+                                        ) : (
+                                            <div className="terminal-empty-state">
+                                                <div className="terminal-icon"><FaTerminal /></div>
+                                                <strong style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Console output &amp; compiler logs will appear here</strong>
+                                                <span style={{ fontSize: '0.75rem' }}>No compiler errors or warnings detected.</span>
+                                            </div>
+                                        )
                                     ) : (
-                                        <div className="terminal-empty-state">
-                                            <div className="terminal-icon"><FaTerminal /></div>
-                                            <strong style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Run your code to see the output here</strong>
-                                            <span style={{ fontSize: '0.75rem' }}>Your results will appear here after running the code.</span>
-                                        </div>
+                                        stdout ? (
+                                            <pre className="output-stdout-pre" style={{ color: '#f8fafc', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                                <strong>Program Standard Output:</strong><br />
+                                                {stdout}
+                                            </pre>
+                                        ) : stderr ? (
+                                            <pre className="output-stderr-pre" style={{ color: '#fca5a5', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                                <strong>Execution Failed (See Console):</strong><br />
+                                                {stderr}
+                                            </pre>
+                                        ) : (
+                                            <div className="terminal-empty-state">
+                                                <div className="terminal-icon"><FaTerminal /></div>
+                                                <strong style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Run your code to see the output here</strong>
+                                                <span style={{ fontSize: '0.75rem' }}>Your results will appear here after running the code.</span>
+                                            </div>
+                                        )
                                     )}
                                 </div>
                             </div>
@@ -3212,70 +3316,100 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                             className="tc-set-dropdown"
                                         >
                                             <option value="sample">
-                                                Sample Test Cases ({(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []).length})
+                                                Sample Test Cases ({((currentQuestion.sampleTests?.length ? currentQuestion.sampleTests : (currentQuestion.sampleTestCases?.length ? currentQuestion.sampleTestCases : (currentQuestion.content?.sampleTestCases?.length ? currentQuestion.content.sampleTestCases : (currentQuestion.hiddenTests?.length ? currentQuestion.hiddenTests.slice(0, 2) : (currentQuestion.testCases?.length ? currentQuestion.testCases.slice(0, 2) : [{ input: "", expectedOutput: "" }]))))))?.length || 1})
                                             </option>
                                             <option value="all">All Test Cases</option>
                                         </select>
                                     </div>
 
                                     <div className="testcases-accordion-list">
-                                        {(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []).map((tc, idx) => {
-                                            const runItem = runResults?.find(r => r.index === idx + 1);
-                                            const isPassed = runItem?.passed;
-                                            const isFailed = runItem && !runItem.passed;
-                                            const isExpanded = expandedTestCaseIndex === idx;
-                                            const actualOut = runItem?.actual ?? '';
+                                        {(() => {
+                                            let tcList = [];
+                                            if (selectedTestCaseSet === 'all') {
+                                                tcList = [
+                                                    ...(currentQuestion.sampleTests || currentQuestion.sampleTestCases || currentQuestion.content?.sampleTestCases || []),
+                                                    ...(currentQuestion.hiddenTests || currentQuestion.testCases?.hidden || [])
+                                                ];
+                                            }
+                                            if (!Array.isArray(tcList) || tcList.length === 0) {
+                                                tcList = currentQuestion.sampleTests?.length
+                                                    ? currentQuestion.sampleTests
+                                                    : (currentQuestion.sampleTestCases?.length
+                                                        ? currentQuestion.sampleTestCases
+                                                        : (currentQuestion.content?.sampleTestCases?.length
+                                                            ? currentQuestion.content.sampleTestCases
+                                                            : (currentQuestion.hiddenTests?.length
+                                                                ? currentQuestion.hiddenTests.slice(0, 2)
+                                                                : (currentQuestion.testCases?.length
+                                                                    ? currentQuestion.testCases.slice(0, 2)
+                                                                    : [{ input: "", expectedOutput: "" }]))));
+                                            }
+                                            return tcList.map((tc, idx) => {
+                                                const runItem = runResults?.find(r => r.index === idx + 1);
+                                                const isPassed = runItem?.passed;
+                                                const isFailed = runItem && !runItem.passed;
+                                                const isExpanded = expandedTestCaseIndex === idx;
+                                                const actualOut = runItem?.actual ?? '';
 
-                                            let cardClass = 'tc-accordion-card';
-                                            if (isPassed) cardClass += ' passed';
-                                            else if (isFailed) cardClass += ' failed';
+                                                let cardClass = 'tc-accordion-card';
+                                                if (isPassed) cardClass += ' passed';
+                                                else if (isFailed) cardClass += ' failed';
 
-                                            return (
-                                                <div key={idx} className={cardClass}>
-                                                    <div className="tc-card-header" onClick={() => setExpandedTestCaseIndex(isExpanded ? -1 : idx)}>
-                                                        <div className="tc-card-header-left">
-                                                            {isPassed ? (
-                                                                <FaCheckCircle style={{ color: '#10b981', fontSize: '0.9rem' }} />
-                                                            ) : isFailed ? (
-                                                                <FaTimesCircle style={{ color: '#ef4444', fontSize: '0.9rem' }} />
-                                                            ) : (
-                                                                <FaChevronRight style={{ color: '#94a3b8', fontSize: '0.75rem' }} />
-                                                            )}
-                                                            <span>Test Case {idx + 1}</span>
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                            <span className={`tc-status-pill ${isPassed ? 'passed' : isFailed ? 'failed' : 'not-run'}`}>
-                                                                {isPassed ? '✓ Passed' : isFailed ? '✗ Failed' : 'Not Run'}
-                                                            </span>
-                                                            {isExpanded ? <FaChevronUp style={{ fontSize: '0.75rem', color: '#94a3b8' }} /> : <FaChevronDown style={{ fontSize: '0.75rem', color: '#94a3b8' }} />}
-                                                        </div>
-                                                    </div>
-
-                                                    {isExpanded && (
-                                                        <div className="tc-card-body">
-                                                            <div className="tc-field-group">
-                                                                <label>Input</label>
-                                                                <div className="tc-field-box">{tc.input ?? ''}</div>
+                                                return (
+                                                    <div key={idx} className={cardClass}>
+                                                        <div className="tc-card-header" onClick={() => setExpandedTestCaseIndex(isExpanded ? -1 : idx)}>
+                                                            <div className="tc-card-header-left">
+                                                                {isPassed ? (
+                                                                    <FaCheckCircle style={{ color: '#10b981', fontSize: '0.9rem' }} />
+                                                                ) : isFailed ? (
+                                                                    <FaTimesCircle style={{ color: '#ef4444', fontSize: '0.9rem' }} />
+                                                                ) : (
+                                                                    <FaChevronRight style={{ color: '#94a3b8', fontSize: '0.75rem' }} />
+                                                                )}
+                                                                <span>Test Case {idx + 1}</span>
                                                             </div>
-                                                            <div className="tc-field-group">
-                                                                <label>Expected Output</label>
-                                                                <div className="tc-field-box">{tc.expectedOutput}</div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                <span className={`tc-status-pill ${isPassed ? 'passed' : isFailed ? 'failed' : 'not-run'}`}>
+                                                                    {isPassed ? '✓ Passed' : isFailed ? '✗ Failed' : 'Not Run'}
+                                                                </span>
+                                                                {isExpanded ? <FaChevronUp style={{ fontSize: '0.75rem', color: '#94a3b8' }} /> : <FaChevronDown style={{ fontSize: '0.75rem', color: '#94a3b8' }} />}
                                                             </div>
-                                                            <div className="tc-field-group">
-                                                                <label>Your Output</label>
-                                                                <div className="tc-field-box" style={isFailed ? { borderColor: '#ef4444', color: '#ef4444' } : isPassed ? { borderColor: '#10b981', color: '#10b981' } : { color: '#64748b' }}>
-                                                                    {actualOut || (runItem ? '[Empty]' : 'Not run yet')}
+                                                        </div>
+
+                                                        {isExpanded && (
+                                                            <div className="tc-card-body">
+                                                                <div className="tc-field-group">
+                                                                    <label>Input</label>
+                                                                    <div className="tc-field-box">{tc.input ?? ''}</div>
+                                                                </div>
+                                                                <div className="tc-field-group">
+                                                                    <label>Expected Output</label>
+                                                                    <div className="tc-field-box">{tc.expectedOutput || tc.expected || ''}</div>
+                                                                </div>
+                                                                <div className="tc-field-group">
+                                                                    <label>Your Output</label>
+                                                                    <div className="tc-field-box" style={isFailed ? { borderColor: '#ef4444', color: '#ef4444' } : isPassed ? { borderColor: '#10b981', color: '#10b981' } : { color: '#64748b' }}>
+                                                                        {actualOut || (runItem ? '[Empty]' : 'Not run yet')}
+                                                                    </div>
+                                                                </div>
+                                                                {runItem?.stderr && (
+                                                                    <div className="tc-field-group">
+                                                                        <label style={{ color: '#ef4444' }}>Errors / Diagnostics</label>
+                                                                        <div className="tc-field-box" style={{ borderColor: '#ef4444', color: '#fca5a5', whiteSpace: 'pre-wrap' }}>
+                                                                            {runItem.stderr}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                <div className="tc-metrics-row">
+                                                                    <span>Execution Time: <strong>{runItem ? '4 ms' : '-'}</strong></span>
+                                                                    <span>Memory Used: <strong>{runItem ? '16.2 MB' : '-'}</strong></span>
                                                                 </div>
                                                             </div>
-                                                            <div className="tc-metrics-row">
-                                                                <span>Execution Time: <strong>{runItem ? '4 ms' : '-'}</strong></span>
-                                                                <span>Memory Used: <strong>{runItem ? '16.2 MB' : '-'}</strong></span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
+                                                        )}
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
                                     </div>
                                 </>
                             ) : (

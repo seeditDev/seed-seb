@@ -846,19 +846,17 @@ const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, pr
   // This guard ensures CodingAssessmentPage never receives an empty questions array
   // when the content exists under a different field name.
   const resolvedQuestions = (() => {
+    let rawList = [];
     if (Array.isArray(sectionData?.questions) && sectionData.questions.length > 0) {
-      return sectionData.questions;
+      rawList = sectionData.questions;
+    } else if (Array.isArray(sectionData?.challenges) && sectionData.challenges.length > 0) {
+      rawList = sectionData.challenges;
+    } else if (Array.isArray(sectionData?.codingQuestions) && sectionData.codingQuestions.length > 0) {
+      rawList = sectionData.codingQuestions;
+    } else if (Array.isArray(sectionData?.items) && sectionData.items.length > 0) {
+      rawList = sectionData.items;
     }
-    if (Array.isArray(sectionData?.challenges) && sectionData.challenges.length > 0) {
-      return sectionData.challenges;
-    }
-    if (Array.isArray(sectionData?.codingQuestions) && sectionData.codingQuestions.length > 0) {
-      return sectionData.codingQuestions;
-    }
-    if (Array.isArray(sectionData?.items) && sectionData.items.length > 0) {
-      return sectionData.items;
-    }
-    return [];
+    return rawList.map(normalizeQuestion);
   })();
 
   const testData = {
