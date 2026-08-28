@@ -602,7 +602,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             // Sync user details if not set
             if (!user) {
-                const authData = getAuthData();
+                const authData = JSON.parse(localStorage.getItem('auth_data') ?? '{}');
                 setUser(authData);
             }
 
