@@ -20,7 +20,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
-import { normalizeTestCaseArray, isTestCasePassed, getQuestionHiddenTestCases, getQuestionSampleTestCases } from '../utils/testCaseUtils';
+import { normalizeTestCaseArray, isTestCasePassed, getQuestionHiddenTestCases, getQuestionSampleTestCases, getQuestionVisibleAllTestCases } from '../utils/testCaseUtils';
 import '../styles/CodingAssessmentPage.css';
 import { fetchContentJSON } from '../utils/contentApi';
 import { useTabSwitchGuard } from '../utils/tabSwitchGuard';
@@ -1546,8 +1546,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
         const isRunAll = selectedTestCaseSet === 'all';
         const sampleTests = getQuestionSampleTestCases(currentQuestion);
-        const allTests = getQuestionHiddenTestCases(currentQuestion);
-        let testsToRun = isRunAll ? allTests : (sampleTests.length > 0 ? sampleTests : allTests);
+        const allVisibleTests = getQuestionVisibleAllTestCases(currentQuestion, 6);
+        let testsToRun = isRunAll ? allVisibleTests : (sampleTests.length > 0 ? sampleTests : allVisibleTests);
         if (!Array.isArray(testsToRun) || testsToRun.length === 0) {
             testsToRun = [{ input: "", expectedOutput: "" }];
         }
@@ -3531,7 +3531,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                                 Sample Test Cases ({getQuestionSampleTestCases(currentQuestion).length || 1})
                                             </option>
                                             <option value="all">
-                                                All Test Cases ({getQuestionHiddenTestCases(currentQuestion).length})
+                                                All Test Cases ({getQuestionVisibleAllTestCases(currentQuestion, 6).length})
                                             </option>
                                         </select>
                                     </div>
@@ -3586,8 +3586,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                                         {(() => {
                                             const sampleCases = getQuestionSampleTestCases(currentQuestion);
-                                            const allCases = getQuestionHiddenTestCases(currentQuestion);
-                                            const tcList = selectedTestCaseSet === 'all' ? allCases : (sampleCases.length > 0 ? sampleCases : allCases);
+                                            const allVisibleCases = getQuestionVisibleAllTestCases(currentQuestion, 6);
+                                            const tcList = selectedTestCaseSet === 'all' ? allVisibleCases : (sampleCases.length > 0 ? sampleCases : allVisibleCases);
                                             const activeResults = selectedTestCaseSet === 'all' 
                                                 ? (evalResults || runResults || questionScores[currentQuestion?.id]?.testResults) 
                                                 : runResults;

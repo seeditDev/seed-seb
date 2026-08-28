@@ -354,4 +354,18 @@ export function getQuestionHiddenTestCases(q) {
   return normalizeTestCaseArray(raw);
 }
 
+/**
+ * Extracts and returns the visible subset of test cases for the sandbox "All Test Cases" view.
+ * Limited to the first N (default 6) hidden/general test cases.
+ *
+ * @param {Object} q - Question object
+ * @param {number} limit - Maximum test cases visible in editor (default 6)
+ * @returns {Array} Array of up to N normalized test cases
+ */
+export function getQuestionVisibleAllTestCases(q, limit = 6) {
+  const hidden = getQuestionHiddenTestCases(q);
+  return hidden.slice(0, limit);
+}
+
+
 
