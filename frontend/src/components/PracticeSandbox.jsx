@@ -619,6 +619,7 @@ const PracticeSandbox = () => {
             break; // Stop running further sample test cases!
           }
 
+          const expectedClean = (tc.expected || (tc.expectedOutput ?? '')).toString().replace(/\r\n/g, '\n').trim();
           const isPassed = isTestCasePassed(res.stdout, tc.expected || tc.expectedOutput, tc.input, res.exit_code, res.error);
 
           results.push({
@@ -626,7 +627,7 @@ const PracticeSandbox = () => {
             input: tc.input,
             expected: expectedClean,
             actual: res.stdout ?? '',
-            stderr: res.stderr || (res.error  ?? ''),
+            stderr: res.stderr || (res.error ?? ''),
             passed: isPassed,
             exitCode: res.exit_code
           });
