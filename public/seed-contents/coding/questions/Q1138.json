@@ -1,0 +1,412 @@
+{
+  "questionId": "Q1138",
+  "title": "Alphabet Board Path Problem",
+  "slug": "alphabet-board-path",
+  "version": 1,
+  "createdAt": "2026-07-10",
+  "updatedAt": "2026-07-10",
+  "metadata": {
+    "tags": [
+      "hash-table",
+      "string"
+    ],
+    "category": "Strings",
+    "isPremium": false,
+    "topicTags": [
+      "hash-table",
+      "string"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
+  },
+  "content": {
+    "notes": [],
+    "constraints": [
+      "1 <= target.length <= 100",
+      "target consists only of English lowercase letters."
+    ],
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "outputFormat": "Single line: JSON-serialised return value",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "[\"leet\"]",
+        "output": "\"DDR!UURRR!!DDD!\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "[\"code\"]",
+        "output": "\"RR!DDRR!UUL!R!\"",
+        "explanation": ""
+      }
+    ],
+    "problemStatement": "On an alphabet board, we start at position `(0, 0)`, corresponding to character `board[0][0]`.\n\nHere, `board = [\"abcde\", \"fghij\", \"klmno\", \"pqrst\", \"uvwxy\", \"z\"]`, as shown in the diagram below.\n\n![](https://assets.leetcode.com/uploads/2019/07/28/azboard.png)\n\nWe may make the following moves:\n\n* `'U'` moves our position up one row, if the position exists on the board;\n* `'D'` moves our position down one row, if the position exists on the board;\n* `'L'` moves our position left one column, if the position exists on the board;\n* `'R'` moves our position right one column, if the position exists on the board;\n* `'!'` adds the character `board[r][c]` at our current position `(r, c)` to the answer.\n\n(Here, the only positions that exist on the board are positions with letters on them.)\n\nOutput a sequence of moves that makes our answer equal to `target` in the smallest number of moves.  You may output any path that does so.\n\n**Example 1:**\n\n```\nInput: target = \"leet\"\r\nOutput: \"DDR!UURRR!!DDD!\"\r\n```\n\n**Example 2:**\n\n```\nInput: target = \"code\"\r\nOutput: \"RR!DDRR!UUL!R!\"\r\n```\n\n**Constraints:**\n\n* `1 <= target.length <= 100`\n* `target` consists only of English lowercase letters."
+  },
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[\"a\"]",
+        "label": "Minimum-length target",
+        "weight": 4,
+        "expectedOutput": "\"!\""
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[\"z\"]",
+        "label": "Single-character z",
+        "weight": 4,
+        "expectedOutput": "\"DDDDD!\""
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[\"az\"]",
+        "label": "Top-to-bottom boundary transition",
+        "weight": 4,
+        "expectedOutput": "\"!DDDDD!\""
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[\"za\"]",
+        "label": "Bottom-to-top z transition",
+        "weight": 4,
+        "expectedOutput": "\"DDDDD!UUUUU!\""
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[\"ab\"]",
+        "label": "Horizontal movement within first row",
+        "weight": 4,
+        "expectedOutput": "\"!R!\""
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[\"ae\"]",
+        "label": "Cross-row movement to e",
+        "weight": 4,
+        "expectedOutput": "\"!RRRR!\""
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[\"af\"]",
+        "label": "Transition to row 1",
+        "weight": 4,
+        "expectedOutput": "\"!D!\""
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[\"aj\"]",
+        "label": "Transition to final letter of row 2",
+        "weight": 4,
+        "expectedOutput": "\"!RRRRD!\""
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[\"ak\"]",
+        "label": "Transition to start of row 3",
+        "weight": 4,
+        "expectedOutput": "\"!DD!\""
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[\"ao\"]",
+        "label": "Transition to final column",
+        "weight": 4,
+        "expectedOutput": "\"!RRRRDD!\""
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[\"ap\"]",
+        "label": "Transition to row 3 start",
+        "weight": 3,
+        "expectedOutput": "\"!DDD!\""
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[\"at\"]",
+        "label": "Transition to row 4 end",
+        "weight": 3,
+        "expectedOutput": "\"!RRRRDDD!\""
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[\"au\"]",
+        "label": "Transition to row 5 boundary",
+        "weight": 3,
+        "expectedOutput": "\"!DDDD!\""
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[\"ay\"]",
+        "label": "All alphabet characters",
+        "weight": 3,
+        "expectedOutput": "\"!RRRRDDDD!\""
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "label": "Repeated-row transitions",
+        "weight": 3,
+        "expectedOutput": "\"!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!\""
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[\"leetcode\"]",
+        "label": "Canonical code target",
+        "weight": 3,
+        "expectedOutput": "\"RDD!UURRR!!DDD!UUULL!RRDD!UUL!R!\""
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[\"code\"]",
+        "label": "Repeated z transitions",
+        "weight": 3,
+        "expectedOutput": "\"RR!RRDD!UUL!R!\""
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[\"zzzz\"]",
+        "label": "Repeated identical character",
+        "weight": 3,
+        "expectedOutput": "\"DDDDD!!!!\""
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaa\"]",
+        "label": "Alternating within first row",
+        "weight": 3,
+        "expectedOutput": "\"!!!!!!!!!!\""
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[\"ababababab\"]",
+        "label": "Repeated a-to-z boundary transitions",
+        "weight": 3,
+        "expectedOutput": "\"!R!L!R!L!R!L!R!L!R!\""
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[\"azazazazaz\"]",
+        "label": "Repeated z-to-a boundary transitions",
+        "weight": 3,
+        "expectedOutput": "\"!DDDDD!UUUUU!DDDDD!UUUUU!DDDDD!UUUUU!DDDDD!UUUUU!DDDDD!\""
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[\"zazazazaza\"]",
+        "label": "Repeated middle-row character",
+        "weight": 3,
+        "expectedOutput": "\"DDDDD!UUUUU!DDDDD!UUUUU!DDDDD!UUUUU!DDDDD!UUUUU!DDDDD!UUUUU!\""
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[\"eeeeeeeeee\"]",
+        "label": "Repeated row-4 character",
+        "weight": 3,
+        "expectedOutput": "\"RRRR!!!!!!!!!!\""
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[\"uuuuuuuuuu\"]",
+        "label": "Horizontal-heavy target",
+        "weight": 3,
+        "expectedOutput": "\"DDDD!!!!!!!!!!\""
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[\"qwertyuiop\"]",
+        "label": "Reverse horizontal-heavy target",
+        "weight": 3,
+        "expectedOutput": "\"RDDD!RD!UUUURR!LLDDD!RR!D!LLLL!UUURRR!RD!LLLLD!\""
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[\"poiuytrewq\"]",
+        "label": "Mixed terminal z target",
+        "weight": 3,
+        "expectedOutput": "\"DDD!URRRR!UL!LLLDDD!RRRR!U!LL!UUURR!LLDDDD!UL!\""
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[\"helloz\"]",
+        "label": "Final-row and row-0 alternation",
+        "weight": 3,
+        "expectedOutput": "\"RRD!URR!LLLDD!!RRR!LLLLDDD!\""
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[\"zoo\"]",
+        "label": "Alternating distant letters",
+        "weight": 3,
+        "expectedOutput": "\"DDDDD!UUURRRR!!\""
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[\"azbycxdwev\"]",
+        "label": "Long mixed target",
+        "weight": 3,
+        "expectedOutput": "\"!DDDDD!UUUUUR!RRRDDDD!UUUULL!RDDDD!UUUU!LDDDD!UUUURR!LLLDDDD!\""
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzz\"]",
+        "label": "Maximum-length target",
+        "weight": 3,
+        "expectedOutput": "\"!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!UUUUU!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!UUUUU!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!R!R!R!R!LLLLD!!\""
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "scoring": {
+    "maxScore": 100,
+    "testCaseWeights": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "defaultScoringType": "PARTIAL_SCORE"
+  },
+  "judging": {
+    "notes": [],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
+  },
+  "solution": {
+    "notes": [
+      "Each character transition uses the minimum Manhattan number of moves.",
+      "The chosen ordering avoids nonexistent cells on the irregular z row."
+    ],
+    "approach": "Map each lowercase letter to its fixed board coordinate. For each target character, move up first, then left, then right, then down, and append !. The up/left-first order is necessary around z because the final row contains only z.",
+    "timeComplexity": "O(n)",
+    "spaceComplexity": "O(n) for the returned path, with O(1) auxiliary state.",
+    "code": {
+      "C": "char* alphabetBoardPath(char* target) {\n    size_t n = strlen(target);\n    char* res = (char*)malloc(n * 10 + 1);\n    size_t p = 0;\n    int r = 0, c = 0;\n    for (size_t i = 0; i < n; i++) {\n        int k = target[i] - 'a';\n        int nr = k / 5, nc = k % 5;\n        while (nr < r) { res[p++] = 'U'; r--; }\n        while (nc < c) { res[p++] = 'L'; c--; }\n        while (nc > c) { res[p++] = 'R'; c++; }\n        while (nr > r) { res[p++] = 'D'; r++; }\n        res[p++] = '!';\n    }\n    res[p] = '\\0';\n    return res;\n}",
+      "C++": "class Solution {\npublic:\n    string alphabetBoardPath(string target) {\n        string res = \"\";\n        int r = 0, c = 0;\n        for (char ch : target) {\n            int k = ch - 'a';\n            int nr = k / 5, nc = k % 5;\n            if (nr < r) res.append(r - nr, 'U');\n            if (nc < c) res.append(c - nc, 'L');\n            if (nc > c) res.append(nc - c, 'R');\n            if (nr > r) res.append(nr - r, 'D');\n            res += '!';\n            r = nr;\n            c = nc;\n        }\n        return res;\n    }\n};",
+      "Java": "class Solution {\n    public String alphabetBoardPath(String target) {\n        StringBuilder sb = new StringBuilder();\n        int r = 0, c = 0;\n        for (char ch : target.toCharArray()) {\n            int idx = ch - 'a';\n            int nr = idx / 5;\n            int nc = idx % 5;\n            for (int k = 0; k < r - nr; k++) sb.append('U');\n            for (int k = 0; k < c - nc; k++) sb.append('L');\n            for (int k = 0; k < nc - c; k++) sb.append('R');\n            for (int k = 0; k < nr - r; k++) sb.append('D');\n            sb.append('!');\n            r = nr;\n            c = nc;\n        }\n        return sb.toString();\n    }\n}",
+      "Python3": "class Solution:\n    def alphabetBoardPath(self, target: str) -> str:\n        r, c = 0, 0\n        res = []\n        for ch in target:\n            nr, nc = divmod(ord(ch) - 97, 5)\n            if nr < r: res.append('U' * (r - nr))\n            if nc < c: res.append('L' * (c - nc))\n            if nc > c: res.append('R' * (nc - c))\n            if nr > r: res.append('D' * (nr - r))\n            res.append('!')\n            r, c = nr, nc\n        return \"\".join(res)",
+      "JavaScript": "/**\n * @param {string} target\n * @return {string}\n */\nvar alphabetBoardPath = function(target) {\n    let r = 0, c = 0;\n    let res = [];\n    for (const ch of target) {\n        const idx = ch.charCodeAt(0) - 97;\n        const nr = Math.floor(idx / 5);\n        const nc = idx % 5;\n        if (nr < r) res.push('U'.repeat(r - nr));\n        if (nc < c) res.push('L'.repeat(c - nc));\n        if (nc > c) res.push('R'.repeat(nc - c));\n        if (nr > r) res.push('D'.repeat(nr - r));\n        res.push('!');\n        r = nr;\n        c = nc;\n    }\n    return res.join('');\n};"
+    },
+    "editorial": {
+      "bruteForce": {
+        "complexity": "O(n) on the fixed-size graph, with unnecessary search overhead.",
+        "description": "Treat the 26 valid cells as a graph and search for a shortest path for every target character. This is correct but unnecessary on the fixed board."
+      },
+      "better": {
+        "complexity": "O(n) time and O(n) output space.",
+        "description": "Precompute coordinates for the 26 letters and emit the Manhattan path between consecutive characters, taking care around z."
+      },
+      "optimal": {
+        "complexity": "O(n) time and O(n) output space; O(1) auxiliary state.",
+        "description": "Compute each character coordinate directly with division and modulo, emit U/L before D/R, then append !."
+      }
+    }
+  },
+  "hints": [
+    "Map each letter to coordinates using its alphabet index.",
+    "Compare current and target rows and columns to determine movement.",
+    "When z is involved, move upward/leftward before downward/rightward.",
+    "Append ! only after reaching the target character."
+  ],
+  "followUps": [
+    "Why must movement ordering be careful around z?",
+    "How would this change if the board were arbitrary input?",
+    "Can letter coordinates be precomputed?",
+    "How would a rectangular board differ?"
+  ],
+  "learningObjectives": [
+    "Map symbols to grid coordinates.",
+    "Construct shortest paths with Manhattan distance.",
+    "Handle an irregular final row safely.",
+    "Produce exact command strings."
+  ],
+  "similarProblems": [],
+  "acceptanceRate": null,
+  "estimatedSolveTime": "20–30 min",
+  "recommendedAfter": [],
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nchar* alphabetBoardPath(char* target) {\n    \n    return \"\";\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    static char s[1000000];\n    if (!fgets(s, sizeof(s), stdin)) return 0;\n    char *first = strchr(s, '\"');\n    char *last = strrchr(s, '\"');\n    if (first && last && last > first) {\n        *last = '\\0';\n        char* o = alphabetBoardPath(first + 1);\n        printf(\"\\\"%s\\\"\\n\", o);\n        free(o);\n    }\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    string alphabetBoardPath(string target) {\n        \n        return \"\";\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string s;\n    if (getline(cin, s)) {\n        size_t first = s.find('\"');\n        size_t last = s.rfind('\"');\n        if (first != string::npos && last != string::npos && last > first) {\n            string t = s.substr(first + 1, last - first - 1);\n            cout << '\"' << Solution().alphabetBoardPath(t) << '\"' << \"\\n\";\n        }\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public String alphabetBoardPath(String target) {\n        \n        return \"\";\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        int first = line.indexOf('\"');\n        int last = line.lastIndexOf('\"');\n        String target = line.substring(first + 1, last);\n        System.out.println(\"\\\"\" + new Solution().alphabetBoardPath(target) + \"\\\"\");\n    }\n}\n",
+    "Python3": "import sys, json\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def alphabetBoardPath(self, target: str) -> str:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().alphabetBoardPath(args[0])))\n",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string} target\n * @return {string}\n */\nvar alphabetBoardPath = function(target) {\n    \n    return \"\";\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(alphabetBoardPath(args[0])));\n    rl.close();\n});\n"
+  },
+  "_internal": {
+    "params": [
+      {
+        "name": "target",
+        "type": "string"
+      }
+    ],
+    "methodName": "alphabetBoardPath"
+  },
+  "verified": true
+}
