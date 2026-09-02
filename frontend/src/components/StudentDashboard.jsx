@@ -98,7 +98,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     try {
       stopAllMediaAndAI();
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
   const [activeTab, setActiveTab] = useState(() => {
@@ -181,7 +181,7 @@ const StudentDashboard = () => {
         setUser(updated);
         localStorage.setItem('auth_data', JSON.stringify(updated));
         if (user?.uid) {
-          updateDoc(doc(db, 'users', user.uid), { photoURL: b64 }).catch(() => {});
+          updateDoc(doc(db, 'users', user.uid), { photoURL: b64 }).catch(() => { });
         }
         toast.success('Profile photo updated!');
       }
@@ -275,7 +275,7 @@ const StudentDashboard = () => {
     const uid = user?.uid || auth?.currentUser?.uid;
     // Don't load progress without a real UID — avoids writing to a 'guest' localStorage key
     if (!uid) return;
-    
+
     // 1. Load Coding Progress
     let prog = null;
     try {
@@ -332,7 +332,7 @@ const StudentDashboard = () => {
       const data = await loadUserDailyGoals(uid);
       const todayStr = new Date().toISOString().split('T')[0];
       let baseGoals = (data && Array.isArray(data.goals)) ? data.goals : getDailyGoalsForDate(todayStr, uid, 0);
-      
+
       // Evaluate each goal against live progress data
       const localProg = prog || (await (await import('../services/codingProgressService')).getFullProgress(uid));
       const solvedToday = Object.entries(localProg?.problemDetails || {})
@@ -389,7 +389,7 @@ const StudentDashboard = () => {
             setSeedCredits(credPrev => {
               const nextCredits = credPrev + 100;
               setTodayCreditsGained(t => t + 100);
-              saveUserDailyGoals(uid, todayStr, evaluated, nextStreak, nextCredits).catch(() => {});
+              saveUserDailyGoals(uid, todayStr, evaluated, nextStreak, nextCredits).catch(() => { });
               return nextCredits;
             });
             return nextStreak;
@@ -429,20 +429,32 @@ const StudentDashboard = () => {
     }
   }, [activeTab, initProgressAndGoals]);
 
+  // Verify tenant validity on mount and update user.tenant details
+  useEffect(() => {
+    DataService.verifyCurrentTenantStatus().then((res) => {
+      if (res && res.valid === false) {
+        alert(res.reason || "Your college subscription has expired or is inactive. Please reach out to your placement department.");
+        navigate('/login?reason=subscription_expired');
+      } else if (res?.tenant) {
+        setUser(prev => prev ? { ...prev, tenant: res.tenant } : prev);
+      }
+    }).catch(() => {});
+  }, [navigate]);
+
   // Log activity on Tab Change
   useEffect(() => {
     const uid = user?.uid || auth?.currentUser?.uid || 'guest';
     if (uid && uid !== 'guest') {
       import('../services/activityLoggerService').then(mod => {
         mod.logUserActivity(uid, 'PAGE_VIEW', { tab: activeTab });
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [activeTab, user]);
 
   const handleToggleGoal = async (idx) => {
     if (!dailyGoals || !dailyGoals[idx]) return;
     const goal = dailyGoals[idx];
-    
+
     // Toggle goal and update Firestore + Local Profile cache
     const updated = dailyGoals.map((g, i) => (i === idx ? { ...g, completed: !g.completed } : g));
     setDailyGoals(updated);
@@ -458,7 +470,7 @@ const StudentDashboard = () => {
     // Activity Log for Goal Toggle
     import('../services/activityLoggerService').then(mod => {
       mod.logUserActivity(uid, 'GOAL_TOGGLED', { goalId: goal.id, title: goal.title, completed: !goal.completed });
-    }).catch(() => {});
+    }).catch(() => { });
 
     if (!wereAllCompletedBefore && areAllCompletedNow) {
       nextStreak = userStreak + 1;
@@ -471,7 +483,7 @@ const StudentDashboard = () => {
       // Activity Log for Streak Approval
       import('../services/activityLoggerService').then(mod => {
         mod.logUserActivity(uid, 'STREAK_APPROVED', { streak: nextStreak, credits: nextCredits, date: todayStr });
-      }).catch(() => {});
+      }).catch(() => { });
     } else if (wereAllCompletedBefore && !areAllCompletedNow) {
       nextStreak = Math.max(1, userStreak - 1);
       nextCredits = Math.max(0, seedCredits - 100);
@@ -539,7 +551,7 @@ const StudentDashboard = () => {
 
     const activity = progressData?.activity || {};
     const details = progressData?.problemDetails || {};
-    
+
     // Set of active date strings "YYYY-MM-DD"
     const activeDateSet = new Set();
     Object.keys(activity).forEach(d => {
@@ -1208,18 +1220,29 @@ const StudentDashboard = () => {
       const combined = testDocs
         .filter(t => !t.isPremium || isPremiumUser)
         .map(t => {
-          // Normalise schedule from ISO strings → shape getScheduleStatus() expects
+          // Normalise schedule from { startDate, startTime, endDate, endTime } or { start, end }
           let schedule = null;
-          if (t.schedule?.start || t.schedule?.end) {
-            const s = t.schedule.start ? new Date(t.schedule.start) : null;
-            const e = t.schedule.end ? new Date(t.schedule.end) : null;
-            if (s || e) {
+          if (t.schedule) {
+            if (t.schedule.startDate) {
               schedule = {
-                startDate: s ? s.toISOString().slice(0, 10) : '',
-                startTime: s ? s.toTimeString().slice(0, 8) : '',
-                endDate: e ? e.toISOString().slice(0, 10) : '',
-                endTime: e ? e.toTimeString().slice(0, 8) : '',
+                startDate: t.schedule.startDate,
+                startTime: t.schedule.startTime,
+                endDate: t.schedule.endDate,
+                endTime: t.schedule.endTime,
+                timezone: t.schedule.timezone || 'Asia/Kolkata',
               };
+            } else if (t.schedule.start || t.schedule.end) {
+              const s = t.schedule.start ? new Date(t.schedule.start) : null;
+              const e = t.schedule.end ? new Date(t.schedule.end) : null;
+              if (s || e) {
+                schedule = {
+                  startDate: s ? s.toISOString().slice(0, 10) : '',
+                  startTime: s ? s.toTimeString().slice(0, 8) : '',
+                  endDate: e ? e.toISOString().slice(0, 10) : '',
+                  endTime: e ? e.toTimeString().slice(0, 8) : '',
+                  timezone: t.schedule.timezone || 'Asia/Kolkata',
+                };
+              }
             }
           }
 
@@ -1300,25 +1323,26 @@ const StudentDashboard = () => {
 
   // Helper: check schedule access and compute status
   const getScheduleStatus = (schedule) => {
-    if (!schedule || !schedule.startDate || !schedule.startTime) {
+    if (!schedule || !schedule.startDate) {
       return { status: "Active", reason: "Always open" };
     }
     try {
-      const now = timeService.getNow();
-      const start = new Date(schedule.startDate + 'T' + schedule.startTime);
-      const end = new Date(schedule.endDate + 'T' + schedule.endTime);
+      const now = (typeof timeService !== "undefined" && timeService?.getNow) ? timeService.getNow() : new Date();
+      const startTimeStr = schedule.startTime || "00:00:00";
+      const start = new Date(schedule.startDate + (schedule.startDate.includes('T') ? '' : 'T' + startTimeStr));
+      const end = schedule.endDate ? new Date(schedule.endDate + (schedule.endDate.includes('T') ? '' : 'T' + (schedule.endTime || "23:59:59"))) : null;
 
-      if (now < start) {
+      if (start && !isNaN(start.getTime()) && now < start) {
         return {
           status: "Upcoming",
-          reason: `Unlocks on ${start.toLocaleDateString()} at ${start.toLocaleTimeString()}`,
+          reason: `Unlocks on ${start.toLocaleDateString()} at ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           time: start
         };
       }
-      if (now > end) {
+      if (end && !isNaN(end.getTime()) && now > end) {
         return {
           status: "Expired",
-          reason: `Ended on ${end.toLocaleDateString()} at ${end.toLocaleTimeString()}`,
+          reason: `Ended on ${end.toLocaleDateString()} at ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           time: end
         };
       }
@@ -1487,6 +1511,25 @@ const StudentDashboard = () => {
 
   // Open Unified Launch Modal on test click
   const handleStartClick = (assessment) => {
+    // 0. Schedule restriction guard
+    if (assessment.schedule) {
+      const schedCheck = getScheduleStatus(assessment.schedule);
+      if (schedCheck.status === "Upcoming") {
+        setEligibilityError({
+          title: "Assessment Not Started",
+          message: `This assessment is not open yet. ${schedCheck.reason}. Please wait until the scheduled start time.`
+        });
+        return;
+      }
+      if (schedCheck.status === "Expired") {
+        setEligibilityError({
+          title: "Assessment Schedule Expired",
+          message: `The access window for this assessment has ended. ${schedCheck.reason}. Access is locked.`
+        });
+        return;
+      }
+    }
+
     setSelectedAssessment(assessment);
     setPasskeyInput("");
     setPasskeyError("");
@@ -1505,6 +1548,25 @@ const StudentDashboard = () => {
   // Validate passkey, eligibility, and launch workspace immediately
   const handleUnifiedLaunch = async () => {
     if (!selectedAssessment || isLaunching) return;
+
+    // 0. Double-check schedule window
+    if (selectedAssessment.schedule) {
+      const schedLock = getScheduleStatus(selectedAssessment.schedule);
+      if (schedLock.status === "Upcoming") {
+        setEligibilityError({
+          title: "Assessment Not Started",
+          message: `This assessment has not started yet. ${schedLock.reason}.`
+        });
+        return;
+      }
+      if (schedLock.status === "Expired") {
+        setEligibilityError({
+          title: "Assessment Schedule Expired",
+          message: `This assessment's schedule has ended. ${schedLock.reason}. Access is locked.`
+        });
+        return;
+      }
+    }
 
     // 1. Mandatory passkey check if test requires it
     if (selectedAssessment.passkey) {
@@ -1562,6 +1624,17 @@ const StudentDashboard = () => {
   // STEP 5 — Load JSON + create initial Firebase doc + navigate
   const launchAssessment = async (assessment) => {
     try {
+      // Final schedule restriction check
+      if (assessment.schedule) {
+        const schedFinal = getScheduleStatus(assessment.schedule);
+        if (schedFinal.status === "Upcoming" || schedFinal.status === "Expired") {
+          setEligibilityError({
+            title: schedFinal.status === "Upcoming" ? "Assessment Not Started" : "Assessment Schedule Expired",
+            message: schedFinal.reason
+          });
+          return;
+        }
+      }
       const now = timeService.now();
       const nowISO = timeService.getNow().toISOString();
       const durationSec = assessment.duration * 60;
@@ -1647,41 +1720,6 @@ const StudentDashboard = () => {
           <div className="home-section-block">
             <h3 className="home-section-heading">Quick Start</h3>
             <div className="quick-start-grid">
-              <div
-                className="quick-start-card"
-                onClick={() => {
-                  setPracticeInitialTab('bank');
-                  setActiveTab('practice');
-                }}
-              >
-                <div className="qs-icon-box qs-blue">
-                  <FaClipboardList />
-                </div>
-                <div className="qs-info">
-                  <h4 className="qs-title">Practice Bank</h4>
-                  <span className="qs-sub">9000+ Questions</span>
-                </div>
-                <FaChevronRight className="qs-arrow" />
-              </div>
-
-              <div
-                className="quick-start-card"
-                onClick={() => {
-                  setPracticeInitialTab('paths');
-                  setPracticeInitialCourse(null);
-                  setActiveTab('practice');
-                }}
-              >
-                <div className="qs-icon-box qs-green">
-                  <FaLaptopCode />
-                </div>
-                <div className="qs-info">
-                  <h4 className="qs-title">Course Curriculum</h4>
-                  <span className="qs-sub">Explore all modules</span>
-                </div>
-                <FaChevronRight className="qs-arrow" />
-              </div>
-
               <div
                 className="quick-start-card"
                 onClick={() => setActiveTab('assessments')}
@@ -2329,7 +2367,7 @@ const StudentDashboard = () => {
 
                       return (
                         <div
-                          key={a.id}
+                          key={`${a.courseId || ''}_${a.seriesId || ''}_${a.id}`}
                           className="ps-sheet-card"
                           style={{
                             '--theme-border-color': 'var(--accent-primary, #4f46e5)',
@@ -2832,15 +2870,31 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Card 2: Academic Information */}
+            {/* Card 2: Academic & Institutional Information */}
             <div className="profile-info-card">
               <div className="card-header-with-edit">
-                <h3 className="profile-card-section-title">Academic Information</h3>
+                <h3 className="profile-card-section-title">Academic &amp; Institutional Information</h3>
               </div>
               <div className="academic-fields-stack">
                 <div className="info-field-row">
                   <span className="field-label">College</span>
-                  <span className="field-value">{user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || college || "—"}</span>
+                  <span className="field-value">{user?.tenant?.name || user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || college || "—"}</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">College Code</span>
+                  <span className="field-value" style={{ fontFamily: 'monospace', fontWeight: 600 }}>{user?.tenantId || user?.tenant?.id || "—"}</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Institutional Access</span>
+                  <span className="field-value" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
+                    <span style={{ color: '#10b981', fontWeight: 600 }}>Active</span>
+                    {user?.tenant?.validUntil ? (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Valid until {user.tenant.validUntil})</span>
+                    ) : (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Lifetime Access)</span>
+                    )}
+                  </span>
                 </div>
                 <div className="info-field-row">
                   <span className="field-label">Department</span>
@@ -3188,7 +3242,7 @@ const StudentDashboard = () => {
                   cursor: 'pointer'
                 }}
               >
-                
+
               </button>
 
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -3269,7 +3323,7 @@ const StudentDashboard = () => {
                       boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
                     }}
                   >
-                     Activate Premium Edition Now
+                    Activate Premium Edition Now
                   </button>
                 ) : (
                   <button
@@ -3287,7 +3341,7 @@ const StudentDashboard = () => {
                       cursor: 'pointer'
                     }}
                   >
-                     Premium Access Active
+                    Premium Access Active
                   </button>
                 )}
               </div>
@@ -4043,7 +4097,7 @@ const StudentDashboard = () => {
       {launchStep === 'modal' && selectedAssessment && (
         <div className="lw-overlay" style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(6px)' }}>
           <div className="lw-card" style={{ maxWidth: '640px', width: '100%', borderRadius: '18px', background: '#ffffff', color: '#0f172a', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)', border: '1px solid #e2e8f0', fontFamily: "'Inter', sans-serif" }}>
-            
+
             {/* Header with Badge, Title & Metadata */}
             <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -4067,7 +4121,7 @@ const StudentDashboard = () => {
             </div>
 
             <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              
+
               {/* Access Passkey (if mandatory) */}
               {selectedAssessment.passkey ? (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 18px' }}>
@@ -4494,11 +4548,11 @@ const StudentDashboard = () => {
 
         <main className="dashboard-main">
           {activeTab === "dashboard" ? renderDashboardHome() :
-           activeTab === "assessments" ? renderAssessments() :
-           activeTab === "practice" ? <PracticeHome initialTab={practiceInitialTab} initialCourse={practiceInitialCourse} /> :
-           activeTab === "settings" ? renderSettings() :
-           activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
-           renderProfile()}
+            activeTab === "assessments" ? renderAssessments() :
+              activeTab === "practice" ? <PracticeHome initialTab={practiceInitialTab} initialCourse={practiceInitialCourse} /> :
+                activeTab === "settings" ? renderSettings() :
+                  activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
+                    renderProfile()}
         </main>
       </div>
 

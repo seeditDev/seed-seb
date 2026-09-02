@@ -37,13 +37,14 @@ import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
  * Merges Firebase Auth identity with the canonical Firestore user document.
  * Strictly canonical fields only — no legacy alias chains.
  */
-function buildAuthData(firebaseUser, profile = {}) {
+function buildAuthData(firebaseUser, profile = {}, tenantDetails = null) {
     return {
         ...profile,
         uid: firebaseUser.uid,
         email: (firebaseUser.email ?? profile.email ?? '').toLowerCase(),
         tenantId: profile.tenantId ?? '',
         college: profile.college ?? '',
+        tenant: tenantDetails || profile.tenant || null,
         name: profile.name ?? '',
         rollNumber: profile.rollNumber ?? '',
         cohortId: profile.cohortId ?? '',
@@ -59,9 +60,6 @@ function buildAuthData(firebaseUser, profile = {}) {
         isAuthenticated: true,
     };
 }
-
-
-
 
 // ────────────────────────────────────────────────────────────────────────────
 // Auth
@@ -92,6 +90,48 @@ class DataService {
                 profile = await DataService.getUserProfileByEmail(firebaseUser.email.toLowerCase());
             }
 
+            // 4. Verify Tenant Status & Subscription Validity
+            let tenantDetails = null;
+            if (profile?.tenantId && profile?.role !== 'superadmin' && profile?.role !== 'admin') {
+                try {
+                    const tenantSnap = await getDoc(doc(db, "tenants", profile.tenantId));
+                    if (tenantSnap.exists()) {
+                        const tData = tenantSnap.data();
+                        const isActive = tData.active !== false;
+                        const validUntil = tData.validUntil ? String(tData.validUntil).trim() : null;
+                        let isExpired = false;
+                        if (validUntil) {
+                            const expDate = new Date(validUntil.includes("T") ? validUntil : `${validUntil}T23:59:59`);
+                            if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+                                isExpired = true;
+                            }
+                        }
+
+                        if (!isActive || isExpired) {
+                            await signOut(auth);
+                            localStorage.removeItem('auth_data');
+                            sessionStorage.removeItem('active_session_id');
+                            sessionStorage.removeItem('is_logging_in');
+                            const err = new Error("Your college subscription has expired or is inactive. Please reach out to your placement department.");
+                            err.code = "tenant-subscription-expired";
+                            throw err;
+                        }
+
+                        tenantDetails = {
+                            id: profile.tenantId,
+                            name: tData.name || profile.college || profile.tenantId,
+                            active: isActive,
+                            validUntil: validUntil,
+                        };
+                    }
+                } catch (tErr) {
+                    if (tErr.code === "tenant-subscription-expired" || tErr.message?.includes("placement department")) {
+                        throw tErr;
+                    }
+                    console.warn('[DataService] Tenant verification warning:', tErr);
+                }
+            }
+
             try {
                 await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
                     activeSessionId: sessionId,
@@ -116,7 +156,7 @@ class DataService {
                 console.warn('[DataService] Failed to record active session in Firestore:', writeErr);
             }
 
-            const authData = buildAuthData(firebaseUser, profile);
+            const authData = buildAuthData(firebaseUser, profile, tenantDetails);
             localStorage.setItem('auth_data', JSON.stringify(authData));
 
             setTimeout(() => {
@@ -127,7 +167,59 @@ class DataService {
         } catch (error) {
             sessionStorage.removeItem('is_logging_in');
             console.error('[DataService] validateCredentials error:', error?.code || error);
+            if (error?.code === "tenant-subscription-expired" || error?.message?.includes("placement department")) {
+                throw error;
+            }
             return null;
+        }
+    }
+
+    /**
+     * Verifies if the active user session's college tenant is active and within validity.
+     */
+    static async verifyCurrentTenantStatus() {
+        try {
+            const raw = localStorage.getItem('auth_data');
+            if (!raw) return { valid: true };
+            const authData = JSON.parse(raw);
+            const tenantId = authData.tenantId;
+            if (!tenantId || authData.role === 'superadmin' || authData.role === 'admin') {
+                return { valid: true };
+            }
+
+            const tenantSnap = await getDoc(doc(db, "tenants", tenantId));
+            if (!tenantSnap.exists()) return { valid: true };
+
+            const tData = tenantSnap.data();
+            const isActive = tData.active !== false;
+            const validUntil = tData.validUntil ? String(tData.validUntil).trim() : null;
+            let isExpired = false;
+            if (validUntil) {
+                const expDate = new Date(validUntil.includes("T") ? validUntil : `${validUntil}T23:59:59`);
+                if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+                    isExpired = true;
+                }
+            }
+
+            if (!isActive || isExpired) {
+                await DataService.signOut();
+                return {
+                    valid: false,
+                    reason: "Your college subscription has expired or is inactive. Please reach out to your placement department."
+                };
+            }
+            return {
+                valid: true,
+                tenant: {
+                    id: tenantId,
+                    name: tData.name || authData.college || tenantId,
+                    active: isActive,
+                    validUntil: validUntil
+                }
+            };
+        } catch (e) {
+            console.warn('[DataService] verifyCurrentTenantStatus error:', e);
+            return { valid: true };
         }
     }
 

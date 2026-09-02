@@ -429,6 +429,18 @@ const StudentDashboard = () => {
     }
   }, [activeTab, initProgressAndGoals]);
 
+  // Verify tenant validity on mount and update user.tenant details
+  useEffect(() => {
+    DataService.verifyCurrentTenantStatus().then((res) => {
+      if (res && res.valid === false) {
+        alert(res.reason || "Your college subscription has expired or is inactive. Please reach out to your placement department.");
+        navigate('/login?reason=subscription_expired');
+      } else if (res?.tenant) {
+        setUser(prev => prev ? { ...prev, tenant: res.tenant } : prev);
+      }
+    }).catch(() => {});
+  }, [navigate]);
+
   // Log activity on Tab Change
   useEffect(() => {
     const uid = user?.uid || auth?.currentUser?.uid || 'guest';
@@ -2858,15 +2870,31 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Card 2: Academic Information */}
+            {/* Card 2: Academic & Institutional Information */}
             <div className="profile-info-card">
               <div className="card-header-with-edit">
-                <h3 className="profile-card-section-title">Academic Information</h3>
+                <h3 className="profile-card-section-title">Academic &amp; Institutional Information</h3>
               </div>
               <div className="academic-fields-stack">
                 <div className="info-field-row">
                   <span className="field-label">College</span>
-                  <span className="field-value">{user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || college || "—"}</span>
+                  <span className="field-value">{user?.tenant?.name || user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || college || "—"}</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">College Code</span>
+                  <span className="field-value" style={{ fontFamily: 'monospace', fontWeight: 600 }}>{user?.tenantId || user?.tenant?.id || "—"}</span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Institutional Access</span>
+                  <span className="field-value" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
+                    <span style={{ color: '#10b981', fontWeight: 600 }}>Active</span>
+                    {user?.tenant?.validUntil ? (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Valid until {user.tenant.validUntil})</span>
+                    ) : (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Lifetime Access)</span>
+                    )}
+                  </span>
                 </div>
                 <div className="info-field-row">
                   <span className="field-label">Department</span>
