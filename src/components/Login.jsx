@@ -246,15 +246,15 @@ const Login = () => {
       </section>
 
       {/* ========================================================
-           RIGHT PANEL: Clean Student Sign In Form
+           RIGHT PANEL: Clean Student & Staff Sign In Form
            ======================================================== */}
       <section className="seb-right-panel">
         
         <div className="seb-form-container">
           
           <div className="seb-form-title-group">
-            <h1 className="seb-form-main-heading">Student Sign In</h1>
-            <p className="seb-form-main-subtitle">Enter your registered credentials to access your scheduled examinations.</p>
+            <h1 className="seb-form-main-heading">Student &amp; Staff Login</h1>
+            <p className="seb-form-main-subtitle">Enter your registered credentials to access your portal, assessments, or staff dashboard.</p>
           </div>
 
           {error && (
@@ -280,16 +280,16 @@ const Login = () => {
 
           <form onSubmit={handleLogin}>
             
-            {/* Email / Student ID Field */}
+            {/* Email / ID Field */}
             <div className="seb-form-field-group">
-              <label className="seb-field-title" htmlFor="studentEmailInput">Email or Student ID</label>
+              <label className="seb-field-title" htmlFor="loginEmailInput">Email or ID (Roll No. / Staff ID)</label>
               <div className="seb-field-input-box">
                 <span className="seb-field-icon-left">
                   <svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </span>
                 <input 
                   type="text" 
-                  id="studentEmailInput" 
+                  id="loginEmailInput" 
                   className="seb-custom-input" 
                   placeholder="Enter your institutional email or ID" 
                   value={email}
@@ -302,14 +302,14 @@ const Login = () => {
 
             {/* Password Field */}
             <div className="seb-form-field-group">
-              <label className="seb-field-title" htmlFor="studentPasswordInput">Password</label>
+              <label className="seb-field-title" htmlFor="loginPasswordInput">Password</label>
               <div className="seb-field-input-box">
                 <span className="seb-field-icon-left">
                   <svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </span>
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  id="studentPasswordInput" 
+                  id="loginPasswordInput" 
                   className="seb-custom-input" 
                   placeholder="Enter your password" 
                   value={password}
