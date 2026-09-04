@@ -220,27 +220,21 @@ export function validateAssessmentPayload(testDoc, assessmentPayload) {
 
     // ── 7. Schedule validity (Scenario 7: archived, Scenario 8: expired) ──────
     if (testDoc.schedule) {
-        const { start, end, autoClose } = testDoc.schedule;
+        const { startDate, endDate } = parseScheduleWindow(testDoc.schedule);
         const now = new Date();
 
-        if (end) {
-            const endDate = new Date(end);
-            if (!isNaN(endDate.getTime()) && now > endDate) {
-                errors.push(
-                    `SCHEDULE_EXPIRED: The test schedule ended at ${endDate.toLocaleString()}. ` +
-                    'This test cannot be started after its scheduled end time.'
-                );
-            }
+        if (startDate && now < startDate) {
+            errors.push(
+                `SCHEDULE_NOT_STARTED: The test is scheduled to start on ${startDate.toLocaleDateString()} at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. ` +
+                'This test cannot be started before its scheduled start time.'
+            );
         }
 
-        if (start) {
-            const startDate = new Date(start);
-            if (!isNaN(startDate.getTime()) && now < startDate) {
-                errors.push(
-                    `SCHEDULE_NOT_STARTED: The test is scheduled to start at ${startDate.toLocaleString()}. ` +
-                    'This test cannot be started before its scheduled start time.'
-                );
-            }
+        if (endDate && now > endDate) {
+            errors.push(
+                `SCHEDULE_EXPIRED: The test schedule ended on ${endDate.toLocaleDateString()} at ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. ` +
+                'This test cannot be started after its scheduled end time.'
+            );
         }
     }
 
@@ -383,6 +377,67 @@ export function validateTestDoc(testDoc) {
  * Scenario 8 (Expired):      schedule.end in the past → blocked.
  *
  * @param {string} testId
+/**
+ * Parses schedule fields into start and end Date objects regardless of format.
+ * Supports:
+ * - { startDate: "YYYY-MM-DD", startTime: "HH:mm", endDate: "YYYY-MM-DD", endTime: "HH:mm" }
+ * - { start: "ISO-String", end: "ISO-String" }
+ * - Firestore Timestamps
+ */
+export function parseScheduleWindow(schedule) {
+    if (!schedule) return { startDate: null, endDate: null };
+
+    let startDate = null;
+    let endDate = null;
+
+    // 1. Start parsing
+    if (schedule.start) {
+        startDate = schedule.start.toDate ? schedule.start.toDate() : new Date(schedule.start);
+    } else if (schedule.startDate) {
+        if (schedule.startDate.toDate) {
+            startDate = schedule.startDate.toDate();
+        } else if (typeof schedule.startDate === "string" && schedule.startDate.trim()) {
+            const timeStr = schedule.startTime && schedule.startTime.trim() ? schedule.startTime.trim() : "00:00:00";
+            startDate = new Date(`${schedule.startDate.trim()}T${timeStr}`);
+            if (isNaN(startDate.getTime())) {
+                startDate = new Date(schedule.startDate.trim());
+            }
+        }
+    } else if (schedule.scheduledStart) {
+        startDate = schedule.scheduledStart.toDate ? schedule.scheduledStart.toDate() : new Date(schedule.scheduledStart);
+    }
+
+    // 2. End parsing
+    if (schedule.end) {
+        endDate = schedule.end.toDate ? schedule.end.toDate() : new Date(schedule.end);
+    } else if (schedule.endDate) {
+        if (schedule.endDate.toDate) {
+            endDate = schedule.endDate.toDate();
+        } else if (typeof schedule.endDate === "string" && schedule.endDate.trim()) {
+            const timeStr = schedule.endTime && schedule.endTime.trim() ? schedule.endTime.trim() : "23:59:59";
+            endDate = new Date(`${schedule.endDate.trim()}T${timeStr}`);
+            if (isNaN(endDate.getTime())) {
+                endDate = new Date(schedule.endDate.trim());
+            }
+        }
+    } else if (schedule.scheduledEnd) {
+        endDate = schedule.scheduledEnd.toDate ? schedule.scheduledEnd.toDate() : new Date(schedule.scheduledEnd);
+    }
+
+    return {
+        startDate: startDate && !isNaN(startDate.getTime()) ? startDate : null,
+        endDate: endDate && !isNaN(endDate.getTime()) ? endDate : null,
+    };
+}
+
+/**
+ * Validate that a student is permitted to START a specific test.
+ *
+ * Scenario 6 (Wrong Cohort): testId not in student's allowedModules → blocked.
+ * Scenario 8 (Expired):      schedule.endDate in the past → blocked.
+ * Scenario 9 (Not started):  schedule.startDate in the future → blocked.
+ *
+ * @param {string} testId
  * @param {string} courseId
  * @param {string} seriesId
  * @param {string[]} allowedModules — cohort.allowedModules (format: "courseId::seriesId::testId")
@@ -391,34 +446,35 @@ export function validateTestDoc(testDoc) {
  */
 export function validateStudentTestAccess(testId, courseId, seriesId, allowedModules, schedule) {
     // Scenario 6: Cohort assignment check
-    const expectedKey = `${courseId}::${seriesId}::${testId}`;
-    if (!allowedModules || !allowedModules.includes(expectedKey)) {
-        return {
-            allowed: false,
-            reason: `This test is not assigned to your cohort. (Expected key: ${expectedKey})`
-        };
+    if (courseId && seriesId && Array.isArray(allowedModules) && allowedModules.length > 0) {
+        const expectedKey = `${courseId}::${seriesId}::${testId}`;
+        const hasDirect = allowedModules.includes(expectedKey);
+        const hasLegacy = allowedModules.includes(testId);
+        if (!hasDirect && !hasLegacy) {
+            return {
+                allowed: false,
+                reason: `This test is not assigned to your cohort. (Expected key: ${expectedKey})`
+            };
+        }
     }
 
-    // Scenario 8: Schedule check
+    // Scenario 8 & 9: Schedule check
     if (schedule) {
+        const { startDate, endDate } = parseScheduleWindow(schedule);
         const now = new Date();
-        if (schedule.end) {
-            const endDate = new Date(schedule.end);
-            if (!isNaN(endDate.getTime()) && now > endDate) {
-                return {
-                    allowed: false,
-                    reason: `This test's schedule has expired (ended ${endDate.toLocaleString()}).`
-                };
-            }
+
+        if (startDate && now < startDate) {
+            return {
+                allowed: false,
+                reason: `This test has not started yet. It is scheduled to start on ${startDate.toLocaleDateString()} at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+            };
         }
-        if (schedule.start) {
-            const startDate = new Date(schedule.start);
-            if (!isNaN(startDate.getTime()) && now < startDate) {
-                return {
-                    allowed: false,
-                    reason: `This test has not started yet (starts ${startDate.toLocaleString()}).`
-                };
-            }
+
+        if (endDate && now > endDate) {
+            return {
+                allowed: false,
+                reason: `This test schedule has expired. The access window closed on ${endDate.toLocaleDateString()} at ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+            };
         }
     }
 

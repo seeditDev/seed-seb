@@ -15,6 +15,8 @@ import {
   FaSearch,
   FaFilter,
   FaLock,
+  FaEye,
+  FaEyeSlash,
   FaShieldAlt,
   FaTimes,
   FaCheck,
@@ -1071,7 +1073,12 @@ const StudentDashboard = () => {
   // Passkey
   const [passkeyInput, setPasskeyInput] = useState("");
   const [passkeyError, setPasskeyError] = useState("");
+  const [showPasskey, setShowPasskey] = useState(false);
   const passkeyInputRef = useRef(null);
+
+  // Themes Dropdown (Profile Tab)
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
 
   // Instant Pre-flight checks
   const [preflightResults, setPreflightResults] = useState({
@@ -1081,6 +1088,16 @@ const StudentDashboard = () => {
     secureEnv: 'pass'
   });
   // ─────────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(e.target)) {
+        setThemeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   useEffect(() => {
     const authData = getAuthData() || {};
@@ -1533,6 +1550,7 @@ const StudentDashboard = () => {
     setSelectedAssessment(assessment);
     setPasskeyInput("");
     setPasskeyError("");
+    setShowPasskey(false);
     setEligibilityError(null);
     setIsLaunching(false);
     setLaunchStep('modal');
@@ -1577,6 +1595,7 @@ const StudentDashboard = () => {
       }
       if (passkeyInput.trim() !== selectedAssessment.passkey) {
         setPasskeyError("Incorrect passkey. Please try again.");
+        if (passkeyInputRef.current) passkeyInputRef.current.focus();
         return;
       }
     }
@@ -1593,20 +1612,23 @@ const StudentDashboard = () => {
       if (!liveUid) throw new Error('Authentication required. Please log in again.');
 
       // 2. Instant eligibility / duplicate check
-      // All assessments write their result to the canonical assessmentResults path.
-      const tenantId = user?.tenantId ?? '';
-      const canonDocPath = `assessmentResults/${tenantId}/${selectedAssessment.id}/${liveUid}`;
-      const docSnap = await getDoc(doc(db, canonDocPath));
-      const isCompleted = docSnap.exists() && (docSnap.data().completed === true || docSnap.data().status === 'submitted');
-      const check = { exists: docSnap.exists(), completed: isCompleted };
-
-      if (check.exists && check.completed) {
-        setIsLaunching(false);
-        setEligibilityError({
-          title: "Assessment Already Completed",
-          message: "You have already completed and submitted this assessment. Re-attempts are not permitted."
-        });
-        return;
+      const tenantId = user?.tenantId || user?.college || 'default';
+      try {
+        if (selectedAssessment.id) {
+          const canonDocPath = `assessmentResults/${tenantId}/${selectedAssessment.id}/${liveUid}`;
+          const docSnap = await getDoc(doc(db, canonDocPath));
+          const isCompleted = docSnap.exists() && (docSnap.data().completed === true || docSnap.data().status === 'submitted');
+          if (isCompleted) {
+            setIsLaunching(false);
+            setEligibilityError({
+              title: "Assessment Already Completed",
+              message: "You have already completed and submitted this assessment. Re-attempts are not permitted."
+            });
+            return;
+          }
+        }
+      } catch (checkErr) {
+        console.warn("Non-fatal eligibility check issue:", checkErr);
       }
 
       // 3. Launch directly into workspace
@@ -2370,7 +2392,7 @@ const StudentDashboard = () => {
                           key={`${a.courseId || ''}_${a.seriesId || ''}_${a.id}`}
                           className="ps-sheet-card"
                           style={{
-                            '--theme-border-color': 'var(--accent-primary, #4f46e5)',
+                            '--theme-border-color': 'var(--accent-primary, #16a34a)',
                             border: a.completed ? '1px solid var(--accent-coding)' : '1px solid var(--border-color)',
                             boxShadow: a.completed ? '0 4px 20px rgba(21, 128, 61, 0.08)' : 'none',
                             minHeight: '200px'
@@ -2433,8 +2455,8 @@ const StudentDashboard = () => {
                                     fontSize: '13px',
                                     fontWeight: '700',
                                     color: '#ffffff',
-                                    backgroundColor: '#4f46e5',
-                                    border: '1px solid #4f46e5',
+                                    backgroundColor: 'var(--accent-primary, #16a34a)',
+                                    border: '1px solid var(--accent-primary, #16a34a)',
                                     borderRadius: '8px',
                                     cursor: 'pointer',
                                     display: 'inline-flex',
@@ -3589,31 +3611,108 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Themes Grid */}
-            <div style={{ marginTop: '18px' }}>
-              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>Platform Themes (7 Themes)</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>Select an optimized color palette designed for high productivity.</div>
-              <div className="theme-options-grid">
-                {allThemes.map(t => {
-                  const active = currentTheme === t.id;
-                  return (
-                    <div
-                      key={t.id}
-                      className={`theme-preview-card ${active ? 'active' : ''}`}
-                      onClick={() => handleThemeChange(t.id)}
-                    >
-                      <div className="theme-card-top-row">
-                        <span className="theme-name-text">{t.name}</span>
-                        {active && <FaCheckCircle className="theme-check-icon" />}
-                      </div>
-                      <div className="theme-color-bubbles">
-                        {t.colors.map((c, cIdx) => (
-                          <div key={cIdx} className="theme-bubble" style={{ background: c }} />
-                        ))}
-                      </div>
+            {/* Themes Dropdown */}
+            <div style={{ marginTop: '18px' }} ref={themeDropdownRef}>
+              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>Platform Theme</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>Select an optimized theme palette designed for your workspace.</div>
+              
+              <div style={{ position: 'relative', maxWidth: '440px' }}>
+                <button
+                  type="button"
+                  onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '11px 16px',
+                    background: 'var(--bg-primary)',
+                    border: '1.5px solid var(--border-color)',
+                    borderRadius: '10px',
+                    color: 'var(--text-main)',
+                    cursor: 'pointer',
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {(allThemes.find(t => t.id === currentTheme)?.colors || ['#f8fafc', '#ffffff', '#15803d']).map((c, idx) => (
+                        <div key={idx} style={{ width: '12px', height: '12px', borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)' }} />
+                      ))}
                     </div>
-                  );
-                })}
+                    <span>{allThemes.find(t => t.id === currentTheme)?.name || 'SEED-SEB Academic (Default)'}</span>
+                  </div>
+                  <FaChevronDown style={{ fontSize: '12px', color: 'var(--text-muted)', transform: themeDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                </button>
+
+                {themeDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      left: 0,
+                      right: 0,
+                      background: 'var(--bg-secondary)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.1)',
+                      zIndex: 100,
+                      maxHeight: '320px',
+                      overflowY: 'auto',
+                      padding: '6px'
+                    }}
+                  >
+                    {allThemes.map(t => {
+                      const active = currentTheme === t.id;
+                      return (
+                        <div
+                          key={t.id}
+                          onClick={() => {
+                            handleThemeChange(t.id);
+                            setThemeDropdownOpen(false);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            background: active ? 'rgba(22, 163, 74, 0.12)' : 'transparent',
+                            transition: 'background 0.15s ease',
+                            marginBottom: '2px'
+                          }}
+                          onMouseEnter={e => {
+                            if (!active) e.currentTarget.style.background = 'var(--bg-primary)';
+                          }}
+                          onMouseLeave={e => {
+                            if (!active) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ display: 'flex', gap: '3px' }}>
+                                {t.colors.map((c, cIdx) => (
+                                  <div key={cIdx} style={{ width: '10px', height: '10px', borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)' }} />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '13px', fontWeight: active ? 700 : 600, color: active ? 'var(--accent-primary, #15803d)' : 'var(--text-main)' }}>
+                                {t.name}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginLeft: '21px' }}>
+                              {t.desc}
+                            </span>
+                          </div>
+                          {active && <FaCheckCircle style={{ color: 'var(--accent-primary, #15803d)', fontSize: '15px', flexShrink: 0 }} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -4095,27 +4194,27 @@ const StudentDashboard = () => {
           UNIFIED STREAMLINED ASSESSMENT LAUNCH MODAL
       ═══════════════════════════════════════════════════════════ */}
       {launchStep === 'modal' && selectedAssessment && (
-        <div className="lw-overlay" style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(6px)' }}>
-          <div className="lw-card" style={{ maxWidth: '640px', width: '100%', borderRadius: '18px', background: '#ffffff', color: '#0f172a', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)', border: '1px solid #e2e8f0', fontFamily: "'Inter', sans-serif" }}>
+        <div className="lw-overlay" style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)' }}>
+          <div className="lw-card" style={{ maxWidth: '640px', width: '100%', borderRadius: '18px', background: 'var(--bg-secondary, #ffffff)', color: 'var(--text-main, #0f172a)', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)', border: '1px solid var(--border-color, #e2e8f0)', fontFamily: "'Inter', sans-serif" }}>
 
             {/* Header with Badge, Title & Metadata */}
-            <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <span style={{ background: '#dcfce7', color: '#16a34a', fontWeight: '800', fontSize: '11px', padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                <span style={{ background: 'rgba(22, 163, 74, 0.12)', color: 'var(--accent-primary, #16a34a)', fontWeight: '800', fontSize: '11px', padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid rgba(22, 163, 74, 0.25)' }}>
                   {selectedAssessment.type?.toUpperCase() || 'ASSESSMENT'}
                 </span>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <FaClock style={{ color: '#6366f1' }} /> {selectedAssessment.duration} Mins
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main, #334155)', background: 'var(--bg-primary, #f1f5f9)', border: '1px solid var(--border-color, #e2e8f0)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <FaClock style={{ color: 'var(--accent-primary, #16a34a)' }} /> {selectedAssessment.duration} Mins
                   </span>
                   {selectedAssessment.proctored && (
-                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', background: '#e0f2fe', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <FaShieldAlt /> Monitored
                     </span>
                   )}
                 </div>
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '6px 0 0 0', letterSpacing: '-0.02em' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main, #0f172a)', margin: '6px 0 0 0', letterSpacing: '-0.02em' }}>
                 {selectedAssessment.name}
               </h2>
             </div>
@@ -4124,27 +4223,78 @@ const StudentDashboard = () => {
 
               {/* Access Passkey (if mandatory) */}
               {selectedAssessment.passkey ? (
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 18px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <FaLock style={{ color: '#6366f1', fontSize: '14px' }} />
-                    <span style={{ fontWeight: '700', fontSize: '0.92rem', color: '#0f172a' }}>Access Passkey</span>
-                    <span style={{ fontSize: '10.5px', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Required</span>
+                <div style={{
+                  background: 'var(--bg-primary, #f8fafc)',
+                  border: `1.5px solid ${passkeyError ? '#ef4444' : passkeyInput.trim() === selectedAssessment.passkey ? '#16a34a' : 'var(--border-color, #e2e8f0)'}`,
+                  borderRadius: '12px',
+                  padding: '16px 18px',
+                  transition: 'border-color 0.2s ease'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FaLock style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '14px' }} />
+                      <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main, #0f172a)' }}>Access Passkey</span>
+                      <span style={{ fontSize: '10.5px', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Required</span>
+                    </div>
+                    {selectedAssessment.passkey && passkeyInput.trim() === selectedAssessment.passkey && (
+                      <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FaCheckCircle /> Passkey Matched
+                      </span>
+                    )}
                   </div>
-                  <input
-                    type="password"
-                    ref={passkeyInputRef}
-                    placeholder="Enter instructor passkey to unlock..."
-                    value={passkeyInput}
-                    onChange={e => {
-                      setPasskeyInput(e.target.value);
-                      if (passkeyError) setPasskeyError("");
-                    }}
-                    onKeyDown={e => e.key === 'Enter' && handleUnifiedLaunch()}
-                    style={{ width: '100%', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
-                    disabled={isLaunching}
-                  />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input
+                      type={showPasskey ? "text" : "password"}
+                      ref={passkeyInputRef}
+                      placeholder="Enter instructor passkey to unlock..."
+                      value={passkeyInput}
+                      onChange={e => {
+                        setPasskeyInput(e.target.value);
+                        if (passkeyError) setPasskeyError("");
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleUnifiedLaunch();
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 42px 10px 14px',
+                        fontSize: '1rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color, #cbd5e1)',
+                        background: 'var(--bg-secondary, #ffffff)',
+                        color: 'var(--text-main, #0f172a)',
+                        outline: 'none',
+                        transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
+                      }}
+                      disabled={isLaunching}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasskey(!showPasskey)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted, #94a3b8)',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '15px'
+                      }}
+                      tabIndex={-1}
+                      title={showPasskey ? "Hide passkey" : "Show passkey"}
+                    >
+                      {showPasskey ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                   {passkeyError && (
-                    <div style={{ marginTop: '8px', padding: '6px 12px', fontSize: '0.84rem', color: '#ef4444', background: '#fef2f2', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ marginTop: '10px', padding: '7px 12px', fontSize: '0.84rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
                       <FaExclamationTriangle /> {passkeyError}
                     </div>
                   )}
@@ -4153,14 +4303,14 @@ const StudentDashboard = () => {
 
               {/* Instant System Status Badges */}
               <div>
-                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748b', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #64748b)', marginBottom: '8px' }}>
                   System Status
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
                   {/* Internet */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Internet</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Internet</span>
                       <FaWifi style={{ color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444' }}>
@@ -4169,9 +4319,9 @@ const StudentDashboard = () => {
                   </div>
 
                   {/* Camera / Mic */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Camera</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Camera</span>
                       <FaCamera style={{ color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b' }}>
@@ -4180,9 +4330,9 @@ const StudentDashboard = () => {
                   </div>
 
                   {/* Secure Shell */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Secure Shell</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Secure Shell</span>
                       <FaShieldAlt style={{ color: '#16a34a', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
@@ -4191,9 +4341,9 @@ const StudentDashboard = () => {
                   </div>
 
                   {/* Fullscreen */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Fullscreen</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Fullscreen</span>
                       <FaExpand style={{ color: '#16a34a', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
@@ -4205,8 +4355,8 @@ const StudentDashboard = () => {
 
               {/* Assessment Section Breakdown */}
               {selectedAssessment.isMultiSection && selectedAssessment.sections?.length > 0 ? (
-                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#334155', marginBottom: '8px' }}>
+                <div style={{ background: 'var(--bg-primary, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #334155)', marginBottom: '8px' }}>
                     Sections Breakdown ({selectedAssessment.sections.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '110px', overflowY: 'auto' }}>
@@ -4216,16 +4366,16 @@ const StudentDashboard = () => {
                           <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
                             {idx + 1}
                           </span>
-                          <span style={{ color: '#0f172a', fontWeight: '700' }}>{sec.name}</span>
+                          <span style={{ color: 'var(--text-main, #0f172a)', fontWeight: '700' }}>{sec.name}</span>
                         </div>
-                        <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.84rem' }}>{sec.duration_minutes || sec.duration || 0} Mins &gt;</span>
+                        <span style={{ color: 'var(--text-muted, #64748b)', fontWeight: '600', fontSize: '0.84rem' }}>{sec.duration_minutes || sec.duration || 0} Mins &gt;</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#334155', marginBottom: '8px' }}>
+                <div style={{ background: 'var(--bg-primary, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #334155)', marginBottom: '8px' }}>
                     Sections Breakdown (1)
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem', padding: '4px 0' }}>
@@ -4233,19 +4383,19 @@ const StudentDashboard = () => {
                       <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
                         1
                       </span>
-                      <span style={{ color: '#0f172a', fontWeight: '700' }}>{selectedAssessment.name}</span>
+                      <span style={{ color: 'var(--text-main, #0f172a)', fontWeight: '700' }}>{selectedAssessment.name}</span>
                     </div>
-                    <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.84rem' }}>{selectedAssessment.duration} Mins &gt;</span>
+                    <span style={{ color: 'var(--text-muted, #64748b)', fontWeight: '600', fontSize: '0.84rem' }}>{selectedAssessment.duration} Mins &gt;</span>
                   </div>
                 </div>
               )}
 
               {/* Essential Rules */}
-              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '10px', padding: '12px 16px' }}>
+              <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '10px', padding: '12px 16px' }}>
                 <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#d97706', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <FaExclamationTriangle /> Important Guidelines
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.83rem', color: '#78350f', lineHeight: '1.55' }}>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.83rem', color: 'var(--text-muted, #78350f)', lineHeight: '1.55' }}>
                   <li>Fullscreen mode is enforced. Tab switching and window exits are strictly tracked.</li>
                   <li>The assessment timer runs continuously and will auto-submit when time expires.</li>
                   <li>This is a single-attempt session. Ensure your power adapter is plugged in.</li>
@@ -4255,7 +4405,7 @@ const StudentDashboard = () => {
             </div>
 
             {/* Footer Actions */}
-            <div style={{ padding: '16px 28px 20px', borderTop: '1px solid #f1f5f9', background: '#fafafa' }}>
+            <div style={{ padding: '16px 28px 20px', borderTop: '1px solid var(--border-color, #f1f5f9)', background: 'var(--bg-primary, #fafafa)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <button
                   type="button"
@@ -4266,9 +4416,9 @@ const StudentDashboard = () => {
                     fontSize: '0.92rem',
                     fontWeight: '600',
                     borderRadius: '8px',
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    color: '#334155',
+                    background: 'var(--bg-secondary, #ffffff)',
+                    border: '1px solid var(--border-color, #cbd5e1)',
+                    color: 'var(--text-main, #334155)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -4286,7 +4436,7 @@ const StudentDashboard = () => {
                     fontSize: '0.95rem',
                     fontWeight: '700',
                     borderRadius: '8px',
-                    background: '#16a34a',
+                    background: 'var(--accent-primary, #16a34a)',
                     color: '#ffffff',
                     border: 'none',
                     boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
@@ -4298,7 +4448,7 @@ const StudentDashboard = () => {
                 >
                   {isLaunching ? (
                     <>
-                      <span className="lw-mini-spinner" style={{ width: '15px', height: '15px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></span>
+                      <span className="lw-mini-spinner" style={{ width: '15px', height: '15px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#ffffff', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }}></span>
                       Starting Assessment...
                     </>
                   ) : (
@@ -4308,7 +4458,7 @@ const StudentDashboard = () => {
                   )}
                 </button>
               </div>
-              <div style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted, #64748b)', fontSize: '11px', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                 <FaLock style={{ fontSize: '10px' }} /> Your activity will be monitored throughout this assessment.
               </div>
             </div>

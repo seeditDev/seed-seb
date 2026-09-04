@@ -48,6 +48,7 @@ import { ATTEMPT_STATES, attemptDocId } from '../services/attemptStateMachine';
 import { markAssessmentCompleted, invalidateCompletionCache } from '../services/attemptStatusService';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 import { savePendingEnvelope } from '../utils/safeStorage';
+import { parseScheduleWindow } from '../utils/assessmentValidator.js';
 
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -1450,6 +1451,26 @@ const MultiSectionAssessment = () => {
     if (!authData?.email || !assessmentData) {
       navigate('/student/dashboard', { replace: true });
       return;
+    }
+
+    // Verify schedule window
+    if (assessmentData.schedule) {
+      const { startDate, endDate } = parseScheduleWindow(assessmentData.schedule);
+      const now = new Date();
+      if (startDate && now < startDate) {
+        toast.error(`This test has not started yet. It is scheduled to start on ${startDate.toLocaleDateString()} at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`);
+        sessionStorage.removeItem('multisectionAssessmentData');
+        localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+        navigate('/student/dashboard', { replace: true });
+        return;
+      }
+      if (endDate && now > endDate) {
+        toast.error(`This test schedule has expired. The access window closed on ${endDate.toLocaleDateString()} at ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`);
+        sessionStorage.removeItem('multisectionAssessmentData');
+        localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+        navigate('/student/dashboard', { replace: true });
+        return;
+      }
     }
 
     // Immediately block if already submitted locally

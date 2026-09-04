@@ -78,9 +78,47 @@ console.log("Hello, World!");
  */
 export function getQuestionBoilerplate(q, lang) {
   if (!lang) return "";
-  const standardLang = lang === 'python3' ? 'python' : (lang === 'c++' ? 'cpp' : (lang === 'js' ? 'javascript' : lang));
+  const standardLang = lang === 'python3' ? 'python' : (lang === 'c++' ? 'cpp' : (lang === 'js' ? 'javascript' : lang.toLowerCase()));
   const altLang = standardLang === 'python' ? 'python3' : (standardLang === 'cpp' ? 'c++' : (standardLang === 'javascript' ? 'js' : standardLang));
   
+  const searchInObj = (obj) => {
+    if (!obj || typeof obj !== 'object') return null;
+    // 1. Direct standard keys
+    const direct = obj[standardLang] || obj[altLang] || obj[lang];
+    if (typeof direct === 'string' && direct.trim() !== '') return direct;
+
+    // 2. Case-insensitive & alias scan (matches "C++", "Python3", "Java", "C", "JavaScript")
+    const targets = new Set([
+      standardLang.toLowerCase(),
+      altLang.toLowerCase(),
+      lang.toLowerCase(),
+      standardLang.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      altLang.toLowerCase().replace(/[^a-z0-9]/g, '')
+    ]);
+    if (standardLang === 'cpp') {
+      targets.add('c++');
+      targets.add('cpp');
+    }
+    if (standardLang === 'python') {
+      targets.add('python3');
+      targets.add('py');
+    }
+    if (standardLang === 'javascript') {
+      targets.add('js');
+      targets.add('node');
+    }
+
+    for (const [k, v] of Object.entries(obj)) {
+      if (typeof v !== 'string' || !v.trim()) continue;
+      const kClean = String(k).trim().toLowerCase();
+      const kAlpha = kClean.replace(/[^a-z0-9]/g, '');
+      if (targets.has(kClean) || targets.has(kAlpha)) {
+        return v;
+      }
+    }
+    return null;
+  };
+
   if (q) {
     const candidates = [
       q.boilerplates,
@@ -101,10 +139,8 @@ export function getQuestionBoilerplate(q, lang) {
 
     for (const source of candidates) {
       if (source && typeof source === 'object') {
-        const val = source[standardLang] || source[altLang] || source[lang] || source[standardLang.toLowerCase()] || source[standardLang.toUpperCase()];
-        if (typeof val === 'string' && val.trim() !== '') {
-          return val;
-        }
+        const found = searchInObj(source);
+        if (found) return found;
       } else if (typeof source === 'string' && source.trim() !== '' && candidates.indexOf(source) <= 2) {
         return source;
       }
@@ -123,16 +159,17 @@ const slugify = (value = '') => {
         .replace(/^-+|-+$/g, '') || 'coding-test';
 };
 
-const normalizeQuestion = (q) => {
+const normalizeQuestion = (q, idx = 0) => {
     if (!q) return q;
-    const id = String(q.id || q.questionId || q.challengeId || (q._id  ?? '')).trim();
+    const rawId = q.id || q.questionId || q.challengeId || q._id;
+    const id = String(rawId !== undefined && rawId !== null && String(rawId).trim() !== '' ? rawId : `q_${idx}`).trim();
     const title = q.title || q.name || (q.content?.title  ?? '');
     const description = q.content?.problemStatement || q.description || (q.problemStatement  ?? '');
     const constraints = Array.isArray(q.content?.constraints) 
         ? q.content.constraints.join('\n') 
         : (q.constraints ?? '');
 
-    // Normalize boilerPlates robustly supporting camelCase, lowerCase, and standard language keys
+    // Normalize boilerPlates robustly supporting camelCase, lowerCase, uppercase, and standard language keys
     const getNormalizedLangKey = (k) => {
         const clean = String(k).trim().toLowerCase();
         if (clean === 'c') return 'c';
@@ -143,21 +180,24 @@ const normalizeQuestion = (q) => {
         return clean;
     };
 
-    // Valid language key names in boilerPlates — filter out non-code keys.
     const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
-    const rawBoilerplates = q.boilerPlates ?? q.boilerplates ?? {};
+    const rawBoilerplates = {
+        ...(q.content?.boilerPlates || {}),
+        ...(q.content?.boilerplates || {}),
+        ...(q.boilerplates || {}),
+        ...(q.boilerPlates || {})
+    };
     const boilerPlates = {};
 
     Object.entries(rawBoilerplates).forEach(([lang, val]) => {
-        if (!VALID_LANG_NAMES.has(String(lang).trim().toLowerCase())) return;
+        const clean = String(lang).trim().toLowerCase();
+        if (!VALID_LANG_NAMES.has(clean) && !VALID_LANG_NAMES.has(clean.replace(/[^a-z0-9]/g, ''))) return;
         if (typeof val !== 'string') return;
         const norm = getNormalizedLangKey(lang);
-        if (norm === 'python') {
-            boilerPlates.python = val;
-            boilerPlates.python3 = val;
-        } else {
-            boilerPlates[norm] = val;
-        }
+        boilerPlates[norm] = val;
+        if (norm === 'cpp') boilerPlates['c++'] = val;
+        if (norm === 'python') boilerPlates.python3 = val;
+        if (norm === 'javascript') boilerPlates.js = val;
     });
 
     // Normalize sample test cases
@@ -446,6 +486,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             for (const q of questions) {
                 const qId = q.id || q.questionId;
+                const qWeight = q.weight || DEFAULT_QUESTION_WEIGHT;
+                totalMaxWeight += qWeight;
+
                 const code = (editorRef.current && currentQuestion?.id === qId)
                     ? editorRef.current.getValue()
                     : (codeMapRef.current[`${qId}_${language}`] ||
@@ -455,6 +498,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                        codeMapRef.current[`${qId}_java`] ||
                        codeMapRef.current[`${qId}_javascript`] ||
                        codeMap[`${qId}_${language}`] || "");
+                allAnswers[qId] = code;
+
                 const hasEvaluatedScore = finalScores[qId] && 
                                           finalScores[qId].testResults && 
                                           finalScores[qId].testResults.length > 0 && 
@@ -465,71 +510,20 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (hasEvaluatedScore) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
+                    // Unsubmitted question: no final evaluation needed. Recorded with 0 score instantly.
                     const hidden = getQuestionHiddenTestCases(q);
-
-                    if (hidden.length === 0) {
-                        console.error(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
-                        finalScores[qId] = {
-                            score: 0,
-                            percentage: 0,
-                            passed: 0,
-                            total: 0,
-                            submitted: true,
-                            code: code,
-                            solution: code,
-                            language: language,
-                            testResults: [],
-                            invalidConfig: true,
-                            invalidReason: 'no_test_cases'
-                        };
-                    } else {
-                        const bridgeLang = language === 'python3' ? 'python' : language;
-                        const isBlank = isCodeBlankOrEmpty(code);
-                        let passes = 0;
-                        let evalResults = [];
-                        if (!isBlank) {
-                            for (let i = 0; i < hidden.length; i++) {
-                                const tc = hidden[i];
-                                try {
-                                    const resRaw = await desktopBridge.runDirectSandbox(bridgeLang, code, tc.input);
-                                    const res = typeof resRaw === 'string' ? JSON.parse(resRaw) : (resRaw || {});
-                                    const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                                    const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
-                                    if (passed) passes++;
-                                    evalResults.push({
-                                        index: i + 1,
-                                        input: tc.input,
-                                        expected: tc.expectedOutput,
-                                        actual: res.stdout ?? "",
-                                        stderr: res.stderr || (res.error ?? ""),
-                                        passed
-                                    });
-                                } catch (err) {
-                                    evalResults.push({
-                                        index: i + 1,
-                                        input: tc.input,
-                                        expected: tc.expectedOutput,
-                                        actual: "",
-                                        stderr: err.message,
-                                        passed: false
-                                    });
-                                }
-                            }
-                        }
-                        const qScore = (!isBlank && hidden.length > 0) ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
-                        finalScores[qId] = {
-                            score: qScore,
-                            percentage: (!isBlank && hidden.length > 0) ? Math.round((passes / hidden.length) * 100) : 0,
-                            passed: isBlank ? 0 : passes,
-                            total: hidden.length,
-                            submitted: true,
-                            code: code,
-                            solution: code,
-                            language: language,
-                            testResults: evalResults
-                        };
-                        totalEarnedWeight += qScore;
-                    }
+                    finalScores[qId] = {
+                        score: 0,
+                        percentage: 0,
+                        passed: 0,
+                        total: hidden.length,
+                        submitted: false,
+                        status: 'Unattempted',
+                        code: code || "",
+                        solution: code || "",
+                        language: language,
+                        testResults: []
+                    };
                 }
             }
 
@@ -1528,7 +1522,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     const editorRef = useRef(null);
     const codeMapRef = useRef(codeMap);
+    const isSwitchingQuestionRef = useRef(false);
     const questionRunHistoryRef = useRef({});
+
+    const getCodeStorageKey = useCallback(() => {
+        const aId = testData?.id || testData?.assessmentId || currentAssessment?.id || assessmentSlug || 'default';
+        return `codingAssessmentCode_${aId}`;
+    }, [testData?.id, testData?.assessmentId, currentAssessment?.id, assessmentSlug]);
+
     useEffect(() => {
         codeMapRef.current = { ...codeMap, ...codeMapRef.current };
     }, [codeMap]);
@@ -1538,68 +1539,96 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             try {
                 const val = editorRef.current.getValue();
                 if (typeof val === 'string') {
-                    const key = `${currentQuestion.id}_${language}`;
+                    const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
+                    const key = `${qId}_${language}`;
                     codeMapRef.current[key] = val;
-                    throttledLocalStorageSet("codingAssessmentCode", codeMapRef.current);
+                    const storageKey = getCodeStorageKey();
+                    try {
+                        localStorage.setItem(storageKey, JSON.stringify(codeMapRef.current));
+                        localStorage.setItem("codingAssessmentCode", JSON.stringify(codeMapRef.current));
+                    } catch (_) {}
                 }
             } catch (_) {}
         }
-    }, [currentQuestion, language]);
+    }, [currentQuestion, language, activeQuestionIndex, getCodeStorageKey]);
 
     const handleSwitchQuestion = useCallback((newIdx) => {
-        saveCurrentEditorToMap();
+        // 1. Immediately extract and save the active editor's value for the current question
+        if (editorRef.current && currentQuestion) {
+            try {
+                const val = editorRef.current.getValue();
+                if (typeof val === 'string') {
+                    const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
+                    const key = `${qId}_${language}`;
+                    codeMapRef.current[key] = val;
+                }
+            } catch (_) {}
+        }
+
+        const storageKey = getCodeStorageKey();
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(codeMapRef.current));
+            localStorage.setItem("codingAssessmentCode", JSON.stringify(codeMapRef.current));
+        } catch (_) {}
+
         let targetIdx = activeQuestionIndex;
         if (typeof newIdx === 'function') {
             targetIdx = newIdx(activeQuestionIndex);
         } else if (typeof newIdx === 'number') {
             targetIdx = newIdx;
         }
+
         if (targetIdx >= 0 && targetIdx < questions.length) {
-            setActiveQuestionIndex(targetIdx);
             const targetQ = questions[targetIdx];
             if (targetQ) {
-                const codeKey = `${targetQ.id}_${language}`;
-                let targetCode = codeMapRef.current[codeKey] || codeMap[codeKey];
+                const targetQId = targetQ.id || targetQ.questionId || `q_${targetIdx}`;
+                const codeKey = `${targetQId}_${language}`;
+                let targetCode = codeMapRef.current[codeKey];
                 if (!targetCode || typeof targetCode !== 'string' || targetCode.trim() === '') {
                     targetCode = getQuestionBoilerplate(targetQ, language);
                     codeMapRef.current[codeKey] = targetCode;
-                    setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
                 }
+
+                // Prevent onChange from triggering handleCodeChange during value update
+                isSwitchingQuestionRef.current = true;
+                setActiveQuestionIndex(targetIdx);
+                setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
+                
                 if (editorRef.current) {
                     editorRef.current.setValue(targetCode);
                 }
+
+                setTimeout(() => {
+                    isSwitchingQuestionRef.current = false;
+                }, 100);
             }
         }
-    }, [questions, activeQuestionIndex, language, saveCurrentEditorToMap, codeMap]);
+    }, [questions, activeQuestionIndex, language, currentQuestion, getCodeStorageKey]);
 
     const handleLanguageChange = useCallback((newLang) => {
         saveCurrentEditorToMap();
         setLanguage(newLang);
         if (!currentQuestion) return;
-        const codeKey = `${currentQuestion.id}_${newLang}`;
+        const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
+        const codeKey = `${qId}_${newLang}`;
         let targetCode = codeMapRef.current[codeKey] || codeMap[codeKey];
         if (!targetCode || typeof targetCode !== 'string' || targetCode.trim() === '') {
             targetCode = getQuestionBoilerplate(currentQuestion, newLang);
             codeMapRef.current[codeKey] = targetCode;
             setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
         }
+        isSwitchingQuestionRef.current = true;
         if (editorRef.current) {
             editorRef.current.setValue(targetCode);
         }
-    }, [currentQuestion, saveCurrentEditorToMap, codeMap]);
+        setTimeout(() => {
+            isSwitchingQuestionRef.current = false;
+        }, 100);
+    }, [currentQuestion, activeQuestionIndex, saveCurrentEditorToMap, codeMap]);
 
-    const getCurrentCode = useCallback((qId = currentQuestion?.id, lang = language) => {
+    const getCurrentCode = useCallback((qId = (currentQuestion?.id || currentQuestion?.questionId || `q_${activeQuestionIndex}`), lang = language) => {
         if (!qId) return "";
         const key = `${qId}_${lang}`;
-        if (editorRef.current && currentQuestion?.id === qId && language === lang) {
-            try {
-                const editorVal = editorRef.current.getValue();
-                if (typeof editorVal === 'string' && editorVal !== '') {
-                    codeMapRef.current[key] = editorVal;
-                    return editorVal;
-                }
-            } catch (_) {}
-        }
         if (codeMapRef.current && codeMapRef.current[key] !== undefined && codeMapRef.current[key] !== null && codeMapRef.current[key].trim?.() !== '') {
             return codeMapRef.current[key];
         }
@@ -1608,25 +1637,29 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         }
         const targetQ = questions.find(q => (q.id || q.questionId) === qId) || currentQuestion;
         return getQuestionBoilerplate(targetQ, lang);
-    }, [currentQuestion, language, codeMap, questions]);
+    }, [currentQuestion, activeQuestionIndex, language, codeMap, questions]);
 
     // Handle code editor change: update ref & throttled local storage (0ms typing latency)
     const handleCodeChange = (value) => {
-        if (!currentQuestion) return;
+        if (isSwitchingQuestionRef.current || !currentQuestion) return;
 
-        const key = `${currentQuestion.id}_${language}`;
+        const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
+        const key = `${qId}_${language}`;
         codeMapRef.current = {
             ...codeMapRef.current,
             [key]: value
         };
-        throttledLocalStorageSet("codingAssessmentCode", codeMapRef.current);
+        const storageKey = getCodeStorageKey();
+        throttledLocalStorageSet(storageKey, codeMapRef.current, 1000);
+        throttledLocalStorageSet("codingAssessmentCode", codeMapRef.current, 1000);
     };
 
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
         const boilerplate = getQuestionBoilerplate(currentQuestion, language);
-        const codeKey = `${currentQuestion.id}_${language}`;
+        const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
+        const codeKey = `${qId}_${language}`;
         codeMapRef.current[codeKey] = boilerplate;
         setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
         if (editorRef.current) {
@@ -2009,7 +2042,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
         if (isEmbedded) {
             setIsSubmitting(true);
-            setSubmitPhase('evaluating');
+            setSubmitPhase('submitting');
             await handleEmbeddedSectionSubmit(reason);
             setIsSubmitting(false);
             submitGuard.fail(); // parent owns persistence; free the lock
@@ -2049,6 +2082,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             for (const q of activeQuestions) {
                 const qId = q.id || q.questionId;
+                const qWeight = q.weight || DEFAULT_QUESTION_WEIGHT;
+                totalMaxWeight += qWeight;
+
                 const hasEvaluatedScore = finalScores[qId] && 
                                           finalScores[qId].testResults && 
                                           finalScores[qId].testResults.length > 0 && 
@@ -2059,6 +2095,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (hasEvaluatedScore) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
+                    // Unsubmitted question: no final evaluation needed. Recorded with 0 score instantly.
+                    const hidden = getQuestionHiddenTestCases(q);
                     const code = (storedCodeMap && storedCodeMap[`${qId}_${language}`]) ||
                                  getCurrentCode(qId, language) ||
                                  codeMapRef.current[`${qId}_cpp`] ||
@@ -2066,73 +2104,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                  codeMapRef.current[`${qId}_python`] ||
                                  codeMapRef.current[`${qId}_java`] ||
                                  codeMapRef.current[`${qId}_javascript`] || "";
-                    const hidden = getQuestionHiddenTestCases(q);
-
-                    if (hidden.length === 0) {
-                        console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
-                        finalScores[qId] = {
-                            score: 0,
-                            percentage: 0,
-                            passed: 0,
-                            total: 0,
-                            submitted: true,
-                            code: code,
-                            solution: code,
-                            language: language,
-                            testResults: [],
-                            invalidConfig: true,
-                            invalidReason: 'no_test_cases'
-                        };
-                    } else {
-                        const bridgeLang = language === 'python3' ? 'python' : language;
-                        let passes = 0;
-                        let evalResults = [];
-                        if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
-                            for (let i = 0; i < hidden.length; i++) {
-                                const tc = hidden[i];
-                                try {
-                                    const res = await Promise.race([
-                                        desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
-                                        new Promise(resolve => setTimeout(() => resolve({ error: 'timeout', exit_code: -1 }), 2500))
-                                    ]);
-                                    if (isEngineDisconnected(res)) break;
-                                    const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                                    const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
-                                    if (passed) passes++;
-                                    evalResults.push({
-                                        index: i + 1,
-                                        input: tc.input,
-                                        expected: tc.expectedOutput,
-                                        actual: res.stdout ?? "",
-                                        stderr: res.stderr || (res.error ?? ""),
-                                        passed
-                                    });
-                                } catch (err) {
-                                    evalResults.push({
-                                        index: i + 1,
-                                        input: tc.input,
-                                        expected: tc.expectedOutput,
-                                        actual: "",
-                                        stderr: err.message,
-                                        passed: false
-                                    });
-                                }
-                            }
-                        }
-                        const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
-                        finalScores[qId] = {
-                            score: qScore,
-                            percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
-                            passed: passes,
-                            total: hidden.length,
-                            submitted: true,
-                            code: code,
-                            solution: code,
-                            language: language,
-                            testResults: evalResults
-                        };
-                        totalEarnedWeight += qScore;
-                    }
+                    finalScores[qId] = {
+                        score: 0,
+                        percentage: 0,
+                        passed: 0,
+                        total: hidden.length,
+                        submitted: false,
+                        status: 'Unattempted',
+                        code: code || "",
+                        solution: code || "",
+                        language: language,
+                        testResults: []
+                    };
                 }
             }
 
@@ -2329,16 +2312,16 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
         if (isEmbedded) {
             setIsSubmitting(true);
-            setSubmitPhase('evaluating');
+            setSubmitPhase('submitting');
             await handleEmbeddedSectionSubmit();
             setIsSubmitting(false);
             submitGuard.fail(); // parent owns persistence; free the lock
             return;
         }
 
-        // Phase 1: Evaluate any unevaluated questions
+        // Submit directly: use already-evaluated results; unsubmitted questions get 0 score
         setIsSubmitting(true);
-        setSubmitPhase('evaluating');
+        setSubmitPhase('submitting');
 
         try {
             const finalScores = { ...questionScores };
@@ -2348,6 +2331,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             for (const rawQ of questions) {
                 const q = normalizeQuestion(rawQ);
                 const qId = q.id || q.questionId;
+                const qWeight = q.weight || DEFAULT_QUESTION_WEIGHT;
+                totalMaxWeight += qWeight;
+
                 const hasEvaluatedScore = finalScores[qId] && 
                                           finalScores[qId].testResults && 
                                           finalScores[qId].testResults.length > 0 && 
@@ -2358,79 +2344,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 if (hasEvaluatedScore) {
                     totalEarnedWeight += finalScores[qId].score;
                 } else {
+                    // Unsubmitted question: no final evaluation needed. Recorded with 0 score instantly.
+                    const hidden = getQuestionHiddenTestCases(q);
                     const code = getCurrentCode(qId, language) ||
                                  codeMapRef.current[`${qId}_cpp`] ||
                                  codeMapRef.current[`${qId}_c`] ||
                                  codeMapRef.current[`${qId}_python`] ||
                                  codeMapRef.current[`${qId}_java`] ||
                                  codeMapRef.current[`${qId}_javascript`] || "";
-                    const hidden = getQuestionHiddenTestCases(q);
-
-                    if (hidden.length === 0) {
-                        console.warn(`[CodingEval] Question ${qId} has no test cases. Assigning 0.`);
-                        finalScores[qId] = {
-                            score: 0,
-                            percentage: 0,
-                            passed: 0,
-                            total: 0,
-                            submitted: true,
-                            code: code,
-                            solution: code,
-                            language: language,
-                            testResults: [],
-                            invalidConfig: true,
-                            invalidReason: 'no_test_cases'
-                        };
-                    } else {
-                        const bridgeLang = language === 'python3' ? 'python' : language;
-                        let passes = 0;
-                        let evalResults = [];
-                        if (code && !isCodeBlankOrEmpty(code) && hidden.length > 0) {
-                            for (let i = 0; i < hidden.length; i++) {
-                                const tc = hidden[i];
-                                try {
-                                    const res = await Promise.race([
-                                        desktopBridge.runDirectSandbox(bridgeLang, code, tc.input),
-                                        new Promise(resolve => setTimeout(() => resolve({ error: 'timeout', exit_code: -1 }), 2500))
-                                    ]);
-                                    if (isEngineDisconnected(res)) break;
-                                    const exit = res.exit_code !== undefined ? res.exit_code : (res.exitCode !== undefined ? res.exitCode : 0);
-                                    const passed = isTestCasePassed(res.stdout, tc.expectedOutput || tc.expected, tc.input, exit, res.error);
-                                    if (passed) passes++;
-                                    evalResults.push({
-                                        index: i + 1,
-                                        input: tc.input,
-                                        expected: tc.expectedOutput,
-                                        actual: res.stdout ?? "",
-                                        stderr: res.stderr || (res.error ?? ""),
-                                        passed
-                                    });
-                                } catch (err) {
-                                    evalResults.push({
-                                        index: i + 1,
-                                        input: tc.input,
-                                        expected: tc.expectedOutput,
-                                        actual: "",
-                                        stderr: err.message,
-                                        passed: false
-                                    });
-                                }
-                            }
-                        }
-                        const qScore = hidden.length > 0 ? (passes / hidden.length) * (q.weight || DEFAULT_QUESTION_WEIGHT) : 0;
-                        finalScores[qId] = {
-                            score: qScore,
-                            percentage: hidden.length > 0 ? Math.round((passes / hidden.length) * 100) : 0,
-                            passed: passes,
-                            total: hidden.length,
-                            submitted: true,
-                            code: code,
-                            solution: code,
-                            language: language,
-                            testResults: evalResults
-                        };
-                        totalEarnedWeight += qScore;
-                    }
+                    finalScores[qId] = {
+                        score: 0,
+                        percentage: 0,
+                        passed: 0,
+                        total: hidden.length,
+                        submitted: false,
+                        status: 'Unattempted',
+                        code: code || "",
+                        solution: code || "",
+                        language: language,
+                        testResults: []
+                    };
                 }
             }
 
@@ -3546,10 +3479,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                                 <div className="editor-monaco-body">
                                     <Editor
-                                        key={`${currentQuestion?.id || 'q'}_${language}_${editorTheme}`}
+                                        key={`${currentQuestion?.id || currentQuestion?.questionId || activeQuestionIndex}_${language}_${editorTheme}`}
                                         height="100%"
                                         language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
-                                        defaultValue={getCurrentCode(currentQuestion?.id, language)}
+                                        defaultValue={getCurrentCode(currentQuestion?.id || currentQuestion?.questionId || `q_${activeQuestionIndex}`, language)}
                                         onChange={handleCodeChange}
                                         onMount={(editor) => {
                                             editorRef.current = editor;
@@ -3621,7 +3554,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 className="coding-testcases-card"
                                 style={{ height: `${outputPaneHeight}px`, flexShrink: 0 }}
                             >
-                                <div className="testcases-tabs-header">
+                                <div className="testcases-tabs-header" style={{ display: 'flex', alignItems: 'center' }}>
                                     <button
                                         type="button"
                                         className={`testcases-tab-btn ${activeResultTab !== 'console' ? 'active' : ''}`}
@@ -3644,6 +3577,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         >
                                             Custom Input
                                         </button>
+                                    )}
+                                    {(isRunning || isEvaluating) && (
+                                        <div style={{
+                                            marginLeft: 'auto',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '4px 12px',
+                                            background: '#1e293b',
+                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                            borderRadius: '6px',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            color: '#ffffff'
+                                        }}>
+                                            <div className="button-spinner" style={{ width: '12px', height: '12px', borderTopColor: '#ffffff' }} />
+                                            <span>{evalProgressText || (isRunning ? 'Compiling & Running...' : 'Evaluating Test Cases...')}</span>
+                                        </div>
                                     )}
                                 </div>
 
@@ -3980,71 +3931,32 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 </div>
             )}
 
-            {/* Submit sequence full-screen overlay — shows evaluating or submitting phase */}
-            {isSubmitting && (
-                <div className="compiling-workspace-overlay" style={{ zIndex: 1200 }}>
-                    <div className="compiling-loader-container">
-                        <div className="compiling-spinner"></div>
-                        {submitPhase === 'evaluating' ? (
-                            <>
-                                <span className="compiling-loader-text"> Evaluating All Questions...</span>
-                                <span className="compiling-loader-subtext">Running hidden test cases against your solutions. Please wait.</span>
-                            </>
-                        ) : (
-                            <>
-                                <span className="compiling-loader-text"> Submitting Assessment...</span>
-                                <span className="compiling-loader-subtext">Saving your results securely. Please do not close this window.</span>
-                            </>
-                        )}
+            {/* Submit & Evaluation Fullscreen Overlay (SEB Boot Branded Theme) */}
+            {(isSubmitting || submitPhase) && (
+                <div className="seb-boot" style={{ zIndex: 99999 }}>
+                    <div className="seb-boot__brand">
+                        <div className="seb-boot__spinner-ring"></div>
+                        <div className="seb-boot__logo-wrapper">
+                            <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
+                        </div>
                     </div>
-                </div>
-            )}
-
-            {/* Active Evaluation Pointer-Lock & HUD Progress Overlay */}
-            {(isRunning || isEvaluating) && (
-                <div className="compiling-workspace-overlay" style={{ 
-                    zIndex: 1100,
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    pointerEvents: 'all',
-                    cursor: 'wait'
-                }}>
-                    <div className="compiling-loader-container" style={{
-                        background: '#0f172a',
-                        border: '1px solid #334155',
-                        borderRadius: '12px',
-                        padding: '24px 32px',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '12px',
-                        maxWidth: '420px',
-                        textAlign: 'center'
-                    }}>
-                        <div className="compiling-spinner" style={{
-                            width: '36px',
-                            height: '36px',
-                            border: '3px solid #334155',
-                            borderTopColor: '#3b82f6',
-                            borderRadius: '50%',
-                            animation: 'spin 1s linear infinite'
-                        }}></div>
-                        <span className="compiling-loader-text" style={{ color: '#f8fafc', fontWeight: 600, fontSize: '1.05rem' }}>
-                            {isRunning ? 'Compiling & Running...' : 'Evaluating Test Cases...'}
-                        </span>
-                        <span className="compiling-loader-subtext" style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                            {evalProgressText || (isRunning ? 'Executing your code against sample test cases...' : 'Running hidden test cases against your solution...')}
+                    <div className="seb-boot__title">
+                        {submitPhase === 'evaluating' ? 'Evaluating Code Solutions...' : 'Submitting Assessment Results...'}
+                    </div>
+                    <div className="seb-boot__status">
+                        <span className="seb-boot__dot"></span>
+                        <span>
+                            {submitPhase === 'evaluating'
+                                ? 'Running hidden test cases on your code · Calculating official scores...'
+                                : 'Saving assessment records securely to the examination server...'}
                         </span>
                     </div>
+                    <div className="seb-boot__progress-bar" style={{ width: '240px' }}>
+                        <div className="seb-boot__progress-fill"></div>
+                    </div>
+                    <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '16px', maxWidth: '400px', textAlign: 'center', lineHeight: 1.5 }}>
+                        Please do not refresh, exit, or close this window while submission is in progress.
+                    </p>
                 </div>
             )}
 
@@ -4096,31 +4008,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     </div>
                 </div>
             )}
-            {/* Global Submitting / Evaluating Overlay */}
-            {(isSubmitting || submitPhase) && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-                    background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 99999, color: 'white', fontFamily: "'Inter', sans-serif"
-                }}>
-                    <div style={{
-                        background: 'rgba(30, 41, 59, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '16px', padding: '36px 48px', textAlign: 'center', maxWidth: '460px',
-                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-                    }}>
-                        <div className="learn-spinner" style={{ width: '48px', height: '48px', borderTopColor: '#10b981', margin: '0 auto 20px' }} />
-                        <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px', color: '#f8fafc' }}>
-                            {submitPhase === 'evaluating' ? 'Evaluating Code Across Test Cases...' : 'Submitting Assessment Results...'}
-                        </h3>
-                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5', margin: 0 }}>
-                            {submitPhase === 'evaluating' 
-                                ? 'Running hidden test cases on your code to calculate official scores...' 
-                                : 'Compiling your score and synchronizing results with the secure exam server. Please wait...'}
-                        </p>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 };
