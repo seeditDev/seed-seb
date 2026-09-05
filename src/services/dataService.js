@@ -47,6 +47,7 @@ function buildAuthData(firebaseUser, profile = {}, tenantDetails = null) {
         tenant: tenantDetails || profile.tenant || null,
         name: profile.name ?? '',
         rollNumber: profile.rollNumber ?? '',
+        username: profile.username ?? '',
         cohortId: profile.cohortId ?? '',
         year: profile.year ?? '',
         department: profile.department ?? '',

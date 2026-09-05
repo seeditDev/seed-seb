@@ -53,7 +53,18 @@ import {
   FaMobileAlt,
   FaCode,
   FaExpand,
-  FaPlay
+  FaPlay,
+  FaHeadset,
+  FaCommentDots,
+  FaDesktop,
+  FaArrowRight,
+  FaLifeRing,
+  FaLinkedin,
+  FaGlobe,
+  FaExternalLinkAlt,
+  FaDownload,
+  FaCopy,
+  FaAndroid
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/StudentDashboard.css';
@@ -77,6 +88,23 @@ import { loadUserDailyGoals, saveUserDailyGoals, getDailyGoalsForDate } from '..
 import { toast } from 'sonner';
 import { getAuthData } from '../utils/storageUtils';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
+import NotificationCenterPopover from './NotificationCenterPopover';
+import {
+  subscribeStudentNotifications,
+  getReadNotifIds,
+  markAsRead,
+  markAllAsRead,
+} from '../services/notificationService';
+import SupportTicketModal from './SupportTicketModal';
+import SupportTicketChatModal from './SupportTicketChatModal';
+import { DocumentationModal, AuthenticityModal } from './SupportDocModals';
+import {
+  subscribeStudentTickets,
+  TICKET_STATUSES,
+  TICKET_CATEGORIES,
+} from '../services/supportService';
+import { ensureUserHasUsername } from '../services/usernameService';
+import { publishPublicProfile } from '../services/publicProfileService';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -120,7 +148,8 @@ const StudentDashboard = () => {
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [userPremiumState, setUserPremiumState] = useState(null);
-  const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'password'
+  const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'widget', 'password'
+  const [studentUsername, setStudentUsername] = useState(() => user?.username || '');
   const [practiceInitialTab, setPracticeInitialTab] = useState('paths');
   const [practiceInitialCourse, setPracticeInitialCourse] = useState(null);
   const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('portal_primary_color') || 'green');
@@ -132,6 +161,66 @@ const StudentDashboard = () => {
   const [currentTheme, setCurrentTheme] = useState(() => {
     return localStorage.getItem('portal_theme') || 'seed-seb';
   });
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportInitialCategory, setSupportInitialCategory] = useState('download_seb');
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [chatTicket, setChatTicket] = useState(null);
+  const [supportTicketsList, setSupportTicketsList] = useState([]);
+
+  useEffect(() => {
+    const effectiveUid = user?.uid || 'demo-student';
+    const unsub = subscribeStudentTickets(effectiveUid, (list) => {
+      setSupportTicketsList(list);
+    });
+    return () => unsub();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    ensureUserHasUsername(user).then((handle) => {
+      if (handle) {
+        setStudentUsername(handle);
+      }
+    }).catch((e) => console.warn('[StudentDashboard] Error ensuring username:', e));
+  }, [user?.uid]);
+
+  // Real-time notifications with time limits
+  const [notifications, setNotifications] = useState([]);
+  const [readNotifIds, setReadNotifIds] = useState(() => getReadNotifIds(user?.uid));
+  const [notifPopoverOpen, setNotifPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    setReadNotifIds(getReadNotifIds(user.uid));
+
+    const unsubscribe = subscribeStudentNotifications(user, (items) => {
+      setNotifications(items);
+    });
+
+    return () => {
+      try {
+        unsubscribe();
+      } catch (_) {}
+    };
+  }, [user?.uid, user?.tenantId, user?.college, user?.cohortId, user?.year, user?.batch]);
+
+  const handleMarkNotifAsRead = useCallback((notifId) => {
+    if (!user?.uid) return;
+    markAsRead(user.uid, notifId);
+    setReadNotifIds(getReadNotifIds(user.uid));
+  }, [user?.uid]);
+
+  const handleMarkAllNotifsAsRead = useCallback(() => {
+    if (!user?.uid) return;
+    markAllAsRead(user.uid, notifications.map((n) => n.id));
+    setReadNotifIds(getReadNotifIds(user.uid));
+  }, [user?.uid, notifications]);
+
+  const unreadNotifCount = useMemo(() => {
+    const readSet = new Set(readNotifIds);
+    return notifications.filter((n) => !readSet.has(n.id)).length;
+  }, [notifications, readNotifIds]);
   const [apiKeysList, setApiKeysList] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('user_api_keys')) || [];
@@ -152,6 +241,10 @@ const StudentDashboard = () => {
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editRollNo, setEditRollNo] = useState('');
+  const [editLinkedin, setEditLinkedin] = useState('');
+  const [editPortfolio, setEditPortfolio] = useState('');
+  const [editLeetcode, setEditLeetcode] = useState('');
+  const [editCodechef, setEditCodechef] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -164,8 +257,27 @@ const StudentDashboard = () => {
       setEditRollNo(user.rollNumber ?? user.RollNumber ?? user.rollNo ?? user.RollNo ?? user.regNo ?? user.RegNo ?? '');
       setEditPhone(user.phone ?? user.phoneNumber ?? user.mobile ?? '');
       setAvatarUrl(user.photoURL ?? '');
+      setEditLinkedin(user.linkedin || user.linkedIn || '');
+      setEditPortfolio(user.portfolio || user.portfolioUrl || user.website || '');
+      setEditLeetcode(user.leetcode || user.leetcodeUrl || '');
+      setEditCodechef(user.codechef || user.codechefUrl || '');
     }
   }, [user]);
+
+  // Sync fresh profile fields from Firestore for existing users upon sign-in/mount
+  useEffect(() => {
+    if (!user?.uid || user.uid === 'demo-student') return;
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      if (snap.exists()) {
+        const remoteData = snap.data();
+        setUser((prev) => {
+          const merged = { ...prev, ...remoteData };
+          try { localStorage.setItem('auth_data', JSON.stringify(merged)); } catch (_) {}
+          return merged;
+        });
+      }
+    }).catch(() => {});
+  }, [user?.uid]);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
@@ -192,27 +304,30 @@ const StudentDashboard = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (!editName.trim()) {
-      toast.error('Name cannot be empty.');
-      return;
-    }
     const updated = {
       ...user,
-      name: editName.trim(),
-      rollNumber: editRollNo.trim(),
       phone: editPhone.trim(),
-      photoURL: avatarUrl
+      photoURL: avatarUrl,
+      linkedin: editLinkedin.trim(),
+      portfolio: editPortfolio.trim(),
+      leetcode: editLeetcode.trim(),
+      codechef: editCodechef.trim()
     };
     setUser(updated);
     localStorage.setItem('auth_data', JSON.stringify(updated));
     if (user?.uid) {
       try {
         await updateDoc(doc(db, 'users', user.uid), {
-          name: editName.trim(),
-          rollNumber: editRollNo.trim(),
           phone: editPhone.trim(),
-          photoURL: avatarUrl
+          photoURL: avatarUrl,
+          linkedin: editLinkedin.trim(),
+          portfolio: editPortfolio.trim(),
+          leetcode: editLeetcode.trim(),
+          codechef: editCodechef.trim()
         });
+        if (studentUsername || user.username) {
+          publishPublicProfile(user.uid, updated, progressData || {}, typeof assessments !== 'undefined' ? assessments : []).catch(() => {});
+        }
       } catch (e) {
         console.warn('Failed to update user profile in Firestore:', e);
       }
@@ -2760,6 +2875,13 @@ const StudentDashboard = () => {
             Academic Details
           </button>
           <button
+            className={`profile-subtab-btn ${profileSubTab === 'widget' ? 'active' : ''}`}
+            onClick={() => setProfileSubTab('widget')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <FaMobileAlt style={{ color: '#10b981' }} /> Android Widget
+          </button>
+          <button
             className={`profile-subtab-btn ${profileSubTab === 'password' ? 'active' : ''}`}
             onClick={() => setProfileSubTab('password')}
           >
@@ -2801,29 +2923,33 @@ const StudentDashboard = () => {
                 <div className="personal-fields-col">
                   <div className="info-field-row">
                     <span className="field-label">Full Name</span>
-                    {isEditingProfile ? (
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
-                      />
-                    ) : (
-                      <span className="field-value">{user?.name || "—"}</span>
-                    )}
+                    <span className="field-value" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 600 }}>{user?.name || name || "—"}</span>
+                      <span style={{
+                        color: '#0284c7',
+                        background: 'rgba(2, 132, 199, 0.1)',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontWeight: 700,
+                        fontSize: '12px'
+                      }}>
+                        @{studentUsername || user?.username || 'student'}
+                      </span>
+                      {studentUsername && (
+                        <a
+                          href={`/user/${studentUsername}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ fontSize: '11.5px', color: '#2563eb', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <FaExternalLinkAlt size={9} /> View Public Profile
+                        </a>
+                      )}
+                    </span>
                   </div>
                   <div className="info-field-row">
                     <span className="field-label">Roll Number</span>
-                    {isEditingProfile ? (
-                      <input
-                        type="text"
-                        value={editRollNo}
-                        onChange={(e) => setEditRollNo(e.target.value)}
-                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
-                      />
-                    ) : (
-                      <span className="field-value">{user?.rollNumber || "—"}</span>
-                    )}
+                    <span className="field-value">{user?.rollNumber || rollNumber || "—"}</span>
                   </div>
                   <div className="info-field-row">
                     <span className="field-label">Email Address</span>
@@ -2837,10 +2963,130 @@ const StudentDashboard = () => {
                         placeholder="Enter phone number"
                         value={editPhone}
                         onChange={(e) => setEditPhone(e.target.value)}
-                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '260px' }}
                       />
                     ) : (
                       <span className="field-value">{user?.phone || user?.phoneNumber || user?.mobile || editPhone || "—"}</span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <FaLinkedin style={{ color: '#0a66c2' }} /> LinkedIn
+                    </span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        placeholder="https://linkedin.com/in/username or username"
+                        value={editLinkedin}
+                        onChange={(e) => setEditLinkedin(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '260px' }}
+                      />
+                    ) : (
+                      <span className="field-value">
+                        {user?.linkedin ? (
+                          <a
+                            href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin.startsWith('linkedin.com') ? user.linkedin : 'linkedin.com/in/' + user.linkedin}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: '#0a66c2', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}
+                          >
+                            {user.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, '') || user.linkedin}
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <FaGlobe style={{ color: '#10b981' }} /> Portfolio
+                    </span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        placeholder="https://yourportfolio.dev"
+                        value={editPortfolio}
+                        onChange={(e) => setEditPortfolio(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '260px' }}
+                      />
+                    ) : (
+                      <span className="field-value">
+                        {user?.portfolio ? (
+                          <a
+                            href={user.portfolio.startsWith('http') ? user.portfolio : `https://${user.portfolio}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: '#10b981', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}
+                          >
+                            {user.portfolio.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <FaCode style={{ color: '#f59e0b' }} /> LeetCode Link
+                    </span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        placeholder="https://leetcode.com/u/username or handle"
+                        value={editLeetcode}
+                        onChange={(e) => setEditLeetcode(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '260px' }}
+                      />
+                    ) : (
+                      <span className="field-value">
+                        {user?.leetcode ? (
+                          <a
+                            href={user.leetcode.startsWith('http') ? user.leetcode : `https://leetcode.com/u/${user.leetcode}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: '#d97706', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}
+                          >
+                            {user.leetcode.replace(/^https?:\/\/(www\.)?leetcode\.com\/u\//, '').replace(/\/$/, '') || user.leetcode}
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <FaCode style={{ color: '#7c3aed' }} /> CodeChef Link
+                    </span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        placeholder="https://codechef.com/users/username or handle"
+                        value={editCodechef}
+                        onChange={(e) => setEditCodechef(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '260px' }}
+                      />
+                    ) : (
+                      <span className="field-value">
+                        {user?.codechef ? (
+                          <a
+                            href={user.codechef.startsWith('http') ? user.codechef : `https://www.codechef.com/users/${user.codechef}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: '#7c3aed', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}
+                          >
+                            {user.codechef.replace(/^https?:\/\/(www\.)?codechef\.com\/users\//, '').replace(/\/$/, '') || user.codechef}
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        )}
+                      </span>
                     )}
                   </div>
                   {isEditingProfile && (
@@ -2945,6 +3191,45 @@ const StudentDashboard = () => {
                   <span className="field-label">Authentication ID</span>
                   <span className="field-value" style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>{user?.uid || auth?.currentUser?.uid || '—'}</span>
                 </div>
+                <div className="info-field-row">
+                  <span className="field-label">Public Username</span>
+                  <span className="field-value" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#38bdf8', fontWeight: 700 }}>@{studentUsername || user?.username || '—'}</span>
+                    {studentUsername && (
+                      <a
+                        href={`/user/${studentUsername}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ fontSize: '12px', color: '#60a5fa', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <FaExternalLinkAlt size={10} /> Public Portfolio
+                      </a>
+                    )}
+                  </span>
+                </div>
+                <div className="info-field-row">
+                  <span className="field-label">Android Home Widget</span>
+                  <span className="field-value">
+                    <button
+                      onClick={() => setProfileSubTab('widget')}
+                      style={{
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid #10b981',
+                        color: '#34d399',
+                        padding: '4px 12px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <FaMobileAlt size={11} /> Setup Mobile Widget &rarr;
+                    </button>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -2977,7 +3262,10 @@ const StudentDashboard = () => {
                     {name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <h3 className="profile-name-title">{name}</h3>
+                <h3 className="profile-name-title" style={{ marginBottom: '2px' }}>{name}</h3>
+                <div style={{ color: '#0284c7', fontWeight: 700, fontSize: '13px', marginBottom: '8px' }}>
+                  @{studentUsername || user?.username || 'student'}
+                </div>
                 <span className="profile-student-badge">STUDENT</span>
 
                 <div className="profile-details-table">
@@ -3002,6 +3290,31 @@ const StudentDashboard = () => {
                     <span className="profile-detail-val">{user?.email || email || "—"}</span>
                   </div>
                 </div>
+
+                {(user?.linkedin || user?.portfolio || user?.leetcode || user?.codechef) && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+                    {user?.linkedin && (
+                      <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noreferrer" title="LinkedIn" style={{ color: '#0a66c2', fontSize: '16px' }}>
+                        <FaLinkedin />
+                      </a>
+                    )}
+                    {user?.portfolio && (
+                      <a href={user.portfolio.startsWith('http') ? user.portfolio : `https://${user.portfolio}`} target="_blank" rel="noreferrer" title="Portfolio" style={{ color: '#10b981', fontSize: '16px' }}>
+                        <FaGlobe />
+                      </a>
+                    )}
+                    {user?.leetcode && (
+                      <a href={user.leetcode.startsWith('http') ? user.leetcode : `https://leetcode.com/u/${user.leetcode}`} target="_blank" rel="noreferrer" title="LeetCode" style={{ color: '#f59e0b', fontSize: '16px' }}>
+                        <FaCode />
+                      </a>
+                    )}
+                    {user?.codechef && (
+                      <a href={user.codechef.startsWith('http') ? user.codechef : `https://www.codechef.com/users/${user.codechef}`} target="_blank" rel="noreferrer" title="CodeChef" style={{ color: '#7c3aed', fontSize: '16px' }}>
+                        <FaCode />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Right Column: 3 Top Stats + Heatmap */}
@@ -3152,6 +3465,203 @@ const StudentDashboard = () => {
               </div>
             </div>
           </div>
+        ) : profileSubTab === 'widget' ? (
+          /* ─── ANDROID WIDGET IN USER PROFILE ─── */
+          <div className="profile-info-cards-stack">
+            <div className="profile-info-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399', fontSize: '20px' }}>
+                  <FaMobileAlt />
+                </div>
+                <div>
+                  <h3 className="profile-card-section-title" style={{ margin: 0 }}>
+                    Android Native Home Screen Widget
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                    Add a live SEED-IT activity &amp; streak tracker directly onto your phone’s launcher screen (like a Clock or Weather widget).
+                  </p>
+                </div>
+              </div>
+
+              {/* Grid with Phone Mockup & Download CTA */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginTop: '20px' }}>
+                
+                {/* Left: Native Widget Simulation Preview */}
+                <div style={{
+                  background: '#0F172A',
+                  borderRadius: '18px',
+                  border: '1.5px solid #334155',
+                  padding: '16px',
+                  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#06b6d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: '#0F172A' }}>S</div>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#F8FAFC' }}>{user?.name || name || 'Student'}</div>
+                          <div style={{ fontSize: '10.5px', color: '#94A3B8' }}>@{studentUsername || user?.username || 'username'}</div>
+                        </div>
+                      </div>
+                      <div style={{ background: '#451A03', border: '1px solid #F59E0B', borderRadius: '16px', padding: '3px 9px', fontSize: '11px', fontWeight: 700, color: '#F59E0B' }}>
+                        🔥 {activeStreak || userStreak || 1} Days
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                      <span style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '6px', padding: '3px 8px', fontSize: '10.5px', color: '#38BDF8', fontWeight: 600 }}>
+                        {totalProblemsSolved || 0} Solved
+                      </span>
+                      <span style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '6px', padding: '3px 8px', fontSize: '10.5px', color: '#34D399', fontWeight: 600 }}>
+                        ⚡ {seedCredits || 0} Credits
+                      </span>
+                      <span style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '6px', padding: '3px 8px', fontSize: '10.5px', color: '#CBD5E1', fontWeight: 600 }}>
+                        📅 Active
+                      </span>
+                    </div>
+
+                    {/* Simulation Grid (past 18 weeks x 7 rows) */}
+                    <div style={{ display: 'flex', gap: '4px', overflowX: 'hidden', padding: '8px 0', borderTop: '1px solid rgba(51, 65, 85, 0.4)' }}>
+                      {weeks.slice(-18).map((week, wIdx) => (
+                        <div key={wIdx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {week.map((d, dIdx) => {
+                            const dateStr = d.toISOString().split('T')[0];
+                            const cnt = getSolvedCountForDate(dateStr);
+                            const level = cnt >= 10 ? 4 : cnt >= 6 ? 3 : cnt >= 3 ? 2 : cnt >= 1 ? 1 : 0;
+                            return (
+                              <div
+                                key={dIdx}
+                                style={{
+                                  width: '11px',
+                                  height: '11px',
+                                  borderRadius: '3px',
+                                  backgroundColor:
+                                    level === 4 ? '#34d399' :
+                                    level === 3 ? '#10b981' :
+                                    level === 2 ? '#047857' :
+                                    level === 1 ? '#064e3b' : '#1e293b'
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', fontSize: '9.5px', color: '#64748B' }}>
+                    <span>seedit.site/user • Tap to view profile</span>
+                    <span>Synced Just now</span>
+                  </div>
+                </div>
+
+                {/* Right: Download Button & Instructions */}
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>
+                      How to add to your phone in 1 minute:
+                    </div>
+                    <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.7', marginBottom: '16px' }}>
+                      <li>Tap the green download button below to get <strong>seedit-widget.apk</strong>.</li>
+                      <li>Install the APK on your Android device.</li>
+                      <li>Long-press empty space on your Android Home Screen &rarr; tap <strong>Widgets</strong> (like adding a Clock widget).</li>
+                      <li>Select <strong>SEED-IT Tracker</strong> &rarr; drag <strong>SEED-IT Activity Widget</strong> to your screen.</li>
+                      <li>Enter your handle <strong style={{ color: '#38bdf8' }}>@{studentUsername || user?.username || 'your_username'}</strong> and tap <strong>Save &amp; Place Widget</strong>!</li>
+                    </ol>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                      <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
+                        📱 Android 8.0+
+                      </span>
+                      <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
+                        📦 33.2 KB Native APK
+                      </span>
+                      <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
+                        🔋 Zero Battery Drain
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <a
+                      href="/downloads/seedit-widget.apk"
+                      download="seedit-widget.apk"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                        color: '#ffffff',
+                        padding: '12px 20px',
+                        borderRadius: '10px',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        textDecoration: 'none',
+                        boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
+                        marginBottom: '10px'
+                      }}
+                    >
+                      <FaDownload /> Download SEED-IT Widget (seedit-widget.apk)
+                    </a>
+
+                    {studentUsername && (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <a
+                          href={`/user/${studentUsername}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)',
+                            color: 'var(--text-main)',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <FaExternalLinkAlt size={11} /> View Public Track
+                        </a>
+                        <button
+                          onClick={() => {
+                            const url = `${window.location.origin}/user/${studentUsername}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success('Public track link copied to clipboard!');
+                          }}
+                          style={{
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)',
+                            color: 'var(--text-main)',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <FaCopy size={11} /> Copy Link
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
         ) : (
           /* ─── CHANGE PASSWORD ─── */
           <div className="profile-info-card" style={{ maxWidth: '520px' }}>
@@ -3264,7 +3774,7 @@ const StudentDashboard = () => {
                   cursor: 'pointer'
                 }}
               >
-
+                
               </button>
 
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -3345,7 +3855,7 @@ const StudentDashboard = () => {
                       boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
                     }}
                   >
-                    Activate Premium Edition Now
+                     Activate Premium Edition Now
                   </button>
                 ) : (
                   <button
@@ -3363,7 +3873,7 @@ const StudentDashboard = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    Premium Access Active
+                     Premium Access Active
                   </button>
                 )}
               </div>
@@ -4025,6 +4535,499 @@ const StudentDashboard = () => {
     );
   };
 
+  const renderHelpAndSupport = () => {
+    return (
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px 8px 48px' }}>
+        {/* Header Section */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '20px',
+          padding: '28px 32px',
+          marginBottom: '28px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                boxShadow: '0 8px 20px rgba(37, 99, 235, 0.25)',
+              }}>
+                <FaHeadset />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#2563eb',
+                    background: 'rgba(37, 99, 235, 0.12)',
+                    padding: '3px 9px',
+                    borderRadius: '6px',
+                  }}>
+                    SEED SUPPORT DESK
+                  </span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted, #64748b)' }}>Real-Time Help &amp; Troubleshooting</span>
+                </div>
+                <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                  Help &amp; Technical Support Center
+                </h1>
+                <p style={{ margin: '4px 0 0', fontSize: '13.5px', color: 'var(--text-secondary, #475569)' }}>
+                  Submit technical issues, browse troubleshooting guides, or track real-time resolution from our engineering team.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSupportInitialCategory('download_seb');
+                  setShowSupportModal(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  padding: '10px 18px',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                }}
+              >
+                <FaCommentDots /> Submit Support Request
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDocModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'var(--bg-card, #ffffff)',
+                  color: 'var(--text-main, #0f172a)',
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  cursor: 'pointer',
+                }}
+              >
+                <FaQuestionCircle /> FAQs &amp; Docs
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 4 Category Action Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+          {[
+            {
+              id: 'download_seb',
+              icon: <FaDesktop style={{ color: '#2563eb' }} />,
+              title: 'SEED-SEB Lockdown',
+              desc: 'Troubleshoot code 0x80070005, Windows Defender blocks, secondary displays, or kiosk freeze.',
+              bg: 'rgba(37, 99, 235, 0.08)',
+              color: '#2563eb',
+            },
+            {
+              id: 'widget_android',
+              icon: <FaMobileAlt style={{ color: '#10b981' }} />,
+              title: 'Mobile Widget Setup',
+              desc: 'Resolve Android APK install, streak sync delays, battery saver restrictions, or widget placement.',
+              bg: 'rgba(16, 185, 129, 0.08)',
+              color: '#10b981',
+            },
+            {
+              id: 'assessment',
+              icon: <FaShieldAlt style={{ color: '#f59e0b' }} />,
+              title: 'Exam Proctoring',
+              desc: 'Assistance with webcam permissions, AI eye/face detection flags, audio checks, or session recovery.',
+              bg: 'rgba(245, 158, 11, 0.08)',
+              color: '#f59e0b',
+            },
+            {
+              id: 'account',
+              icon: <FaUser style={{ color: '#8b5cf6' }} />,
+              title: 'Account & Tenant',
+              desc: 'Student handle issues, college affiliation, exam schedule access, or profile verification.',
+              bg: 'rgba(139, 92, 246, 0.08)',
+              color: '#8b5cf6',
+            },
+          ].map((cat) => (
+            <div
+              key={cat.id}
+              style={{
+                background: 'var(--bg-card, #ffffff)',
+                border: '1px solid var(--border-color, #e2e8f0)',
+                borderRadius: '16px',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '14px',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+            >
+              <div>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: cat.bg,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px',
+                  marginBottom: '12px',
+                }}>
+                  {cat.icon}
+                </div>
+                <h3 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>
+                  {cat.title}
+                </h3>
+                <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--text-muted, #64748b)', lineHeight: '1.45' }}>
+                  {cat.desc}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSupportInitialCategory(cat.id);
+                  setShowSupportModal(true);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: cat.color,
+                  fontWeight: 700,
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginTop: '4px',
+                }}
+              >
+                Report an Issue <FaArrowRight size={10} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Live Support Requests Tracker */}
+        <div style={{
+          background: 'var(--bg-card, #ffffff)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '20px',
+          padding: '24px 28px',
+          marginBottom: '32px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(37, 99, 235, 0.1)',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+              }}>
+                <FaLifeRing />
+              </div>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                My Support Requests
+              </h2>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '12px',
+                background: 'var(--bg-secondary, #f1f5f9)',
+                color: 'var(--text-secondary, #475569)',
+              }}>
+                {supportTicketsList.length} total
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSupportInitialCategory('download_seb');
+                setShowSupportModal(true);
+              }}
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--border-color, #cbd5e1)',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                color: 'var(--text-main, #0f172a)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <FaCommentDots /> New Request
+            </button>
+          </div>
+
+          {supportTicketsList.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '48px 24px',
+              background: 'var(--bg-secondary, #f8fafc)',
+              borderRadius: '14px',
+              border: '1px dashed var(--border-color, #cbd5e1)',
+            }}>
+              <FaHeadset style={{ fontSize: '36px', color: '#94a3b8', marginBottom: '12px' }} />
+              <p style={{ margin: 0, fontWeight: 700, fontSize: '14px', color: 'var(--text-main, #1e293b)' }}>
+                No support tickets submitted yet
+              </p>
+              <p style={{ margin: '4px 0 16px', fontSize: '12.5px', color: 'var(--text-muted, #64748b)' }}>
+                Have questions about SEED-SEB, Android Widget, or exams? We are here to help.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSupportInitialCategory('download_seb');
+                  setShowSupportModal(true);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  padding: '9px 18px',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Create Support Request
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {supportTicketsList.map((ticket) => {
+                const st = TICKET_STATUSES[ticket.status] || TICKET_STATUSES.OPEN;
+                const dateStr = ticket.createdAt instanceof Date ? ticket.createdAt.toLocaleString() : 'Recently';
+
+                return (
+                  <div
+                    key={ticket.id}
+                    style={{
+                      background: 'var(--bg-primary, #ffffff)',
+                      border: '1px solid var(--border-color, #e2e8f0)',
+                      borderRadius: '14px',
+                      padding: '18px 20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: 'var(--bg-secondary, #f1f5f9)',
+                          color: 'var(--text-secondary, #334155)',
+                          letterSpacing: '0.5px',
+                        }}>
+                          {ticket.ticketNumber || ticket.id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>
+                          {ticket.categoryLabel || ticket.category}
+                        </span>
+                        <span style={{
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          padding: '2px 7px',
+                          borderRadius: '6px',
+                          background: ticket.priority === 'CRITICAL' ? '#fee2e2' : ticket.priority === 'HIGH' ? '#fef3c7' : '#f1f5f9',
+                          color: ticket.priority === 'CRITICAL' ? '#b91c1c' : ticket.priority === 'HIGH' ? '#b45309' : '#475569',
+                        }}>
+                          {ticket.priority} Priority
+                        </span>
+                      </div>
+
+                      <span style={{
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        background: st.bg,
+                        color: st.color,
+                      }}>
+                        {st.label}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>
+                        {ticket.subject}
+                      </h4>
+                      <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary, #475569)', lineHeight: '1.5' }}>
+                        {ticket.description}
+                      </p>
+                    </div>
+
+                    {/* Admin resolution note callout */}
+                    {ticket.resolutionNotes && (
+                      <div style={{
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        color: '#166534',
+                        fontSize: '13px',
+                        lineHeight: '1.5',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, marginBottom: '3px' }}>
+                          <FaCheckCircle style={{ color: '#10b981' }} /> Admin Resolution Response:
+                        </div>
+                        <div>{ticket.resolutionNotes}</div>
+                      </div>
+                    )}
+
+                    {/* Live Chat Action / Status Bar */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      background: ticket.chatEnabled ? 'rgba(59, 130, 246, 0.07)' : 'var(--bg-secondary, #f8fafc)',
+                      border: ticket.chatEnabled ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid var(--border-color, #e2e8f0)',
+                      fontSize: '12px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FaCommentDots style={{ color: ticket.chatEnabled ? '#2563eb' : 'var(--text-muted, #94a3b8)', fontSize: '14px' }} />
+                        {ticket.chatEnabled ? (
+                          <span style={{ color: '#1e40af', fontWeight: 600 }}>
+                            {ticket.status === 'CLOSED' || ticket.status === 'closed'
+                              ? 'Live chat concluded (Archived)'
+                              : 'Support Staff initiated Live Chat'}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted, #64748b)' }}>
+                            Live chat not initiated yet. (Activated by staff when needed)
+                          </span>
+                        )}
+                      </div>
+
+                      {ticket.chatEnabled && (
+                        <button
+                          onClick={() => setChatTicket(ticket)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: ticket.status === 'CLOSED' || ticket.status === 'closed' ? '#64748b' : '#2563eb',
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '11.5px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}
+                        >
+                          <FaCommentDots size={11} />
+                          {ticket.status === 'CLOSED' || ticket.status === 'closed' ? 'View Chat History' : 'Open Live Chat'}
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-muted, #94a3b8)', borderTop: '1px solid var(--border-color, #f1f5f9)', paddingTop: '10px' }}>
+                      <span>Platform: {ticket.platform || 'seed-seb'} • Version: {ticket.appVersion || '1.0.4'}</span>
+                      <span>Submitted on {dateStr}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* FAQ Troubleshooting Accordion */}
+        <div style={{
+          background: 'var(--bg-card, #ffffff)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '20px',
+          padding: '24px 28px',
+        }}>
+          <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: 800, color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FaQuestionCircle style={{ color: '#2563eb' }} /> Frequently Asked Questions
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
+            {[
+              {
+                q: 'How do I run SEED-SEB if Windows SmartScreen flags it?',
+                a: 'Click "More info" on the blue Windows dialog, then click "Run anyway". SEED-SEB requires elevated privileges to create the secure lockdown kiosk.',
+              },
+              {
+                q: 'Why does SEED-SEB notify me about multiple monitors?',
+                a: 'For exam integrity, secondary external displays must be unplugged or detached before the proctored browser can lock the screen.',
+              },
+              {
+                q: 'How do I add the SEED-IT Widget on Android?',
+                a: 'After installing the APK, long-press any empty space on your home screen, select "Widgets", locate "SEED-IT Tracker", and drag it to your screen.',
+              },
+              {
+                q: 'What happens if my connection drops during an exam?',
+                a: 'SEED-SEB features offline auto-recovery. Your answers are cached securely locally and automatically re-synced as soon as connectivity resumes.',
+              },
+            ].map((faq, idx) => (
+              <div key={idx} style={{
+                background: 'var(--bg-secondary, #f8fafc)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid var(--border-color, #e2e8f0)',
+              }}>
+                <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-main, #0f172a)', marginBottom: '6px' }}>
+                  {faq.q}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary, #475569)', lineHeight: '1.45' }}>
+                  {faq.a}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`}>
       {/* Welcome Quote Verification Popup (Commented out) */}
@@ -4526,10 +5529,41 @@ const StudentDashboard = () => {
         </div>
 
         <div className="header-right-actions">
-          <button className="header-action-icon-btn" title="Notifications">
-            <FaBell />
-            <span className="header-notif-count-badge">3</span>
-          </button>
+          <div className="notif-center-wrapper">
+            <button
+              className="header-action-icon-btn"
+              title="Notifications"
+              onClick={() => setNotifPopoverOpen((prev) => !prev)}
+              aria-expanded={notifPopoverOpen}
+            >
+              <FaBell />
+              {unreadNotifCount > 0 && (
+                <span className="header-notif-count-badge">
+                  {unreadNotifCount > 99 ? "99+" : unreadNotifCount}
+                </span>
+              )}
+            </button>
+
+            <NotificationCenterPopover
+              isOpen={notifPopoverOpen}
+              onClose={() => setNotifPopoverOpen(false)}
+              notifications={notifications}
+              readIds={readNotifIds}
+              onMarkAsRead={handleMarkNotifAsRead}
+              onMarkAllAsRead={handleMarkAllNotifsAsRead}
+              onNavigate={(url) => {
+                setNotifPopoverOpen(false);
+                if (url.startsWith("/student/dashboard")) {
+                  const params = new URLSearchParams(url.split("?")[1] || "");
+                  const tab = params.get("tab");
+                  if (tab) setActiveTab(tab);
+                } else {
+                  navigate(url);
+                }
+              }}
+            />
+          </div>
+
           <button className="header-action-icon-btn" title="Settings" onClick={() => setActiveTab('settings')}>
             <FaCog />
           </button>
@@ -4580,6 +5614,13 @@ const StudentDashboard = () => {
               >
                 <FaUser />
                 {!collapsed && <span>Profile</span>}
+              </button>
+              <button
+                className={`sidebar-nav-pill ${activeTab === "support" ? "active" : ""}`}
+                onClick={() => setActiveTab("support")}
+              >
+                <FaHeadset />
+                {!collapsed && <span>Help &amp; Support</span>}
               </button>
               {isAiInterviewAllowed && (
                 <button
@@ -4700,11 +5741,34 @@ const StudentDashboard = () => {
           {activeTab === "dashboard" ? renderDashboardHome() :
             activeTab === "assessments" ? renderAssessments() :
               activeTab === "practice" ? <PracticeHome initialTab={practiceInitialTab} initialCourse={practiceInitialCourse} /> :
-                activeTab === "settings" ? renderSettings() :
-                  activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
-                    renderProfile()}
+                activeTab === "support" ? renderHelpAndSupport() :
+                  activeTab === "settings" ? renderSettings() :
+                    activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
+                      renderProfile()}
         </main>
       </div>
+
+      {/* Support & Documentation Modals */}
+      <SupportTicketModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        user={user}
+        initialCategory={supportInitialCategory}
+      />
+      <SupportTicketChatModal
+        isOpen={Boolean(chatTicket)}
+        onClose={() => setChatTicket(null)}
+        ticket={chatTicket}
+        currentUser={user}
+      />
+      <DocumentationModal
+        isOpen={showDocModal}
+        onClose={() => setShowDocModal(false)}
+      />
+      <AuthenticityModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
 
       {/* Logout animation screen */}
       {showLogoutAnimation && (
