@@ -229,6 +229,7 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
     streak,
     seedCredits: userProfile.seedCredits || 0,
     linkedin: userProfile.linkedin || userProfile.linkedIn || '',
+    github: userProfile.github || userProfile.githubUrl || '',
     portfolio: userProfile.portfolio || userProfile.portfolioUrl || userProfile.website || '',
     leetcode: userProfile.leetcode || userProfile.leetcodeUrl || '',
     codechef: userProfile.codechef || userProfile.codechefUrl || '',

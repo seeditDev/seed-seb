@@ -61,6 +61,7 @@ import {
   FaLifeRing,
   FaLinkedin,
   FaGlobe,
+  FaGithub,
   FaExternalLinkAlt,
   FaDownload,
   FaCopy,
@@ -240,7 +241,9 @@ const StudentDashboard = () => {
 
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editBio, setEditBio] = useState('');
   const [editRollNo, setEditRollNo] = useState('');
+  const [editGithub, setEditGithub] = useState('');
   const [editLinkedin, setEditLinkedin] = useState('');
   const [editPortfolio, setEditPortfolio] = useState('');
   const [editLeetcode, setEditLeetcode] = useState('');
@@ -256,7 +259,9 @@ const StudentDashboard = () => {
       setEditName(user.name ?? user.Name ?? user.fullName ?? '');
       setEditRollNo(user.rollNumber ?? user.RollNumber ?? user.rollNo ?? user.RollNo ?? user.regNo ?? user.RegNo ?? '');
       setEditPhone(user.phone ?? user.phoneNumber ?? user.mobile ?? '');
+      setEditBio(user.bio || '');
       setAvatarUrl(user.photoURL ?? '');
+      setEditGithub(user.github || user.githubUrl || '');
       setEditLinkedin(user.linkedin || user.linkedIn || '');
       setEditPortfolio(user.portfolio || user.portfolioUrl || user.website || '');
       setEditLeetcode(user.leetcode || user.leetcodeUrl || '');
@@ -306,8 +311,11 @@ const StudentDashboard = () => {
   const handleSaveProfile = async () => {
     const updated = {
       ...user,
+      name: editName.trim() || user.name,
       phone: editPhone.trim(),
+      bio: editBio.trim(),
       photoURL: avatarUrl,
+      github: editGithub.trim(),
       linkedin: editLinkedin.trim(),
       portfolio: editPortfolio.trim(),
       leetcode: editLeetcode.trim(),
@@ -318,8 +326,11 @@ const StudentDashboard = () => {
     if (user?.uid) {
       try {
         await updateDoc(doc(db, 'users', user.uid), {
+          name: editName.trim() || user.name,
           phone: editPhone.trim(),
+          bio: editBio.trim(),
           photoURL: avatarUrl,
+          github: editGithub.trim(),
           linkedin: editLinkedin.trim(),
           portfolio: editPortfolio.trim(),
           leetcode: editLeetcode.trim(),
@@ -2956,6 +2967,20 @@ const StudentDashboard = () => {
                     <span className="field-value">{user?.email || email || "—"}</span>
                   </div>
                   <div className="info-field-row">
+                    <span className="field-label">Student Bio</span>
+                    {isEditingProfile ? (
+                      <textarea
+                        rows={2}
+                        placeholder="Brief bio or aspirations"
+                        value={editBio}
+                        onChange={(e) => setEditBio(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '260px' }}
+                      />
+                    ) : (
+                      <span className="field-value">{user?.bio || editBio || "—"}</span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
                     <span className="field-label">Phone Number</span>
                     {isEditingProfile ? (
                       <input
@@ -2967,6 +2992,36 @@ const StudentDashboard = () => {
                       />
                     ) : (
                       <span className="field-value">{user?.phone || user?.phoneNumber || user?.mobile || editPhone || "—"}</span>
+                    )}
+                  </div>
+                  <div className="info-field-row">
+                    <span className="field-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <FaGithub style={{ color: 'var(--text-main)' }} /> GitHub
+                    </span>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        placeholder="https://github.com/username or username"
+                        value={editGithub}
+                        onChange={(e) => setEditGithub(e.target.value)}
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '260px' }}
+                      />
+                    ) : (
+                      <span className="field-value">
+                        {user?.github ? (
+                           <a
+                             href={user.github.startsWith('http') ? user.github : `https://${user.github.startsWith('github.com') ? user.github : 'github.com/' + user.github}`}
+                             target="_blank"
+                             rel="noreferrer"
+                             style={{ color: 'var(--text-main)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 500 }}
+                           >
+                             {user.github.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, '') || user.github}
+                             <FaExternalLinkAlt size={10} />
+                           </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        )}
+                      </span>
                     )}
                   </div>
                   <div className="info-field-row">
@@ -3291,8 +3346,13 @@ const StudentDashboard = () => {
                   </div>
                 </div>
 
-                {(user?.linkedin || user?.portfolio || user?.leetcode || user?.codechef) && (
+                {(user?.github || user?.linkedin || user?.portfolio || user?.leetcode || user?.codechef) && (
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+                    {user?.github && (
+                      <a href={user.github.startsWith('http') ? user.github : `https://${user.github.startsWith('github.com') ? user.github : 'github.com/' + user.github}`} target="_blank" rel="noreferrer" title="GitHub" style={{ color: 'var(--text-main)', fontSize: '16px' }}>
+                        <FaGithub />
+                      </a>
+                    )}
                     {user?.linkedin && (
                       <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noreferrer" title="LinkedIn" style={{ color: '#0a66c2', fontSize: '16px' }}>
                         <FaLinkedin />
