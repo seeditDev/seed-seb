@@ -768,13 +768,42 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                 stderr: tc.error ?? ""
             })));
 
-            // Update local React progress mappings
+            // Update local React progress mappings and sync with tracking system
             if (result.score === 100) {
                 localStorage.setItem(`q_completed_${selectedChallenge.id}`, 'true');
                 setCompletedChallenges(prev => ({
                     ...prev,
                     [selectedChallenge.id]: true
                 }));
+
+                // Record to codingProgress and userSolutions
+                try {
+                    const authRaw = localStorage.getItem('auth_data');
+                    const currentUid = authRaw ? JSON.parse(authRaw)?.uid : null;
+                    if (currentUid) {
+                        import('../services/codingProgressService').then(({ markQuestionSolved }) => {
+                            markQuestionSolved(currentUid, selectedChallenge.id, language, 100, 1, {
+                                title: selectedChallenge.title || selectedChallenge.id,
+                                difficulty: selectedChallenge.difficulty || 'Medium',
+                                category: selectedChallenge.category || 'Assessment'
+                            });
+                        }).catch(() => {});
+
+                        import('../services/userSolutionsService').then(({ saveSolution }) => {
+                            saveSolution(currentUid, {
+                                questionId: selectedChallenge.id,
+                                questionTitle: selectedChallenge.title || selectedChallenge.id,
+                                language,
+                                code,
+                                status: 'accepted',
+                                testsPassed: result.passed || result.testCases?.length || 1,
+                                testsTotal: result.total || result.testCases?.length || 1,
+                                executionTimeMs: 0,
+                                isPractice: false
+                            }).catch(() => {});
+                        }).catch(() => {});
+                    }
+                } catch (_) {}
             }
 
             setCustomNotice({

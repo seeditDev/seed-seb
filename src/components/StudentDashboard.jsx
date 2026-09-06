@@ -507,20 +507,32 @@ const StudentDashboard = () => {
 
       setDailyGoals(evaluated);
 
-      // If all goals are completed today, ensure streak and rewards are persisted (ONCE per day)
+      // 1-Question Streak Rule: Solving 1 question today maintains/advances streak for today!
+      if (todaySolvedCount >= 1 && uid && uid !== 'guest') {
+        if (user?.lastStreakDate !== todayStr) {
+          const nextStreak = Math.max(1, userStreak);
+          setUserStreak(nextStreak);
+          import('firebase/firestore').then(({ updateDoc, doc, serverTimestamp }) => {
+            updateDoc(doc(db, 'users', uid), {
+              streak: nextStreak,
+              lastStreakDate: todayStr,
+              lastActiveDate: todayStr,
+              updatedAt: serverTimestamp()
+            }).catch(() => {});
+          }).catch(() => {});
+        }
+      }
+
+      // Bonus Rewards: If all 3 daily goals are completed today, award +100 SEED Credits
       if (evaluated.length > 0 && allCompleted && uid && uid !== 'guest') {
         const wereAllCompletedBefore = baseGoals.every(g => g.completed);
-        const alreadyAwardedToday = data?.allCompleted === true || user?.lastStreakDate === todayStr;
+        const alreadyAwardedToday = data?.allCompleted === true;
         if (!wereAllCompletedBefore && !alreadyAwardedToday) {
-          setUserStreak(prev => {
-            const nextStreak = prev + 1;
-            setSeedCredits(credPrev => {
-              const nextCredits = credPrev + 100;
-              setTodayCreditsGained(t => t + 100);
-              saveUserDailyGoals(uid, todayStr, evaluated, nextStreak, nextCredits).catch(() => { });
-              return nextCredits;
-            });
-            return nextStreak;
+          setSeedCredits(credPrev => {
+            const nextCredits = credPrev + 100;
+            setTodayCreditsGained(t => t + 100);
+            saveUserDailyGoals(uid, todayStr, evaluated, userStreak, nextCredits).catch(() => { });
+            return nextCredits;
           });
         }
       }
@@ -5793,9 +5805,9 @@ const StudentDashboard = () => {
                     ))}
                   </div>
 
-                  {dailyGoals.length > 0 && dailyGoals.every(g => g.completed) && (
+                  {(user?.lastStreakDate === new Date().toISOString().split('T')[0] || (dailyGoals.length > 0 && dailyGoals.some(g => (g.type === 'difficulty' || g.type === 'solve') && g.completed)) || (dailyGoals.length > 0 && dailyGoals.every(g => g.completed))) && (
                     <div className="streak-approved-badge">
-                      <FaFire style={{ color: '#f59e0b' }} /> Streak Approved for Today!
+                      <FaFire style={{ color: '#f59e0b' }} /> Streak Active for Today!
                     </div>
                   )}
                 </div>

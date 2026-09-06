@@ -120,7 +120,9 @@ export const saveUserDailyGoals = async (uid, dateStr, goals, streakOverride = n
       };
       if (streakOverride !== null) updateData.streak = streakOverride;
       if (creditsOverride !== null) updateData.seedCredits = creditsOverride;
-      if (payload.allCompleted) updateData.lastStreakDate = todayStr;
+      if (payload.allCompleted || (goals && goals.some(g => (g.type === 'difficulty' || g.type === 'solve') && g.completed))) {
+        updateData.lastStreakDate = todayStr;
+      }
 
       await updateDoc(userRef, updateData).catch(async () => {
         // If updateDoc fails (e.g. document does not exist yet), try setDoc with merge
@@ -131,4 +133,12 @@ export const saveUserDailyGoals = async (uid, dateStr, goals, streakOverride = n
       console.warn('[dailyGoalsPool] Firestore update error:', err.message);
     }
   }
+};
+
+/**
+ * Helper to check if daily streak is achieved today.
+ * Rule: Solving at least 1 problem for the day achieves the daily streak.
+ */
+export const isStreakAchievedToday = (todaySolvedCount) => {
+  return typeof todaySolvedCount === 'number' && todaySolvedCount >= 1;
 };
