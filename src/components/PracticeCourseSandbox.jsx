@@ -728,6 +728,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
         }
 
         const expectedClean = (tc.expected || (tc.expectedOutput ?? '')).toString().replace(/\r\n/g, '\n').trim();
+        const actualClean = (res.stdout || '').toString().replace(/\r\n/g, '\n').trim();
         
         // Handle placeholder test cases gracefully (code runs successfully & compiles)
         const isPlaceholder = expectedClean === 'expected' || expectedClean === 'expectedoutput';

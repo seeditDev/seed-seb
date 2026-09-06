@@ -714,7 +714,9 @@ const isCodeBlankOrEmpty = (codeStr) => {
         }
 
         const expectedClean = (tc.expected || (tc.expectedOutput  ?? '')).toString().replace(/\r\n/g, '\n').trim();
-        const isPassed = !isBlank && isTestCasePassed(res.stdout, tc.expected || tc.expectedOutput, tc.input, res.exit_code, res.error);
+        const actualClean = (res.stdout || '').toString().replace(/\r\n/g, '\n').trim();
+        const isPlaceholder = expectedClean === 'expected' || expectedClean === 'expectedoutput';
+        const isPassed = !isBlank && (isPlaceholder ? actualClean.length > 0 : isTestCasePassed(res.stdout, tc.expected || tc.expectedOutput, tc.input, res.exit_code, res.error));
 
         if (isPassed) {
           passedCount++;
