@@ -190,7 +190,9 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
     ? assessments.filter((a) => a.completed).length
     : 0;
 
-  const streak = typeof userProfile.streak === 'number' ? userProfile.streak : 0;
+  const streak = typeof userProfile.streak === 'number' 
+    ? userProfile.streak 
+    : (typeof progressData.streak === 'number' ? progressData.streak : 0);
   const heatmap = generateYearHeatmapData(progressData.activity, progressData.problemDetails);
   const badges = computeStudentBadges(solvedCount, completedAssessments, streak);
 
@@ -235,6 +237,8 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
     codechef: userProfile.codechef || userProfile.codechefUrl || '',
     stats: {
       solvedCount,
+      totalQuestions: 9328,
+      totalQuestionsDisplay: '9,000+',
       attemptedCount,
       easySolved,
       mediumSolved,
@@ -243,6 +247,7 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
       totalContributions: heatmap.totalContributions,
       activeDays: heatmap.activeDays,
     },
+    activity: progressData.activity || {},
     heatmapData: heatmap,
     tracks,
     badges,

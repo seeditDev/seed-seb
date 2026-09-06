@@ -1910,8 +1910,11 @@ const StudentDashboard = () => {
                 <div className="snapshot-icon-box icon-green">
                   <FaThLarge />
                 </div>
-                <div className="snapshot-stat-val">{activitySnapshotStats.totalSolved}</div>
-                <div className="snapshot-stat-lbl">Problems Solved</div>
+                <div className="snapshot-stat-val">
+                  {activitySnapshotStats.totalSolved}
+                  <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500, marginLeft: '4px' }}>/ 9,000+</span>
+                </div>
+                <div className="snapshot-stat-lbl">Questions Solved</div>
                 <div className="snapshot-stat-trend trend-green">
                   <FaArrowUp style={{ fontSize: '10px' }} /> {activitySnapshotStats.solvedTrend}
                 </div>
@@ -3381,8 +3384,11 @@ const StudentDashboard = () => {
               <div className="profile-right-column">
                 <div className="profile-three-stats-row">
                   <div className="util-stat-card">
-                    <span className="util-stat-val val-green">{totalProblemsSolved}</span>
-                    <span className="util-stat-lbl">Problems Solved</span>
+                    <span className="util-stat-val val-green">
+                      {totalProblemsSolved}
+                      <span style={{ fontSize: '13px', color: 'var(--sd-text-dim, #94a3b8)', fontWeight: 500, marginLeft: '4px' }}>/ 9,000+</span>
+                    </span>
+                    <span className="util-stat-lbl">Practice Questions Solved</span>
                   </div>
                   <div className="util-stat-card">
                     <span className="util-stat-val val-blue">{formatUsageTime(totalHours)}</span>
@@ -3397,9 +3403,14 @@ const StudentDashboard = () => {
                 {/* Heatmap Card */}
                 <div className="heatmap-card">
                   <div className="analytics-card-header" style={{ marginBottom: '14px' }}>
-                    <h4 className="widget-section-title" style={{ margin: 0 }}>
-                      Practice portal activity tracker (last 6 months)
-                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <h4 className="widget-section-title" style={{ margin: 0 }}>
+                        Practice portal activity tracker (last 6 months)
+                      </h4>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted, #94a3b8)' }}>
+                        Solved {totalProblemsSolved} of 9,328 questions in Question Bank
+                      </span>
+                    </div>
                     <button
                       className="btn-sync-cloud"
                       onClick={handleSyncProfileProgress}
@@ -3514,8 +3525,11 @@ const StudentDashboard = () => {
                 </div>
                 <div className="activity-snapshot-card">
                   <div className="snapshot-icon-box icon-green"><FaCode /></div>
-                  <div className="snapshot-stat-val">{totalProblemsSolved}</div>
-                  <div className="snapshot-stat-lbl">Coding Submissions</div>
+                  <div className="snapshot-stat-val">
+                    {totalProblemsSolved}
+                    <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500, marginLeft: '3px' }}>/ 9k+</span>
+                  </div>
+                  <div className="snapshot-stat-lbl">Questions Solved</div>
                 </div>
                 <div className="activity-snapshot-card">
                   <div className="snapshot-icon-box icon-orange"><FaCalendarAlt /></div>
@@ -3573,7 +3587,7 @@ const StudentDashboard = () => {
 
                     <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
                       <span style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '6px', padding: '3px 8px', fontSize: '10.5px', color: '#38BDF8', fontWeight: 600 }}>
-                        {totalProblemsSolved || 0} Solved
+                        {totalProblemsSolved || 0} / 9,000+ Solved
                       </span>
                       <span style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '6px', padding: '3px 8px', fontSize: '10.5px', color: '#34D399', fontWeight: 600 }}>
                         ⚡ {seedCredits || 0} Credits
