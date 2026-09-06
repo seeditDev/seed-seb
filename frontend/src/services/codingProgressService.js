@@ -31,10 +31,96 @@
  */
 
 import { db } from '../lib/firebase-config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import desktopBridge from '../utils/desktopBridge';
 
 const COLLECTION = 'codingProgress';
+
+/**
+ * Strips undefined values recursively so Firestore setDoc never throws:
+ * "Unsupported field value: undefined"
+ */
+const sanitizeForFirestore = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  return JSON.parse(JSON.stringify(obj));
+};
+
+/**
+ * Central Question Bank challenge count (9,000+ curriculum & algorithmic questions)
+ */
+export const TOTAL_QUESTION_BANK_COUNT = 9328;
+
+/**
+ * Dynamic Consecutive Active Day Streak Engine.
+ * Evaluates activity history and problem details to calculate the active streak leading to today.
+ * Preserves existing streak if today has not ended and yesterday was active.
+ */
+export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previousStreak = 0, lastStreakDate = '') => {
+  const activeDates = new Set();
+  if (activityMap && typeof activityMap === 'object') {
+    Object.entries(activityMap).forEach(([dateStr, act]) => {
+      const solved = typeof act === 'number' ? act : (act?.problemsSolved || act?.questionsAttempted || 0);
+      const hours = typeof act === 'object' ? (act?.hours || 0) : 0;
+      if (solved > 0 || hours > 0) activeDates.add(dateStr);
+    });
+  }
+  if (problemDetails && typeof problemDetails === 'object') {
+    Object.values(problemDetails).forEach(detail => {
+      if (detail && (detail.status === 'SOLVED' || detail.bestScore > 0) && detail.lastSolvedAt) {
+        const dStr = String(detail.lastSolvedAt).split('T')[0];
+        if (dStr) activeDates.add(dStr);
+      }
+    });
+  }
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  let checkDate = new Date(today);
+  let streak = 0;
+
+  if (activeDates.has(todayStr)) {
+    streak = 1;
+    checkDate.setDate(checkDate.getDate() - 1);
+    while (true) {
+      const dStr = checkDate.toISOString().split('T')[0];
+      if (activeDates.has(dStr)) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    if (previousStreak > 0 && lastStreakDate === yesterdayStr) {
+      streak = Math.max(streak, previousStreak + 1);
+    } else if (previousStreak > 0 && lastStreakDate === todayStr) {
+      streak = Math.max(streak, previousStreak);
+    }
+  } else if (activeDates.has(yesterdayStr) || (previousStreak > 0 && (lastStreakDate === yesterdayStr || lastStreakDate === todayStr))) {
+    streak = 1;
+    checkDate = new Date(yesterday);
+    checkDate.setDate(checkDate.getDate() - 1);
+    while (true) {
+      const dStr = checkDate.toISOString().split('T')[0];
+      if (activeDates.has(dStr)) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    if (previousStreak > 0 && (lastStreakDate === yesterdayStr || lastStreakDate === todayStr)) {
+      streak = Math.max(streak, previousStreak);
+    }
+  } else {
+    streak = 0;
+  }
+
+  return streak;
+};
 
 // Helper: Resolve effective UID
 const resolveEffectiveUid = (uid) => {
@@ -63,8 +149,22 @@ const normalizeProgressStructure = (rawObj) => {
   // Exclude solved from attempted
   const uniqueAttempted = [...new Set(attempted.map(String))].filter(id => id && !uniqueSolved.includes(id));
 
-  const details = parsed.problemDetails || {};
+  const rawDetails = parsed.problemDetails || {};
+  const details = {};
+  if (rawDetails && typeof rawDetails === 'object') {
+    for (const [k, v] of Object.entries(rawDetails)) {
+      if (v && typeof v === 'object') {
+        const cleanV = { ...v };
+        if (cleanV.lastSolvedAt === undefined || cleanV.lastSolvedAt === 'undefined' || cleanV.lastSolvedAt === null) {
+          delete cleanV.lastSolvedAt;
+        }
+        details[k] = cleanV;
+      }
+    }
+  }
   const cacheId = Number(parsed.cacheId) || 1;
+  const streak = Number(parsed.streak) || 0;
+  const lastStreakDate = parsed.lastStreakDate || '';
 
   return {
     completedQuestions: uniqueSolved,
@@ -73,6 +173,8 @@ const normalizeProgressStructure = (rawObj) => {
     solvedCount: uniqueSolved.length,
     attemptedCount: uniqueAttempted.length,
     cacheId,
+    streak,
+    lastStreakDate,
     problemDetails: details,
     activity: parsed.activity || {},
     activityByDate: parsed.activityByDate || {},
@@ -219,9 +321,12 @@ export const getProgressSummary = async (uid) => {
   const local = getLocalProgress(uid);
   return {
     solvedCount: local.solvedCount,
+    totalQuestions: TOTAL_QUESTION_BANK_COUNT,
     attemptedCount: local.attemptedCount,
     completedQuestions: local.completedQuestions,
     attemptedQuestions: local.attemptedQuestions,
+    streak: local.streak || 0,
+    lastStreakDate: local.lastStreakDate || '',
     cacheId: local.cacheId,
     updatedAt: local.updatedAt
   };
@@ -290,25 +395,76 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
   }
   local.activity[today].problemsSolved += 1;
 
+  // Compute live consecutive day streak
+  const calculatedStreak = computeLiveStreak(
+    local.activity,
+    local.problemDetails,
+    local.streak || 0,
+    local.lastStreakDate || ''
+  );
+  local.streak = calculatedStreak;
+  local.lastStreakDate = today;
+
   saveLocalProgress(uid, local);
-  console.log(`[CodingProgressService] ${strQId} marked as SOLVED (cacheId: ${local.cacheId})`);
+  console.log(`[CodingProgressService] ${strQId} marked as SOLVED (cacheId: ${local.cacheId}, streak: ${calculatedStreak})`);
+
+  // Update auth_data in LocalStorage so user.streak and user.solvedCount are instantly fresh
+  try {
+    const authRaw = localStorage.getItem('auth_data');
+    if (authRaw) {
+      const authObj = JSON.parse(authRaw);
+      authObj.streak = calculatedStreak;
+      authObj.lastStreakDate = today;
+      authObj.solvedCount = local.completedQuestions.length;
+      authObj.problemsSolvedCount = local.completedQuestions.length;
+      localStorage.setItem('auth_data', JSON.stringify(authObj));
+    }
+  } catch (_) {}
 
   // Log activity to userActivities/{uid}/
   import('./activityLoggerService').then(mod => {
-    mod.logUserActivity(uid, 'QUESTION_SOLVED', { questionId: strQId, language, score, attempts: numAttempts });
+    mod.logUserActivity(uid, 'QUESTION_SOLVED', { questionId: strQId, language, score, attempts: numAttempts, streak: calculatedStreak });
   }).catch(() => {});
 
   // Background sync with Firestore if online
   if (navigator.onLine) {
     try {
       const docRef = doc(db, COLLECTION, uid);
-      await setDoc(docRef, local, { merge: true });
+      await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
+
+      // Synchronize streak, lastActiveDate, and problemsSolvedCount to users/{uid}
+      updateDoc(doc(db, 'users', uid), {
+        streak: calculatedStreak,
+        lastStreakDate: today,
+        lastActiveDate: today,
+        problemsSolvedCount: local.completedQuestions.length,
+        solvedCount: local.completedQuestions.length,
+        updatedAt: serverTimestamp()
+      }).catch(err => console.warn('[CodingProgressService] users update skipped:', err.message));
+
+      // Synchronize public profile at publicProfiles/{username}
+      try {
+        const authObj = JSON.parse(localStorage.getItem('auth_data') || '{}');
+        const username = authObj.username || authObj.studentUsername;
+        if (username) {
+          import('./publicProfileService').then(({ publishPublicProfile }) => {
+            publishPublicProfile(uid, { ...authObj, streak: calculatedStreak }, local).catch(() => {});
+          }).catch(() => {});
+        }
+      } catch (_) {}
     } catch (e) {
       console.warn('[CodingProgressService] Background sync failed (will sync later):', e.message);
     }
   }
 
-  return { success: true, progress: local };
+  // Broadcast change event
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('coding_progress_updated', {
+      detail: { uid, progress: local, streak: calculatedStreak }
+    }));
+  }
+
+  return { success: true, progress: local, streak: calculatedStreak };
 };
 
 /**
@@ -336,8 +492,12 @@ export const markQuestionAttempted = async (uid, questionId, language, score, at
     attempts: (existing?.attempts || 0) + numAttempts,
     bestScore: Math.max(typeof score === 'number' ? score : 0, existing?.bestScore || 0),
     lastAttemptedAt: now,
-    lastSolvedAt: existing?.lastSolvedAt || (isAlreadySolved ? now : undefined)
   };
+
+  const solvedAt = existing?.lastSolvedAt || (isAlreadySolved ? now : null);
+  if (solvedAt) {
+    detail.lastSolvedAt = solvedAt;
+  }
 
   local.problemDetails[strQId] = detail;
 
@@ -357,7 +517,7 @@ export const markQuestionAttempted = async (uid, questionId, language, score, at
   if (navigator.onLine) {
     try {
       const docRef = doc(db, COLLECTION, uid);
-      await setDoc(docRef, local, { merge: true });
+      await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
     } catch (e) {
       console.warn('[CodingProgressService] Background sync failed:', e.message);
     }
@@ -383,7 +543,7 @@ export const trackQuestionTimeSpent = async (uid, questionId, timeSpentMs) => {
   // Background sync
   if (navigator.onLine) {
     try {
-      await setDoc(doc(db, COLLECTION, uid), local, { merge: true });
+      await setDoc(doc(db, COLLECTION, uid), sanitizeForFirestore(local), { merge: true });
     } catch (_) {}
   }
 };
@@ -411,7 +571,7 @@ export const trackDailyActivity = async (uid, delta = {}) => {
   saveLocalProgress(uid, local);
   if (navigator.onLine) {
     try {
-      await setDoc(doc(db, COLLECTION, uid), local, { merge: true });
+      await setDoc(doc(db, COLLECTION, uid), sanitizeForFirestore(local), { merge: true });
     } catch (_) {}
   }
 };
@@ -485,20 +645,24 @@ export const syncProgressWithFirebase = async (uid) => {
     // Merge problemDetails taking highest attempts and best score
     const mergedDetails = { ...(remote.problemDetails || {}), ...(local.problemDetails || {}) };
     const allKeys = new Set([...Object.keys(local.problemDetails || {}), ...Object.keys(remote.problemDetails || {})]);
-    for (const key of allKeys) {
-      const lDet = local.problemDetails?.[key];
-      const rDet = remote.problemDetails?.[key];
+    for (const qId of allKeys) {
+      const lDet = local.problemDetails?.[qId];
+      const rDet = remote.problemDetails?.[qId];
 
       if (lDet && rDet) {
-        const isSolved = lDet.status === 'SOLVED' || rDet.status === 'SOLVED' || mergedSolved.includes(key);
-        mergedDetails[key] = {
+        const isSolved = lDet.status === 'SOLVED' || rDet.status === 'SOLVED' || mergedSolved.includes(qId);
+        const detailObj = {
           status: isSolved ? 'SOLVED' : 'ATTEMPTED',
           language: lDet.bestScore >= (rDet.bestScore || 0) ? lDet.language : (rDet.language || lDet.language),
           attempts: Math.max(lDet.attempts || 1, rDet.attempts || 1),
           bestScore: Math.max(lDet.bestScore || 0, rDet.bestScore || 0),
-          lastSolvedAt: lDet.lastSolvedAt || rDet.lastSolvedAt,
-          lastAttemptedAt: lDet.lastAttemptedAt || rDet.lastAttemptedAt
+          lastAttemptedAt: lDet.lastAttemptedAt || rDet.lastAttemptedAt || now
         };
+        const solvedAt = lDet.lastSolvedAt || rDet.lastSolvedAt;
+        if (solvedAt) {
+          detailObj.lastSolvedAt = solvedAt;
+        }
+        mergedDetails[qId] = detailObj;
       }
     }
 
@@ -527,6 +691,13 @@ export const syncProgressWithFirebase = async (uid) => {
 
     const nextCacheId = Math.max(Number(local.cacheId) || 0, Number(remote.cacheId) || 0) + 1;
 
+    const mergedStreak = computeLiveStreak(
+      mergedActivity,
+      mergedDetails,
+      Math.max(Number(local.streak) || 0, Number(remote.streak) || 0),
+      local.lastStreakDate || remote.lastStreakDate || ''
+    );
+
     const mergedProgress = {
       completedQuestions: mergedSolved,
       solvedProblems: mergedSolved,
@@ -534,6 +705,8 @@ export const syncProgressWithFirebase = async (uid) => {
       solvedCount: mergedSolved.length,
       attemptedCount: mergedAttempted.length,
       cacheId: nextCacheId,
+      streak: mergedStreak,
+      lastStreakDate: local.lastStreakDate || remote.lastStreakDate || '',
       problemDetails: mergedDetails,
       activity: mergedActivity,
       sheetSolvedDicts: mergedSheets,
@@ -543,9 +716,21 @@ export const syncProgressWithFirebase = async (uid) => {
     // Save to LocalStorage and Firestore
     const effectiveUid = resolveEffectiveUid(uid);
     localStorage.setItem(`practice_progress_${effectiveUid}`, JSON.stringify(mergedProgress));
-    await setDoc(docRef, mergedProgress, { merge: true });
+    await setDoc(docRef, sanitizeForFirestore(mergedProgress), { merge: true });
 
-    console.log('[CodingProgressService] Sync completed. Solved:', mergedProgress.solvedCount, 'Attempted:', mergedProgress.attemptedCount, 'cacheId:', nextCacheId);
+    // Update auth_data in LocalStorage
+    try {
+      const authRaw = localStorage.getItem('auth_data');
+      if (authRaw) {
+        const authObj = JSON.parse(authRaw);
+        authObj.streak = mergedStreak;
+        authObj.solvedCount = mergedProgress.solvedCount;
+        authObj.problemsSolvedCount = mergedProgress.solvedCount;
+        localStorage.setItem('auth_data', JSON.stringify(authObj));
+      }
+    } catch (_) {}
+
+    console.log('[CodingProgressService] Sync completed. Solved:', mergedProgress.solvedCount, 'Attempted:', mergedProgress.attemptedCount, 'Streak:', mergedStreak, 'cacheId:', nextCacheId);
     return { success: true, progress: mergedProgress };
   } catch (error) {
     console.error('[CodingProgressService] Sync failed:', error);
@@ -616,7 +801,7 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
       const { auth } = await import('../lib/firebase-config');
       if (!auth.currentUser) return { success: true };
       const docRef = doc(db, COLLECTION, uid);
-      await setDoc(docRef, local, { merge: true });
+      await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
     } catch (e) {
       console.warn('[CodingProgressService] Background sync failed:', e.message);
     }
@@ -645,7 +830,7 @@ export const saveSheetProgress = async (uid, sheetId, problemId, isSolved) => {
   if (navigator.onLine) {
     try {
       const docRef = doc(db, COLLECTION, uid);
-      await setDoc(docRef, local, { merge: true });
+      await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
     } catch (e) {
       console.warn('[CodingProgressService] Background sync failed:', e.message);
     }

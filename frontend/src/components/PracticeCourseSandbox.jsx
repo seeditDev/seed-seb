@@ -11,6 +11,7 @@ import {
   markQuestionSolved, markQuestionAttempted, getQuestionProgress, 
   getFullProgress 
 } from '../services/codingProgressService';
+import { saveSolution } from '../services/userSolutionsService';
 import { getAuthData } from '../utils/storageUtils';
 import { isTestCasePassed } from '../utils/testCaseUtils';
 import { fetchArticleFile } from '../utils/articleFetcher';
@@ -727,6 +728,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
         }
 
         const expectedClean = (tc.expected || (tc.expectedOutput ?? '')).toString().replace(/\r\n/g, '\n').trim();
+        const actualClean = (res.stdout || '').toString().replace(/\r\n/g, '\n').trim();
         
         // Handle placeholder test cases gracefully (code runs successfully & compiles)
         const isPlaceholder = expectedClean === 'expected' || expectedClean === 'expectedoutput';
@@ -752,21 +754,51 @@ const isCodeBlankOrEmpty = (codeStr) => {
       setSubmitScore(score);
 
       if (uid) {
-        const pMeta = {
-          difficulty: question?.difficulty || 'Easy',
-          category: question?.category ?? '',
-          title: question?.title || question?.name || questionId
-        };
+        try {
+          const pMeta = {
+            difficulty: question?.difficulty || 'Easy',
+            category: question?.category ?? '',
+            title: question?.title || question?.name || questionId
+          };
 
-        if (score === 100) {
-          await markQuestionSolved(uid, questionId, language, score, 1, pMeta);
-          const updatedSolved = [...new Set([...solvedIds, questionId])];
-          setSolvedIds(updatedSolved);
-          checkCourseCompletion(updatedSolved);
-          toast.success(` Problem Solved! 100% test cases passed.`);
-        } else {
-          await markQuestionAttempted(uid, questionId, language, score, 1, pMeta);
-          toast.info(`Tests completed: ${passedCount}/${testCases.length} passed (${score}%).`);
+          if (score === 100) {
+            try {
+              await saveSolution(uid, {
+                questionId,
+                questionTitle: question?.title || question?.name || questionId,
+                language,
+                code: currentCode,
+                status: 'accepted',
+                testsPassed: passedCount,
+                testsTotal: testCases.length,
+                isPractice: true
+              });
+            } catch (_) {}
+
+            await markQuestionSolved(uid, questionId, language, score, 1, pMeta);
+            const updatedSolved = [...new Set([...solvedIds, questionId])];
+            setSolvedIds(updatedSolved);
+            checkCourseCompletion(updatedSolved);
+            toast.success(` Problem Solved! 100% test cases passed.`);
+          } else {
+            try {
+              await saveSolution(uid, {
+                questionId,
+                questionTitle: question?.title || question?.name || questionId,
+                language,
+                code: currentCode,
+                status: 'wrong_answer',
+                testsPassed: passedCount,
+                testsTotal: testCases.length,
+                isPractice: true
+              });
+            } catch (_) {}
+
+            await markQuestionAttempted(uid, questionId, language, score, 1, pMeta);
+            toast.info(`Tests completed: ${passedCount}/${testCases.length} passed (${score}%).`);
+          }
+        } catch (progressErr) {
+          console.warn('[PracticeCourseSandbox] Progress save error (non-fatal):', progressErr);
         }
       }
     } catch (err) {

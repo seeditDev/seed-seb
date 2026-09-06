@@ -714,7 +714,9 @@ const isCodeBlankOrEmpty = (codeStr) => {
         }
 
         const expectedClean = (tc.expected || (tc.expectedOutput  ?? '')).toString().replace(/\r\n/g, '\n').trim();
-        const isPassed = !isBlank && isTestCasePassed(res.stdout, tc.expected || tc.expectedOutput, tc.input, res.exit_code, res.error);
+        const actualClean = (res.stdout || '').toString().replace(/\r\n/g, '\n').trim();
+        const isPlaceholder = expectedClean === 'expected' || expectedClean === 'expectedoutput';
+        const isPassed = !isBlank && (isPlaceholder ? actualClean.length > 0 : isTestCasePassed(res.stdout, tc.expected || tc.expectedOutput, tc.input, res.exit_code, res.error));
 
         if (isPassed) {
           passedCount++;
@@ -744,65 +746,69 @@ const isCodeBlankOrEmpty = (codeStr) => {
 
       // Save progress (currentCode already captured at start of try block)
       if (uid) {
-        const nowMs = Date.now();
-        const questionOpenedAt = window._practiceQuestionOpenedAt || nowMs;
-        const timeSpentMs = nowMs - questionOpenedAt;
+        try {
+          const nowMs = Date.now();
+          const questionOpenedAt = window._practiceQuestionOpenedAt || nowMs;
+          const timeSpentMs = nowMs - questionOpenedAt;
 
-        const qMeta = {
-          difficulty: question?.difficulty || 'Easy',
-          category: question?.category ?? '',
-          title: question?.title || question?.name || questionId
-        };
+          const qMeta = {
+            difficulty: question?.difficulty || 'Easy',
+            category: question?.category ?? '',
+            title: question?.title || question?.name || questionId
+          };
 
-        if (score === 100) {
-          await markQuestionSolved(uid, questionId, language, score, 1, qMeta);
-          setSolvedIds(prev => [...new Set([...prev, questionId])]);
-          setAttemptedIds(prev => prev.filter(id => id !== questionId));
+          if (score === 100) {
+            await markQuestionSolved(uid, questionId, language, score, 1, qMeta);
+            setSolvedIds(prev => [...new Set([...prev, questionId])]);
+            setAttemptedIds(prev => prev.filter(id => id !== questionId));
 
-          // LeetCode-style: store accepted solution in Firestore
-          await saveSolution(uid, {
-            questionId,
-            questionTitle: question?.title || question?.name || questionId,
-            language,
-            code: currentCode,
-            status: 'accepted',
-            testsPassed: passedCount,
-            testsTotal: testCases.length,
-            executionTimeMs: 0,
-            isPractice: true,
-          });
-        } else {
-          await markQuestionAttempted(uid, questionId, language, score, 1, qMeta);
-          if (!solvedIds.includes(questionId)) {
-            setAttemptedIds(prev => [...new Set([...prev, questionId])]);
+            // LeetCode-style: store accepted solution in Firestore
+            await saveSolution(uid, {
+              questionId,
+              questionTitle: question?.title || question?.name || questionId,
+              language,
+              code: currentCode,
+              status: 'accepted',
+              testsPassed: passedCount,
+              testsTotal: testCases.length,
+              executionTimeMs: 0,
+              isPractice: true,
+            });
+          } else {
+            await markQuestionAttempted(uid, questionId, language, score, 1, qMeta);
+            if (!solvedIds.includes(questionId)) {
+              setAttemptedIds(prev => [...new Set([...prev, questionId])]);
+            }
+
+            // Store wrong-answer submission too
+            await saveSolution(uid, {
+              questionId,
+              questionTitle: question?.title || question?.name || questionId,
+              language,
+              code: currentCode,
+              status: score > 0 ? 'partial' : 'wrong_answer',
+              testsPassed: passedCount,
+              testsTotal: testCases.length,
+              executionTimeMs: 0,
+              isPractice: true,
+            });
           }
 
-          // Store wrong-answer submission too
-          await saveSolution(uid, {
-            questionId,
-            questionTitle: question?.title || question?.name || questionId,
-            language,
-            code: currentCode,
-            status: score > 0 ? 'partial' : 'wrong_answer',
-            testsPassed: passedCount,
-            testsTotal: testCases.length,
-            executionTimeMs: 0,
-            isPractice: true,
-          });
+          // Track time + daily activity
+          await trackQuestionTimeSpent(uid, questionId, timeSpentMs);
+          await trackDailyActivity(uid, { questionsAttempted: 1, timeSpentMs });
+          window._practiceQuestionOpenedAt = nowMs; // reset timer for next attempt
+
+          setProblemDetails(prev => ({
+            ...prev,
+            [questionId]: {
+              ...prev[questionId],
+              bestScore: Math.max(score, prev[questionId]?.bestScore || 0)
+            }
+          }));
+        } catch (progressErr) {
+          console.warn('[PracticeSandbox] Progress save error (non-fatal):', progressErr);
         }
-
-        // Track time + daily activity
-        await trackQuestionTimeSpent(uid, questionId, timeSpentMs);
-        await trackDailyActivity(uid, { questionsAttempted: 1, timeSpentMs });
-        window._practiceQuestionOpenedAt = nowMs; // reset timer for next attempt
-
-        setProblemDetails(prev => ({
-          ...prev,
-          [questionId]: {
-            ...prev[questionId],
-            bestScore: Math.max(score, prev[questionId]?.bestScore || 0)
-          }
-        }));
       }
     } catch (err) {
       toast.error('Testing failed: ' + err.message);
