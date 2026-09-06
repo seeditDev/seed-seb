@@ -78,6 +78,7 @@ export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previou
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const cleanLastStreakDate = typeof lastStreakDate === 'string' ? lastStreakDate.split('T')[0] : '';
 
   let checkDate = new Date(today);
   let streak = 0;
@@ -94,12 +95,17 @@ export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previou
         break;
       }
     }
-    if (previousStreak > 0 && lastStreakDate === yesterdayStr) {
-      streak = Math.max(streak, previousStreak + 1);
-    } else if (previousStreak > 0 && lastStreakDate === todayStr) {
+    // STREAK RULE: Only increment once per calendar day.
+    // If today is already credited (cleanLastStreakDate === todayStr), solving another question today never increments streak.
+    if (cleanLastStreakDate === todayStr) {
       streak = Math.max(streak, previousStreak);
+    } else if (cleanLastStreakDate === yesterdayStr && previousStreak > 0) {
+      // First active problem solved today after an active yesterday: advance streak by 1
+      streak = Math.max(streak, previousStreak + 1);
+    } else {
+      streak = Math.max(1, streak);
     }
-  } else if (activeDates.has(yesterdayStr) || (previousStreak > 0 && (lastStreakDate === yesterdayStr || lastStreakDate === todayStr))) {
+  } else if (activeDates.has(yesterdayStr) || (previousStreak > 0 && (cleanLastStreakDate === yesterdayStr || cleanLastStreakDate === todayStr))) {
     streak = 1;
     checkDate = new Date(yesterday);
     checkDate.setDate(checkDate.getDate() - 1);
@@ -112,7 +118,7 @@ export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previou
         break;
       }
     }
-    if (previousStreak > 0 && (lastStreakDate === yesterdayStr || lastStreakDate === todayStr)) {
+    if (previousStreak > 0 && (cleanLastStreakDate === yesterdayStr || cleanLastStreakDate === todayStr)) {
       streak = Math.max(streak, previousStreak);
     }
   } else {

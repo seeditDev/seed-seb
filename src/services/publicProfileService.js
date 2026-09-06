@@ -229,6 +229,7 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
     bio: userProfile.bio || 'Computer Science student pursuing software excellence on SEED-IT.',
     avatarUrl: userProfile.photoURL || '',
     streak,
+    lastStreakDate: typeof userProfile.lastStreakDate === 'string' ? userProfile.lastStreakDate.split('T')[0] : '',
     seedCredits: userProfile.seedCredits || 0,
     linkedin: userProfile.linkedin || userProfile.linkedIn || '',
     github: userProfile.github || userProfile.githubUrl || '',

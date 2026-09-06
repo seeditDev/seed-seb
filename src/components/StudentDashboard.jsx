@@ -182,6 +182,7 @@ const StudentDashboard = () => {
     ensureUserHasUsername(user).then((handle) => {
       if (handle) {
         setStudentUsername(handle);
+        publishPublicProfile(user.uid, { ...user, username: handle }, progressData || {}, typeof assessments !== 'undefined' ? assessments : []).catch(() => {});
       }
     }).catch((e) => console.warn('[StudentDashboard] Error ensuring username:', e));
   }, [user?.uid]);
@@ -509,9 +510,11 @@ const StudentDashboard = () => {
 
       // 1-Question Streak Rule: Solving 1 question today maintains/advances streak for today!
       if (todaySolvedCount >= 1 && uid && uid !== 'guest') {
-        if (user?.lastStreakDate !== todayStr) {
+        const cleanUserLastStreak = (user?.lastStreakDate || '').split('T')[0];
+        if (cleanUserLastStreak !== todayStr) {
           const nextStreak = Math.max(1, userStreak);
           setUserStreak(nextStreak);
+          setUser(prev => prev ? { ...prev, lastStreakDate: todayStr, streak: nextStreak } : prev);
           import('firebase/firestore').then(({ updateDoc, doc, serverTimestamp }) => {
             updateDoc(doc(db, 'users', uid), {
               streak: nextStreak,
@@ -613,11 +616,24 @@ const StudentDashboard = () => {
     }).catch(() => { });
 
     if (!wereAllCompletedBefore && areAllCompletedNow) {
-      nextStreak = userStreak + 1;
       nextCredits = seedCredits + 100;
-      setUserStreak(nextStreak);
       setSeedCredits(nextCredits);
       setTodayCreditsGained(prev => prev + 100);
+
+      // Streak rule: Only increment if streak wasn't already advanced for today!
+      const lastDate = (user?.lastStreakDate || '').split('T')[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      if (lastDate === yesterdayStr) {
+        nextStreak = userStreak + 1;
+      } else {
+        nextStreak = Math.max(1, userStreak);
+      }
+      setUserStreak(nextStreak);
+      setUser(prev => prev ? { ...prev, lastStreakDate: todayStr, streak: nextStreak } : prev);
+
       toast.success('🔥 Streak Approved! All daily goals completed! +100 SEED Credits awarded!');
 
       // Activity Log for Streak Approval
@@ -625,9 +641,7 @@ const StudentDashboard = () => {
         mod.logUserActivity(uid, 'STREAK_APPROVED', { streak: nextStreak, credits: nextCredits, date: todayStr });
       }).catch(() => { });
     } else if (wereAllCompletedBefore && !areAllCompletedNow) {
-      nextStreak = Math.max(1, userStreak - 1);
       nextCredits = Math.max(0, seedCredits - 100);
-      setUserStreak(nextStreak);
       setSeedCredits(nextCredits);
       setTodayCreditsGained(prev => Math.max(0, prev - 100));
     }
