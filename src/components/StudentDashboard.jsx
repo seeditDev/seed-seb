@@ -68,6 +68,7 @@ import {
   FaAndroid
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { isQuestionBankProblem } from '../services/codingProgressService';
 import '../styles/StudentDashboard.css';
 import '../styles/PracticeHome.css';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
@@ -465,8 +466,8 @@ const StudentDashboard = () => {
       // Evaluate each goal against live progress data
       const localProg = prog || (await (await import('../services/codingProgressService')).getFullProgress(uid));
       const solvedToday = Object.entries(localProg?.problemDetails || {})
-        .filter(([id, p]) => (p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt && p.lastSolvedAt.startsWith(todayStr));
-      const todaySolvedCount = Math.max((localProg?.activity?.[todayStr]?.problemsSolved || 0), solvedToday.length);
+        .filter(([id, p]) => (p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt && p.lastSolvedAt.startsWith(todayStr) && isQuestionBankProblem(p.questionId || id));
+      const todaySolvedCount = solvedToday.length;
       const todayTimeMins = Math.round((localProg?.activity?.[todayStr]?.hours || 0) * 60);
 
       let allCompleted = true;
@@ -2822,12 +2823,13 @@ const StudentDashboard = () => {
       weeks.push(dates.slice(i, i + 7));
     }
 
-    // Statistics computation
+    // Statistics computation (strictly QuestionBank problems)
     const getSolvedCountForDate = (dateStr) => {
       let count = 0;
       if (progressData?.problemDetails) {
-        Object.values(progressData.problemDetails).forEach(detail => {
+        Object.entries(progressData.problemDetails).forEach(([id, detail]) => {
           if (detail.status === 'SOLVED' && detail.lastSolvedAt) {
+            if (!isQuestionBankProblem(detail.questionId || id)) return;
             const solvedDate = detail.lastSolvedAt.split('T')[0];
             if (solvedDate === dateStr) {
               count++;
@@ -2835,12 +2837,11 @@ const StudentDashboard = () => {
           }
         });
       }
-      const activityCount = progressData?.activity?.[dateStr]?.problemsSolved || 0;
-      return Math.max(count, activityCount);
+      return count;
     };
 
     let totalHours = 0;
-    let totalProblemsSolved = progressData?.completedQuestions?.length || progressData?.solvedProblems?.length || progressData?.solvedCount || 0;
+    let totalProblemsSolved = (progressData?.completedQuestions || progressData?.solvedProblems || []).filter(isQuestionBankProblem).length;
     if (progressData?.activity) {
       Object.values(progressData.activity).forEach(act => {
         totalHours += act.hours || 0;

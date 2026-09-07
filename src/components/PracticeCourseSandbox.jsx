@@ -291,11 +291,19 @@ const PracticeCourseSandbox = () => {
         const qData = normalizeQuestion(qRaw);
         setQuestion(qData);
 
-        // 2. Fetch solved progress
+        // 2. Fetch solved progress (QuestionBank solved + Course completed items)
         const progress = uid
           ? await getFullProgress(uid).catch(() => ({ solvedProblems: [], problemDetails: {} }))
           : { solvedProblems: [], problemDetails: {} };
-        setSolvedIds(progress.solvedProblems || []);
+        const allCompletedInCourse = [
+          ...(progress.solvedProblems || []),
+          ...(progress.completedQuestions || []),
+          ...(progress.courseCompletedItems || []),
+          ...Object.entries(progress.problemDetails || {})
+            .filter(([_, d]) => d && (d.status === 'SOLVED' || d.bestScore > 0 || d.lastSolvedAt))
+            .map(([id]) => id)
+        ];
+        setSolvedIds([...new Set(allCompletedInCourse)]);
 
         // 3. Detect default language based on Course & Question Boilerplates
         const allowedLangs = qData.judging?.supportedLanguages || ['C', 'C++', 'Java', 'Python3', 'JavaScript'];
