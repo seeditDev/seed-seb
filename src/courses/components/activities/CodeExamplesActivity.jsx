@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../../../utils/monacoFontFix';
 import { 
   FaCode, FaPlay, FaTerminal, FaCheckCircle, FaSpinner, 
   FaArrowRight, FaArrowLeft, FaFileCode, FaCopy, FaUndo, FaTrash 
@@ -362,11 +363,13 @@ const CodeExamplesActivity = ({ topic, onCheckpointComplete, onContinue }) => {
             value={currentCode}
             theme={monacoTheme}
             onChange={(val) => setCurrentCode(val || '')}
+            onMount={(editor, monaco) => {
+              remeasureMonacoFonts(monaco, editor);
+            }}
             options={{
+              ...MONACO_FONT_OPTIONS,
               minimap: { enabled: false },
               fontSize: 13.5,
-              fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace",
-              fontLigatures: true,
               scrollBeyondLastLine: false,
               automaticLayout: true,
               padding: { top: 14, bottom: 14 },

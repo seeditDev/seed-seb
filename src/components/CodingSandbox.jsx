@@ -7,6 +7,7 @@ import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import { useLocation, useNavigate } from './router-compat';
 import { normalizeTestCaseArray, compareOutputs } from '../utils/testCaseUtils';
 import { toast } from 'sonner';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../utils/monacoFontFix';
 import '../styles/CodingSandbox.css';
 
 // Predefined fallback challenges
@@ -755,16 +756,17 @@ const isCodeBlankOrEmpty = (codeStr) => {
                                 onChange={(val) => {
                                     codeRef.current = val ?? '';
                                 }}
-                                onMount={(editor) => {
+                                onMount={(editor, monaco) => {
                                     editorRef.current = editor;
                                     const currentCode = codeRef.current || (code  ?? '');
                                     if (editor.getValue() !== currentCode) {
                                         editor.setValue(currentCode);
                                     }
+                                    remeasureMonacoFonts(monaco, editor);
                                 }}
                                 options={{
+                                    ...MONACO_FONT_OPTIONS,
                                     fontSize: 14,
-                                    fontFamily: "'JetBrains Mono', 'Consolas', monospace",
                                     minimap: { enabled: false },
                                     scrollBeyondLastLine: false,
                                     automaticLayout: true,

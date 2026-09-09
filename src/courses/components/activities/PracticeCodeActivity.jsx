@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../../../utils/monacoFontFix';
 import { 
   FaPlay, FaCheck, FaTimes, FaSpinner, 
   FaArrowLeft, FaCheckCircle, FaCode, FaTerminal 
@@ -234,8 +235,12 @@ const PracticeCodeActivity = ({ topic, onBack, onCheckpointComplete, user }) => 
               theme={monacoTheme}
               language={language === 'cpp' ? 'cpp' : (language === 'python' ? 'python' : 'java')}
               value={code}
-              onMount={(editor) => { editorRef.current = editor; }}
+              onMount={(editor, monaco) => { 
+                editorRef.current = editor; 
+                remeasureMonacoFonts(monaco, editor);
+              }}
               options={{
+                ...MONACO_FONT_OPTIONS,
                 fontSize: 14,
                 minimap: { enabled: false },
                 automaticLayout: true,

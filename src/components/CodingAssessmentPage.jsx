@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { buildResultDoc, buildSectionResult, buildQuestionResult, buildCodingSubmission } from '../utils/buildResultDoc.js';
 import { useNavigate, useParams, Link } from './router-compat';
 import Editor from '@monaco-editor/react';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../utils/monacoFontFix';
 import { 
     FaArrowLeft, FaArrowRight, FaPlay, FaCheck, FaTimes, FaUndo, FaBookmark, 
     FaClock, FaLock, FaExclamationTriangle, FaCheckCircle, FaTimesCircle,
@@ -3490,13 +3491,14 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
                                         defaultValue={getCurrentCode(currentQuestion?.id || currentQuestion?.questionId || `q_${activeQuestionIndex}`, language)}
                                         onChange={handleCodeChange}
-                                        onMount={(editor) => {
+                                        onMount={(editor, monaco) => {
                                             editorRef.current = editor;
+                                            remeasureMonacoFonts(monaco, editor);
                                         }}
                                         theme={editorTheme === 'light' ? 'vs' : 'vs-dark'}
                                         options={{
+                                            ...MONACO_FONT_OPTIONS,
                                             fontSize: 14,
-                                            fontFamily: "'JetBrains Mono', 'Fira Code', Courier, monospace",
                                             minimap: { enabled: false },
                                             scrollbar: { vertical: 'visible', horizontal: 'visible' },
                                             automaticLayout: true,

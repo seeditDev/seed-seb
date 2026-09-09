@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../../../utils/monacoFontFix';
 import { 
   FaPlay, FaCheck, FaTimes, FaUndo, FaTerminal, 
   FaArrowLeft, FaArrowRight, FaCheckCircle, FaTimesCircle, FaSpinner, FaCode,
@@ -793,18 +794,19 @@ const CourseCodingPracticeView = ({
               height="100%"
               language={selectedLang === 'cpp' || selectedLang === 'c' ? 'cpp' : selectedLang}
               value={code}
-              onMount={(editor) => { 
+              onMount={(editor, monaco) => { 
                 editorRef.current = editor; 
+                remeasureMonacoFonts(monaco, editor);
                 setTimeout(() => editor.layout(), 100);
               }}
               onChange={(newVal) => setCode(newVal || '')}
               theme={monacoTheme}
               options={{
+                ...MONACO_FONT_OPTIONS,
                 fontSize: 13.5,
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
                 lineNumbers: 'on',
-                fontFamily: "'Fira Code', Consolas, Monaco, monospace",
                 automaticLayout: true
               }}
             />

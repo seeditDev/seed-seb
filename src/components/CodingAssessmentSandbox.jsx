@@ -5,6 +5,7 @@ import { db } from '../lib/firebase-config';
 import { collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from 'firebase/firestore';
 import desktopBridge from '../utils/desktopBridge';
 import { useLocation, useNavigate } from './router-compat';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../utils/monacoFontFix';
 import '../styles/CodingAssessmentSandbox.css';
 
 const isRunningInPyQt = () => {
@@ -1358,17 +1359,18 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                                 onChange={(val) => {
                                     codeRef.current = val ?? '';
                                 }}
-                                onMount={(editor) => {
+                                onMount={(editor, monaco) => {
                                     editorRef.current = editor;
                                     const currentCode = codeRef.current || (code  ?? '');
                                     if (editor.getValue() !== currentCode) {
                                         editor.setValue(currentCode);
                                     }
+                                    remeasureMonacoFonts(monaco, editor);
                                 }}
                                 options={{
+                                    ...MONACO_FONT_OPTIONS,
                                     readOnly: isEmbedded && selectedChallenge && lockedChallenges.includes(selectedChallenge.id),
                                     fontSize: 14,
-                                    fontFamily: "'JetBrains Mono', 'Consolas', monospace",
                                     minimap: { enabled: false },
                                     scrollBeyondLastLine: false,
                                     automaticLayout: true,

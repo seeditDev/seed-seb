@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../../../utils/monacoFontFix';
 import { 
   FaPlay, FaCheck, FaTimes, FaSpinner, 
   FaCode, FaTerminal, FaCheckCircle, FaExclamationTriangle,
@@ -303,8 +304,12 @@ const CourseMSACodingSection = ({
               language={language === 'cpp' || language === 'c' ? 'cpp' : (language === 'python' ? 'python' : 'java')}
               value={currentCode}
               onChange={handleEditorChange}
-              onMount={(editor) => { editorRef.current = editor; }}
+              onMount={(editor, monaco) => { 
+                editorRef.current = editor; 
+                remeasureMonacoFonts(monaco, editor);
+              }}
               options={{
+                ...MONACO_FONT_OPTIONS,
                 fontSize: 14,
                 minimap: { enabled: false },
                 automaticLayout: true,

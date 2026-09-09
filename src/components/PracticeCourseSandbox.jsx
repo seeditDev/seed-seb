@@ -18,6 +18,7 @@ import { fetchArticleFile } from '../utils/articleFetcher';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
 import ProblemMarkdownRenderer from './common/ProblemMarkdownRenderer';
+import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../utils/monacoFontFix';
 import '../styles/PracticeSandbox.css'; // Reuse core sandbox tokens and styling
 
 const FREE_BOILERPLATES = {
@@ -71,7 +72,7 @@ const getBoilerplate = (boilerplatesObj, langKey) => {
 
 
 const EDITOR_OPTIONS = {
-  fontFamily: 'var(--ps-mono)',
+  ...MONACO_FONT_OPTIONS,
   fontSize: 14,
   minimap: { enabled: false },
   scrollbar: { vertical: 'visible', horizontal: 'visible' },
@@ -1185,12 +1186,13 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 onChange={(val) => {
                   codeRef.current = val ?? '';
                 }}
-                onMount={(editor) => {
+                onMount={(editor, monaco) => {
                   editorRef.current = editor;
                   const currentCode = codeRef.current || (code ?? '');
                   if (editor.getValue() !== currentCode) {
                     editor.setValue(currentCode);
                   }
+                  remeasureMonacoFonts(monaco, editor);
                 }}
                 options={EDITOR_OPTIONS}
               />
