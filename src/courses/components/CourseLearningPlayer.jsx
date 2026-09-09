@@ -136,12 +136,16 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
     });
   };
 
-  const handleSelectTopic = (module, topic) => {
+  const handleSelectTopic = (module, topic, bypassLockCheck = false) => {
     // Check if topic is locked (prior topic in module must be completed)
     const tIdx = module.topics?.findIndex(t => t.topicId === topic.topicId) ?? -1;
-    if (tIdx > 0) {
+    if (tIdx > 0 && !bypassLockCheck) {
       const prevTopic = module.topics[tIdx - 1];
-      const prevCompleted = Boolean(progress?.topics?.[prevTopic.topicId]?.completed);
+      const prevTopicProg = progress?.topics?.[prevTopic.topicId];
+      const prevCompleted = Boolean(
+        prevTopicProg?.completed || 
+        getTopicActivityStatus(prevTopic, prevTopicProg).isCompleted
+      );
       if (!prevCompleted) {
         toast.warning(`Lesson locked. Please complete "${prevTopic.title}" to unlock this lesson.`);
         return;
@@ -181,7 +185,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
 
     // Strict Rule: MSA is allowed ONLY if all submodules within the module are completed
     const modTopics = targetModule.topics || [];
-    const completedCount = modTopics.filter(t => progress?.topics?.[t.topicId]?.completed).length;
+    const completedCount = modTopics.filter(t => progress?.topics?.[t.topicId]?.completed || getTopicActivityStatus(t, progress?.topics?.[t.topicId]).isCompleted).length;
     const isMsaPassed = Boolean(progress?.modules?.[targetModule.moduleId]?.msa?.passed);
     const allTopicsDone = modTopics.length > 0 && completedCount === modTopics.length;
 
@@ -191,7 +195,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
         { duration: 4500 }
       );
       // Automatically navigate to the first incomplete submodule
-      const firstIncomplete = modTopics.find(t => !progress?.topics?.[t.topicId]?.completed);
+      const firstIncomplete = modTopics.find(t => !progress?.topics?.[t.topicId]?.completed && !getTopicActivityStatus(t, progress?.topics?.[t.topicId]).isCompleted);
       if (firstIncomplete) {
         handleSelectTopic(targetModule, firstIncomplete);
       }
@@ -219,11 +223,12 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
     }
   };
 
-  const handlePracticeProblemSolved = async (problemId) => {
+  const handlePracticeProblemSolved = async (problemId, allIds = []) => {
     const targetModId = activeModule?.moduleId || selectedModuleId;
     const targetTopicId = activeTopic?.topicId || selectedTopicId;
+    const idsToRecord = Array.isArray(allIds) && allIds.length > 0 ? allIds : [problemId];
     const updated = await recordTopicPracticeSolved(
-      uid, course, targetModId, targetTopicId, problemId
+      uid, course, targetModId, targetTopicId, idsToRecord
     );
     if (updated) {
       setProgress({ ...updated });
@@ -266,7 +271,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
 
   const currentStepIdx = availableTopicSteps.indexOf(activeStep);
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (activeStep === 'MSA') {
       handleContinueNextModule();
       return;
@@ -286,22 +291,31 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
         toast.warning(`Please complete ${pendingItem.label} before advancing.`);
         return;
       }
-      const targetModId = activeModule?.moduleId || selectedModuleId;
-      const targetTopicId = activeTopic?.topicId || selectedTopicId;
-      markTopicCompleted(uid, course, targetModId, targetTopicId)
-        .then(up => { if (up) setProgress(up); });
+    }
+
+    const targetModId = activeModule?.moduleId || selectedModuleId;
+    const targetTopicId = activeTopic?.topicId || selectedTopicId;
+    if (!activeTopicProgress?.completed) {
+      const up = await markTopicCompleted(uid, course, targetModId, targetTopicId);
+      if (up) {
+        setProgress({ ...up });
+      }
     }
 
     // Advance to next topic in module
     const currentTopicIdx = activeModule?.topics?.findIndex(t => t.topicId === selectedTopicId) ?? -1;
     if (currentTopicIdx !== -1 && currentTopicIdx < (activeModule?.topics?.length || 0) - 1) {
       const nextTopic = activeModule.topics[currentTopicIdx + 1];
-      handleSelectTopic(activeModule, nextTopic);
+      handleSelectTopic(activeModule, nextTopic, true);
       return;
     }
 
     // If at end of topics in module, verify all topics are complete before launching Module Assessment
-    const allTopicsDone = (activeModule?.topics || []).every(t => progress?.topics?.[t.topicId]?.completed || t.topicId === selectedTopicId);
+    const allTopicsDone = (activeModule?.topics || []).every(t => 
+      progress?.topics?.[t.topicId]?.completed || 
+      t.topicId === selectedTopicId || 
+      getTopicActivityStatus(t, progress?.topics?.[t.topicId]).isCompleted
+    );
     if (!allTopicsDone) {
       toast.warning("Complete all lessons in this module before taking the Module Assessment.");
       return;
@@ -829,8 +843,9 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
                 topic={activeTopic}
                 topicProgress={activeTopicProgress}
                 onBack={() => setActiveStep('LESSON')}
+                onContinue={handleNextStep}
                 onCheckpointComplete={() => handleCheckpointComplete('practiceSolved')}
-                onProblemSolved={(pId) => handlePracticeProblemSolved(pId)}
+                onProblemSolved={(pId, allIds) => handlePracticeProblemSolved(pId, allIds)}
                 user={user}
               />
             ) : activeStep === 'EXAMPLES' ? (

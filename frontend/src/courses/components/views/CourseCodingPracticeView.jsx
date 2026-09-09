@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Editor from '@monaco-editor/react';
 import { 
   FaPlay, FaCheck, FaTimes, FaUndo, FaTerminal, 
-  FaArrowLeft, FaCheckCircle, FaTimesCircle, FaSpinner, FaCode,
+  FaArrowLeft, FaArrowRight, FaCheckCircle, FaTimesCircle, FaSpinner, FaCode,
   FaShieldAlt, FaLightbulb, FaCheckDouble, FaExternalLinkAlt,
   FaChevronDown, FaChevronUp, FaImage, FaCopy
 } from 'react-icons/fa';
@@ -90,6 +90,7 @@ const CourseCodingPracticeView = ({
   topic, 
   topicProgress,
   onBack, 
+  onContinue,
   onCheckpointComplete, 
   onProblemSolved, 
   user 
@@ -124,8 +125,16 @@ const CourseCodingPracticeView = ({
     });
   }, [topic?.practiceProblems, topic?.practiceQuestions, topic?.codingQuestions]);
 
-  const solvedIds = useMemo(() => {
-    return new Set(topicProgress?.solvedProblems || []);
+  const [localSolvedIds, setLocalSolvedIds] = useState(() => new Set(topicProgress?.solvedProblems || []));
+
+  useEffect(() => {
+    if (topicProgress?.solvedProblems && Array.isArray(topicProgress.solvedProblems)) {
+      setLocalSolvedIds(prev => {
+        const next = new Set(prev);
+        topicProgress.solvedProblems.forEach(id => next.add(id));
+        return next;
+      });
+    }
   }, [topicProgress?.solvedProblems]);
 
   const [activeQIndex, setActiveQIndex] = useState(0);
@@ -134,6 +143,21 @@ const CourseCodingPracticeView = ({
   // Loaded full Question data state
   const [loadedQuestion, setLoadedQuestion] = useState(null);
   const [isLoadingQB, setIsLoadingQB] = useState(true);
+
+  const isQuestionSolved = useCallback((q, idx) => {
+    if (!q) return false;
+    const candidateIds = [
+      q.id,
+      q.problemId,
+      q.questionId,
+      (activeQIndex === idx && loadedQuestion?.id),
+      (activeQIndex === idx && loadedQuestion?.problemId),
+      `P_${idx + 1}`
+    ].filter(Boolean);
+    return candidateIds.some(id => localSolvedIds.has(id));
+  }, [localSolvedIds, activeQIndex, loadedQuestion]);
+
+  const solvedIds = localSolvedIds;
 
   // Editor states
   const [activeTab, setActiveTab] = useState('description'); // 'description' | 'solution'
@@ -465,20 +489,40 @@ const CourseCodingPracticeView = ({
       setSubmissionResult(subResult);
 
       if (isAllPassed) {
-        const qId = loadedQuestion.id || loadedQuestion.problemId;
-        toast.success(`Accepted! Problem solved (${passedCount}/${totalCount} hidden test cases passed).`);
-        onProblemSolved?.(qId);
+        const candidateIds = [
+          loadedQuestion?.id,
+          loadedQuestion?.problemId,
+          activeQMeta?.id,
+          activeQMeta?.problemId,
+          activeQMeta?.questionId,
+          `P_${activeQIndex + 1}`
+        ].filter(Boolean);
 
-        // One-way sync to global Question Bank
-        syncPracticeProblemToQuestionBank(user?.uid, qId, selectedLang, 100);
+        // 1. Immediately update local UI state so pills turn green with zero lag
+        setLocalSolvedIds(prev => {
+          const next = new Set(prev);
+          candidateIds.forEach(id => next.add(id));
+          return next;
+        });
 
-        // Check if all problems in topic are now solved
-        const newSolvedSet = new Set(solvedIds);
-        newSolvedSet.add(qId);
-        const allCompleted = normalizedList.every(q => newSolvedSet.has(q.id || q.problemId));
-        if (allCompleted) {
-          onCheckpointComplete?.('practiceSolved');
-          toast.success('All practice problems for this topic are now completed!');
+        const primaryId = loadedQuestion?.problemId || loadedQuestion?.id || activeQMeta?.problemId || activeQMeta?.id || `P_${activeQIndex + 1}`;
+
+        // 2. Notify parent with primary ID and all alias IDs
+        onProblemSolved?.(primaryId, candidateIds);
+
+        // 3. One-way sync to global Question Bank
+        syncPracticeProblemToQuestionBank(user?.uid, primaryId, selectedLang, 100);
+
+        // 4. Check if all problems in topic are now solved
+        const willAllBeSolved = normalizedList.every((q, idx) => {
+          if (idx === activeQIndex) return true;
+          return isQuestionSolved(q, idx);
+        });
+
+        if (willAllBeSolved) {
+          toast.success('🎉 All practice problems for this topic are now completed! You can proceed to the next lesson.');
+        } else {
+          toast.success(`Accepted! Problem ${activeQIndex + 1} of ${normalizedList.length} completed.`);
         }
       } else {
         toast.error(`Wrong Answer: Passed ${passedCount} of ${totalCount} hidden test cases. All must pass for credit.`);
@@ -491,9 +535,9 @@ const CourseCodingPracticeView = ({
     }
   };
 
-  const isCurrentQSolved = solvedIds.has(activeQMeta.id) || solvedIds.has(activeQMeta.problemId);
-  const totalSolvedInTopic = normalizedList.filter(q => solvedIds.has(q.id) || solvedIds.has(q.problemId)).length;
-  const isAllPracticeDone = totalSolvedInTopic === normalizedList.length;
+  const isCurrentQSolved = isQuestionSolved(activeQMeta, activeQIndex);
+  const totalSolvedInTopic = normalizedList.filter((q, idx) => isQuestionSolved(q, idx)).length;
+  const isAllPracticeDone = normalizedList.length > 0 && totalSolvedInTopic >= normalizedList.length;
 
   return (
     <div className="compiler-fullscreen-workspace">
@@ -507,8 +551,8 @@ const CourseCodingPracticeView = ({
 
           <div className="compiler-questions-pills">
             {normalizedList.map((q, idx) => {
-              const qId = q.id || q.problemId;
-              const isSolved = solvedIds.has(qId);
+              const qId = q.id || q.problemId || `P_${idx + 1}`;
+              const isSolved = isQuestionSolved(q, idx);
               const isActive = idx === activeQIndex;
 
               return (
@@ -532,7 +576,7 @@ const CourseCodingPracticeView = ({
           </div>
         </div>
 
-        <div className="compiler-header-right">
+        <div className="compiler-header-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div className="practice-completion-badge" style={{
             display: 'flex',
             alignItems: 'center',
@@ -547,6 +591,32 @@ const CourseCodingPracticeView = ({
             {isAllPracticeDone ? <FaCheckDouble /> : <FaCode />}
             <span><strong>{totalSolvedInTopic}</strong> of <strong>{normalizedList.length}</strong> Solved</span>
           </div>
+
+          {isAllPracticeDone && onContinue && (
+            <button
+              className="compiler-continue-btn"
+              onClick={onContinue}
+              title="Proceed to Next Lesson / Module"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span>Next Lesson</span>
+              <FaArrowRight />
+            </button>
+          )}
         </div>
       </div>
 
@@ -908,6 +978,59 @@ const CourseCodingPracticeView = ({
                             </div>
                           ))}
                         </div>
+
+                        {submissionResult.passed && (
+                          <div style={{ marginTop: '14px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {activeQIndex < normalizedList.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveQIndex(prev => prev + 1)}
+                                style={{
+                                  padding: '8px 16px',
+                                  background: '#2563eb',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  fontWeight: 600,
+                                  fontSize: '13px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
+                                }}
+                              >
+                                <span>Next Problem (P{activeQIndex + 2})</span>
+                                <FaArrowRight />
+                              </button>
+                            )}
+
+                            {isAllPracticeDone && onContinue && (
+                              <button
+                                type="button"
+                                onClick={onContinue}
+                                style={{
+                                  padding: '8px 18px',
+                                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  fontWeight: 700,
+                                  fontSize: '13px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                                }}
+                              >
+                                <FaCheckDouble />
+                                <span>All Done — Proceed to Next Lesson</span>
+                                <FaArrowRight />
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--lp-text-muted)' }}>

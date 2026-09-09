@@ -497,6 +497,83 @@ export const hydrateProgressFromFirestore = (firestoreData, course) => {
 };
 
 /**
+ * Deep merge cloud progress and local progress so newer local updates (solved problems, checkpoints)
+ * are never clobbered by lagging or stale cloud snapshots.
+ */
+export const mergeCourseProgress = (cloud, local, course) => {
+  if (!cloud) return local;
+  if (!local) return cloud;
+
+  const merged = { ...cloud, ...local };
+  merged.modules = { ...(cloud.modules || {}) };
+  merged.topics = { ...(cloud.topics || {}) };
+
+  // Merge modules
+  const allModIds = Array.from(new Set([...Object.keys(cloud.modules || {}), ...Object.keys(local.modules || {})]));
+  for (const mId of allModIds) {
+    const cMod = cloud.modules?.[mId] || {};
+    const lMod = local.modules?.[mId] || {};
+    merged.modules[mId] = {
+      ...cMod,
+      ...lMod,
+      completed: Boolean(cMod.completed || lMod.completed),
+      isUnlocked: Boolean(cMod.isUnlocked || lMod.isUnlocked),
+      msa: {
+        ...(cMod.msa || {}),
+        ...(lMod.msa || {}),
+        passed: Boolean(cMod.msa?.passed || lMod.msa?.passed)
+      }
+    };
+  }
+
+  // Merge topics
+  const allTopicIds = Array.from(new Set([...Object.keys(cloud.topics || {}), ...Object.keys(local.topics || {})]));
+  for (const tId of allTopicIds) {
+    const cTop = cloud.topics?.[tId] || {};
+    const lTop = local.topics?.[tId] || {};
+    const mergedSolved = Array.from(new Set([...(cTop.solvedProblems || []), ...(lTop.solvedProblems || [])]));
+    const mergedPassedCps = Array.from(new Set([...(cTop.passedCheckpoints || []), ...(lTop.passedCheckpoints || [])]));
+
+    merged.topics[tId] = {
+      ...cTop,
+      ...lTop,
+      completed: Boolean(cTop.completed || lTop.completed),
+      readingCompleted: Boolean(cTop.readingCompleted || lTop.readingCompleted),
+      videoWatched: Boolean(cTop.videoWatched || lTop.videoWatched),
+      currentAllowedVideoTime: Math.max(cTop.currentAllowedVideoTime || 0, lTop.currentAllowedVideoTime || 0),
+      currentPageIdx: Math.max(cTop.currentPageIdx || 0, lTop.currentPageIdx || 0),
+      solvedProblems: mergedSolved,
+      passedCheckpoints: mergedPassedCps,
+      checkpoints: {
+        ...(cTop.checkpoints || {}),
+        ...(lTop.checkpoints || {}),
+        practiceSolved: Boolean(cTop.checkpoints?.practiceSolved || lTop.checkpoints?.practiceSolved)
+      }
+    };
+  }
+
+  merged.percentage = Math.max(cloud.percentage || 0, local.percentage || 0);
+  merged.completedTopics = Object.values(merged.topics).filter(t => t.completed).length;
+  merged.completedModules = Object.values(merged.modules).filter(m => m.completed).length;
+
+  return merged;
+};
+
+/**
+ * Fast synchronous reader for latest locally cached course progress.
+ */
+export const getLatestLocalProgress = (uid, course) => {
+  if (!course) return null;
+  const courseId = course.courseId;
+  const localKey = `${LOCAL_PROGRESS_PREFIX}${uid}_${courseId}`;
+  try {
+    const raw = localStorage.getItem(localKey);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return null;
+};
+
+/**
  * Load course progress for a user with local fallback and cloud sync.
  */
 export const getCourseProgress = async (uid, course) => {
@@ -504,15 +581,29 @@ export const getCourseProgress = async (uid, course) => {
   const courseId = course.courseId;
   const localKey = `${LOCAL_PROGRESS_PREFIX}${uid}_${courseId}`;
 
-  let progress = null;
+  // 1. Read local cache first (instant 0ms)
+  let localProgress = null;
+  try {
+    const raw = localStorage.getItem(localKey);
+    if (raw) {
+      localProgress = JSON.parse(raw);
+    }
+  } catch (_) {}
 
-  // 1. Attempt Firestore read if authenticated and online
+  let progress = localProgress;
+
+  // 2. Attempt Firestore read if authenticated and online, then merge safely
   if (uid && uid !== 'demo' && uid !== 'demo-student' && navigator.onLine) {
     try {
       const snap = await getDoc(doc(db, 'users', uid, 'courseProgress', courseId));
       if (snap.exists()) {
         const firestoreData = snap.data();
-        progress = hydrateProgressFromFirestore(firestoreData, course);
+        const cloudProgress = hydrateProgressFromFirestore(firestoreData, course);
+        if (localProgress) {
+          progress = mergeCourseProgress(cloudProgress, localProgress, course);
+        } else {
+          progress = cloudProgress;
+        }
         saveLocalCourseProgress(uid, courseId, progress);
       }
     } catch (e) {
@@ -520,22 +611,10 @@ export const getCourseProgress = async (uid, course) => {
     }
   }
 
-  // 2. Local Storage fallback / cache
-  if (!progress) {
-    try {
-      const raw = localStorage.getItem(localKey);
-      if (raw) {
-        progress = JSON.parse(raw);
-      }
-    } catch (_) {}
-  }
-
   // 3. Create initial progress if none exists
   if (!progress) {
     progress = createInitialCourseProgress(course);
     saveLocalCourseProgress(uid, courseId, progress);
-    // We do not immediately sync an unstarted, 0% course to Firestore upon browsing.
-    // Sync begins as soon as the student opens a topic, interacts, or takes an assessment.
   }
 
   return progress;
@@ -577,7 +656,7 @@ export const syncCourseProgressToFirestore = async (uid, courseId, progress, cou
 export const updateOngoingTopic = async (uid, course, moduleId, topicId) => {
   if (!course || !moduleId || !topicId) return null;
   const courseId = course.courseId;
-  const progress = await getCourseProgress(uid, course);
+  const progress = getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
   if (!progress) return null;
 
   progress.currentModuleId = moduleId;
@@ -596,7 +675,7 @@ export const updateOngoingTopic = async (uid, course, moduleId, topicId) => {
 export const updateTopicCheckpoint = async (uid, course, moduleId, topicId, checkpointKey, value = true) => {
   if (!course || !topicId) return null;
   const courseId = course.courseId;
-  const progress = await getCourseProgress(uid, course);
+  const progress = getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
 
   if (!progress.topics[topicId]) {
     progress.topics[topicId] = {
@@ -657,7 +736,7 @@ export const updateTopicCheckpoint = async (uid, course, moduleId, topicId, chec
 export const markTopicCompleted = async (uid, course, moduleId, topicId) => {
   if (!course || !topicId) return null;
   const courseId = course.courseId;
-  const progress = await getCourseProgress(uid, course);
+  const progress = getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
 
   if (!progress.topics[topicId]) {
     progress.topics[topicId] = {
@@ -706,7 +785,7 @@ export const markTopicCompleted = async (uid, course, moduleId, topicId) => {
 export const passTopicCheckpoint = async (uid, course, moduleId, topicId, checkpointId, newAllowedTime = 0) => {
   if (!course || !topicId || !checkpointId) return null;
   const courseId = course.courseId;
-  const progress = await getCourseProgress(uid, course);
+  const progress = getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
 
   if (!progress.topics[topicId]) {
     progress.topics[topicId] = {
@@ -763,7 +842,7 @@ export const passTopicCheckpoint = async (uid, course, moduleId, topicId, checkp
 export const updateTextPageProgress = async (uid, course, moduleId, topicId, pageIdx) => {
   if (!course || !topicId) return null;
   const courseId = course.courseId;
-  const progress = await getCourseProgress(uid, course);
+  const progress = getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
 
   if (!progress.topics[topicId]) {
     progress.topics[topicId] = {
@@ -887,13 +966,35 @@ export const getTopicActivityStatus = (topic, topicProgress) => {
       });
     } else if (req === 'practice') {
       const practiceList = topic.practiceProblems || topic.practiceQuestions || topic.codingQuestions || [];
-      const done = isTopicMarkedCompleted || Boolean(practiceList.length > 0 ? solved.length >= practiceList.length : cp.practiceSolved);
+      const allPracticeListSolved = practiceList.length > 0 && practiceList.every(q => {
+        const ids = [q.id, q.problemId, q.questionId, (typeof q === 'string' ? q : null)].filter(Boolean);
+        return ids.some(id => solved.includes(id));
+      });
+      const done = isTopicMarkedCompleted || Boolean(
+        cp.practiceSolved ||
+        allPracticeListSolved ||
+        (practiceList.length > 0 ? solved.length >= practiceList.length : false)
+      );
       if (done) completedCount++;
+
+      let countSolved = 0;
+      if (practiceList.length > 0) {
+        if (done) {
+          countSolved = practiceList.length;
+        } else {
+          practiceList.forEach(q => {
+            const ids = [q.id, q.problemId, q.questionId, (typeof q === 'string' ? q : null)].filter(Boolean);
+            if (ids.some(id => solved.includes(id))) countSolved++;
+          });
+          countSolved = Math.max(countSolved, Math.min(solved.length, practiceList.length));
+        }
+      }
+
       items.push({
         key: 'practice',
         label: 'Practice Questions',
         done,
-        count: practiceList.length > 0 ? `${solved.length}/${practiceList.length}` : undefined
+        count: practiceList.length > 0 ? `${countSolved}/${practiceList.length}` : undefined
       });
     }
   }
@@ -911,9 +1012,10 @@ export const getTopicActivityStatus = (topic, topicProgress) => {
 /**
  * Record a solved coding practice problem for a topic.
  */
-export const recordTopicPracticeSolved = async (uid, course, moduleId, topicId, problemId) => {
+export const recordTopicPracticeSolved = async (uid, course, moduleId, topicId, problemIdOrIds) => {
   if (!course || !topicId) return null;
-  const progress = await getCourseProgress(uid, course);
+  const courseId = course.courseId;
+  const progress = getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
   if (!progress.topics[topicId]) {
     progress.topics[topicId] = {
       topicId,
@@ -928,22 +1030,35 @@ export const recordTopicPracticeSolved = async (uid, course, moduleId, topicId, 
 
   const topicProg = progress.topics[topicId];
   if (!topicProg.solvedProblems) topicProg.solvedProblems = [];
-  if (problemId && !topicProg.solvedProblems.includes(problemId)) {
-    topicProg.solvedProblems.push(problemId);
-  }
+
+  const incomingIds = Array.isArray(problemIdOrIds) ? problemIdOrIds : [problemIdOrIds].filter(Boolean);
+  incomingIds.forEach(id => {
+    if (id && !topicProg.solvedProblems.includes(id)) {
+      topicProg.solvedProblems.push(id);
+    }
+  });
 
   const topicObj = findTopicInCourse(course, topicId)?.topic;
   const practiceList = topicObj?.practiceProblems || topicObj?.practiceQuestions || topicObj?.codingQuestions || [];
-  if (topicProg.solvedProblems.length >= (practiceList.length || 1)) {
-    if (!topicProg.checkpoints) topicProg.checkpoints = {};
+
+  const allProblemsSolved = practiceList.length > 0
+    ? practiceList.every(q => {
+        const ids = [q.id, q.problemId, q.questionId, (typeof q === 'string' ? q : null)].filter(Boolean);
+        return ids.some(id => topicProg.solvedProblems.includes(id));
+      }) || (topicProg.solvedProblems.length >= practiceList.length)
+    : true;
+
+  if (!topicProg.checkpoints) topicProg.checkpoints = {};
+  if (allProblemsSolved) {
     topicProg.checkpoints.practiceSolved = true;
   }
 
-  awardCourseMilestone(uid, progress, course, 'practice', `${topicId}_${problemId || 'p'}`, COURSE_GAMIFICATION_SPEC.TOPIC_PRACTICE_XP, COURSE_GAMIFICATION_SPEC.TOPIC_PRACTICE_CREDITS);
+  const primaryId = incomingIds[0] || 'p';
+  awardCourseMilestone(uid, progress, course, 'practice', `${topicId}_${primaryId}`, COURSE_GAMIFICATION_SPEC.TOPIC_PRACTICE_XP, COURSE_GAMIFICATION_SPEC.TOPIC_PRACTICE_CREDITS);
 
-  if (isTopicRequirementsSatisfied(topicObj, topicProg) && !topicProg.completed) {
+  if (isTopicRequirementsSatisfied(topicObj, topicProg)) {
     topicProg.completed = true;
-    topicProg.completedAt = new Date().toISOString();
+    if (!topicProg.completedAt) topicProg.completedAt = new Date().toISOString();
     awardCourseMilestone(uid, progress, course, 'topic_complete', topicId, COURSE_GAMIFICATION_SPEC.TOPIC_COMPLETION_XP, COURSE_GAMIFICATION_SPEC.TOPIC_COMPLETION_CREDITS);
   }
 
@@ -958,8 +1073,8 @@ export const recordTopicPracticeSolved = async (uid, course, moduleId, topicId, 
 
   checkCourseGraduation(uid, progress, course);
 
-  saveLocalCourseProgress(uid, course.courseId, progress);
-  syncCourseProgressToFirestore(uid, course.courseId, progress, course);
+  saveLocalCourseProgress(uid, courseId, progress);
+  syncCourseProgressToFirestore(uid, courseId, progress, course);
 
   return progress;
 };
