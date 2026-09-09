@@ -1,0 +1,436 @@
+rules_version = '2';
+
+// ════════════════════════════════════════════════════════════════════════════
+// SEED-IT Platform — Unified Production Security Rules
+// Shared across seed-website, seed-seb, and seed-admin
+// ════════════════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Helper Functions
+    // ──────────────────────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function hasProfile() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function myProfile() {
+      return hasProfile()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : {};
+    }
+
+    function myRole() {
+      return hasProfile()
+        ? myProfile().get('role', 'student')
+        : (isSignedIn() ? request.auth.token.get('role', 'student') : 'none');
+    }
+
+    function isAdmin() {
+      return myRole() == 'admin' || myRole() == 'superadmin';
+    }
+
+    function isStaff() {
+      return myRole() == 'staff';
+    }
+
+    function isPortal() {
+      return isAdmin() || isStaff();
+    }
+
+    function myTenant() {
+      return hasProfile()
+        ? myProfile().get('tenantId', '')
+        : request.auth.token.get('tenantId', '');
+    }
+
+    function tenantAllowed(tenantId) {
+      return isAdmin() || (isStaff() && (myTenant() == '' || tenantId == '' || tenantId == myTenant()));
+    }
+
+    function isTenantMember(tenantId) {
+      return isSignedIn() && (isAdmin() || myTenant() == '' || tenantId == '' || myTenant() == tenantId);
+    }
+
+    function isValidDuration(durationSecs) {
+      return durationSecs >= 1 && durationSecs <= 86400;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 0. Public Version & Build Hash (Pre-Launch Checks)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /version_seedit/{document=**} {
+      allow read: if true;
+      allow write: if isPortal() || isAdmin() || isSignedIn();
+    }
+
+    match /app_build_hashes/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /assessment_keys/{contestId} {
+      allow read: if isPortal();
+      allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 1. Users & Subcollections  users/{userId}
+    //    (Used by seed-website & seed-seb for login, sessions & attempts)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /users/{userId} {
+      allow get:    if isUser(userId) || isPortal();
+      allow list:   if isPortal();
+      allow create, update: if isUser(userId) || isPortal() || isSignedIn();
+      allow delete: if isAdmin();
+
+      // Activity Logging (Login tracking in dataService.js)
+      match /activityLogging/{sessionId} {
+        allow read, write: if isUser(userId) || isPortal() || isSignedIn();
+      }
+
+      // Course Progress (Practice, checkpoints, submodule completion, MSA)
+      match /courseProgress/{courseId} {
+        allow read, write: if true;
+      }
+
+      // Contest & Assessment Attempts (SessionService in seed-seb)
+      match /contestAttempts/{attemptId} {
+        allow read: if isUser(userId) || isPortal();
+        allow create, update: if isUser(userId) || isPortal() || isSignedIn();
+        allow delete: if isAdmin();
+      }
+
+      match /profile/{docId} {
+        allow read, write: if isUser(userId) || isPortal();
+      }
+
+      match /settings/{docId} {
+        allow read, write: if isUser(userId) || isPortal();
+      }
+
+      match /{allSub=**} {
+        allow read, write: if isUser(userId) || isPortal() || isSignedIn();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 2. Tenants  tenants/{tenantId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /tenants/{tenantId} {
+      allow get:    if isTenantMember(tenantId) || isPortal();
+      allow list:   if isPortal();
+      allow create, update, delete: if isAdmin();
+
+      match /cohorts/{cohortId} {
+        allow get, list: if isTenantMember(tenantId) || isPortal();
+        allow create, update, delete: if isPortal();
+      }
+
+      match /settings/{docId} {
+        allow get, list: if isTenantMember(tenantId) || isPortal();
+        allow create, update, delete: if isPortal();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 3. Courses / Assessment Test Series (Exam Engine hierarchy)
+    //    courses/{courseId}/series/{seriesId}/tests/{testId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /courses/{courseId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin() || isPortal();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create, update: if true;
+        allow delete: if isAdmin() || isPortal();
+      }
+
+      match /series/{seriesId} {
+        allow read:                    if true;
+        allow create, update, delete:  if isPortal();
+
+        match /tests/{testId} {
+          allow read:                    if true;
+          allow create, update, delete:  if isPortal();
+        }
+
+        match /_meta/{trackerId} {
+          allow read, write: if isPortal();
+        }
+      }
+
+      match /{allSub=**} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 3b. Real Courses (Interactive Learning Curriculum Catalog, Syllabus, Reviews & Enrollments)
+    //     realCourses/{courseId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /realCourses/{courseId} {
+      // Anyone can read interactive course metadata, syllabus, reviews, rating, and enrollments
+      allow read: if true;
+
+      // Allow auto-syncing curriculum metadata, adding student reviews, and incrementing enrollments
+      allow create, update: if true;
+      allow delete: if isAdmin() || isPortal();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create, update: if true;
+        allow delete: if isAdmin() || isPortal();
+      }
+
+      match /{allSub=**} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 4. Assessments (Authoring store - seed-admin & staff portal)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /assessments/{assessmentId} {
+      allow get, list: if true;
+      allow create, update, delete: if isPortal();
+
+      match /questions/{questionId} {
+        allow get, list: if true;
+        allow create, update, delete: if isPortal();
+      }
+
+      match /sections/{sectionId} {
+        allow get, list: if true;
+        allow create, update, delete: if isPortal();
+      }
+
+      match /metadata/{docId} {
+        allow get, list: if isPortal();
+        allow create, update, delete: if isPortal();
+      }
+
+      match /config/{docId} {
+        allow get, list: if isPortal();
+        allow create, update, delete: if isPortal();
+      }
+
+      match /{allSub=**} {
+        allow read: if true;
+        allow write: if isPortal();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 5. Assessment Results (seed-seb submissions & seed-admin reports)
+    //    Path: assessmentResults/{tenantId}/{assessmentId}/{userId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /assessmentResults/{tenantId} {
+      allow get, list: if isPortal() || isSignedIn();
+
+      match /{assessmentId}/{userId} {
+        allow get:    if isUser(userId) || isPortal();
+        allow list:   if isPortal();
+        allow create: if isUser(userId) || isPortal() || isSignedIn();
+        allow update: if isUser(userId) || isPortal() || isSignedIn();
+        allow delete: if isAdmin();
+      }
+
+      match /{document=**} {
+        allow read, write: if isPortal() || isSignedIn();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 6. Proctoring Logs & Events (seed-seb proctoring)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /proctoringLogs/{attemptId} {
+      allow read: if isPortal()
+        || (isSignedIn() && (resource == null || resource.data.get('userId', '') == request.auth.uid || resource.data.get('uid', '') == request.auth.uid));
+
+      allow create, update: if isPortal()
+        || (isSignedIn() && (request.resource.data.get('userId', '') == request.auth.uid || request.resource.data.get('uid', '') == request.auth.uid));
+      allow delete: if isAdmin();
+
+      match /events/{eventId} {
+        allow read: if isPortal()
+          || (isSignedIn() && (resource == null || resource.data.get('uid', '') == request.auth.uid || resource.data.get('userId', '') == request.auth.uid));
+        allow create: if isSignedIn()
+          && (request.resource.data.get('uid', '') == request.auth.uid || request.resource.data.get('userId', '') == request.auth.uid);
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 7. Practice, Progress & Banks
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /codingProgress/{uid} {
+      allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+
+      match /{document=**} {
+        allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+      }
+    }
+
+    match /userActivities/{uid} {
+      allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+
+      match /{allPaths=**} {
+        allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+      }
+    }
+
+    match /codingBank/{bankId} {
+      allow get, list: if isSignedIn() || true;
+      allow create, update, delete: if isPortal();
+    }
+
+    match /codingChallenges/{challengeId} {
+      allow get, list: if isSignedIn() || true;
+      allow create, update, delete: if isPortal();
+    }
+
+    match /questionBank/{questionId} {
+      allow get, list: if isSignedIn() || true;
+      allow create, update, delete: if isPortal();
+    }
+
+    match /questions/{questionId} {
+      allow get, list: if true;
+      allow create, update, delete: if isPortal();
+    }
+
+    match /userSolutions/{uid}/{sub=**} {
+      allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 8. Live Presence (Online tracking & aggregation queries)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /livePresence/{dateStr} {
+      allow read, write: if isPortal() || isSignedIn();
+
+      match /sessions/{sessionId} {
+        allow read: if isPortal() || isSignedIn();
+        allow create, update: if isSignedIn();
+        allow delete: if isPortal();
+      }
+
+      match /{allSub=**} {
+        allow read, write: if isPortal() || isSignedIn();
+      }
+    }
+
+    match /contentUrls/{urlId} {
+      allow read:  if isSignedIn();
+      allow write: if isPortal();
+    }
+
+    match /contestUrls/{urlId} {
+      allow read:  if isSignedIn();
+      allow write: if isPortal();
+    }
+
+    match /appConfig/{docId} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read:   if isSignedIn();
+      allow create: if isPortal() && (
+        isAdmin() || (isStaff() && (myTenant() == '' || request.resource.data.targetTenantId == myTenant()))
+      );
+      allow update: if isPortal() && (
+        isAdmin() || (isStaff() && (myTenant() == '' || resource.data.targetTenantId == myTenant()))
+      );
+      allow delete: if isAdmin() || (isStaff() && (myTenant() == '' || resource.data.targetTenantId == myTenant()));
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 8.5 Public Student Profiles & Usernames
+    //     (Enables unauthenticated public access at seedit.site/user/{username})
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /usernames/{username} {
+      allow read:  if true;
+      allow write: if isSignedIn() || isPortal();
+    }
+
+    match /publicProfiles/{username} {
+      allow read:   if true;
+      allow create: if isSignedIn() || isPortal();
+      allow update: if isSignedIn() || isPortal();
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 8.6 Support & Issue Tickets & Live Chat Messages
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /supportTickets/{ticketId} {
+      allow read: if isPortal() || isSignedIn() || true;
+      allow create: if true;
+      allow update: if isPortal() || isSignedIn() || true;
+      allow delete: if isAdmin();
+
+      // Support Ticket Live Chat Messages subcollection
+      match /messages/{messageId} {
+        allow read: if isPortal() || isSignedIn() || true;
+        allow create: if isPortal() || isSignedIn() || true;
+        allow update: if isPortal() || isSignedIn();
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 9. Collection Group Queries
+    //    (Live Assessment Monitor in seed-admin & Presence Counts)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /{path=**}/messages/{messageId} {
+      allow read, write: if isPortal() || isSignedIn() || true;
+    }
+
+    match /{path=**}/contestAttempts/{attemptId} {
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal() || isSignedIn();
+    }
+
+    match /{path=**}/sessions/{sessionId} {
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal() || isSignedIn();
+    }
+
+    // Fallback: Default Deny All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

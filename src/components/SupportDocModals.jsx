@@ -95,7 +95,7 @@ export const DocumentationModal = ({ isOpen, onClose }) => {
           {/* Guide 1 */}
           <div style={{ border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '12px', padding: '16px' }}>
             <h4 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, color: '#2563eb' }}>
-              🪟 Windows SmartScreen / Antivirus Prompt
+              Windows SmartScreen / Antivirus Prompt
             </h4>
             <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-secondary, #475569)', lineHeight: '1.6' }}>
               When downloading <code>SEED-SEB-Setup.exe</code> on a fresh Windows system, Microsoft Defender SmartScreen might display a notification stating <em>"Windows protected your PC"</em>.
@@ -108,7 +108,7 @@ export const DocumentationModal = ({ isOpen, onClose }) => {
           {/* Guide 2 */}
           <div style={{ border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '12px', padding: '16px' }}>
             <h4 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, color: '#10b981' }}>
-              📱 Android APK Installation Permission
+              Android APK Installation Permission
             </h4>
             <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-secondary, #475569)', lineHeight: '1.6' }}>
               When installing <code>seedit-widget.apk</code>, Chrome or your browser will request <em>"Install unknown apps"</em> permission.
@@ -121,7 +121,7 @@ export const DocumentationModal = ({ isOpen, onClose }) => {
           {/* Guide 3 */}
           <div style={{ border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '12px', padding: '16px' }}>
             <h4 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, color: '#8b5cf6' }}>
-              🔒 Exam Lockdown Shortcuts
+              Exam Lockdown Shortcuts
             </h4>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary, #475569)', lineHeight: '1.6' }}>
               During proctored assessments, SEED-SEB disables all secondary screens, screen capture tools, and task switching. Once the assessment is submitted or closed by proctor authorization, your normal desktop is restored instantly.

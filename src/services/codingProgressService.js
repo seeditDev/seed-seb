@@ -33,6 +33,7 @@
 import { db } from '../lib/firebase-config';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, getDocs, query, where } from 'firebase/firestore';
 import desktopBridge from '../utils/desktopBridge';
+import { getQuestionBankReward, awardUserXPAndCredits } from '../utils/gamificationService';
 
 const COLLECTION = 'codingProgress';
 
@@ -420,6 +421,8 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
   const meta = (typeof attempts === 'object' && attempts !== null) ? attempts : (metadata || {});
   const numAttempts = typeof attempts === 'number' ? attempts : (typeof attempts === 'string' && !isNaN(attempts) ? Number(attempts) : 1);
 
+  const wasAlreadySolved = existing && existing.status === 'SOLVED' && existing.xpAwarded;
+
   const detail = {
     status: 'SOLVED',
     language: language || existing?.language || 'cpp',
@@ -430,8 +433,24 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
     bestScore: Math.max(typeof score === 'number' ? score : 100, existing?.bestScore || 0),
     lastSolvedAt: now,
     lastAttemptedAt: now,
-    isQuestionBank: isQB
+    isQuestionBank: isQB,
+    xpAwarded: true
   };
+
+  // Award Question Bank XP and SEED Credits if not already awarded
+  if (isQB && !wasAlreadySolved) {
+    const reward = getQuestionBankReward(detail.difficulty);
+    detail.earnedXP = reward.xp;
+    detail.earnedCredits = reward.credits;
+    awardUserXPAndCredits(uid, reward.xp, reward.credits, 'QUESTION_BANK_SOLVED', {
+      questionId: strQId,
+      difficulty: detail.difficulty,
+      title: detail.title
+    }).catch(err => console.warn('[CodingProgressService] Gamification award error:', err));
+  } else if (existing?.earnedXP) {
+    detail.earnedXP = existing.earnedXP;
+    detail.earnedCredits = existing.earnedCredits;
+  }
 
   local.problemDetails[strQId] = detail;
   

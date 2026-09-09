@@ -1,0 +1,848 @@
+{
+  "courseId": "heaps",
+  "title": "Heaps Mastery",
+  "slug": "heaps",
+  "category": "Data Structures & Algorithms",
+  "level": "Intermediate to Advanced",
+  "rating": 4.8,
+  "reviewsCount": 1211,
+  "isPopular": false,
+  "badgeText": "Specialization",
+  "description": "Master binary heaps from first principles through practical problem solving. Learn min-heaps and max-heaps, array representation, insertion and deletion, heapify, heap sort, priority queues, and heap-based selection techniques.",
+  "thumbnail": "/images/courses/dsa_thumbnail.png",
+  "skills": [
+    "Time & Space Complexity",
+    "Optimal Memory Layout",
+    "Recursive Paradigms",
+    "Competitive Problem Solving",
+    "Boundary Analysis"
+  ],
+  "estimatedHours": 8,
+  "modules": [
+    {
+      "moduleId": "heaps-m1",
+      "title": "Learn Heaps",
+      "description": "Build a strong foundation in heap invariants, array indexing, core operations, and practical heap applications.",
+      "estimatedMinutes": 40,
+      "topics": [
+        {
+          "topicId": "heaps-m1-t1",
+          "title": "Fundamentals of Heaps",
+          "description": "Study concepts and solve targeted engineering problems for Fundamentals of Heaps.",
+          "mode": "TEXT",
+          "readingTimeMinutes": 45,
+          "pages": [
+            {
+              "pageId": "p-HEAP01",
+              "title": "Introduction to Heaps",
+              "content": "### Introduction to Heaps\nA **heap** is a complete binary tree with a priority rule between every parent and child.\n\n- A **min-heap** keeps each parent less than or equal to its children, so the minimum is at the root.\n- A **max-heap** keeps each parent greater than or equal to its children, so the maximum is at the root.\n- Heaps are commonly stored in arrays, making them useful for priority queues, scheduling, greedy algorithms, and heap sort.\n\nThe root is at index `0`. With zero-based indexing, the children of index `i` are `2*i+1` and `2*i+2`.",
+              "callout": {
+                "type": "KEY_CONCEPT",
+                "title": "Key takeaway",
+                "text": "Introduction to Heaps: apply the heap invariant and the correct array-index relationships for reliable implementation."
+              },
+              "codeCard": {
+                "language": "cpp",
+                "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    priority_queue<int> maxHeap;\n    for (int x : {40,18,30,7,12}) maxHeap.push(x);\n    cout << maxHeap.top() << '\\n';\n}"
+              },
+              "checkpoint": {
+                "checkpointId": "cp-HEAP01",
+                "question": "What does the root guarantee in a binary heap?",
+                "options": [
+                  "A min-heap keeps the minimum at the root and a max-heap keeps the maximum at the root.",
+                  "The root is always the most recently inserted value.",
+                  "The root must be the median value.",
+                  "The root can ignore the heap invariant until deletion."
+                ],
+                "correctAnswer": 0,
+                "explanation": "The heap invariant guarantees that the root contains the highest-priority value."
+              }
+            },
+            {
+              "pageId": "p-HEAP02",
+              "title": "Representation of binary trees as array",
+              "content": "### Array Representation of a Binary Heap\nA complete binary tree can be stored level-by-level in a zero-indexed array.\n\nFor a node at index `i`:\n- left child = `2*i+1`\n- right child = `2*i+2`\n- parent for `i>0` = `(i-1)/2`\n\nFor example, `[2,4,7,8,15,10,18,21]` represents a complete binary tree without storing explicit child pointers. Check child indexes against the array length before accessing them.",
+              "callout": {
+                "type": "KEY_CONCEPT",
+                "title": "Key takeaway",
+                "text": "Representation of binary trees as array: apply the heap invariant and the correct array-index relationships for reliable implementation."
+              },
+              "codeCard": {
+                "language": "cpp",
+                "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    vector<int> heap = {2,4,7,8,15,10,18,21};\n    int i = 1;\n    cout << heap[2*i+1] << ' ' << heap[2*i+2] << '\\n';\n}"
+              }
+            },
+            {
+              "pageId": "p-HEAP13",
+              "title": "Finding indexes of the children of a node",
+              "content": "### Finding Indexes of the Children\nIn a zero-indexed heap array, the candidate child indexes for a node at index `i` are:\n\n- `left = 2*i + 1`\n- `right = 2*i + 2`\n\nFor index `6`, the candidates are `13` and `14`. They are valid only when they are smaller than the heap size. This simple arithmetic is the basis of iterative sift-up and sift-down operations.",
+              "callout": {
+                "type": "KEY_CONCEPT",
+                "title": "Key takeaway",
+                "text": "Finding indexes of the children of a node: apply the heap invariant and the correct array-index relationships for reliable implementation."
+              },
+              "codeCard": {
+                "language": "cpp",
+                "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    int n = 15, i = 6;\n    int left = 2*i+1, right = 2*i+2;\n    if (left < n) cout << left << ' ';\n    if (right < n) cout << right;\n    cout << '\\n';\n}"
+              }
+            },
+            {
+              "pageId": "p-HEAP03",
+              "title": "MCQ about Heaps",
+              "content": "### Heap Root and Priority\nThe root gives the highest-priority value currently stored.\n\nFor the values `13, 12, 51, 2, 14, 17, 15`, a min-heap places `2` at the root. The internal arrangement is not required to be fully sorted; only the parent-child heap invariant must hold.\n\nThis is why a heap is useful when an application repeatedly needs the smallest or largest item.",
+              "callout": {
+                "type": "KEY_CONCEPT",
+                "title": "Key takeaway",
+                "text": "MCQ about Heaps: apply the heap invariant and the correct array-index relationships for reliable implementation."
+              },
+              "codeCard": {
+                "language": "cpp",
+                "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    priority_queue<int, vector<int>, greater<int>> minHeap;\n    for (int x : {13,12,51,2,14,17,15}) minHeap.push(x);\n    cout << minHeap.top() << '\\n';\n}"
+              }
+            },
+            {
+              "pageId": "p-HEAP16",
+              "title": "Time Complexity of Heap operations",
+              "content": "### Time Complexity of Heap Operations\nFor a binary heap containing `N` elements:\n\n- `top` is **O(1)** because the root is at index `0`.\n- `push` is **O(log N)** in the worst case because a new value may move up the heap.\n- `pop` is **O(log N)** in the worst case because a replacement value may move down.\n- Bottom-up heap construction is **O(N)**.\n- The heap occupies **O(N)** space.",
+              "callout": {
+                "type": "KEY_CONCEPT",
+                "title": "Key takeaway",
+                "text": "Time Complexity of Heap operations: apply the heap invariant and the correct array-index relationships for reliable implementation."
+              },
+              "codeCard": {
+                "language": "cpp",
+                "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    priority_queue<int> pq;\n    pq.push(10); pq.push(25); pq.push(7);\n    cout << pq.top() << '\\n';\n    pq.pop();\n    cout << pq.top() << '\\n';\n}"
+              }
+            }
+          ],
+          "codeExamples": [
+            {
+              "exampleId": "ex-HEAP01-java",
+              "language": "cpp",
+              "label": "C++",
+              "title": "Introduction to Heaps (C++)",
+              "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    priority_queue<int> maxHeap;\n    for (int x : {40,18,30,7,12}) maxHeap.push(x);\n    cout << maxHeap.top() << '\\n';\n}"
+            },
+            {
+              "exampleId": "ex-HEAP02-java",
+              "language": "cpp",
+              "label": "C++",
+              "title": "Representation of binary trees as array (C++)",
+              "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    vector<int> heap = {2,4,7,8,15,10,18,21};\n    int i = 1;\n    cout << heap[2*i+1] << ' ' << heap[2*i+2] << '\\n';\n}"
+            },
+            {
+              "exampleId": "ex-HEAP13-java",
+              "language": "cpp",
+              "label": "C++",
+              "title": "Finding indexes of the children of a node (C++)",
+              "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    int n = 15, i = 6;\n    int left = 2*i+1, right = 2*i+2;\n    if (left < n) cout << left << ' ';\n    if (right < n) cout << right;\n    cout << '\\n';\n}"
+            },
+            {
+              "exampleId": "ex-HEAP03-java",
+              "language": "cpp",
+              "label": "C++",
+              "title": "MCQ about Heaps (C++)",
+              "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    priority_queue<int, vector<int>, greater<int>> minHeap;\n    for (int x : {13,12,51,2,14,17,15}) minHeap.push(x);\n    cout << minHeap.top() << '\\n';\n}"
+            },
+            {
+              "exampleId": "ex-HEAP16-java",
+              "language": "cpp",
+              "label": "C++",
+              "title": "Time Complexity of Heap operations (C++)",
+              "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    priority_queue<int> pq;\n    pq.push(10); pq.push(25); pq.push(7);\n    cout << pq.top() << '\\n';\n    pq.pop();\n    cout << pq.top() << '\\n';\n}"
+            }
+          ],
+          "practiceProblems": [
+            {
+              "problemId": "Q4262",
+              "questionId": "Q4262",
+              "title": "Insert an element into a max-heap",
+              "difficulty": "Easy",
+              "description": "Insert one value into a valid max-heap and preserve the max-heap property.",
+              "problemStatement": "Append X and repeatedly swap it with its parent while it is larger. Output the resulting heap in level order.",
+              "constraints": [
+                "1 <= N <= 100000",
+                "The N input values already form a valid max-heap.",
+                "-10^9 <= every value <= 10^9"
+              ],
+              "inputFormat": "First line: N. Second line: N heap values. Third line: X.",
+              "outputFormat": "Print N+1 integers in level order.",
+              "sampleTestCases": [
+                {
+                  "input": "5\n50 30 40 10 20\n60",
+                  "output": "60 30 50 10 20 40",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "1\n7\n3",
+                  "output": "7 3"
+                },
+                {
+                  "input": "3\n20 10 15\n25",
+                  "output": "25 20 15 10"
+                },
+                {
+                  "input": "4\n100 90 80 70\n95",
+                  "output": "100 95 80 70 90"
+                },
+                {
+                  "input": "5\n50 40 45 10 20\n35",
+                  "output": "50 40 45 10 20 35"
+                },
+                {
+                  "input": "6\n9 8 7 6 5 4\n10",
+                  "output": "10 8 9 6 5 4 7"
+                }
+              ]
+            },
+            {
+              "problemId": "HEAP14",
+              "questionId": "HEAP14",
+              "title": "Build a min-heap by repeated insertion",
+              "difficulty": "Easy",
+              "description": "Insert N values one by one into an initially empty min-heap.",
+              "problemStatement": "Process the values in the given order using repeated insertion into a min-heap. Output the final heap in level order.",
+              "constraints": [
+                "1 <= N <= 100000",
+                "-10^9 <= every value <= 10^9"
+              ],
+              "inputFormat": "First line: N. Second line: N values.",
+              "outputFormat": "Print the final min-heap in level order.",
+              "sampleTestCases": [
+                {
+                  "input": "6\n13 12 51 2 14 17",
+                  "output": "2 12 17 13 14 51",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "1\n0",
+                  "output": "0"
+                },
+                {
+                  "input": "5\n5 4 3 2 1",
+                  "output": "1 2 4 5 3"
+                },
+                {
+                  "input": "7\n9 1 8 2 7 3 6",
+                  "output": "1 2 3 9 7 8 6"
+                },
+                {
+                  "input": "4\n-1 5 -3 2",
+                  "output": "-3 2 -1 5"
+                },
+                {
+                  "input": "8\n10 10 9 9 1 1 2 2",
+                  "output": "1 2 1 9 9 10 2 10"
+                }
+              ]
+            },
+            {
+              "problemId": "HEAP05",
+              "questionId": "HEAP05",
+              "title": "Delete the top element from a max-heap",
+              "difficulty": "Easy",
+              "description": "Remove the maximum element from a valid max-heap and restore the max-heap property.",
+              "problemStatement": "Move the last element to the root, remove the old last slot, then sift the replacement down. Output the remaining heap.",
+              "constraints": [
+                "2 <= N <= 100000",
+                "The N input values form a valid max-heap.",
+                "-10^9 <= every value <= 10^9"
+              ],
+              "inputFormat": "First line: N. Second line: N heap values.",
+              "outputFormat": "Print the remaining N-1 heap values in level order.",
+              "sampleTestCases": [
+                {
+                  "input": "7\n100 50 90 20 40 80 70",
+                  "output": "90 50 80 20 40 70",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "2\n10 5",
+                  "output": "5"
+                },
+                {
+                  "input": "3\n20 10 15",
+                  "output": "15 10"
+                },
+                {
+                  "input": "5\n50 40 45 10 20",
+                  "output": "45 40 20 10"
+                },
+                {
+                  "input": "6\n100 90 80 70 60 50",
+                  "output": "90 70 80 50 60"
+                },
+                {
+                  "input": "4\n4 3 2 1",
+                  "output": "3 1 2"
+                }
+              ]
+            },
+            {
+              "problemId": "HEAP15",
+              "questionId": "HEAP15",
+              "title": "Delete the top element from a min-heap",
+              "difficulty": "Easy",
+              "description": "Remove the minimum element from a valid min-heap and restore the min-heap property.",
+              "problemStatement": "Move the last element to the root, remove the old last slot, then sift the replacement down. Output the remaining heap.",
+              "constraints": [
+                "2 <= N <= 100000",
+                "The N input values form a valid min-heap.",
+                "-10^9 <= every value <= 10^9"
+              ],
+              "inputFormat": "First line: N. Second line: N heap values.",
+              "outputFormat": "Print the remaining N-1 heap values in level order.",
+              "sampleTestCases": [
+                {
+                  "input": "7\n2 8 5 14 11 9 7",
+                  "output": "5 8 7 14 11 9",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "2\n1 5",
+                  "output": "5"
+                },
+                {
+                  "input": "3\n1 4 3",
+                  "output": "3 4"
+                },
+                {
+                  "input": "5\n2 5 3 8 9",
+                  "output": "3 5 9 8"
+                },
+                {
+                  "input": "6\n-1 0 2 4 6 8",
+                  "output": "0 4 2 8 6"
+                },
+                {
+                  "input": "4\n4 7 5 9",
+                  "output": "5 7 9"
+                }
+              ]
+            },
+            {
+              "problemId": "Q4275",
+              "questionId": "Q4275",
+              "title": "Process a max-heap with insert and delete operations",
+              "difficulty": "Medium",
+              "description": "Maintain a max-heap while processing insertions and delete-top operations.",
+              "problemStatement": "For `I x`, insert x. For `D`, delete the maximum if one exists. Print the final heap in level order, or `EMPTY`.",
+              "constraints": [
+                "1 <= Q <= 100000",
+                "-10^9 <= x <= 10^9"
+              ],
+              "inputFormat": "First line: Q. Next Q lines: `I x` or `D`.",
+              "outputFormat": "Print the final heap or `EMPTY`.",
+              "sampleTestCases": [
+                {
+                  "input": "6\nI 10\nI 30\nI 20\nD\nI 25\nI 5",
+                  "output": "25 20 10 5",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "1\nI 4",
+                  "output": "4"
+                },
+                {
+                  "input": "4\nI 1\nI 3\nD\nD",
+                  "output": "EMPTY"
+                },
+                {
+                  "input": "7\nI 10\nI 5\nI 8\nD\nI 12\nD\nI 7",
+                  "output": "8 7 5"
+                },
+                {
+                  "input": "5\nD\nI -2\nI -5\nD\nD",
+                  "output": "EMPTY"
+                },
+                {
+                  "input": "8\nI 1\nI 1\nI 2\nI 3\nD\nI 0\nD\nI 9",
+                  "output": "9 1 1 0"
+                }
+              ]
+            },
+            {
+              "problemId": "Q4280",
+              "questionId": "Q4280",
+              "title": "Check whether an array is a heap",
+              "difficulty": "Easy",
+              "description": "Determine whether an array satisfies a min-heap or max-heap property.",
+              "problemStatement": "The first line gives N and `MIN` or `MAX`. Compare each parent with its existing children. Output `YES` only when every comparison satisfies the requested property.",
+              "constraints": [
+                "1 <= N <= 100000",
+                "Values fit a signed 32-bit integer."
+              ],
+              "inputFormat": "First line: N and heap type. Second line: N integers.",
+              "outputFormat": "Print `YES` or `NO`.",
+              "sampleTestCases": [
+                {
+                  "input": "5 MIN\n1 3 2 7 6",
+                  "output": "YES",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "1 MAX\n42",
+                  "output": "YES"
+                },
+                {
+                  "input": "6 MIN\n1 2 2 4 5 8",
+                  "output": "YES"
+                },
+                {
+                  "input": "6 MAX\n9 7 8 1 2 3",
+                  "output": "YES"
+                },
+                {
+                  "input": "5 MIN\n1 5 2 7 6",
+                  "output": "YES"
+                },
+                {
+                  "input": "7 MAX\n10 9 8 7 6 5 4",
+                  "output": "YES"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "topicId": "heaps-m1-t2",
+          "title": "Applications of heap",
+          "description": "Study concepts and solve targeted engineering problems for Applications of heap.",
+          "mode": "TEXT",
+          "readingTimeMinutes": 30,
+          "pages": [
+            {
+              "pageId": "p-Q4265",
+              "title": "Heap Sort",
+              "content": "### Heap Sort\nHeap sort can sort an array in **O(N log N)** time using a heap.\n\nFor ascending order, a max-heap repeatedly exposes the largest value at the root. Swap that root with the last unsorted position, shrink the heap boundary, and restore the max-heap property.\n\nThe key invariant is that the sorted suffix never needs to be touched again.",
+              "callout": {
+                "type": "KEY_CONCEPT",
+                "title": "Key takeaway",
+                "text": "Heap Sort: apply the heap invariant and the correct array-index relationships for reliable implementation."
+              },
+              "codeCard": {
+                "language": "cpp",
+                "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    vector<int> a = {5,1,4,2,8};\n    make_heap(a.begin(), a.end());\n    sort_heap(a.begin(), a.end());\n    for (int x : a) cout << x << ' ';\n    cout << '\\n';\n}"
+              },
+              "checkpoint": {
+                "checkpointId": "cp-Q4265",
+                "question": "Why is heap sort O(N log N)?",
+                "options": [
+                  "It performs O(N) heap extractions, with each restoration taking O(log N).",
+                  "It compares every pair of elements once.",
+                  "It uses hashing for every element.",
+                  "It always performs exactly N recursive splits."
+                ],
+                "correctAnswer": 0,
+                "explanation": "After heap construction, each of the O(N) extractions requires O(log N) heap restoration."
+              }
+            },
+            {
+              "pageId": "p-HEAP10",
+              "title": "Kth largest number MCQ",
+              "content": "### K-th Largest with a Heap\nTo find the K-th largest value, keep a **min-heap of size K**.\n\nFor each value, insert it. If the heap size exceeds `K`, remove its smallest value. After all values are processed, the root is the K-th largest value.\n\nThis gives `O(N log K)` time and `O(K)` extra space, and duplicate values count separately.",
+              "callout": {
+                "type": "KEY_CONCEPT",
+                "title": "Key takeaway",
+                "text": "Kth largest number MCQ: apply the heap invariant and the correct array-index relationships for reliable implementation."
+              },
+              "codeCard": {
+                "language": "cpp",
+                "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    vector<int> a={1,10,7,3,2,19}; int k=2;\n    priority_queue<int, vector<int>, greater<int>> h;\n    for (int x:a) { h.push(x); if ((int)h.size()>k) h.pop(); }\n    cout << h.top() << '\\n';\n}"
+              }
+            }
+          ],
+          "codeExamples": [
+            {
+              "exampleId": "ex-HEAP10-java",
+              "language": "cpp",
+              "label": "C++",
+              "title": "Kth largest number MCQ (C++)",
+              "code": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    vector<int> a={1,10,7,3,2,19}; int k=2;\n    priority_queue<int, vector<int>, greater<int>> h;\n    for (int x:a) { h.push(x); if ((int)h.size()>k) h.pop(); }\n    cout << h.top() << '\\n';\n}"
+            }
+          ],
+          "practiceProblems": [
+            {
+              "problemId": "HEAP09",
+              "questionId": "HEAP09",
+              "title": "Heap sort ascending",
+              "difficulty": "Easy",
+              "description": "Sort N integers in ascending order using heap sort.",
+              "problemStatement": "Use a max-heap to repeatedly place the largest remaining value at the end of the array. Output the sorted array.",
+              "constraints": [
+                "1 <= N <= 100000",
+                "-10^9 <= every value <= 10^9"
+              ],
+              "inputFormat": "First line: N. Second line: N integers.",
+              "outputFormat": "Print the values in ascending order.",
+              "sampleTestCases": [
+                {
+                  "input": "10\n1 78 29 48 19 2 17 134 93 13",
+                  "output": "1 2 13 17 19 29 48 78 93 134",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "1\n5",
+                  "output": "5"
+                },
+                {
+                  "input": "5\n4 1 3 2 6",
+                  "output": "1 2 3 4 6"
+                },
+                {
+                  "input": "6\n9 9 0 -1 7 2",
+                  "output": "-1 0 2 7 9 9"
+                },
+                {
+                  "input": "3\n-5 -2 -9",
+                  "output": "-9 -5 -2"
+                },
+                {
+                  "input": "8\n1 2 3 4 5 6 7 8",
+                  "output": "1 2 3 4 5 6 7 8"
+                }
+              ]
+            },
+            {
+              "problemId": "Q4281",
+              "questionId": "Q4281",
+              "title": "Find the K-th largest element",
+              "difficulty": "Medium",
+              "description": "Find the K-th largest value using a min-heap of size K.",
+              "problemStatement": "Keep the K largest values seen so far in a min-heap. After all values are processed, the root is the K-th largest. Duplicate values count separately.",
+              "constraints": [
+                "1 <= K <= N <= 100000",
+                "-10^9 <= every value <= 10^9"
+              ],
+              "inputFormat": "First line: N K. Second line: N integers.",
+              "outputFormat": "Print the K-th largest value.",
+              "sampleTestCases": [
+                {
+                  "input": "6 2\n1 10 7 3 2 19",
+                  "output": "10",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "1 1\n42",
+                  "output": "42"
+                },
+                {
+                  "input": "5 3\n5 1 5 2 4",
+                  "output": "4"
+                },
+                {
+                  "input": "7 7\n1 2 3 4 5 6 7",
+                  "output": "1"
+                },
+                {
+                  "input": "6 4\n-1 -2 -3 -4 -5 -6",
+                  "output": "-4"
+                },
+                {
+                  "input": "8 5\n10 9 9 8 7 7 1 0",
+                  "output": "7"
+                }
+              ]
+            },
+            {
+              "problemId": "Q10557",
+              "questionId": "Q10557",
+              "title": "Minimum cost to combine cards",
+              "difficulty": "Medium",
+              "description": "Repeatedly combine the two smallest card values. The cost of each combination is their sum.",
+              "problemStatement": "Use a min-heap. Pop the two smallest values, add their sum to the total cost, then push the sum back until one card remains.",
+              "constraints": [
+                "1 <= N <= 100000",
+                "0 <= every card value <= 10^9"
+              ],
+              "inputFormat": "First line: N. Second line: N card values.",
+              "outputFormat": "Print the minimum total combination cost.",
+              "sampleTestCases": [
+                {
+                  "input": "4\n1 2 3 4",
+                  "output": "19",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "1\n0",
+                  "output": "0"
+                },
+                {
+                  "input": "2\n7 8",
+                  "output": "15"
+                },
+                {
+                  "input": "5\n1 2 3 4 5",
+                  "output": "33"
+                },
+                {
+                  "input": "6\n10 20 30 40 50 60",
+                  "output": "510"
+                },
+                {
+                  "input": "7\n2 2 2 2 2 2 2",
+                  "output": "40"
+                }
+              ]
+            },
+            {
+              "problemId": "HEAP17",
+              "questionId": "HEAP17",
+              "title": "Priority queue operation simulator",
+              "difficulty": "Easy",
+              "description": "Use a min-priority queue to process insert, top, and delete-top operations.",
+              "problemStatement": "`I x` inserts x. `T` prints the current minimum or `EMPTY`. `D` deletes the minimum if one exists. Print one result for each `T`.",
+              "constraints": [
+                "1 <= Q <= 100000",
+                "-10^9 <= x <= 10^9"
+              ],
+              "inputFormat": "First line: Q. Next Q lines contain `I x`, `T`, or `D`.",
+              "outputFormat": "Print one line for each `T` operation.",
+              "sampleTestCases": [
+                {
+                  "input": "7\nI 5\nI 2\nT\nD\nT\nD\nT",
+                  "output": "2\n5\nEMPTY",
+                  "explanation": "The output follows directly from the stated heap operation."
+                }
+              ],
+              "boilerPlates": {
+                "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve.\n    return 0;\n}",
+                "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve.\n    return 0;\n}",
+                "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception {\n    // Read input and solve.\n}}",
+                "Python3": "import sys\n\ndef main():\n    # Read input and solve.\n    pass\nif __name__ == \"__main__\": main()"
+              },
+              "hiddenTestCases": [
+                {
+                  "input": "3\nT\nD\nT",
+                  "output": "EMPTY\nEMPTY"
+                },
+                {
+                  "input": "6\nI 10\nI -1\nI 4\nT\nD\nT",
+                  "output": "-1\n4"
+                },
+                {
+                  "input": "5\nI 3\nD\nT\nI 8\nT",
+                  "output": "EMPTY\n8"
+                },
+                {
+                  "input": "8\nI 7\nI 7\nT\nD\nT\nD\nT\nT",
+                  "output": "7\n7\nEMPTY\nEMPTY"
+                },
+                {
+                  "input": "4\nI -5\nT\nD\nT",
+                  "output": "-5\nEMPTY"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "msa": {
+        "assessmentId": "msa-heaps-m1",
+        "title": "Module 1 Assessment: Learn Heaps",
+        "durationMinutes": 20,
+        "passPercent": 90,
+        "mcqSection": {
+          "totalQuestions": 10,
+          "durationMinutes": 20,
+          "passCutoffPercent": 90,
+          "questions": [
+            {
+              "questionId": "msa-heaps-m1-q1",
+              "question": "In a min-heap, which value is guaranteed to be at the root?",
+              "options": [
+                "The minimum",
+                "The maximum",
+                "The median",
+                "The last inserted"
+              ],
+              "correctAnswer": 0,
+              "explanation": "A min-heap places the minimum at the root."
+            },
+            {
+              "questionId": "msa-heaps-m1-q2",
+              "question": "What is the left-child index of node i in a zero-indexed heap array?",
+              "options": [
+                "2*i+1",
+                "2*i+2",
+                "(i-1)/2",
+                "i/2"
+              ],
+              "correctAnswer": 0,
+              "explanation": "The left child is stored at 2*i+1."
+            },
+            {
+              "questionId": "msa-heaps-m1-q3",
+              "question": "What is the parent index of a non-root node i?",
+              "options": [
+                "2*i+1",
+                "2*i+2",
+                "(i-1)/2",
+                "i+1"
+              ],
+              "correctAnswer": 2,
+              "explanation": "Integer division of (i-1) by 2 gives the parent index."
+            },
+            {
+              "questionId": "msa-heaps-m1-q4",
+              "question": "What is the worst-case time of heap insertion?",
+              "options": [
+                "O(1)",
+                "O(log N)",
+                "O(N)",
+                "O(N log N)"
+              ],
+              "correctAnswer": 1,
+              "explanation": "A new value may move up the height of the complete tree."
+            },
+            {
+              "questionId": "msa-heaps-m1-q5",
+              "question": "What is the worst-case time of deleting the heap root?",
+              "options": [
+                "O(1)",
+                "O(log N)",
+                "O(N)",
+                "O(N^2)"
+              ],
+              "correctAnswer": 1,
+              "explanation": "The replacement can sift down through O(log N) levels."
+            },
+            {
+              "questionId": "msa-heaps-m1-q6",
+              "question": "What is the complexity of bottom-up heap construction?",
+              "options": [
+                "O(N)",
+                "O(log N)",
+                "O(N log N)",
+                "O(N^2)"
+              ],
+              "correctAnswer": 0,
+              "explanation": "Bottom-up heapify is linear in the number of elements."
+            },
+            {
+              "questionId": "msa-heaps-m1-q7",
+              "question": "Which structure is most suitable for repeatedly retrieving the smallest value?",
+              "options": [
+                "Min-heap",
+                "Stack",
+                "Unordered linked list with no search",
+                "Plain queue"
+              ],
+              "correctAnswer": 0,
+              "explanation": "A min-heap gives constant-time root access and logarithmic updates."
+            },
+            {
+              "questionId": "msa-heaps-m1-q8",
+              "question": "For K-th largest using a size-K min-heap, what does the root represent after all values are processed?",
+              "options": [
+                "The K-th largest value",
+                "The largest value",
+                "The smallest value",
+                "The K-th smallest value"
+              ],
+              "correctAnswer": 0,
+              "explanation": "The heap contains the K largest values, so its minimum is the K-th largest overall."
+            },
+            {
+              "questionId": "msa-heaps-m1-q9",
+              "question": "What is the key heap-sort invariant after placing an element at the end?",
+              "options": [
+                "The sorted suffix contains the largest elements in final positions.",
+                "The whole array is already sorted.",
+                "Every value becomes unique.",
+                "The heap becomes a perfect binary tree."
+              ],
+              "correctAnswer": 0,
+              "explanation": "Each extracted maximum is fixed in the sorted suffix."
+            },
+            {
+              "questionId": "msa-heaps-m1-q10",
+              "question": "Why are heaps useful for priority queues?",
+              "options": [
+                "They efficiently support insertion and removal of a highest-priority item.",
+                "They keep all values fully sorted after every insertion.",
+                "They guarantee O(1) insertion for all priorities.",
+                "They require no storage for queued items."
+              ],
+              "correctAnswer": 0,
+              "explanation": "Heaps provide an efficient balance between priority access and updates."
+            }
+          ]
+        },
+        "passCutoffPercent": 90
+      }
+    }
+  ]
+}

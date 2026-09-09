@@ -333,7 +333,7 @@ const SupportTicketChatModal = ({ isOpen, onClose, ticket, currentUser }) => {
                     }}
                   >
                     <span style={{ fontWeight: 700, color: isAdmin ? '#2563eb' : 'var(--text-main, #0f172a)' }}>
-                      {isAdmin ? `🛡️ ${msg.senderName || 'Support Staff'}` : 'You'}
+                      {isAdmin ? (msg.senderName || 'Support Staff') : 'You'}
                     </span>
                     <span>• {timeStr}</span>
                   </div>

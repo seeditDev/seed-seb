@@ -14,6 +14,20 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import SecurityWatermark from '@/components/SecurityWatermark';
 
+// Catch and suppress browser-injected Live Metrics / Soft Navigation errors (Chromium DevTools bug)
+if (typeof window !== "undefined") {
+  window.addEventListener("error", (event) => {
+    if (
+      event.message?.includes("Cannot read properties of undefined (reading 'startTime')") ||
+      event.error?.stack?.includes("reportAllChanges")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.warn("[Telemetry Guard] Suppressed DevTools live metrics soft-nav error:", event.message);
+    }
+  }, true);
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

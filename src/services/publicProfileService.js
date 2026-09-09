@@ -18,6 +18,7 @@ import { db } from '../lib/firebase-config';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { sanitizeUsernameComponent } from './usernameService';
 import { isQuestionBankProblem } from './codingProgressService';
+import { calculateLevel } from '../utils/gamificationService';
 
 const PUBLIC_PROFILES = 'publicProfiles';
 
@@ -233,6 +234,9 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
     streak,
     lastStreakDate: typeof userProfile.lastStreakDate === 'string' ? userProfile.lastStreakDate.split('T')[0] : '',
     seedCredits: userProfile.seedCredits || 0,
+    totalXP: userProfile.totalXP || 0,
+    level: userProfile.level || calculateLevel(userProfile.totalXP || 0).level,
+    levelTitle: userProfile.levelTitle || calculateLevel(userProfile.totalXP || 0).levelTitle,
     linkedin: userProfile.linkedin || userProfile.linkedIn || '',
     github: userProfile.github || userProfile.githubUrl || '',
     portfolio: userProfile.portfolio || userProfile.portfolioUrl || userProfile.website || '',

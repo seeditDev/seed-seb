@@ -28,6 +28,7 @@ import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
 import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
+import { ProblemImage } from './common/ProblemMarkdownRenderer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
 import SecurityWatermark from './SecurityWatermark';
 import { requireTenant, resolveTenant } from '../utils/tenant';
@@ -566,6 +567,14 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
                   <span>{formatSecs(timeSpentPerQ[idx] || 0)}</span>
                 </div>
                 <div className="mcq-review-question">{renderTextWithCode(rq.question)}</div>
+                {(rq.imageUrl || rq.image || rq.figure || rq.diagram || rq.questionImage || rq.assetUrl || rq.content?.imageUrl || rq.content?.image) && (
+                  <div className="mcq-review-image" style={{ margin: '8px 0', maxWidth: '320px' }}>
+                    <ProblemImage 
+                      src={rq.imageUrl || rq.image || rq.figure || rq.diagram || rq.questionImage || rq.assetUrl || rq.content?.imageUrl || rq.content?.image} 
+                      alt={`Question ${idx + 1} Illustration`} 
+                    />
+                  </div>
+                )}
                 <div className="mcq-review-answer">
                   Your answer: {answers[idx] !== undefined ? rq.options[answers[idx]] : <span className="text-muted">Not answered</span>}
                 </div>
@@ -683,6 +692,16 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
                   <span className="mcq-q-num-badge">Q{questionIndex + 1}.</span>
                   <span className="mcq-q-content">{renderTextWithCode(q.question)}</span>
                 </div>
+
+                {/* Render question illustration if present on question object */}
+                {(q.imageUrl || q.image || q.figure || q.diagram || q.questionImage || q.assetUrl || q.content?.imageUrl || q.content?.image) && (
+                  <div className="mcq-q-image-container" style={{ margin: '14px 0', textAlign: 'center' }}>
+                    <ProblemImage 
+                      src={q.imageUrl || q.image || q.figure || q.diagram || q.questionImage || q.assetUrl || q.content?.imageUrl || q.content?.image} 
+                      alt={q.imageAlt || `Question ${questionIndex + 1} Illustration`} 
+                    />
+                  </div>
+                )}
 
                 <div className="mcq-ref-options-stack">
                   {q.options?.map((opt, oIdx) => {
@@ -2197,7 +2216,7 @@ const MultiSectionAssessment = () => {
           // Transition attempt to FAILED_RECOVERABLE so resume/retry is possible
           transitionAttemptState(assessment?.id, ATTEMPT_STATES.FAILED_RECOVERABLE).catch(() => { });
           toast.error(
-            '⚠️ Submission pending — no network. Your answers are saved locally and will sync automatically when you reconnect. Do not close this window.',
+            'Submission pending — no network. Your answers are saved locally and will sync automatically when you reconnect. Do not close this window.',
             { duration: 12000 }
           );
           // Early return: student stays on page, not navigated away

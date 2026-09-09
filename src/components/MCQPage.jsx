@@ -15,6 +15,7 @@ import ProctoringInstructions from './ProctoringInstructions';
 import timeService from '../services/timeService';
 import { clearAllProctorCache, getViolations, recordViolation } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
+import { ProblemImage } from './common/ProblemMarkdownRenderer';
 import { getAuthData } from '../utils/storageUtils';
 import { fetchContentJSON } from '../utils/contentApi';
 import { gradeMcqAttempt } from '../utils/mcqGrading';
@@ -2441,6 +2442,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                         <span>{getTimeTaken(index)}s</span>
                                     </div>
                                     <div className="mcq-review-question">{renderTextWithCode(question.question)}</div>
+                                    {(question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image) && (
+                                        <div className="mcq-review-image" style={{ margin: '8px 0', maxWidth: '320px' }}>
+                                            <ProblemImage 
+                                                src={question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image} 
+                                                alt={`Question ${index + 1} Illustration`} 
+                                            />
+                                        </div>
+                                    )}
                                     <div className="mcq-review-answer">
                                         Your answer: {answers[index] !== undefined ? renderMathAndCode(question.options[answers[index]], true) : <span className="text-muted">Not answered</span>}
                                     </div>
@@ -2570,6 +2579,16 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                         <span className="mcq-q-num-badge">Q{questionIndex + 1}.</span>
                                         <span className="mcq-q-content">{renderTextWithCode(currentQ.question)}</span>
                                     </div>
+
+                                    {/* Render question illustration if present on question object */}
+                                    {(currentQ?.imageUrl || currentQ?.image || currentQ?.figure || currentQ?.diagram || currentQ?.questionImage || currentQ?.assetUrl || currentQ?.content?.imageUrl || currentQ?.content?.image) && (
+                                        <div className="mcq-q-image-container" style={{ margin: '14px 0', textAlign: 'center' }}>
+                                            <ProblemImage 
+                                                src={currentQ?.imageUrl || currentQ?.image || currentQ?.figure || currentQ?.diagram || currentQ?.questionImage || currentQ?.assetUrl || currentQ?.content?.imageUrl || currentQ?.content?.image} 
+                                                alt={currentQ?.imageAlt || `Question ${questionIndex + 1} Illustration`} 
+                                            />
+                                        </div>
+                                    )}
 
                                     <div className="mcq-ref-options-stack">
                                         {currentQ.options && currentQ.options.map((option, optionIndex) => {
@@ -2927,6 +2946,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                 </div>
 
                                 <div className="mcq-solution-q-text">{renderTextWithCode(question.question)}</div>
+                                {(question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image) && (
+                                    <div className="mcq-solution-image" style={{ margin: '10px 0', maxWidth: '400px' }}>
+                                        <ProblemImage 
+                                            src={question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image} 
+                                            alt="Question Illustration" 
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="mcq-solution-options">
                                     {question.options.map((option, oIndex) => {

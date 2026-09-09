@@ -17,6 +17,7 @@ import { isTestCasePassed } from '../utils/testCaseUtils';
 import { fetchArticleFile } from '../utils/articleFetcher';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
+import ProblemMarkdownRenderer from './common/ProblemMarkdownRenderer';
 import '../styles/PracticeSandbox.css'; // Reuse core sandbox tokens and styling
 
 const FREE_BOILERPLATES = {
@@ -175,23 +176,9 @@ const normalizeQuestion = (q) => {
   };
 };
 
-// Formatter to render Markdown statements cleanly
+// Formatter to render Markdown statements cleanly via ProblemMarkdownRenderer
 const formatProblemText = (text) => {
-  if (!text) return '';
-  // Simple styling replacer
-  return text.split('\n\n').map((para, idx) => {
-    let clean = para
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/`([^`]+)`/g, '<code class="psb-inline-code">$1</code>')
-      // Render basic bullet points
-      .replace(/^\s*[-*]\s+(.*)$/gm, '<li class="psb-li-item">$1</li>');
-
-    if (clean.includes('<li class="psb-li-item">')) {
-      return <ul key={idx} className="psb-para-ul" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(clean) }} />;
-    }
-    return <p key={idx} className="psb-para" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(clean) }} />;
-  });
+  return <ProblemMarkdownRenderer content={text} />;
 };
 
 const PracticeCourseSandbox = () => {
@@ -1117,23 +1104,21 @@ const isCodeBlankOrEmpty = (codeStr) => {
                 {question.content?.inputFormat && (
                   <>
                     <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '16px 0 6px 0', textTransform: 'uppercase', color: 'var(--ps-primary)' }}>Input Format</h3>
-                    <p style={{ fontSize: '13px', color: 'var(--ps-text-dim)', margin: '0 0 16px 0' }}>{question.content.inputFormat}</p>
+                    <ProblemMarkdownRenderer content={question.content.inputFormat} />
                   </>
                 )}
                 
                 {question.content?.outputFormat && (
                   <>
                     <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '16px 0 6px 0', textTransform: 'uppercase', color: 'var(--ps-primary)' }}>Output Format</h3>
-                    <p style={{ fontSize: '13px', color: 'var(--ps-text-dim)', margin: '0 0 16px 0' }}>{question.content.outputFormat}</p>
+                    <ProblemMarkdownRenderer content={question.content.outputFormat} />
                   </>
                 )}
 
-                {question.content?.constraints && question.content.constraints.length > 0 && (
+                {question.content?.constraints && (
                   <>
                     <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '16px 0 6px 0', textTransform: 'uppercase', color: 'var(--ps-primary)' }}>Constraints</h3>
-                    <ul style={{ margin: '0 0 16px 0', paddingLeft: '20px', fontSize: '13px', color: 'var(--ps-text-dim)' }}>
-                      {question.content.constraints.map((c, idx) => <li key={idx}>{c}</li>)}
-                    </ul>
+                    <ProblemMarkdownRenderer content={question.content.constraints} />
                   </>
                 )}
 

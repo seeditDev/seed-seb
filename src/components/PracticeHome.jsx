@@ -12,8 +12,10 @@ import {
   FaRocket, FaPython, FaCoffee, FaDatabase,
   FaReact, FaHtml5, FaJs, FaTerminal, FaRust, FaBrain, FaNetworkWired, FaCode, FaLaptopCode,
   FaThLarge, FaTasks, FaTachometerAlt, FaClock, FaCheck,
-  FaCheckSquare, FaChartLine, FaSyncAlt, FaEye
+  FaCheckSquare, FaChartLine, FaSyncAlt, FaEye,
+  FaServer, FaCogs, FaClipboardList, FaLayerGroup, FaArrowRight
 } from 'react-icons/fa';
+import SeedCreditCoin from './SeedCreditCoin';
 import roadmapsData from './roadmaps_data.json';
 import '../styles/PracticeHome.css';
 import { CATEGORIZED_SHEETS } from '../config/sheetsData';
@@ -145,17 +147,28 @@ const getCorrectArticleForProblem = (courseId, prob) => {
   return 'gfg-dsa';
 };
 
-const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
+const PracticeHome = ({ 
+  initialTab = 'paths', 
+  initialCourse = null,
+  user: propUser = null,
+  totalXP = 0,
+  seedCredits = 0,
+  userLevelInfo = null
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(initialTab || 'paths'); // 'paths' or 'bank'
+  const [activeTab, setActiveTab] = useState(initialTab && initialTab !== 'paths' ? initialTab : 'bank'); // 'sheets' or 'bank'
   const [selectedCourse, setSelectedCourse] = useState(() => initialCourse ? String(initialCourse).replace(/-/g, '_') : null);
 
   useEffect(() => {
     if (initialTab) {
-      setActiveTab(initialTab);
+      if (initialTab === 'paths' && !initialCourse) {
+        setActiveTab('bank');
+      } else {
+        setActiveTab(initialTab);
+      }
     }
-  }, [initialTab]);
+  }, [initialTab, initialCourse]);
 
   useEffect(() => {
     if (initialCourse) {
@@ -180,8 +193,14 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState({ text: '', type: '' });
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(propUser || null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+  useEffect(() => {
+    if (propUser) {
+      setUser(propUser);
+    }
+  }, [propUser]);
 
   // Filters for Flat Question Bank
   const [searchQuery, setSearchQuery] = useState('');
@@ -192,6 +211,10 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // Structured Sheets Filter & Accordions
+  const [sheetSubjectFilter, setSheetSubjectFilter] = useState('All Subjects');
+  const [accordionsOpen, setAccordionsOpen] = useState({ dsa: true, coreCs: true, sysDesign: true });
 
   // Structured Learning Paths State
   const [courses, setCourses] = useState([]);
@@ -786,13 +809,13 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
 
   const getRoadmapStyle = (slug) => {
     const map = {
-      'become-5-star': { color: '#10b981', icon: '⭐' },
-      'python-dsa': { color: '#3b82f6', icon: '🐍' },
-      'javascript-dsa': { color: '#f59e0b', icon: '⚡' },
-      'cpp-dsa': { color: '#8b5cf6', icon: '⚙️' },
-      'java-dsa': { color: '#ef4444', icon: '☕' }
+      'become-5-star': { color: '#10b981', icon: <FaStar style={{ color: '#10b981' }} /> },
+      'python-dsa': { color: '#3b82f6', icon: <FaPython style={{ color: '#3b82f6' }} /> },
+      'javascript-dsa': { color: '#f59e0b', icon: <FaJs style={{ color: '#f59e0b' }} /> },
+      'cpp-dsa': { color: '#8b5cf6', icon: <FaCode style={{ color: '#8b5cf6' }} /> },
+      'java-dsa': { color: '#ef4444', icon: <FaCoffee style={{ color: '#ef4444' }} /> }
     };
-    return map[slug] || { color: '#10b981', icon: '🚀' };
+    return map[slug] || { color: '#10b981', icon: <FaRocket style={{ color: '#10b981' }} /> };
   };
 
   const closeArticle = () => {
@@ -1305,82 +1328,289 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
       );
     }
 
+    // Calculate 8 core structured sheets completed count
+    const dsaSheets = CATEGORIZED_SHEETS["DSA Sheets"] || [];
+    const coreCsSheets = CATEGORIZED_SHEETS["Core Cs Subjects"] || [];
+    const sysDesignSheets = CATEGORIZED_SHEETS["System Design"] || [];
+    const allEightSheets = [...dsaSheets, ...coreCsSheets, ...sysDesignSheets];
+
+    const completedSheetsCount = allEightSheets.filter(sheet => {
+      const total = getSheetTotalProblems(sheet);
+      const solved = getSheetSolvedCount(sheet);
+      return total > 0 && solved >= total;
+    }).length;
+
+    const totalProblemsIn8 = allEightSheets.reduce((sum, s) => sum + getSheetTotalProblems(s), 0);
+    const totalSolvedIn8 = allEightSheets.reduce((sum, s) => sum + getSheetSolvedCount(s), 0);
+    const progressPct = totalProblemsIn8 > 0 ? Math.round((totalSolvedIn8 / totalProblemsIn8) * 100) : 0;
+
+    const SUBJECT_PILLS = ['All Subjects', 'DSA', 'Core CS', 'System Design', 'Database', 'Web Development'];
+
     return (
-      <div className="ph-section" style={{ margin: '30px auto' }}>
-        <div className="ph-hero" style={{ padding: '20px 0' }}>
-          <div className="ph-hero-tag">Structured Sheets</div>
-        </div>
+      <div className="ph-section" style={{ margin: '20px auto 40px auto' }}>
+        {/* Header Split matching Image 2 */}
+        <div className="ps-header-split">
+          <div className="ps-header-left">
+            <h1 className="ps-main-title">Structured Practice Sheets</h1>
+            <p className="ps-main-subtitle">
+              Curated problem lists to master DSA, Core CS, and System Design step by step
+            </p>
+          </div>
 
-        <div className="ps-categories-container" style={{ marginTop: '20px' }}>
-          {Object.entries(CATEGORIZED_SHEETS).map(([categoryName, sheets]) => (
-            <div key={categoryName} className="ps-category-group">
-              <h2 className="ps-category-header">
-                {categoryName}
-              </h2>
-
-              <div className="ps-cards-grid">
-                {sheets.map(sheet => {
-                  const totalQs = getSheetTotalProblems(sheet);
-                  const solvedQs = getSheetSolvedCount(sheet);
-                  const style = {
-                    '--theme-border-color': sheet.borderColor,
-                    '--theme-border-color-15': `${sheet.borderColor}15`,
-                    '--theme-border-color-25': `${sheet.borderColor}25`,
-                    '--theme-border-color-30': `${sheet.borderColor}30`,
-                    '--theme-border-color-50': `${sheet.borderColor}50`
-                  };
-
-                  return (
-                    <div
-                      key={sheet.id}
-                      className="ps-sheet-card"
-                      style={style}
-                    >
-                      <div>
-                        <h3 className="ps-card-title">{sheet.title}</h3>
-                        <p className="ps-card-desc">{sheet.desc}</p>
-                      </div>
-
-                      <div className="ps-card-footer">
-                        <span className="ps-card-stats">
-                          {solvedQs}/{totalQs} Solved
-                        </span>
-
-                        <div className="ps-card-actions">
-                          {sheet.id === 'a2z' || sheet.id === 'blind75' || sheet.id === 'sde' || sheet.id === 'striver79' ? (
-                            <>
-                              <button
-                                onClick={() => handleSheetCardClick(sheet)}
-                                className="ps-action-btn"
-                                style={{ padding: '6px 10px' }}
-                              >
-                                Sheet
-                              </button>
-                              <button
-                                onClick={() => handleSheetCardClick(sheet)}
-                                className="ps-action-btn primary"
-                                style={{ padding: '6px 10px' }}
-                              >
-                                Track
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => handleSheetCardClick(sheet)}
-                              className="ps-action-btn primary"
-                            >
-                              Start Learning
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+          <div className="ps-your-progress-widget">
+            <div className="ps-progress-icon-box">
+              <FaTasks />
+            </div>
+            <div className="ps-progress-info">
+              <div className="ps-progress-header-row">
+                <span className="ps-progress-title">Your Progress</span>
+                <span className="ps-progress-count">{completedSheetsCount} / {allEightSheets.length} sheets completed</span>
+              </div>
+              <div className="ps-progress-bar-wrap">
+                <div className="ps-progress-bar-track">
+                  <div
+                    className="ps-progress-bar-fill"
+                    style={{ width: `${completedSheetsCount > 0 ? Math.round((completedSheetsCount / allEightSheets.length) * 100) : progressPct}%` }}
+                  />
+                </div>
+                <span className="ps-progress-pct">
+                  {completedSheetsCount > 0 ? Math.round((completedSheetsCount / allEightSheets.length) * 100) : progressPct}%
+                </span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Subject Filter Pills Bar */}
+        <div className="ps-subject-pills-row">
+          {SUBJECT_PILLS.map(subj => (
+            <button
+              key={subj}
+              className={`ps-subject-pill ${sheetSubjectFilter === subj ? 'active' : ''}`}
+              onClick={() => setSheetSubjectFilter(subj)}
+            >
+              {subj}
+            </button>
           ))}
         </div>
+
+        {/* 3 Collapsible Accordion Sections */}
+        {/* Accordion 1: DSA */}
+        {(sheetSubjectFilter === 'All Subjects' || sheetSubjectFilter === 'DSA') && (
+          <div className="ps-accordion-group">
+            <div
+              className="ps-accordion-header"
+              onClick={() => setAccordionsOpen(prev => ({ ...prev, dsa: !prev.dsa }))}
+            >
+              <div className="ps-accordion-header-left">
+                <div className="ps-accordion-icon-box dsa">
+                  <FaCode />
+                </div>
+                <div className="ps-accordion-title-group">
+                  <h3 className="ps-accordion-title">Data Structures & Algorithms</h3>
+                  <p className="ps-accordion-subtitle">Core problem sets curated by top competitive programmers</p>
+                </div>
+              </div>
+              <div className="ps-accordion-header-right">
+                <span className="ps-sheet-count-tag">{dsaSheets.length} Sheets</span>
+                <FaChevronDown
+                  className="ps-accordion-chevron"
+                  style={{ transform: accordionsOpen.dsa ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                />
+              </div>
+            </div>
+
+            {accordionsOpen.dsa && (
+              <div className="ps-accordion-content">
+                <div className="ps-accordion-cards-grid cols-4">
+                  {dsaSheets.map(sheet => {
+                    const total = getSheetTotalProblems(sheet);
+                    const solved = getSheetSolvedCount(sheet);
+                    const tag = sheet.id === 'a2z' ? 'DSA SHEET'
+                      : sheet.id === 'blind75' ? 'BLIND 75'
+                      : sheet.id === 'sde' ? 'SDE SHEET'
+                      : 'SEED-IT 79';
+
+                    return (
+                      <div key={sheet.id} className="ps-sheet-card-v2">
+                        <div>
+                          <div
+                            className="ps-sheet-top-icon"
+                            style={{
+                              background: `${sheet.borderColor}15`,
+                              color: sheet.borderColor
+                            }}
+                          >
+                            <FaCode />
+                          </div>
+                          <h4 className="ps-sheet-card-title">{sheet.title}</h4>
+                          <p className="ps-sheet-card-desc">{sheet.desc}</p>
+                        </div>
+
+                        <div className="ps-sheet-card-bottom">
+                          <div className="ps-sheet-stats-strip">
+                            <span className="ps-sheet-solved-text">{solved}/{total} Solved</span>
+                            <span className="ps-sheet-badge-tag">{tag}</span>
+                          </div>
+                          <button
+                            className="ps-sheet-cta-btn"
+                            onClick={() => handleSheetCardClick(sheet)}
+                          >
+                            Track Progress <FaArrowRight style={{ fontSize: '11px' }} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Accordion 2: Core CS */}
+        {(sheetSubjectFilter === 'All Subjects' || sheetSubjectFilter === 'Core CS' || sheetSubjectFilter === 'Database') && (
+          <div className="ps-accordion-group">
+            <div
+              className="ps-accordion-header"
+              onClick={() => setAccordionsOpen(prev => ({ ...prev, coreCs: !prev.coreCs }))}
+            >
+              <div className="ps-accordion-header-left">
+                <div className="ps-accordion-icon-box core-cs">
+                  <FaServer />
+                </div>
+                <div className="ps-accordion-title-group">
+                  <h3 className="ps-accordion-title">Core Computer Science</h3>
+                  <p className="ps-accordion-subtitle">Fundamental concepts required for tech interviews and exams</p>
+                </div>
+              </div>
+              <div className="ps-accordion-header-right">
+                <span className="ps-sheet-count-tag">{coreCsSheets.length} Sheets</span>
+                <FaChevronDown
+                  className="ps-accordion-chevron"
+                  style={{ transform: accordionsOpen.coreCs ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                />
+              </div>
+            </div>
+
+            {accordionsOpen.coreCs && (
+              <div className="ps-accordion-content">
+                <div className="ps-accordion-cards-grid cols-3">
+                  {coreCsSheets.map(sheet => {
+                    const total = getSheetTotalProblems(sheet);
+                    const solved = getSheetSolvedCount(sheet);
+                    const tag = sheet.id === 'cn' ? 'NETWORKING'
+                      : sheet.id === 'dbms' ? 'DATABASE'
+                      : 'OPERATING SYSTEM';
+                    const icon = sheet.id === 'cn' ? <FaServer />
+                      : sheet.id === 'dbms' ? <FaDatabase />
+                      : <FaTerminal />;
+
+                    return (
+                      <div key={sheet.id} className="ps-sheet-card-v2">
+                        <div>
+                          <div
+                            className="ps-sheet-top-icon"
+                            style={{
+                              background: `${sheet.borderColor}15`,
+                              color: sheet.borderColor
+                            }}
+                          >
+                            {icon}
+                          </div>
+                          <h4 className="ps-sheet-card-title">{sheet.title}</h4>
+                          <p className="ps-sheet-card-desc">{sheet.desc}</p>
+                        </div>
+
+                        <div className="ps-sheet-card-bottom">
+                          <div className="ps-sheet-stats-strip">
+                            <span className="ps-sheet-solved-text">{solved}/{total} Solved</span>
+                            <span className="ps-sheet-badge-tag">{tag}</span>
+                          </div>
+                          <button
+                            className="ps-sheet-cta-btn"
+                            onClick={() => handleSheetCardClick(sheet)}
+                          >
+                            Start Learning <FaArrowRight style={{ fontSize: '11px' }} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Accordion 3: System Design */}
+        {(sheetSubjectFilter === 'All Subjects' || sheetSubjectFilter === 'System Design' || sheetSubjectFilter === 'Web Development') && (
+          <div className="ps-accordion-group">
+            <div
+              className="ps-accordion-header"
+              onClick={() => setAccordionsOpen(prev => ({ ...prev, sysDesign: !prev.sysDesign }))}
+            >
+              <div className="ps-accordion-header-left">
+                <div className="ps-accordion-icon-box sys-design">
+                  <FaCogs />
+                </div>
+                <div className="ps-accordion-title-group">
+                  <h3 className="ps-accordion-title">System Design</h3>
+                  <p className="ps-accordion-subtitle">High-level and low-level architectural patterns for scalable systems</p>
+                </div>
+              </div>
+              <div className="ps-accordion-header-right">
+                <span className="ps-sheet-count-tag">{sysDesignSheets.length} Sheet</span>
+                <FaChevronDown
+                  className="ps-accordion-chevron"
+                  style={{ transform: accordionsOpen.sysDesign ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                />
+              </div>
+            </div>
+
+            {accordionsOpen.sysDesign && (
+              <div className="ps-accordion-content">
+                <div className="ps-accordion-cards-grid cols-1">
+                  {sysDesignSheets.map(sheet => {
+                    const total = getSheetTotalProblems(sheet);
+                    const solved = getSheetSolvedCount(sheet);
+
+                    return (
+                      <div key={sheet.id} className="ps-sheet-card-v2">
+                        <div>
+                          <div
+                            className="ps-sheet-top-icon"
+                            style={{
+                              background: `${sheet.borderColor}15`,
+                              color: sheet.borderColor
+                            }}
+                          >
+                            <FaCogs />
+                          </div>
+                          <h4 className="ps-sheet-card-title">{sheet.title}</h4>
+                          <p className="ps-sheet-card-desc">{sheet.desc}</p>
+                        </div>
+
+                        <div className="ps-sheet-card-bottom">
+                          <div className="ps-sheet-stats-strip">
+                            <span className="ps-sheet-solved-text">{solved}/{total} Solved</span>
+                            <span className="ps-sheet-badge-tag">SYSTEM DESIGN</span>
+                          </div>
+                          <button
+                            className="ps-sheet-cta-btn"
+                            onClick={() => handleSheetCardClick(sheet)}
+                          >
+                            Start Learning <FaArrowRight style={{ fontSize: '11px' }} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -1533,15 +1763,8 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
     <div className="ph-root">
       {/* Sub navigation bar */}
       <div className="ph-topbar" style={{ background: 'transparent', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', padding: '12px 0px', marginBottom: '20px', position: 'static' }}>
-        <div className="ph-section" style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', padding: '0 32px' }}>
+        <div className="ph-section ph-topbar-inner" style={{ padding: '0 32px' }}>
           <div className="ph-topbar-nav" style={{ gap: '8px' }}>
-            <button
-              className={`ph-topbar-btn ${activeTab === 'paths' && !selectedModule ? 'active' : ''}`}
-              onClick={() => handleTabChange('paths')}
-              style={{ borderRadius: '8px' }}
-            >
-              Course Curriculum
-            </button>
             <button
               className={`ph-topbar-btn ${activeTab === 'sheets' && !selectedModule ? 'active' : ''}`}
               onClick={() => handleTabChange('sheets')}
@@ -1556,6 +1779,19 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
             >
               Practice Bank
             </button>
+          </div>
+
+          <div className="ph-gamification-strip">
+            <div className="ph-gamification-chip level">
+              <span>{userLevelInfo?.levelTitle || 'Level 1'}</span>
+            </div>
+            <div className="ph-gamification-chip xp">
+              <span>{totalXP || 0} XP</span>
+            </div>
+            <div className="ph-gamification-chip credits">
+              <SeedCreditCoin size={14} style={{ marginRight: '5px' }} />
+              <span>{seedCredits || 0} Credits</span>
+            </div>
           </div>
         </div>
       </div>
@@ -2969,7 +3205,7 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
 
               {/* Count */}
               <span className="ph-problems-count">
-                {filteredQuestions.length} / {questions.length} (Solved: {solvedIds.length}, Attempted: {attemptedIds.length})
+                {filteredQuestions.length} questions
               </span>
 
               {(searchQuery || selectedCategory !== 'All' || selectedDifficulty !== 'All' || selectedStatus !== 'All') && (
@@ -3159,65 +3395,90 @@ const PracticeHome = ({ initialTab = 'paths', initialCourse = null }) => {
             )}
           </div>
 
-          {/* Right Sidebar Stats */}
+          {/* Right Sidebar Stats matching Image 1 */}
           <div className="ph-problems-sidebar">
-            {/* Solved Progress Widget with SVG Circular Gauge */}
-            <div className="ph-stat-card">
-              <div className="ph-stat-title">MY PROGRESS</div>
-              
-              <div className="ph-progress-gauge-box">
-                <div className="circular-gauge-container small" style={{ margin: '10px auto' }}>
-                  <svg className="circular-gauge-svg" viewBox="0 0 100 100" width="120" height="120">
-                    <circle className="gauge-bg-circle" cx="50" cy="50" r="42" strokeWidth="8" fill="none" />
+            {/* Solved Progress Widget with SVG Donut Gauge */}
+            <div className="ph-stat-card qb-progress-card">
+              <div className="qb-card-header">
+                <span className="qb-card-title">MY PROGRESS</span>
+                <button
+                  className="qb-card-link"
+                  onClick={() => { setSelectedCategory('All'); setSelectedDifficulty('All'); setSelectedStatus('All'); setCurrentPage(1); }}
+                >
+                  View Details
+                </button>
+              </div>
+
+              <div className="qb-donut-center-box">
+                <div className="qb-donut-ring-wrapper">
+                  <svg className="qb-donut-svg" width="120" height="120" viewBox="0 0 100 100">
+                    <circle className="qb-donut-bg-ring" cx="50" cy="50" r="40" strokeWidth="8" fill="none" />
                     <circle
-                      className="gauge-bar-circle"
+                      className="qb-donut-fill-ring"
                       cx="50"
                       cy="50"
-                      r="42"
+                      r="40"
                       strokeWidth="8"
                       fill="none"
-                      strokeDasharray="263.89"
-                      strokeDashoffset={263.89 - (263.89 * (questions.length > 0 ? solvedIds.length / questions.length : 0))}
+                      strokeDasharray="251.2"
+                      strokeDashoffset={251.2 - (251.2 * (questions.length > 0 ? (solvedIds.filter(id => questionBankIdsSet.has(id)).length / questions.length) : 0))}
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="circular-gauge-text">
-                    <span className="ph-stat-solved" style={{ fontSize: '26px', fontWeight: '800' }}>{solvedIds.filter(id => questionBankIdsSet.has(id)).length}</span>
-                    <span className="ph-stat-total" style={{ fontSize: '13px', color: 'var(--ph-text-dim)' }}>/{questions.length}</span>
-                    <span className="gauge-lbl" style={{ fontSize: '11px', marginTop: '2px' }}>Solved</span>
+                  <div className="qb-donut-center-text">
+                    <span className="qb-donut-solved-val">{solvedIds.filter(id => questionBankIdsSet.has(id)).length}</span>
+                    <span className="qb-donut-total-val">/{questions.length || 9328}</span>
+                    <span className="qb-donut-label">Solved</span>
                   </div>
                 </div>
               </div>
 
-              <div className="ph-stat-diff-list" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="qb-difficulty-breakdown-list">
                 {DIFFICULTIES.map(d => {
                   const total = questions.filter(q => q.difficulty === d).length;
                   const solved = questions.filter(q => q.difficulty === d && solvedIdsSet.has(q.questionId)).length;
-                  const cls = d === 'Hard' ? 'hard' : d === 'Medium' ? 'medium' : d === 'Beginner' ? 'beginner' : 'easy';
+                  const cls = d.toLowerCase();
                   return (
-                    <div key={d} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', padding: '4px 0' }}>
-                      <span className={`ph-diff-text ${cls}`} style={{ fontWeight: '700' }}>{d}</span>
-                      <span style={{ color: 'var(--ph-text-dim)', fontWeight: '600' }}>{solved}/{total}</span>
+                    <div key={d} className="qb-diff-item">
+                      <span className="qb-diff-dot-lbl">
+                        <span className={`qb-dot ${cls}`} />
+                        {d}
+                      </span>
+                      <span className="qb-diff-count-val">{solved}/{total}</span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Quick Category Links */}
-            <div className="ph-stat-card" style={{ marginTop: '16px' }}>
-              <div className="ph-stat-title">CATEGORIES</div>
-              <div className="ph-sidebar-cats">
-                {(showAllCategories ? CATEGORIES : CATEGORIES.slice(0, 14)).map(cat => {
-                  const count = questions.filter(q => (q.category ?? '').toLowerCase() === cat.toLowerCase()).length;
+            {/* Categories Progress Bars list in sidebar */}
+            <div className="ph-stat-card qb-categories-card">
+              <div className="qb-card-header">
+                <span className="qb-card-title">CATEGORIES</span>
+              </div>
+
+              <div className="qb-categories-progress-list">
+                {(showAllCategories ? CATEGORIES : CATEGORIES.slice(0, 10)).map(cat => {
+                  const catQuestions = questions.filter(q => (q.category ?? '').toLowerCase() === cat.toLowerCase());
+                  const total = catQuestions.length;
+                  const solved = catQuestions.filter(q => solvedIdsSet.has(q.questionId)).length;
+                  const pct = total > 0 ? Math.round((solved / total) * 100) : 0;
                   return (
                     <div
                       key={cat}
-                      className={`ph-sidebar-cat-row ${selectedCategory === cat ? 'active' : ''}`}
+                      className={`qb-category-row ${selectedCategory === cat ? 'active' : ''}`}
                       onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
                     >
-                      <span className="ph-sidebar-cat-name">{cat}</span>
-                      <span className="ph-sidebar-cat-count">{count}</span>
+                      <div className="qb-category-top-row">
+                        <span className="qb-cat-title">{cat}</span>
+                        <span className="qb-cat-count">{total > 0 ? `${solved}/${total}` : `${total} qs`}</span>
+                      </div>
+                      <div className="qb-cat-bar-track">
+                        <div
+                          className="qb-cat-bar-fill"
+                          style={{ width: `${Math.max(pct, total > 0 ? 8 : 0)}%` }}
+                        />
+                      </div>
                     </div>
                   );
                 })}

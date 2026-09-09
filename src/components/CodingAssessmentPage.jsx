@@ -21,6 +21,7 @@ import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
 import { normalizeTestCaseArray, isTestCasePassed, getQuestionHiddenTestCases, getQuestionSampleTestCases, getQuestionVisibleAllTestCases } from '../utils/testCaseUtils';
+import ProblemMarkdownRenderer, { ProblemImage } from './common/ProblemMarkdownRenderer';
 import '../styles/CodingAssessmentPage.css';
 import { fetchContentJSON } from '../utils/contentApi';
 import { useTabSwitchGuard } from '../utils/tabSwitchGuard';
@@ -3374,17 +3375,22 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                 </div>
 
                                 <div className="problem-description-text">
-                                    <p>{currentQuestion?.description || currentQuestion?.content?.problemStatement || 'Solve the challenge as specified below.'}</p>
+                                    <ProblemMarkdownRenderer content={currentQuestion?.description || currentQuestion?.content?.problemStatement || 'Solve the challenge as specified below.'} />
+                                    {(currentQuestion?.imageUrl || currentQuestion?.image || currentQuestion?.figure || currentQuestion?.diagram || currentQuestion?.questionImage || currentQuestion?.assetUrl || currentQuestion?.content?.imageUrl || currentQuestion?.content?.image) && (
+                                        <div style={{ margin: '16px 0', textAlign: 'center' }}>
+                                            <ProblemImage 
+                                                src={currentQuestion?.imageUrl || currentQuestion?.image || currentQuestion?.figure || currentQuestion?.diagram || currentQuestion?.questionImage || currentQuestion?.assetUrl || currentQuestion?.content?.imageUrl || currentQuestion?.content?.image} 
+                                                alt={currentQuestion?.title || "Problem Illustration"} 
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Constraints */}
                                 {currentQuestion?.constraints && (
                                     <div className="problem-constraints-block">
-                                        <ul className="problem-bullets-list">
-                                            {currentQuestion.constraints.split('\n').filter(Boolean).map((c, idx) => (
-                                                <li key={idx}>{c}</li>
-                                            ))}
-                                        </ul>
+                                        <h4 style={{ fontSize: '13px', fontWeight: 700, margin: '14px 0 6px 0', textTransform: 'uppercase', color: 'var(--ps-primary, #10b981)' }}>Constraints</h4>
+                                        <ProblemMarkdownRenderer content={currentQuestion.constraints} />
                                     </div>
                                 )}
 
@@ -3400,7 +3406,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         </div>
                                         {st.explanation && (
                                             <div className="example-field-line explanation">
-                                                {st.explanation}
+                                                <strong>Explanation:</strong> <ProblemMarkdownRenderer content={st.explanation} />
                                             </div>
                                         )}
                                     </div>

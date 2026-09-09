@@ -88,15 +88,32 @@ const Login = () => {
       if (code.includes("user-not-found") || code.includes("wrong-password") || code.includes("invalid-credential")) {
         setError("Invalid email or password. Please try again.");
       } else if (code.includes("too-many-requests")) {
-        setError("Too many failed attempts. Please try again later.");
-      } else if (code.includes("network-request-failed")) {
-        setError("Network connection issue. Please verify your connection.");
+        setError("Too many failed attempts. Please wait a few minutes before trying again.");
       } else {
-        setError(err.message || "Sign in failed. Please verify your credentials.");
+        setError("Authentication error: " + (err?.message || "Please check your network and try again."));
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemoStudentLogin = () => {
+    const demoUser = {
+      uid: 'demo-student',
+      name: 'Ambika (Demo Student)',
+      email: 'ambika@demo.seed.edu',
+      role: 'student',
+      tenantId: 'seed-demo',
+      tenant: { id: 'seed-demo', name: 'SEED Demo Institute' },
+      isPremium: true
+    };
+    localStorage.setItem("auth_data", JSON.stringify(demoUser));
+    localStorage.setItem("role", "student");
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      navigate("/student/dashboard");
+    }, 400);
   };
 
   return (
@@ -371,6 +388,28 @@ const Login = () => {
             >
               {loading ? "Verifying credentials..." : "Sign In"}
             </button>
+
+            {import.meta.env.DEV && (
+              <button 
+                type="button"
+                id="devQuickStudentLoginBtn"
+                onClick={handleDemoStudentLogin}
+                style={{
+                  marginTop: '12px',
+                  width: '100%',
+                  padding: '10px',
+                  background: 'rgba(99, 102, 241, 0.1)',
+                  border: '1px dashed #6366f1',
+                  borderRadius: '8px',
+                  color: '#6366f1',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  fontSize: '13px'
+                }}
+              >
+                Quick Demo Student Access (Dev)
+              </button>
+            )}
           </form>
 
         </div>
