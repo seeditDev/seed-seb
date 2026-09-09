@@ -18,6 +18,21 @@ export default defineConfig({
         ignored: ['**/build/**', '**/.output/**', '**/dist/**', '**/.nitro/**'],
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('realCourses') && id.endsWith('.json')) {
+              const match = id.match(/realCourses[/\\]([^/\\]+)\.json/);
+              if (match) {
+                return `course-${match[1]}`;
+              }
+              return 'course-data';
+            }
+          },
+        },
+      },
+    },
     optimizeDeps: {
       include: [
         "react-icons/fa",
