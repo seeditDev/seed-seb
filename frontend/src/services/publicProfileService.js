@@ -17,6 +17,8 @@
 import { db } from '../lib/firebase-config';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { sanitizeUsernameComponent } from './usernameService';
+import { isQuestionBankProblem } from './codingProgressService';
+import { calculateLevel } from '../utils/gamificationService';
 
 const PUBLIC_PROFILES = 'publicProfiles';
 
@@ -28,10 +30,11 @@ export function generateYearHeatmapData(activityMap = {}, problemDetails = {}) {
   const days = [];
   const map = { ...(activityMap || {}) };
 
-  // Overlay problemDetails dates if available
+  // Overlay problemDetails dates if available (QuestionBank problems only)
   if (problemDetails && typeof problemDetails === 'object') {
-    Object.values(problemDetails).forEach((detail) => {
+    Object.entries(problemDetails).forEach(([qId, detail]) => {
       if (detail && detail.status === 'SOLVED' && detail.lastSolvedAt) {
+        if (!isQuestionBankProblem(detail.questionId || qId)) return;
         const dStr = String(detail.lastSolvedAt).split('T')[0];
         if (dStr) {
           if (!map[dStr]) map[dStr] = { problemsSolved: 0 };
@@ -161,18 +164,18 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
   const username = sanitizeUsernameComponent(userProfile.username);
   if (!username) return null;
 
-  const solvedProblems = progressData.completedQuestions || progressData.solvedProblems || [];
-  const solvedCount = solvedProblems.length || progressData.solvedCount || 0;
-  const attemptedCount = (progressData.attemptedQuestions || []).length || progressData.attemptedCount || 0;
+  const solvedProblems = (progressData.completedQuestions || progressData.solvedProblems || []).filter(isQuestionBankProblem);
+  const solvedCount = solvedProblems.length;
+  const attemptedCount = (progressData.attemptedQuestions || []).filter(isQuestionBankProblem).length;
 
-  // Approximate difficulty breakdown
+  // Approximate difficulty breakdown (QuestionBank only)
   let easySolved = 0;
   let mediumSolved = 0;
   let hardSolved = 0;
 
   if (progressData.problemDetails) {
     Object.entries(progressData.problemDetails).forEach(([qId, detail]) => {
-      if (detail.status === 'SOLVED') {
+      if (detail.status === 'SOLVED' && isQuestionBankProblem(detail.questionId || qId)) {
         const diff = String(detail.difficulty || '').toLowerCase();
         if (diff === 'hard') hardSolved++;
         else if (diff === 'medium') mediumSolved++;
@@ -229,7 +232,11 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
     bio: userProfile.bio || 'Computer Science student pursuing software excellence on SEED-IT.',
     avatarUrl: userProfile.photoURL || '',
     streak,
+    lastStreakDate: typeof userProfile.lastStreakDate === 'string' ? userProfile.lastStreakDate.split('T')[0] : '',
     seedCredits: userProfile.seedCredits || 0,
+    totalXP: userProfile.totalXP || 0,
+    level: userProfile.level || calculateLevel(userProfile.totalXP || 0).level,
+    levelTitle: userProfile.levelTitle || calculateLevel(userProfile.totalXP || 0).levelTitle,
     linkedin: userProfile.linkedin || userProfile.linkedIn || '',
     github: userProfile.github || userProfile.githubUrl || '',
     portfolio: userProfile.portfolio || userProfile.portfolioUrl || userProfile.website || '',

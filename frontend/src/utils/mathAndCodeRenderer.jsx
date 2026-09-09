@@ -3,11 +3,13 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
 import DOMPurify from 'dompurify';
+import { ProblemImage } from '../components/common/ProblemMarkdownRenderer';
 
 /**
- * Safely renders LaTeX mathematical expressions and code blocks in question & option text.
+ * Safely renders LaTeX mathematical expressions, code blocks, and illustrations/images in question & option text.
  * Handles \frac{a}{b}, \sqrt{x}, \pm, \times, \div, exponents (^), subscripts (_),
- * markdown code blocks (```...```), and preserves multi-line whitespace.
+ * markdown code blocks (```...```), markdown images (![alt](url)), markdown links ([alt](url)),
+ * raw image URLs, and preserves multi-line whitespace.
  */
 export const renderMathAndCode = (text, isOption = false) => {
   if (text === null || text === undefined) return null;
@@ -56,7 +58,35 @@ export const renderMathAndCode = (text, isOption = false) => {
     });
   }
 
-  // 2. Check for LaTeX math commands or delimiters ($...$, \frac, \sqrt, \pm, etc.)
+  // 2. Check for markdown images, markdown links with image/URL, and raw image URLs
+  const hasImageOrLink = /!\[.*?\]\(https?:\/\/.*?\)|\[.*?\]\(https?:\/\/.*?\)|\bhttps?:\/\/[^\s<>()"]+\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s<>()"]*)?|\bhttps?:\/\/[^\s<>()"]*(?:cdn\.codechef\.com\/images|imgur\.com|cloudinary\.com|firebasestorage\.googleapis\.com)[^\s<>()"]*/i.test(str);
+  
+  if (hasImageOrLink) {
+    const parts = str.split(/(!\[.*?\]\(https?:\/\/.*?\)|\(?\[.*?\]\(https?:\/\/.*?\)\)?|\bhttps?:\/\/[^\s<>()"]+\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?[^\s<>()"]*)?|\bhttps?:\/\/[^\s<>()"]*(?:cdn\.codechef\.com\/images|imgur\.com|cloudinary\.com|firebasestorage\.googleapis\.com)[^\s<>()"]*)/gi);
+    if (parts.length > 1) {
+      return parts.map((part, index) => {
+        if (!part) return null;
+        // Check markdown image: ![alt](url)
+        const mdImg = part.match(/^!\[(.*?)\]\((https?:\/\/[^\s)]+)\)$/);
+        if (mdImg) {
+          return <ProblemImage key={`img-${index}`} src={mdImg[2]} alt={mdImg[1] || 'Question Illustration'} />;
+        }
+        // Check markdown link: [alt](url)
+        const mdLink = part.match(/^\[(.*?)\]\((https?:\/\/[^\s)]+)\)$/);
+        if (mdLink) {
+          return <ProblemImage key={`link-img-${index}`} src={mdLink[2]} alt={mdLink[1] || 'Question Illustration'} />;
+        }
+        // Check raw image URL
+        const rawImg = part.match(/^(https?:\/\/[^\s<>()"]+)$/);
+        if (rawImg) {
+          return <ProblemImage key={`raw-img-${index}`} src={rawImg[1]} alt="Question Illustration" />;
+        }
+        return <span key={`txt-${index}`}>{renderMathAndCode(part, isOption)}</span>;
+      });
+    }
+  }
+
+  // 3. Check for LaTeX math commands or delimiters ($...$, \frac, \sqrt, \pm, etc.)
   const hasLatexCmds = /\\(frac|dfrac|sqrt|pm|mp|times|div|le|ge|neq|approx|pi|alpha|beta|theta|lambda|infty|sum|int|lim)|\$|\\[([[\])]|\^|_/.test(str);
 
   if (hasLatexCmds) {

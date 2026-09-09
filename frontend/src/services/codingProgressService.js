@@ -31,8 +31,9 @@
  */
 
 import { db } from '../lib/firebase-config';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, getDocs, query, where } from 'firebase/firestore';
 import desktopBridge from '../utils/desktopBridge';
+import { getQuestionBankReward, awardUserXPAndCredits } from '../utils/gamificationService';
 
 const COLLECTION = 'codingProgress';
 
@@ -51,25 +52,38 @@ const sanitizeForFirestore = (obj) => {
 export const TOTAL_QUESTION_BANK_COUNT = 9328;
 
 /**
+ * QuestionBank Identification Helper:
+ * Validates whether a given question ID belongs to the QuestionBank (q{id}.json).
+ * QuestionBank IDs follow patterns like 'Q0.1', 'Q1001', 'q4286', or purely numeric IDs.
+ * Non-QuestionBank course items/articles (e.g. 'GSCP01', 'CDEV001', 'AJOOP1', '0-1-knapsack-dp-19', 'concept') return false.
+ */
+export const isQuestionBankProblem = (questionId) => {
+  if (!questionId && questionId !== 0) return false;
+  const clean = String(questionId).trim().replace(/\.json$/i, '');
+  return /^q\d+(\.\d+)?$/i.test(clean) || /^\d+$/.test(clean);
+};
+
+/**
  * Dynamic Consecutive Active Day Streak Engine.
  * Evaluates activity history and problem details to calculate the active streak leading to today.
  * Preserves existing streak if today has not ended and yesterday was active.
+ * STREAK RULE: Only QuestionBank problems (q{id}.json) count towards streaks.
  */
 export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previousStreak = 0, lastStreakDate = '') => {
   const activeDates = new Set();
-  if (activityMap && typeof activityMap === 'object') {
-    Object.entries(activityMap).forEach(([dateStr, act]) => {
-      const solved = typeof act === 'number' ? act : (act?.problemsSolved || act?.questionsAttempted || 0);
-      const hours = typeof act === 'object' ? (act?.hours || 0) : 0;
-      if (solved > 0 || hours > 0) activeDates.add(dateStr);
-    });
-  }
   if (problemDetails && typeof problemDetails === 'object') {
-    Object.values(problemDetails).forEach(detail => {
+    Object.entries(problemDetails).forEach(([qId, detail]) => {
       if (detail && (detail.status === 'SOLVED' || detail.bestScore > 0) && detail.lastSolvedAt) {
+        if (!isQuestionBankProblem(detail.questionId || qId)) return;
         const dStr = String(detail.lastSolvedAt).split('T')[0];
         if (dStr) activeDates.add(dStr);
       }
+    });
+  }
+  if (activeDates.size === 0 && activityMap && typeof activityMap === 'object') {
+    Object.entries(activityMap).forEach(([dateStr, act]) => {
+      const solved = typeof act === 'number' ? act : (act?.problemsSolved || 0);
+      if (solved > 0) activeDates.add(dateStr);
     });
   }
 
@@ -78,6 +92,7 @@ export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previou
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const cleanLastStreakDate = typeof lastStreakDate === 'string' ? lastStreakDate.split('T')[0] : '';
 
   let checkDate = new Date(today);
   let streak = 0;
@@ -94,12 +109,17 @@ export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previou
         break;
       }
     }
-    if (previousStreak > 0 && lastStreakDate === yesterdayStr) {
-      streak = Math.max(streak, previousStreak + 1);
-    } else if (previousStreak > 0 && lastStreakDate === todayStr) {
+    // STREAK RULE: Only increment once per calendar day.
+    // If today is already credited (cleanLastStreakDate === todayStr), solving another question today never increments streak.
+    if (cleanLastStreakDate === todayStr) {
       streak = Math.max(streak, previousStreak);
+    } else if (cleanLastStreakDate === yesterdayStr && previousStreak > 0) {
+      // First active problem solved today after an active yesterday: advance streak by 1
+      streak = Math.max(streak, previousStreak + 1);
+    } else {
+      streak = Math.max(1, streak);
     }
-  } else if (activeDates.has(yesterdayStr) || (previousStreak > 0 && (lastStreakDate === yesterdayStr || lastStreakDate === todayStr))) {
+  } else if (activeDates.has(yesterdayStr) || (previousStreak > 0 && (cleanLastStreakDate === yesterdayStr || cleanLastStreakDate === todayStr))) {
     streak = 1;
     checkDate = new Date(yesterday);
     checkDate.setDate(checkDate.getDate() - 1);
@@ -112,7 +132,7 @@ export const computeLiveStreak = (activityMap = {}, problemDetails = {}, previou
         break;
       }
     }
-    if (previousStreak > 0 && (lastStreakDate === yesterdayStr || lastStreakDate === todayStr)) {
+    if (previousStreak > 0 && (cleanLastStreakDate === yesterdayStr || cleanLastStreakDate === todayStr)) {
       streak = Math.max(streak, previousStreak);
     }
   } else {
@@ -136,18 +156,24 @@ const resolveEffectiveUid = (uid) => {
 const normalizeProgressStructure = (rawObj) => {
   const parsed = rawObj && typeof rawObj === 'object' ? rawObj : {};
   
-  // Normalize completed/solved list
+  // Normalize completed/solved list - ONLY QuestionBank problems
   const solved = Array.isArray(parsed.completedQuestions) 
     ? parsed.completedQuestions 
     : (Array.isArray(parsed.solvedProblems) ? parsed.solvedProblems : []);
-  const uniqueSolved = [...new Set(solved.map(String))].filter(Boolean);
+  const allSolved = [...new Set(solved.map(String))].filter(Boolean);
+  const qbSolved = allSolved.filter(isQuestionBankProblem);
 
-  // Normalize attempted list
+  // Preserve non-QB completed items for course tracking
+  const nonQbSolved = allSolved.filter(id => !isQuestionBankProblem(id));
+  const rawCourseItems = Array.isArray(parsed.courseCompletedItems) ? parsed.courseCompletedItems.map(String) : [];
+  const courseCompletedItems = [...new Set([...rawCourseItems, ...nonQbSolved])].filter(Boolean);
+
+  // Normalize attempted list - ONLY QuestionBank problems
   const attempted = Array.isArray(parsed.attemptedQuestions) 
     ? parsed.attemptedQuestions 
     : [];
   // Exclude solved from attempted
-  const uniqueAttempted = [...new Set(attempted.map(String))].filter(id => id && !uniqueSolved.includes(id));
+  const qbAttempted = [...new Set(attempted.map(String))].filter(id => id && isQuestionBankProblem(id) && !qbSolved.includes(id));
 
   const rawDetails = parsed.problemDetails || {};
   const details = {};
@@ -167,11 +193,12 @@ const normalizeProgressStructure = (rawObj) => {
   const lastStreakDate = parsed.lastStreakDate || '';
 
   return {
-    completedQuestions: uniqueSolved,
-    solvedProblems: uniqueSolved, // backward compatibility
-    attemptedQuestions: uniqueAttempted,
-    solvedCount: uniqueSolved.length,
-    attemptedCount: uniqueAttempted.length,
+    completedQuestions: qbSolved,
+    solvedProblems: qbSolved, // backward compatibility
+    attemptedQuestions: qbAttempted,
+    courseCompletedItems,
+    solvedCount: qbSolved.length,
+    attemptedCount: qbAttempted.length,
     cacheId,
     streak,
     lastStreakDate,
@@ -205,10 +232,16 @@ const saveLocalProgress = (uid, progress) => {
   const effectiveUid = resolveEffectiveUid(uid);
   if (!effectiveUid) return;
 
-  // Bump cacheId and update summary counts
+  // Bump cacheId and update summary counts - strictly QuestionBank
+  const qbSolved = (progress.completedQuestions || []).filter(isQuestionBankProblem);
+  const qbAttempted = (progress.attemptedQuestions || []).filter(id => isQuestionBankProblem(id) && !qbSolved.includes(id));
+
+  progress.completedQuestions = qbSolved;
+  progress.solvedProblems = qbSolved;
+  progress.attemptedQuestions = qbAttempted;
   progress.cacheId = (Number(progress.cacheId) || 0) + 1;
-  progress.solvedCount = (progress.completedQuestions || []).length;
-  progress.attemptedCount = (progress.attemptedQuestions || []).length;
+  progress.solvedCount = qbSolved.length;
+  progress.attemptedCount = qbAttempted.length;
   progress.updatedAt = new Date().toISOString();
 
   const serialized = JSON.stringify(progress);
@@ -228,6 +261,30 @@ const saveLocalProgress = (uid, progress) => {
       detail: { uid: effectiveUid, progress }
     }));
   }
+};
+
+
+/**
+ * Ensures that the local progress for uid is hydrated from Firestore/Disk if local cache is empty.
+ * Guarantees that background writes (e.g. logPortalActivityTime) never overwrite non-empty Firestore data with empty defaults.
+ */
+export const ensureHydratedProgress = async (uid) => {
+  const effectiveUid = resolveEffectiveUid(uid);
+  if (!effectiveUid) return normalizeProgressStructure({});
+
+  const raw = localStorage.getItem(`practice_progress_${effectiveUid}`);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        if ((parsed.completedQuestions && parsed.completedQuestions.length > 0) || (parsed.activity && Object.keys(parsed.activity).length > 0)) {
+          return normalizeProgressStructure(parsed);
+        }
+      }
+    } catch (_) {}
+  }
+
+  return await loadPersistedUserActivity(effectiveUid);
 };
 
 // ── Read Operations ────────────────────────────────────────────────────────────
@@ -275,29 +332,28 @@ export const loadPersistedUserActivity = async (uid) => {
 
   // 1. Check in-memory / localStorage first
   const local = getLocalProgress(effectiveUid);
+  const hasLocalData = (local.completedQuestions && local.completedQuestions.length > 0) || (local.activity && Object.keys(local.activity).length > 0);
 
-  // 2. On the first call of each browser session per-uid, always sync with Firestore to restore
-  //    progress that may have been recorded on another device or after a fresh login.
-  //    sessionStorage key: `progress_synced_${uid}` guards against repeated network round-trips.
+  // 2. Session sync guard
   const sessionKey = `progress_synced_${effectiveUid}`;
   const alreadySyncedThisSession = typeof sessionStorage !== 'undefined' && sessionStorage.getItem(sessionKey) === 'true';
 
-  if (!alreadySyncedThisSession && navigator.onLine) {
+  // Always sync if online and either not synced this session OR local cache is currently empty
+  if ((!alreadySyncedThisSession || !hasLocalData) && navigator.onLine) {
     try {
       const res = await syncProgressWithFirebase(effectiveUid);
       if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(sessionKey, 'true');
       if (res?.success && res?.progress) {
-        console.log('[CodingProgressService] Session-start sync from Firestore. Solved:', res.progress.solvedCount);
+        console.log('[CodingProgressService] Synced from Firestore. Solved:', res.progress.solvedCount);
         return res.progress;
       }
     } catch (syncErr) {
-      console.warn('[CodingProgressService] Session-start Firestore sync failed, using local:', syncErr.message);
-      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(sessionKey, 'true');
+      console.warn('[CodingProgressService] Firestore sync error, checking disk/local:', syncErr.message);
     }
   }
 
-  // 3. Return localStorage data (already merged if sync ran above)
-  if ((local.completedQuestions && local.completedQuestions.length > 0) || (local.activityByDate && Object.keys(local.activityByDate).length > 0)) {
+  // 3. Return localStorage data if it has entries
+  if (hasLocalData) {
     return local;
   }
 
@@ -360,9 +416,12 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
   const local = getLocalProgress(uid);
   const existing = local.problemDetails[strQId];
   const now = new Date().toISOString();
+  const isQB = isQuestionBankProblem(strQId);
 
   const meta = (typeof attempts === 'object' && attempts !== null) ? attempts : (metadata || {});
   const numAttempts = typeof attempts === 'number' ? attempts : (typeof attempts === 'string' && !isNaN(attempts) ? Number(attempts) : 1);
+
+  const wasAlreadySolved = existing && existing.status === 'SOLVED' && existing.xpAwarded;
 
   const detail = {
     status: 'SOLVED',
@@ -373,58 +432,91 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
     attempts: (existing?.attempts || 0) + numAttempts,
     bestScore: Math.max(typeof score === 'number' ? score : 100, existing?.bestScore || 0),
     lastSolvedAt: now,
-    lastAttemptedAt: now
+    lastAttemptedAt: now,
+    isQuestionBank: isQB,
+    xpAwarded: true
   };
+
+  // Award Question Bank XP and SEED Credits if not already awarded
+  if (isQB && !wasAlreadySolved) {
+    const reward = getQuestionBankReward(detail.difficulty);
+    detail.earnedXP = reward.xp;
+    detail.earnedCredits = reward.credits;
+    awardUserXPAndCredits(uid, reward.xp, reward.credits, 'QUESTION_BANK_SOLVED', {
+      questionId: strQId,
+      difficulty: detail.difficulty,
+      title: detail.title
+    }).catch(err => console.warn('[CodingProgressService] Gamification award error:', err));
+  } else if (existing?.earnedXP) {
+    detail.earnedXP = existing.earnedXP;
+    detail.earnedCredits = existing.earnedCredits;
+  }
 
   local.problemDetails[strQId] = detail;
   
-  // Add to completedQuestions / solvedProblems
-  if (!local.completedQuestions.includes(strQId)) {
-    local.completedQuestions.push(strQId);
-  }
-  local.solvedProblems = local.completedQuestions;
-
-  // Remove from attemptedQuestions since it's now completed
-  local.attemptedQuestions = local.attemptedQuestions.filter(id => id !== strQId);
-  
-  // Track activity solved count
-  if (!local.activity) local.activity = {};
+  let calculatedStreak = local.streak || 0;
   const today = now.split('T')[0];
-  if (!local.activity[today]) {
-    local.activity[today] = { hours: 0, problemsSolved: 0 };
-  }
-  local.activity[today].problemsSolved += 1;
 
-  // Compute live consecutive day streak
-  const calculatedStreak = computeLiveStreak(
-    local.activity,
-    local.problemDetails,
-    local.streak || 0,
-    local.lastStreakDate || ''
-  );
-  local.streak = calculatedStreak;
-  local.lastStreakDate = today;
+  if (isQB) {
+    // Add to completedQuestions / solvedProblems (ONLY QuestionBank problems)
+    if (!local.completedQuestions.includes(strQId)) {
+      local.completedQuestions.push(strQId);
+    }
+    local.solvedProblems = local.completedQuestions;
+
+    // Remove from attemptedQuestions since it's now completed
+    local.attemptedQuestions = local.attemptedQuestions.filter(id => id !== strQId);
+    
+    // Track activity solved count
+    if (!local.activity) local.activity = {};
+    if (!local.activity[today]) {
+      local.activity[today] = { hours: 0, problemsSolved: 0 };
+    }
+    local.activity[today].problemsSolved += 1;
+
+    // Compute live consecutive day streak
+    calculatedStreak = computeLiveStreak(
+      local.activity,
+      local.problemDetails,
+      local.streak || 0,
+      local.lastStreakDate || ''
+    );
+    local.streak = calculatedStreak;
+    local.lastStreakDate = today;
+  } else {
+    // Non-QuestionBank problem (course concept, article, quiz)
+    if (!local.courseCompletedItems) local.courseCompletedItems = [];
+    if (!local.courseCompletedItems.includes(strQId)) {
+      local.courseCompletedItems.push(strQId);
+    }
+    local.attemptedQuestions = local.attemptedQuestions.filter(id => id !== strQId);
+    // Do NOT add to completedQuestions or solvedProblems
+    // Do NOT increment activity problemsSolved
+    // Do NOT update streak
+  }
 
   saveLocalProgress(uid, local);
-  console.log(`[CodingProgressService] ${strQId} marked as SOLVED (cacheId: ${local.cacheId}, streak: ${calculatedStreak})`);
+  console.log(`[CodingProgressService] ${strQId} marked as SOLVED (isQB: ${isQB}, cacheId: ${local.cacheId}, streak: ${calculatedStreak})`);
 
-  // Update auth_data in LocalStorage so user.streak and user.solvedCount are instantly fresh
-  try {
-    const authRaw = localStorage.getItem('auth_data');
-    if (authRaw) {
-      const authObj = JSON.parse(authRaw);
-      authObj.streak = calculatedStreak;
-      authObj.lastStreakDate = today;
-      authObj.solvedCount = local.completedQuestions.length;
-      authObj.problemsSolvedCount = local.completedQuestions.length;
-      localStorage.setItem('auth_data', JSON.stringify(authObj));
-    }
-  } catch (_) {}
+  if (isQB) {
+    // Update auth_data in LocalStorage so user.streak and user.solvedCount are instantly fresh
+    try {
+      const authRaw = localStorage.getItem('auth_data');
+      if (authRaw) {
+        const authObj = JSON.parse(authRaw);
+        authObj.streak = calculatedStreak;
+        authObj.lastStreakDate = today;
+        authObj.solvedCount = local.completedQuestions.length;
+        authObj.problemsSolvedCount = local.completedQuestions.length;
+        localStorage.setItem('auth_data', JSON.stringify(authObj));
+      }
+    } catch (_) {}
 
-  // Log activity to userActivities/{uid}/
-  import('./activityLoggerService').then(mod => {
-    mod.logUserActivity(uid, 'QUESTION_SOLVED', { questionId: strQId, language, score, attempts: numAttempts, streak: calculatedStreak });
-  }).catch(() => {});
+    // Log activity to userActivities/{uid}/
+    import('./activityLoggerService').then(mod => {
+      mod.logUserActivity(uid, 'QUESTION_SOLVED', { questionId: strQId, language, score, attempts: numAttempts, streak: calculatedStreak });
+    }).catch(() => {});
+  }
 
   // Background sync with Firestore if online
   if (navigator.onLine) {
@@ -432,26 +524,61 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
       const docRef = doc(db, COLLECTION, uid);
       await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
 
-      // Synchronize streak, lastActiveDate, and problemsSolvedCount to users/{uid}
-      updateDoc(doc(db, 'users', uid), {
-        streak: calculatedStreak,
-        lastStreakDate: today,
-        lastActiveDate: today,
-        problemsSolvedCount: local.completedQuestions.length,
-        solvedCount: local.completedQuestions.length,
-        updatedAt: serverTimestamp()
-      }).catch(err => console.warn('[CodingProgressService] users update skipped:', err.message));
+      // Calculate total hours
+      let totalHours = 0;
+      Object.values(local.activity || {}).forEach(a => { totalHours += (a?.hours || 0); });
+      const roundedHours = Number(totalHours.toFixed(2));
+      const totalSolved = local.completedQuestions.length;
 
-      // Synchronize public profile at publicProfiles/{username}
-      try {
-        const authObj = JSON.parse(localStorage.getItem('auth_data') || '{}');
-        const username = authObj.username || authObj.studentUsername;
-        if (username) {
-          import('./publicProfileService').then(({ publishPublicProfile }) => {
-            publishPublicProfile(uid, { ...authObj, streak: calculatedStreak }, local).catch(() => {});
+      const userUpdatePayload = {
+        hoursPresent: roundedHours,
+        'stats.hoursPresent': roundedHours,
+        'stats.activeDays': Object.keys(local.activity || {}).length,
+        'stats.totalQuestions': TOTAL_QUESTION_BANK_COUNT,
+        updatedAt: serverTimestamp()
+      };
+
+      if (isQB) {
+        userUpdatePayload.streak = calculatedStreak;
+        userUpdatePayload.lastStreakDate = today;
+        userUpdatePayload.lastActiveDate = today;
+        userUpdatePayload.problemsSolvedCount = totalSolved;
+        userUpdatePayload.solvedCount = totalSolved;
+        userUpdatePayload['stats.solvedCount'] = totalSolved;
+        userUpdatePayload['stats.problemsSolvedCount'] = totalSolved;
+      }
+
+      // Synchronize streak, lastActiveDate, problemsSolvedCount, and stats to users/{uid}
+      updateDoc(doc(db, 'users', uid), userUpdatePayload).catch(err => console.warn('[CodingProgressService] users update skipped:', err.message));
+
+      if (isQB) {
+        // Also record to userSolutions/{uid}/allSubmissions for cross-app parity
+        try {
+          import('./userSolutionsService').then(({ saveSolution }) => {
+            saveSolution(uid, {
+              questionId: strQId,
+              questionTitle: detail.title || strQId,
+              language: detail.language || 'c',
+              status: 'accepted',
+              testsPassed: 1,
+              testsTotal: 1,
+              executionTimeMs: 0,
+              isPractice: true
+            }).catch(() => {});
           }).catch(() => {});
-        }
-      } catch (_) {}
+        } catch (_) {}
+
+        // Synchronize public profile at publicProfiles/{username}
+        try {
+          const authObj = JSON.parse(localStorage.getItem('auth_data') || '{}');
+          const username = authObj.username || authObj.studentUsername;
+          if (username) {
+            import('./publicProfileService').then(({ publishPublicProfile }) => {
+              publishPublicProfile(uid, { ...authObj, streak: calculatedStreak }, local).catch(() => {});
+            }).catch(() => {});
+          }
+        } catch (_) {}
+      }
     } catch (e) {
       console.warn('[CodingProgressService] Background sync failed (will sync later):', e.message);
     }
@@ -460,11 +587,11 @@ export const markQuestionSolved = async (uid, questionId, language, score, attem
   // Broadcast change event
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('coding_progress_updated', {
-      detail: { uid, progress: local, streak: calculatedStreak }
+      detail: { uid, progress: local, streak: calculatedStreak, isQuestionBank: isQB }
     }));
   }
 
-  return { success: true, progress: local, streak: calculatedStreak };
+  return { success: true, progress: local, streak: calculatedStreak, isQuestionBank: isQB };
 };
 
 /**
@@ -477,6 +604,7 @@ export const markQuestionAttempted = async (uid, questionId, language, score, at
   const local = getLocalProgress(uid);
   const existing = local.problemDetails[strQId];
   const now = new Date().toISOString();
+  const isQB = isQuestionBankProblem(strQId);
 
   const meta = (typeof attempts === 'object' && attempts !== null) ? attempts : (metadata || {});
   const numAttempts = typeof attempts === 'number' ? attempts : 1;
@@ -492,6 +620,7 @@ export const markQuestionAttempted = async (uid, questionId, language, score, at
     attempts: (existing?.attempts || 0) + numAttempts,
     bestScore: Math.max(typeof score === 'number' ? score : 0, existing?.bestScore || 0),
     lastAttemptedAt: now,
+    isQuestionBank: isQB
   };
 
   const solvedAt = existing?.lastSolvedAt || (isAlreadySolved ? now : null);
@@ -501,17 +630,19 @@ export const markQuestionAttempted = async (uid, questionId, language, score, at
 
   local.problemDetails[strQId] = detail;
 
-  // If not already completed, add to attemptedQuestions
-  if (!isAlreadySolved && !local.attemptedQuestions.includes(strQId)) {
+  // If not already completed, add to attemptedQuestions ONLY for QuestionBank problems
+  if (isQB && !isAlreadySolved && !local.attemptedQuestions.includes(strQId)) {
     local.attemptedQuestions.push(strQId);
   }
 
   saveLocalProgress(uid, local);
 
-  // Log activity to userActivities/{uid}/
-  import('./activityLoggerService').then(mod => {
-    mod.logUserActivity(uid, 'QUESTION_ATTEMPT', { questionId: strQId, language, score });
-  }).catch(() => {});
+  if (isQB) {
+    // Log activity to userActivities/{uid}/
+    import('./activityLoggerService').then(mod => {
+      mod.logUserActivity(uid, 'QUESTION_ATTEMPT', { questionId: strQId, language, score });
+    }).catch(() => {});
+  }
 
   // Background sync with Firestore if online
   if (navigator.onLine) {
@@ -532,7 +663,7 @@ export const markQuestionAttempted = async (uid, questionId, language, score, at
 export const trackQuestionTimeSpent = async (uid, questionId, timeSpentMs) => {
   if (!uid || !questionId || !timeSpentMs || timeSpentMs <= 0) return;
   const strQId = String(questionId).trim();
-  const local = getLocalProgress(uid);
+  const local = await ensureHydratedProgress(uid);
   const existing = local.problemDetails[strQId] || {};
   local.problemDetails[strQId] = {
     ...existing,
@@ -553,7 +684,7 @@ export const trackQuestionTimeSpent = async (uid, questionId, timeSpentMs) => {
  */
 export const trackDailyActivity = async (uid, delta = {}) => {
   if (!uid) return;
-  const local = getLocalProgress(uid);
+  const local = await ensureHydratedProgress(uid);
   if (!local.activityByDate) local.activityByDate = {};
   const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
   const existing = local.activityByDate[today] || { questionsAttempted: 0, timeSpentMs: 0 };
@@ -633,13 +764,25 @@ export const syncProgressWithFirebase = async (uid) => {
       } catch (_) {}
     }
 
-    // Merge completedQuestions / solvedProblems
-    const remoteSolved = remote.completedQuestions || remote.solvedProblems || [];
-    const mergedSolved = [...new Set([...(local.completedQuestions || []), ...remoteSolved])];
+    // Also query userSolutions/{uid}/allSubmissions for any accepted problems (QB only)
+    let acceptedFromSubs = [];
+    try {
+      const subSnap = await getDocs(query(collection(db, 'userSolutions', uid, 'allSubmissions'), where('status', '==', 'accepted')));
+      subSnap.forEach(d => {
+        const qId = d.data()?.questionId;
+        if (qId && isQuestionBankProblem(qId)) acceptedFromSubs.push(String(qId).trim());
+      });
+    } catch (_) {}
 
-    // Merge attemptedQuestions (exclude completed)
-    const remoteAttempted = remote.attemptedQuestions || [];
-    const mergedAttempted = [...new Set([...(local.attemptedQuestions || []), ...remoteAttempted])]
+    // Merge completedQuestions / solvedProblems (strictly QuestionBank problems)
+    const remoteSolved = (remote.completedQuestions || remote.solvedProblems || []).filter(isQuestionBankProblem);
+    const localSolved = (local.completedQuestions || []).filter(isQuestionBankProblem);
+    const mergedSolved = [...new Set([...localSolved, ...remoteSolved, ...acceptedFromSubs])];
+
+    // Merge attemptedQuestions (exclude completed, QB only)
+    const remoteAttempted = (remote.attemptedQuestions || []).filter(isQuestionBankProblem);
+    const localAttempted = (local.attemptedQuestions || []).filter(isQuestionBankProblem);
+    const mergedAttempted = [...new Set([...localAttempted, ...remoteAttempted])]
       .filter(id => !mergedSolved.includes(id));
 
     // Merge problemDetails taking highest attempts and best score
@@ -649,20 +792,25 @@ export const syncProgressWithFirebase = async (uid) => {
       const lDet = local.problemDetails?.[qId];
       const rDet = remote.problemDetails?.[qId];
 
+      const nowIso = new Date().toISOString();
       if (lDet && rDet) {
         const isSolved = lDet.status === 'SOLVED' || rDet.status === 'SOLVED' || mergedSolved.includes(qId);
         const detailObj = {
           status: isSolved ? 'SOLVED' : 'ATTEMPTED',
-          language: lDet.bestScore >= (rDet.bestScore || 0) ? lDet.language : (rDet.language || lDet.language),
+          language: (lDet.bestScore || 0) >= (rDet.bestScore || 0) ? lDet.language : (rDet.language || lDet.language),
           attempts: Math.max(lDet.attempts || 1, rDet.attempts || 1),
           bestScore: Math.max(lDet.bestScore || 0, rDet.bestScore || 0),
-          lastAttemptedAt: lDet.lastAttemptedAt || rDet.lastAttemptedAt || now
+          lastAttemptedAt: lDet.lastAttemptedAt || rDet.lastAttemptedAt || nowIso
         };
         const solvedAt = lDet.lastSolvedAt || rDet.lastSolvedAt;
         if (solvedAt) {
           detailObj.lastSolvedAt = solvedAt;
         }
         mergedDetails[qId] = detailObj;
+      } else if (lDet || rDet) {
+        const det = lDet || rDet;
+        if (mergedSolved.includes(qId)) det.status = 'SOLVED';
+        mergedDetails[qId] = det;
       }
     }
 
@@ -717,6 +865,37 @@ export const syncProgressWithFirebase = async (uid) => {
     const effectiveUid = resolveEffectiveUid(uid);
     localStorage.setItem(`practice_progress_${effectiveUid}`, JSON.stringify(mergedProgress));
     await setDoc(docRef, sanitizeForFirestore(mergedProgress), { merge: true });
+
+    // Calculate total hours
+    let totalHours = 0;
+    Object.values(mergedActivity || {}).forEach(a => { totalHours += (a?.hours || 0); });
+    const roundedHours = Number(totalHours.toFixed(2));
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Synchronize canonical fields & stats map to users/{uid}
+    try {
+      const userUpdatePayload = {
+        streak: mergedStreak,
+        lastStreakDate: (mergedDetails && Object.values(mergedDetails).some(d => d.lastSolvedAt?.startsWith(todayStr))) ? todayStr : (remote.lastStreakDate || ''),
+        lastActiveDate: todayStr,
+        solvedCount: mergedProgress.solvedCount,
+        problemsSolvedCount: mergedProgress.solvedCount,
+        hoursPresent: roundedHours,
+        stats: {
+          solvedCount: mergedProgress.solvedCount,
+          problemsSolvedCount: mergedProgress.solvedCount,
+          totalQuestions: TOTAL_QUESTION_BANK_COUNT,
+          activeDays: Object.keys(mergedActivity || {}).length,
+          hoursPresent: roundedHours
+        },
+        updatedAt: serverTimestamp()
+      };
+      await updateDoc(doc(db, 'users', uid), userUpdatePayload).catch(async () => {
+        await setDoc(doc(db, 'users', uid), userUpdatePayload, { merge: true });
+      });
+    } catch (uErr) {
+      console.warn('[CodingProgressService] users sync update error:', uErr.message);
+    }
 
     // Update auth_data in LocalStorage
     try {
@@ -773,7 +952,8 @@ export const getQuestionDisplayStatus = (
 export const logPortalActivityTime = async (uid, minutes = 1) => {
   if (!uid) return { success: false };
   
-  const local = getLocalProgress(uid);
+  // Hydration Guard: ensure we modify hydrated progress, NOT a blank shell
+  const local = await ensureHydratedProgress(uid);
   if (!local.activity) {
     local.activity = {};
   }
@@ -802,6 +982,18 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
       if (!auth.currentUser) return { success: true };
       const docRef = doc(db, COLLECTION, uid);
       await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
+
+      // Calculate total hours and mirror to users/{uid}
+      let totalHours = 0;
+      Object.values(local.activity || {}).forEach(a => { totalHours += (a?.hours || 0); });
+      const roundedHours = Number(totalHours.toFixed(2));
+
+      updateDoc(doc(db, 'users', uid), {
+        hoursPresent: roundedHours,
+        'stats.hoursPresent': roundedHours,
+        lastActiveDate: today,
+        updatedAt: serverTimestamp()
+      }).catch(() => {});
     } catch (e) {
       console.warn('[CodingProgressService] Background sync failed:', e.message);
     }
@@ -839,6 +1031,7 @@ export const saveSheetProgress = async (uid, sheetId, problemId, isSolved) => {
 };
 
 export default {
+  ensureHydratedProgress,
   getCompletedQuestionIds,
   getSolvedQuestionIds,
   getAttemptedQuestionIds,
@@ -852,4 +1045,5 @@ export default {
   getQuestionDisplayStatus,
   logPortalActivityTime,
   saveSheetProgress,
+  isQuestionBankProblem,
 };

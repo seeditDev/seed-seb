@@ -15,6 +15,7 @@ import ProctoringInstructions from './ProctoringInstructions';
 import timeService from '../services/timeService';
 import { clearAllProctorCache, getViolations, recordViolation } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
+import { ProblemImage } from './common/ProblemMarkdownRenderer';
 import { getAuthData } from '../utils/storageUtils';
 import { fetchContentJSON } from '../utils/contentApi';
 import { gradeMcqAttempt } from '../utils/mcqGrading';
@@ -2441,6 +2442,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                         <span>{getTimeTaken(index)}s</span>
                                     </div>
                                     <div className="mcq-review-question">{renderTextWithCode(question.question)}</div>
+                                    {(question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image) && (
+                                        <div className="mcq-review-image" style={{ margin: '8px 0', maxWidth: '320px' }}>
+                                            <ProblemImage 
+                                                src={question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image} 
+                                                alt={`Question ${index + 1} Illustration`} 
+                                            />
+                                        </div>
+                                    )}
                                     <div className="mcq-review-answer">
                                         Your answer: {answers[index] !== undefined ? renderMathAndCode(question.options[answers[index]], true) : <span className="text-muted">Not answered</span>}
                                     </div>
@@ -2570,6 +2579,16 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                         <span className="mcq-q-num-badge">Q{questionIndex + 1}.</span>
                                         <span className="mcq-q-content">{renderTextWithCode(currentQ.question)}</span>
                                     </div>
+
+                                    {/* Render question illustration if present on question object */}
+                                    {(currentQ?.imageUrl || currentQ?.image || currentQ?.figure || currentQ?.diagram || currentQ?.questionImage || currentQ?.assetUrl || currentQ?.content?.imageUrl || currentQ?.content?.image) && (
+                                        <div className="mcq-q-image-container" style={{ margin: '14px 0', textAlign: 'center' }}>
+                                            <ProblemImage 
+                                                src={currentQ?.imageUrl || currentQ?.image || currentQ?.figure || currentQ?.diagram || currentQ?.questionImage || currentQ?.assetUrl || currentQ?.content?.imageUrl || currentQ?.content?.image} 
+                                                alt={currentQ?.imageAlt || `Question ${questionIndex + 1} Illustration`} 
+                                            />
+                                        </div>
+                                    )}
 
                                     <div className="mcq-ref-options-stack">
                                         {currentQ.options && currentQ.options.map((option, optionIndex) => {
@@ -2927,6 +2946,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                 </div>
 
                                 <div className="mcq-solution-q-text">{renderTextWithCode(question.question)}</div>
+                                {(question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image) && (
+                                    <div className="mcq-solution-image" style={{ margin: '10px 0', maxWidth: '400px' }}>
+                                        <ProblemImage 
+                                            src={question?.imageUrl || question?.image || question?.figure || question?.diagram || question?.questionImage || question?.assetUrl || question?.content?.imageUrl || question?.content?.image} 
+                                            alt="Question Illustration" 
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="mcq-solution-options">
                                     {question.options.map((option, oIndex) => {
@@ -3257,44 +3284,27 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     // Main render
     if (startCountdown !== null) {
         return (
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100vw',
-                height: '100vh',
-                background: 'radial-gradient(circle at center, #0f172a, #020617)',
-                color: 'white',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 99999,
-                fontFamily: "'Inter', sans-serif"
-            }}>
-                <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
-                    <div className="learn-spinner" style={{ width: '60px', height: '60px', borderTopColor: '#10b981', margin: '0 auto 24px' }}></div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: '#10b981', letterSpacing: '-0.02em' }}>
-                        Preparing Secure Environment...
-                    </h2>
-                    <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px', lineHeight: '1.6' }}>
-                        Setting up MCQ environment, proctoring controls, and loading questions.
-                    </p>
-                    <div style={{
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        borderRadius: '16px',
-                        padding: '24px 32px',
-                        display: 'inline-block',
-                        boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
-                    }}>
-                        <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748b', marginBottom: '8px', fontWeight: '700' }}>
-                            Assessment Starts In
-                        </div>
-                        <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'white', fontFamily: 'monospace', lineHeight: '1' }}>
-                            {startCountdown}s
-                        </div>
+            <div className="seb-boot" style={{ zIndex: 99999 }}>
+                <div className="seb-boot__brand">
+                    <div className="seb-boot__spinner-ring"></div>
+                    <div className="seb-boot__logo-wrapper">
+                        <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
                     </div>
+                </div>
+                <div className="seb-boot__title">
+                    Preparing MCQ Environment...
+                </div>
+                <div className="seb-boot__status">
+                    <span className="seb-boot__dot"></span>
+                    <span>
+                        Configuring proctoring controls · Starting in{' '}
+                        <strong style={{ color: '#0f172a', fontFamily: 'monospace', fontSize: '15px' }}>
+                            {startCountdown}s
+                        </strong>
+                    </span>
+                </div>
+                <div className="seb-boot__progress-bar" style={{ width: '240px' }}>
+                    <div className="seb-boot__progress-fill"></div>
                 </div>
             </div>
         );

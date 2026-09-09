@@ -15,6 +15,8 @@ import {
   FaSearch,
   FaFilter,
   FaLock,
+  FaEye,
+  FaEyeSlash,
   FaShieldAlt,
   FaTimes,
   FaCheck,
@@ -51,9 +53,29 @@ import {
   FaMobileAlt,
   FaCode,
   FaExpand,
-  FaPlay
+  FaPlay,
+  FaHeadset,
+  FaCommentDots,
+  FaDesktop,
+  FaArrowRight,
+  FaLifeRing,
+  FaLinkedin,
+  FaGlobe,
+  FaGithub,
+  FaExternalLinkAlt,
+  FaDownload,
+  FaCopy,
+  FaAndroid,
+  FaBolt,
+  FaCoins,
+  FaListOl,
+  FaLayerGroup,
+  FaBoxOpen,
+  FaBatteryFull
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { isQuestionBankProblem } from '../services/codingProgressService';
+import SeedCreditCoin from './SeedCreditCoin';
 import '../styles/StudentDashboard.css';
 import '../styles/PracticeHome.css';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
@@ -65,16 +87,38 @@ import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
 import PracticeHome from './PracticeHome';
+import CourseLearningPlayer from '../courses/components/CourseLearningPlayer';
+import MyLearningDashboard from '../courses/components/MyLearningDashboard';
+import CourseCatalog from '../courses/components/CourseCatalog';
+import { COURSE_CATALOG } from '../courses/data/courseCatalogData';
+import { getEnrolledCourseIds, fetchEnrolledCourseIds, getCourseProgress } from '../courses/services/learningEngineService';
 import AIInterviewSimulator from './AIInterviewSimulator';
 import { fetchContentJSON } from '../utils/contentApi';
 import { fetchCompletionMap, invalidateCompletionCache } from '../services/attemptStatusService';
 import { requireTenant } from '../utils/tenant';
 import { RESUMABLE_STATES, ATTEMPT_STATES } from '../services/attemptStateMachine';
-import { validateAssessmentPayload, validateTestDoc, validateMSASections } from '../utils/assessmentValidator';
-import { loadUserDailyGoals, saveUserDailyGoals, getDailyGoalsForDate } from '../utils/dailyGoalsPool';
+import { loadUserDailyGoals, saveUserDailyGoals, getDailyGoalsForDate, ALL_GOALS_COMPLETION_BONUS } from '../utils/dailyGoalsPool';
+import { calculateLevel, awardUserXPAndCredits, getUserGamification } from '../utils/gamificationService';
 import { toast } from 'sonner';
 import { getAuthData } from '../utils/storageUtils';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
+import NotificationCenterPopover from './NotificationCenterPopover';
+import {
+  subscribeStudentNotifications,
+  getReadNotifIds,
+  markAsRead,
+  markAllAsRead,
+} from '../services/notificationService';
+import SupportTicketModal from './SupportTicketModal';
+import SupportTicketChatModal from './SupportTicketChatModal';
+import { DocumentationModal, AuthenticityModal } from './SupportDocModals';
+import {
+  subscribeStudentTickets,
+  TICKET_STATUSES,
+  TICKET_CATEGORIES,
+} from '../services/supportService';
+import { ensureUserHasUsername } from '../services/usernameService';
+import { publishPublicProfile } from '../services/publicProfileService';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -107,20 +151,65 @@ const StudentDashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(() => getAuthData());
   const [dailyGoals, setDailyGoals] = useState([]);
-  const [seedCredits, setSeedCredits] = useState(2450);
+  const [seedCredits, setSeedCredits] = useState(() => (user?.seedCredits !== undefined ? user.seedCredits : 2450));
+  const [totalXP, setTotalXP] = useState(() => (user?.totalXP !== undefined ? user.totalXP : 0));
+  const [userLevelInfo, setUserLevelInfo] = useState(() => calculateLevel(user?.totalXP || 0));
   const [todayCreditsGained, setTodayCreditsGained] = useState(120);
-  const [userStreak, setUserStreak] = useState(1);
+  const [userStreak, setUserStreak] = useState(() => (user?.streak !== undefined ? user.streak : 1));
   const [goalOffset, setGoalOffset] = useState(0);
-  const [progressData, setProgressData] = useState(null);
+  const [progressData, setProgressData] = useState(() => {
+    try {
+      const authObj = getAuthData() || {};
+      const uid = authObj.uid || authObj.id || authObj.email || 'demo-student';
+      let raw = localStorage.getItem(`practice_progress_${uid}`);
+      if (!raw) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('practice_progress_')) {
+            raw = localStorage.getItem(k);
+            break;
+          }
+        }
+      }
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return null;
+  });
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [userPremiumState, setUserPremiumState] = useState(null);
-  const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'password'
-  const [practiceInitialTab, setPracticeInitialTab] = useState('paths');
+  const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'widget', 'password'
+  const [studentUsername, setStudentUsername] = useState(() => user?.username || '');
+  const [practiceInitialTab, setPracticeInitialTab] = useState(() => location.state?.practiceTab || 'bank');
   const [practiceInitialCourse, setPracticeInitialCourse] = useState(null);
+  const [selectedLearningCourse, setSelectedLearningCourse] = useState(() => {
+    if (location.state?.courseId) {
+      return COURSE_CATALOG.find(c => c.courseId === location.state.courseId) || COURSE_CATALOG[0];
+    }
+    return null;
+  });
+  const [courseInitialView, setCourseInitialView] = useState('OVERVIEW');
+
+  // Synchronize dashboard tab and practice tab when navigating via location.state (e.g. Home button from PracticeSandbox)
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+    if (location.state?.practiceTab) {
+      setPracticeInitialTab(location.state.practiceTab);
+      setPracticeInitialCourse(null);
+    }
+  }, [location.state]);
+
+  // Auto-collapse sidebar when a course is viewed to provide maximum learning workspace
+  useEffect(() => {
+    if (selectedLearningCourse && (activeTab === 'my-learning' || activeTab === 'courses')) {
+      setCollapsed(true);
+    }
+  }, [selectedLearningCourse, activeTab]);
   const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('portal_primary_color') || 'green');
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('portal_font_size') || 'medium');
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -130,6 +219,67 @@ const StudentDashboard = () => {
   const [currentTheme, setCurrentTheme] = useState(() => {
     return localStorage.getItem('portal_theme') || 'seed-seb';
   });
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportInitialCategory, setSupportInitialCategory] = useState('download_seb');
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [chatTicket, setChatTicket] = useState(null);
+  const [supportTicketsList, setSupportTicketsList] = useState([]);
+
+  useEffect(() => {
+    const effectiveUid = user?.uid || 'demo-student';
+    const unsub = subscribeStudentTickets(effectiveUid, (list) => {
+      setSupportTicketsList(list);
+    });
+    return () => unsub();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    ensureUserHasUsername(user).then((handle) => {
+      if (handle) {
+        setStudentUsername(handle);
+        publishPublicProfile(user.uid, { ...user, username: handle }, progressData || {}, typeof assessments !== 'undefined' ? assessments : []).catch(() => {});
+      }
+    }).catch((e) => console.warn('[StudentDashboard] Error ensuring username:', e));
+  }, [user?.uid]);
+
+  // Real-time notifications with time limits
+  const [notifications, setNotifications] = useState([]);
+  const [readNotifIds, setReadNotifIds] = useState(() => getReadNotifIds(user?.uid));
+  const [notifPopoverOpen, setNotifPopoverOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    setReadNotifIds(getReadNotifIds(user.uid));
+
+    const unsubscribe = subscribeStudentNotifications(user, (items) => {
+      setNotifications(items);
+    });
+
+    return () => {
+      try {
+        unsubscribe();
+      } catch (_) {}
+    };
+  }, [user?.uid, user?.tenantId, user?.college, user?.cohortId, user?.year, user?.batch]);
+
+  const handleMarkNotifAsRead = useCallback((notifId) => {
+    if (!user?.uid) return;
+    markAsRead(user.uid, notifId);
+    setReadNotifIds(getReadNotifIds(user.uid));
+  }, [user?.uid]);
+
+  const handleMarkAllNotifsAsRead = useCallback(() => {
+    if (!user?.uid) return;
+    markAllAsRead(user.uid, notifications.map((n) => n.id));
+    setReadNotifIds(getReadNotifIds(user.uid));
+  }, [user?.uid, notifications]);
+
+  const unreadNotifCount = useMemo(() => {
+    const readSet = new Set(readNotifIds);
+    return notifications.filter((n) => !readSet.has(n.id)).length;
+  }, [notifications, readNotifIds]);
   const [apiKeysList, setApiKeysList] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('user_api_keys')) || [];
@@ -149,11 +299,20 @@ const StudentDashboard = () => {
 
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editBio, setEditBio] = useState('');
   const [editRollNo, setEditRollNo] = useState('');
+  const [editGithub, setEditGithub] = useState('');
+  const [editLinkedin, setEditLinkedin] = useState('');
+  const [editPortfolio, setEditPortfolio] = useState('');
+  const [editLeetcode, setEditLeetcode] = useState('');
+  const [editCodechef, setEditCodechef] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -161,9 +320,30 @@ const StudentDashboard = () => {
       setEditName(user.name ?? user.Name ?? user.fullName ?? '');
       setEditRollNo(user.rollNumber ?? user.RollNumber ?? user.rollNo ?? user.RollNo ?? user.regNo ?? user.RegNo ?? '');
       setEditPhone(user.phone ?? user.phoneNumber ?? user.mobile ?? '');
+      setEditBio(user.bio || '');
       setAvatarUrl(user.photoURL ?? '');
+      setEditGithub(user.github || user.githubUrl || '');
+      setEditLinkedin(user.linkedin || user.linkedIn || '');
+      setEditPortfolio(user.portfolio || user.portfolioUrl || user.website || '');
+      setEditLeetcode(user.leetcode || user.leetcodeUrl || '');
+      setEditCodechef(user.codechef || user.codechefUrl || '');
     }
   }, [user]);
+
+  // Sync fresh profile fields from Firestore for existing users upon sign-in/mount
+  useEffect(() => {
+    if (!user?.uid || user.uid === 'demo-student') return;
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      if (snap.exists()) {
+        const remoteData = snap.data();
+        setUser((prev) => {
+          const merged = { ...prev, ...remoteData };
+          try { localStorage.setItem('auth_data', JSON.stringify(merged)); } catch (_) {}
+          return merged;
+        });
+      }
+    }).catch(() => {});
+  }, [user?.uid]);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
@@ -190,27 +370,36 @@ const StudentDashboard = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (!editName.trim()) {
-      toast.error('Name cannot be empty.');
-      return;
-    }
     const updated = {
       ...user,
-      name: editName.trim(),
-      rollNumber: editRollNo.trim(),
+      name: editName.trim() || user.name,
       phone: editPhone.trim(),
-      photoURL: avatarUrl
+      bio: editBio.trim(),
+      photoURL: avatarUrl,
+      github: editGithub.trim(),
+      linkedin: editLinkedin.trim(),
+      portfolio: editPortfolio.trim(),
+      leetcode: editLeetcode.trim(),
+      codechef: editCodechef.trim()
     };
     setUser(updated);
     localStorage.setItem('auth_data', JSON.stringify(updated));
     if (user?.uid) {
       try {
         await updateDoc(doc(db, 'users', user.uid), {
-          name: editName.trim(),
-          rollNumber: editRollNo.trim(),
+          name: editName.trim() || user.name,
           phone: editPhone.trim(),
-          photoURL: avatarUrl
+          bio: editBio.trim(),
+          photoURL: avatarUrl,
+          github: editGithub.trim(),
+          linkedin: editLinkedin.trim(),
+          portfolio: editPortfolio.trim(),
+          leetcode: editLeetcode.trim(),
+          codechef: editCodechef.trim()
         });
+        if (studentUsername || user.username) {
+          publishPublicProfile(user.uid, updated, progressData || {}, typeof assessments !== 'undefined' ? assessments : []).catch(() => {});
+        }
       } catch (e) {
         console.warn('Failed to update user profile in Firestore:', e);
       }
@@ -272,9 +461,8 @@ const StudentDashboard = () => {
 
   // ─── Live Progress, Dynamic Streak & Daily Goals Lifecycle ───────────
   const initProgressAndGoals = useCallback(async () => {
-    const uid = user?.uid || auth?.currentUser?.uid;
-    // Don't load progress without a real UID — avoids writing to a 'guest' localStorage key
-    if (!uid) return;
+    const authObj = getAuthData() || {};
+    const uid = user?.uid || user?.id || user?.rollNumber || authObj.uid || authObj.id || auth?.currentUser?.uid || 'demo-student';
 
     // 1. Load Coding Progress
     let prog = null;
@@ -336,11 +524,12 @@ const StudentDashboard = () => {
       // Evaluate each goal against live progress data
       const localProg = prog || (await (await import('../services/codingProgressService')).getFullProgress(uid));
       const solvedToday = Object.entries(localProg?.problemDetails || {})
-        .filter(([id, p]) => (p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt && p.lastSolvedAt.startsWith(todayStr));
-      const todaySolvedCount = Math.max((localProg?.activity?.[todayStr]?.problemsSolved || 0), solvedToday.length);
+        .filter(([id, p]) => (p.status === 'SOLVED' || p.lastSolvedAt) && p.lastSolvedAt && p.lastSolvedAt.startsWith(todayStr) && isQuestionBankProblem(p.questionId || id));
+      const todaySolvedCount = solvedToday.length;
       const todayTimeMins = Math.round((localProg?.activity?.[todayStr]?.hours || 0) * 60);
 
       let allCompleted = true;
+      let newlyAwardedGoals = false;
       const evaluated = baseGoals.map(g => {
         let isComp = g.completed || false;
         let curr = g.current || 0;
@@ -374,50 +563,102 @@ const StudentDashboard = () => {
         }
 
         if (!isComp) allCompleted = false;
+
+        // Check if this goal was completed and not yet awarded today
+        const wasAwarded = g.awarded === true;
+        if (isComp && !wasAwarded && uid && uid !== 'guest') {
+          newlyAwardedGoals = true;
+          const xpVal = g.xp || g.points || 30;
+          const creditsVal = g.credits || 10;
+          awardUserXPAndCredits(uid, xpVal, creditsVal, 'DAILY_TASK_COMPLETED', { goalId: g.id, title: g.title });
+          toast.success(`Daily Goal Completed: "${g.title}" (+${xpVal} XP · +${creditsVal} Credits)!`);
+          return { ...g, current: curr, target: tgt, completed: true, awarded: true, displayProgress: progLabel };
+        }
+
         return { ...g, current: curr, target: tgt, completed: isComp, displayProgress: progLabel };
       });
 
       setDailyGoals(evaluated);
 
-      // If all goals are completed today, ensure streak and rewards are persisted (ONCE per day)
-      if (evaluated.length > 0 && allCompleted && uid && uid !== 'guest') {
-        const wereAllCompletedBefore = baseGoals.every(g => g.completed);
-        const alreadyAwardedToday = data?.allCompleted === true || user?.lastStreakDate === todayStr;
-        if (!wereAllCompletedBefore && !alreadyAwardedToday) {
-          setUserStreak(prev => {
-            const nextStreak = prev + 1;
-            setSeedCredits(credPrev => {
-              const nextCredits = credPrev + 100;
-              setTodayCreditsGained(t => t + 100);
-              saveUserDailyGoals(uid, todayStr, evaluated, nextStreak, nextCredits).catch(() => { });
-              return nextCredits;
-            });
-            return nextStreak;
-          });
+      // 1-Question Streak Rule: Solving 1 question today maintains/advances streak for today!
+      if (todaySolvedCount >= 1 && uid && uid !== 'guest') {
+        const cleanUserLastStreak = (user?.lastStreakDate || '').split('T')[0];
+        if (cleanUserLastStreak !== todayStr) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          const nextStreak = (cleanUserLastStreak === yesterdayStr && userStreak > 0) ? (userStreak + 1) : Math.max(1, userStreak);
+          setUserStreak(nextStreak);
+          setUser(prev => prev ? { ...prev, lastStreakDate: todayStr, streak: nextStreak } : prev);
+          import('firebase/firestore').then(({ updateDoc, doc, serverTimestamp }) => {
+            updateDoc(doc(db, 'users', uid), {
+              streak: nextStreak,
+              lastStreakDate: todayStr,
+              lastActiveDate: todayStr,
+              updatedAt: serverTimestamp()
+            }).catch(() => {});
+          }).catch(() => {});
         }
+      }
+
+      // Bonus Rewards: If all 3 daily goals are completed today, award bonus XP and Credits
+      if (evaluated.length > 0 && allCompleted && uid && uid !== 'guest') {
+        const alreadyAwardedToday = data?.allCompletedAwarded === true || (baseGoals.every(g => g.completed) && data?.allCompleted === true);
+        if (!alreadyAwardedToday) {
+          const bonusXP = ALL_GOALS_COMPLETION_BONUS?.xp || 100;
+          const bonusCredits = ALL_GOALS_COMPLETION_BONUS?.credits || 50;
+          awardUserXPAndCredits(uid, bonusXP, bonusCredits, 'ALL_DAILY_GOALS_COMPLETED', { date: todayStr });
+          toast.success(`Outstanding! All 3 Daily Tasks Completed! Bonus +${bonusXP} XP & +${bonusCredits} SEED Credits awarded!`);
+          saveUserDailyGoals(uid, todayStr, evaluated.map(g => ({ ...g, completed: true, awarded: true })), userStreak, seedCredits + bonusCredits);
+        }
+      }
+
+      if (newlyAwardedGoals) {
+        saveUserDailyGoals(uid, todayStr, evaluated, userStreak, seedCredits).catch(() => {});
       }
 
       if (user) {
         if (user.seedCredits !== undefined) setSeedCredits(user.seedCredits);
+        if (user.totalXP !== undefined) {
+          setTotalXP(user.totalXP);
+          setUserLevelInfo(calculateLevel(user.totalXP));
+        }
       }
     } catch (err) {
       console.warn('[Dashboard] Daily goals evaluation skipped:', err);
     }
-  }, [user?.uid, user?.lastStreakDate]);
+  }, [user?.uid, user?.lastStreakDate, userStreak, seedCredits]);
 
   useEffect(() => {
     initProgressAndGoals();
 
-    const handleProgressUpdate = () => {
+    const handleProgressUpdate = (e) => {
+      if (e?.detail?.progress) {
+        setProgressData(e.detail.progress);
+      }
       initProgressAndGoals();
     };
 
+    const handleGamificationUpdate = (e) => {
+      if (e.detail) {
+        if (typeof e.detail.totalXP === 'number') {
+          setTotalXP(e.detail.totalXP);
+          setUserLevelInfo(calculateLevel(e.detail.totalXP));
+        }
+        if (typeof e.detail.seedCredits === 'number') {
+          setSeedCredits(e.detail.seedCredits);
+        }
+      }
+    };
+
     window.addEventListener('coding_progress_updated', handleProgressUpdate);
+    window.addEventListener('user_gamification_updated', handleGamificationUpdate);
     window.addEventListener('storage', handleProgressUpdate);
     window.addEventListener('focus', handleProgressUpdate);
 
     return () => {
       window.removeEventListener('coding_progress_updated', handleProgressUpdate);
+      window.removeEventListener('user_gamification_updated', handleGamificationUpdate);
       window.removeEventListener('storage', handleProgressUpdate);
       window.removeEventListener('focus', handleProgressUpdate);
     };
@@ -454,9 +695,10 @@ const StudentDashboard = () => {
   const handleToggleGoal = async (idx) => {
     if (!dailyGoals || !dailyGoals[idx]) return;
     const goal = dailyGoals[idx];
+    const willBeCompleted = !goal.completed;
 
     // Toggle goal and update Firestore + Local Profile cache
-    const updated = dailyGoals.map((g, i) => (i === idx ? { ...g, completed: !g.completed } : g));
+    const updated = dailyGoals.map((g, i) => (i === idx ? { ...g, completed: willBeCompleted, awarded: willBeCompleted } : g));
     setDailyGoals(updated);
 
     const uid = user?.uid || auth?.currentUser?.uid || 'guest';
@@ -465,34 +707,58 @@ const StudentDashboard = () => {
     const areAllCompletedNow = updated.every(g => g.completed);
 
     let nextStreak = userStreak;
-    let nextCredits = seedCredits;
 
     // Activity Log for Goal Toggle
     import('../services/activityLoggerService').then(mod => {
-      mod.logUserActivity(uid, 'GOAL_TOGGLED', { goalId: goal.id, title: goal.title, completed: !goal.completed });
+      mod.logUserActivity(uid, 'GOAL_TOGGLED', { goalId: goal.id, title: goal.title, completed: willBeCompleted });
     }).catch(() => { });
 
+    if (willBeCompleted) {
+      const xpVal = goal.xp || goal.points || 30;
+      const creditsVal = goal.credits || 10;
+      awardUserXPAndCredits(uid, xpVal, creditsVal, 'DAILY_TASK_MANUAL_COMPLETE', { goalId: goal.id, title: goal.title });
+      toast.success(`"${goal.title}" completed! (+${xpVal} XP · +${creditsVal} Credits)`);
+
+      // If it's a solve/difficulty goal, consider streak
+      if (goal.type === 'difficulty' || goal.type === 'solve') {
+        const lastDate = (user?.lastStreakDate || '').split('T')[0];
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        if (lastDate !== todayStr) {
+          nextStreak = (lastDate === yesterdayStr && userStreak > 0) ? (userStreak + 1) : Math.max(1, userStreak);
+          setUserStreak(nextStreak);
+          setUser(prev => prev ? { ...prev, lastStreakDate: todayStr, streak: nextStreak } : prev);
+        }
+      }
+    }
+
     if (!wereAllCompletedBefore && areAllCompletedNow) {
-      nextStreak = userStreak + 1;
-      nextCredits = seedCredits + 100;
-      setUserStreak(nextStreak);
-      setSeedCredits(nextCredits);
-      setTodayCreditsGained(prev => prev + 100);
-      toast.success('🔥 Streak Approved! All daily goals completed! +100 SEED Credits awarded!');
+      const bonusXP = ALL_GOALS_COMPLETION_BONUS?.xp || 100;
+      const bonusCredits = ALL_GOALS_COMPLETION_BONUS?.credits || 50;
+      awardUserXPAndCredits(uid, bonusXP, bonusCredits, 'ALL_DAILY_GOALS_COMPLETED', { date: todayStr });
+
+      const lastDate = (user?.lastStreakDate || '').split('T')[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      if (lastDate !== todayStr) {
+        nextStreak = (lastDate === yesterdayStr && userStreak > 0) ? (userStreak + 1) : Math.max(1, userStreak);
+        setUserStreak(nextStreak);
+        setUser(prev => prev ? { ...prev, lastStreakDate: todayStr, streak: nextStreak } : prev);
+      }
+
+      toast.success(`Streak Active! All 3 daily goals completed! +${bonusXP} XP & +${bonusCredits} SEED Credits bonus awarded!`);
 
       // Activity Log for Streak Approval
       import('../services/activityLoggerService').then(mod => {
-        mod.logUserActivity(uid, 'STREAK_APPROVED', { streak: nextStreak, credits: nextCredits, date: todayStr });
+        mod.logUserActivity(uid, 'STREAK_APPROVED', { streak: nextStreak, date: todayStr });
       }).catch(() => { });
-    } else if (wereAllCompletedBefore && !areAllCompletedNow) {
-      nextStreak = Math.max(1, userStreak - 1);
-      nextCredits = Math.max(0, seedCredits - 100);
-      setUserStreak(nextStreak);
-      setSeedCredits(nextCredits);
-      setTodayCreditsGained(prev => Math.max(0, prev - 100));
     }
 
-    await saveUserDailyGoals(uid, todayStr, updated, nextStreak, nextCredits);
+    await saveUserDailyGoals(uid, todayStr, updated, nextStreak, seedCredits);
   };
 
   const handleRefreshOrEditGoals = async () => {
@@ -592,8 +858,9 @@ const StudentDashboard = () => {
   const activitySnapshotStats = useMemo(() => {
     const details = progressData?.problemDetails || {};
     const activity = progressData?.activity || {};
-    const solvedList = progressData?.solvedProblems || [];
-    const totalSolved = solvedList.length;
+    const solvedList = progressData?.solvedProblems || progressData?.completedQuestions || [];
+    const detailsSolved = Object.values(details).filter(p => p?.status === 'SOLVED').length;
+    const totalSolved = Math.max(solvedList.length, detailsSolved);
 
     // Accuracy Calculation
     const problemEntries = Object.values(details);
@@ -715,12 +982,77 @@ const StudentDashboard = () => {
     });
   }, [cQuestionIds, javaQuestionIds, cppQuestionIds, dsaQuestionIds, solvedIdsSet]);
 
+  const [dashboardEnrolledProgress, setDashboardEnrolledProgress] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDashboardCourses() {
+      const uid = user?.uid || 'guest';
+      const enrolled = await fetchEnrolledCourseIds(uid);
+      const map = {};
+      for (const course of COURSE_CATALOG) {
+        if (enrolled.includes(course.courseId)) {
+          const prog = await getCourseProgress(uid, course);
+          if (prog) map[course.courseId] = prog;
+        }
+      }
+      if (isMounted) setDashboardEnrolledProgress(map);
+    }
+    loadDashboardCourses();
+    return () => { isMounted = false; };
+  }, [user?.uid, activeTab]);
+
   const displayedCourses = useMemo(() => {
-    const started = rawCoursesList.filter(c => c.isStarted);
-    const unstarted = rawCoursesList.filter(c => !c.isStarted);
-    const combined = [...started, ...unstarted];
-    return combined.slice(0, 4);
-  }, [rawCoursesList]);
+    const uid = user?.uid || 'guest';
+    const enrolledIds = getEnrolledCourseIds(uid);
+
+    const enrolledCourses = COURSE_CATALOG.filter(c => enrolledIds.includes(c.courseId)).map(c => {
+      const prog = dashboardEnrolledProgress[c.courseId];
+      const pct = prog?.percentage || 0;
+      const totalModules = c.modules?.length || 1;
+      const completedModules = typeof prog?.completedModules === 'number'
+        ? prog.completedModules
+        : Object.values(prog?.modules || {}).filter(m => m?.completed).length;
+      const currentMod = c.modules?.find(m => m.moduleId === prog?.currentModuleId) || c.modules?.[0];
+      const currentTopic = currentMod?.topics?.find(t => t.topicId === prog?.currentTopicId) || currentMod?.topics?.[0];
+
+      return {
+        id: c.courseId,
+        title: c.title,
+        subtitle: currentTopic
+          ? `${currentMod?.title?.replace(/^Module\s*\d+:\s*/i, '')} • ${currentTopic.title?.replace(/^\d+\.\d+\s*/, '')}`
+          : (c.description || currentMod?.title || c.category),
+        description: c.description || '',
+        percentage: pct,
+        completedTopics: completedModules,
+        totalTopics: totalModules,
+        isStarted: pct > 0,
+        rawCourse: c,
+        boxClass: 'box-blue',
+        barClass: 'bar-blue',
+        icon: <FaCode />
+      };
+    });
+
+    if (enrolledCourses.length > 0) {
+      return enrolledCourses.slice(0, 4);
+    }
+
+    return COURSE_CATALOG.slice(0, 4).map(c => ({
+      id: c.courseId,
+      title: c.title,
+      subtitle: c.description || `${c.modules?.length || 1} Modules • ${c.level}`,
+      description: c.description || '',
+      percentage: 0,
+      completedTopics: 0,
+      totalTopics: c.modules?.length || 1,
+      isStarted: false,
+      rawCourse: c,
+      boxClass: 'box-blue',
+      barClass: 'bar-blue',
+      icon: <FaCode />
+    }));
+  }, [dashboardEnrolledProgress, user?.uid]);
 
   // Assessments List State
   const [assessments, setAssessments] = useState([]);
@@ -1071,7 +1403,12 @@ const StudentDashboard = () => {
   // Passkey
   const [passkeyInput, setPasskeyInput] = useState("");
   const [passkeyError, setPasskeyError] = useState("");
+  const [showPasskey, setShowPasskey] = useState(false);
   const passkeyInputRef = useRef(null);
+
+  // Themes Dropdown (Profile Tab)
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
 
   // Instant Pre-flight checks
   const [preflightResults, setPreflightResults] = useState({
@@ -1081,6 +1418,16 @@ const StudentDashboard = () => {
     secureEnv: 'pass'
   });
   // ─────────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(e.target)) {
+        setThemeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   useEffect(() => {
     const authData = getAuthData() || {};
@@ -1124,7 +1471,9 @@ const StudentDashboard = () => {
               phone: p.phone ?? authData.phone ?? '',
               role: p.role ?? authData.role ?? 'student',
               isPremium: Boolean(p.isPremium ?? authData.isPremium),
-              seedCredits: typeof p.seedCredits === 'number' ? p.seedCredits : (typeof authData.seedCredits === 'number' ? authData.seedCredits : 0),
+              seedCredits: typeof p.seedCredits === 'number' ? p.seedCredits : (typeof authData.seedCredits === 'number' ? authData.seedCredits : 2450),
+              totalXP: typeof p.totalXP === 'number' ? p.totalXP : (typeof authData.totalXP === 'number' ? authData.totalXP : 0),
+              level: typeof p.level === 'number' ? p.level : (typeof authData.level === 'number' ? authData.level : 1),
               streak: typeof p.streak === 'number' ? p.streak : (typeof authData.streak === 'number' ? authData.streak : 0),
               lastStreakDate: p.lastStreakDate ?? authData.lastStreakDate ?? null,
               photoURL: p.photoURL ?? authData.photoURL ?? '',
@@ -1133,6 +1482,10 @@ const StudentDashboard = () => {
             setUser(enriched);
             if (enriched.seedCredits !== undefined) setSeedCredits(enriched.seedCredits);
             if (enriched.streak !== undefined) setUserStreak(enriched.streak);
+            if (enriched.totalXP !== undefined) {
+              setTotalXP(enriched.totalXP);
+              setUserLevelInfo(calculateLevel(enriched.totalXP));
+            }
             localStorage.setItem('auth_data', JSON.stringify(enriched));
 
             if (!authData.tenantId && enriched.tenantId) {
@@ -1212,12 +1565,13 @@ const StudentDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      // ── NEW: fetch TestDocs directly from courses/{courseId}/series/{seriesId}/tests/{testId}
-      const testDocs = await DataService.getAllowedTestDocs();
+      // ── Fetch TestDocs strictly from courses/{courseId}/series/{seriesId}/tests/{testId}
+      // Strictly official assessments created by Admin and Staff (never real courses)
+      let testDocs = await DataService.getAllowedTestDocs();
 
       const isPremiumUser = Boolean(userData?.isPremium) === true;
 
-      const combined = testDocs
+      const combined = (testDocs || [])
         .filter(t => !t.isPremium || isPremiumUser)
         .map(t => {
           // Normalise schedule from { startDate, startTime, endDate, endTime } or { start, end }
@@ -1226,9 +1580,9 @@ const StudentDashboard = () => {
             if (t.schedule.startDate) {
               schedule = {
                 startDate: t.schedule.startDate,
-                startTime: t.schedule.startTime,
+                startTime: t.schedule.startTime || '00:00:00',
                 endDate: t.schedule.endDate,
-                endTime: t.schedule.endTime,
+                endTime: t.schedule.endTime || '23:59:59',
                 timezone: t.schedule.timezone || 'Asia/Kolkata',
               };
             } else if (t.schedule.start || t.schedule.end) {
@@ -1237,18 +1591,22 @@ const StudentDashboard = () => {
               if (s || e) {
                 schedule = {
                   startDate: s ? s.toISOString().slice(0, 10) : '',
-                  startTime: s ? s.toTimeString().slice(0, 8) : '',
+                  startTime: s ? s.toTimeString().slice(0, 8) : '00:00:00',
                   endDate: e ? e.toISOString().slice(0, 10) : '',
-                  endTime: e ? e.toTimeString().slice(0, 8) : '',
+                  endTime: e ? e.toTimeString().slice(0, 8) : '23:59:59',
                   timezone: t.schedule.timezone || 'Asia/Kolkata',
                 };
               }
             }
           }
 
+          const durMin = t.duration_minutes || t.duration || t.timeLimit || 45;
+          const qCount = t.questionCount || (Array.isArray(t.sections) && t.sections.length > 0
+            ? t.sections.reduce((acc, s) => acc + (s.questionCount || (Array.isArray(s.questions) ? s.questions.length : 0) || (Array.isArray(s.problems) ? s.problems.length : 0)), 0)
+            : 15);
+
           // All assessments use the unified Assessment runtime (MSA).
-          // 'type' is always 'assessment'; MCQ/Coding/SEA are section-level types.
-          const isMultiSection = true; // every assessment routes through MultiSectionAssessment
+          const isMultiSection = true;
 
           return {
             // ── identity ──
@@ -1257,34 +1615,38 @@ const StudentDashboard = () => {
             seriesId: t.seriesId,
             // ── display ──
             name: t.name,
+            description: t.description || `Milestone assessment evaluation covering core concepts in ${t.name}.`,
             seriesName: t.seriesTitle || t.courseTitle || 'Assessments',
+            seriesDescription: t.seriesDescription || `Comprehensive milestone evaluation and evaluation series for ${t.seriesTitle || t.courseTitle || 'programming tracks'}.`,
             courseTitle: t.courseTitle ?? '',
-            seriesKey: t.seriesId,
+            seriesKey: t.seriesId || t.courseId || 'general',
             difficulty: t.difficulty || 'Medium',
             // ── engine routing ──
             type: 'assessment',
             isMultiSection,
-            slug: t.assessmentId || t.id,
+            slug: t.assessmentId || t.slug || t.id,
             url: t.cdnUrl ?? '',
             cdnUrl: t.cdnUrl ?? '',
             // ── sections ──
             sections: t.sections || [],
             // ── timing ──
-            duration: t.duration_minutes || 60,
+            duration: durMin,
+            timeLimit: durMin,
             schedule,
             // ── access ──
             passkey: t.passkey ?? '',
             isPremium: t.isPremium,
             guestEnabled: t.guestEnabled,
             // ── proctor ──
-            proctored: t.proctored,
-            audioProctored: t.audioProctored,
+            proctored: t.proctored !== false,
+            audioProctored: Boolean(t.audioProctored),
             maxViolations: t.maxViolations ?? 5,
             maxAudioViolations: t.maxAudioViolations ?? 3,
             // ── settings ──
             settings: t.settings,
             display_order: t.display_order ?? 999,
-            totalMarks: t.maxScore || 100,
+            totalMarks: t.totalMarks || t.maxScore || 100,
+            questionCount: qCount,
             // ── initially false, resolved below ──
             completed: false,
           };
@@ -1323,14 +1685,14 @@ const StudentDashboard = () => {
 
   // Helper: check schedule access and compute status
   const getScheduleStatus = (schedule) => {
-    if (!schedule || !schedule.startDate) {
+    if (!schedule || typeof schedule !== 'object' || !schedule.startDate) {
       return { status: "Active", reason: "Always open" };
     }
     try {
       const now = (typeof timeService !== "undefined" && timeService?.getNow) ? timeService.getNow() : new Date();
-      const startTimeStr = schedule.startTime || "00:00:00";
+      const startTimeStr = (schedule.startTime && typeof schedule.startTime === 'string' && schedule.startTime.trim()) ? schedule.startTime.trim() : "00:00:00";
       const start = new Date(schedule.startDate + (schedule.startDate.includes('T') ? '' : 'T' + startTimeStr));
-      const end = schedule.endDate ? new Date(schedule.endDate + (schedule.endDate.includes('T') ? '' : 'T' + (schedule.endTime || "23:59:59"))) : null;
+      const end = schedule.endDate ? new Date(schedule.endDate + (schedule.endDate.includes('T') ? '' : 'T' + ((schedule.endTime && typeof schedule.endTime === 'string') ? schedule.endTime.trim() : "23:59:59"))) : null;
 
       if (start && !isNaN(start.getTime()) && now < start) {
         return {
@@ -1533,6 +1895,7 @@ const StudentDashboard = () => {
     setSelectedAssessment(assessment);
     setPasskeyInput("");
     setPasskeyError("");
+    setShowPasskey(false);
     setEligibilityError(null);
     setIsLaunching(false);
     setLaunchStep('modal');
@@ -1577,6 +1940,7 @@ const StudentDashboard = () => {
       }
       if (passkeyInput.trim() !== selectedAssessment.passkey) {
         setPasskeyError("Incorrect passkey. Please try again.");
+        if (passkeyInputRef.current) passkeyInputRef.current.focus();
         return;
       }
     }
@@ -1593,20 +1957,23 @@ const StudentDashboard = () => {
       if (!liveUid) throw new Error('Authentication required. Please log in again.');
 
       // 2. Instant eligibility / duplicate check
-      // All assessments write their result to the canonical assessmentResults path.
-      const tenantId = user?.tenantId ?? '';
-      const canonDocPath = `assessmentResults/${tenantId}/${selectedAssessment.id}/${liveUid}`;
-      const docSnap = await getDoc(doc(db, canonDocPath));
-      const isCompleted = docSnap.exists() && (docSnap.data().completed === true || docSnap.data().status === 'submitted');
-      const check = { exists: docSnap.exists(), completed: isCompleted };
-
-      if (check.exists && check.completed) {
-        setIsLaunching(false);
-        setEligibilityError({
-          title: "Assessment Already Completed",
-          message: "You have already completed and submitted this assessment. Re-attempts are not permitted."
-        });
-        return;
+      const tenantId = user?.tenantId || user?.college || 'default';
+      try {
+        if (selectedAssessment.id) {
+          const canonDocPath = `assessmentResults/${tenantId}/${selectedAssessment.id}/${liveUid}`;
+          const docSnap = await getDoc(doc(db, canonDocPath));
+          const isCompleted = docSnap.exists() && (docSnap.data().completed === true || docSnap.data().status === 'submitted');
+          if (isCompleted) {
+            setIsLaunching(false);
+            setEligibilityError({
+              title: "Assessment Already Completed",
+              message: "You have already completed and submitted this assessment. Re-attempts are not permitted."
+            });
+            return;
+          }
+        }
+      } catch (checkErr) {
+        console.warn("Non-fatal eligibility check issue:", checkErr);
       }
 
       // 3. Launch directly into workspace
@@ -1706,13 +2073,30 @@ const StudentDashboard = () => {
   const dept = user?.department || user?.Department || user?.dept || user?.Dept || user?.branch || user?.Branch || "";
 
   const renderDashboardHome = () => {
+    const totalBankQuestions = 9328;
+    const liveSolvedCount = Math.max(
+      progressData?.solvedProblems?.length || 0,
+      progressData?.completedQuestions?.length || 0,
+      Object.values(progressData?.problemDetails || {}).filter(p => p?.status === 'SOLVED').length
+    );
+    const liveAttemptedCount = Math.max(
+      liveSolvedCount,
+      progressData?.attemptedQuestions?.length || 0,
+      Object.keys(progressData?.problemDetails || {}).length || 0
+    );
+    const liveUnattemptedCount = Math.max(0, totalBankQuestions - liveAttemptedCount);
+    const liveSolvedPct = totalBankQuestions > 0 ? ((liveSolvedCount / totalBankQuestions) * 100).toFixed(1) : '0.0';
+    const liveAttemptedPct = totalBankQuestions > 0 ? (((liveAttemptedCount - liveSolvedCount) / totalBankQuestions) * 100).toFixed(1) : '0.0';
+    const liveUnattemptedPct = totalBankQuestions > 0 ? ((liveUnattemptedCount / totalBankQuestions) * 100).toFixed(1) : '100.0';
+    const donutDashArray = `${Math.min(100, Math.max(liveSolvedCount > 0 ? 2 : 0, Math.round((liveSolvedCount / totalBankQuestions) * 100)))}, 100`;
+
     return (
       <div className="dashboard-grid-layout">
         {/* ── Left / Center Main Feed Column ── */}
         <div className="dashboard-main-col">
           {/* Welcome Header */}
           <div className="home-welcome-header">
-            <h1 className="home-welcome-title">Welcome back, {name}! 👋</h1>
+            <h1 className="home-welcome-title">Welcome back, {name}!</h1>
             <p className="home-welcome-subtitle">Stay consistent and keep building your problem solving skills.</p>
           </div>
 
@@ -1762,8 +2146,11 @@ const StudentDashboard = () => {
                 <div className="snapshot-icon-box icon-green">
                   <FaThLarge />
                 </div>
-                <div className="snapshot-stat-val">{activitySnapshotStats.totalSolved}</div>
-                <div className="snapshot-stat-lbl">Problems Solved</div>
+                <div className="snapshot-stat-val">
+                  {activitySnapshotStats.totalSolved}
+                  <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 500, marginLeft: '4px' }}>/ 9,000+</span>
+                </div>
+                <div className="snapshot-stat-lbl">Questions Solved</div>
                 <div className="snapshot-stat-trend trend-green">
                   <FaArrowUp style={{ fontSize: '10px' }} /> {activitySnapshotStats.solvedTrend}
                 </div>
@@ -1811,9 +2198,7 @@ const StudentDashboard = () => {
               <button
                 className="home-section-link-btn"
                 onClick={() => {
-                  setPracticeInitialTab('paths');
-                  setPracticeInitialCourse(null);
-                  setActiveTab('practice');
+                  setActiveTab('my-learning');
                 }}
               >
                 View All
@@ -1826,10 +2211,16 @@ const StudentDashboard = () => {
                   key={course.id}
                   className="continue-course-card"
                   onClick={() => {
-                    setPracticeInitialTab('paths');
-                    setPracticeInitialCourse(course.id);
-                    setActiveTab('practice');
+                    if (course.rawCourse) {
+                      setSelectedLearningCourse(course.rawCourse);
+                      setCourseInitialView('CLASS');
+                      setCollapsed(true);
+                      setActiveTab('courses');
+                    } else {
+                      setActiveTab('my-learning');
+                    }
                   }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <div className="course-card-top">
                     <div className={`course-icon-box ${course.boxClass}`}>
@@ -1839,14 +2230,14 @@ const StudentDashboard = () => {
                       ⋮
                     </button>
                   </div>
-                  <h4 className="course-card-title">{course.title}</h4>
-                  <p className="course-card-sub">{course.subtitle}</p>
+                  <h4 className="course-card-title" title={course.title}>{course.title}</h4>
+                  <p className="course-card-sub" title={course.subtitle || course.description}>{course.subtitle || course.description}</p>
                   <div className="course-progress-track">
                     <div className={`course-progress-bar ${course.barClass}`} style={{ width: `${course.percentage}%` }} />
                   </div>
                   <div className="course-card-footer">
-                    <span className="course-pct-label">{course.percentage}% Completed</span>
-                    <span className="course-topics-count">{course.completedTopics}/{course.totalTopics} Topics</span>
+                    <span className="course-pct-label">{course.percentage > 0 ? `${course.percentage}% Completed` : 'Available to Start'}</span>
+                    <span className="course-topics-count">{course.completedTopics}/{course.totalTopics} Modules</span>
                   </div>
                 </div>
               ))}
@@ -1936,8 +2327,8 @@ const StudentDashboard = () => {
 
             <div className="week-streak-footer">
               {currentWeekDays.activeDaysCount > 0
-                ? `Great job! ${currentWeekDays.activeDaysCount} active day${currentWeekDays.activeDaysCount === 1 ? '' : 's'} this week. 🔥`
-                : `No activity yet this week. Solve a problem to light up your streak! 🔥`}
+                ? `Great job! ${currentWeekDays.activeDaysCount} active day${currentWeekDays.activeDaysCount === 1 ? '' : 's'} this week.`
+                : `No activity yet this week. Solve a problem to light up your streak!`}
             </div>
           </div>
 
@@ -1956,13 +2347,13 @@ const StudentDashboard = () => {
                   />
                   <path
                     className="po-donut-fill"
-                    strokeDasharray="2, 100"
+                    strokeDasharray={donutDashArray}
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                 </svg>
                 <div className="po-center-text">
-                  <span className="po-num">0</span>
-                  <span className="po-denom">/9328</span>
+                  <span className="po-num">{liveSolvedCount}</span>
+                  <span className="po-denom">/{totalBankQuestions}</span>
                 </div>
               </div>
 
@@ -1970,17 +2361,17 @@ const StudentDashboard = () => {
                 <div className="po-legend-item">
                   <span className="po-dot dot-green" />
                   <span className="po-label">Solved</span>
-                  <span className="po-val">0 (0%)</span>
+                  <span className="po-val">{liveSolvedCount} ({liveSolvedPct}%)</span>
                 </div>
                 <div className="po-legend-item">
                   <span className="po-dot dot-blue" />
                   <span className="po-label">Attempted</span>
-                  <span className="po-val">0 (0%)</span>
+                  <span className="po-val">{Math.max(0, liveAttemptedCount - liveSolvedCount)} ({liveAttemptedPct}%)</span>
                 </div>
                 <div className="po-legend-item">
                   <span className="po-dot dot-grey" />
                   <span className="po-label">Unattempted</span>
-                  <span className="po-val">9328 (100%)</span>
+                  <span className="po-val">{liveUnattemptedCount} ({liveUnattemptedPct}%)</span>
                 </div>
               </div>
             </div>
@@ -2144,9 +2535,9 @@ const StudentDashboard = () => {
                 width: '44px', height: '44px', borderRadius: '50%',
                 background: '#FEF3C7', color: '#D97706',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '22px', fontWeight: 'bold'
+                fontSize: '18px', fontWeight: 'bold'
               }}>
-                ⚡
+                <FaBolt style={{ color: '#d97706' }} />
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: '16px', color: '#FBBF24', fontWeight: '700' }}>
@@ -2370,58 +2761,74 @@ const StudentDashboard = () => {
                           key={`${a.courseId || ''}_${a.seriesId || ''}_${a.id}`}
                           className="ps-sheet-card"
                           style={{
-                            '--theme-border-color': 'var(--accent-primary, #4f46e5)',
-                            border: a.completed ? '1px solid var(--accent-coding)' : '1px solid var(--border-color)',
-                            boxShadow: a.completed ? '0 4px 20px rgba(21, 128, 61, 0.08)' : 'none',
-                            minHeight: '200px'
+                            '--theme-border-color': 'var(--accent-primary, #16a34a)',
+                            border: a.completed ? '1px solid #10b981' : '1px solid var(--border-color)',
+                            boxShadow: a.completed ? '0 4px 20px rgba(16, 185, 129, 0.08)' : 'var(--shadow-sm)',
+                            minHeight: '220px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between'
                           }}
                         >
                           <div>
-                            <h3 className="ps-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span>{a.name}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                              <h3 className="ps-card-title" style={{ margin: 0, fontSize: '15px', fontWeight: 700, lineHeight: '1.3' }}>
+                                {a.name}
+                              </h3>
                               {a.completed ? (
-                                <span style={{ background: 'var(--soft-green, rgba(21, 128, 61, 0.15))', color: 'var(--accent-coding, #15803d)', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
-                                  Completed
+                                <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '11px', padding: '3px 9px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                  <FaCheck size={10} /> Done
                                 </span>
                               ) : (
-                                <span className={`difficulty-badge diff-${a.difficulty.toLowerCase()}`}>
-                                  {a.difficulty}
+                                <span className={`difficulty-badge diff-${(a.difficulty || 'Medium').toLowerCase()}`} style={{ whiteSpace: 'nowrap' }}>
+                                  {a.difficulty || 'Medium'}
                                 </span>
                               )}
-                            </h3>
-                            <p className="ps-card-desc" style={{ fontSize: '12px', marginTop: '6px', color: 'var(--text-muted)' }}>
-                              {a.description || `Timed, proctored assessment. ${a.sections?.length > 1 ? `${a.sections.length} sections` : ''}`}
+                            </div>
+
+                            <p className="ps-card-desc" style={{ fontSize: '12.5px', marginTop: '4px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                              {a.description}
                             </p>
 
-                            <div className="ps-meta-tags" style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <FaClock style={{ fontSize: '10px' }} /> {a.timeLimit ? `${a.timeLimit} mins` : '60 mins'}
+                            <div className="ps-meta-tags" style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                <FaClock style={{ fontSize: '10px', color: '#38bdf8' }} /> {a.duration || a.timeLimit || 45} mins
                               </span>
-                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                Assessment
-                                {a.sections?.length > 1 && ` · ${a.sections.length} Sections`}
+                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                <FaAward style={{ fontSize: '10px', color: '#10b981' }} /> {a.totalMarks || 100} Marks
                               </span>
+                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                <FaListOl style={{ fontSize: '10px', color: '#a855f7' }} /> {a.questionCount || 15} Questions
+                              </span>
+                              <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                <FaShieldAlt style={{ fontSize: '10px', color: '#f59e0b' }} /> {a.proctored ? 'Proctored' : 'Open'}
+                              </span>
+                              {a.sections && a.sections.length > 0 && (
+                                <span className="ps-tag" style={{ fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '3px 8px', color: 'var(--text-main)' }}>
+                                  <FaLayerGroup style={{ fontSize: '10px', color: '#6366f1' }} /> {a.sections.map(s => (s.type || 'mcq').toUpperCase()).filter((v, i, arr) => arr.indexOf(v) === i).join(' + ')}
+                                </span>
+                              )}
                             </div>
                           </div>
 
-                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '14px' }}>
+                          <div className="ps-card-footer" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <div className="ps-schedule-status">
-                              <span className={`status-pill ${sched.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px' }}>
+                              <span className={`status-pill ${sched.status.toLowerCase()}`} style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '6px', fontWeight: 600 }}>
                                 {sched.status}
                               </span>
                             </div>
 
                             <div className="ps-card-actions">
                               {a.completed ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'default', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '7px 16px', borderRadius: '8px', cursor: 'default', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600 }}>
                                   <FaCheck /> Done
                                 </button>
                               ) : isExpired ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '7px 16px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600 }}>
                                   <FaLock /> Expired
                                 </button>
                               ) : isUpcoming ? (
-                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '6px 14px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px' }}>
+                                <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '7px 16px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600 }}>
                                   <FaLock /> Locked
                                 </button>
                               ) : (
@@ -2430,20 +2837,21 @@ const StudentDashboard = () => {
                                   className="ps-action-btn primary"
                                   style={{
                                     padding: '7px 18px',
-                                    fontSize: '13px',
+                                    fontSize: '12.5px',
                                     fontWeight: '700',
                                     color: '#ffffff',
-                                    backgroundColor: '#4f46e5',
-                                    border: '1px solid #4f46e5',
+                                    backgroundColor: '#10b981',
+                                    border: '1px solid #059669',
                                     borderRadius: '8px',
                                     cursor: 'pointer',
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)'
+                                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                                    transition: 'all 0.15s ease'
                                   }}
                                 >
-                                  Start Test
+                                  Start Assessment <FaArrowRight size={11} />
                                 </button>
                               )}
                             </div>
@@ -2645,12 +3053,13 @@ const StudentDashboard = () => {
       weeks.push(dates.slice(i, i + 7));
     }
 
-    // Statistics computation
+    // Statistics computation (strictly QuestionBank problems)
     const getSolvedCountForDate = (dateStr) => {
       let count = 0;
       if (progressData?.problemDetails) {
-        Object.values(progressData.problemDetails).forEach(detail => {
+        Object.entries(progressData.problemDetails).forEach(([id, detail]) => {
           if (detail.status === 'SOLVED' && detail.lastSolvedAt) {
+            if (!isQuestionBankProblem(detail.questionId || id)) return;
             const solvedDate = detail.lastSolvedAt.split('T')[0];
             if (solvedDate === dateStr) {
               count++;
@@ -2658,12 +3067,11 @@ const StudentDashboard = () => {
           }
         });
       }
-      const activityCount = progressData?.activity?.[dateStr]?.problemsSolved || 0;
-      return Math.max(count, activityCount);
+      return count;
     };
 
     let totalHours = 0;
-    let totalProblemsSolved = progressData?.completedQuestions?.length || progressData?.solvedProblems?.length || progressData?.solvedCount || 0;
+    let totalProblemsSolved = (progressData?.completedQuestions || progressData?.solvedProblems || []).filter(isQuestionBankProblem).length;
     if (progressData?.activity) {
       Object.values(progressData.activity).forEach(act => {
         totalHours += act.hours || 0;
@@ -2729,24 +3137,30 @@ const StudentDashboard = () => {
             className={`profile-subtab-btn ${profileSubTab === 'info' ? 'active' : ''}`}
             onClick={() => setProfileSubTab('info')}
           >
-            Profile Information
+            <FaUser className="profile-tab-icon" /> Profile Information
           </button>
           <button
             className={`profile-subtab-btn ${profileSubTab === 'utilisation' ? 'active' : ''}`}
             onClick={() => setProfileSubTab('utilisation')}
           >
-            Academic Details
+            <FaGraduationCap className="profile-tab-icon" /> Academic Details
+          </button>
+          <button
+            className={`profile-subtab-btn ${profileSubTab === 'widget' ? 'active' : ''}`}
+            onClick={() => setProfileSubTab('widget')}
+          >
+            <FaMobileAlt className="profile-tab-icon" /> Android Widget
           </button>
           <button
             className={`profile-subtab-btn ${profileSubTab === 'password' ? 'active' : ''}`}
             onClick={() => setProfileSubTab('password')}
           >
-            Change Password
+            <FaShieldAlt className="profile-tab-icon" /> Change Password
           </button>
         </div>
 
         {profileSubTab === 'info' ? (
-          /* ─── VIEW FROM IMAGE 5: Profile Information ─── */
+          /* ─── REDESIGNED: Profile Information ─── */
           <div className="profile-info-cards-stack">
             {/* Hidden file input for photo upload */}
             <input
@@ -2757,12 +3171,76 @@ const StudentDashboard = () => {
               style={{ display: 'none' }}
             />
 
-            {/* Card 1: Personal Information */}
-            <div className="profile-info-card">
-              <div className="card-header-with-edit">
-                <h3 className="profile-card-section-title">Personal Information</h3>
+            {/* Card 0: Profile Identity Hero */}
+            <div className="profile-hero-card">
+              <div className="profile-hero-left">
+                <div className="profile-hero-avatar-wrapper">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile Avatar"
+                      className="profile-hero-avatar-img"
+                    />
+                  ) : (
+                    <div className="profile-hero-avatar-initials">
+                      {(user?.name || name || 'S').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="profile-avatar-camera-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Upload profile photo"
+                  >
+                    <FaCamera size={12} />
+                  </button>
+                </div>
+
+                <div className="profile-hero-info">
+                  <div className="profile-hero-name-row">
+                    <h2 className="profile-hero-name">{user?.name || name || 'Student'}</h2>
+                    <span className="profile-handle-badge">@{studentUsername || user?.username || 'student'}</span>
+                  </div>
+                  <div className="profile-hero-badges-row">
+                    <span className="profile-badge-pill pill-role">STUDENT</span>
+                    <span className="profile-badge-pill pill-tenant">
+                      <FaGraduationCap size={12} style={{ marginRight: '4px' }} />
+                      {user?.tenant?.name || user?.college || college || 'SEED Institution'}
+                    </span>
+                    <span className="profile-badge-pill pill-active">
+                      <span className="live-status-dot" /> Active
+                    </span>
+                  </div>
+                  {studentUsername && (
+                    <div className="profile-hero-actions-row">
+                      <a
+                        href={`/user/${studentUsername}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="profile-quick-action-link"
+                      >
+                        <FaExternalLinkAlt size={10} /> View Public Profile
+                      </a>
+                      <button
+                        type="button"
+                        className="profile-quick-action-link"
+                        onClick={() => {
+                          const url = `${window.location.origin}/user/${studentUsername}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success('Public profile link copied to clipboard!');
+                        }}
+                      >
+                        <FaCopy size={10} /> Copy Share Link
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="profile-hero-right">
                 <button
-                  className="btn-edit-pill"
+                  type="button"
+                  className={`profile-action-btn ${isEditingProfile ? 'btn-save' : 'btn-edit'}`}
                   onClick={() => {
                     if (isEditingProfile) {
                       handleSaveProfile();
@@ -2771,192 +3249,482 @@ const StudentDashboard = () => {
                     }
                   }}
                 >
-                  {isEditingProfile ? 'Save Changes' : 'Edit'}
+                  {isEditingProfile ? <><FaCheck size={12} /> Save Changes</> : <><FaCog size={12} /> Edit Details</>}
                 </button>
-              </div>
-
-              <div className="personal-info-grid">
-                <div className="personal-fields-col">
-                  <div className="info-field-row">
-                    <span className="field-label">Full Name</span>
-                    {isEditingProfile ? (
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
-                      />
-                    ) : (
-                      <span className="field-value">{user?.name || "—"}</span>
-                    )}
-                  </div>
-                  <div className="info-field-row">
-                    <span className="field-label">Roll Number</span>
-                    {isEditingProfile ? (
-                      <input
-                        type="text"
-                        value={editRollNo}
-                        onChange={(e) => setEditRollNo(e.target.value)}
-                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
-                      />
-                    ) : (
-                      <span className="field-value">{user?.rollNumber || "—"}</span>
-                    )}
-                  </div>
-                  <div className="info-field-row">
-                    <span className="field-label">Email Address</span>
-                    <span className="field-value">{user?.email || email || "—"}</span>
-                  </div>
-                  <div className="info-field-row">
-                    <span className="field-label">Phone Number</span>
-                    {isEditingProfile ? (
-                      <input
-                        type="text"
-                        placeholder="Enter phone number"
-                        value={editPhone}
-                        onChange={(e) => setEditPhone(e.target.value)}
-                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)', fontSize: '13px', width: '220px' }}
-                      />
-                    ) : (
-                      <span className="field-value">{user?.phone || user?.phoneNumber || user?.mobile || editPhone || "—"}</span>
-                    )}
-                  </div>
-                  {isEditingProfile && (
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                      <button
-                        className="feature-cta-btn btn-green-solid"
-                        onClick={handleSaveProfile}
-                        style={{ padding: '6px 16px', fontSize: '12px' }}
-                      >
-                        Save Profile
-                      </button>
-                      <button
-                        className="btn-edit-pill"
-                        onClick={() => setIsEditingProfile(false)}
-                        style={{ padding: '6px 14px', fontSize: '12px' }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="personal-avatar-col">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Profile Avatar"
-                      style={{
-                        width: '72px',
-                        height: '72px',
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: '2px solid #10b981'
-                      }}
-                    />
-                  ) : (
-                    <div className="profile-avatar-circle-green">
-                      {(user?.name || name || 'S').charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                {isEditingProfile && (
                   <button
-                    className="btn-upload-photo"
-                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
+                    className="profile-cancel-btn"
+                    onClick={() => setIsEditingProfile(false)}
                   >
-                    Upload Photo
+                    Cancel
                   </button>
-                  <span className="upload-photo-hint">JPG, PNG up to 2MB</span>
-                </div>
+                )}
               </div>
             </div>
 
-            {/* Card 2: Academic & Institutional Information */}
-            <div className="profile-info-card">
-              <div className="card-header-with-edit">
-                <h3 className="profile-card-section-title">Academic &amp; Institutional Information</h3>
-              </div>
-              <div className="academic-fields-stack">
-                <div className="info-field-row">
-                  <span className="field-label">College</span>
-                  <span className="field-value">{user?.tenant?.name || user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || college || "—"}</span>
-                </div>
-                <div className="info-field-row">
-                  <span className="field-label">College Code</span>
-                  <span className="field-value" style={{ fontFamily: 'monospace', fontWeight: 600 }}>{user?.tenantId || user?.tenant?.id || "—"}</span>
-                </div>
-                <div className="info-field-row">
-                  <span className="field-label">Institutional Access</span>
-                  <span className="field-value" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
-                    <span style={{ color: '#10b981', fontWeight: 600 }}>Active</span>
-                    {user?.tenant?.validUntil ? (
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Valid until {user.tenant.validUntil})</span>
-                    ) : (
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Lifetime Access)</span>
-                    )}
-                  </span>
-                </div>
-                <div className="info-field-row">
-                  <span className="field-label">Department</span>
-                  <span className="field-value">{user?.department || user?.Department || user?.dept || user?.Dept || user?.branch || user?.Branch || dept || "—"}</span>
-                </div>
-                <div className="info-field-row">
-                  <span className="field-label">Graduation Year / Cohort</span>
-                  <span className="field-value">{user?.year || user?.Year || user?.cohortId || user?.CohortId || year || "—"}</span>
-                </div>
-              </div>
-            </div>
+            {/* Wide 2-Column Responsive Layout to utilize right-side space */}
+            <div className="profile-info-cards-grid">
+              {/* Left Column: Personal Information & Coding Profiles */}
+              <div className="profile-info-col-left">
+                {/* Card: Personal Information */}
+                <div className="profile-info-card">
+                  <div className="profile-card-header-bar">
+                    <div>
+                      <h3 className="profile-card-section-title">Personal Information</h3>
+                      <p className="profile-card-section-subtitle">Manage your personal identification, contact coordinates, and student bio.</p>
+                    </div>
+                  </div>
 
-            {/* Card 3: Account Information */}
-            <div className="profile-info-card">
-              <h3 className="profile-card-section-title" style={{ marginBottom: '16px' }}>Account Information</h3>
-              <div className="account-fields-stack">
-                <div className="info-field-row">
-                  <span className="field-label">Account Status</span>
-                  <span className="status-badge-active">Active</span>
+                  {isEditingProfile ? (
+                    <div className="profile-form-grid">
+                      <div className="form-field-group">
+                        <label className="form-field-label">Full Name</label>
+                        <input
+                          type="text"
+                          className="form-text-input"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="Enter full name"
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">Roll Number</label>
+                        <input
+                          type="text"
+                          className="form-text-input disabled"
+                          value={user?.rollNumber || rollNumber || editRollNo || ''}
+                          disabled
+                          title="Roll Number is verified and linked to your institutional registration and cannot be edited"
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">Phone Number</label>
+                        <input
+                          type="text"
+                          className="form-text-input"
+                          value={editPhone}
+                          onChange={(e) => setEditPhone(e.target.value)}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">Registered Email</label>
+                        <input
+                          type="email"
+                          className="form-text-input disabled"
+                          value={user?.email || email || ''}
+                          disabled
+                          title="Email is linked to institutional authentication and cannot be edited"
+                        />
+                      </div>
+                      <div className="form-field-group full-width">
+                        <label className="form-field-label">Student Bio</label>
+                        <textarea
+                          rows={3}
+                          className="form-text-input textarea"
+                          value={editBio}
+                          onChange={(e) => setEditBio(e.target.value)}
+                          placeholder="Brief personal bio, interests, or career aspirations"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="profile-details-grid">
+                      <div className="profile-grid-cell">
+                        <span className="field-label">Full Name</span>
+                        <span className="field-value">{user?.name || name || '—'}</span>
+                      </div>
+                      <div className="profile-grid-cell">
+                        <span className="field-label">Roll Number</span>
+                        <span className="field-value">{user?.rollNumber || rollNumber || '—'}</span>
+                      </div>
+                      <div className="profile-grid-cell">
+                        <span className="field-label">Registered Email</span>
+                        <span className="field-value">{user?.email || email || '—'}</span>
+                      </div>
+                      <div className="profile-grid-cell">
+                        <span className="field-label">Phone Number</span>
+                        <span className="field-value">{user?.phone || user?.phoneNumber || user?.mobile || editPhone || '—'}</span>
+                      </div>
+                      <div className="profile-grid-cell full-width">
+                        <span className="field-label">Student Bio</span>
+                        <span className="field-value bio-text">{user?.bio || editBio || 'No student biography provided yet. Click "Edit Details" to add one.'}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="info-field-row">
-                  <span className="field-label">Account Role</span>
-                  <span className="field-value" style={{ textTransform: 'capitalize' }}>{user?.role || 'Student'}</span>
+
+                {/* Card: Coding & Professional Profiles */}
+                <div className="profile-info-card">
+                  <div className="profile-card-header-bar">
+                    <div>
+                      <h3 className="profile-card-section-title">Coding &amp; Professional Profiles</h3>
+                      <p className="profile-card-section-subtitle">Link your competitive programming handles and portfolio to enhance your public profile.</p>
+                    </div>
+                  </div>
+
+                  {isEditingProfile ? (
+                    <div className="profile-form-grid">
+                      <div className="form-field-group">
+                        <label className="form-field-label">
+                          <FaGithub style={{ marginRight: '6px' }} /> GitHub Handle or URL
+                        </label>
+                        <input
+                          type="text"
+                          className="form-text-input"
+                          placeholder="github.com/username or username"
+                          value={editGithub}
+                          onChange={(e) => setEditGithub(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">
+                          <FaLinkedin style={{ color: '#0a66c2', marginRight: '6px' }} /> LinkedIn Handle or URL
+                        </label>
+                        <input
+                          type="text"
+                          className="form-text-input"
+                          placeholder="linkedin.com/in/username or username"
+                          value={editLinkedin}
+                          onChange={(e) => setEditLinkedin(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">
+                          <FaGlobe style={{ color: '#10b981', marginRight: '6px' }} /> Personal Portfolio URL
+                        </label>
+                        <input
+                          type="text"
+                          className="form-text-input"
+                          placeholder="https://yourportfolio.dev"
+                          value={editPortfolio}
+                          onChange={(e) => setEditPortfolio(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">
+                          <FaCode style={{ color: '#f59e0b', marginRight: '6px' }} /> LeetCode Handle or URL
+                        </label>
+                        <input
+                          type="text"
+                          className="form-text-input"
+                          placeholder="leetcode.com/u/username or handle"
+                          value={editLeetcode}
+                          onChange={(e) => setEditLeetcode(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">
+                          <FaCode style={{ color: '#7c3aed', marginRight: '6px' }} /> CodeChef Handle or URL
+                        </label>
+                        <input
+                          type="text"
+                          className="form-text-input"
+                          placeholder="codechef.com/users/username or handle"
+                          value={editCodechef}
+                          onChange={(e) => setEditCodechef(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="profile-coding-chips-grid">
+                      <div className="coding-chip-card">
+                        <div className="coding-chip-header">
+                          <FaGithub className="coding-icon github" />
+                          <span className="coding-chip-title">GitHub</span>
+                        </div>
+                        {user?.github ? (
+                          <a
+                            href={user.github.startsWith('http') ? user.github : `https://${user.github.startsWith('github.com') ? user.github : 'github.com/' + user.github}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="coding-chip-link"
+                          >
+                            <span>{user.github.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, '')}</span>
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span className="coding-chip-empty">Not linked</span>
+                        )}
+                      </div>
+
+                      <div className="coding-chip-card">
+                        <div className="coding-chip-header">
+                          <FaLinkedin className="coding-icon linkedin" />
+                          <span className="coding-chip-title">LinkedIn</span>
+                        </div>
+                        {user?.linkedin ? (
+                          <a
+                            href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin.startsWith('linkedin.com') ? user.linkedin : 'linkedin.com/in/' + user.linkedin}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="coding-chip-link"
+                          >
+                            <span>{user.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//, '').replace(/\/$/, '')}</span>
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span className="coding-chip-empty">Not linked</span>
+                        )}
+                      </div>
+
+                      <div className="coding-chip-card">
+                        <div className="coding-chip-header">
+                          <FaGlobe className="coding-icon portfolio" />
+                          <span className="coding-chip-title">Portfolio</span>
+                        </div>
+                        {user?.portfolio ? (
+                          <a
+                            href={user.portfolio.startsWith('http') ? user.portfolio : `https://${user.portfolio}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="coding-chip-link"
+                          >
+                            <span>{user.portfolio.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span className="coding-chip-empty">Not linked</span>
+                        )}
+                      </div>
+
+                      <div className="coding-chip-card">
+                        <div className="coding-chip-header">
+                          <FaCode className="coding-icon leetcode" />
+                          <span className="coding-chip-title">LeetCode</span>
+                        </div>
+                        {user?.leetcode ? (
+                          <a
+                            href={user.leetcode.startsWith('http') ? user.leetcode : `https://leetcode.com/u/${user.leetcode}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="coding-chip-link"
+                          >
+                            <span>{user.leetcode.replace(/^https?:\/\/(www\.)?leetcode\.com\/u\//, '').replace(/\/$/, '')}</span>
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span className="coding-chip-empty">Not linked</span>
+                        )}
+                      </div>
+
+                      <div className="coding-chip-card">
+                        <div className="coding-chip-header">
+                          <FaCode className="coding-icon codechef" />
+                          <span className="coding-chip-title">CodeChef</span>
+                        </div>
+                        {user?.codechef ? (
+                          <a
+                            href={user.codechef.startsWith('http') ? user.codechef : `https://www.codechef.com/users/${user.codechef}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="coding-chip-link"
+                          >
+                            <span>{user.codechef.replace(/^https?:\/\/(www\.)?codechef\.com\/users\//, '').replace(/\/$/, '')}</span>
+                            <FaExternalLinkAlt size={10} />
+                          </a>
+                        ) : (
+                          <span className="coding-chip-empty">Not linked</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="info-field-row">
-                  <span className="field-label">Authentication ID</span>
-                  <span className="field-value" style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>{user?.uid || auth?.currentUser?.uid || '—'}</span>
+              </div>
+
+              {/* Right Column: Gamification Level, Academic Details & System Info */}
+              <div className="profile-info-col-right">
+                {/* Card 1: Gamification Level & Progression */}
+                <div className="profile-level-card">
+                  <div className="profile-level-header">
+                    <div className="profile-level-badge-col">
+                      <div className="profile-level-number-badge">
+                        <span className="profile-level-label">TIER</span>
+                        <span className="profile-level-value">{userLevelInfo.level}</span>
+                      </div>
+                      <div className="profile-level-title-group">
+                        <div className="level-title-row">
+                          <h3 className="profile-level-title">{userLevelInfo.levelTitle}</h3>
+                          <span className="level-status-pill">Active Tier</span>
+                        </div>
+                        <span className="profile-level-subtitle">Experience &amp; Algorithmic Mastery Ranking</span>
+                      </div>
+                    </div>
+
+                    <div className="profile-level-stats-row">
+                      <div className="profile-level-stat-item">
+                        <span className="profile-stat-num">
+                          {userLevelInfo.totalXP.toLocaleString()} <span className="profile-stat-unit">XP</span>
+                        </span>
+                        <span className="profile-stat-lbl">Total XP Gained</span>
+                      </div>
+                      <div className="profile-level-stat-item">
+                        <span className="profile-stat-num stat-credits">
+                          <SeedCreditCoin size={15} style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: '5px' }} />
+                          {seedCredits.toLocaleString()} <span className="profile-stat-unit">SC</span>
+                        </span>
+                        <span className="profile-stat-lbl">SEED Credits</span>
+                      </div>
+                      <div className="profile-level-stat-item">
+                        <span className="profile-stat-num stat-streak">
+                          {userStreak} <span className="profile-stat-unit">Day{userStreak === 1 ? '' : 's'}</span>
+                        </span>
+                        <span className="profile-stat-lbl">Active Streak</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="profile-level-progress-wrapper">
+                    <div className="profile-level-progress-header">
+                      <span className="level-prog-text">
+                        Rank Progression: <strong>Level {userLevelInfo.level} &rarr; Level {userLevelInfo.level + 1}</strong>
+                      </span>
+                      <span className="level-prog-percent">
+                        {userLevelInfo.progressInLevelXP.toLocaleString()} / {(userLevelInfo.nextLevelXP - userLevelInfo.currentLevelMinXP).toLocaleString()} XP ({userLevelInfo.progressPercent}%)
+                      </span>
+                    </div>
+                    <div className="profile-level-progress-bar-track">
+                      <div
+                        className="profile-level-progress-bar-fill"
+                        style={{ width: `${userLevelInfo.progressPercent}%` }}
+                      />
+                    </div>
+                    <span className="level-prog-hint">
+                      Earn {userLevelInfo.neededForNextLevel.toLocaleString()} more XP to reach Level {userLevelInfo.level + 1}. Practice Question Bank problems and complete courses to level up.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card 4: Academic & Institutional Information */}
+                <div className="profile-info-card">
+                  <div className="profile-card-header-bar">
+                    <div>
+                      <h3 className="profile-card-section-title">Academic &amp; Institutional Information</h3>
+                      <p className="profile-card-section-subtitle">Verified registration records from your college or partner university.</p>
+                    </div>
+                  </div>
+                  <div className="profile-details-grid">
+                    <div className="profile-grid-cell">
+                      <span className="field-label">College / University</span>
+                      <span className="field-value">{user?.tenant?.name || user?.college || user?.College || user?.collegeName || user?.tenantName || user?.tenantId || college || "—"}</span>
+                    </div>
+                    <div className="profile-grid-cell">
+                      <span className="field-label">Institution Code / Tenant</span>
+                      <span className="field-value code-pill">{user?.tenantId || user?.tenant?.id || "—"}</span>
+                    </div>
+                    <div className="profile-grid-cell">
+                      <span className="field-label">Institutional Access</span>
+                      <span className="field-value" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="live-status-dot" />
+                        <span style={{ color: '#10b981', fontWeight: 600 }}>Active</span>
+                        {user?.tenant?.validUntil ? (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Valid until {user.tenant.validUntil})</span>
+                        ) : (
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(Lifetime Access)</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="profile-grid-cell">
+                      <span className="field-label">Department</span>
+                      <span className="field-value">{user?.department || user?.Department || user?.dept || user?.Dept || user?.branch || user?.Branch || dept || "—"}</span>
+                    </div>
+                    <div className="profile-grid-cell">
+                      <span className="field-label">Graduation Year / Cohort</span>
+                      <span className="field-value">{user?.year || user?.Year || user?.cohortId || user?.CohortId || year || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 5: Account & System Information */}
+                <div className="profile-info-card">
+                  <div className="profile-card-header-bar">
+                    <div>
+                      <h3 className="profile-card-section-title">Account &amp; System Information</h3>
+                      <p className="profile-card-section-subtitle">Authentication identifiers and connected client tools.</p>
+                    </div>
+                  </div>
+                  <div className="profile-details-grid">
+                    <div className="profile-grid-cell">
+                      <span className="field-label">Account Status</span>
+                      <span className="field-value">
+                        <span className="status-badge-active">Active</span>
+                      </span>
+                    </div>
+                    <div className="profile-grid-cell">
+                      <span className="field-label">Account Role</span>
+                      <span className="field-value" style={{ textTransform: 'capitalize' }}>{user?.role || 'Student'}</span>
+                    </div>
+                    <div className="profile-grid-cell full-width">
+                      <span className="field-label">Authentication UID</span>
+                      <span className="field-value code-pill uid-pill">
+                        {user?.uid || auth?.currentUser?.uid || '—'}
+                        <button
+                          type="button"
+                          className="btn-copy-mini"
+                          onClick={() => {
+                            const uid = user?.uid || auth?.currentUser?.uid || '';
+                            if (uid) {
+                              navigator.clipboard.writeText(uid);
+                              toast.success('UID copied to clipboard!');
+                            }
+                          }}
+                          title="Copy Authentication UID"
+                        >
+                          <FaCopy size={11} />
+                        </button>
+                      </span>
+                    </div>
+                    <div className="profile-grid-cell full-width">
+                      <span className="field-label">Android Home Widget</span>
+                      <span className="field-value">
+                        <button
+                          onClick={() => setProfileSubTab('widget')}
+                          className="btn-widget-shortcut"
+                        >
+                          <FaMobileAlt size={12} /> Setup Mobile Widget &rarr;
+                        </button>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ) : profileSubTab === 'utilisation' ? (
-          /* ─── VIEW FROM IMAGE 1 ROW 2 COL 1: Academic Details & Utilisation ─── */
+          /* ─── REDESIGNED: Academic Details & Platform Utilisation ─── */
           <div className="profile-utilisation-container">
-            <div className="home-welcome-header" style={{ marginBottom: '20px' }}>
-              <h1 className="home-welcome-title">Student Profile & Utilisation</h1>
-              <p className="home-welcome-subtitle">Manage your academic registration info and review your daily practice dashboard.</p>
+            <div className="profile-subtab-header">
+              <h2 className="profile-subtab-title">Academic Details &amp; Utilisation</h2>
+              <p className="profile-subtab-subtitle">Review your verified institutional registration and explore your platform practice metrics.</p>
             </div>
 
             <div className="profile-view-layout">
               {/* Left Student Registration Details Card */}
               <div className="profile-card-left">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Profile Avatar"
-                    style={{
-                      width: '72px',
-                      height: '72px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid #10b981',
-                      margin: '0 auto 12px'
-                    }}
-                  />
-                ) : (
-                  <div className="profile-avatar-large">
-                    {name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <h3 className="profile-name-title">{name}</h3>
-                <span className="profile-student-badge">STUDENT</span>
+                <div className="profile-avatar-wrapper">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile Avatar"
+                      className="profile-card-avatar-img"
+                    />
+                  ) : (
+                    <div className="profile-avatar-large">
+                      {(user?.name || name || 'S').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <h3 className="profile-name-title">{user?.name || name || 'Student'}</h3>
+                <div className="profile-username-tag">
+                  @{studentUsername || user?.username || 'student'}
+                </div>
+                <div className="profile-badge-strip">
+                  <span className="profile-student-badge">STUDENT</span>
+                  <span className="profile-student-badge level-badge">
+                    <FaBolt size={10} style={{ marginRight: '4px' }} /> LEVEL {userLevelInfo.level}
+                  </span>
+                </div>
 
                 <div className="profile-details-table">
                   <div className="profile-detail-row">
@@ -2965,7 +3733,7 @@ const StudentDashboard = () => {
                   </div>
                   <div className="profile-detail-row">
                     <span className="profile-detail-label">College</span>
-                    <span className="profile-detail-val">{user?.college || college || "—"}</span>
+                    <span className="profile-detail-val">{user?.tenant?.name || user?.college || college || "—"}</span>
                   </div>
                   <div className="profile-detail-row">
                     <span className="profile-detail-label">Department</span>
@@ -2980,43 +3748,106 @@ const StudentDashboard = () => {
                     <span className="profile-detail-val">{user?.email || email || "—"}</span>
                   </div>
                 </div>
+
+                {(user?.github || user?.linkedin || user?.portfolio || user?.leetcode || user?.codechef) && (
+                  <div className="profile-social-icons-strip">
+                    {user?.github && (
+                      <a href={user.github.startsWith('http') ? user.github : `https://${user.github.startsWith('github.com') ? user.github : 'github.com/' + user.github}`} target="_blank" rel="noreferrer" title="GitHub" className="social-icon-btn github">
+                        <FaGithub />
+                      </a>
+                    )}
+                    {user?.linkedin && (
+                      <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noreferrer" title="LinkedIn" className="social-icon-btn linkedin">
+                        <FaLinkedin />
+                      </a>
+                    )}
+                    {user?.portfolio && (
+                      <a href={user.portfolio.startsWith('http') ? user.portfolio : `https://${user.portfolio}`} target="_blank" rel="noreferrer" title="Portfolio" className="social-icon-btn portfolio">
+                        <FaGlobe />
+                      </a>
+                    )}
+                    {user?.leetcode && (
+                      <a href={user.leetcode.startsWith('http') ? user.leetcode : `https://leetcode.com/u/${user.leetcode}`} target="_blank" rel="noreferrer" title="LeetCode" className="social-icon-btn leetcode">
+                        <FaCode />
+                      </a>
+                    )}
+                    {user?.codechef && (
+                      <a href={user.codechef.startsWith('http') ? user.codechef : `https://www.codechef.com/users/${user.codechef}`} target="_blank" rel="noreferrer" title="CodeChef" className="social-icon-btn codechef">
+                        <FaCode />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Right Column: 3 Top Stats + Heatmap */}
+              {/* Right Column: 4 Top Stats + Heatmap */}
               <div className="profile-right-column">
-                <div className="profile-three-stats-row">
-                  <div className="util-stat-card">
-                    <span className="util-stat-val val-green">{totalProblemsSolved}</span>
-                    <span className="util-stat-lbl">Problems Solved</span>
+                <div className="profile-three-stats-row profile-four-stats-row">
+                  <div className="util-stat-card card-purple">
+                    <div className="util-stat-header">
+                      <FaBolt className="util-stat-icon icon-purple" />
+                      <span className="util-stat-label">Mastery Level</span>
+                    </div>
+                    <span className="util-stat-val val-purple">
+                      Level {userLevelInfo.level}
+                    </span>
+                    <span className="util-stat-sub">{userLevelInfo.totalXP.toLocaleString()} XP · {userLevelInfo.levelTitle}</span>
                   </div>
-                  <div className="util-stat-card">
+
+                  <div className="util-stat-card card-green">
+                    <div className="util-stat-header">
+                      <FaCode className="util-stat-icon icon-green" />
+                      <span className="util-stat-label">Problems Solved</span>
+                    </div>
+                    <span className="util-stat-val val-green">
+                      {totalProblemsSolved}
+                      <span className="val-sub-fraction">/ 9,000+</span>
+                    </span>
+                    <span className="util-stat-sub">Practice Questions Cleared</span>
+                  </div>
+
+                  <div className="util-stat-card card-blue">
+                    <div className="util-stat-header">
+                      <FaClock className="util-stat-icon icon-blue" />
+                      <span className="util-stat-label">Learning Time</span>
+                    </div>
                     <span className="util-stat-val val-blue">{formatUsageTime(totalHours)}</span>
-                    <span className="util-stat-lbl">Time Spent Active</span>
+                    <span className="util-stat-sub">Time Spent Active</span>
                   </div>
-                  <div className="util-stat-card">
+
+                  <div className="util-stat-card card-orange">
+                    <div className="util-stat-header">
+                      <FaFire className="util-stat-icon icon-orange" />
+                      <span className="util-stat-label">Active Streak</span>
+                    </div>
                     <span className="util-stat-val val-orange">{activeStreak} Day{activeStreak === 1 ? '' : 's'}</span>
-                    <span className="util-stat-lbl">Active Streak</span>
+                    <span className="util-stat-sub">Continuous Practice</span>
                   </div>
                 </div>
 
                 {/* Heatmap Card */}
                 <div className="heatmap-card">
-                  <div className="analytics-card-header" style={{ marginBottom: '14px' }}>
-                    <h4 className="widget-section-title" style={{ margin: 0 }}>
-                      Practice portal activity tracker (last 6 months)
-                    </h4>
+                  <div className="analytics-card-header">
+                    <div>
+                      <h4 className="widget-section-title">
+                        Practice Portal Activity Tracker (Last 6 Months)
+                      </h4>
+                      <span className="heatmap-section-subtitle">
+                        Solved {totalProblemsSolved} of 9,328 questions in Question Bank
+                      </span>
+                    </div>
                     <button
                       className="btn-sync-cloud"
                       onClick={handleSyncProfileProgress}
                       disabled={loadingProfileProgress}
                     >
-                      <FaSyncAlt /> {loadingProfileProgress ? 'Syncing...' : 'Sync with Cloud'}
+                      <FaSyncAlt className={loadingProfileProgress ? 'spin' : ''} /> {loadingProfileProgress ? 'Syncing...' : 'Sync with Cloud'}
                     </button>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <div className="heatmap-grid-container">
                     {/* Y-axis days */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '9px', color: '#94a3b8', marginTop: '18px', width: '22px' }}>
+                    <div className="heatmap-day-labels">
                       <span>Sun</span>
                       <span style={{ visibility: 'hidden' }}>Mon</span>
                       <span>Tue</span>
@@ -3027,44 +3858,37 @@ const StudentDashboard = () => {
                     </div>
 
                     {/* X-axis weeks */}
-                    <div style={{ flex: 1, overflowX: 'auto' }}>
+                    <div className="heatmap-scroll-area">
                       {/* Months Row */}
-                      <div style={{ position: 'relative', height: '14px', marginBottom: '6px', fontSize: '10px', color: '#94a3b8' }}>
+                      <div className="heatmap-month-labels">
                         {monthHeaders.map(hdr => (
                           <span key={hdr.index} style={{
                             position: 'absolute',
-                            left: `${hdr.index * 14}px`,
+                            left: `${hdr.index * 15}px`,
                             whiteSpace: 'nowrap'
                           }}>{hdr.label}</span>
                         ))}
                       </div>
 
                       {/* Grid of Weeks */}
-                      <div style={{ display: 'flex', gap: '3px' }}>
+                      <div className="heatmap-weeks-row">
                         {weeks.map((wk, wkIdx) => (
-                          <div key={wkIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <div key={wkIdx} className="heatmap-week-col">
                             {wk.map((day, dIdx) => {
                               const dateStr = day.toISOString().split('T')[0];
                               const dayInfo = progressData?.activity?.[dateStr] || { hours: 0, problemsSolved: 0 };
                               const solved = getSolvedCountForDate(dateStr);
 
-                              let color = '#ebedf0';
-                              if (solved === 1) color = '#9be9a8';
-                              if (solved === 2) color = '#40c463';
-                              if (solved === 3) color = '#30a14e';
-                              if (solved >= 4) color = '#216e39';
+                              let colorClass = 'lvl-0';
+                              if (solved === 1) colorClass = 'lvl-1';
+                              if (solved === 2) colorClass = 'lvl-2';
+                              if (solved === 3) colorClass = 'lvl-3';
+                              if (solved >= 4) colorClass = 'lvl-4';
 
                               return (
                                 <div
                                   key={dIdx}
-                                  style={{
-                                    width: '12px',
-                                    height: '12px',
-                                    background: color,
-                                    border: '1px solid rgba(0,0,0,0.06)',
-                                    borderRadius: '2px',
-                                    cursor: 'pointer'
-                                  }}
+                                  className={`heatmap-cell ${colorClass}`}
                                   onMouseEnter={(e) => {
                                     const rect = e.target.getBoundingClientRect();
                                     setTooltipPos({
@@ -3090,13 +3914,13 @@ const StudentDashboard = () => {
                   </div>
 
                   {/* Heatmap Legend */}
-                  <div className="heatmap-footer-legend" style={{ marginTop: '12px' }}>
+                  <div className="heatmap-footer-legend">
                     <span>Less</span>
-                    <div style={{ width: '11px', height: '11px', background: '#ebedf0', borderRadius: '2px' }}></div>
-                    <div style={{ width: '11px', height: '11px', background: '#9be9a8', borderRadius: '2px' }}></div>
-                    <div style={{ width: '11px', height: '11px', background: '#40c463', borderRadius: '2px' }}></div>
-                    <div style={{ width: '11px', height: '11px', background: '#30a14e', borderRadius: '2px' }}></div>
-                    <div style={{ width: '11px', height: '11px', background: '#216e39', borderRadius: '2px' }}></div>
+                    <div className="legend-cell lvl-0"></div>
+                    <div className="legend-cell lvl-1"></div>
+                    <div className="legend-cell lvl-2"></div>
+                    <div className="legend-cell lvl-3"></div>
+                    <div className="legend-cell lvl-4"></div>
                     <span>More</span>
                   </div>
                 </div>
@@ -3104,7 +3928,7 @@ const StudentDashboard = () => {
             </div>
 
             {/* Performance Overview (4 Cards Row) */}
-            <div className="performance-overview-section" style={{ marginTop: '28px' }}>
+            <div className="performance-overview-section">
               <h3 className="home-section-heading">Performance Overview</h3>
               <div className="activity-snapshot-grid">
                 <div className="activity-snapshot-card">
@@ -3113,66 +3937,261 @@ const StudentDashboard = () => {
                   <div className="snapshot-stat-lbl">Accuracy</div>
                 </div>
                 <div className="activity-snapshot-card">
-                  <div className="snapshot-icon-box icon-blue"><FaCheck /></div>
+                  <div className="snapshot-icon-box icon-blue"><FaClipboardList /></div>
                   <div className="snapshot-stat-val">0</div>
                   <div className="snapshot-stat-lbl">Assessments Taken</div>
                 </div>
                 <div className="activity-snapshot-card">
-                  <div className="snapshot-icon-box icon-green"><FaCode /></div>
-                  <div className="snapshot-stat-val">{totalProblemsSolved}</div>
-                  <div className="snapshot-stat-lbl">Coding Submissions</div>
+                  <div className="snapshot-icon-box icon-green"><FaLaptopCode /></div>
+                  <div className="snapshot-stat-val">
+                    {totalProblemsSolved}
+                    <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500, marginLeft: '3px' }}>/ 9k+</span>
+                  </div>
+                  <div className="snapshot-stat-lbl">Questions Solved</div>
                 </div>
                 <div className="activity-snapshot-card">
                   <div className="snapshot-icon-box icon-orange"><FaCalendarAlt /></div>
                   <div className="snapshot-stat-val">0</div>
-                  <div className="snapshot-stat-lbl">Days in Platform</div>
+                  <div className="snapshot-stat-lbl">Days on Platform</div>
                 </div>
               </div>
             </div>
           </div>
+        ) : profileSubTab === 'widget' ? (
+          /* ─── REDESIGNED: Android Widget in User Profile ─── */
+          <div className="profile-info-cards-stack">
+            <div className="profile-info-card">
+              <div className="widget-header-row">
+                <div className="widget-header-icon-box">
+                  <FaMobileAlt />
+                </div>
+                <div>
+                  <h3 className="profile-card-section-title">
+                    Android Native Home Screen Widget
+                  </h3>
+                  <p className="profile-card-section-subtitle">
+                    Add a live SEED-IT activity and streak tracker directly onto your mobile phone launcher.
+                  </p>
+                </div>
+              </div>
+
+              {/* Grid with Phone Mockup & Download CTA */}
+              <div className="widget-showcase-grid">
+                {/* Left: Native Widget Simulation Preview */}
+                <div className="widget-mockup-frame">
+                  <div>
+                    <div className="widget-mockup-top-bar">
+                      <div className="widget-mockup-user">
+                        <div className="widget-mockup-avatar">S</div>
+                        <div>
+                          <div className="widget-mockup-name">{user?.name || name || 'Student'}</div>
+                          <div className="widget-mockup-handle">@{studentUsername || user?.username || 'username'}</div>
+                        </div>
+                      </div>
+                      <div className="widget-streak-pill">
+                        <FaFire size={11} style={{ marginRight: '4px' }} /> {activeStreak || userStreak || 1} Days
+                      </div>
+                    </div>
+
+                    <div className="widget-chips-row">
+                      <span className="widget-pill blue">
+                        <FaCode size={10} style={{ marginRight: '4px' }} /> {totalProblemsSolved || 0} / 9,000+ Solved
+                      </span>
+                      <span className="widget-pill green">
+                        <FaCoins size={10} style={{ marginRight: '4px' }} /> {seedCredits || 0} Credits
+                      </span>
+                      <span className="widget-pill gray">
+                        <FaCalendarAlt size={10} style={{ marginRight: '4px' }} /> Active
+                      </span>
+                    </div>
+
+                    {/* Simulation Grid (past 18 weeks x 7 rows) */}
+                    <div className="widget-mini-heatmap">
+                      {weeks.slice(-18).map((week, wIdx) => (
+                        <div key={wIdx} className="widget-heatmap-col">
+                          {week.map((d, dIdx) => {
+                            const dateStr = d.toISOString().split('T')[0];
+                            const cnt = getSolvedCountForDate(dateStr);
+                            const level = cnt >= 10 ? 4 : cnt >= 6 ? 3 : cnt >= 3 ? 2 : cnt >= 1 ? 1 : 0;
+                            return (
+                              <div
+                                key={dIdx}
+                                className={`widget-dot lvl-${level}`}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="widget-mockup-footer">
+                    <span>seedit.site/user • Tap to view profile</span>
+                    <span>Synced Just now</span>
+                  </div>
+                </div>
+
+                {/* Right: Download Button & Instructions */}
+                <div className="widget-guide-col">
+                  <div>
+                    <h4 className="widget-guide-title">
+                      Setup Instructions (1 Minute):
+                    </h4>
+                    <ol className="widget-steps-list">
+                      <li>Tap the download button below to get <strong>seedit-widget.apk</strong>.</li>
+                      <li>Install the APK on your Android mobile device.</li>
+                      <li>Long-press empty space on your Android Home Screen &rarr; tap <strong>Widgets</strong>.</li>
+                      <li>Select <strong>SEED-IT Tracker</strong> &rarr; drag <strong>SEED-IT Activity Widget</strong> to your screen.</li>
+                      <li>Enter your handle <strong style={{ color: '#10b981' }}>@{studentUsername || user?.username || 'your_username'}</strong> and tap <strong>Save &amp; Place Widget</strong>!</li>
+                    </ol>
+
+                    <div className="widget-specs-row">
+                      <span className="widget-spec-badge">
+                        <FaMobileAlt size={11} style={{ marginRight: '4px' }} /> Android 8.0+
+                      </span>
+                      <span className="widget-spec-badge">
+                        <FaBoxOpen size={11} style={{ marginRight: '4px' }} /> 33.2 KB Native APK
+                      </span>
+                      <span className="widget-spec-badge">
+                        <FaBatteryFull size={11} style={{ marginRight: '4px' }} /> Zero Battery Drain
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="widget-actions-box">
+                    <a
+                      href="/downloads/seedit-widget.apk"
+                      download="seedit-widget.apk"
+                      className="widget-download-cta-btn"
+                    >
+                      <FaDownload /> Download SEED-IT Widget (seedit-widget.apk)
+                    </a>
+
+                    {studentUsername && (
+                      <div className="widget-quick-links-group">
+                        <a
+                          href={`/user/${studentUsername}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="widget-secondary-btn"
+                        >
+                          <FaExternalLinkAlt size={11} /> View Public Track
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = `${window.location.origin}/user/${studentUsername}`;
+                            navigator.clipboard.writeText(url);
+                            toast.success('Public track link copied to clipboard!');
+                          }}
+                          className="widget-secondary-btn"
+                        >
+                          <FaCopy size={11} /> Copy Link
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
         ) : (
-          /* ─── CHANGE PASSWORD ─── */
-          <div className="profile-info-card" style={{ maxWidth: '520px' }}>
-            <h3 className="profile-card-section-title" style={{ marginBottom: '18px' }}>Change Password</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>Current Password</label>
-                <input
-                  type="password"
-                  placeholder="Enter current password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)' }}
-                />
+          /* ─── REDESIGNED: Change Password ─── */
+          <div className="profile-info-cards-stack" style={{ maxWidth: '580px' }}>
+            <div className="profile-info-card">
+              <div className="password-card-header">
+                <div className="password-icon-box">
+                  <FaShieldAlt />
+                </div>
+                <div>
+                  <h3 className="profile-card-section-title">Change Password</h3>
+                  <p className="profile-card-section-subtitle">Ensure your account is protected with a secure password.</p>
+                </div>
               </div>
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>New Password</label>
-                <input
-                  type="password"
-                  placeholder="Enter new password (min 6 characters)"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)' }}
-                />
+
+              <div className="password-form-stack">
+                <div className="form-field-group">
+                  <label className="form-field-label">Current Password</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      placeholder="Enter your current password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="form-text-input"
+                    />
+                    <button
+                      type="button"
+                      className="btn-toggle-eye"
+                      onClick={() => setShowCurrentPassword(p => !p)}
+                      title={showCurrentPassword ? "Hide password" : "Show password"}
+                    >
+                      {showCurrentPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">New Password</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="Enter new password (minimum 6 characters)"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="form-text-input"
+                    />
+                    <button
+                      type="button"
+                      className="btn-toggle-eye"
+                      onClick={() => setShowNewPassword(p => !p)}
+                      title={showNewPassword ? "Hide password" : "Show password"}
+                    >
+                      {showNewPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">Confirm New Password</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Re-enter new password to confirm"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="form-text-input"
+                    />
+                    <button
+                      type="button"
+                      className="btn-toggle-eye"
+                      onClick={() => setShowConfirmPassword(p => !p)}
+                      title={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="password-requirements-box">
+                  <div className={`req-item ${newPassword.length >= 6 ? 'met' : ''}`}>
+                    <FaCheck size={11} /> Minimum 6 characters in length
+                  </div>
+                  <div className={`req-item ${newPassword && newPassword === confirmPassword ? 'met' : ''}`}>
+                    <FaCheck size={11} /> New password and confirmation match
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="feature-cta-btn btn-green-solid"
+                  onClick={handleUpdatePassword}
+                  style={{ width: '100%', justifyContent: 'center', marginTop: '4px' }}
+                >
+                  <FaLock size={12} style={{ marginRight: '6px' }} /> Update Account Password
+                </button>
               </div>
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>Confirm New Password</label>
-                <input
-                  type="password"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-main)' }}
-                />
-              </div>
-              <button
-                type="button"
-                className="feature-cta-btn btn-green-solid"
-                onClick={handleUpdatePassword}
-                style={{ marginTop: '8px', width: 'auto', alignSelf: 'flex-start', padding: '10px 20px' }}
-              >
-                Update Password
-              </button>
             </div>
           </div>
         )}
@@ -3242,7 +4261,7 @@ const StudentDashboard = () => {
                   cursor: 'pointer'
                 }}
               >
-
+                
               </button>
 
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -3323,7 +4342,7 @@ const StudentDashboard = () => {
                       boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
                     }}
                   >
-                    Activate Premium Edition Now
+                     Activate Premium Edition Now
                   </button>
                 ) : (
                   <button
@@ -3341,7 +4360,7 @@ const StudentDashboard = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    Premium Access Active
+                     Premium Access Active
                   </button>
                 )}
               </div>
@@ -3589,31 +4608,108 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Themes Grid */}
-            <div style={{ marginTop: '18px' }}>
-              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>Platform Themes (7 Themes)</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>Select an optimized color palette designed for high productivity.</div>
-              <div className="theme-options-grid">
-                {allThemes.map(t => {
-                  const active = currentTheme === t.id;
-                  return (
-                    <div
-                      key={t.id}
-                      className={`theme-preview-card ${active ? 'active' : ''}`}
-                      onClick={() => handleThemeChange(t.id)}
-                    >
-                      <div className="theme-card-top-row">
-                        <span className="theme-name-text">{t.name}</span>
-                        {active && <FaCheckCircle className="theme-check-icon" />}
-                      </div>
-                      <div className="theme-color-bubbles">
-                        {t.colors.map((c, cIdx) => (
-                          <div key={cIdx} className="theme-bubble" style={{ background: c }} />
-                        ))}
-                      </div>
+            {/* Themes Dropdown */}
+            <div style={{ marginTop: '18px' }} ref={themeDropdownRef}>
+              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>Platform Theme</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>Select an optimized theme palette designed for your workspace.</div>
+              
+              <div style={{ position: 'relative', maxWidth: '440px' }}>
+                <button
+                  type="button"
+                  onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '11px 16px',
+                    background: 'var(--bg-primary)',
+                    border: '1.5px solid var(--border-color)',
+                    borderRadius: '10px',
+                    color: 'var(--text-main)',
+                    cursor: 'pointer',
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {(allThemes.find(t => t.id === currentTheme)?.colors || ['#f8fafc', '#ffffff', '#15803d']).map((c, idx) => (
+                        <div key={idx} style={{ width: '12px', height: '12px', borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)' }} />
+                      ))}
                     </div>
-                  );
-                })}
+                    <span>{allThemes.find(t => t.id === currentTheme)?.name || 'SEED-SEB Academic (Default)'}</span>
+                  </div>
+                  <FaChevronDown style={{ fontSize: '12px', color: 'var(--text-muted)', transform: themeDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                </button>
+
+                {themeDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 6px)',
+                      left: 0,
+                      right: 0,
+                      background: 'var(--bg-secondary)',
+                      border: '1.5px solid var(--border-color)',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.25), 0 4px 10px rgba(0,0,0,0.1)',
+                      zIndex: 100,
+                      maxHeight: '320px',
+                      overflowY: 'auto',
+                      padding: '6px'
+                    }}
+                  >
+                    {allThemes.map(t => {
+                      const active = currentTheme === t.id;
+                      return (
+                        <div
+                          key={t.id}
+                          onClick={() => {
+                            handleThemeChange(t.id);
+                            setThemeDropdownOpen(false);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            background: active ? 'rgba(22, 163, 74, 0.12)' : 'transparent',
+                            transition: 'background 0.15s ease',
+                            marginBottom: '2px'
+                          }}
+                          onMouseEnter={e => {
+                            if (!active) e.currentTarget.style.background = 'var(--bg-primary)';
+                          }}
+                          onMouseLeave={e => {
+                            if (!active) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ display: 'flex', gap: '3px' }}>
+                                {t.colors.map((c, cIdx) => (
+                                  <div key={cIdx} style={{ width: '10px', height: '10px', borderRadius: '50%', background: c, border: '1px solid rgba(0,0,0,0.15)' }} />
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '13px', fontWeight: active ? 700 : 600, color: active ? 'var(--accent-primary, #15803d)' : 'var(--text-main)' }}>
+                                {t.name}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginLeft: '21px' }}>
+                              {t.desc}
+                            </span>
+                          </div>
+                          {active && <FaCheckCircle style={{ color: 'var(--accent-primary, #15803d)', fontSize: '15px', flexShrink: 0 }} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3926,6 +5022,499 @@ const StudentDashboard = () => {
     );
   };
 
+  const renderHelpAndSupport = () => {
+    return (
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px 8px 48px' }}>
+        {/* Header Section */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '20px',
+          padding: '28px 32px',
+          marginBottom: '28px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                boxShadow: '0 8px 20px rgba(37, 99, 235, 0.25)',
+              }}>
+                <FaHeadset />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#2563eb',
+                    background: 'rgba(37, 99, 235, 0.12)',
+                    padding: '3px 9px',
+                    borderRadius: '6px',
+                  }}>
+                    SEED SUPPORT DESK
+                  </span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted, #64748b)' }}>Real-Time Help &amp; Troubleshooting</span>
+                </div>
+                <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                  Help &amp; Technical Support Center
+                </h1>
+                <p style={{ margin: '4px 0 0', fontSize: '13.5px', color: 'var(--text-secondary, #475569)' }}>
+                  Submit technical issues, browse troubleshooting guides, or track real-time resolution from our engineering team.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSupportInitialCategory('download_seb');
+                  setShowSupportModal(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  padding: '10px 18px',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                }}
+              >
+                <FaCommentDots /> Submit Support Request
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDocModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'var(--bg-card, #ffffff)',
+                  color: 'var(--text-main, #0f172a)',
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  cursor: 'pointer',
+                }}
+              >
+                <FaQuestionCircle /> FAQs &amp; Docs
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 4 Category Action Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+          {[
+            {
+              id: 'download_seb',
+              icon: <FaDesktop style={{ color: '#2563eb' }} />,
+              title: 'SEED-SEB Lockdown',
+              desc: 'Troubleshoot code 0x80070005, Windows Defender blocks, secondary displays, or kiosk freeze.',
+              bg: 'rgba(37, 99, 235, 0.08)',
+              color: '#2563eb',
+            },
+            {
+              id: 'widget_android',
+              icon: <FaMobileAlt style={{ color: '#10b981' }} />,
+              title: 'Mobile Widget Setup',
+              desc: 'Resolve Android APK install, streak sync delays, battery saver restrictions, or widget placement.',
+              bg: 'rgba(16, 185, 129, 0.08)',
+              color: '#10b981',
+            },
+            {
+              id: 'assessment',
+              icon: <FaShieldAlt style={{ color: '#f59e0b' }} />,
+              title: 'Exam Proctoring',
+              desc: 'Assistance with webcam permissions, AI eye/face detection flags, audio checks, or session recovery.',
+              bg: 'rgba(245, 158, 11, 0.08)',
+              color: '#f59e0b',
+            },
+            {
+              id: 'account',
+              icon: <FaUser style={{ color: '#8b5cf6' }} />,
+              title: 'Account & Tenant',
+              desc: 'Student handle issues, college affiliation, exam schedule access, or profile verification.',
+              bg: 'rgba(139, 92, 246, 0.08)',
+              color: '#8b5cf6',
+            },
+          ].map((cat) => (
+            <div
+              key={cat.id}
+              style={{
+                background: 'var(--bg-card, #ffffff)',
+                border: '1px solid var(--border-color, #e2e8f0)',
+                borderRadius: '16px',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '14px',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+            >
+              <div>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: cat.bg,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px',
+                  marginBottom: '12px',
+                }}>
+                  {cat.icon}
+                </div>
+                <h3 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>
+                  {cat.title}
+                </h3>
+                <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--text-muted, #64748b)', lineHeight: '1.45' }}>
+                  {cat.desc}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSupportInitialCategory(cat.id);
+                  setShowSupportModal(true);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: cat.color,
+                  fontWeight: 700,
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginTop: '4px',
+                }}
+              >
+                Report an Issue <FaArrowRight size={10} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Live Support Requests Tracker */}
+        <div style={{
+          background: 'var(--bg-card, #ffffff)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '20px',
+          padding: '24px 28px',
+          marginBottom: '32px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(37, 99, 235, 0.1)',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+              }}>
+                <FaLifeRing />
+              </div>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
+                My Support Requests
+              </h2>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '12px',
+                background: 'var(--bg-secondary, #f1f5f9)',
+                color: 'var(--text-secondary, #475569)',
+              }}>
+                {supportTicketsList.length} total
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSupportInitialCategory('download_seb');
+                setShowSupportModal(true);
+              }}
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--border-color, #cbd5e1)',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                color: 'var(--text-main, #0f172a)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <FaCommentDots /> New Request
+            </button>
+          </div>
+
+          {supportTicketsList.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '48px 24px',
+              background: 'var(--bg-secondary, #f8fafc)',
+              borderRadius: '14px',
+              border: '1px dashed var(--border-color, #cbd5e1)',
+            }}>
+              <FaHeadset style={{ fontSize: '36px', color: '#94a3b8', marginBottom: '12px' }} />
+              <p style={{ margin: 0, fontWeight: 700, fontSize: '14px', color: 'var(--text-main, #1e293b)' }}>
+                No support tickets submitted yet
+              </p>
+              <p style={{ margin: '4px 0 16px', fontSize: '12.5px', color: 'var(--text-muted, #64748b)' }}>
+                Have questions about SEED-SEB, Android Widget, or exams? We are here to help.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSupportInitialCategory('download_seb');
+                  setShowSupportModal(true);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  padding: '9px 18px',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Create Support Request
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {supportTicketsList.map((ticket) => {
+                const st = TICKET_STATUSES[ticket.status] || TICKET_STATUSES.OPEN;
+                const dateStr = ticket.createdAt instanceof Date ? ticket.createdAt.toLocaleString() : 'Recently';
+
+                return (
+                  <div
+                    key={ticket.id}
+                    style={{
+                      background: 'var(--bg-primary, #ffffff)',
+                      border: '1px solid var(--border-color, #e2e8f0)',
+                      borderRadius: '14px',
+                      padding: '18px 20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          background: 'var(--bg-secondary, #f1f5f9)',
+                          color: 'var(--text-secondary, #334155)',
+                          letterSpacing: '0.5px',
+                        }}>
+                          {ticket.ticketNumber || ticket.id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted, #64748b)', fontWeight: 500 }}>
+                          {ticket.categoryLabel || ticket.category}
+                        </span>
+                        <span style={{
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          padding: '2px 7px',
+                          borderRadius: '6px',
+                          background: ticket.priority === 'CRITICAL' ? '#fee2e2' : ticket.priority === 'HIGH' ? '#fef3c7' : '#f1f5f9',
+                          color: ticket.priority === 'CRITICAL' ? '#b91c1c' : ticket.priority === 'HIGH' ? '#b45309' : '#475569',
+                        }}>
+                          {ticket.priority} Priority
+                        </span>
+                      </div>
+
+                      <span style={{
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        background: st.bg,
+                        color: st.color,
+                      }}>
+                        {st.label}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>
+                        {ticket.subject}
+                      </h4>
+                      <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary, #475569)', lineHeight: '1.5' }}>
+                        {ticket.description}
+                      </p>
+                    </div>
+
+                    {/* Admin resolution note callout */}
+                    {ticket.resolutionNotes && (
+                      <div style={{
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        color: '#166534',
+                        fontSize: '13px',
+                        lineHeight: '1.5',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, marginBottom: '3px' }}>
+                          <FaCheckCircle style={{ color: '#10b981' }} /> Admin Resolution Response:
+                        </div>
+                        <div>{ticket.resolutionNotes}</div>
+                      </div>
+                    )}
+
+                    {/* Live Chat Action / Status Bar */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      background: ticket.chatEnabled ? 'rgba(59, 130, 246, 0.07)' : 'var(--bg-secondary, #f8fafc)',
+                      border: ticket.chatEnabled ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid var(--border-color, #e2e8f0)',
+                      fontSize: '12px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FaCommentDots style={{ color: ticket.chatEnabled ? '#2563eb' : 'var(--text-muted, #94a3b8)', fontSize: '14px' }} />
+                        {ticket.chatEnabled ? (
+                          <span style={{ color: '#1e40af', fontWeight: 600 }}>
+                            {ticket.status === 'CLOSED' || ticket.status === 'closed'
+                              ? 'Live chat concluded (Archived)'
+                              : 'Support Staff initiated Live Chat'}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted, #64748b)' }}>
+                            Live chat not initiated yet. (Activated by staff when needed)
+                          </span>
+                        )}
+                      </div>
+
+                      {ticket.chatEnabled && (
+                        <button
+                          onClick={() => setChatTicket(ticket)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: ticket.status === 'CLOSED' || ticket.status === 'closed' ? '#64748b' : '#2563eb',
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            fontSize: '11.5px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}
+                        >
+                          <FaCommentDots size={11} />
+                          {ticket.status === 'CLOSED' || ticket.status === 'closed' ? 'View Chat History' : 'Open Live Chat'}
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-muted, #94a3b8)', borderTop: '1px solid var(--border-color, #f1f5f9)', paddingTop: '10px' }}>
+                      <span>Platform: {ticket.platform || 'seed-seb'} • Version: {ticket.appVersion || '1.0.4'}</span>
+                      <span>Submitted on {dateStr}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* FAQ Troubleshooting Accordion */}
+        <div style={{
+          background: 'var(--bg-card, #ffffff)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '20px',
+          padding: '24px 28px',
+        }}>
+          <h2 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: 800, color: 'var(--text-main, #0f172a)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FaQuestionCircle style={{ color: '#2563eb' }} /> Frequently Asked Questions
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
+            {[
+              {
+                q: 'How do I run SEED-SEB if Windows SmartScreen flags it?',
+                a: 'Click "More info" on the blue Windows dialog, then click "Run anyway". SEED-SEB requires elevated privileges to create the secure lockdown kiosk.',
+              },
+              {
+                q: 'Why does SEED-SEB notify me about multiple monitors?',
+                a: 'For exam integrity, secondary external displays must be unplugged or detached before the proctored browser can lock the screen.',
+              },
+              {
+                q: 'How do I add the SEED-IT Widget on Android?',
+                a: 'After installing the APK, long-press any empty space on your home screen, select "Widgets", locate "SEED-IT Tracker", and drag it to your screen.',
+              },
+              {
+                q: 'What happens if my connection drops during an exam?',
+                a: 'SEED-SEB features offline auto-recovery. Your answers are cached securely locally and automatically re-synced as soon as connectivity resumes.',
+              },
+            ].map((faq, idx) => (
+              <div key={idx} style={{
+                background: 'var(--bg-secondary, #f8fafc)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid var(--border-color, #e2e8f0)',
+              }}>
+                <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-main, #0f172a)', marginBottom: '6px' }}>
+                  {faq.q}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary, #475569)', lineHeight: '1.45' }}>
+                  {faq.a}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`}>
       {/* Welcome Quote Verification Popup (Commented out) */}
@@ -4095,27 +5684,27 @@ const StudentDashboard = () => {
           UNIFIED STREAMLINED ASSESSMENT LAUNCH MODAL
       ═══════════════════════════════════════════════════════════ */}
       {launchStep === 'modal' && selectedAssessment && (
-        <div className="lw-overlay" style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(6px)' }}>
-          <div className="lw-card" style={{ maxWidth: '640px', width: '100%', borderRadius: '18px', background: '#ffffff', color: '#0f172a', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)', border: '1px solid #e2e8f0', fontFamily: "'Inter', sans-serif" }}>
+        <div className="lw-overlay" style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)' }}>
+          <div className="lw-card" style={{ maxWidth: '640px', width: '100%', borderRadius: '18px', background: 'var(--bg-secondary, #ffffff)', color: 'var(--text-main, #0f172a)', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)', border: '1px solid var(--border-color, #e2e8f0)', fontFamily: "'Inter', sans-serif" }}>
 
             {/* Header with Badge, Title & Metadata */}
-            <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <span style={{ background: '#dcfce7', color: '#16a34a', fontWeight: '800', fontSize: '11px', padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                <span style={{ background: 'rgba(22, 163, 74, 0.12)', color: 'var(--accent-primary, #16a34a)', fontWeight: '800', fontSize: '11px', padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid rgba(22, 163, 74, 0.25)' }}>
                   {selectedAssessment.type?.toUpperCase() || 'ASSESSMENT'}
                 </span>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#334155', background: '#f1f5f9', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <FaClock style={{ color: '#6366f1' }} /> {selectedAssessment.duration} Mins
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main, #334155)', background: 'var(--bg-primary, #f1f5f9)', border: '1px solid var(--border-color, #e2e8f0)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <FaClock style={{ color: 'var(--accent-primary, #16a34a)' }} /> {selectedAssessment.duration} Mins
                   </span>
                   {selectedAssessment.proctored && (
-                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', background: '#e0f2fe', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <FaShieldAlt /> Monitored
                     </span>
                   )}
                 </div>
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '6px 0 0 0', letterSpacing: '-0.02em' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main, #0f172a)', margin: '6px 0 0 0', letterSpacing: '-0.02em' }}>
                 {selectedAssessment.name}
               </h2>
             </div>
@@ -4124,27 +5713,78 @@ const StudentDashboard = () => {
 
               {/* Access Passkey (if mandatory) */}
               {selectedAssessment.passkey ? (
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 18px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <FaLock style={{ color: '#6366f1', fontSize: '14px' }} />
-                    <span style={{ fontWeight: '700', fontSize: '0.92rem', color: '#0f172a' }}>Access Passkey</span>
-                    <span style={{ fontSize: '10.5px', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Required</span>
+                <div style={{
+                  background: 'var(--bg-primary, #f8fafc)',
+                  border: `1.5px solid ${passkeyError ? '#ef4444' : passkeyInput.trim() === selectedAssessment.passkey ? '#16a34a' : 'var(--border-color, #e2e8f0)'}`,
+                  borderRadius: '12px',
+                  padding: '16px 18px',
+                  transition: 'border-color 0.2s ease'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FaLock style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '14px' }} />
+                      <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main, #0f172a)' }}>Access Passkey</span>
+                      <span style={{ fontSize: '10.5px', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Required</span>
+                    </div>
+                    {selectedAssessment.passkey && passkeyInput.trim() === selectedAssessment.passkey && (
+                      <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FaCheckCircle /> Passkey Matched
+                      </span>
+                    )}
                   </div>
-                  <input
-                    type="password"
-                    ref={passkeyInputRef}
-                    placeholder="Enter instructor passkey to unlock..."
-                    value={passkeyInput}
-                    onChange={e => {
-                      setPasskeyInput(e.target.value);
-                      if (passkeyError) setPasskeyError("");
-                    }}
-                    onKeyDown={e => e.key === 'Enter' && handleUnifiedLaunch()}
-                    style={{ width: '100%', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
-                    disabled={isLaunching}
-                  />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input
+                      type={showPasskey ? "text" : "password"}
+                      ref={passkeyInputRef}
+                      placeholder="Enter instructor passkey to unlock..."
+                      value={passkeyInput}
+                      onChange={e => {
+                        setPasskeyInput(e.target.value);
+                        if (passkeyError) setPasskeyError("");
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleUnifiedLaunch();
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 42px 10px 14px',
+                        fontSize: '1rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color, #cbd5e1)',
+                        background: 'var(--bg-secondary, #ffffff)',
+                        color: 'var(--text-main, #0f172a)',
+                        outline: 'none',
+                        transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
+                      }}
+                      disabled={isLaunching}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasskey(!showPasskey)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted, #94a3b8)',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '15px'
+                      }}
+                      tabIndex={-1}
+                      title={showPasskey ? "Hide passkey" : "Show passkey"}
+                    >
+                      {showPasskey ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                   {passkeyError && (
-                    <div style={{ marginTop: '8px', padding: '6px 12px', fontSize: '0.84rem', color: '#ef4444', background: '#fef2f2', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ marginTop: '10px', padding: '7px 12px', fontSize: '0.84rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
                       <FaExclamationTriangle /> {passkeyError}
                     </div>
                   )}
@@ -4153,14 +5793,14 @@ const StudentDashboard = () => {
 
               {/* Instant System Status Badges */}
               <div>
-                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748b', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #64748b)', marginBottom: '8px' }}>
                   System Status
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
                   {/* Internet */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Internet</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Internet</span>
                       <FaWifi style={{ color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444' }}>
@@ -4169,9 +5809,9 @@ const StudentDashboard = () => {
                   </div>
 
                   {/* Camera / Mic */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Camera</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Camera</span>
                       <FaCamera style={{ color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b' }}>
@@ -4180,9 +5820,9 @@ const StudentDashboard = () => {
                   </div>
 
                   {/* Secure Shell */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Secure Shell</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Secure Shell</span>
                       <FaShieldAlt style={{ color: '#16a34a', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
@@ -4191,9 +5831,9 @@ const StudentDashboard = () => {
                   </div>
 
                   {/* Fullscreen */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>Fullscreen</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Fullscreen</span>
                       <FaExpand style={{ color: '#16a34a', fontSize: '13px' }} />
                     </div>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
@@ -4205,8 +5845,8 @@ const StudentDashboard = () => {
 
               {/* Assessment Section Breakdown */}
               {selectedAssessment.isMultiSection && selectedAssessment.sections?.length > 0 ? (
-                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#334155', marginBottom: '8px' }}>
+                <div style={{ background: 'var(--bg-primary, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #334155)', marginBottom: '8px' }}>
                     Sections Breakdown ({selectedAssessment.sections.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '110px', overflowY: 'auto' }}>
@@ -4216,16 +5856,16 @@ const StudentDashboard = () => {
                           <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
                             {idx + 1}
                           </span>
-                          <span style={{ color: '#0f172a', fontWeight: '700' }}>{sec.name}</span>
+                          <span style={{ color: 'var(--text-main, #0f172a)', fontWeight: '700' }}>{sec.name}</span>
                         </div>
-                        <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.84rem' }}>{sec.duration_minutes || sec.duration || 0} Mins &gt;</span>
+                        <span style={{ color: 'var(--text-muted, #64748b)', fontWeight: '600', fontSize: '0.84rem' }}>{sec.duration_minutes || sec.duration || 0} Mins &gt;</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#334155', marginBottom: '8px' }}>
+                <div style={{ background: 'var(--bg-primary, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #334155)', marginBottom: '8px' }}>
                     Sections Breakdown (1)
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem', padding: '4px 0' }}>
@@ -4233,19 +5873,19 @@ const StudentDashboard = () => {
                       <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
                         1
                       </span>
-                      <span style={{ color: '#0f172a', fontWeight: '700' }}>{selectedAssessment.name}</span>
+                      <span style={{ color: 'var(--text-main, #0f172a)', fontWeight: '700' }}>{selectedAssessment.name}</span>
                     </div>
-                    <span style={{ color: '#64748b', fontWeight: '600', fontSize: '0.84rem' }}>{selectedAssessment.duration} Mins &gt;</span>
+                    <span style={{ color: 'var(--text-muted, #64748b)', fontWeight: '600', fontSize: '0.84rem' }}>{selectedAssessment.duration} Mins &gt;</span>
                   </div>
                 </div>
               )}
 
               {/* Essential Rules */}
-              <div style={{ background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '10px', padding: '12px 16px' }}>
+              <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '10px', padding: '12px 16px' }}>
                 <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#d97706', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <FaExclamationTriangle /> Important Guidelines
                 </div>
-                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.83rem', color: '#78350f', lineHeight: '1.55' }}>
+                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.83rem', color: 'var(--text-muted, #78350f)', lineHeight: '1.55' }}>
                   <li>Fullscreen mode is enforced. Tab switching and window exits are strictly tracked.</li>
                   <li>The assessment timer runs continuously and will auto-submit when time expires.</li>
                   <li>This is a single-attempt session. Ensure your power adapter is plugged in.</li>
@@ -4255,7 +5895,7 @@ const StudentDashboard = () => {
             </div>
 
             {/* Footer Actions */}
-            <div style={{ padding: '16px 28px 20px', borderTop: '1px solid #f1f5f9', background: '#fafafa' }}>
+            <div style={{ padding: '16px 28px 20px', borderTop: '1px solid var(--border-color, #f1f5f9)', background: 'var(--bg-primary, #fafafa)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <button
                   type="button"
@@ -4266,9 +5906,9 @@ const StudentDashboard = () => {
                     fontSize: '0.92rem',
                     fontWeight: '600',
                     borderRadius: '8px',
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    color: '#334155',
+                    background: 'var(--bg-secondary, #ffffff)',
+                    border: '1px solid var(--border-color, #cbd5e1)',
+                    color: 'var(--text-main, #334155)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -4286,7 +5926,7 @@ const StudentDashboard = () => {
                     fontSize: '0.95rem',
                     fontWeight: '700',
                     borderRadius: '8px',
-                    background: '#16a34a',
+                    background: 'var(--accent-primary, #16a34a)',
                     color: '#ffffff',
                     border: 'none',
                     boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
@@ -4298,7 +5938,7 @@ const StudentDashboard = () => {
                 >
                   {isLaunching ? (
                     <>
-                      <span className="lw-mini-spinner" style={{ width: '15px', height: '15px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></span>
+                      <span className="lw-mini-spinner" style={{ width: '15px', height: '15px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#ffffff', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }}></span>
                       Starting Assessment...
                     </>
                   ) : (
@@ -4308,7 +5948,7 @@ const StudentDashboard = () => {
                   )}
                 </button>
               </div>
-              <div style={{ textAlign: 'center', color: '#64748b', fontSize: '11px', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted, #64748b)', fontSize: '11px', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                 <FaLock style={{ fontSize: '10px' }} /> Your activity will be monitored throughout this assessment.
               </div>
             </div>
@@ -4372,17 +6012,70 @@ const StudentDashboard = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <span className="header-search-shortcut-badge">⌘K</span>
+          <kbd className="header-search-shortcut-badge">Ctrl+K</kbd>
         </div>
 
         <div className="header-right-actions">
-          <button className="header-action-icon-btn" title="Notifications">
-            <FaBell />
-            <span className="header-notif-count-badge">3</span>
-          </button>
+          <div className="notif-center-wrapper">
+            <button
+              className="header-action-icon-btn"
+              title="Notifications"
+              onClick={() => setNotifPopoverOpen((prev) => !prev)}
+              aria-expanded={notifPopoverOpen}
+            >
+              <FaBell />
+              {unreadNotifCount > 0 && (
+                <span className="header-notif-count-badge">
+                  {unreadNotifCount > 99 ? "99+" : unreadNotifCount}
+                </span>
+              )}
+            </button>
+
+            <NotificationCenterPopover
+              isOpen={notifPopoverOpen}
+              onClose={() => setNotifPopoverOpen(false)}
+              notifications={notifications}
+              readIds={readNotifIds}
+              onMarkAsRead={handleMarkNotifAsRead}
+              onMarkAllAsRead={handleMarkAllNotifsAsRead}
+              onNavigate={(url) => {
+                setNotifPopoverOpen(false);
+                if (url.startsWith("/student/dashboard")) {
+                  const params = new URLSearchParams(url.split("?")[1] || "");
+                  const tab = params.get("tab");
+                  if (tab) setActiveTab(tab);
+                } else {
+                  navigate(url);
+                }
+              }}
+            />
+          </div>
+
           <button className="header-action-icon-btn" title="Settings" onClick={() => setActiveTab('settings')}>
             <FaCog />
           </button>
+          <div
+            className="header-gamification-pill"
+            onClick={() => {
+              setActiveTab('profile');
+              setProfileSubTab('info');
+            }}
+            title={`Level ${userLevelInfo.level}: ${userLevelInfo.levelTitle} · ${(totalXP || userLevelInfo?.totalXP || 0).toLocaleString()} XP · ${seedCredits.toLocaleString()} SC`}
+          >
+            <span className="hgp-level-badge">
+              LVL {userLevelInfo.level}
+            </span>
+            <span className="hgp-divider" />
+            <span className="hgp-stat">
+              <span className="hgp-val">{(totalXP || userLevelInfo?.totalXP || 0).toLocaleString()}</span>
+              <span className="hgp-unit xp">XP</span>
+            </span>
+            <span className="hgp-divider" />
+            <span className="hgp-stat">
+              <span className="hgp-val">{(seedCredits || 0).toLocaleString()}</span>
+              <span className="hgp-unit credits">SC</span>
+            </span>
+          </div>
           <div className="header-user-avatar-pill" onClick={() => setActiveTab('profile')}>
             <div className="header-user-avatar-circle">
               {name.charAt(0).toUpperCase()}
@@ -4405,6 +6098,28 @@ const StudentDashboard = () => {
               >
                 <FaThLarge />
                 {!collapsed && <span>Dashboard</span>}
+              </button>
+              <button
+                className={`sidebar-nav-pill ${activeTab === "my-learning" ? "active" : ""}`}
+                onClick={() => {
+                  setSelectedLearningCourse(null);
+                  setCollapsed(false);
+                  setActiveTab("my-learning");
+                }}
+              >
+                <FaGraduationCap />
+                {!collapsed && <span>My Learning</span>}
+              </button>
+              <button
+                className={`sidebar-nav-pill ${activeTab === "courses" ? "active" : ""}`}
+                onClick={() => {
+                  setSelectedLearningCourse(null);
+                  setCollapsed(false);
+                  setActiveTab("courses");
+                }}
+              >
+                <FaBookOpen />
+                {!collapsed && <span>Courses</span>}
               </button>
               <button
                 className={`sidebar-nav-pill ${activeTab === "assessments" ? "active" : ""}`}
@@ -4431,6 +6146,13 @@ const StudentDashboard = () => {
                 <FaUser />
                 {!collapsed && <span>Profile</span>}
               </button>
+              <button
+                className={`sidebar-nav-pill ${activeTab === "support" ? "active" : ""}`}
+                onClick={() => setActiveTab("support")}
+              >
+                <FaHeadset />
+                {!collapsed && <span>Help &amp; Support</span>}
+              </button>
               {isAiInterviewAllowed && (
                 <button
                   className={`sidebar-nav-pill ${activeTab === "ai-interview" ? "active" : ""}`}
@@ -4451,26 +6173,7 @@ const StudentDashboard = () => {
 
             {!collapsed && (
               <div className="sidebar-widgets-section">
-                {/* ── 1. SEED Credits Card (Commented out) ── */}
-                {/*
-                <div
-                  className="sidebar-credits-card"
-                  onClick={() => toast.info('SEED Credits: Earn credits by practicing problems and completing daily goals!')}
-                  title="SEED Credits balance"
-                >
-                  <div className="credits-icon-box">
-                    <div className="gold-coin-circle">S</div>
-                  </div>
-                  <div className="credits-info-col">
-                    <span className="credits-card-title">SEED Credits</span>
-                    <span className="credits-card-val">{(seedCredits || 2450).toLocaleString()}</span>
-                    <span className="credits-daily-badge">+{todayCreditsGained || 120} today</span>
-                  </div>
-                  <FaChevronRight className="credits-arrow-icon" />
-                </div>
-                */}
-
-                {/* ── 2. Today's Goal Card (Automated 3 Regular Tasks) ── */}
+                {/* ── Today's Goal Card (Automated 3 Regular Tasks) ── */}
                 <div className="sidebar-goals-card">
                   <div className="goals-card-header">
                     <span className="goals-title">Today's Goal</span>
@@ -4509,28 +6212,37 @@ const StudentDashboard = () => {
                         className={`goal-checkbox-row ${goal.completed ? 'completed' : ''}`}
                         onClick={() => {
                           if (goal.completed) {
-                            toast.success(`✓ "${goal.title}" is completed for today!`);
+                            toast.success(`"${goal.title}" completed for today! (+${goal.xp || 30} XP · +${goal.credits || 10} Credits)`);
                           } else {
-                            toast.info(`"${goal.title}" progress: ${goal.current || 0}/${goal.target || 1}. Complete it in Practice Bank!`);
+                            toast.info(`"${goal.title}" progress: ${goal.current || 0}/${goal.target || 1}. Complete it in Practice Bank! Reward: +${goal.xp || 30} XP · +${goal.credits || 10} Credits`);
                             setPracticeInitialTab('bank');
                             setPracticeInitialCourse(null);
                             setActiveTab('practice');
                           }
                         }}
-                        title={goal.completed ? 'Goal completed today' : `Automated goal (${goal.current || 0}/${goal.target || 1}) — click to practice`}
+                        title={goal.completed ? `Goal completed today (+${goal.xp || 30} XP · +${goal.credits || 10} Credits)` : `Automated goal (${goal.current || 0}/${goal.target || 1}) — click to practice (+${goal.xp || 30} XP · +${goal.credits || 10} Credits)`}
                         style={{ cursor: 'pointer' }}
                       >
                         <div className={`goal-check-circle ${goal.completed ? 'checked' : ''}`}>
                           {goal.completed ? <FaCheck /> : null}
                         </div>
-                        <span className="goal-item-label">{goal.title} {goal.displayProgress ?? ''}</span>
+                        <div className="goal-item-content">
+                          <span className="goal-item-label">{goal.title} {goal.displayProgress ?? ''}</span>
+                          <span className="goal-reward-tag">+{goal.xp || 30} XP · +{goal.credits || 10} Credits</span>
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  {dailyGoals.length > 0 && dailyGoals.every(g => g.completed) && (
+                  {(user?.lastStreakDate === new Date().toISOString().split('T')[0] || (dailyGoals.length > 0 && dailyGoals.some(g => (g.type === 'difficulty' || g.type === 'solve') && g.completed)) || (dailyGoals.length > 0 && dailyGoals.every(g => g.completed))) && (
                     <div className="streak-approved-badge">
-                      <FaFire style={{ color: '#f59e0b' }} /> Streak Approved for Today!
+                      <FaFire style={{ color: '#f59e0b' }} /> {userStreak} Day Streak Active!
+                    </div>
+                  )}
+
+                  {dailyGoals.length > 0 && dailyGoals.every(g => g.completed) && (
+                    <div className="all-goals-bonus-badge">
+                      <FaTrophy style={{ marginRight: '6px' }} /> All 3 Done: +100 XP Bonus!
                     </div>
                   )}
                 </div>
@@ -4548,13 +6260,98 @@ const StudentDashboard = () => {
 
         <main className="dashboard-main">
           {activeTab === "dashboard" ? renderDashboardHome() :
+            activeTab === "my-learning" ? (
+              selectedLearningCourse ? (
+                <CourseLearningPlayer 
+                  course={selectedLearningCourse} 
+                  initialView={courseInitialView}
+                  onExit={() => {
+                    setSelectedLearningCourse(null);
+                    setCourseInitialView('OVERVIEW');
+                    setCollapsed(false);
+                  }} 
+                  user={user} 
+                />
+              ) : (
+                <MyLearningDashboard 
+                  onOpenCourse={(c, view = 'CLASS') => {
+                    setSelectedLearningCourse(c);
+                    setCourseInitialView(view);
+                    setCollapsed(true);
+                  }} 
+                  onExploreCourses={() => setActiveTab("courses")} 
+                  user={user}
+                  totalXP={totalXP || userLevelInfo?.totalXP || 0}
+                  seedCredits={seedCredits}
+                  userLevelInfo={userLevelInfo}
+                />
+              )
+            ) :
+            activeTab === "courses" ? (
+              selectedLearningCourse ? (
+                <CourseLearningPlayer 
+                  course={selectedLearningCourse} 
+                  initialView={courseInitialView}
+                  onExit={() => {
+                    setSelectedLearningCourse(null);
+                    setCourseInitialView('OVERVIEW');
+                    setCollapsed(false);
+                  }} 
+                  user={user} 
+                />
+              ) : (
+                <CourseCatalog 
+                  onStartCourse={(c, view = 'OVERVIEW') => { 
+                    setSelectedLearningCourse(c); 
+                    setCourseInitialView(view);
+                    setCollapsed(true);
+                  }} 
+                  user={user}
+                  totalXP={totalXP || userLevelInfo?.totalXP || 0}
+                  seedCredits={seedCredits}
+                  userLevelInfo={userLevelInfo}
+                />
+              )
+            ) :
             activeTab === "assessments" ? renderAssessments() :
-              activeTab === "practice" ? <PracticeHome initialTab={practiceInitialTab} initialCourse={practiceInitialCourse} /> :
-                activeTab === "settings" ? renderSettings() :
-                  activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
-                    renderProfile()}
+              activeTab === "practice" ? (
+                <PracticeHome 
+                  initialTab={practiceInitialTab} 
+                  initialCourse={practiceInitialCourse} 
+                  user={user}
+                  totalXP={totalXP || userLevelInfo?.totalXP || 0}
+                  seedCredits={seedCredits}
+                  userLevelInfo={userLevelInfo}
+                />
+              ) :
+                activeTab === "support" ? renderHelpAndSupport() :
+                  activeTab === "settings" ? renderSettings() :
+                    activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
+                      renderProfile()}
         </main>
       </div>
+
+      {/* Support & Documentation Modals */}
+      <SupportTicketModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        user={user}
+        initialCategory={supportInitialCategory}
+      />
+      <SupportTicketChatModal
+        isOpen={Boolean(chatTicket)}
+        onClose={() => setChatTicket(null)}
+        ticket={chatTicket}
+        currentUser={user}
+      />
+      <DocumentationModal
+        isOpen={showDocModal}
+        onClose={() => setShowDocModal(false)}
+      />
+      <AuthenticityModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
 
       {/* Logout animation screen */}
       {showLogoutAnimation && (

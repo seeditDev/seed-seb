@@ -11,10 +11,15 @@ import desktopBridge from './desktopBridge';
 
 // ─── 3 Standard Regular Daily Goals to Achieve Streak ────────────────
 export const REGULAR_DAILY_GOALS = [
-  { id: 'goal_easy_1', title: 'Solve 1 Easy Problem', target: 1, type: 'difficulty', difficulty: 'Easy', points: 30 },
-  { id: 'goal_medium_1', title: 'Solve 1 Medium Problem', target: 1, type: 'difficulty', difficulty: 'Medium', points: 40 },
-  { id: 'goal_time_15', title: 'Spend 15 mins in portal', target: 15, type: 'time', points: 30 }
+  { id: 'goal_easy_1', title: 'Solve 1 Easy Problem', target: 1, type: 'difficulty', difficulty: 'Easy', xp: 40, credits: 10, points: 40 },
+  { id: 'goal_medium_1', title: 'Solve 1 Medium Problem', target: 1, type: 'difficulty', difficulty: 'Medium', xp: 70, credits: 20, points: 70 },
+  { id: 'goal_time_15', title: 'Spend 15 mins in portal', target: 15, type: 'time', xp: 30, credits: 10, points: 30 }
 ];
+
+export const ALL_GOALS_COMPLETION_BONUS = {
+  xp: 100,
+  credits: 50
+};
 
 export const DAILY_GOALS_POOL = REGULAR_DAILY_GOALS;
 
@@ -88,7 +93,7 @@ export const loadUserDailyGoals = async (uid) => {
 /**
  * Saves daily goals & streak & credits to LocalStorage, Local Profile Folder, and Firestore.
  */
-export const saveUserDailyGoals = async (uid, dateStr, goals, streakOverride = null, creditsOverride = null) => {
+export const saveUserDailyGoals = async (uid, dateStr, goals, streakOverride = null, creditsOverride = null, xpOverride = null, levelOverride = null) => {
   if (!goals) return;
   const todayStr = dateStr || new Date().toISOString().split('T')[0];
   const payload = {
@@ -120,7 +125,11 @@ export const saveUserDailyGoals = async (uid, dateStr, goals, streakOverride = n
       };
       if (streakOverride !== null) updateData.streak = streakOverride;
       if (creditsOverride !== null) updateData.seedCredits = creditsOverride;
-      if (payload.allCompleted) updateData.lastStreakDate = todayStr;
+      if (xpOverride !== null) updateData.totalXP = xpOverride;
+      if (levelOverride !== null) updateData.level = levelOverride;
+      if (payload.allCompleted || (goals && goals.some(g => (g.type === 'difficulty' || g.type === 'solve') && g.completed))) {
+        updateData.lastStreakDate = todayStr;
+      }
 
       await updateDoc(userRef, updateData).catch(async () => {
         // If updateDoc fails (e.g. document does not exist yet), try setDoc with merge
@@ -131,4 +140,12 @@ export const saveUserDailyGoals = async (uid, dateStr, goals, streakOverride = n
       console.warn('[dailyGoalsPool] Firestore update error:', err.message);
     }
   }
+};
+
+/**
+ * Helper to check if daily streak is achieved today.
+ * Rule: Solving at least 1 problem for the day achieves the daily streak.
+ */
+export const isStreakAchievedToday = (todaySolvedCount) => {
+  return typeof todaySolvedCount === 'number' && todaySolvedCount >= 1;
 };

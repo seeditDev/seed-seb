@@ -28,6 +28,7 @@ import SpokenEnglishAssessment from './SpokenEnglishAssessment';
 import timeService from '../services/timeService';
 import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
+import { ProblemImage } from './common/ProblemMarkdownRenderer';
 import { normalizeTestCaseArray } from '../utils/testCaseUtils';
 import SecurityWatermark from './SecurityWatermark';
 import { requireTenant, resolveTenant } from '../utils/tenant';
@@ -82,9 +83,10 @@ const isTruthy = (val) => {
 /**
  * Normalises a raw coding question from JSON into the internal schema.
  */
-const normalizeQuestion = (q) => {
+const normalizeQuestion = (q, idx = 0) => {
   if (!q) return q;
-  const id = q.questionId || (q.id ?? '');
+  const rawId = q.questionId || q.id || q.challengeId || q._id;
+  const id = String(rawId !== undefined && rawId !== null && String(rawId).trim() !== '' ? rawId : `q_${idx}`).trim();
   const title = q.title || q.name || (q.content?.title ?? '');
   const description = q.content?.problemStatement || q.description || (q.problemStatement ?? '');
   const instructions = q.content?.inputFormat || (q.instructions ?? '');
@@ -105,19 +107,23 @@ const normalizeQuestion = (q) => {
 
   const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
 
-  const rawBoilerplates = q.boilerPlates ?? q.boilerplates ?? {};
+  const rawBoilerplates = {
+    ...(q.content?.boilerPlates || {}),
+    ...(q.content?.boilerplates || {}),
+    ...(q.boilerplates || {}),
+    ...(q.boilerPlates || {})
+  };
   const boilerPlates = {};
 
   Object.entries(rawBoilerplates).forEach(([lang, val]) => {
-    if (!VALID_LANG_NAMES.has(String(lang).trim().toLowerCase())) return;
+    const clean = String(lang).trim().toLowerCase();
+    if (!VALID_LANG_NAMES.has(clean) && !VALID_LANG_NAMES.has(clean.replace(/[^a-z0-9]/g, ''))) return;
     if (typeof val !== 'string') return;
     const norm = getNormalizedLangKey(lang);
-    if (norm === 'python') {
-      boilerPlates.python = val;
-      boilerPlates.python3 = val;
-    } else {
-      boilerPlates[norm] = val;
-    }
+    boilerPlates[norm] = val;
+    if (norm === 'cpp') boilerPlates['c++'] = val;
+    if (norm === 'python') boilerPlates.python3 = val;
+    if (norm === 'javascript') boilerPlates.js = val;
   });
 
   const testCases = normalizeTestCaseArray(q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || q.testCases?.sample || []);
@@ -132,6 +138,7 @@ const normalizeQuestion = (q) => {
   return {
     ...q,
     id,
+    questionId: id,
     title,
     description,
     instructions,
@@ -560,6 +567,14 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
                   <span>{formatSecs(timeSpentPerQ[idx] || 0)}</span>
                 </div>
                 <div className="mcq-review-question">{renderTextWithCode(rq.question)}</div>
+                {(rq.imageUrl || rq.image || rq.figure || rq.diagram || rq.questionImage || rq.assetUrl || rq.content?.imageUrl || rq.content?.image) && (
+                  <div className="mcq-review-image" style={{ margin: '8px 0', maxWidth: '320px' }}>
+                    <ProblemImage 
+                      src={rq.imageUrl || rq.image || rq.figure || rq.diagram || rq.questionImage || rq.assetUrl || rq.content?.imageUrl || rq.content?.image} 
+                      alt={`Question ${idx + 1} Illustration`} 
+                    />
+                  </div>
+                )}
                 <div className="mcq-review-answer">
                   Your answer: {answers[idx] !== undefined ? rq.options[answers[idx]] : <span className="text-muted">Not answered</span>}
                 </div>
@@ -677,6 +692,16 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
                   <span className="mcq-q-num-badge">Q{questionIndex + 1}.</span>
                   <span className="mcq-q-content">{renderTextWithCode(q.question)}</span>
                 </div>
+
+                {/* Render question illustration if present on question object */}
+                {(q.imageUrl || q.image || q.figure || q.diagram || q.questionImage || q.assetUrl || q.content?.imageUrl || q.content?.image) && (
+                  <div className="mcq-q-image-container" style={{ margin: '14px 0', textAlign: 'center' }}>
+                    <ProblemImage 
+                      src={q.imageUrl || q.image || q.figure || q.diagram || q.questionImage || q.assetUrl || q.content?.imageUrl || q.content?.image} 
+                      alt={q.imageAlt || `Question ${questionIndex + 1} Illustration`} 
+                    />
+                  </div>
+                )}
 
                 <div className="mcq-ref-options-stack">
                   {q.options?.map((opt, oIdx) => {
@@ -2191,7 +2216,7 @@ const MultiSectionAssessment = () => {
           // Transition attempt to FAILED_RECOVERABLE so resume/retry is possible
           transitionAttemptState(assessment?.id, ATTEMPT_STATES.FAILED_RECOVERABLE).catch(() => { });
           toast.error(
-            '⚠️ Submission pending — no network. Your answers are saved locally and will sync automatically when you reconnect. Do not close this window.',
+            'Submission pending — no network. Your answers are saved locally and will sync automatically when you reconnect. Do not close this window.',
             { duration: 12000 }
           );
           // Early return: student stays on page, not navigated away
@@ -2267,10 +2292,22 @@ const MultiSectionAssessment = () => {
 
   if (loading || !assessment) {
     return (
-      <div className="msa-loading">
+      <div className="seb-boot">
         <SecurityWatermark email={user?.email} />
-        <div className="msa-spinner" />
-        <p>Loading multi-section exam environment...</p>
+        <div className="seb-boot__brand">
+          <div className="seb-boot__spinner-ring"></div>
+          <div className="seb-boot__logo-wrapper">
+            <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
+          </div>
+        </div>
+        <div className="seb-boot__title">SEED-IT Examination Environment</div>
+        <div className="seb-boot__status">
+          <span className="seb-boot__dot"></span>
+          <span>Loading multi-section exam environment...</span>
+        </div>
+        <div className="seb-boot__progress-bar">
+          <div className="seb-boot__progress-fill"></div>
+        </div>
       </div>
     );
   }
@@ -2442,101 +2479,64 @@ const MultiSectionAssessment = () => {
           />
         )}
         {sectionView}
-        {/* Pre-section countdown overlay */}
+        {/* Pre-section countdown overlay (SEB Boot Branded Theme) */}
         {sectionCountdown !== null && (() => {
           const activeSec = assessment?.sections?.[countdownSecIdx];
           const qList = activeSec ? (sectionData[activeSec.sectionId]?.questions || sectionData[activeSec.id]?.questions || sectionData[activeSec.name]?.questions || sectionData[activeSec.slug]?.questions || sectionData[String(countdownSecIdx)]?.questions) : null;
           const questionsLoaded = Array.isArray(qList) && qList.length > 0;
           return (
-            <div style={{
-              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-              background: 'var(--bg-primary)',
-              color: 'var(--text-main)', display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center', zIndex: 99999, fontFamily: "'Inter',sans-serif"
-            }}>
-              <div style={{ textAlign: 'center', maxWidth: '500px', padding: '20px' }}>
-                <div className="msa-spinner" style={{ width: '60px', height: '60px', borderTopColor: 'var(--accent-coding)', margin: '0 auto 24px' }} />
-                <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '8px', color: 'var(--accent-coding)', letterSpacing: '-0.02em' }}>
-                  Preparing Section Workspace...
-                </h2>
-                {assessment?.name && (
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '6px' }}>
-                    {assessment.name}
-                  </p>
-                )}
-                <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '24px', lineHeight: '1.6' }}>
-                  Entering Section: <strong style={{ color: 'var(--text-main)' }}>{assessment?.sections?.[countdownSecIdx]?.name}</strong>.
-                  <br />Loading questions and preparing environment.
-                </p>
-
-                {/* Status indicators */}
-                <div style={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  padding: '16px 20px',
-                  marginBottom: '24px',
-                  textAlign: 'left',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Section Questions:</span>
-                    <span style={{ fontWeight: '600', color: questionsLoaded ? '#10b981' : '#f59e0b' }}>
-                      {questionsLoaded ? 'Loaded ' : 'Fetching questions...'}
-                    </span>
-                  </div>
-                  {shouldUseProctoring && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Camera Proctoring:</span>
-                      <span style={{ fontWeight: '600', color: isVisualProctorReady ? '#10b981' : '#f59e0b' }}>
-                        {isVisualProctorReady ? 'Ready ' : 'Initializing AI & models...'}
-                      </span>
-                    </div>
-                  )}
-                  {shouldUseAudioProctoring && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Microphone Proctoring:</span>
-                      <span style={{ fontWeight: '600', color: isAudioProctorReady ? '#10b981' : '#f59e0b' }}>
-                        {isAudioProctorReady ? 'Ready ' : 'Requesting mic permission...'}
-                      </span>
-                    </div>
-                  )}
+            <div className="seb-boot" style={{ zIndex: 99999 }}>
+              <div className="seb-boot__brand">
+                <div className="seb-boot__spinner-ring"></div>
+                <div className="seb-boot__logo-wrapper">
+                  <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
                 </div>
-
-                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px 32px', display: 'inline-block' }}>
-                  <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: '700' }}>
-                    {sectionCountdown <= 0 ? 'Waiting for resources...' : 'Section Starts In'}
-                  </div>
-                  <div style={{ fontSize: '3.5rem', fontWeight: '900', color: 'var(--text-main)', fontFamily: 'monospace', lineHeight: '1' }}>
+              </div>
+              <div className="seb-boot__title">
+                {activeSec?.name ? `Entering ${activeSec.name}` : 'Preparing Section Workspace...'}
+              </div>
+              {assessment?.name && (
+                <div style={{ color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '14px' }}>
+                  {assessment.name} · Section {countdownSecIdx + 1} of {assessment?.sections?.length || 1}
+                </div>
+              )}
+              <div className="seb-boot__status">
+                <span className="seb-boot__dot"></span>
+                <span>
+                  {questionsLoaded ? 'Environment ready · Starting in ' : 'Configuring workspace · Starting in '}
+                  <strong style={{ color: '#0f172a', fontFamily: 'monospace', fontSize: '15px' }}>
                     {sectionCountdown > 0 ? `${sectionCountdown}s` : '0s'}
-                  </div>
-                </div>
+                  </strong>
+                </span>
+              </div>
+              <div className="seb-boot__progress-bar" style={{ width: '240px' }}>
+                <div className="seb-boot__progress-fill"></div>
               </div>
             </div>
           );
         })()}
-        {/* Global Submitting Overlay */}
+        {/* Global Submitting Overlay (SEB Boot Branded Theme) */}
         {isSubmittingEntireExam && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-            background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            zIndex: 99999, color: 'white', fontFamily: "'Inter', sans-serif"
-          }}>
-            <div style={{
-              background: 'rgba(30, 41, 59, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px', padding: '36px 48px', textAlign: 'center', maxWidth: '460px',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-            }}>
-              <div className="learn-spinner" style={{ width: '48px', height: '48px', borderTopColor: '#6366f1', margin: '0 auto 20px' }} />
-              <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px', color: '#f8fafc' }}>Submitting Assessment...</h3>
-              <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5', margin: 0 }}>
-                Evaluating test responses, compiling score metrics, and syncing with the secure server. Please do not close the window.
-              </p>
+          <div className="seb-boot" style={{ zIndex: 99999 }}>
+            <div className="seb-boot__brand">
+              <div className="seb-boot__spinner-ring"></div>
+              <div className="seb-boot__logo-wrapper">
+                <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
+              </div>
             </div>
+            <div className="seb-boot__title">
+              Submitting Assessment Results...
+            </div>
+            <div className="seb-boot__status">
+              <span className="seb-boot__dot"></span>
+              <span>Evaluating test responses, compiling score metrics, and syncing with the secure server.</span>
+            </div>
+            <div className="seb-boot__progress-bar" style={{ width: '240px' }}>
+              <div className="seb-boot__progress-fill"></div>
+            </div>
+            <p style={{ color: '#64748b', fontSize: '0.88rem', marginTop: '16px', maxWidth: '420px', textAlign: 'center', lineHeight: 1.5 }}>
+              Please do not refresh, exit, or close this window while final submission is in progress.
+            </p>
           </div>
         )}
       </>

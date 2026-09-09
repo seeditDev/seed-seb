@@ -19,8 +19,10 @@ export const COLLECTIONS = {
     LIVE_PRESENCE: 'livePresence',
     PROCTORING_LOGS: 'proctoringLogs',
     SYSTEM_CONFIG: 'systemConfig',
-    // ── New centralized course schema (Admin Portal v3) ──
+    // ── New centralized course schema (Admin Portal v3 - Assessment Tab) ──
     COURSES: 'courses',                   // courses/{courseId}/series/{seriesId}/tests/{testId}
+    // ── Interactive Learning Curriculum Catalog & Student Course Metadata ──
+    REAL_COURSES: 'realCourses',           // realCourses/{courseId}
     CONTENT_URLS: 'contentUrls',          // CDN URL registry populated by MCQ/Coding/SEA creators
     QUESTION_BANK: 'questionBank',        // MCQ question bank (QBCategory: custom etc.)
     CODING_CHALLENGES_BANK: 'codingChallenges', // Coding challenge bank

@@ -9,6 +9,7 @@ import { saveSolution } from '../services/userSolutionsService';
 import { getAuthData } from '../utils/storageUtils';
 import { isTestCasePassed } from '../utils/testCaseUtils';
 import { toast } from 'sonner';
+import ProblemMarkdownRenderer from './common/ProblemMarkdownRenderer';
 import '../styles/PracticeSandbox.css';
 
 const FREE_BOILERPLATES = {
@@ -858,7 +859,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
     <div className="psb-root">
       {/* Header */}
       <div className="psb-header">
-        <button className="psb-back-btn" onClick={() => navigate('/student/dashboard', { state: { tab: 'practice' } })}>Home</button>
+        <button className="psb-back-btn" onClick={() => navigate('/student/dashboard', { state: { tab: 'practice', practiceTab: 'bank' } })}>Home</button>
         <button className="psb-back-btn" onClick={() => navigate(-1)}>← Back</button>
 
         {/* Toggle Sidebar Button */}
@@ -999,26 +1000,18 @@ const isCodeBlankOrEmpty = (codeStr) => {
                   </div>
 
                   <div className="psb-section-label">Problem Statement</div>
-                  <div className="psb-problem-text">{question.content?.problemStatement}</div>
+                  <ProblemMarkdownRenderer content={question.content?.problemStatement} />
 
                   <div className="psb-section-label">Input Format</div>
-                  <div className="psb-problem-text">{question.content?.inputFormat ?? ''}</div>
+                  <ProblemMarkdownRenderer content={question.content?.inputFormat} />
 
                   <div className="psb-section-label">Output Format</div>
-                  <div className="psb-problem-text">{question.content?.outputFormat || 'Print standard output.'}</div>
+                  <ProblemMarkdownRenderer content={question.content?.outputFormat || 'Print standard output.'} />
 
                   {question.content?.constraints && (
                     <>
                       <div className="psb-section-label">Constraints</div>
-                      {Array.isArray(question.content.constraints) ? (
-                        question.content.constraints.length > 0 && (
-                          <ul className="psb-constraints-list">
-                            {question.content.constraints.map((c, i) => <li key={i}>{c}</li>)}
-                          </ul>
-                        )
-                      ) : (
-                        <div className="psb-problem-text">{String(question.content.constraints)}</div>
-                      )}
+                      <ProblemMarkdownRenderer content={question.content.constraints} />
                     </>
                   )}
 
@@ -1037,7 +1030,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                       </div>
                       {s.explanation && (
                         <div className="psb-sample-explanation">
-                          <strong>Explanation:</strong> {s.explanation}
+                          <strong>Explanation:</strong> <ProblemMarkdownRenderer content={s.explanation} />
                         </div>
                       )}
                     </div>
@@ -1050,7 +1043,7 @@ const isCodeBlankOrEmpty = (codeStr) => {
                     question.solution?.approach ? (
                       <>
                         <div className="psb-section-label">Approach</div>
-                        <div className="psb-problem-text">{question.solution.approach}</div>
+                        <ProblemMarkdownRenderer content={question.solution.approach} />
                         <div className="psb-section-label">Complexity</div>
                         <div className="psb-problem-text">
                           Time Complexity: <code>{question.solution.timeComplexity ?? ''}</code>
