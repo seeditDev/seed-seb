@@ -35,6 +35,7 @@ export function buildResultDoc({
   sections = [],
   questions = [],
   codingSubmissions = [],
+  questionTiming = {},
   proctoring = {},
   speech = {},
   appVersion = '1.0.4',
@@ -103,6 +104,7 @@ export function buildResultDoc({
     startedAt:        startedAt,
     submittedAt:      submittedAt,
     timeTakenSeconds: timeTakenSeconds,
+    questionTiming:   (questionTiming && typeof questionTiming === 'object') ? questionTiming : {},
 
     // Submission State
     status:            'submitted',
@@ -149,7 +151,7 @@ export function buildResultDoc({
 /**
  * Builds a canonical SectionResult object.
  */
-export function buildSectionResult({ sectionName, type, totalScore, maxScore, timeTakenSeconds, startedAt, submittedAt }) {
+export function buildSectionResult({ sectionName, type, totalScore, maxScore, timeTakenSeconds, startedAt, submittedAt, questionTiming = {} }) {
   return {
     sectionName: sectionName ?? '',
     type: type ?? '',
@@ -158,18 +160,23 @@ export function buildSectionResult({ sectionName, type, totalScore, maxScore, ti
     timeTakenSeconds: typeof timeTakenSeconds === 'number' ? timeTakenSeconds : 0,
     startedAt: startedAt ?? '',
     submittedAt: submittedAt ?? '',
+    questionTiming: (questionTiming && typeof questionTiming === 'object') ? questionTiming : {},
   };
 }
 
 /**
  * Builds a canonical QuestionResult object for MCQ detail.
  */
-export function buildQuestionResult({ questionId, selectedOption, isCorrect, timeSpentSeconds }) {
+export function buildQuestionResult({ questionId, selectedOption, isCorrect, timeSpentSeconds, timeSpentFormatted }) {
+  const secs = typeof timeSpentSeconds === 'number' ? timeSpentSeconds : 0;
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
   return {
     questionId: questionId ?? '',
     selectedOption: selectedOption ?? null,
     isCorrect: Boolean(isCorrect),
-    timeSpentSeconds: typeof timeSpentSeconds === 'number' ? timeSpentSeconds : 0,
+    timeSpentSeconds: secs,
+    timeSpentFormatted: timeSpentFormatted || `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`,
   };
 }
 
@@ -179,6 +186,7 @@ export function buildQuestionResult({ questionId, selectedOption, isCorrect, tim
 export function buildCodingSubmission({
   questionId,
   questionNumber,
+  questionKey,
   problemTitle,
   title,
   difficulty,
@@ -195,15 +203,22 @@ export function buildCodingSubmission({
   attempts,
   testResults,
   timeSpentSeconds,
+  timeSpentFormatted,
   startedAt,
   submittedAt
 }) {
   const finalCode = code ?? solution ?? '';
   const passed = typeof testsPassed === 'number' ? testsPassed : 0;
   const total = typeof totalTests === 'number' ? totalTests : 0;
+  const secs = typeof timeSpentSeconds === 'number' ? timeSpentSeconds : 0;
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  const formatted = timeSpentFormatted || `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  const qNum = typeof questionNumber === 'number' ? questionNumber : 1;
   return {
     questionId: questionId ?? '',
-    questionNumber: typeof questionNumber === 'number' ? questionNumber : 1,
+    questionNumber: qNum,
+    questionKey: questionKey || `Q${qNum}`,
     problemTitle: problemTitle || title || '',
     title: title || problemTitle || '',
     difficulty: difficulty ?? 'Easy',
@@ -218,7 +233,8 @@ export function buildCodingSubmission({
     status: status || (total > 0 ? (passed === total ? 'Accepted' : (passed > 0 ? 'Partial' : 'Wrong Answer')) : 'Wrong Answer'),
     compilationCount: typeof compilationCount === 'number' ? compilationCount : 0,
     attempts: typeof attempts === 'number' ? attempts : (typeof compilationCount === 'number' ? compilationCount : 0),
-    timeSpentSeconds: typeof timeSpentSeconds === 'number' ? timeSpentSeconds : 0,
+    timeSpentSeconds: secs,
+    timeSpentFormatted: formatted,
     startedAt: startedAt ?? '',
     submittedAt: submittedAt ?? new Date().toISOString(),
     testResults: Array.isArray(testResults) ? testResults : []

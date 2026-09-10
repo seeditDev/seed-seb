@@ -6,6 +6,7 @@ import { collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from 'fireb
 import desktopBridge from '../utils/desktopBridge';
 import { useLocation, useNavigate } from './router-compat';
 import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../utils/monacoFontFix';
+import QuestionTimingTracker from '../utils/questionTimingTracker';
 import '../styles/CodingAssessmentSandbox.css';
 
 const isRunningInPyQt = () => {
@@ -154,6 +155,10 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
     const [qTimerRemaining, setQTimerRemaining] = useState(0);
     const [lockedChallenges, setLockedChallenges] = useState([]);
     const [timeSpentPerQ, setTimeSpentPerQ] = useState({});
+    const timingTrackerRef = useRef(null);
+    if (!timingTrackerRef.current) {
+        timingTrackerRef.current = new QuestionTimingTracker({}, "sandboxQuestionTiming");
+    }
 
     const [isRunning, setIsRunning] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
@@ -218,10 +223,21 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                 }
             });
 
+            if (timingTrackerRef.current) {
+                timingTrackerRef.current.stop();
+            }
+            const questionTiming = timingTrackerRef.current
+                ? timingTrackerRef.current.getQuestionTiming(challenges)
+                : {};
+            const activeTimeMap = timingTrackerRef.current
+                ? timingTrackerRef.current.getRawTimeMap(challenges)
+                : timeSpentPerQ;
+
             if (onSectionSubmit) {
                 onSectionSubmit({
                     answers: allAnswers,
-                    timeSpentPerQ: timeSpentPerQ,
+                    timeSpentPerQ: activeTimeMap,
+                    questionTiming: questionTiming,
                     completed: completedChallenges
                 });
             }
@@ -623,21 +639,22 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
         }
     }, [isEmbedded, selectedChallenge, currentChallengeIndex, challenges, isLockedOut, settings.questionTimers]);
 
-    // Track active question elapsed seconds
+    // Track active challenge timing
     useEffect(() => {
-        let qTimer;
-        if (selectedChallenge && !isLockedOut) {
-            qTimer = setInterval(() => {
-                setTimeSpentPerQ(prev => ({
-                    ...prev,
-                    [selectedChallenge.id]: (prev[selectedChallenge.id] || 0) + 1
-                }));
-            }, 1000);
+        if (!selectedChallenge || !timingTrackerRef.current) return;
+        const currentIdx = challenges.findIndex(c => c.id === selectedChallenge.id);
+        if (currentIdx >= 0) {
+            timingTrackerRef.current.switchQuestion(currentIdx);
         }
+    }, [selectedChallenge, challenges]);
+
+    useEffect(() => {
         return () => {
-            if (qTimer) clearInterval(qTimer);
+            if (timingTrackerRef.current) {
+                timingTrackerRef.current.flushCurrent();
+            }
         };
-    }, [selectedChallenge, isLockedOut]);
+    }, []);
 
     // 5. Autosave code to localStorage every 30 seconds (reads live editor value)
     useEffect(() => {

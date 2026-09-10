@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { buildResultDoc, buildSectionResult, buildQuestionResult, buildCodingSubmission } from '../utils/buildResultDoc.js';
+import QuestionTimingTracker from '../utils/questionTimingTracker.js';
 import { useNavigate, useParams, Link } from './router-compat';
 import Editor from '@monaco-editor/react';
 import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../utils/monacoFontFix';
@@ -394,6 +395,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const workspaceBodyRef = useRef(null);
     const rightPaneRef = useRef(null);
 
+    const timingTrackerRef = useRef(null);
+    if (!timingTrackerRef.current) {
+        const initialTimings = readJSON("codingQuestionTiming", null) || readJSON("codingTimeSpentPerQ", {}) || {};
+        timingTrackerRef.current = new QuestionTimingTracker(initialTimings, "codingQuestionTiming");
+    }
+
     const [timeSpentPerQ, setTimeSpentPerQ] = useState(() => {
         // BUG FIXED (P1): a corrupt/truncated blob used to be swallowed here and
         // silently reset progress. readJSON validates and falls back explicitly.
@@ -453,23 +460,33 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     }, [isEmbedded]);
 
     useEffect(() => {
-        let qTimer;
-        // Increment time spent on the active question only when test is active/running
+        // Delta-based question timing tracker:
+        // When active question changes or test runs, tracker resumes for activeQuestionIndex.
+        // Flushes elapsed delta on switch or unmount without causing 1000ms re-render churn.
         const isExamActive = !submissionSuccess && questions.length > 0 && activeQuestionIndex !== undefined;
-        if (isExamActive) {
-            const activeQ = questions[activeQuestionIndex];
-            const qId = activeQ?.questionId || activeQ?.id || activeQuestionIndex.toString();
-            qTimer = setInterval(() => {
-                setTimeSpentPerQ(prev => ({
-                    ...prev,
-                    [qId]: (prev[qId] || 0) + 1
-                }));
-            }, 1000);
+        if (isExamActive && timingTrackerRef.current) {
+            timingTrackerRef.current.start(activeQuestionIndex);
         }
         return () => {
-            if (qTimer) clearInterval(qTimer);
+            if (timingTrackerRef.current) {
+                timingTrackerRef.current.flushCurrent();
+            }
         };
-    }, [submissionSuccess, questions, activeQuestionIndex]);
+    }, [submissionSuccess, questions.length, activeQuestionIndex]);
+
+    useEffect(() => {
+        const handleFlush = () => {
+            if (timingTrackerRef.current) {
+                timingTrackerRef.current.flushCurrent();
+            }
+        };
+        window.addEventListener('beforeunload', handleFlush);
+        document.addEventListener('visibilitychange', handleFlush);
+        return () => {
+            window.removeEventListener('beforeunload', handleFlush);
+            document.removeEventListener('visibilitychange', handleFlush);
+        };
+    }, []);
 
     // Ref to latest onSectionSubmit
     const onSectionSubmitRef = useRef(onSectionSubmit);
@@ -534,23 +551,39 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 totalEarnedWeight = 0;
                 totalMaxWeight = 0;
 
+                // Stop question timing tracker and capture final per-question elapsed timings
+                if (timingTrackerRef.current) {
+                    timingTrackerRef.current.stop();
+                }
+                const questionTiming = timingTrackerRef.current
+                    ? timingTrackerRef.current.getQuestionTiming(questions)
+                    : {};
+                const activeTimeSpentMap = timingTrackerRef.current
+                    ? timingTrackerRef.current.getRawTimeMap(questions)
+                    : timeSpentPerQ;
+
                 const codingDetails = questions.map((q, idx) => {
-                    const qId = q.id || q.questionId;
+                    const qId = q.id || q.questionId || `q_${idx}`;
+                    const qKey = `Q${idx + 1}`;
                     const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
-                    const passed = scoreObj.passed || 0;
-                    const total = scoreObj.total || 0;
+                    const passed = scoreObj.passed || scoreObj.testPassedCount || 0;
+                    const total = scoreObj.total || scoreObj.totalTestCases || (q.testCases ? q.testCases.length : 0);
                     const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
                     
-                    const userCode = scoreObj.code || scoreObj.solution || allAnswers[qId] || getCurrentCode(qId, language) || "";
+                    const userCode = scoreObj.code || scoreObj.solution || allAnswers[qId] || getCurrentCode(qId, language) || codeMapRef.current[`${qId}_${language}`] || codeMap[`${qId}_${language}`] || "";
                     const qLang = scoreObj.language || language || 'c';
                     const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
 
                     totalEarnedWeight += scoreObj.score || 0;
                     totalMaxWeight += q.weight || DEFAULT_QUESTION_WEIGHT;
 
+                    const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
+                    const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
+
                     return buildCodingSubmission({
                         questionId: qId,
                         questionNumber: idx + 1,
+                        questionKey: qKey,
                         problemTitle: q.name || q.title || `Question ${idx + 1}`,
                         title: q.name || q.title || `Question ${idx + 1}`,
                         difficulty: q.difficulty || 'Easy',
@@ -568,7 +601,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         timeComplexity: q.timeComplexity ?? '',
                         spaceComplexity: q.spaceComplexity ?? '',
                         testResults: testResults,
-                        timeSpentSeconds: timeSpentPerQ[qId] || 0,
+                        timeSpentSeconds: qTimeSpent,
+                        timeSpentFormatted: qTimeFormatted,
                         submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
                     });
                 });
@@ -586,7 +620,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                 await targetSubmit({
                     answers: allAnswers,
-                    timeSpentPerQ: timeSpentPerQ,
+                    timeSpentPerQ: activeTimeSpentMap,
+                    questionTiming: questionTiming,
                     completed: finalScores,
                     coding: codingDetails,
                     questions: codingDetails,
@@ -1593,6 +1628,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                 // Prevent onChange from triggering handleCodeChange during value update
                 isSwitchingQuestionRef.current = true;
+                if (timingTrackerRef.current) {
+                    timingTrackerRef.current.switchQuestion(targetIdx);
+                }
                 setActiveQuestionIndex(targetIdx);
                 setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
                 
@@ -2124,12 +2162,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
             const finalPercent = totalMaxWeight > 0 ? Math.round((totalEarnedWeight / totalMaxWeight) * 100) : 0;
             const elapsed = Math.round((timeService.now() - parseInt(storedStartTime, 10)) / 1000);
 
+            // Stop question timing tracker and capture final per-question elapsed timings
+            if (timingTrackerRef.current) {
+                timingTrackerRef.current.stop();
+            }
+            const questionTiming = timingTrackerRef.current
+                ? timingTrackerRef.current.getQuestionTiming(activeQuestions)
+                : {};
+            const activeTimeSpentMap = timingTrackerRef.current
+                ? timingTrackerRef.current.getRawTimeMap(activeQuestions)
+                : timeSpentPerQ;
+
             // Gather metadata payload
             const codingSubmissions = activeQuestions.map((q, idx) => {
-                const qId = q.id || q.questionId;
+                const qId = q.id || q.questionId || `q_${idx}`;
+                const qKey = `Q${idx + 1}`;
                 const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
-                const passed = scoreObj.passed || 0;
-                const total = scoreObj.total || 0;
+                const passed = scoreObj.passed || scoreObj.testPassedCount || 0;
+                const total = scoreObj.total || scoreObj.totalTestCases || (q.testCases ? q.testCases.length : 0);
                 const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
                 const userCode = scoreObj.code || scoreObj.solution || (storedCodeMap && storedCodeMap[`${qId}_${language}`]) ||
                                  getCurrentCode(qId, language) ||
@@ -2141,10 +2191,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                  codeMapRef.current[`${qId}_javascript`] || "";
                 const qLang = scoreObj.language || language || 'c';
                 const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
+                const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
+                const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
 
                 return buildCodingSubmission({
                     questionId: qId,
                     questionNumber: idx + 1,
+                    questionKey: qKey,
                     problemTitle: q.name || q.title || `Question ${idx + 1}`,
                     title: q.name || q.title || `Question ${idx + 1}`,
                     difficulty: q.difficulty || 'Easy',
@@ -2162,6 +2215,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     timeComplexity: q.timeComplexity ?? '',
                     spaceComplexity: q.spaceComplexity ?? '',
                     testResults: testResults,
+                    timeSpentSeconds: qTimeSpent,
+                    timeSpentFormatted: qTimeFormatted,
                     submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
                 });
             });
@@ -2210,6 +2265,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         : (reason === 'proctoring_violations' ? 'Proctoring violations exceeded limit' : 'Tab switch limit lockout'),
                 },
                 codingSubmissions: codingSubmissions,
+                questionTiming: questionTiming,
                 proctoring: {
                     violationCount: (() => {
                         const vInfo = getViolations(activeAssessment.id, authData.email);
@@ -2383,12 +2439,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 user.department
             );
 
+            // Stop question timing tracker and capture final per-question elapsed timings
+            if (timingTrackerRef.current) {
+                timingTrackerRef.current.stop();
+            }
+            const questionTiming = timingTrackerRef.current
+                ? timingTrackerRef.current.getQuestionTiming(questions)
+                : {};
+            const activeTimeSpentMap = timingTrackerRef.current
+                ? timingTrackerRef.current.getRawTimeMap(questions)
+                : timeSpentPerQ;
+
             const codingSubmissions = questions.map((rawQ, idx) => {
                 const q = normalizeQuestion(rawQ);
-                const qId = q.id || q.questionId;
+                const qId = q.id || q.questionId || `q_${idx}`;
+                const qKey = `Q${idx + 1}`;
                 const scoreObj = finalScores[qId] || questionScores[qId] || { score: 0, percentage: 0, passed: 0, total: 0 };
-                const passed = scoreObj.passed || 0;
-                const total = scoreObj.total || 0;
+                const passed = scoreObj.passed || scoreObj.testPassedCount || 0;
+                const total = scoreObj.total || scoreObj.totalTestCases || 0;
                 const status = scoreObj.status || (total > 0 ? (passed === total ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer");
                 const userCode = scoreObj.code || scoreObj.solution || getCurrentCode(qId, language) ||
                                  codeMapRef.current[`${qId}_${language}`] ||
@@ -2399,10 +2467,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                  codeMapRef.current[`${qId}_javascript`] || "";
                 const qLang = scoreObj.language || language || 'c';
                 const testResults = scoreObj.testResults || questionRunHistoryRef.current[qId]?.results || [];
+                const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
+                const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
 
                 return buildCodingSubmission({
                     questionId: qId,
                     questionNumber: idx + 1,
+                    questionKey: qKey,
                     problemTitle: q.name || q.title || `Question ${idx + 1}`,
                     title: q.name || q.title || `Question ${idx + 1}`,
                     difficulty: q.difficulty || 'Easy',
@@ -2419,7 +2490,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     attempts: compilationCounts[qId] || 0,
                     timeComplexity: q.timeComplexity ?? '',
                     spaceComplexity: q.spaceComplexity ?? '',
-                    timeSpentSeconds: timeSpentPerQ[qId] || 0,
+                    timeSpentSeconds: qTimeSpent,
+                    timeSpentFormatted: qTimeFormatted,
                     startedAt: questionStartTimes[qId] || new Date(startTime).toISOString(),
                     submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString(),
                     testResults: testResults
@@ -2468,6 +2540,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     submissionReason: 'manual',
                 },
                 codingSubmissions: codingSubmissions,
+                questionTiming: questionTiming,
                 proctoring: {
                     violationCount: (() => {
                         const vInfo = getViolations(currentAssessment.id, user.email);
@@ -2560,6 +2633,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         localStorage.removeItem("codingCompilationCounts");
         localStorage.removeItem("codingQuestionSubmitTimes");
         localStorage.removeItem("codingCourseCtx");
+        localStorage.removeItem("codingTimeSpentPerQ");
+        localStorage.removeItem("codingQuestionTiming");
+        if (timingTrackerRef.current) {
+            timingTrackerRef.current.clearStorage();
+        }
         clearAllProctorCache();
         
         setCurrentAssessment(null);

@@ -1138,7 +1138,8 @@ const MultiSectionAssessment = () => {
         submittedAt: sec.submittedAt ?? '',
         timeSpentSeconds: secTime,
         timeTaken: secTime,
-        timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`
+        timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`,
+        questionTiming: sec.questionTiming || sec.data?.questionTiming || {},
       };
     });
 
@@ -1151,6 +1152,32 @@ const MultiSectionAssessment = () => {
       .filter(sec => sec.data?.questions?.length || sec.data?.coding?.length)
       .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), [])
       .map(c => buildCodingSubmission(c));
+
+    const aggregatedQuestionTiming = Object.values(combinedResults)
+      .filter(sec => sec.type === 'coding')
+      .reduce((acc, sec) => {
+        if (sec.questionTiming && Object.keys(sec.questionTiming).length > 0) {
+          return { ...acc, ...sec.questionTiming };
+        }
+        if (sec.data?.questionTiming && Object.keys(sec.data?.questionTiming).length > 0) {
+          return { ...acc, ...sec.data.questionTiming };
+        }
+        if (Array.isArray(sec.data?.questions)) {
+          sec.data.questions.forEach((q, idx) => {
+            const key = q.questionKey || `Q${idx + 1}`;
+            if (!acc[key]) {
+              acc[key] = {
+                timeSpentSeconds: q.timeSpentSeconds || 0,
+                timeSpentFormatted: q.timeSpentFormatted || '00:00',
+                questionId: q.questionId || '',
+                questionNumber: q.questionNumber || idx + 1,
+                title: q.title || q.name || `Question ${idx + 1}`
+              };
+            }
+          });
+        }
+        return acc;
+      }, {});
 
     const totalMarksSum = Object.values(combinedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
     const totalScore = Object.values(combinedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
@@ -1212,6 +1239,7 @@ const MultiSectionAssessment = () => {
       sections: sectionsList,
       questions: aggregatedQuestions,
       codingSubmissions: aggregatedCoding,
+      questionTiming: aggregatedQuestionTiming,
       proctoring: {
         violationCount: totalViolations,
         totalNoFace,
@@ -1282,6 +1310,7 @@ const MultiSectionAssessment = () => {
         (effectiveAssessment?.id && key.startsWith(`msa_active_mcq_state_${effectiveAssessment.id}`)) ||
         key.startsWith(`codingAssessmentCode`) ||
         key.startsWith(`codingTimeSpentPerQ`) ||
+        key.startsWith(`codingQuestionTiming`) ||
         key.startsWith(`proctor_violations_`) ||
         key.startsWith(`proctor_events_`)
       )) {
@@ -2008,6 +2037,7 @@ const MultiSectionAssessment = () => {
         startedAt: secstartedAt,
         submittedAt: secsubmittedAt,
         timeSpentSeconds: secTimeSpentSeconds,
+        questionTiming: sectionResults?.questionTiming || {},
         data: sectionResults || {}
       }
     };
@@ -2044,6 +2074,10 @@ const MultiSectionAssessment = () => {
         throw new Error('[MSA] autoSubmitSection partial: missing authenticated userId.');
       }
 
+      const partialQuestionTiming = Object.values(updatedResults)
+        .filter(sec => sec.type === 'coding' && (sec.questionTiming || sec.data?.questionTiming))
+        .reduce((acc, sec) => ({ ...acc, ...(sec.questionTiming || sec.data?.questionTiming) }), {});
+
       setDoc(doc(db, `assessmentResults/${tenant.tenantId}/${assessment.id}/${userId}`), {
         userId,
         email: tenant.email,
@@ -2058,6 +2092,7 @@ const MultiSectionAssessment = () => {
         sectionsCompleted: currentSecIdx + 1,
         totalSections,
         sections: updatedResults,
+        questionTiming: partialQuestionTiming,
         lastUpdatedAt: serverTimestamp(),
         lastUpdatedAtISO: new Date().toISOString()
       }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
@@ -2091,7 +2126,8 @@ const MultiSectionAssessment = () => {
             submittedAt: sec.submittedAt ?? '',
             timeSpentSeconds: secTime,
             timeTaken: secTime,
-            timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`
+            timeTakenFormatted: `${secM}:${secS < 10 ? '0' : ''}${secS}`,
+            questionTiming: sec.questionTiming || sec.data?.questionTiming || {},
           };
         });
 
@@ -2103,6 +2139,32 @@ const MultiSectionAssessment = () => {
           .filter(sec => sec.type === 'coding' && (sec.data?.questions || sec.data?.coding))
           .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), [])
           .map(c => buildCodingSubmission(c));
+
+        const aggregatedQuestionTiming = Object.values(updatedResults)
+          .filter(sec => sec.type === 'coding')
+          .reduce((acc, sec) => {
+            if (sec.questionTiming && Object.keys(sec.questionTiming).length > 0) {
+              return { ...acc, ...sec.questionTiming };
+            }
+            if (sec.data?.questionTiming && Object.keys(sec.data?.questionTiming).length > 0) {
+              return { ...acc, ...sec.data.questionTiming };
+            }
+            if (Array.isArray(sec.data?.questions)) {
+              sec.data.questions.forEach((q, idx) => {
+                const key = q.questionKey || `Q${idx + 1}`;
+                if (!acc[key]) {
+                  acc[key] = {
+                    timeSpentSeconds: q.timeSpentSeconds || 0,
+                    timeSpentFormatted: q.timeSpentFormatted || '00:00',
+                    questionId: q.questionId || '',
+                    questionNumber: q.questionNumber || idx + 1,
+                    title: q.title || q.name || `Question ${idx + 1}`
+                  };
+                }
+              });
+            }
+            return acc;
+          }, {});
 
         const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
         const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
@@ -2174,6 +2236,7 @@ const MultiSectionAssessment = () => {
           sections: sectionsList,
           questions: aggregatedQuestions,
           codingSubmissions: aggregatedCoding,
+          questionTiming: aggregatedQuestionTiming,
           proctoring: {
             violationCount: totalViolations,
             totalNoFace,
@@ -2265,6 +2328,7 @@ const MultiSectionAssessment = () => {
           key.startsWith(`msa_active_mcq_state_${assessment?.id}`) ||
           key.startsWith(`codingAssessmentCode`) ||
           key.startsWith(`codingTimeSpentPerQ`) ||
+          key.startsWith(`codingQuestionTiming`) ||
           key.startsWith(`proctor_violations_`) ||
           key.startsWith(`proctor_events_`)
         )) {
