@@ -5,7 +5,8 @@ import {
   FaPlay, FaCheck, FaTimes, FaUndo, FaTerminal, 
   FaArrowLeft, FaArrowRight, FaCheckCircle, FaTimesCircle, FaSpinner, FaCode,
   FaShieldAlt, FaLightbulb, FaCheckDouble, FaExternalLinkAlt,
-  FaChevronDown, FaChevronUp, FaImage, FaCopy
+  FaChevronDown, FaChevronUp, FaImage, FaCopy,
+  FaGithub
 } from 'react-icons/fa';
 import desktopBridge from '../../../utils/desktopBridge';
 import { fetchQuestion } from '../../../services/codingQuestionBankService';
@@ -16,6 +17,12 @@ import {
 } from '../../../utils/testCaseUtils';
 import { syncPracticeProblemToQuestionBank } from '../../services/learningEngineService';
 import { useSystemTheme } from '../../services/courseThemeHelper';
+import GitHubSyncModal from '../../../components/common/GitHubSyncModal';
+import {
+  getGitHubConfig,
+  fetchGitHubConfigFromFirestore,
+  syncSolvedProblemToGitHub
+} from '../../../services/githubSyncService';
 import { toast } from 'sonner';
 
 const DEFAULT_BOILERPLATES = {
@@ -140,6 +147,18 @@ const CourseCodingPracticeView = ({
 
   const [activeQIndex, setActiveQIndex] = useState(0);
   const activeQMeta = normalizedList[activeQIndex] || normalizedList[0];
+
+  // GitHub Sync state
+  const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [githubConfig, setGithubConfig] = useState(() => getGitHubConfig());
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetchGitHubConfigFromFirestore(user.uid).then((cfg) => {
+        if (cfg) setGithubConfig(cfg);
+      });
+    }
+  }, [user?.uid]);
 
   // Loaded full Question data state
   const [loadedQuestion, setLoadedQuestion] = useState(null);
@@ -514,6 +533,25 @@ const CourseCodingPracticeView = ({
         // 3. One-way sync to global Question Bank
         syncPracticeProblemToQuestionBank(user?.uid, primaryId, selectedLang, 100);
 
+        // 3b. One-way sync to personal GitHub repository
+        if (githubConfig.isConnected && githubConfig.autoSync) {
+          syncSolvedProblemToGitHub(user?.uid, {
+            questionId: primaryId,
+            title: loadedQuestion?.title || activeQMeta?.title || primaryId,
+            difficulty: loadedQuestion?.difficulty || activeQMeta?.difficulty || 'Medium',
+            category: topic?.name || topic?.title || 'Course Coding Practice',
+            language: selectedLang,
+            code: currentCode,
+            testCases: hiddenCases,
+            isPractice: true,
+            description: loadedQuestion?.description || loadedQuestion?.problemStatement || ''
+          }).then((res) => {
+            if (res?.success) {
+              toast.success(`⚡ Solution synced to GitHub (${githubConfig.repo})!`);
+            }
+          }).catch((err) => console.warn('[GitHubSync] Course problem sync error:', err));
+        }
+
         // 4. Check if all problems in topic are now solved
         const willAllBeSolved = normalizedList.every((q, idx) => {
           if (idx === activeQIndex) return true;
@@ -618,6 +656,28 @@ const CourseCodingPracticeView = ({
               <FaArrowRight />
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowGitHubModal(true)}
+            title={githubConfig.isConnected ? `Connected to GitHub as @${githubConfig.username} (${githubConfig.repo})` : 'Connect GitHub for One-Way Sync'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 12px',
+              borderRadius: '20px',
+              background: githubConfig.isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+              border: githubConfig.isConnected ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+              color: githubConfig.isConnected ? '#10b981' : 'var(--lp-text-muted)',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <FaGithub />
+            <span>{githubConfig.isConnected ? `@${githubConfig.username}` : 'Sync to GitHub'}</span>
+          </button>
         </div>
       </div>
 
@@ -1090,6 +1150,17 @@ const CourseCodingPracticeView = ({
           )}
         </div>
       </div>
+
+      {/* GitHub Sync Modal */}
+      {showGitHubModal && (
+        <GitHubSyncModal
+          user={user}
+          onClose={() => {
+            setShowGitHubModal(false);
+            setGithubConfig(getGitHubConfig());
+          }}
+        />
+      )}
     </div>
   );
 };

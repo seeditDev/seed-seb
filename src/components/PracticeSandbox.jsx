@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from './router-compat';
 import Editor from '@monaco-editor/react';
-import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
+import { FaPlay, FaCheck, FaTimes, FaUndo, FaArrowLeft, FaHourglassHalf, FaCode, FaListUl, FaSearch, FaLock, FaStar, FaCheckCircle, FaLightbulb, FaGithub } from 'react-icons/fa';
 import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import { fetchQuestion, fetchQuestionsIndex } from '../services/codingQuestionBankService';
 import { markQuestionSolved, markQuestionAttempted, getQuestionProgress, getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, trackQuestionTimeSpent, trackDailyActivity } from '../services/codingProgressService';
 import { saveSolution } from '../services/userSolutionsService';
+import { getGitHubConfig, fetchGitHubConfigFromFirestore, pushProblemSolution } from '../services/githubSyncService';
+import GitHubSyncModal from './common/GitHubSyncModal';
 import { getAuthData } from '../utils/storageUtils';
 import { isTestCasePassed } from '../utils/testCaseUtils';
 import { toast } from 'sonner';
@@ -214,6 +216,74 @@ const PracticeSandbox = () => {
   const [sidebarCategory, setSidebarCategory] = useState('All');
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [sidebarStatus, setSidebarStatus] = useState('All');
+
+  // GitHub Sync states
+  const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [isSyncingToGitHub, setIsSyncingToGitHub] = useState(false);
+  const [gitHubSyncedUrl, setGitHubSyncedUrl] = useState(null);
+  const [gitHubConfigState, setGitHubConfigState] = useState(getGitHubConfig());
+
+  // Load private GitHub config from Firestore users/{uid}/settings/githubSync
+  useEffect(() => {
+    const authStorage = getAuthData();
+    const effectiveUid = user?.uid ?? authStorage?.uid;
+    if (effectiveUid) {
+      fetchGitHubConfigFromFirestore(effectiveUid).then((cfg) => {
+        setGitHubConfigState(cfg);
+      });
+    }
+  }, [user?.uid]);
+
+  const handleManualGitHubSync = async () => {
+    const cfg = getGitHubConfig();
+    if (!cfg.isConnected) {
+      setShowGitHubModal(true);
+      return;
+    }
+
+    const currentCode = editorRef.current ? editorRef.current.getValue() : code;
+    if (!currentCode || !currentCode.trim()) {
+      toast.error('No code in editor to sync.');
+      return;
+    }
+
+    setIsSyncingToGitHub(true);
+    const toastId = toast.loading('Syncing solution to GitHub...');
+
+    try {
+      const res = await pushProblemSolution(
+        question,
+        currentCode,
+        language,
+        {
+          score: submitScore ?? 100,
+          testsPassed: submitResults.filter(r => r.passed).length || (question.testCases?.hidden || []).length || 1,
+          totalTests: submitResults.length || (question.testCases?.hidden || []).length || 1,
+        }
+      );
+
+      setGitHubSyncedUrl(res.commitUrl || res.fileUrl);
+      toast.success(
+        <div>
+          <span>✓ Solution committed to GitHub!</span>{' '}
+          <a
+            href={res.commitUrl || res.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#6366f1', textDecoration: 'underline', fontWeight: 700 }}
+          >
+            View on GitHub →
+          </a>
+        </div>,
+        { id: toastId }
+      );
+    } catch (err) {
+      console.error('[PracticeSandbox] GitHub sync error:', err);
+      toast.error(err.message || 'Failed to sync to GitHub.', { id: toastId });
+    } finally {
+      setIsSyncingToGitHub(false);
+    }
+  };
 
   // Resizable layout states
   const [leftWidth, setLeftWidth] = useState(42); // percentage
@@ -776,6 +846,33 @@ const isCodeBlankOrEmpty = (codeStr) => {
               executionTimeMs: 0,
               isPractice: true,
             });
+
+            // Auto-sync to GitHub if configured
+            const ghCfg = getGitHubConfig();
+            if (ghCfg.isConnected && ghCfg.autoSync) {
+              pushProblemSolution(question, currentCode, language, {
+                score: 100,
+                testsPassed: passedCount,
+                totalTests: testCases.length,
+              }).then((res) => {
+                setGitHubSyncedUrl(res.commitUrl || res.fileUrl);
+                toast.success(
+                  <div>
+                    <span>⚡ Auto-synced to GitHub!</span>{' '}
+                    <a
+                      href={res.commitUrl || res.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#10b981', textDecoration: 'underline', fontWeight: 700 }}
+                    >
+                      View commit →
+                    </a>
+                  </div>
+                );
+              }).catch((err) => {
+                console.warn('[PracticeSandbox] Background GitHub auto-sync note:', err);
+              });
+            }
           } else {
             await markQuestionAttempted(uid, questionId, language, score, 1, qMeta);
             if (!solvedIds.includes(questionId)) {
@@ -1171,6 +1268,15 @@ const isCodeBlankOrEmpty = (codeStr) => {
             >
               {isSubmitting ? <div className="psb-spinner" /> : <FaCheck />} Submit Answers
             </button>
+            <button
+              className="psb-reset-btn"
+              onClick={handleManualGitHubSync}
+              disabled={isSyncingToGitHub}
+              title={gitHubConfigState.isConnected ? `Synced to GitHub repo: ${gitHubConfigState.repo}` : 'Connect your GitHub repository'}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', color: gitHubConfigState.isConnected ? '#10b981' : 'inherit' }}
+            >
+              {isSyncingToGitHub ? <div className="psb-spinner" /> : <FaGithub />} {gitHubConfigState.isConnected ? 'Sync to GitHub' : 'Connect GitHub'}
+            </button>
             <button className="psb-reset-btn" onClick={handleResetCode} disabled={showPremiumLock}>
               <FaUndo /> Reset Template
             </button>
@@ -1396,6 +1502,53 @@ const isCodeBlankOrEmpty = (codeStr) => {
                       <div className={`psb-score-banner ${submitScore === 100 ? 'pass' : submitScore > 0 ? 'partial' : 'fail'}`}>
                         {submitScore === 100 ? 'All Test Cases Passed!' : `Partial Score: ${submitScore}/100`}
                       </div>
+                      {submitScore === 100 && (
+                        <div style={{
+                          marginTop: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 14px',
+                          background: 'rgba(16, 185, 129, 0.08)',
+                          border: '1px solid rgba(16, 185, 129, 0.25)',
+                          borderRadius: '8px',
+                          fontSize: '12.5px'
+                        }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#10b981', fontWeight: 600 }}>
+                            <FaGithub /> GitHub Contribution Heatmap:
+                          </span>
+                          {gitHubSyncedUrl ? (
+                            <a
+                              href={gitHubSyncedUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: '#10b981', textDecoration: 'underline', fontWeight: 700 }}
+                            >
+                              View Commit →
+                            </a>
+                          ) : (
+                            <button
+                              onClick={handleManualGitHubSync}
+                              disabled={isSyncingToGitHub}
+                              style={{
+                                background: '#10b981',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '5px 12px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}
+                            >
+                              <FaGithub /> {isSyncingToGitHub ? 'Syncing...' : 'Sync Solution'}
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', maxHeight: '150px', overflowY: 'auto' }}>
                         {submitResults.map((tr, i) => (
                           <div key={tr.id} className="psb-test-case-row" style={{
@@ -1416,6 +1569,14 @@ const isCodeBlankOrEmpty = (codeStr) => {
           </div>
         </div>
       </div>
+
+      {/* GitHub Sync Modal */}
+      <GitHubSyncModal
+        isOpen={showGitHubModal}
+        onClose={() => setShowGitHubModal(false)}
+        user={user}
+        onSyncCompleted={() => setGitHubConfigState(getGitHubConfig())}
+      />
     </div>
   );
 };

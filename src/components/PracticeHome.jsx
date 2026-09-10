@@ -13,13 +13,16 @@ import {
   FaReact, FaHtml5, FaJs, FaTerminal, FaRust, FaBrain, FaNetworkWired, FaCode, FaLaptopCode,
   FaThLarge, FaTasks, FaTachometerAlt, FaClock, FaCheck,
   FaCheckSquare, FaChartLine, FaSyncAlt, FaEye,
-  FaServer, FaCogs, FaClipboardList, FaLayerGroup, FaArrowRight
+  FaServer, FaCogs, FaClipboardList, FaLayerGroup, FaArrowRight,
+  FaGithub
 } from 'react-icons/fa';
 import SeedCreditCoin from './SeedCreditCoin';
 import roadmapsData from './roadmaps_data.json';
 import '../styles/PracticeHome.css';
 import { CATEGORIZED_SHEETS } from '../config/sheetsData';
 import { getAuthData } from '../utils/storageUtils';
+import { getGitHubConfig, fetchGitHubConfigFromFirestore } from '../services/githubSyncService';
+import GitHubSyncModal from './common/GitHubSyncModal';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
 
@@ -195,12 +198,24 @@ const PracticeHome = ({
   const [syncMsg, setSyncMsg] = useState({ text: '', type: '' });
   const [user, setUser] = useState(propUser || null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [gitHubConfig, setGitHubConfig] = useState(getGitHubConfig());
 
   useEffect(() => {
     if (propUser) {
       setUser(propUser);
     }
   }, [propUser]);
+
+  useEffect(() => {
+    const authStorage = getAuthData();
+    const effectiveUid = user?.uid ?? propUser?.uid ?? authStorage?.uid;
+    if (effectiveUid) {
+      fetchGitHubConfigFromFirestore(effectiveUid).then((cfg) => {
+        setGitHubConfig(cfg);
+      });
+    }
+  }, [user?.uid, propUser?.uid]);
 
   // Filters for Flat Question Bank
   const [searchQuery, setSearchQuery] = useState('');
@@ -3100,9 +3115,41 @@ const PracticeHome = ({
           <div className="ph-problems-main">
 
             {/* Header Title & Subtitle */}
-            <div className="qb-header" style={{ marginBottom: '20px' }}>
-              <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ph-text)', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Question Bank</h1>
-              <p style={{ fontSize: '13.5px', color: 'var(--ph-text-dim)', margin: 0 }}>Explore and practice from our comprehensive question collection.</p>
+            <div className="qb-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ph-text)', margin: '0 0 6px 0', letterSpacing: '-0.02em' }}>Question Bank</h1>
+                <p style={{ fontSize: '13.5px', color: 'var(--ph-text-dim)', margin: 0 }}>Explore and practice from our comprehensive question collection.</p>
+              </div>
+              <button
+                onClick={() => setShowGitHubModal(true)}
+                className="qb-github-sync-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: '1px solid var(--ph-border, #e2e8f0)',
+                  background: 'var(--ph-card, #ffffff)',
+                  color: 'var(--ph-text, #1e293b)',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                  transition: 'all 0.15s ease'
+                }}
+                title={gitHubConfig.isConnected ? `Connected to GitHub repository: ${gitHubConfig.repo}` : 'Connect GitHub account'}
+              >
+                <FaGithub style={{ fontSize: '16px' }} />
+                {gitHubConfig.isConnected ? (
+                  <>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+                    <span>@{gitHubConfig.username}</span>
+                  </>
+                ) : (
+                  <span>Sync to GitHub</span>
+                )}
+              </button>
             </div>
 
             {/* Summary Metrics Banner Bar (View 2) - 4 Cards matching design */}
@@ -3618,6 +3665,13 @@ const PracticeHome = ({
           </div>
         </div>
       )}
+      {/* GitHub Sync Modal */}
+      <GitHubSyncModal
+        isOpen={showGitHubModal}
+        onClose={() => setShowGitHubModal(false)}
+        user={user || propUser}
+        onSyncCompleted={() => setGitHubConfig(getGitHubConfig())}
+      />
     </div>
   );
 };

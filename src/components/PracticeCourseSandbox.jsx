@@ -3,7 +3,8 @@ import { useNavigate, useParams } from './router-compat';
 import Editor from '@monaco-editor/react';
 import { 
   FaPlay, FaCheck, FaHourglassHalf, 
-  FaListUl, FaChevronRight, FaCheckCircle, FaStar
+  FaListUl, FaChevronRight, FaCheckCircle, FaStar,
+  FaGithub
 } from 'react-icons/fa';
 import desktopBridge, { isEngineDisconnected } from '../utils/desktopBridge';
 import { fetchQuestion } from '../services/codingQuestionBankService';
@@ -19,6 +20,12 @@ import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
 import ProblemMarkdownRenderer from './common/ProblemMarkdownRenderer';
 import { MONACO_FONT_OPTIONS, remeasureMonacoFonts } from '../utils/monacoFontFix';
+import GitHubSyncModal from './common/GitHubSyncModal';
+import {
+  getGitHubConfig,
+  fetchGitHubConfigFromFirestore,
+  syncSolvedProblemToGitHub
+} from '../services/githubSyncService';
 import '../styles/PracticeSandbox.css'; // Reuse core sandbox tokens and styling
 
 const FREE_BOILERPLATES = {
@@ -255,9 +262,20 @@ const PracticeCourseSandbox = () => {
   // Show course completion celebration badge modal
   const [showAwardModal, setShowAwardModal] = useState(false);
 
+  // GitHub Sync states
+  const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [githubConfig, setGithubConfig] = useState(() => getGitHubConfig());
+  const [githubSyncResult, setGithubSyncResult] = useState(null);
+
   useEffect(() => {
     const authData = getAuthData();
     setUser(authData);
+    const uid = authData?.uid || user?.uid;
+    if (uid) {
+      fetchGitHubConfigFromFirestore(uid).then((cfg) => {
+        if (cfg) setGithubConfig(cfg);
+      });
+    }
 
     const loadCourseAndQuestion = async () => {
       setLoading(true);
@@ -776,6 +794,26 @@ const isCodeBlankOrEmpty = (codeStr) => {
             setSolvedIds(updatedSolved);
             checkCourseCompletion(updatedSolved);
             toast.success(` Problem Solved! 100% test cases passed.`);
+
+            // Trigger GitHub Portfolio Sync if connected and auto-sync is enabled
+            if (githubConfig.isConnected && githubConfig.autoSync) {
+              syncSolvedProblemToGitHub(uid, {
+                questionId,
+                title: question?.title || question?.name || questionId,
+                difficulty: question?.difficulty || 'Easy',
+                category: question?.category || 'Course Coding Practice',
+                language,
+                code: currentCode,
+                testCases,
+                isPractice: true,
+                description: question?.description || (question?.content?.problemStatement ?? '')
+              }).then((syncRes) => {
+                if (syncRes?.success) {
+                  setGithubSyncResult(syncRes);
+                  toast.success(`⚡ Solution synced to GitHub (${githubConfig.repo})!`);
+                }
+              }).catch((err) => console.warn('[GitHubSync] Course problem sync error:', err));
+            }
           } else {
             try {
               await saveSolution(uid, {
@@ -864,6 +902,29 @@ const isCodeBlankOrEmpty = (codeStr) => {
             })}
           </select>
         )}
+
+        <button
+          type="button"
+          onClick={() => setShowGitHubModal(true)}
+          title={githubConfig.isConnected ? `Connected to GitHub as @${githubConfig.username} (${githubConfig.repo})` : 'Connect GitHub for One-Way Sync'}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            background: githubConfig.isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+            border: githubConfig.isConnected ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--ps-border)',
+            color: githubConfig.isConnected ? '#10b981' : 'var(--ps-text)',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            marginLeft: '10px'
+          }}
+        >
+          <FaGithub />
+          <span>{githubConfig.isConnected ? `@${githubConfig.username}` : 'Sync to GitHub'}</span>
+        </button>
       </div>
 
       {/* Main Learning Workspace */}
@@ -1462,6 +1523,17 @@ const isCodeBlankOrEmpty = (codeStr) => {
             }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeArticle.content ?? '') }} />
           </div>
         </div>
+      )}
+
+      {/* GitHub Sync Modal */}
+      {showGitHubModal && (
+        <GitHubSyncModal
+          user={user}
+          onClose={() => {
+            setShowGitHubModal(false);
+            setGithubConfig(getGitHubConfig());
+          }}
+        />
       )}
     </div>
   );

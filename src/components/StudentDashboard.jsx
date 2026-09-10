@@ -119,6 +119,18 @@ import {
 } from '../services/supportService';
 import { ensureUserHasUsername } from '../services/usernameService';
 import { publishPublicProfile } from '../services/publicProfileService';
+import GitHubSyncModal from './common/GitHubSyncModal';
+import {
+  getGitHubConfig,
+  saveGitHubConfig,
+  fetchGitHubConfigFromFirestore,
+  saveGitHubConfigToFirestore,
+  clearGitHubConfigFromFirestore,
+  verifyGitHubToken,
+  connectWithGitHubOAuth,
+  batchSyncAllSolved,
+  DEFAULT_REPO_NAME,
+} from '../services/githubSyncService';
 
 const LOCAL_BASE_URL = '/seed-contents';
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
@@ -315,6 +327,35 @@ const StudentDashboard = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef(null);
 
+  // GitHub Sync & Personal Access Token (PAT) State (stored in users/{uid}/settings/githubSync)
+  const [githubConfig, setGithubConfig] = useState(() => getGitHubConfig());
+  const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [githubPatInput, setGithubPatInput] = useState(() => getGitHubConfig().token || '');
+  const [showPatSecret, setShowPatSecret] = useState(false);
+  const [isVerifyingPat, setIsVerifyingPat] = useState(false);
+  const [isConnectingOAuth, setIsConnectingOAuth] = useState(false);
+  const [githubRepoName, setGithubRepoName] = useState(() => getGitHubConfig().repo || DEFAULT_REPO_NAME);
+  const [githubAutoSync, setGithubAutoSync] = useState(() => getGitHubConfig().autoSync);
+  const [githubIsPrivate, setGithubIsPrivate] = useState(() => getGitHubConfig().isPrivate);
+  const [isBatchSyncing, setIsBatchSyncing] = useState(false);
+  const [batchSyncProgress, setBatchSyncProgress] = useState(null);
+
+  // Fetch student's private GitHub Sync settings from Firestore
+  useEffect(() => {
+    const effectiveUid = user?.uid || getAuthData()?.uid;
+    if (effectiveUid) {
+      fetchGitHubConfigFromFirestore(effectiveUid).then((cfg) => {
+        if (cfg) {
+          setGithubConfig(cfg);
+          setGithubPatInput(cfg.token || '');
+          setGithubRepoName(cfg.repo || DEFAULT_REPO_NAME);
+          setGithubAutoSync(cfg.autoSync);
+          setGithubIsPrivate(cfg.isPrivate);
+        }
+      });
+    }
+  }, [user?.uid]);
+
   useEffect(() => {
     if (user) {
       setEditName(user.name ?? user.Name ?? user.fullName ?? '');
@@ -433,6 +474,113 @@ const StudentDashboard = () => {
       }
     } catch (err) {
       toast.error(err.message || 'Failed to update password. Please re-authenticate.');
+    }
+  };
+
+  const handleProfileConnectOAuth = async () => {
+    const uid = user?.uid || getAuthData()?.uid;
+    setIsConnectingOAuth(true);
+    try {
+      const authResult = await connectWithGitHubOAuth();
+      const updatedConfig = {
+        token: authResult.token,
+        username: authResult.username,
+        name: authResult.name || user?.name || authResult.username,
+        email: authResult.email || user?.email || '',
+        avatar: authResult.avatar || '',
+        repo: githubRepoName || DEFAULT_REPO_NAME,
+        autoSync: githubAutoSync,
+        isPrivate: githubIsPrivate,
+        authMethod: 'oauth',
+      };
+      await saveGitHubConfigToFirestore(uid, updatedConfig);
+      setGithubConfig({ ...updatedConfig, isConnected: true });
+      setGithubPatInput(authResult.token);
+      toast.success(`Connected with GitHub as @${authResult.username}!`);
+    } catch (err) {
+      console.error('[GitHub Profile Connect Error]', err);
+      toast.error(`GitHub Connection Failed: ${err.message}`);
+    } finally {
+      setIsConnectingOAuth(false);
+    }
+  };
+
+  const handleProfileSavePat = async () => {
+    const trimmed = (githubPatInput || '').trim();
+    if (!trimmed) {
+      toast.error('Please paste your GitHub Personal Access Token (PAT).');
+      return;
+    }
+    const uid = user?.uid || getAuthData()?.uid;
+    setIsVerifyingPat(true);
+    try {
+      const userMeta = await verifyGitHubToken(trimmed);
+      const updatedConfig = {
+        token: trimmed,
+        username: userMeta.login,
+        name: userMeta.name || userMeta.login,
+        email: userMeta.email || '',
+        avatar: userMeta.avatar_url || '',
+        repo: githubRepoName || DEFAULT_REPO_NAME,
+        autoSync: githubAutoSync,
+        isPrivate: githubIsPrivate,
+        authMethod: 'pat',
+      };
+      await saveGitHubConfigToFirestore(uid, updatedConfig);
+      setGithubConfig({ ...updatedConfig, isConnected: true });
+      toast.success(`Verified & Saved PAT for @${userMeta.login}!`);
+    } catch (err) {
+      toast.error(`PAT Verification Failed: ${err.message}`);
+    } finally {
+      setIsVerifyingPat(false);
+    }
+  };
+
+  const handleProfileSaveRepoSettings = async () => {
+    const uid = user?.uid || getAuthData()?.uid;
+    const repoClean = (githubRepoName || DEFAULT_REPO_NAME).trim().replace(/\s+/g, '-');
+    const updated = {
+      ...githubConfig,
+      repo: repoClean,
+      autoSync: githubAutoSync,
+      isPrivate: githubIsPrivate,
+    };
+    await saveGitHubConfigToFirestore(uid, updated);
+    setGithubConfig(updated);
+    setGithubRepoName(repoClean);
+    toast.success('GitHub repository settings saved!');
+  };
+
+  const handleProfileDisconnectGitHub = async () => {
+    const uid = user?.uid || getAuthData()?.uid;
+    await clearGitHubConfigFromFirestore(uid);
+    setGithubConfig(getGitHubConfig());
+    setGithubPatInput('');
+    toast.info('GitHub integration disconnected.');
+  };
+
+  const handleProfileBatchSync = async () => {
+    const uid = user?.uid || getAuthData()?.uid;
+    if (!uid || !githubConfig.isConnected) {
+      toast.error('Connect your GitHub account first.');
+      return;
+    }
+    setIsBatchSyncing(true);
+    setBatchSyncProgress({ current: 0, total: 0, questionTitle: 'Starting batch sync...' });
+    try {
+      const result = await batchSyncAllSolved(uid, (prog) => {
+        setBatchSyncProgress(prog);
+      });
+      if (result.success) {
+        toast.success(`Sync complete! Pushed ${result.synced} solutions to GitHub.`);
+      } else {
+        toast.error(`Sync finished with issues: ${result.errors.length} errors.`);
+      }
+    } catch (err) {
+      toast.error(`Batch sync failed: ${err.message}`);
+    } finally {
+      setIsBatchSyncing(false);
+      setBatchSyncProgress(null);
     }
   };
 
@@ -3140,6 +3288,12 @@ const StudentDashboard = () => {
             <FaUser className="profile-tab-icon" /> Profile Information
           </button>
           <button
+            className={`profile-subtab-btn ${profileSubTab === 'github' ? 'active' : ''}`}
+            onClick={() => setProfileSubTab('github')}
+          >
+            <FaGithub className="profile-tab-icon" /> GitHub Integration &amp; PAT
+          </button>
+          <button
             className={`profile-subtab-btn ${profileSubTab === 'utilisation' ? 'active' : ''}`}
             onClick={() => setProfileSubTab('utilisation')}
           >
@@ -3447,6 +3601,33 @@ const StudentDashboard = () => {
                         ) : (
                           <span className="coding-chip-empty">Not linked</span>
                         )}
+
+                        {githubConfig.isConnected ? (
+                          <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+                            <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} />
+                              Synced: {githubConfig.repo}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setProfileSubTab('github')}
+                              style={{ background: 'none', border: 'none', color: 'var(--accent-primary, #10b981)', cursor: 'pointer', padding: 0, fontWeight: 700, fontSize: '11px' }}
+                            >
+                              Manage &rarr;
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Heatmap sync off</span>
+                            <button
+                              type="button"
+                              onClick={() => setProfileSubTab('github')}
+                              style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', padding: 0, fontWeight: 700, fontSize: '11px' }}
+                            >
+                              + Connect PAT
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="coding-chip-card">
@@ -3688,6 +3869,318 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        ) : profileSubTab === 'github' ? (
+          /* ─── REDESIGNED: GitHub Sync & Personal Access Token (PAT) ─── */
+          <div className="profile-github-container">
+            {/* Top Status & Intro Hero Banner */}
+            <div className="github-profile-hero-card">
+              <div className="github-hero-left">
+                <div className="github-hero-icon-box">
+                  <FaGithub size={36} />
+                </div>
+                <div>
+                  <div className="github-hero-title-row">
+                    <h3 className="github-hero-title">GitHub Portfolio &amp; One-Way Sync</h3>
+                    {githubConfig.isConnected ? (
+                      <span className="github-connection-pill connected">
+                        <span className="live-status-dot" /> Connected ({githubConfig.authMethod === 'oauth' ? 'OAuth' : 'PAT'})
+                      </span>
+                    ) : (
+                      <span className="github-connection-pill disconnected">
+                        Not Connected
+                      </span>
+                    )}
+                  </div>
+                  <p className="github-hero-subtitle">
+                    Automatically push every verified, accepted coding solution to your personal GitHub repository to illuminate your <strong>GitHub Contribution Heatmap</strong> and maintain a recruiter-ready algorithmic portfolio.
+                  </p>
+                </div>
+              </div>
+
+              {githubConfig.isConnected && (
+                <div className="github-hero-right">
+                  <a
+                    href={`https://github.com/${githubConfig.username}/${githubConfig.repo}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="github-repo-link-badge"
+                  >
+                    <FaExternalLinkAlt size={11} /> github.com/{githubConfig.username}/{githubConfig.repo}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleProfileDisconnectGitHub}
+                    className="github-btn-disconnect"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 2-Column Responsive Layout: Left Configuration, Right Security & Directory Preview */}
+            <div className="github-config-grid">
+              {/* Left Column: Connection Methods & Settings */}
+              <div className="github-config-col-left">
+
+                {/* Method A: One-Click GitHub Connect (OAuth) */}
+                <div className="github-settings-card">
+                  <div className="github-card-header">
+                    <div>
+                      <h4 className="github-card-title">1-Click GitHub Connect (No PAT Needed)</h4>
+                      <p className="github-card-desc">Sign in with your GitHub account securely via OAuth popup with repository access.</p>
+                    </div>
+                  </div>
+
+                  <div className="github-oauth-action-box">
+                    <button
+                      type="button"
+                      disabled={isConnectingOAuth}
+                      onClick={handleProfileConnectOAuth}
+                      className="github-oauth-btn"
+                    >
+                      <FaGithub size={18} />
+                      <span>{isConnectingOAuth ? 'Authorizing with GitHub...' : githubConfig.isConnected && githubConfig.authMethod === 'oauth' ? 'Re-authorize GitHub (OAuth)' : 'Connect with GitHub (1-Click)'}</span>
+                    </button>
+                    <span className="github-helper-text">
+                      No manual token copying needed. Securely requests <code>repo</code> write scope to push code to your profile.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Method B: Personal Access Token (PAT) Manual Option */}
+                <div className="github-settings-card">
+                  <div className="github-card-header">
+                    <div>
+                      <h4 className="github-card-title">Personal Access Token (PAT)</h4>
+                      <p className="github-card-desc">Prefer fine-grained access? Enter or update your GitHub Personal Access Token directly.</p>
+                    </div>
+                  </div>
+
+                  <div className="github-pat-form">
+                    <div className="form-field-group">
+                      <label className="form-field-label">
+                        <FaKey size={11} style={{ marginRight: '6px' }} /> GitHub Personal Access Token
+                      </label>
+                      <div className="password-input-wrapper">
+                        <input
+                          type={showPatSecret ? 'text' : 'password'}
+                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          value={githubPatInput}
+                          onChange={(e) => setGithubPatInput(e.target.value)}
+                          className="form-text-input"
+                        />
+                        <button
+                          type="button"
+                          className="btn-toggle-eye"
+                          onClick={() => setShowPatSecret(!showPatSecret)}
+                          title={showPatSecret ? 'Hide PAT' : 'Show PAT'}
+                        >
+                          {showPatSecret ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                        </button>
+                      </div>
+                      <div className="pat-help-links">
+                        <a
+                          href="https://github.com/settings/tokens/new?scopes=repo&description=SEED-IT%20Portfolio%20Sync"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="pat-link"
+                        >
+                          <FaExternalLinkAlt size={10} /> Generate GitHub Classic PAT (with repo scope)
+                        </a>
+                        <span className="pat-sep">·</span>
+                        <a
+                          href="https://github.com/settings/personal-access-tokens/new"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="pat-link"
+                        >
+                          Fine-grained PAT
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="github-pat-action-row">
+                      <button
+                        type="button"
+                        disabled={isVerifyingPat || !githubPatInput}
+                        onClick={handleProfileSavePat}
+                        className="github-save-pat-btn"
+                      >
+                        {isVerifyingPat ? <><FaSyncAlt className="spin" size={12} /> Verifying Token...</> : <><FaCheck size={12} /> Verify &amp; Save PAT</>}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Target Repository & Automation Settings */}
+                <div className="github-settings-card">
+                  <div className="github-card-header">
+                    <div>
+                      <h4 className="github-card-title">Repository &amp; Automation Settings</h4>
+                      <p className="github-card-desc">Configure where your solutions are stored and how sync triggers.</p>
+                    </div>
+                  </div>
+
+                  <div className="github-repo-settings-form">
+                    <div className="form-field-group">
+                      <label className="form-field-label">Target Repository Name</label>
+                      <input
+                        type="text"
+                        value={githubRepoName}
+                        onChange={(e) => setGithubRepoName(e.target.value)}
+                        placeholder="seed-it-solutions"
+                        className="form-text-input"
+                      />
+                      <span className="github-helper-text">
+                        If the repository does not exist on your GitHub profile, SEED-IT will automatically create it for you on first push!
+                      </span>
+                    </div>
+
+                    <div className="github-toggles-stack">
+                      <label className="github-toggle-row">
+                        <input
+                          type="checkbox"
+                          checked={githubAutoSync}
+                          onChange={(e) => setGithubAutoSync(e.target.checked)}
+                          className="github-checkbox"
+                        />
+                        <div>
+                          <div className="toggle-label">Auto-Push on 100% Test Pass</div>
+                          <div className="toggle-sub">Automatically pushes solution code and README whenever you pass all test cases in Question Bank or Course Coding Practice.</div>
+                        </div>
+                      </label>
+
+                      <label className="github-toggle-row">
+                        <input
+                          type="checkbox"
+                          checked={githubIsPrivate}
+                          onChange={(e) => setGithubIsPrivate(e.target.checked)}
+                          className="github-checkbox"
+                        />
+                        <div>
+                          <div className="toggle-label">Create Repository as Private</div>
+                          <div className="toggle-sub">Default is public so recruiters can view your solutions. Check this if you prefer a private repository.</div>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="github-pat-action-row" style={{ marginTop: '16px' }}>
+                      <button
+                        type="button"
+                        onClick={handleProfileSaveRepoSettings}
+                        className="github-save-pat-btn"
+                      >
+                        <FaCheck size={12} /> Save Repository Settings
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Batch Sync Action */}
+                <div className="github-settings-card">
+                  <div className="github-card-header">
+                    <div>
+                      <h4 className="github-card-title">Batch Sync All Solved Problems</h4>
+                      <p className="github-card-desc">Backfill your GitHub repository with all previously solved accepted problems.</p>
+                    </div>
+                  </div>
+
+                  <div className="github-batch-sync-box">
+                    <p className="batch-sync-desc">
+                      Have previously solved problems that are not yet on your GitHub? Click below to batch-commit your solutions, generate READMEs, and refresh your portfolio index in one click.
+                    </p>
+
+                    {batchSyncProgress && (
+                      <div className="batch-progress-wrap">
+                        <div className="batch-progress-text">
+                          <span>Syncing: {batchSyncProgress.questionTitle}</span>
+                          <span>{batchSyncProgress.current} / {batchSyncProgress.total}</span>
+                        </div>
+                        <div className="batch-progress-bar">
+                          <div
+                            className="batch-progress-fill"
+                            style={{
+                              width: `${batchSyncProgress.total > 0 ? (batchSyncProgress.current / batchSyncProgress.total) * 100 : 0}%`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={isBatchSyncing || !githubConfig.isConnected}
+                      onClick={handleProfileBatchSync}
+                      className="github-batch-btn"
+                    >
+                      {isBatchSyncing ? <><FaSyncAlt className="spin" size={13} /> Batch Syncing Solutions...</> : <><FaSyncAlt size={13} /> Batch Sync All Solved Problems</>}
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Security Isolation & Directory Structure */}
+              <div className="github-config-col-right">
+
+                {/* Security Guarantee Card */}
+                <div className="github-security-card">
+                  <div className="security-card-header">
+                    <FaShieldAlt className="security-icon" />
+                    <div>
+                      <h4 className="security-title">Private Firestore Security Guarantee</h4>
+                      <span className="security-badge">Isolated Storage</span>
+                    </div>
+                  </div>
+                  <p className="security-body">
+                    Your GitHub Personal Access Token (PAT) and OAuth access tokens are stored strictly within your private document at:
+                  </p>
+                  <div className="security-path-box">
+                    <code>users/{user?.uid || 'your-uid'}/settings/githubSync</code>
+                  </div>
+                  <ul className="security-bullets">
+                    <li><FaCheck size={11} className="bullet-check" /> <strong>Never Public:</strong> Public profile visitors, peer students, and leaderboards cannot see or access your token.</li>
+                    <li><FaCheck size={11} className="bullet-check" /> <strong>Firestore Rules Protected:</strong> Only your authenticated Firebase UID (<code>isUser(userId)</code>) has read and write permissions.</li>
+                    <li><FaCheck size={11} className="bullet-check" /> <strong>One-Way Sync:</strong> Code flows strictly from SEED-IT to your personal GitHub repository. We never read or modify your other repositories.</li>
+                  </ul>
+                </div>
+
+                {/* Recruiter-Ready Repository Hierarchy */}
+                <div className="github-tree-card">
+                  <h4 className="tree-card-title">Recruiter-Ready Directory Hierarchy</h4>
+                  <p className="tree-card-subtitle">Every solution is structured to maximize interview readiness and clean organization:</p>
+
+                  <div className="github-tree-view">
+                    <div className="tree-line root"><FaBoxOpen className="tree-icon" /> {githubConfig.repo || 'seed-it-solutions'}/</div>
+                    <div className="tree-line file indent-1"><FaCode className="tree-icon file" /> README.md <span className="tree-tag">Dynamic stats &amp; badges</span></div>
+                    <div className="tree-line file indent-1"><FaCog className="tree-icon file" /> .seed-tracker.json <span className="tree-tag">Sync manifest</span></div>
+                    <div className="tree-line folder indent-1"><FaBoxOpen className="tree-icon" /> Problems/</div>
+                    <div className="tree-line folder indent-2"><FaBoxOpen className="tree-icon" /> Arrays/</div>
+                    <div className="tree-line folder indent-3"><FaBoxOpen className="tree-icon" /> 001-Two-Sum/</div>
+                    <div className="tree-line file indent-4"><FaCode className="tree-icon file" /> README.md <span className="tree-tag">Statement &amp; examples</span></div>
+                    <div className="tree-line file indent-4"><FaCode className="tree-icon file" /> solution.py <span className="tree-tag">Formatted code</span></div>
+                    <div className="tree-line folder indent-2"><FaBoxOpen className="tree-icon" /> Dynamic-Programming/</div>
+                    <div className="tree-line folder indent-3"><FaBoxOpen className="tree-icon" /> 070-Climbing-Stairs/</div>
+                    <div className="tree-line file indent-4"><FaCode className="tree-icon file" /> README.md</div>
+                    <div className="tree-line file indent-4"><FaCode className="tree-icon file" /> Solution.java</div>
+                  </div>
+                </div>
+
+                {/* Heatmap Impact Info */}
+                <div className="github-heatmap-info-card">
+                  <div className="heatmap-info-header">
+                    <FaFire className="fire-icon" />
+                    <h4 className="heatmap-info-title">GitHub Contribution Heatmap</h4>
+                  </div>
+                  <p className="heatmap-info-body">
+                    Every problem you solve creates a verified commit authored with your GitHub email and timestamp. This lights up your green contribution squares on your GitHub profile, visibly demonstrating your continuous day-to-day algorithmic practice to technical interviewers and hiring managers!
+                  </p>
+                </div>
+
               </div>
             </div>
           </div>
@@ -6352,6 +6845,22 @@ const StudentDashboard = () => {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
       />
+
+      {/* GitHub Sync & PAT Modal */}
+      {showGitHubModal && (
+        <GitHubSyncModal
+          user={user}
+          onClose={() => {
+            setShowGitHubModal(false);
+            const cfg = getGitHubConfig();
+            setGithubConfig(cfg);
+            setGithubPatInput(cfg.token || '');
+            setGithubRepoName(cfg.repo || DEFAULT_REPO_NAME);
+            setGithubAutoSync(cfg.autoSync);
+            setGithubIsPrivate(cfg.isPrivate);
+          }}
+        />
+      )}
 
       {/* Logout animation screen */}
       {showLogoutAnimation && (
