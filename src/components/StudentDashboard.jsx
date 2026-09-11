@@ -120,6 +120,7 @@ import { ensureUserHasUsername } from '../services/usernameService';
 import { publishPublicProfile } from '../services/publicProfileService';
 import GitHubSyncModal from './common/GitHubSyncModal';
 import PremiumUpgradeModal from './PremiumUpgradeModal';
+import { checkSubscriptionStatus, syncAndValidateSubscription } from '../services/subscriptionValidator';
 import { purchaseContestPass } from '../services/razorpayService';
 import {
   getGitHubConfig,
@@ -194,6 +195,7 @@ const StudentDashboard = () => {
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [userPremiumState, setUserPremiumState] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(() => checkSubscriptionStatus(user));
   const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'widget', 'password'
   const [studentUsername, setStudentUsername] = useState(() => user?.username || '');
   const [practiceInitialTab, setPracticeInitialTab] = useState(() => location.state?.practiceTab || 'bank');
@@ -220,10 +222,28 @@ const StudentDashboard = () => {
   });
   const [showSupportModal, setShowSupportModal] = useState(false);
 
+  // Automatically sync and validate subscription on mount
+  useEffect(() => {
+    if (user?.uid) {
+      syncAndValidateSubscription(user, db).then((status) => {
+        setSubscriptionInfo(status);
+        if (status.needsDowngrade) {
+          setUser((prev) => ({
+            ...(prev || {}),
+            isPremium: false,
+            premium: false,
+            subscriptionStatus: 'expired',
+          }));
+        }
+      }).catch((err) => console.warn('[StudentDashboard] Subscription validation error:', err));
+    }
+  }, [user?.uid]);
+
   useEffect(() => {
     const onPremiumUpdated = () => {
       setUser((prev) => {
-        const next = { ...(prev || {}), isPremium: true, premium: true };
+        const next = { ...(prev || {}), isPremium: true, premium: true, subscriptionStatus: 'active' };
+        setSubscriptionInfo(checkSubscriptionStatus(next));
         loadAssessments(next);
         return next;
       });
@@ -233,19 +253,7 @@ const StudentDashboard = () => {
   }, []);
 
   const handleContestPassCheckout = async (contest) => {
-    toast.info(`Contest passes can be acquired on seedit.site. Visit the website to unlock this contest.`, {
-      action: {
-        label: 'Go to Website',
-        onClick: () => {
-          try {
-            if (typeof window !== 'undefined' && window.electronAPI?.openExternal) {
-              window.electronAPI.openExternal('https://seedit.site');
-              return;
-            }
-          } catch (_) {}
-          window.open('https://seedit.site', '_blank', 'noopener,noreferrer');
-        }
-      },
+    toast.info(`Contest passes must be purchased on the website (seedit.site) from your personal browser. Once acquired, this contest will unlock here.`, {
       duration: 6000
     });
   };
@@ -1621,6 +1629,32 @@ const StudentDashboard = () => {
           if (profileSnap.exists()) {
             const p = profileSnap.data();
 
+            // Validate subscription using canonical subscription engine
+            const subStatus = await syncAndValidateSubscription(p, db);
+            setSubscriptionInfo(subStatus);
+
+            let isTenantDisabled = Boolean(p.isTenantDisabled ?? authData.isTenantDisabled);
+            let tenantActive = p.tenantActive !== false && authData.tenantActive !== false;
+            const tenantId = p.tenantId || authData.tenantId;
+
+            if (tenantId && tenantId !== 'global') {
+              try {
+                const tSnap = await getDoc(doc(db, 'tenants', tenantId));
+                if (tSnap.exists()) {
+                  const tData = tSnap.data();
+                  const validUntil = tData.subscription?.validUntil || tData.validUntil;
+                  const isExpired = validUntil ? new Date(validUntil).getTime() < Date.now() : false;
+                  if (tData.active === false || isExpired) {
+                    isTenantDisabled = true;
+                    tenantActive = false;
+                  } else {
+                    isTenantDisabled = false;
+                    tenantActive = true;
+                  }
+                }
+              } catch (_) {}
+            }
+
             const enriched = {
               ...authData,
               ...p,
@@ -1635,13 +1669,21 @@ const StudentDashboard = () => {
               department: p.department ?? authData.department ?? '',
               phone: p.phone ?? authData.phone ?? '',
               role: p.role ?? authData.role ?? 'student',
-              isPremium: Boolean(p.isPremium ?? authData.isPremium),
+              isTenantDisabled,
+              tenantActive,
+              isPremium: subStatus.isPremium,
+              premiumPlan: subStatus.plan,
+              premiumStartDate: subStatus.startDate,
+              premiumEndDate: subStatus.endDate,
+              subscriptionStatus: subStatus.status,
               seedCredits: typeof p.seedCredits === 'number' ? p.seedCredits : (typeof authData.seedCredits === 'number' ? authData.seedCredits : 2450),
               totalXP: typeof p.totalXP === 'number' ? p.totalXP : (typeof authData.totalXP === 'number' ? authData.totalXP : 0),
               level: typeof p.level === 'number' ? p.level : (typeof authData.level === 'number' ? authData.level : 1),
               streak: typeof p.streak === 'number' ? p.streak : (typeof authData.streak === 'number' ? authData.streak : 0),
               lastStreakDate: p.lastStreakDate ?? authData.lastStreakDate ?? null,
               photoURL: p.photoURL ?? authData.photoURL ?? '',
+              purchasedCourses: p.purchasedCourses || authData.purchasedCourses || {},
+              assignedRealCourses: p.assignedRealCourses || authData.assignedRealCourses || [],
               isAuthenticated: true,
             };
             setUser(enriched);
@@ -4810,150 +4852,7 @@ const StudentDashboard = () => {
           </div>
         )}
 
-        {/* Premium Upgrade & Status Modal */}
-        {showPremiumModal && (
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            background: 'rgba(0, 0, 0, 0.75)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }}>
-            <div style={{
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '24px',
-              maxWidth: '520px',
-              width: '100%',
-              padding: '32px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-              color: 'var(--text-main)',
-              position: 'relative'
-            }}>
-              <button
-                type="button"
-                onClick={() => setShowPremiumModal(false)}
-                style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  fontSize: '20px',
-                  cursor: 'pointer'
-                }}
-              >
-                
-              </button>
-
-              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(234, 88, 12, 0.2))',
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px',
-                  color: '#f59e0b',
-                  fontSize: '28px'
-                }}>
-                  <FaCrown />
-                </div>
-                <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '0 0 8px 0' }}>
-                  SEED-IT Premium Edition
-                </h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-                  {isPremium ? 'Your student profile has active Premium Edition access.' : 'Unlock full academic & competitive coding features.'}
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '28px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '20px' }}></span>
-                  <div>
-                    <div style={{ fontWeight: '700', fontSize: '14px' }}>Unlimited AI Mock Interviews</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Real-time voice & coding feedback with Gemini AI</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '20px' }}></span>
-                  <div>
-                    <div style={{ fontWeight: '700', fontSize: '14px' }}>AI Camera Proctoring Sandbox</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Anti-cheat detection with face monitoring</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <span style={{ fontSize: '20px' }}></span>
-                  <div>
-                    <div style={{ fontWeight: '700', fontSize: '14px' }}>Spoken English CEFR Evaluator</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Pronunciation, grammar & fluency scorecard</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                {!isPremium ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const rawAuth = localStorage.getItem('auth_data');
-                      if (rawAuth) {
-                        try {
-                          const parsed = JSON.parse(rawAuth);
-                          parsed.Premium = true;
-                          parsed.isPremium = true;
-                          localStorage.setItem('auth_data', JSON.stringify(parsed));
-                        } catch (e) { }
-                      }
-                      setUserPremiumState(true);
-                      setShowPremiumModal(false);
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: '14px',
-                      borderRadius: '12px',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                      color: '#ffffff',
-                      fontWeight: '700',
-                      fontSize: '15px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)'
-                    }}
-                  >
-                     Activate Premium Edition Now
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowPremiumModal(false)}
-                    style={{
-                      flex: 1,
-                      padding: '14px',
-                      borderRadius: '12px',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #10b981, #059669)',
-                      color: '#ffffff',
-                      fontWeight: '700',
-                      fontSize: '15px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                     Premium Access Active
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Tooltip for Heatmap */}
 
       </div>
     );
@@ -6567,6 +6466,178 @@ const StudentDashboard = () => {
         </aside>
 
         <main className="dashboard-main">
+          {/* Lifecycle & Status Alert Banners */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* Campus Access Paused / Global Learner Banner */}
+            {(user?.isTenantDisabled === true || user?.tenantActive === false) && (
+              <div style={{
+                margin: '16px 24px 0 24px',
+                padding: '14px 18px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.08) 100%)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '16px',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 300px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#f59e0b',
+                    fontSize: '18px',
+                    flexShrink: 0
+                  }}>
+                    <FaExclamationTriangle />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '13.5px', color: '#fbbf24' }}>
+                      Campus Access Paused — Operating in Global Student Mode
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#d1d5db', marginTop: '2px', lineHeight: '1.4' }}>
+                      Your institution's campus portal is currently inactive or under renewal. You can continue accessing all your permanent lifetime courses and global practice problems. College-specific tests will resume once your institution re-activates access.
+                    </div>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  color: '#fbbf24',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em'
+                }}>
+                  Global Mode
+                </span>
+              </div>
+            )}
+
+            {/* Premium Expiring Soon Reminder Banner */}
+            {subscriptionInfo?.isPremium && subscriptionInfo?.isExpiringSoon && (
+              <div style={{
+                margin: '16px 24px 0 24px',
+                padding: '14px 18px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(220, 38, 38, 0.06) 100%)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '16px',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 300px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#f87171',
+                    fontSize: '18px',
+                    flexShrink: 0
+                  }}>
+                    <FaClock />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '13.5px', color: '#f87171' }}>
+                      SEED Premium Expiring in {subscriptionInfo.daysLeft} Day{subscriptionInfo.daysLeft === 1 ? '' : 's'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#d1d5db', marginTop: '2px', lineHeight: '1.4' }}>
+                      Your {subscriptionInfo.plan === 'premium_annual' ? 'Annual Pro' : 'Monthly'} membership expires on {new Date(subscriptionInfo.endDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}. Renew on seedit.site to keep unlimited AI mock interviews and proctoring sandboxes.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPremiumModal(true)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    color: '#000000',
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)'
+                  }}
+                >
+                  Extend Membership
+                </button>
+              </div>
+            )}
+
+            {/* Premium Expired Notice Banner */}
+            {subscriptionInfo?.status === 'expired' && (
+              <div style={{
+                margin: '16px 24px 0 24px',
+                padding: '14px 18px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.15) 0%, rgba(71, 85, 105, 0.08) 100%)',
+                border: '1px solid rgba(148, 163, 184, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '16px',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 300px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(148, 163, 184, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#cbd5e1',
+                    fontSize: '18px',
+                    flexShrink: 0
+                  }}>
+                    <FaCrown />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '13.5px', color: '#cbd5e1' }}>
+                      SEED Premium Expired — Active on Standard Edition
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px', lineHeight: '1.4' }}>
+                      Your premium plan has ended. All your purchased lifetime courses and coding progress remain fully intact. You can renew anytime on seedit.site to re-activate Pro features.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPremiumModal(true)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Re-activate Premium
+                </button>
+              </div>
+            )}
+          </div>
+
           {activeTab === "dashboard" ? renderDashboardHome() :
             activeTab === "my-learning" ? (
               <MyLearningDashboard 
@@ -6655,9 +6726,17 @@ const StudentDashboard = () => {
         isOpen={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         user={user}
-        onUpgradeSuccess={() => {
-          const updated = { ...(user || {}), isPremium: true, premium: true };
+        onUpgradeSuccess={(res) => {
+          const updated = {
+            ...(user || {}),
+            isPremium: true,
+            premium: true,
+            subscriptionStatus: 'active',
+            premiumPlan: res?.plan || 'premium_annual',
+            premiumEndDate: res?.endDate || null,
+          };
           setUser(updated);
+          setSubscriptionInfo(checkSubscriptionStatus(updated));
           loadAssessments(updated);
         }}
       />

@@ -4,14 +4,18 @@
  * 
  * Rules:
  * 1. Disabled check: Disabled courses (enabled === false) are completely inaccessible.
- * 2. SEED Premium check: Users with verified isPremium === true (or admin/superadmin role)
- *    get unrestricted access to all RealCourses.
- * 3. Standard users: CANNOT enroll in or access any RealCourse UNLESS it is explicitly
- *    mapped to their tenant (via active realCourseEntitlements for their tenant/cohort).
+ * 2. Lifetime access: Individually purchased or directly assigned courses (assignedRealCourses,
+ *    purchasedCourses) belong to the user permanently (lifetime) — accessible to standard users
+ *    regardless of premium status.
+ * 3. SEED Premium check: Users with an active, unexpired SEED Premium subscription
+ *    (or admin/superadmin role) get unrestricted access to all courses while active.
+ * 4. Standard users: If not purchased and not premium, access depends on institutional
+ *    tenant/cohort mappings (only active if user's tenant is enabled).
  */
 
 import { db } from '../../lib/firebase-config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { checkSubscriptionStatus } from '../../services/subscriptionValidator';
 
 const ENTITLEMENTS_COLLECTION = 'realCourseEntitlements';
 const CACHE_KEY_PREFIX = 'seed_entitled_courses_';
@@ -42,15 +46,11 @@ function normalizeYear(val) {
 
 /**
  * Fetch all entitled course IDs for the user.
- * Returns a Set of courseIds, or a Set containing '*' for premium/admin users.
+ * Returns a Set of courseIds, or a Set containing '*' for active premium/admin users.
  */
 export const fetchUserEntitledCourseIds = async (user = null) => {
   const effectiveUser = user || getCurrentAuthUser();
   const uid = effectiveUser?.uid || effectiveUser?.id || 'anonymous';
-
-  if (memoryCache && memoryCacheUid === uid) {
-    return memoryCache;
-  }
 
   // Check session cache
   try {
@@ -63,8 +63,12 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
     }
   } catch (_) {}
 
-  // 1. Premium & Admin users have unrestricted access to all courses
-  if (effectiveUser?.isPremium === true || effectiveUser?.role === 'superadmin' || effectiveUser?.role === 'admin') {
+  // 1. Strict Subscription Validation: Check if user has active, unexpired SEED Premium
+  const subStatus = checkSubscriptionStatus(effectiveUser);
+  const isSuperOrAdmin = effectiveUser?.role === 'superadmin' || effectiveUser?.role === 'admin';
+  const hasActivePremium = (subStatus.isPremium && subStatus.status === 'active') || isSuperOrAdmin;
+
+  if (hasActivePremium) {
     const allSet = new Set(['*']);
     memoryCache = allSet;
     memoryCacheUid = uid;
@@ -76,15 +80,26 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
 
   let tenantId = effectiveUser?.tenantId || effectiveUser?.college || effectiveUser?.institutionId;
   let userCohort = effectiveUser?.cohortId || effectiveUser?.year;
-  let userAllocatedCourses = Array.isArray(effectiveUser?.assignedRealCourses) ? effectiveUser.assignedRealCourses : [];
+  
+  // Extract all directly owned / purchased courses (LIFETIME)
+  let userAllocatedCourses = Array.isArray(effectiveUser?.assignedRealCourses) ? [...effectiveUser.assignedRealCourses] : [];
+  if (Array.isArray(effectiveUser?.assignedCourses)) {
+    userAllocatedCourses.push(...effectiveUser.assignedCourses);
+  }
+  if (effectiveUser?.purchasedCourses && typeof effectiveUser.purchasedCourses === 'object') {
+    Object.keys(effectiveUser.purchasedCourses).forEach((cId) => {
+      if (cId && !userAllocatedCourses.includes(cId)) userAllocatedCourses.push(cId);
+    });
+  }
 
   // If user metadata is missing from local session, fetch live profile from users/{uid}
-  if ((!tenantId || effectiveUser?.isPremium === undefined || userAllocatedCourses.length === 0) && uid && uid !== 'anonymous' && navigator.onLine) {
+  if ((!tenantId || userAllocatedCourses.length === 0) && uid && uid !== 'anonymous' && navigator.onLine) {
     try {
       const userSnap = await getDoc(doc(db, 'users', uid));
       if (userSnap.exists()) {
         const uData = userSnap.data();
-        if (uData.isPremium === true || uData.role === 'admin' || uData.role === 'superadmin') {
+        const liveSub = checkSubscriptionStatus(uData);
+        if ((liveSub.isPremium && liveSub.status === 'active') || uData.role === 'admin' || uData.role === 'superadmin') {
           const allSet = new Set(['*']);
           memoryCache = allSet;
           memoryCacheUid = uid;
@@ -98,19 +113,25 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
         if (Array.isArray(uData.assignedRealCourses)) {
           userAllocatedCourses = Array.from(new Set([...userAllocatedCourses, ...uData.assignedRealCourses]));
         }
+        if (uData.purchasedCourses && typeof uData.purchasedCourses === 'object') {
+          Object.keys(uData.purchasedCourses).forEach((cId) => {
+            if (cId && !userAllocatedCourses.includes(cId)) userAllocatedCourses.push(cId);
+          });
+        }
       }
     } catch (_) {}
   }
 
   const entitledSet = new Set();
 
-  // 2. Direct User Allocation (Directly assigned courses bypass tenant mapping)
+  // 2. Direct User Allocation (Purchased Lifetime Courses bypass tenant mapping completely)
   userAllocatedCourses.forEach((cId) => {
     if (cId) entitledSet.add(cId);
   });
 
-  // 3. Standard Users: Entitled if course is mapped to their tenant/cohort
-  if (tenantId && navigator.onLine) {
+  // 3. Standard Users: Entitled if course is mapped to their tenant/cohort (ONLY if tenant is active)
+  const isTenantActive = !effectiveUser?.isTenantDisabled && effectiveUser?.tenantActive !== false;
+  if (tenantId && isTenantActive && navigator.onLine) {
     try {
       const colRef = collection(db, ENTITLEMENTS_COLLECTION);
       const q = query(
@@ -128,18 +149,15 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
         if (!eCohort || eCohort === 'ALL') {
           entitledSet.add(courseId);
         } else if (userCohort) {
-          const normECohort = normalizeYear(eCohort);
-          const normUCohort = normalizeYear(userCohort);
-          if (normECohort === normUCohort || eCohort === String(userCohort).trim().toUpperCase()) {
+          const uCohortNorm = normalizeYear(userCohort);
+          const eCohortNorm = normalizeYear(eCohort);
+          if (uCohortNorm && eCohortNorm && uCohortNorm === eCohortNorm) {
             entitledSet.add(courseId);
           }
-        } else {
-          // If no specific cohort is assigned to the student, allow all courses mapped to their tenant
-          entitledSet.add(courseId);
         }
       });
-    } catch (e) {
-      console.warn('[courseEntitlementService] Entitlements fetch warning:', e.message);
+    } catch (err) {
+      console.warn('[courseEntitlementService] Failed to fetch tenant entitlements:', err);
     }
   }
 
@@ -153,44 +171,60 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
 };
 
 /**
- * Determine entitlement for a single course against a user profile and entitled set.
- * Standard users can ONLY enroll if course is mapped to their tenant.
+ * Synchronously checks whether a specific course is entitled.
+ *
+ * @param {object} course - The course object
+ * @param {Set<string>} entitledCourseIds - Pre-fetched entitled IDs
+ * @param {object} user - Optional user object override
+ * @returns {{ entitled: boolean, reason: string, badge: string, isLocked: boolean, isLifetime?: boolean }}
  */
-export const checkCourseEntitlement = (course, user = null, entitledCourseIds = null) => {
-  if (!course) return { entitled: false, reason: 'Course not found', badge: 'Unavailable', isLocked: true };
+export const checkCourseEntitlement = (course, entitledCourseIds = null, user = null) => {
+  if (!course) {
+    return {
+      entitled: false,
+      reason: 'Course metadata unavailable',
+      badge: 'Unavailable',
+      isLocked: true,
+    };
+  }
 
+  // 0. Course Disabled Check (Global Kill Switch)
   if (course.enabled === false) {
     return {
       entitled: false,
-      reason: 'Course is temporarily unavailable',
-      badge: 'Inactive',
+      reason: 'This track is currently under maintenance or disabled by administrator.',
+      badge: 'Course Disabled',
       isLocked: true,
     };
   }
 
   const effectiveUser = user || getCurrentAuthUser();
+  const courseId = course.courseId || course.id;
 
-  // 1. Premium / Superadmin
-  if (effectiveUser?.isPremium === true || effectiveUser?.role === 'superadmin' || effectiveUser?.role === 'admin') {
+  // 1. LIFETIME ACCESS: Check if course was individually purchased or directly allocated
+  const userAllocated = Array.isArray(effectiveUser?.assignedRealCourses)
+    ? effectiveUser.assignedRealCourses
+    : (Array.isArray(effectiveUser?.assignedCourses) ? effectiveUser.assignedCourses : []);
+  const hasPurchasedDict = Boolean(effectiveUser?.purchasedCourses?.[courseId]);
+
+  if (userAllocated.includes(courseId) || hasPurchasedDict) {
     return {
       entitled: true,
-      reason: 'Included with SEED Premium',
-      badge: 'Premium Access',
+      reason: 'Lifetime access — individually purchased / allocated course',
+      badge: 'Lifetime Access',
       isLocked: false,
+      isLifetime: true,
     };
   }
 
-  const courseId = course.courseId || course.id;
-
-  // 2. Direct User-Specific Allocation
-  const userAllocatedCourses = Array.isArray(effectiveUser?.assignedRealCourses) 
-    ? effectiveUser.assignedRealCourses 
-    : (Array.isArray(effectiveUser?.assignedCourses) ? effectiveUser.assignedCourses : []);
-  if (userAllocatedCourses.includes(courseId)) {
+  // 2. ACTIVE PREMIUM CHECK: Only grants full library access while subscription is unexpired
+  const subStatus = checkSubscriptionStatus(effectiveUser);
+  const isSuperOrAdmin = effectiveUser?.role === 'superadmin' || effectiveUser?.role === 'admin';
+  if ((subStatus.isPremium && subStatus.status === 'active') || isSuperOrAdmin) {
     return {
       entitled: true,
-      reason: 'Directly allocated to your student account',
-      badge: 'Directly Allocated',
+      reason: 'Included with active SEED Premium',
+      badge: 'Premium Access',
       isLocked: false,
     };
   }
@@ -207,11 +241,13 @@ export const checkCourseEntitlement = (course, user = null, entitledCourseIds = 
     };
   }
 
-  // Standard user without tenant mapping is locked
+  // Standard user without mapping or expired premium
   return {
     entitled: false,
-    reason: 'Restricted: This course is not mapped to your institution. Contact your faculty or upgrade to SEED Premium to unlock.',
-    badge: '🔒 Institutional Access Only',
+    reason: subStatus.status === 'expired'
+      ? 'Your SEED Premium has expired. Upgrade on seedit.site or purchase this course individually for lifetime access.'
+      : 'Restricted: This course is not mapped to your institution. Purchase individually on seedit.site or subscribe to SEED Premium.',
+    badge: '🔒 Locked',
     isLocked: true,
   };
 };

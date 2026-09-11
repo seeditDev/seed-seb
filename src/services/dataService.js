@@ -43,6 +43,9 @@ import { fetchContentJSON, CONTENT_REPOS } from '../utils/contentApi';
  * Strictly canonical fields only — no legacy alias chains.
  */
 function buildAuthData(firebaseUser, profile = {}, tenantDetails = null) {
+    const isTenantDisabled = Boolean(profile.isTenantDisabled || tenantDetails?.isTenantDisabled);
+    const tenantActive = !isTenantDisabled && profile.tenantActive !== false && tenantDetails?.active !== false;
+
     return {
         ...profile,
         uid: firebaseUser.uid,
@@ -50,6 +53,13 @@ function buildAuthData(firebaseUser, profile = {}, tenantDetails = null) {
         tenantId: profile.tenantId ?? '',
         college: profile.college ?? '',
         tenant: tenantDetails || profile.tenant || null,
+        isTenantDisabled,
+        tenantActive,
+        purchasedCourses: profile.purchasedCourses || {},
+        assignedRealCourses: profile.assignedRealCourses || [],
+        premiumStartDate: profile.premiumStartDate || null,
+        premiumEndDate: profile.premiumEndDate || null,
+        subscriptionStatus: profile.subscriptionStatus || 'none',
         name: profile.name ?? '',
         rollNumber: profile.rollNumber ?? '',
         username: profile.username ?? '',
@@ -114,26 +124,30 @@ class DataService {
                         }
 
                         if (!isActive || isExpired) {
-                            await signOut(auth);
-                            localStorage.removeItem('auth_data');
-                            sessionStorage.removeItem('active_session_id');
-                            sessionStorage.removeItem('is_logging_in');
-                            const err = new Error("Your college subscription has expired or is inactive. Please reach out to your placement department.");
-                            err.code = "tenant-subscription-expired";
-                            throw err;
+                            // User is allowed to sign in; institutional modules are paused and user falls back to Global mode
+                            profile.isTenantDisabled = true;
+                            profile.tenantActive = false;
+                            profile.tenantInactiveReason = isExpired ? 'expired' : 'inactive';
+                            tenantDetails = {
+                                id: profile.tenantId,
+                                name: tData.name || profile.college || profile.tenantId,
+                                active: false,
+                                isTenantDisabled: true,
+                                validUntil: validUntil,
+                            };
+                        } else {
+                            profile.isTenantDisabled = false;
+                            profile.tenantActive = true;
+                            tenantDetails = {
+                                id: profile.tenantId,
+                                name: tData.name || profile.college || profile.tenantId,
+                                active: true,
+                                isTenantDisabled: false,
+                                validUntil: validUntil,
+                            };
                         }
-
-                        tenantDetails = {
-                            id: profile.tenantId,
-                            name: tData.name || profile.college || profile.tenantId,
-                            active: isActive,
-                            validUntil: validUntil,
-                        };
                     }
                 } catch (tErr) {
-                    if (tErr.code === "tenant-subscription-expired" || tErr.message?.includes("placement department")) {
-                        throw tErr;
-                    }
                     console.warn('[DataService] Tenant verification warning:', tErr);
                 }
             }
@@ -688,9 +702,10 @@ class DataService {
                 console.warn('[DataService] getGlobalTests error:', gErr);
             }
 
-            // 2. Fetch tenant cohort assigned tests (if student is in a college cohort)
+            // 2. Fetch tenant cohort assigned tests (only if student's institution is active)
             let cohortTests = [];
-            if (tenantId && cohortId) {
+            const isTenantDisabled = authData.isTenantDisabled === true || authData.tenantActive === false;
+            if (tenantId && cohortId && !isTenantDisabled) {
                 try {
                     const cohort = await DataService.getTenantCohort(tenantId, cohortId);
                     const allowedModules = cohort?.allowedModules || [];

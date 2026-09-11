@@ -422,7 +422,7 @@ const Login = () => {
                 {loading ? "Verifying credentials..." : "Sign In"}
               </button>
 
-              {/* Registration Notice pointing to seedit.site */}
+              {/* Registration Notice */}
               <div style={{
                 marginTop: '22px',
                 padding: '14px 16px',
@@ -432,28 +432,11 @@ const Login = () => {
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>
-                  Don't have an account?
+                  New to SEED-IT?
                 </div>
                 <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.5' }}>
-                  New student registration is hosted exclusively on the SEED Web Portal.
+                  SEED-SEB is for registered users only. Account creation and institutional enrollment are managed by your administrator or on the web portal.
                 </div>
-                <a 
-                  href="https://seedit.site" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    marginTop: '8px',
-                    fontSize: '12.5px',
-                    fontWeight: '700',
-                    color: '#008744',
-                    textDecoration: 'none'
-                  }}
-                >
-                  Create Account on seedit.site &rarr;
-                </a>
               </div>
             </form>
           )}
