@@ -39,23 +39,73 @@ export function checkSubscriptionStatus(user) {
     };
   }
 
-  // Support both canonical fields and legacy fallbacks if present
-  const endDateStr = user.premiumEndDate || user.subscriptionEndDate;
-  const startDateStr = user.premiumStartDate || user.subscriptionStartDate;
-  const plan = user.premiumPlan || (user.subscriptionPlan || 'premium_annual');
+  // Support canonical fields, pro aliases, and institution fallbacks
+  const endDateStr = user.premiumEndDate || user.subscriptionEndDate || user.proEndDate;
+  const startDateStr = user.premiumStartDate || user.subscriptionStartDate || user.proStartDate;
+  const rawPlan = user.premiumPlan || user.subscriptionPlan || user.plan || (user.isTrial ? 'pro_trial' : 'pro_annual');
+  const isTrial = Boolean(user.isTrial || rawPlan.includes('trial'));
+  const trialUsed = Boolean(user.trialUsed || user.hasUsedTrial);
 
-  // If there are no subscription dates, user has no active validated subscription
+  // Institution / Cohort Pro inheritance
+  const isInstitutionPro = Boolean(user.cohortIsPremium || user.institutionIsPremium || user.tenantIsPremium);
+  const institutionEndDateStr = user.cohortPremiumEndDate || user.tenantPremiumEndDate;
+  if (isInstitutionPro) {
+    const instEndMs = institutionEndDateStr ? new Date(institutionEndDateStr).getTime() : NaN;
+    if (isNaN(instEndMs) || Date.now() <= instEndMs) {
+      const daysLeft = isNaN(instEndMs) ? 365 : Math.max(0, Math.ceil((instEndMs - Date.now()) / (1000 * 60 * 60 * 24)));
+      return {
+        isPremium: true,
+        isPro: true,
+        tier: 'pro',
+        status: 'active',
+        daysLeft,
+        plan: 'institution_pro',
+        displayPlan: 'Campus Pro License',
+        startDate: startDateStr || null,
+        endDate: institutionEndDateStr || null,
+        isExpiringSoon: daysLeft <= 7,
+        isTrial: false,
+        trialUsed,
+        needsDowngrade: false,
+      };
+    }
+  }
+
+  // If there are no subscription dates, check if explicitly set active by admin
   if (!endDateStr) {
-    const hadLegacyFlag = Boolean(user.isPremium || user.premium);
+    const isExplicitlyActive = Boolean(user.isPremium || user.premium || user.subscriptionStatus === 'active');
+    // If explicitly marked active by admin without explicit date, grant 30-day grace rather than instant wipe
+    if (isExplicitlyActive) {
+      return {
+        isPremium: true,
+        isPro: true,
+        tier: 'pro',
+        status: 'active',
+        daysLeft: 30,
+        plan: rawPlan,
+        displayPlan: isTrial ? 'Pro Trial' : 'SEED Pro',
+        startDate: startDateStr || new Date().toISOString(),
+        endDate: null,
+        isExpiringSoon: false,
+        isTrial,
+        trialUsed,
+        needsDowngrade: false,
+      };
+    }
     return {
       isPremium: false,
-      status: hadLegacyFlag ? 'expired' : 'none',
+      isPro: false,
+      tier: 'standard',
+      status: 'none',
       daysLeft: 0,
-      plan: hadLegacyFlag ? plan : 'none',
+      plan: 'standard',
+      displayPlan: 'Standard Free',
       startDate: null,
       endDate: null,
       isExpiringSoon: false,
-      needsDowngrade: hadLegacyFlag, // Downgrade legacy unverified flags
+      isTrial: false,
+      trialUsed,
+      needsDowngrade: false,
     };
   }
 
@@ -66,12 +116,17 @@ export function checkSubscriptionStatus(user) {
   if (isNaN(endMs) || nowMs > endMs) {
     return {
       isPremium: false,
+      isPro: false,
+      tier: 'standard',
       status: 'expired',
       daysLeft: 0,
-      plan,
+      plan: rawPlan,
+      displayPlan: isTrial ? 'Pro Trial Expired' : 'SEED Pro (Expired)',
       startDate: startDateStr || null,
       endDate: endDateStr,
       isExpiringSoon: false,
+      isTrial,
+      trialUsed: isTrial ? true : trialUsed,
       needsDowngrade: Boolean(user.isPremium || user.premium || user.subscriptionStatus === 'active'),
     };
   }
@@ -80,12 +135,17 @@ export function checkSubscriptionStatus(user) {
   const daysLeft = Math.max(0, Math.ceil((endMs - nowMs) / (1000 * 60 * 60 * 24)));
   return {
     isPremium: true,
+    isPro: true,
+    tier: 'pro',
     status: 'active',
     daysLeft,
-    plan,
+    plan: rawPlan,
+    displayPlan: isTrial ? `Pro Trial (${daysLeft}d left)` : (rawPlan.includes('annual') ? 'SEED Pro Annual' : 'SEED Pro'),
     startDate: startDateStr || null,
     endDate: endDateStr,
     isExpiringSoon: daysLeft <= 7,
+    isTrial,
+    trialUsed: isTrial ? true : trialUsed,
     needsDowngrade: false,
   };
 }
