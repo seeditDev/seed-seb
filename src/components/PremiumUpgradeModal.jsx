@@ -188,6 +188,44 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
           </p>
         </div>
 
+        {/* Active Premium Card if user is already Pro */}
+        {(() => {
+          const sub = checkSubscriptionStatus(user);
+          if (sub.isPremium && sub.status === 'active') {
+            return (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.1) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FaStar style={{ color: '#10b981', fontSize: '18px' }} />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#34d399' }}>
+                      Active {sub.plan === 'premium_annual' ? 'Annual Pro' : 'Monthly'} Membership
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#94a3b8' }}>
+                      Expires on {new Date(sub.endDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} ({sub.daysLeft} days remaining)
+                    </div>
+                  </div>
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: '800', background: 'rgba(16, 185, 129, 0.25)', color: '#34d399', padding: '3px 8px', borderRadius: '10px' }}>
+                  ACTIVE
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         {/* Plan Cards Selection */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '18px' }}>
           {SUBSCRIPTION_PLANS.map((plan) => {
@@ -295,7 +333,7 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
         >
           <FaLock style={{ color: '#f59e0b', marginTop: '2px', flexShrink: 0 }} />
           <div>
-            <strong>How to Subscribe:</strong> Open <strong>seedit.site</strong> in your standard computer browser (Chrome, Edge, Safari) to subscribe via Razorpay. Once purchased, click the button below to verify and unlock your account.
+            <strong>How to Subscribe:</strong> Please open <strong>https://seedit.site</strong> in your regular desktop browser to complete your subscription. SEED-SEB does not open external web browsers for security reasons. Once purchased, click the button below to verify and unlock your account.
           </div>
         </div>
 

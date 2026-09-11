@@ -178,7 +178,7 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
  * @param {object} user - Optional user object override
  * @returns {{ entitled: boolean, reason: string, badge: string, isLocked: boolean, isLifetime?: boolean }}
  */
-export const checkCourseEntitlement = (course, entitledCourseIds = null, user = null) => {
+export const checkCourseEntitlement = (course, arg2 = null, arg3 = null) => {
   if (!course) {
     return {
       entitled: false,
@@ -186,6 +186,25 @@ export const checkCourseEntitlement = (course, entitledCourseIds = null, user = 
       badge: 'Unavailable',
       isLocked: true,
     };
+  }
+
+  // Polymorphic argument normalization: supports (course, user, entitledSet) and (course, entitledSet, user)
+  let entitledCourseIds = null;
+  let userOverride = null;
+
+  if (arg2 instanceof Set || (arg2 && typeof arg2.has === 'function')) {
+    entitledCourseIds = arg2;
+    userOverride = arg3 && typeof arg3 === 'object' && !(arg3 instanceof Set) ? arg3 : null;
+  } else if (Array.isArray(arg2)) {
+    entitledCourseIds = new Set(arg2);
+    userOverride = arg3 && typeof arg3 === 'object' && !(arg3 instanceof Set) ? arg3 : null;
+  } else if (arg2 && typeof arg2 === 'object') {
+    userOverride = arg2;
+    if (arg3 instanceof Set || (arg3 && typeof arg3.has === 'function')) {
+      entitledCourseIds = arg3;
+    } else if (Array.isArray(arg3)) {
+      entitledCourseIds = new Set(arg3);
+    }
   }
 
   // 0. Course Disabled Check (Global Kill Switch)
@@ -198,7 +217,7 @@ export const checkCourseEntitlement = (course, entitledCourseIds = null, user = 
     };
   }
 
-  const effectiveUser = user || getCurrentAuthUser();
+  const effectiveUser = userOverride || getCurrentAuthUser();
   const courseId = course.courseId || course.id;
 
   // 1. LIFETIME ACCESS: Check if course was individually purchased or directly allocated
@@ -230,7 +249,10 @@ export const checkCourseEntitlement = (course, entitledCourseIds = null, user = 
   }
 
   // 3. Standard user: Check institutional tenant/cohort assignment
-  const set = entitledCourseIds || memoryCache;
+  const rawSet = entitledCourseIds || memoryCache;
+  const set = (rawSet instanceof Set || (rawSet && typeof rawSet.has === 'function'))
+    ? rawSet
+    : (Array.isArray(rawSet) ? new Set(rawSet) : null);
 
   if (set && (set.has('*') || set.has(courseId))) {
     return {

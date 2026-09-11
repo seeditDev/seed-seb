@@ -3497,6 +3497,39 @@ const StudentDashboard = () => {
                       <FaGraduationCap size={12} style={{ marginRight: '4px' }} />
                       {user?.tenant?.name || user?.college || college || 'SEED Institution'}
                     </span>
+                    {subscriptionInfo?.isPremium ? (
+                      <span
+                        className="profile-badge-pill"
+                        onClick={() => setShowPremiumModal(true)}
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.25))',
+                          border: '1px solid rgba(245, 158, 11, 0.5)',
+                          color: '#fbbf24',
+                          fontWeight: '800',
+                          cursor: 'pointer'
+                        }}
+                        title={`Active SEED Premium until ${subscriptionInfo.endDate ? new Date(subscriptionInfo.endDate).toLocaleDateString() : 'N/A'}`}
+                      >
+                        <FaCrown size={11} style={{ marginRight: '4px' }} />
+                        {subscriptionInfo.plan === 'premium_annual' ? 'PRO ANNUAL' : 'PRO MONTHLY'}
+                      </span>
+                    ) : (
+                      <span
+                        className="profile-badge-pill"
+                        onClick={() => setShowPremiumModal(true)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          color: '#cbd5e1',
+                          fontWeight: '700',
+                          cursor: 'pointer'
+                        }}
+                        title="Standard Edition — Click to view Premium plans"
+                      >
+                        <FaUserShield size={11} style={{ marginRight: '4px' }} />
+                        STANDARD PLAN
+                      </span>
+                    )}
                     <span className="profile-badge-pill pill-active">
                       <span className="live-status-dot" /> Active
                     </span>
@@ -6285,6 +6318,39 @@ const StudentDashboard = () => {
               <span className="hgp-unit credits">SC</span>
             </span>
           </div>
+
+          {/* User Tier Badge: PRO vs STANDARD */}
+          <div 
+            onClick={() => setShowPremiumModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              background: subscriptionInfo?.isPremium 
+                ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%)' 
+                : 'rgba(255, 255, 255, 0.06)',
+              border: subscriptionInfo?.isPremium 
+                ? '1px solid rgba(245, 158, 11, 0.5)' 
+                : '1px solid rgba(255, 255, 255, 0.15)',
+              color: subscriptionInfo?.isPremium ? '#fbbf24' : '#94a3b8',
+              fontSize: '11px',
+              fontWeight: '800',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              boxShadow: subscriptionInfo?.isPremium ? '0 0 12px rgba(245, 158, 11, 0.25)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+            title={subscriptionInfo?.isPremium 
+              ? `SEED Premium Active (${subscriptionInfo.plan === 'premium_annual' ? 'Annual Pro' : 'Monthly'}) until ${subscriptionInfo.endDate ? new Date(subscriptionInfo.endDate).toLocaleDateString() : ''}` 
+              : 'Standard Edition — Click to view Premium plans'}
+          >
+            {subscriptionInfo?.isPremium ? <FaCrown style={{ color: '#f59e0b' }} /> : <FaUserShield />}
+            <span>{subscriptionInfo?.isPremium ? (subscriptionInfo.plan === 'premium_annual' ? 'PRO ANNUAL' : 'PRO MONTHLY') : 'STANDARD'}</span>
+          </div>
+
           <div className="header-user-avatar-pill" onClick={() => setActiveTab('profile')}>
             <div className="header-user-avatar-circle">
               {name.charAt(0).toUpperCase()}
