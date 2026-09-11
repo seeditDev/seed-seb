@@ -233,22 +233,21 @@ const StudentDashboard = () => {
   }, []);
 
   const handleContestPassCheckout = async (contest) => {
-    try {
-      const res = await purchaseContestPass(user, contest);
-      if (res.success) {
-        toast.success(`Entry pass confirmed for "${contest.name}"!`);
-        const updated = {
-          ...(user || {}),
-          contestPasses: { ...(user?.contestPasses || {}), [contest.id]: true }
-        };
-        setUser(updated);
-        loadAssessments(updated);
-      } else if (res.error) {
-        toast.error(res.error);
-      }
-    } catch (e) {
-      toast.error(e.message || "Failed to initiate pass checkout.");
-    }
+    toast.info(`Contest passes can be acquired on seedit.site. Visit the website to unlock this contest.`, {
+      action: {
+        label: 'Go to Website',
+        onClick: () => {
+          try {
+            if (typeof window !== 'undefined' && window.electronAPI?.openExternal) {
+              window.electronAPI.openExternal('https://seedit.site');
+              return;
+            }
+          } catch (_) {}
+          window.open('https://seedit.site', '_blank', 'noopener,noreferrer');
+        }
+      },
+      duration: 6000
+    });
   };
   const [supportInitialCategory, setSupportInitialCategory] = useState('download_seb');
   const [showDocModal, setShowDocModal] = useState(false);

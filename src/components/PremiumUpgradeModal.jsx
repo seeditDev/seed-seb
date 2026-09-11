@@ -1,37 +1,49 @@
 import React, { useState } from 'react';
-import { FaStar, FaCheck, FaTimes, FaShieldAlt, FaBolt, FaAward, FaLockOpen } from 'react-icons/fa';
-import { SUBSCRIPTION_PLANS, purchasePremiumPlan } from '../services/razorpayService';
+import { FaStar, FaCheck, FaTimes, FaShieldAlt, FaExternalLinkAlt, FaSyncAlt } from 'react-icons/fa';
+import { SUBSCRIPTION_PLANS } from '../services/razorpayService';
+import { db } from '../lib/firebase-config';
+import { doc, getDoc } from 'firebase/firestore';
+
+const openExternalURL = (url) => {
+  try {
+    if (typeof window !== 'undefined' && window.electronAPI?.openExternal) {
+      window.electronAPI.openExternal(url);
+      return;
+    }
+  } catch (_) {}
+  window.open(url, '_blank', 'noopener,noreferrer');
+};
 
 export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSuccess }) {
   const [selectedPlanId, setSelectedPlanId] = useState('premium_annual');
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [successMsg, setSuccessMsg] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [statusMsg, setStatusMsg] = useState(null);
 
   if (!isOpen) return null;
 
   const selectedPlan = SUBSCRIPTION_PLANS.find(p => p.id === selectedPlanId) || SUBSCRIPTION_PLANS[0];
 
-  const handleCheckout = async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
+  const handleOpenWeb = () => {
+    openExternalURL('https://seedit.site');
+  };
 
+  const handleRefreshStatus = async () => {
+    if (!user?.uid) return;
+    setRefreshing(true);
+    setStatusMsg(null);
     try {
-      const res = await purchasePremiumPlan(user, selectedPlan);
-      if (res.success) {
-        setSuccessMsg("Congratulations! Your SEED-IT account has been upgraded to Premium.");
-        if (onUpgradeSuccess) onUpgradeSuccess(res);
-        setTimeout(() => {
-          onClose();
-        }, 1800);
-      } else if (res.error) {
-        setErrorMsg(res.error);
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists() && (snap.data().isPremium || snap.data().premium)) {
+        setStatusMsg({ type: 'success', text: "Premium membership detected! Your account is now active." });
+        if (onUpgradeSuccess) onUpgradeSuccess({ success: true, plan: snap.data().premiumPlan });
+        setTimeout(() => onClose(), 1500);
+      } else {
+        setStatusMsg({ type: 'info', text: "No active subscription found yet. If you just completed checkout on seedit.site, please wait a moment and try again." });
       }
-    } catch (err) {
-      setErrorMsg(err.message || "Payment checkout failed. Please try again.");
+    } catch (e) {
+      setStatusMsg({ type: 'error', text: "Unable to verify subscription: " + (e.message || "Network error") });
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -126,12 +138,12 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
             Upgrade to SEED Premium
           </h2>
           <p style={{ fontSize: '13.5px', color: '#9ca3af', margin: 0 }}>
-            Unlock every challenge, compete in Global Contests, and master top courses.
+            Purchases and subscriptions are managed on our official web portal.
           </p>
         </div>
 
         {/* Plan Cards Selection */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '18px' }}>
           {SUBSCRIPTION_PLANS.map((plan) => {
             const isSelected = plan.id === selectedPlanId;
             return (
@@ -189,7 +201,7 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
             border: '1px solid rgba(255, 255, 255, 0.06)',
             borderRadius: '12px',
             padding: '14px 16px',
-            marginBottom: '20px',
+            marginBottom: '18px',
           }}
         >
           <div style={{ fontSize: '11.5px', fontWeight: '700', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
@@ -219,72 +231,88 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
           </div>
         </div>
 
-        {/* Status Alerts */}
-        {errorMsg && (
-          <div
-            style={{
-              padding: '10px 14px',
-              borderRadius: '8px',
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#f87171',
-              fontSize: '12.5px',
-              marginBottom: '14px',
-            }}
-          >
-            {errorMsg}
-          </div>
-        )}
+        {/* Notice Info Box */}
+        <div
+          style={{
+            background: 'rgba(59, 130, 246, 0.08)',
+            border: '1px solid rgba(59, 130, 246, 0.25)',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '16px',
+            fontSize: '12px',
+            color: '#93c5fd',
+            lineHeight: '1.45',
+          }}
+        >
+          💡 <strong>Buying Policy:</strong> For maximum security, all payment checkouts (Razorpay, UPI, Cards) are executed on our website at <strong>seedit.site</strong>. Once upgraded, all courses and premium challenges immediately unlock here in SEED-SEB.
+        </div>
 
-        {successMsg && (
+        {/* Status Alerts */}
+        {statusMsg && (
           <div
             style={{
               padding: '10px 14px',
               borderRadius: '8px',
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#34d399',
-              fontSize: '13px',
-              fontWeight: '600',
+              background: statusMsg.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.12)',
+              border: `1px solid ${statusMsg.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              color: statusMsg.type === 'success' ? '#34d399' : '#f87171',
+              fontSize: '12.5px',
               marginBottom: '14px',
               textAlign: 'center',
             }}
           >
-            🎉 {successMsg}
+            {statusMsg.text}
           </div>
         )}
 
-        {/* Action Button */}
-        <button
-          onClick={handleCheckout}
-          disabled={loading || Boolean(successMsg)}
-          style={{
-            width: '100%',
-            padding: '14px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-            color: '#000000',
-            fontWeight: '800',
-            fontSize: '14.5px',
-            border: 'none',
-            cursor: loading || Boolean(successMsg) ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 16px rgba(245, 158, 11, 0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.15s ease',
-            opacity: loading ? 0.75 : 1,
-          }}
-        >
-          {loading ? (
-            <span>Processing with Razorpay...</span>
-          ) : (
-            <>
-              <FaLockOpen size={14} /> Pay ₹{selectedPlan.priceINR} via Razorpay
-            </>
-          )}
-        </button>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button
+            onClick={handleOpenWeb}
+            style={{
+              width: '100%',
+              padding: '13px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: '#000000',
+              fontWeight: '800',
+              fontSize: '14.5px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(245, 158, 11, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <FaExternalLinkAlt size={13} /> Buy on seedit.site
+          </button>
+
+          <button
+            onClick={handleRefreshStatus}
+            disabled={refreshing}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '10px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#e2e8f0',
+              fontWeight: '600',
+              fontSize: '13px',
+              cursor: refreshing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+          >
+            <FaSyncAlt size={12} className={refreshing ? 'fa-spin' : ''} />
+            {refreshing ? 'Verifying status...' : "I've subscribed on Web (Sync Status)"}
+          </button>
+        </div>
 
         {/* Trust Badge */}
         <div
@@ -298,7 +326,7 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
             color: '#6b7280',
           }}
         >
-          <FaShieldAlt color="#10b981" /> 256-Bit SSL Encrypted Checkout via Razorpay (UPI, Cards, NetBanking)
+          <FaShieldAlt color="#10b981" /> Purchases processed securely via Razorpay at seedit.site
         </div>
       </div>
     </div>
