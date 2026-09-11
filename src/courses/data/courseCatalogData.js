@@ -23,6 +23,9 @@ const SLUG_ALIASES = {
   'python-mastery-course': 'python-beginner-v2-p1',
   'sql-database-mastery': 'sql-intermediate',
   'sql-database-systems-course': 'sql-intermediate',
+  'sql-interactive': 'sql-interactive',
+  'sql-mastery': 'sql-interactive',
+  'learn-sql': 'sql-interactive',
   'web-dev-fullstack-course': 'web-dev-js',
   'system-design-mastery-course': 'operating-system'
 };
@@ -33,6 +36,7 @@ const FLAGSHIP_PRIORITY = [
   'dsa',
   'java',
   'c',
+  'sql-interactive',
   'operating-system',
   'python-beginner-v2-p1',
   'react-js',

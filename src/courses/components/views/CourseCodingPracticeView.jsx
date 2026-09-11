@@ -764,7 +764,7 @@ const CourseCodingPracticeView = ({
                     </pre>
                     {tc.explanation && (
                       <div className="example-explanation-box">
-                        <strong style={{ color: 'var(--lp-text-muted)', fontSize: '12px' }}>Explanation:</strong>
+                        <strong style={{ color: '#000000', fontSize: '12px' }}>Explanation:</strong>
                         <ProblemStatementRenderer content={tc.explanation} />
                       </div>
                     )}
@@ -784,15 +784,15 @@ const CourseCodingPracticeView = ({
               <div className="solution-view-pane">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#f59e0b' }}>
                   <FaLightbulb />
-                  <strong style={{ color: 'var(--lp-text)' }}>Editorial &amp; Approach</strong>
+                  <strong style={{ color: '#000000' }}>Editorial &amp; Approach</strong>
                 </div>
-                <p style={{ fontSize: '13.5px', color: 'var(--lp-text)', lineHeight: '1.65' }}>
+                <p style={{ fontSize: '13.5px', color: '#000000', lineHeight: '1.65' }}>
                   {loadedQuestion?.solution?.approach || 'Examine optimal algorithmic strategies for this problem pattern.'}
                 </p>
                 {loadedQuestion?.solution?.code?.Python3 && (
                   <div style={{ marginTop: '14px' }}>
-                    <strong style={{ fontSize: '12.5px', color: 'var(--lp-text)' }}>Reference Implementation (Python 3):</strong>
-                    <pre style={{ background: 'var(--lp-surface-hover)', padding: '12px', borderRadius: '8px', border: '1px solid var(--lp-border)', fontSize: '12px', color: 'var(--lp-text)', overflowX: 'auto', marginTop: '6px' }}>
+                    <strong style={{ fontSize: '12.5px', color: '#000000' }}>Reference Implementation (Python 3):</strong>
+                    <pre style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px', color: '#000000', overflowX: 'auto', marginTop: '6px' }}>
                       <code>{loadedQuestion.solution.code.Python3}</code>
                     </pre>
                   </div>

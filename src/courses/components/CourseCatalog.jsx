@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import SeedCreditCoin from '../../components/SeedCreditCoin';
 import { calculateCourseRewards } from '../../utils/gamificationService';
+import '../styles/CourseLearningPlayer.css';
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'All Courses', icon: FaThLarge, color: '#0d9488', bg: 'rgba(13, 148, 136, 0.12)' },

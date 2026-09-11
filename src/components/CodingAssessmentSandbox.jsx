@@ -968,29 +968,44 @@ const CodingAssessmentSandbox = ({ isEmbedded = false, testData = null, secTimer
                 </div>
             )}
             {showSubmitConfirm && (
-                <div className="proctor-start-overlay" style={{ zIndex: 10005 }}>
-                    <div className="proctor-start-card" style={{ border: '1.5px solid #ef4444', boxShadow: '0 0 15px rgba(239, 68, 68, 0.3)' }}>
-                        <h2>Submit Assessment?</h2>
-                        <p style={{ color: '#d1d5db', lineHeight: '1.6', margin: '15px 0' }}>
-                            Are you sure you want to finish and submit your assessment? 
-                            Once submitted, you will not be able to re-enter or edit your solutions.
-                        </p>
-                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '25px' }}>
-                            <button 
-                                className="action-btn" 
-                                style={{ background: '#333', color: '#ccc', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                onClick={() => setShowSubmitConfirm(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                className="action-btn run-btn" 
-                                style={{ background: '#ef4444', color: '#fff', padding: '10px 25px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                onClick={handleManualSubmit}
-                            >
-                                Confirm & Submit
-                            </button>
-                        </div>
+                <div 
+                    style={{
+                        position: 'fixed',
+                        top: '20px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 10005,
+                        background: '#1e293b',
+                        border: '1.5px solid #ef4444',
+                        boxShadow: '0 12px 36px rgba(0,0,0,0.5), 0 0 20px rgba(239, 68, 68, 0.25)',
+                        borderRadius: '12px',
+                        padding: '20px 24px',
+                        maxWidth: '460px',
+                        width: 'calc(100% - 32px)',
+                        textAlign: 'center'
+                    }}
+                >
+                    <h3 style={{ margin: '0 0 8px', color: '#f8fafc', fontSize: '1.05rem', fontWeight: 700 }}>
+                        Submit Assessment?
+                    </h3>
+                    <p style={{ margin: '0 0 16px', color: '#94a3b8', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                        Are you sure you want to finish and submit? Once submitted, you will not be able to re-enter or edit solutions.
+                    </p>
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                        <button 
+                            type="button"
+                            style={{ background: 'rgba(255,255,255,0.08)', color: '#f8fafc', padding: '8px 18px', border: '1px solid #475569', borderRadius: '6px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 600 }}
+                            onClick={() => setShowSubmitConfirm(false)}
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="button"
+                            style={{ background: '#ef4444', color: '#ffffff', padding: '8px 20px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.84rem', fontWeight: 700 }}
+                            onClick={handleManualSubmit}
+                        >
+                            Confirm &amp; Submit
+                        </button>
                     </div>
                 </div>
             )}

@@ -1541,6 +1541,11 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 setShowReviewAnswers(false);
                 setSubmissionStatus('success');
 
+                // Smoothly display .seb-boot confirmation for 1.2s then unveil results view
+                await new Promise(r => setTimeout(r, 1200));
+                setShowSubmittingPopup(false);
+                setIsSubmitting(false);
+
                 submitGuard.complete();
                 const canonicalMainId = isEmbedded
                     ? (testData?.assessmentId || testData?.id)
@@ -3024,54 +3029,49 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     const renderSubmittingPopup = () => {
         if (!showSubmittingPopup) return null;
 
-        const getStepText = () => {
+        const getStepTitle = () => {
             switch (submissionStep) {
                 case 'validating':
-                    return 'Validating the Answers';
+                    return 'Validating Responses...';
                 case 'generating':
-                    return 'Generating Marks';
+                    return 'Generating Assessment Score...';
                 case 'submitted':
-                    return 'Test Submitted Successfully!';
+                    return 'Submission Completed Successfully!';
                 default:
-                    return 'Submitting...';
+                    return 'Submitting Assessment Results...';
             }
         };
 
-        const getStepIcon = () => {
-            if (submissionStep === 'submitted') {
-                return <FaCheckCircle className="mcq-success-icon" />;
+        const getStepStatus = () => {
+            switch (submissionStep) {
+                case 'validating':
+                    return 'Checking answer completeness and integrity';
+                case 'generating':
+                    return 'Aggregating marks and persisting test records';
+                case 'submitted':
+                    return 'Preparing performance analysis & analytics...';
+                default:
+                    return 'Finalizing test attempt';
             }
-            return (
-                <div className="mcq-dot-loader">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            );
         };
 
         return (
-            <div className="mcq-popup-overlay">
-                <div className="mcq-popup-content mcq-submitting-popup">
-                    <div className="mcq-popup-loader">
-                        {getStepIcon()}
+            <div className="seb-boot" style={{ zIndex: 99999 }}>
+                <div className="seb-boot__brand">
+                    <div className="seb-boot__spinner-ring"></div>
+                    <div className="seb-boot__logo-wrapper">
+                        <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
                     </div>
-                    <h3>{getStepText()}</h3>
-                    {submissionStep === 'submitted' && (
-                        <>
-                            <p>Your test has been successfully submitted and recorded.</p>
-                            <button
-                                className="mcq-popup-button mcq-primary-button"
-                                onClick={() => {
-                                    setShowSubmittingPopup(false);
-                                    setSubmissionStep('');
-                                    setIsSubmitting(false);
-                                }}
-                            >
-                                View Results
-                            </button>
-                        </>
-                    )}
+                </div>
+                <div className="seb-boot__title">
+                    {getStepTitle()}
+                </div>
+                <div className="seb-boot__status">
+                    <span className="seb-boot__dot"></span>
+                    <span>{getStepStatus()}</span>
+                </div>
+                <div className="seb-boot__progress-bar" style={{ width: '260px' }}>
+                    <div className="seb-boot__progress-fill"></div>
                 </div>
             </div>
         );

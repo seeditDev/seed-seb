@@ -87,12 +87,11 @@ import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
 import PracticeHome from './PracticeHome';
-import CourseLearningPlayer from '../courses/components/CourseLearningPlayer';
 import MyLearningDashboard from '../courses/components/MyLearningDashboard';
 import CourseCatalog from '../courses/components/CourseCatalog';
+import '../courses/styles/CourseLearningPlayer.css';
 import { COURSE_CATALOG } from '../courses/data/courseCatalogData';
 import { getEnrolledCourseIds, fetchEnrolledCourseIds, getCourseProgress } from '../courses/services/learningEngineService';
-import AIInterviewSimulator from './AIInterviewSimulator';
 import { fetchContentJSON } from '../utils/contentApi';
 import { fetchCompletionMap, invalidateCompletionCache } from '../services/attemptStatusService';
 import { requireTenant } from '../utils/tenant';
@@ -197,13 +196,6 @@ const StudentDashboard = () => {
   const [studentUsername, setStudentUsername] = useState(() => user?.username || '');
   const [practiceInitialTab, setPracticeInitialTab] = useState(() => location.state?.practiceTab || 'bank');
   const [practiceInitialCourse, setPracticeInitialCourse] = useState(null);
-  const [selectedLearningCourse, setSelectedLearningCourse] = useState(() => {
-    if (location.state?.courseId) {
-      return COURSE_CATALOG.find(c => c.courseId === location.state.courseId) || COURSE_CATALOG[0];
-    }
-    return null;
-  });
-  const [courseInitialView, setCourseInitialView] = useState('OVERVIEW');
 
   // Synchronize dashboard tab and practice tab when navigating via location.state (e.g. Home button from PracticeSandbox)
   useEffect(() => {
@@ -215,13 +207,6 @@ const StudentDashboard = () => {
       setPracticeInitialCourse(null);
     }
   }, [location.state]);
-
-  // Auto-collapse sidebar when a course is viewed to provide maximum learning workspace
-  useEffect(() => {
-    if (selectedLearningCourse && (activeTab === 'my-learning' || activeTab === 'courses')) {
-      setCollapsed(true);
-    }
-  }, [selectedLearningCourse, activeTab]);
   const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('portal_primary_color') || 'green');
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('portal_font_size') || 'medium');
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -2019,41 +2004,38 @@ const StudentDashboard = () => {
     });
   };
 
-  // Open Unified Launch Modal on test click
+  // Direct Streamlined Launch on test click
   const handleStartClick = (assessment) => {
+    if (!assessment) return;
+
     // 0. Schedule restriction guard
     if (assessment.schedule) {
       const schedCheck = getScheduleStatus(assessment.schedule);
       if (schedCheck.status === "Upcoming") {
-        setEligibilityError({
-          title: "Assessment Not Started",
-          message: `This assessment is not open yet. ${schedCheck.reason}. Please wait until the scheduled start time.`
-        });
+        toast.error(`This assessment is not open yet. ${schedCheck.reason}. Please wait until the scheduled start time.`);
         return;
       }
       if (schedCheck.status === "Expired") {
-        setEligibilityError({
-          title: "Assessment Schedule Expired",
-          message: `The access window for this assessment has ended. ${schedCheck.reason}. Access is locked.`
-        });
+        toast.error(`The access window for this assessment has ended. ${schedCheck.reason}. Access is locked.`);
         return;
       }
     }
 
-    setSelectedAssessment(assessment);
-    setPasskeyInput("");
-    setPasskeyError("");
-    setShowPasskey(false);
-    setEligibilityError(null);
-    setIsLaunching(false);
-    setLaunchStep('modal');
+    if (assessment.completed) {
+      toast.error('You have already completed and submitted this assessment. Re-attempts are not permitted.');
+      return;
+    }
 
-    // Run parallel device & network checks in background (~50ms)
-    runParallelPreflight(assessment);
-
-    setTimeout(() => {
-      if (passkeyInputRef.current) passkeyInputRef.current.focus();
-    }, 120);
+    // Direct launch into the unified Assessment runtime
+    sessionStorage.setItem('multisectionAssessmentData', JSON.stringify(assessment));
+    sessionStorage.setItem('msaCourseCtx', JSON.stringify({
+      courseId: assessment.courseId ?? '',
+      seriesId: assessment.seriesId ?? '',
+      assessmentId: assessment.id ?? '',
+      totalMarks: assessment.maxScore || 100,
+      settings: assessment.settings || {},
+    }));
+    navigate(`/student/assessment/id/${assessment.slug}`);
   };
 
   // Validate passkey, eligibility, and launch workspace immediately
@@ -2360,10 +2342,11 @@ const StudentDashboard = () => {
                   className="continue-course-card"
                   onClick={() => {
                     if (course.rawCourse) {
-                      setSelectedLearningCourse(course.rawCourse);
-                      setCourseInitialView('CLASS');
-                      setCollapsed(true);
-                      setActiveTab('courses');
+                      const cid = course.rawCourse.courseId || course.rawCourse.id || course.rawCourse.slug || course.id;
+                      try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(course.rawCourse)); } catch (_) {}
+                      navigate(`/student/learning/${cid}?view=CLASS`, { state: { view: 'CLASS' } });
+                    } else if (course.id) {
+                      navigate(`/student/learning/${course.id}?view=CLASS`, { state: { view: 'CLASS' } });
                     } else {
                       setActiveTab('my-learning');
                     }
@@ -4132,7 +4115,7 @@ const StudentDashboard = () => {
                   <div className="security-card-header">
                     <FaShieldAlt className="security-icon" />
                     <div>
-                      <h4 className="security-title">Private Firestore Security Guarantee</h4>
+                      <h4 className="security-title">Private Cloud Server Security Guarantee</h4>
                       <span className="security-badge">Isolated Storage</span>
                     </div>
                   </div>
@@ -4144,7 +4127,7 @@ const StudentDashboard = () => {
                   </div>
                   <ul className="security-bullets">
                     <li><FaCheck size={11} className="bullet-check" /> <strong>Never Public:</strong> Public profile visitors, peer students, and leaderboards cannot see or access your token.</li>
-                    <li><FaCheck size={11} className="bullet-check" /> <strong>Firestore Rules Protected:</strong> Only your authenticated Firebase UID (<code>isUser(userId)</code>) has read and write permissions.</li>
+                    <li><FaCheck size={11} className="bullet-check" /> <strong>Cloud Server Rules Protected:</strong> Only your authenticated Cloud Server UID (<code>isUser(userId)</code>) has read and write permissions.</li>
                     <li><FaCheck size={11} className="bullet-check" /> <strong>One-Way Sync:</strong> Code flows strictly from SEED-IT to your personal GitHub repository. We never read or modify your other repositories.</li>
                   </ul>
                 </div>
@@ -6171,283 +6154,6 @@ const StudentDashboard = () => {
           </div>
         </div>
       )}
-      */}
-
-      {/* ═══════════════════════════════════════════════════════════
-          UNIFIED STREAMLINED ASSESSMENT LAUNCH MODAL
-      ═══════════════════════════════════════════════════════════ */}
-      {launchStep === 'modal' && selectedAssessment && (
-        <div className="lw-overlay" style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)' }}>
-          <div className="lw-card" style={{ maxWidth: '640px', width: '100%', borderRadius: '18px', background: 'var(--bg-secondary, #ffffff)', color: 'var(--text-main, #0f172a)', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)', border: '1px solid var(--border-color, #e2e8f0)', fontFamily: "'Inter', sans-serif" }}>
-
-            {/* Header with Badge, Title & Metadata */}
-            <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid var(--border-color, #f1f5f9)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <span style={{ background: 'rgba(22, 163, 74, 0.12)', color: 'var(--accent-primary, #16a34a)', fontWeight: '800', fontSize: '11px', padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.06em', textTransform: 'uppercase', border: '1px solid rgba(22, 163, 74, 0.25)' }}>
-                  {selectedAssessment.type?.toUpperCase() || 'ASSESSMENT'}
-                </span>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-main, #334155)', background: 'var(--bg-primary, #f1f5f9)', border: '1px solid var(--border-color, #e2e8f0)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <FaClock style={{ color: 'var(--accent-primary, #16a34a)' }} /> {selectedAssessment.duration} Mins
-                  </span>
-                  {selectedAssessment.proctored && (
-                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#0284c7', background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.25)', padding: '4px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <FaShieldAlt /> Monitored
-                    </span>
-                  )}
-                </div>
-              </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-main, #0f172a)', margin: '6px 0 0 0', letterSpacing: '-0.02em' }}>
-                {selectedAssessment.name}
-              </h2>
-            </div>
-
-            <div style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-              {/* Access Passkey (if mandatory) */}
-              {selectedAssessment.passkey ? (
-                <div style={{
-                  background: 'var(--bg-primary, #f8fafc)',
-                  border: `1.5px solid ${passkeyError ? '#ef4444' : passkeyInput.trim() === selectedAssessment.passkey ? '#16a34a' : 'var(--border-color, #e2e8f0)'}`,
-                  borderRadius: '12px',
-                  padding: '16px 18px',
-                  transition: 'border-color 0.2s ease'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <FaLock style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '14px' }} />
-                      <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main, #0f172a)' }}>Access Passkey</span>
-                      <span style={{ fontSize: '10.5px', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', padding: '2px 8px', borderRadius: '8px', fontWeight: '700' }}>Required</span>
-                    </div>
-                    {selectedAssessment.passkey && passkeyInput.trim() === selectedAssessment.passkey && (
-                      <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <FaCheckCircle /> Passkey Matched
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <input
-                      type={showPasskey ? "text" : "password"}
-                      ref={passkeyInputRef}
-                      placeholder="Enter instructor passkey to unlock..."
-                      value={passkeyInput}
-                      onChange={e => {
-                        setPasskeyInput(e.target.value);
-                        if (passkeyError) setPasskeyError("");
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleUnifiedLaunch();
-                        }
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '10px 42px 10px 14px',
-                        fontSize: '1rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color, #cbd5e1)',
-                        background: 'var(--bg-secondary, #ffffff)',
-                        color: 'var(--text-main, #0f172a)',
-                        outline: 'none',
-                        transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
-                      }}
-                      disabled={isLaunching}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasskey(!showPasskey)}
-                      style={{
-                        position: 'absolute',
-                        right: '12px',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-muted, #94a3b8)',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '15px'
-                      }}
-                      tabIndex={-1}
-                      title={showPasskey ? "Hide passkey" : "Show passkey"}
-                    >
-                      {showPasskey ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                  {passkeyError && (
-                    <div style={{ marginTop: '10px', padding: '7px 12px', fontSize: '0.84rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-                      <FaExclamationTriangle /> {passkeyError}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
-              {/* Instant System Status Badges */}
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #64748b)', marginBottom: '8px' }}>
-                  System Status
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
-                  {/* Internet */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Internet</span>
-                      <FaWifi style={{ color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444', fontSize: '13px' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.internet === 'pass' ? '#16a34a' : '#ef4444' }}>
-                      {preflightResults.internet === 'pass' ? 'Active' : 'Offline'}
-                    </span>
-                  </div>
-
-                  {/* Camera / Mic */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Camera</span>
-                      <FaCamera style={{ color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b', fontSize: '13px' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: preflightResults.webcam === 'pass' ? '#16a34a' : '#f59e0b' }}>
-                      {preflightResults.webcam === 'pass' ? 'Ready' : 'Checking'}
-                    </span>
-                  </div>
-
-                  {/* Secure Shell */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Secure Shell</span>
-                      <FaShieldAlt style={{ color: '#16a34a', fontSize: '13px' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
-                      Enforced
-                    </span>
-                  </div>
-
-                  {/* Fullscreen */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', background: 'var(--bg-primary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted, #64748b)', fontWeight: '600' }}>Fullscreen</span>
-                      <FaExpand style={{ color: '#16a34a', fontSize: '13px' }} />
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16a34a' }}>
-                      Enforced
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Assessment Section Breakdown */}
-              {selectedAssessment.isMultiSection && selectedAssessment.sections?.length > 0 ? (
-                <div style={{ background: 'var(--bg-primary, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #334155)', marginBottom: '8px' }}>
-                    Sections Breakdown ({selectedAssessment.sections.length})
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '110px', overflowY: 'auto' }}>
-                    {selectedAssessment.sections.map((sec, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem', padding: '4px 0' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
-                            {idx + 1}
-                          </span>
-                          <span style={{ color: 'var(--text-main, #0f172a)', fontWeight: '700' }}>{sec.name}</span>
-                        </div>
-                        <span style={{ color: 'var(--text-muted, #64748b)', fontWeight: '600', fontSize: '0.84rem' }}>{sec.duration_minutes || sec.duration || 0} Mins &gt;</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div style={{ background: 'var(--bg-primary, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderLeft: '4px solid #16a34a', borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted, #334155)', marginBottom: '8px' }}>
-                    Sections Breakdown (1)
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem', padding: '4px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ background: '#16a34a', color: '#ffffff', width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700' }}>
-                        1
-                      </span>
-                      <span style={{ color: 'var(--text-main, #0f172a)', fontWeight: '700' }}>{selectedAssessment.name}</span>
-                    </div>
-                    <span style={{ color: 'var(--text-muted, #64748b)', fontWeight: '600', fontSize: '0.84rem' }}>{selectedAssessment.duration} Mins &gt;</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Essential Rules */}
-              <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '10px', padding: '12px 16px' }}>
-                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#d97706', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <FaExclamationTriangle /> Important Guidelines
-                </div>
-                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.83rem', color: 'var(--text-muted, #78350f)', lineHeight: '1.55' }}>
-                  <li>Fullscreen mode is enforced. Tab switching and window exits are strictly tracked.</li>
-                  <li>The assessment timer runs continuously and will auto-submit when time expires.</li>
-                  <li>This is a single-attempt session. Ensure your power adapter is plugged in.</li>
-                </ul>
-              </div>
-
-            </div>
-
-            {/* Footer Actions */}
-            <div style={{ padding: '16px 28px 20px', borderTop: '1px solid var(--border-color, #f1f5f9)', background: 'var(--bg-primary, #fafafa)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={cancelWizard}
-                  disabled={isLaunching}
-                  style={{
-                    padding: '9px 20px',
-                    fontSize: '0.92rem',
-                    fontWeight: '600',
-                    borderRadius: '8px',
-                    background: 'var(--bg-secondary, #ffffff)',
-                    border: '1px solid var(--border-color, #cbd5e1)',
-                    color: 'var(--text-main, #334155)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <FaTimes /> Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleUnifiedLaunch}
-                  disabled={isLaunching}
-                  style={{
-                    padding: '10px 24px',
-                    fontSize: '0.95rem',
-                    fontWeight: '700',
-                    borderRadius: '8px',
-                    background: 'var(--accent-primary, #16a34a)',
-                    color: '#ffffff',
-                    border: 'none',
-                    boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: isLaunching ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  {isLaunching ? (
-                    <>
-                      <span className="lw-mini-spinner" style={{ width: '15px', height: '15px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#ffffff', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }}></span>
-                      Starting Assessment...
-                    </>
-                  ) : (
-                    <>
-                      <FaPlay style={{ fontSize: '11px' }} /> Start Assessment
-                    </>
-                  )}
-                </button>
-              </div>
-              <div style={{ textAlign: 'center', color: 'var(--text-muted, #64748b)', fontSize: '11px', marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                <FaLock style={{ fontSize: '10px' }} /> Your activity will be monitored throughout this assessment.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Eligibility / connection error modal */}
       {eligibilityError && (
@@ -6595,7 +6301,6 @@ const StudentDashboard = () => {
               <button
                 className={`sidebar-nav-pill ${activeTab === "my-learning" ? "active" : ""}`}
                 onClick={() => {
-                  setSelectedLearningCourse(null);
                   setCollapsed(false);
                   setActiveTab("my-learning");
                 }}
@@ -6606,7 +6311,6 @@ const StudentDashboard = () => {
               <button
                 className={`sidebar-nav-pill ${activeTab === "courses" ? "active" : ""}`}
                 onClick={() => {
-                  setSelectedLearningCourse(null);
                   setCollapsed(false);
                   setActiveTab("courses");
                 }}
@@ -6648,8 +6352,8 @@ const StudentDashboard = () => {
               </button>
               {isAiInterviewAllowed && (
                 <button
-                  className={`sidebar-nav-pill ${activeTab === "ai-interview" ? "active" : ""}`}
-                  onClick={() => setActiveTab("ai-interview")}
+                  className="sidebar-nav-pill"
+                  onClick={() => navigate('/student/ai-interview')}
                 >
                   <FaUserTie />
                   {!collapsed && <span>AI Interview</span>}
@@ -6754,57 +6458,31 @@ const StudentDashboard = () => {
         <main className="dashboard-main">
           {activeTab === "dashboard" ? renderDashboardHome() :
             activeTab === "my-learning" ? (
-              selectedLearningCourse ? (
-                <CourseLearningPlayer 
-                  course={selectedLearningCourse} 
-                  initialView={courseInitialView}
-                  onExit={() => {
-                    setSelectedLearningCourse(null);
-                    setCourseInitialView('OVERVIEW');
-                    setCollapsed(false);
-                  }} 
-                  user={user} 
-                />
-              ) : (
-                <MyLearningDashboard 
-                  onOpenCourse={(c, view = 'CLASS') => {
-                    setSelectedLearningCourse(c);
-                    setCourseInitialView(view);
-                    setCollapsed(true);
-                  }} 
-                  onExploreCourses={() => setActiveTab("courses")} 
-                  user={user}
-                  totalXP={totalXP || userLevelInfo?.totalXP || 0}
-                  seedCredits={seedCredits}
-                  userLevelInfo={userLevelInfo}
-                />
-              )
+              <MyLearningDashboard 
+                onOpenCourse={(c, view = 'CLASS') => {
+                  const cid = c.courseId || c.id || c.slug;
+                  try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(c)); } catch (_) {}
+                  navigate(`/student/learning/${cid}?view=${view}`, { state: { view } });
+                }} 
+                onExploreCourses={() => setActiveTab("courses")} 
+                user={user}
+                totalXP={totalXP || userLevelInfo?.totalXP || 0}
+                seedCredits={seedCredits}
+                userLevelInfo={userLevelInfo}
+              />
             ) :
             activeTab === "courses" ? (
-              selectedLearningCourse ? (
-                <CourseLearningPlayer 
-                  course={selectedLearningCourse} 
-                  initialView={courseInitialView}
-                  onExit={() => {
-                    setSelectedLearningCourse(null);
-                    setCourseInitialView('OVERVIEW');
-                    setCollapsed(false);
-                  }} 
-                  user={user} 
-                />
-              ) : (
-                <CourseCatalog 
-                  onStartCourse={(c, view = 'OVERVIEW') => { 
-                    setSelectedLearningCourse(c); 
-                    setCourseInitialView(view);
-                    setCollapsed(true);
-                  }} 
-                  user={user}
-                  totalXP={totalXP || userLevelInfo?.totalXP || 0}
-                  seedCredits={seedCredits}
-                  userLevelInfo={userLevelInfo}
-                />
-              )
+              <CourseCatalog 
+                onStartCourse={(c, view = 'OVERVIEW') => { 
+                  const cid = c.courseId || c.id || c.slug;
+                  try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(c)); } catch (_) {}
+                  navigate(`/student/learning/${cid}?view=${view}`, { state: { view } });
+                }} 
+                user={user}
+                totalXP={totalXP || userLevelInfo?.totalXP || 0}
+                seedCredits={seedCredits}
+                userLevelInfo={userLevelInfo}
+              />
             ) :
             activeTab === "assessments" ? renderAssessments() :
               activeTab === "practice" ? (
@@ -6819,8 +6497,7 @@ const StudentDashboard = () => {
               ) :
                 activeTab === "support" ? renderHelpAndSupport() :
                   activeTab === "settings" ? renderSettings() :
-                    activeTab === "ai-interview" ? <AIInterviewSimulator user={user} /> :
-                      renderProfile()}
+                    renderProfile()}
         </main>
       </div>
 

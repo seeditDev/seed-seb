@@ -82,7 +82,7 @@ export default function GitHubSyncModal({ isOpen, onClose, user, onSyncCompleted
     } catch (err) {
       console.warn('[GitHubSyncModal] OAuth error:', err);
       if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/configuration-not-found') {
-        toast.error('GitHub OAuth is not configured in Firebase Console. Please enter your Personal Access Token below.');
+        toast.error('GitHub OAuth is not configured on Cloud Server. Please enter your Personal Access Token below.');
         setShowPatSection(true);
       } else if (err.code === 'auth/popup-closed-by-user') {
         toast.info('GitHub connection window was closed.');

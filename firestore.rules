@@ -236,6 +236,19 @@ service cloud.firestore {
         allow create, update, delete: if isPortal();
       }
 
+      // Feedback subcollections (Student submission after exam completion)
+      match /assessmentFeedback/{feedbackId} {
+        allow read: if isPortal() || isSignedIn();
+        allow create, update: if isSignedIn();
+        allow delete: if isAdmin();
+      }
+
+      match /platformFeedback/{feedbackId} {
+        allow read: if isPortal() || isSignedIn();
+        allow create, update: if isSignedIn();
+        allow delete: if isAdmin();
+      }
+
       match /{allSub=**} {
         allow read: if true;
         allow write: if isPortal();
@@ -325,8 +338,20 @@ service cloud.firestore {
       allow create, update, delete: if isPortal();
     }
 
-    match /userSolutions/{uid}/{sub=**} {
-      allow read, write: if isUser(uid) || isPortal() || isSignedIn();
+    // ══════════════════════════════════════════════════════════════════════
+    // 7b. Assessment & Platform Feedback (Top-level aggregation queries)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /assessmentFeedback/{feedbackId} {
+      allow read: if isPortal() || isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    match /platformFeedback/{feedbackId} {
+      allow read: if isPortal() || isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════════════════

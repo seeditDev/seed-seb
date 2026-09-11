@@ -120,7 +120,7 @@ const AdminQuestionBank = () => {
 
     // Seeding tool
     const handleReSeed = async () => {
-        if (window.confirm("Are you sure you want to seed default challenges into Firestore? This will overwrite duplicates.")) {
+        if (window.confirm("Are you sure you want to seed default challenges into Cloud Server? This will overwrite duplicates.")) {
             try {
                 setIsLoading(true);
                 for (const ch of DEFAULT_CHALLENGES) {
@@ -182,7 +182,7 @@ const AdminQuestionBank = () => {
                 const adminProfile = await getDoc(doc(db, 'users', auth.currentUser.uid));
                 if (!adminProfile.exists()) {
                     toast.error(
-                        'Admin profile not found in Firestore. Cannot create assessment key ' +
+                        'Admin profile not found on Cloud Server. Cannot create assessment key ' +
                         'without a valid tenantId. Contact your system administrator.'
                     );
                     return;
@@ -205,7 +205,7 @@ const AdminQuestionBank = () => {
             toast.error(
                 'Your admin profile does not have a tenantId field. ' +
                 'Cannot create an assessment key without tenant scoping. ' +
-                'Ask your system administrator to set your tenantId in Firestore.'
+                'Ask your system administrator to set your tenantId on Cloud Server.'
             );
             return;
         }
@@ -239,7 +239,7 @@ const AdminQuestionBank = () => {
             // ── Phase 3: Validate Key Existence ──────────────────────────────────
             const verifyKeySnap = await getDoc(keyRef);
             if (!verifyKeySnap.exists() || !verifyKeySnap.data()?.encryptionKey) {
-                throw new Error("Key verification failed: encryption key record could not be confirmed in Firestore.");
+                throw new Error("Key verification failed: encryption key record could not be confirmed on Cloud Server.");
             }
 
             // ── Phase 4: Publish/Save Contest Document ───────────────────────────

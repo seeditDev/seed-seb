@@ -1436,8 +1436,21 @@ const isCodeBlankOrEmpty = (codeStr) => {
           <div style={{
             maxWidth: '440px', width: '90%', background: 'var(--ps-panel)',
             border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px',
-            padding: '36px', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+            padding: '36px', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+            position: 'relative'
           }}>
+            <button
+              type="button"
+              onClick={() => setShowAwardModal(false)}
+              style={{
+                position: 'absolute', top: '16px', right: '16px',
+                background: 'transparent', border: 'none', color: 'var(--ps-text-dim, #94a3b8)',
+                fontSize: '18px', cursor: 'pointer'
+              }}
+              title="Close"
+            >
+              ✕
+            </button>
             <div style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: '80px', height: '80px', borderRadius: '50%',

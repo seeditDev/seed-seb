@@ -288,7 +288,7 @@ export const isCodeBlankOrEmpty = (code) => {
     return noComments === '';
 };
 
-const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionSubmit = null, settings = {}, parentProctoringData = null, parentSettings = null }) => {
+const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentId = '', sectionId = '', secTimer = 0, onSectionSubmit = null, settings = {}, parentProctoringData = null, parentSettings = null }) => {
     const navigate = useNavigate();
     const { assessmentSlug } = useParams();
 
@@ -321,8 +321,63 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
     const [questions, setQuestions] = useState([]);
     const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
     const currentQuestion = questions[activeQuestionIndex] || null;
+
+    // Canonical Question Identity: assessmentId + sectionId + questionId
+    const getCanonicalQKey = useCallback((q = currentQuestion, idx = activeQuestionIndex) => {
+        if (!q) return `q_${idx}`;
+        const baseId = q.id || q.questionId || `q_${idx}`;
+        const aId = testData?.assessmentId || assessmentId || currentAssessment?.id || assessmentSlug || 'exam';
+        const sId = testData?.sectionId || sectionId || 'coding';
+        return `${aId}__${sId}__${baseId}`;
+    }, [currentQuestion, activeQuestionIndex, testData?.assessmentId, testData?.sectionId, assessmentId, sectionId, currentAssessment?.id, assessmentSlug]);
+
+    // Isolated question state map: { [canonicalQKey]: { codeByLang, selectedLanguage, samplesPassedAll, sampleRunCode, runResults, evalResults, stdout, stderr, activeResultTab, isRunning, isEvaluating } }
+    const [codingStateByQuestion, setCodingStateByQuestion] = useState({});
+    const codingStateByQuestionRef = useRef({});
+    codingStateByQuestionRef.current = codingStateByQuestion;
+
+    const activeCanonicalQKeyRef = useRef('');
+    const isSubmittingQuestionRef = useRef(false);
+    const isRunningQuestionRef = useRef(false);
+
+    const currentCanonicalQKey = getCanonicalQKey(currentQuestion, activeQuestionIndex);
+    useEffect(() => {
+        activeCanonicalQKeyRef.current = currentCanonicalQKey;
+    }, [currentCanonicalQKey]);
+
     const [language, setLanguage] = useState('cpp');
+
+    // Derived active question state
+    const activeQState = codingStateByQuestion[currentCanonicalQKey] || {
+        codeByLang: {},
+        selectedLanguage: language || 'cpp',
+        samplesPassedAll: false,
+        sampleRunCode: '',
+        runResults: null,
+        evalResults: null,
+        stdout: '',
+        stderr: '',
+        activeResultTab: 'output',
+        isRunning: false,
+        isEvaluating: false,
+    };
+
+    const editorRef = useRef(null);
     const [codeMap, setCodeMap] = useState({}); // Key: questionId_language -> Code text
+    const codeMapRef = useRef(codeMap);
+    const isSwitchingQuestionRef = useRef(false);
+    const questionRunHistoryRef = useRef({});
+
+    const getCodeStorageKey = useCallback(() => {
+        const aId = testData?.assessmentId || assessmentId || testData?.id || currentAssessment?.id || assessmentSlug || 'default';
+        const sId = testData?.sectionId || sectionId || 'coding';
+        return `codingAssessmentCode_${aId}_${sId}`;
+    }, [testData?.assessmentId, testData?.sectionId, assessmentId, sectionId, testData?.id, currentAssessment?.id, assessmentSlug]);
+
+    useEffect(() => {
+        codeMapRef.current = { ...codeMap, ...codeMapRef.current };
+    }, [codeMap]);
+
     const [visitedQuestions, setVisitedQuestions] = useState({}); // questionId -> boolean
     const [bookmarkedQuestions, setBookmarkedQuestions] = useState({}); // questionId -> boolean
     const [questionScores, setQuestionScores] = useState({}); // questionId -> { score, passed, total }
@@ -508,9 +563,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 const qWeight = q.weight || DEFAULT_QUESTION_WEIGHT;
                 totalMaxWeight += qWeight;
 
+                const qKey = getCanonicalQKey(q);
+                const qLang = codingStateByQuestionRef.current[qKey]?.selectedLanguage || language || 'cpp';
                 const code = (editorRef.current && currentQuestion?.id === qId)
                     ? editorRef.current.getValue()
-                    : (codeMapRef.current[`${qId}_${language}`] ||
+                    : (codingStateByQuestionRef.current[qKey]?.codeByLang?.[qLang] ||
+                       codeMapRef.current[`${qId}_${language}`] ||
                        codeMapRef.current[`${qId}_cpp`] ||
                        codeMapRef.current[`${qId}_c`] ||
                        codeMapRef.current[`${qId}_python`] ||
@@ -705,29 +763,62 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         }
     }, [isEmbedded, testData?.questions, settings, user, currentAssessment]);
 
-    // Initialize code boilerPlates in embedded mode
+    // Initialize question coding states & boilerplates (both embedded and standalone)
     useEffect(() => {
-        if (isEmbedded && questions.length > 0 && Object.keys(codeMap).length === 0) {
-            let savedMap = {};
-            try {
-                const raw = localStorage.getItem("codingAssessmentCode");
-                if (raw) savedMap = JSON.parse(raw);
-            } catch (_) {}
+        if (questions.length === 0) return;
 
-            const initialCodeMap = { ...savedMap };
-            const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
-            questions.forEach(q => {
-                availableLanguages.forEach(lang => {
-                    const key = `${q.id}_${lang}`;
-                    if (!initialCodeMap[key]) {
-                        initialCodeMap[key] = getQuestionBoilerplate(q, lang);
+        const storageKey = getCodeStorageKey();
+        let savedStateMap = {};
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) savedStateMap = JSON.parse(raw);
+        } catch (_) {}
+
+        const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
+        const nextCodingState = { ...codingStateByQuestionRef.current, ...savedStateMap };
+        const nextCodeMap = { ...codeMapRef.current };
+
+        questions.forEach((q, idx) => {
+            const qKey = getCanonicalQKey(q, idx);
+            const existingQState = nextCodingState[qKey] || {};
+            const existingCodes = existingQState.codeByLang || {};
+            const populatedCodes = { ...existingCodes };
+
+            availableLanguages.forEach(lang => {
+                const legacyKey = `${q.id}_${lang}`;
+                if (!populatedCodes[lang]) {
+                    if (existingCodes[lang]) {
+                        populatedCodes[lang] = existingCodes[lang];
+                    } else if (nextCodeMap[legacyKey]) {
+                        populatedCodes[lang] = nextCodeMap[legacyKey];
+                    } else {
+                        populatedCodes[lang] = getQuestionBoilerplate(q, lang);
                     }
-                });
+                }
+                nextCodeMap[legacyKey] = populatedCodes[lang];
+                nextCodeMap[`${qKey}_${lang}`] = populatedCodes[lang];
             });
-            codeMapRef.current = { ...initialCodeMap, ...codeMapRef.current };
-            setCodeMap(initialCodeMap);
-        }
-    }, [isEmbedded, questions, codeMap]);
+
+            nextCodingState[qKey] = {
+                codeByLang: populatedCodes,
+                selectedLanguage: existingQState.selectedLanguage || language || 'cpp',
+                samplesPassedAll: existingQState.samplesPassedAll || false,
+                sampleRunCode: existingQState.sampleRunCode || '',
+                runResults: existingQState.runResults || null,
+                evalResults: existingQState.evalResults || null,
+                stdout: existingQState.stdout || '',
+                stderr: existingQState.stderr || '',
+                activeResultTab: existingQState.activeResultTab || 'output',
+                isRunning: false,
+                isEvaluating: false,
+            };
+        });
+
+        codingStateByQuestionRef.current = nextCodingState;
+        setCodingStateByQuestion(nextCodingState);
+        codeMapRef.current = nextCodeMap;
+        setCodeMap(nextCodeMap);
+    }, [questions, getCanonicalQKey, getCodeStorageKey]);
 
     const hasTimerStartedRef = useRef(false);
     const autoSubmitAttemptRef = useRef(null);
@@ -814,39 +905,26 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setAlertConfig({ title, message, type, onClose });
     }, []);
 
-    const currentQuestionStateRef = useRef({ stdout: '', stderr: '', runResults: null, evalResults: null, activeResultTab: 'output' });
-    currentQuestionStateRef.current = { stdout, stderr, runResults, evalResults, activeResultTab };
-
-    // Save and load console results when switching questions
+    // Synchronize console logs and results for the current active question from isolated state
     useEffect(() => {
-        const prevIdx = prevQuestionIndexRef.current;
-        const prevQ = questions[prevIdx];
-        const currentQ = questions[activeQuestionIndex];
-
-        if (prevQ && prevQ.id !== currentQ?.id) {
-            // Save previous question's console results
-            setQuestionResults(prev => ({
-                ...prev,
-                [prevQ.id]: currentQuestionStateRef.current
-            }));
-
-            // Load current question's console results
-            const currentRes = questionResults[currentQ?.id] || {
-                stdout: '',
-                stderr: '',
-                runResults: null,
-                evalResults: null,
-                activeResultTab: 'output'
-            };
-            setStdout(currentRes.stdout || '');
-            setStderr(currentRes.stderr || '');
-            setRunResults(currentRes.runResults);
-            setEvalResults(currentRes.evalResults);
-            setActiveResultTab(currentRes.activeResultTab || 'output');
+        const qState = codingStateByQuestion[currentCanonicalQKey];
+        if (qState) {
+            setStdout(qState.stdout || '');
+            setStderr(qState.stderr || '');
+            setRunResults(qState.runResults || null);
+            setEvalResults(qState.evalResults || null);
+            setActiveResultTab(qState.activeResultTab || 'output');
+            if (qState.selectedLanguage && qState.selectedLanguage !== language) {
+                setLanguage(qState.selectedLanguage);
+            }
+        } else {
+            setStdout('');
+            setStderr('');
+            setRunResults(null);
+            setEvalResults(null);
+            setActiveResultTab('output');
         }
-
-        prevQuestionIndexRef.current = activeQuestionIndex;
-    }, [activeQuestionIndex, questions]);
+    }, [currentCanonicalQKey, codingStateByQuestion, language]);
 
     // Set auto-submit notice message
     const setAutoSubmitMessage = useCallback((msg) => {
@@ -1557,55 +1635,57 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         // Tab switch monitoring disabled per requirements
     }, [startTime, currentAssessment, isLockedOut]);
 
-    const editorRef = useRef(null);
-    const codeMapRef = useRef(codeMap);
-    const isSwitchingQuestionRef = useRef(false);
-    const questionRunHistoryRef = useRef({});
-
-    const getCodeStorageKey = useCallback(() => {
-        const aId = testData?.id || testData?.assessmentId || currentAssessment?.id || assessmentSlug || 'default';
-        return `codingAssessmentCode_${aId}`;
-    }, [testData?.id, testData?.assessmentId, currentAssessment?.id, assessmentSlug]);
-
-    useEffect(() => {
-        codeMapRef.current = { ...codeMap, ...codeMapRef.current };
-    }, [codeMap]);
-
     const saveCurrentEditorToMap = useCallback(() => {
         if (editorRef.current && currentQuestion) {
             try {
                 const val = editorRef.current.getValue();
                 if (typeof val === 'string') {
+                    const currKey = getCanonicalQKey(currentQuestion, activeQuestionIndex);
+                    const currLang = activeQState.selectedLanguage || language || 'cpp';
+                    const prevQState = codingStateByQuestionRef.current[currKey] || {};
+                    const updatedCodes = { ...(prevQState.codeByLang || {}), [currLang]: val };
+                    codingStateByQuestionRef.current = {
+                        ...codingStateByQuestionRef.current,
+                        [currKey]: { ...prevQState, codeByLang: updatedCodes }
+                    };
                     const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
-                    const key = `${qId}_${language}`;
-                    codeMapRef.current[key] = val;
+                    codeMapRef.current[`${qId}_${currLang}`] = val;
                     const storageKey = getCodeStorageKey();
                     try {
-                        localStorage.setItem(storageKey, JSON.stringify(codeMapRef.current));
-                        localStorage.setItem("codingAssessmentCode", JSON.stringify(codeMapRef.current));
+                        localStorage.setItem(storageKey, JSON.stringify(codingStateByQuestionRef.current));
                     } catch (_) {}
                 }
             } catch (_) {}
         }
-    }, [currentQuestion, language, activeQuestionIndex, getCodeStorageKey]);
+    }, [currentQuestion, language, activeQuestionIndex, activeQState.selectedLanguage, getCodeStorageKey, getCanonicalQKey]);
 
     const handleSwitchQuestion = useCallback((newIdx) => {
+        if (isRunningQuestionRef.current || isSubmittingQuestionRef.current || isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating) {
+            return; // Lock switching while code is running or evaluating
+        }
+
         // 1. Immediately extract and save the active editor's value for the current question
         if (editorRef.current && currentQuestion) {
             try {
                 const val = editorRef.current.getValue();
                 if (typeof val === 'string') {
+                    const currKey = getCanonicalQKey(currentQuestion, activeQuestionIndex);
+                    const currLang = activeQState.selectedLanguage || language || 'cpp';
+                    const prevQState = codingStateByQuestionRef.current[currKey] || {};
+                    const updatedCodes = { ...(prevQState.codeByLang || {}), [currLang]: val };
+                    codingStateByQuestionRef.current = {
+                        ...codingStateByQuestionRef.current,
+                        [currKey]: { ...prevQState, codeByLang: updatedCodes }
+                    };
                     const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
-                    const key = `${qId}_${language}`;
-                    codeMapRef.current[key] = val;
+                    codeMapRef.current[`${qId}_${currLang}`] = val;
                 }
             } catch (_) {}
         }
 
         const storageKey = getCodeStorageKey();
         try {
-            localStorage.setItem(storageKey, JSON.stringify(codeMapRef.current));
-            localStorage.setItem("codingAssessmentCode", JSON.stringify(codeMapRef.current));
+            localStorage.setItem(storageKey, JSON.stringify(codingStateByQuestionRef.current));
         } catch (_) {}
 
         let targetIdx = activeQuestionIndex;
@@ -1616,96 +1696,133 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         }
 
         if (targetIdx >= 0 && targetIdx < questions.length) {
-            const targetQ = questions[targetIdx];
-            if (targetQ) {
-                const targetQId = targetQ.id || targetQ.questionId || `q_${targetIdx}`;
-                const codeKey = `${targetQId}_${language}`;
-                let targetCode = codeMapRef.current[codeKey];
-                if (!targetCode || typeof targetCode !== 'string' || targetCode.trim() === '') {
-                    targetCode = getQuestionBoilerplate(targetQ, language);
-                    codeMapRef.current[codeKey] = targetCode;
-                }
-
-                // Prevent onChange from triggering handleCodeChange during value update
-                isSwitchingQuestionRef.current = true;
-                if (timingTrackerRef.current) {
-                    timingTrackerRef.current.switchQuestion(targetIdx);
-                }
-                setActiveQuestionIndex(targetIdx);
-                setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
-                
-                if (editorRef.current) {
-                    editorRef.current.setValue(targetCode);
-                }
-
-                setTimeout(() => {
-                    isSwitchingQuestionRef.current = false;
-                }, 100);
+            if (timingTrackerRef.current) {
+                timingTrackerRef.current.switchQuestion(targetIdx);
             }
+            setActiveQuestionIndex(targetIdx);
+            // CRITICAL FIX: DO NOT call editorRef.current.setValue(targetCode)!
+            // Calling setValue on the old editor before unmount caused cross-question contamination.
+            // With a question-scoped React key on <Editor>, React cleanly mounts the new question's editor with its own code.
         }
-    }, [questions, activeQuestionIndex, language, currentQuestion, getCodeStorageKey]);
+    }, [questions.length, activeQuestionIndex, currentQuestion, language, activeQState, isRunning, isEvaluating, getCodeStorageKey, getCanonicalQKey]);
 
     const handleLanguageChange = useCallback((newLang) => {
+        if (!currentQuestion || isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating) return;
         saveCurrentEditorToMap();
         setLanguage(newLang);
-        if (!currentQuestion) return;
-        const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
-        const codeKey = `${qId}_${newLang}`;
-        let targetCode = codeMapRef.current[codeKey] || codeMap[codeKey];
-        if (!targetCode || typeof targetCode !== 'string' || targetCode.trim() === '') {
-            targetCode = getQuestionBoilerplate(currentQuestion, newLang);
-            codeMapRef.current[codeKey] = targetCode;
-            setCodeMap(prev => ({ ...prev, [codeKey]: targetCode }));
-        }
-        isSwitchingQuestionRef.current = true;
-        if (editorRef.current) {
-            editorRef.current.setValue(targetCode);
-        }
-        setTimeout(() => {
-            isSwitchingQuestionRef.current = false;
-        }, 100);
-    }, [currentQuestion, activeQuestionIndex, saveCurrentEditorToMap, codeMap]);
 
-    const getCurrentCode = useCallback((qId = (currentQuestion?.id || currentQuestion?.questionId || `q_${activeQuestionIndex}`), lang = language) => {
-        if (!qId) return "";
-        const key = `${qId}_${lang}`;
-        if (codeMapRef.current && codeMapRef.current[key] !== undefined && codeMapRef.current[key] !== null && codeMapRef.current[key].trim?.() !== '') {
-            return codeMapRef.current[key];
-        }
-        if (codeMap && codeMap[key] !== undefined && codeMap[key] !== null && codeMap[key].trim?.() !== '') {
-            return codeMap[key];
-        }
-        const targetQ = questions.find(q => (q.id || q.questionId) === qId) || currentQuestion;
-        return getQuestionBoilerplate(targetQ, lang);
-    }, [currentQuestion, activeQuestionIndex, language, codeMap, questions]);
+        const currKey = getCanonicalQKey(currentQuestion, activeQuestionIndex);
+        const prevQState = codingStateByQuestionRef.current[currKey] || {};
+        const existingCode = prevQState.codeByLang?.[newLang];
+        const finalCode = (typeof existingCode === 'string' && existingCode.trim() !== '')
+            ? existingCode
+            : getQuestionBoilerplate(currentQuestion, newLang);
 
-    // Handle code editor change: update ref & throttled local storage (0ms typing latency)
-    const handleCodeChange = (value) => {
-        if (isSwitchingQuestionRef.current || !currentQuestion) return;
-
-        const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
-        const key = `${qId}_${language}`;
-        codeMapRef.current = {
-            ...codeMapRef.current,
-            [key]: value
+        const updatedCodes = { ...(prevQState.codeByLang || {}), [newLang]: finalCode };
+        const updatedQState = {
+            ...prevQState,
+            selectedLanguage: newLang,
+            codeByLang: updatedCodes,
+            // Language change invalidates sample pass status for new language
+            samplesPassedAll: false,
+            sampleRunCode: ''
         };
+
+        codingStateByQuestionRef.current = {
+            ...codingStateByQuestionRef.current,
+            [currKey]: updatedQState
+        };
+        const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
+        codeMapRef.current[`${qId}_${newLang}`] = finalCode;
+
+        setCodingStateByQuestion(prev => ({
+            ...prev,
+            [currKey]: updatedQState
+        }));
+        // CRITICAL FIX: Do NOT call editorRef.current.setValue(targetCode).
+        // The React key includes language, so Monaco remounts cleanly.
+    }, [currentQuestion, activeQuestionIndex, isRunning, isEvaluating, activeQState.isRunning, activeQState.isEvaluating, getCanonicalQKey, saveCurrentEditorToMap]);
+
+    const getCurrentCode = useCallback((q = currentQuestion, lang = (activeQState?.selectedLanguage || language)) => {
+        if (!q) return "";
+        const qKey = getCanonicalQKey(q);
+        const qState = codingStateByQuestionRef.current[qKey];
+        if (qState?.codeByLang?.[lang] !== undefined && qState.codeByLang[lang] !== null) {
+            return qState.codeByLang[lang];
+        }
+        const simpleKey = `${q.id || q.questionId}_${lang}`;
+        if (codeMapRef.current[simpleKey] !== undefined && codeMapRef.current[simpleKey] !== null && codeMapRef.current[simpleKey].trim?.() !== '') {
+            return codeMapRef.current[simpleKey];
+        }
+        return getQuestionBoilerplate(q, lang);
+    }, [currentQuestion, activeQState?.selectedLanguage, language, getCanonicalQKey]);
+
+    // Handle code editor change: update ref & throttled local storage with question isolation
+    const handleCodeChange = useCallback((targetQKey, targetLang, newVal) => {
+        if (!targetQKey || typeof newVal !== 'string') return;
+
+        const prevQState = codingStateByQuestionRef.current[targetQKey] || {};
+        const prevCodes = prevQState.codeByLang || {};
+        const updatedCodes = { ...prevCodes, [targetLang]: newVal };
+
+        // Requirement: "user must run the code, it must pass all samples and then only enable the submit button"
+        // Invalidate sample pass status if code differs from the verified sample run code!
+        const isSameAsSampleRun = newVal.trim() === (prevQState.sampleRunCode || '').trim();
+        const newSamplesPassed = isSameAsSampleRun ? (prevQState.samplesPassedAll ?? false) : false;
+
+        const updatedQState = {
+            ...prevQState,
+            codeByLang: updatedCodes,
+            selectedLanguage: targetLang,
+            samplesPassedAll: newSamplesPassed
+        };
+
+        codingStateByQuestionRef.current = {
+            ...codingStateByQuestionRef.current,
+            [targetQKey]: updatedQState
+        };
+
+        if (currentQuestion) {
+            const simpleKey = `${currentQuestion.id || currentQuestion.questionId}_${targetLang}`;
+            codeMapRef.current[simpleKey] = newVal;
+        }
+
+        setCodingStateByQuestion(prev => ({
+            ...prev,
+            [targetQKey]: updatedQState
+        }));
+
         const storageKey = getCodeStorageKey();
-        throttledLocalStorageSet(storageKey, codeMapRef.current, 1000);
-        throttledLocalStorageSet("codingAssessmentCode", codeMapRef.current, 1000);
-    };
+        throttledLocalStorageSet(storageKey, codingStateByQuestionRef.current, 1000);
+    }, [getCodeStorageKey, currentQuestion]);
 
     // Reset code boilerplate
     const handleResetCode = () => {
         if (!currentQuestion) return;
-        const boilerplate = getQuestionBoilerplate(currentQuestion, language);
+        const currKey = getCanonicalQKey(currentQuestion, activeQuestionIndex);
+        const currLang = activeQState.selectedLanguage || language || 'cpp';
+        const boilerplate = getQuestionBoilerplate(currentQuestion, currLang);
+
+        const prevQState = codingStateByQuestionRef.current[currKey] || {};
+        const updatedCodes = { ...(prevQState.codeByLang || {}), [currLang]: boilerplate };
+        const updatedQState = {
+            ...prevQState,
+            codeByLang: updatedCodes,
+            samplesPassedAll: false,
+            sampleRunCode: ''
+        };
+
+        codingStateByQuestionRef.current = {
+            ...codingStateByQuestionRef.current,
+            [currKey]: updatedQState
+        };
         const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
-        const codeKey = `${qId}_${language}`;
-        codeMapRef.current[codeKey] = boilerplate;
-        setCodeMap(prev => ({ ...prev, [codeKey]: boilerplate }));
-        if (editorRef.current) {
-            editorRef.current.setValue(boilerplate);
-        }
-        handleCodeChange(boilerplate);
+        codeMapRef.current[`${qId}_${currLang}`] = boilerplate;
+
+        setCodingStateByQuestion(prev => ({
+            ...prev,
+            [currKey]: updatedQState
+        }));
     };
 
     // Backup active state to localStorage & Firestore (continuous cloud sync for partial attempts)
@@ -1768,11 +1885,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
     // Run Code Engine (Sample Tests)
     // Flow: show loader FIRST → send to backend → close loader
+    // Flow: show loader FIRST → send to backend → close loader
     const runSampleTestCases = async () => {
-        if (!currentQuestion) return;
+        if (!currentQuestion || isRunningQuestionRef.current || isRunning || isEvaluating || isSubmittingQuestionRef.current) return;
+        isRunningQuestionRef.current = true;
+
+        const targetQ = currentQuestion;
+        const targetQIdx = activeQuestionIndex;
+        const targetQKey = getCanonicalQKey(targetQ, targetQIdx);
+        const currentLang = activeQState.selectedLanguage || language || 'cpp';
 
         setCompilationCounts(prev => {
-            const updated = { ...prev, [currentQuestion.id]: (prev[currentQuestion.id] || 0) + 1 };
+            const updated = { ...prev, [targetQ.id]: (prev[targetQ.id] || 0) + 1 };
             localStorage.setItem("codingCompilationCounts", JSON.stringify(updated));
             return updated;
         });
@@ -1783,20 +1907,21 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setStderr('');
         setStdout('');
 
-        const code = getCurrentCode();
+        const code = getCurrentCode(targetQ, currentLang);
         const isRunAll = selectedTestCaseSet === 'all';
-        const sampleTests = getQuestionSampleTestCases(currentQuestion);
-        const allVisibleTests = getQuestionVisibleAllTestCases(currentQuestion, 6);
+        const sampleTests = getQuestionSampleTestCases(targetQ);
+        const allVisibleTests = getQuestionVisibleAllTestCases(targetQ, 6);
         let testsToRun = isRunAll ? allVisibleTests : (sampleTests.length > 0 ? sampleTests : allVisibleTests);
         if (!Array.isArray(testsToRun) || testsToRun.length === 0) {
             testsToRun = [{ input: "", expectedOutput: "" }];
         }
 
-        const bridgeLang = language === 'python3' ? 'python' : language;
+        const bridgeLang = currentLang === 'python3' ? 'python' : currentLang;
         const isBlank = isCodeBlankOrEmpty(code);
 
         if (isBlank) {
-            setStderr("No code submitted. Please write solution code before running test cases.");
+            const emptyStderr = "No code submitted. Please write solution code before running test cases.";
+            setStderr(emptyStderr);
             const emptyResults = testsToRun.map((tc, idx) => ({
                 index: idx + 1,
                 input: tc.input,
@@ -1806,19 +1931,39 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 passed: false
             }));
             setRunResults(emptyResults);
-            questionRunHistoryRef.current[currentQuestion.id] = {
-                questionId: currentQuestion.id,
+
+            const emptyRecord = {
+                questionId: targetQ.id,
                 code: "",
                 solution: "",
-                language: language,
+                language: currentLang,
                 testsPassed: 0,
                 totalTests: emptyResults.length,
                 status: "Wrong Answer",
                 results: emptyResults,
                 runAt: new Date().toISOString()
             };
+            questionRunHistoryRef.current[targetQ.id] = emptyRecord;
+
+            const updatedQState = {
+                ...(codingStateByQuestionRef.current[targetQKey] || {}),
+                runResults: emptyResults,
+                samplesPassedAll: false,
+                sampleRunCode: '',
+                stdout: '',
+                stderr: emptyStderr,
+                activeResultTab: 'console',
+                isRunning: false
+            };
+            codingStateByQuestionRef.current = {
+                ...codingStateByQuestionRef.current,
+                [targetQKey]: updatedQState
+            };
+            setCodingStateByQuestion(prev => ({ ...prev, [targetQKey]: updatedQState }));
+
             setActiveResultTab('console');
             setIsRunning(false);
+            isRunningQuestionRef.current = false;
             setEvalProgressText('');
             return;
         }
@@ -1897,38 +2042,84 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 }
             }
 
-            setRunResults(results);
-            if (isRunAll) {
-                setEvalResults(results);
-            }
-
-            // Record run history and sync into questionScores so code, language, and run testcase results are preserved
+            // Evaluate sample test case pass rate
             const passedCases = results.filter(r => r.passed && !r.isCustom).length;
             const totalCases = results.filter(r => !r.isCustom).length;
-            const runStatus = totalCases > 0 ? (passedCases === totalCases ? "Accepted" : (passedCases > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
+            const allSamplesPassed = totalCases > 0 && passedCases === totalCases;
+            const runStatus = totalCases > 0 ? (allSamplesPassed ? "Accepted" : (passedCases > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
 
+            let primaryStdout = "";
+            let primaryStderr = "";
+            if (useCustomInput && customCase) {
+                primaryStdout = customCase.actual || "";
+                primaryStderr = customCase.stderr || "";
+            } else {
+                const firstErrorCase = results.find(r => r.stderr);
+                const primaryCase = firstErrorCase || results[0];
+                if (primaryCase) {
+                    primaryStdout = primaryCase.actual || "";
+                    primaryStderr = primaryCase.stderr || "";
+                }
+            }
+
+            const updatedQState = {
+                ...(codingStateByQuestionRef.current[targetQKey] || {}),
+                runResults: results,
+                samplesPassedAll: allSamplesPassed,
+                sampleRunCode: allSamplesPassed ? code.trim() : '',
+                stdout: primaryStdout,
+                stderr: primaryStderr,
+                activeResultTab: primaryStderr ? 'console' : 'output',
+                isRunning: false
+            };
+
+            codingStateByQuestionRef.current = {
+                ...codingStateByQuestionRef.current,
+                [targetQKey]: updatedQState
+            };
+            setCodingStateByQuestion(prev => ({
+                ...prev,
+                [targetQKey]: updatedQState
+            }));
+
+            // Sync to legacy states for active view
+            if (activeCanonicalQKeyRef.current === targetQKey) {
+                setRunResults(results);
+                if (isRunAll) setEvalResults(results);
+                setStdout(primaryStdout);
+                setStderr(primaryStderr);
+                setActiveResultTab(primaryStderr ? 'console' : 'output');
+                if (useCustomInput && customCase) {
+                    setExpandedTestCaseIndex('custom');
+                } else {
+                    setExpandedTestCaseIndex(0);
+                }
+                setActiveRightTab('testcases');
+            }
+
+            // Record run history and sync into questionScores
             const runRecord = {
-                questionId: currentQuestion.id,
+                questionId: targetQ.id,
                 code: code,
                 solution: code,
-                language: language,
+                language: currentLang,
                 testsPassed: passedCases,
                 totalTests: totalCases,
                 status: runStatus,
                 results: results,
                 runAt: new Date().toISOString()
             };
-            questionRunHistoryRef.current[currentQuestion.id] = runRecord;
+            questionRunHistoryRef.current[targetQ.id] = runRecord;
 
             setQuestionScores(prev => {
-                const existing = prev[currentQuestion.id];
+                const existing = prev[targetQ.id];
                 return {
                     ...prev,
-                    [currentQuestion.id]: {
+                    [targetQ.id]: {
                         ...(existing || {}),
                         code: code,
                         solution: code,
-                        language: language,
+                        language: currentLang,
                         lastRunTestsPassed: passedCases,
                         lastRunTotalTests: totalCases,
                         lastRunStatus: runStatus,
@@ -1938,39 +2129,51 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 };
             });
 
-            // Populate stdout / stderr for console and output tabs
-            if (useCustomInput && customCase) {
-                setStdout(customCase.actual || "");
-                setStderr(customCase.stderr || "");
-                setActiveResultTab(customCase.stderr ? 'console' : 'output');
-                setExpandedTestCaseIndex('custom');
-            } else {
-                const firstErrorCase = results.find(r => r.stderr);
-                const primaryCase = firstErrorCase || results[0];
-                if (primaryCase) {
-                    setStdout(primaryCase.actual || "");
-                    setStderr(primaryCase.stderr || "");
-                }
-                setExpandedTestCaseIndex(0);
-                setActiveResultTab(firstErrorCase ? 'console' : 'output');
-            }
-            setActiveRightTab('testcases');
             backupProgress();
         } catch (err) {
             console.error("Run code error:", err);
-            setStderr(`Run Code Error: ${err.message}`);
+            const errText = `Run Code Error: ${err.message}`;
+            setStderr(errText);
             setActiveResultTab('console');
+            const errQState = {
+                ...(codingStateByQuestionRef.current[targetQKey] || {}),
+                stderr: errText,
+                samplesPassedAll: false,
+                sampleRunCode: '',
+                activeResultTab: 'console',
+                isRunning: false
+            };
+            codingStateByQuestionRef.current = {
+                ...codingStateByQuestionRef.current,
+                [targetQKey]: errQState
+            };
+            setCodingStateByQuestion(prev => ({ ...prev, [targetQKey]: errQState }));
         } finally {
             setIsRunning(false);
+            isRunningQuestionRef.current = false;
             setEvalProgressText('');
         }
     };
 
     const handleSubmitQuestion = async () => {
-        if (!currentQuestion) return;
+        if (!currentQuestion || isSubmittingQuestionRef.current || isEvaluating || isRunning || isRunningQuestionRef.current) return;
+
+        const targetQ = currentQuestion;
+        const targetQIdx = activeQuestionIndex;
+        const targetQKey = getCanonicalQKey(targetQ, targetQIdx);
+        const currentLang = activeQState.selectedLanguage || language || 'cpp';
+        const qState = codingStateByQuestionRef.current[targetQKey] || activeQState;
+
+        // ENFORCE: User must run the code, it must pass all samples and then only enable the submit button.
+        if (!qState.samplesPassedAll) {
+            toast.info("Run Code and pass all sample test cases before submitting your solution.");
+            return;
+        }
+
+        isSubmittingQuestionRef.current = true;
 
         setQuestionSubmitTimes(prev => {
-            const updated = { ...prev, [currentQuestion.id]: new Date().toISOString() };
+            const updated = { ...prev, [targetQ.id]: new Date().toISOString() };
             localStorage.setItem("codingQuestionSubmitTimes", JSON.stringify(updated));
             return updated;
         });
@@ -1979,10 +2182,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
         setEvalProgressText(`Preparing Hidden Test Cases...`);
         setEvalResults(null);
 
-        const code = getCurrentCode();
-        let hiddenTests = getQuestionHiddenTestCases(currentQuestion);
+        const code = getCurrentCode(targetQ, currentLang);
+        let hiddenTests = getQuestionHiddenTestCases(targetQ);
 
-        const bridgeLang = language === 'python3' ? 'python' : language;
+        const bridgeLang = currentLang === 'python3' ? 'python' : currentLang;
         const isEvalBlank = isCodeBlankOrEmpty(code);
 
         let passedCount = 0;
@@ -2018,12 +2221,40 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
             const total = hiddenTests.length;
             const score = (!isEvalBlank && total > 0) ? Math.round((passedCount / total) * 100) : 0;
-            const earnedWeight = (!isEvalBlank && total > 0) ? (passedCount / total) * (currentQuestion.weight || DEFAULT_QUESTION_WEIGHT) : 0;
+            const earnedWeight = (!isEvalBlank && total > 0) ? (passedCount / total) * (targetQ.weight || DEFAULT_QUESTION_WEIGHT) : 0;
             const evalStatus = (!isEvalBlank && total > 0) ? (passedCount === total ? "Accepted" : (passedCount > 0 ? "Partial" : "Wrong Answer")) : "Wrong Answer";
+
+            const firstError = results.find(r => r.error);
+            const evalStdout = firstError ? '' : `Evaluation Completed: ${passedCount}/${total} test cases passed.`;
+            const evalStderr = firstError ? firstError.error : '';
+
+            const updatedQState = {
+                ...(codingStateByQuestionRef.current[targetQKey] || {}),
+                evalResults: results,
+                stdout: evalStdout,
+                stderr: evalStderr,
+                activeResultTab: firstError ? 'console' : 'output',
+                isEvaluating: false,
+                submitted: true,
+                score: earnedWeight,
+                passedCount: passedCount,
+                totalHidden: total,
+                evalStatus: evalStatus,
+                scorePercent: score
+            };
+
+            codingStateByQuestionRef.current = {
+                ...codingStateByQuestionRef.current,
+                [targetQKey]: updatedQState
+            };
+            setCodingStateByQuestion(prev => ({
+                ...prev,
+                [targetQKey]: updatedQState
+            }));
 
             const newScores = {
                 ...questionScores,
-                [currentQuestion.id]: {
+                [targetQ.id]: {
                     score: earnedWeight,
                     percentage: score,
                     passed: passedCount,
@@ -2031,43 +2262,51 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                     submitted: true,
                     code: code,
                     solution: code,
-                    language: language,
+                    language: currentLang,
                     testResults: results,
                     status: evalStatus,
                     submittedAt: new Date().toISOString()
                 }
             };
             setQuestionScores(newScores);
-            setEvalResults(results);
 
-            const firstError = results.find(r => r.error);
-            if (firstError) {
-                setStderr(firstError.error);
-                setActiveResultTab('console');
-            } else {
-                setStdout(`Evaluation Completed: ${passedCount}/${total} test cases passed.`);
-                setActiveResultTab('output');
+            if (activeCanonicalQKeyRef.current === targetQKey) {
+                setEvalResults(results);
+                if (firstError) {
+                    setStderr(firstError.error);
+                    setActiveResultTab('console');
+                } else {
+                    setStdout(evalStdout);
+                    setActiveResultTab('output');
+                }
+                setActiveRightTab('testcases');
+                setExpandedTestCaseIndex(0);
             }
-            setActiveRightTab('testcases');
-            setExpandedTestCaseIndex(0);
+
             backupProgress();
         } catch (err) {
             console.error("Submit question evaluation failed:", err);
             evalError = err.message;
         } finally {
             setIsEvaluating(false);
+            isSubmittingQuestionRef.current = false;
             setEvalProgressText('');
 
-            if (evalError) {
-                showCustomAlert("Evaluation Failed", `Evaluation failed: ${evalError}`, "error");
-            } else {
-                const total = hiddenTests.length;
-                const score = total > 0 ? Math.round((passedCount / total) * 100) : 0;
-                showCustomAlert(
-                    "Question Submitted ",
-                    `Hidden Tests Passed: ${passedCount}/${total} \u00a0\u00a0 Score: ${score}%`,
-                    "success"
-                );
+            // Non-blocking toast feedback without popup modal layout thrashing
+            if (activeCanonicalQKeyRef.current === targetQKey) {
+                if (evalError) {
+                    toast.error(`Evaluation failed: ${evalError}`);
+                } else {
+                    const total = hiddenTests.length;
+                    const score = total > 0 ? Math.round((passedCount / total) * 100) : 0;
+                    if (passedCount === total) {
+                        toast.success(`Question Submitted! All ${total} hidden tests passed (${score}%)`);
+                    } else if (passedCount > 0) {
+                        toast.warning(`Question Submitted: ${passedCount}/${total} hidden tests passed (${score}%)`);
+                    } else {
+                        toast.error(`Question Submitted: 0/${total} hidden tests passed (0%)`);
+                    }
+                }
             }
         }
     };
@@ -3426,7 +3665,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     <button
                                         type="button"
                                         className="problem-arrow-btn"
-                                        disabled={activeQuestionIndex === 0}
+                                        disabled={activeQuestionIndex === 0 || isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating}
                                         onClick={() => handleSwitchQuestion(i => i - 1)}
                                         title="Previous Question"
                                     >
@@ -3435,7 +3674,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                     <button
                                         type="button"
                                         className="problem-arrow-btn"
-                                        disabled={activeQuestionIndex === questions.length - 1}
+                                        disabled={activeQuestionIndex === questions.length - 1 || isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating}
                                         onClick={() => handleSwitchQuestion(i => i + 1)}
                                         title="Next Question"
                                     >
@@ -3564,11 +3803,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                                 <div className="editor-monaco-body">
                                     <Editor
-                                        key={`${currentQuestion?.id || currentQuestion?.questionId || activeQuestionIndex}_${language}_${editorTheme}`}
+                                        key={`${currentCanonicalQKey}_${activeQState.selectedLanguage}_${editorTheme}`}
                                         height="100%"
-                                        language={language === 'cpp' ? 'cpp' : (language === 'c' ? 'c' : (language === 'javascript' ? 'javascript' : language))}
-                                        defaultValue={getCurrentCode(currentQuestion?.id || currentQuestion?.questionId || `q_${activeQuestionIndex}`, language)}
-                                        onChange={handleCodeChange}
+                                        language={activeQState.selectedLanguage === 'cpp' ? 'cpp' : (activeQState.selectedLanguage === 'c' ? 'c' : (activeQState.selectedLanguage === 'javascript' ? 'javascript' : activeQState.selectedLanguage))}
+                                        value={getCurrentCode(currentQuestion, activeQState.selectedLanguage)}
+                                        onChange={(val) => handleCodeChange(currentCanonicalQKey, activeQState.selectedLanguage, val)}
                                         onMount={(editor, monaco) => {
                                             editorRef.current = editor;
                                             remeasureMonacoFonts(monaco, editor);
@@ -3591,9 +3830,9 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         type="button"
                                         className="btn-run-code-emerald"
                                         onClick={runSampleTestCases}
-                                        disabled={isRunning || isEvaluating}
+                                        disabled={isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating}
                                     >
-                                        {isRunning ? (
+                                        {(isRunning || activeQState.isRunning) ? (
                                             <><div className="button-spinner" /> Running...</>
                                         ) : (
                                             <><FaPlay /> Run Code</>
@@ -3602,16 +3841,30 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
 
                                     <button
                                         type="button"
-                                        className="btn-submit-code-dark"
+                                        className={`btn-submit-code-dark ${activeQState.samplesPassedAll ? 'ready-to-submit' : 'submit-locked'}`}
                                         onClick={handleSubmitQuestion}
-                                        disabled={isRunning || isEvaluating}
+                                        disabled={!activeQState.samplesPassedAll || isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating}
+                                        title={!activeQState.samplesPassedAll ? "Run Code and pass all sample test cases to enable submission" : "Submit Question Code"}
                                     >
-                                        {isEvaluating ? (
+                                        {(isEvaluating || activeQState.isEvaluating) ? (
                                             <><div className="button-spinner" /> Evaluating...</>
                                         ) : (
                                             <><FaCheck /> Submit Code</>
                                         )}
                                     </button>
+
+                                    {/* Clear visual badge showing submit requirement status */}
+                                    <div className={`submit-req-indicator ${activeQState.samplesPassedAll ? 'unlocked' : 'locked'}`}>
+                                        {activeQState.samplesPassedAll ? (
+                                            <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 600 }}>
+                                                <FaCheckCircle /> All samples passed (Submit enabled)
+                                            </span>
+                                        ) : (
+                                            <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 500 }}>
+                                                <FaExclamationTriangle /> Run Code &amp; pass all samples to submit
+                                            </span>
+                                        )}
+                                    </div>
 
                                     <button
                                         type="button"
@@ -3712,9 +3965,37 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                         </div>
                                     ) : (
                                         <div className="testcases-accordion-scroll">
+                                            {/* High-visibility inline submission banner (replaces blocking modal popup) */}
+                                            {activeQState.submitted && (
+                                                <div className={`coding-submission-inline-banner ${activeQState.evalStatus === 'Accepted' ? 'status-accepted' : (activeQState.passedCount > 0 ? 'status-partial' : 'status-wrong')}`}>
+                                                    <div className="submission-banner-left">
+                                                        {activeQState.evalStatus === 'Accepted' ? (
+                                                            <FaCheckCircle className="banner-icon icon-success" />
+                                                        ) : (activeQState.passedCount > 0 ? (
+                                                            <FaExclamationTriangle className="banner-icon icon-warning" />
+                                                        ) : (
+                                                            <FaTimesCircle className="banner-icon icon-danger" />
+                                                        ))}
+                                                        <div>
+                                                            <div className="banner-status-title">
+                                                                {activeQState.evalStatus === 'Accepted' ? 'Accepted' : (activeQState.passedCount > 0 ? 'Partially Accepted' : 'Wrong Answer')}
+                                                            </div>
+                                                            <div className="banner-status-sub">
+                                                                Hidden Test Cases: <strong>{activeQState.passedCount ?? 0}/{activeQState.totalHidden ?? (currentQuestion?.hiddenTests?.length || 0)} passed</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="submission-banner-right">
+                                                        <span className="banner-score-pill">
+                                                            Score: {activeQState.scorePercent ?? (questionScores[currentQuestion?.id]?.percentage || 0)}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             {/* Custom testcase result if active */}
                                             {useCustomInput && (() => {
-                                                const customItem = (runResults || []).find(r => r.isCustom || r.index === 'Custom');
+                                                const customItem = (activeQState.runResults || []).find(r => r.isCustom || r.index === 'Custom');
                                                 const isPassed = customItem?.passed === true;
                                                 const isFailed = customItem && customItem.passed === false;
                                                 const isCustomExpanded = expandedTestCaseIndex === 'custom';
@@ -3760,7 +4041,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                                                 const sampleCases = getQuestionSampleTestCases(currentQuestion);
                                                 const allVisibleCases = getQuestionVisibleAllTestCases(currentQuestion, 6);
                                                 const tcList = selectedTestCaseSet === 'all' ? allVisibleCases : (sampleCases.length > 0 ? sampleCases : allVisibleCases);
-                                                const activeResults = runResults || evalResults || questionScores[currentQuestion?.id]?.testResults;
+                                                const activeResults = activeQState.runResults || activeQState.evalResults || questionScores[currentQuestion?.id]?.testResults;
 
                                                 return tcList.map((tc, idx) => {
                                                     const runItem = activeResults?.find(r => r.index === idx + 1);
@@ -3818,26 +4099,23 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                         <button
                             type="button"
                             className="btn-prev-question-clean"
-                            disabled={activeQuestionIndex === 0}
+                            disabled={activeQuestionIndex === 0 || isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating}
                             onClick={() => handleSwitchQuestion(i => i - 1)}
                         >
                             <FaChevronLeft /> Previous Question
                         </button>
 
-                        <button
-                            type="button"
-                            className="btn-save-next-emerald"
-                            onClick={() => {
-                                if (activeQuestionIndex === questions.length - 1) {
-                                    setShowSubmitModal(true);
-                                } else {
-                                    handleSwitchQuestion(i => i + 1);
-                                }
-                            }}
-                        >
-                            <span>{activeQuestionIndex === questions.length - 1 ? 'Submit Section' : 'Submit Section'}</span>
-                            <FaChevronRight />
-                        </button>
+                        {activeQuestionIndex < questions.length - 1 && (
+                            <button
+                                type="button"
+                                className="btn-save-next-emerald"
+                                disabled={isRunning || isEvaluating || activeQState.isRunning || activeQState.isEvaluating}
+                                onClick={() => handleSwitchQuestion(i => i + 1)}
+                            >
+                                <span>Next Question</span>
+                                <FaChevronRight />
+                            </button>
+                        )}
                     </footer>
                 </>
             ) : (
@@ -4017,8 +4295,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, secTimer = 
                 </div>
             )}
 
-            {/* Submit & Evaluation Fullscreen Overlay (SEB Boot Branded Theme) */}
-            {(isSubmitting || submitPhase) && (
+            {/* Submit & Evaluation Fullscreen Overlay (SEB Boot Branded Theme - standalone mode only) */}
+            {!isEmbedded && (isSubmitting || submitPhase) && (
                 <div className="seb-boot" style={{ zIndex: 99999 }}>
                     <div className="seb-boot__brand">
                         <div className="seb-boot__spinner-ring"></div>

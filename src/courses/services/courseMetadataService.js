@@ -168,7 +168,7 @@ export const syncAllCoursesToFirestore = async (courseCatalog = []) => {
           updatedAt: serverTimestamp()
         };
         await setDoc(docRef, initialDoc, { merge: true });
-        console.log(`[courseMetadataService] Synced new course "${course.title}" (${cId}) to Firestore`);
+        console.log(`[courseMetadataService] Synced new course "${course.title}" (${cId}) to Cloud Server`);
       } else {
         // Document exists: ensure 'enabled' is present and curriculum metadata is up to date,
         // but preserve live reviews and enrolledCount!

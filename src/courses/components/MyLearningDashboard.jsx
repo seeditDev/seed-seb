@@ -19,6 +19,7 @@ import { calculateCourseRewards } from '../../utils/gamificationService';
 import CourseCertificateModal from './views/CourseCertificateModal';
 import { toast } from 'sonner';
 import SeedCreditCoin from '../../components/SeedCreditCoin';
+import '../styles/CourseLearningPlayer.css';
 
 const getCourseGradient = (slug = '') => {
   const s = String(slug || '').toLowerCase();

@@ -13,7 +13,7 @@ import {
   FaClock, FaCheckCircle, FaLock, FaBookOpen, FaCode,
   FaArrowLeft, FaArrowRight, FaBookmark,
   FaChevronRight, FaFileAlt, FaListUl, FaShieldAlt, FaLightbulb, FaSignOutAlt, FaFlag,
-  FaExclamationTriangle
+  FaExclamationTriangle, FaKey, FaEye, FaEyeSlash, FaWifi, FaCamera, FaExpand, FaPlay, FaInfoCircle
 } from 'react-icons/fa';
 import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
@@ -25,6 +25,7 @@ import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
+import AssessmentFeedback from './AssessmentFeedback';
 import timeService from '../services/timeService';
 import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
 import { renderMathAndCode } from '../utils/mathAndCodeRenderer';
@@ -894,6 +895,9 @@ const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, pr
 
   const testData = {
     ...sectionData,
+    assessmentId: assessmentId || sectionData?.assessmentId || '',
+    assessmentName: assessmentName || sectionData?.assessmentName || '',
+    sectionId: sectionData?.sectionId || sectionData?.id || '',
     questions: resolvedQuestions
   };
 
@@ -907,6 +911,8 @@ const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, pr
     <CodingAssessmentPage
       isEmbedded={true}
       testData={testData}
+      assessmentId={assessmentId || sectionData?.assessmentId || ''}
+      sectionId={sectionData?.sectionId || sectionData?.id || ''}
       secTimer={secTimer}
       onSectionSubmit={onSectionSubmit}
       settings={embeddedSettings}
@@ -947,9 +953,15 @@ const MultiSectionAssessment = () => {
   const [examResults, setExamResults] = useState({});
   const [examFinished, setExamFinished] = useState(false);
   const [isSubmittingEntireExam, setIsSubmittingEntireExam] = useState(false);
-  // 15-sec relaxation between sections: null = not showing, number = countdown value
+  // 4-sec relaxation between sections: null = not showing, number = countdown value
   const [relaxationCountdown, setRelaxationCountdown] = useState(null);
   const [relaxationNextIdx, setRelaxationNextIdx] = useState(-1);
+
+  // Pre-Flight passkey gate state
+  const [passkeyInput, setPasskeyInput] = useState('');
+  const [passkeyError, setPasskeyError] = useState('');
+  const [showPasskey, setShowPasskey] = useState(false);
+  const passkeyInputRef = useRef(null);
   const [isVisualProctorReady, setIsVisualProctorReady] = useState(false);
   const [isAudioProctorReady, setIsAudioProctorReady] = useState(false);
   const [proctoringData, setProctoringData] = useState({
@@ -958,6 +970,8 @@ const MultiSectionAssessment = () => {
     violations: []
   });
   const [submissionReason, setSubmissionReason] = useState(null);
+  const [completedAttemptId, setCompletedAttemptId] = useState('');
+  const [completedTenant, setCompletedTenant] = useState(null);
 
   const shouldUseProctoring = useMemo(() => {
     if (!assessment) return false;
@@ -2012,6 +2026,24 @@ const MultiSectionAssessment = () => {
     }
   }, [assessment]);
 
+  const handleBeginAssessment = useCallback(() => {
+    if (assessment?.passkey) {
+      if (!passkeyInput.trim()) {
+        setPasskeyError('Please enter the access passkey provided by your instructor.');
+        if (passkeyInputRef.current) passkeyInputRef.current.focus();
+        return;
+      }
+      if (passkeyInput.trim() !== assessment.passkey) {
+        setPasskeyError('Incorrect passkey. Please check with your instructor and try again.');
+        if (passkeyInputRef.current) passkeyInputRef.current.focus();
+        return;
+      }
+    }
+    setPasskeyError('');
+    const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+    handleStartSection(targetIdx >= 0 ? targetIdx : 0);
+  }, [assessment, passkeyInput, secCompleted, handleStartSection]);
+
   const autoSubmitSection = useCallback(async (sectionResults) => {
     if (examFinishedRef.current) return;
     if (!assessment?.sections || currentSecIdx < 0 || currentSecIdx >= assessment.sections.length) return;
@@ -2097,11 +2129,11 @@ const MultiSectionAssessment = () => {
         lastUpdatedAtISO: new Date().toISOString()
       }, { merge: true }).catch(e => console.error('[MSA] Partial Firestore save failed:', e));
 
-      // ── 15-second inter-section relaxation ──
+      // ── Inter-section transition loader ──
       const nextSec = assessment.sections[nextIdx];
-      toast.success(`Section submitted! Next: "${nextSec?.name || `Section ${nextIdx + 1}`}" starts in 15 seconds.`, { duration: 5000 });
+      toast.success(`Section submitted! Next: "${nextSec?.name || `Section ${nextIdx + 1}`}" starting...`, { duration: 3500 });
       setRelaxationNextIdx(nextIdx);
-      setRelaxationCountdown(15);
+      setRelaxationCountdown(4);
       // handleStartSection(nextIdx) is called by the relaxation countdown useEffect
     } else {
       // All sections done — final submission
@@ -2294,11 +2326,10 @@ const MultiSectionAssessment = () => {
           teardownHardwareAndProctoring();
         } catch (_) { }
 
+        setCompletedAttemptId(sessionAttemptId);
+        setCompletedTenant(tenant);
         setExamFinished(true);
-        toast.success('Assessment submitted! Returning to dashboard…', { duration: 4000 });
-        setTimeout(() => {
-          navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
-        }, 4000);
+        toast.success('Assessment submitted successfully! Please provide your feedback.', { duration: 4000 });
         if (assessment?.id) {
           localStorage.setItem(`msaCompleted_${assessment.id}`, 'true');
         }
@@ -2339,18 +2370,26 @@ const MultiSectionAssessment = () => {
     }
   }, [assessment, currentSecIdx, examResults, handleStartSection, user]);
 
-  // Intercept forward navigation when exam is finished
+  // Intercept navigation when exam is finished
   useEffect(() => {
     if (examFinished) {
-      window.history.replaceState(null, '', '/student/dashboard');
+      const isViolation = submissionReason === 'proctoring_violations';
+      if (!isViolation) {
+        try {
+          window.history.replaceState(null, '', '/student/assessment/feedback');
+        } catch (_) { }
+      } else {
+        try {
+          window.history.replaceState(null, '', '/student/dashboard');
+        } catch (_) { }
+      }
       const handleForward = () => {
-        window.history.pushState(null, '', '/student/dashboard');
         navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
       };
       window.addEventListener('popstate', handleForward);
       return () => window.removeEventListener('popstate', handleForward);
     }
-  }, [examFinished, navigate]);
+  }, [examFinished, submissionReason, navigate]);
 
   // ────────────────────────── RENDER ─────────────────────────────────────────
 
@@ -2376,71 +2415,102 @@ const MultiSectionAssessment = () => {
     );
   }
 
-  // Exam finished screen
+  // Exam finished screen / Feedback flow
   if (examFinished) {
     const isViolationAutoSubmit = submissionReason === 'proctoring_violations';
+    if (isViolationAutoSubmit) {
+      return (
+        <div className="msa-finished-container" style={{ maxWidth: '620px', margin: '80px auto', padding: '40px 36px', background: '#1e293b', borderRadius: '16px', color: '#f8fafc', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif", textAlign: 'center' }}>
+          <SecurityWatermark email={user?.email} />
+          <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '4.5rem', marginBottom: '18px' }} />
+          <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#f87171', marginBottom: '12px' }}>Assessment Auto-Submitted</h1>
+          <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', padding: '14px 18px', marginBottom: '24px', textAlign: 'left', fontSize: '0.92rem', color: '#fca5a5', lineHeight: '1.5' }}>
+            <strong>Notice:</strong> This assessment was automatically finalized and submitted because the proctoring violation limit was exceeded (e.g. window exits, tab switching, or camera/mic anomalies).
+          </div>
+          <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '32px' }}>
+            Your responses and metrics up to this point have been securely recorded and synced to the portal.
+          </p>
+          <button
+            onClick={() => {
+              try { stopAllMediaAndAI(); } catch (_) {}
+              window.history.replaceState(null, '', '/student/dashboard');
+              navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+            }}
+            style={{ background: '#ef4444', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.05rem', fontWeight: '700', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      );
+    }
+
     return (
-      <div className="msa-finished-container" style={{ maxWidth: '620px', margin: '80px auto', padding: '40px 36px', background: '#1e293b', borderRadius: '16px', color: '#f8fafc', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)', fontFamily: "'Inter',sans-serif", textAlign: 'center' }}>
-        <SecurityWatermark email={user?.email} />
-        {isViolationAutoSubmit ? (
-          <>
-            <FaExclamationTriangle style={{ color: '#ef4444', fontSize: '4.5rem', marginBottom: '18px' }} />
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#f87171', marginBottom: '12px' }}>Assessment Auto-Submitted</h1>
-            <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px', padding: '14px 18px', marginBottom: '24px', textAlign: 'left', fontSize: '0.92rem', color: '#fca5a5', lineHeight: '1.5' }}>
-              <strong>Notice:</strong> This assessment was automatically finalized and submitted because the proctoring violation limit was exceeded (e.g. window exits, tab switching, or camera/mic anomalies).
-            </div>
-            <p style={{ color: '#94a3b8', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '32px' }}>
-              Your responses and metrics up to this point have been securely recorded and synced to the portal.
-            </p>
-          </>
-        ) : (
-          <>
-            <FaCheckCircle style={{ color: '#10b981', fontSize: '4.5rem', marginBottom: '18px' }} />
-            <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'white', marginBottom: '12px' }}>Assessment Completed!</h1>
-            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '32px' }}>
-              Congratulations <strong>{user?.name}</strong>, your answers have been successfully recorded and submitted. You may now safely return to the dashboard.
-            </p>
-          </>
-        )}
-        <button
-          onClick={() => {
-            try { stopAllMediaAndAI(); } catch (_) {}
-            window.history.replaceState(null, '', '/student/dashboard');
-            navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
-          }}
-          style={{ background: isViolationAutoSubmit ? '#ef4444' : 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.05rem', fontWeight: '700', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
-        >
-          Return to Dashboard
-        </button>
-      </div>
+      <AssessmentFeedback
+        assessment={assessment}
+        user={user}
+        tenant={completedTenant || { tenantId: user?.tenantId || 'default' }}
+        attemptId={completedAttemptId || attemptDocId(user?.uid || user?.email, assessment?.id)}
+        onComplete={() => {
+          try { stopAllMediaAndAI(); } catch (_) {}
+          window.history.replaceState(null, '', '/student/dashboard');
+          navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+        }}
+      />
     );
   }
 
   const activeSection = currentSecIdx >= 0 ? assessment.sections?.[currentSecIdx] : null;
 
-  // ── Inter-section relaxation screen (15-second countdown)
+  // ── Inter-section transition loader (using canonical SEED SEB section loader)
   if (relaxationCountdown !== null) {
     const nextSec = assessment.sections?.[relaxationNextIdx];
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', fontFamily: "'Inter', sans-serif" }}>
+      <div className="seb-boot" style={{ zIndex: 99999 }}>
         <SecurityWatermark email={user?.email} />
-        <div style={{ textAlign: 'center', padding: '48px', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', maxWidth: '520px', width: '90%' }}>
-          <FaCheckCircle style={{ color: '#10b981', fontSize: '4rem', marginBottom: '20px' }} />
-          <h2 style={{ color: '#f1f5f9', fontSize: '1.8rem', fontWeight: '700', margin: '0 0 12px' }}>Section Submitted!</h2>
-          <p style={{ color: '#94a3b8', fontSize: '1rem', marginBottom: '32px' }}>
-            Next section: <strong style={{ color: '#e2e8f0' }}>{nextSec?.name || `Section ${relaxationNextIdx + 1}`}</strong>
-          </p>
-          <div style={{ width: '100px', height: '100px', borderRadius: '50%', border: '4px solid rgba(99,102,241,0.3)', borderTop: '4px solid #6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', animation: 'spin 1s linear infinite' }}>
-            <span style={{ fontSize: '2.4rem', fontWeight: '800', color: '#6366f1' }}>{relaxationCountdown}</span>
+        <div className="seb-boot__brand">
+          <div className="seb-boot__spinner-ring"></div>
+          <div className="seb-boot__logo-wrapper">
+            <img src="/SEED_Logo.png" alt="SEED-IT Platform" className="seb-boot__logo" />
           </div>
-          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Starting automatically in {relaxationCountdown} second{relaxationCountdown !== 1 ? 's' : ''}&hellip;</p>
-          <button
-            onClick={() => { setRelaxationCountdown(0); }}
-            style={{ marginTop: '20px', background: 'rgba(99,102,241,0.2)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)', padding: '10px 24px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem' }}
-          >
-            Start Now
-          </button>
         </div>
+        <div className="seb-boot__title">
+          {nextSec?.name ? `Entering ${nextSec.name}` : 'Preparing Next Section...'}
+        </div>
+        {assessment?.name && (
+          <div style={{ color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '700', marginBottom: '14px' }}>
+            {assessment.name} · Section {relaxationNextIdx + 1} of {assessment?.sections?.length || 1}
+          </div>
+        )}
+        <div className="seb-boot__status">
+          <span className="seb-boot__dot"></span>
+          <span>
+            {`Transitioning workspace · Starting automatically in `}
+            <strong style={{ color: '#0f172a', fontFamily: 'monospace', fontSize: '15px' }}>
+              {relaxationCountdown > 0 ? `${relaxationCountdown}s` : '0s'}
+            </strong>
+          </span>
+        </div>
+        <div className="seb-boot__progress-bar" style={{ width: '240px' }}>
+          <div className="seb-boot__progress-fill"></div>
+        </div>
+        <button
+          onClick={() => { setRelaxationCountdown(0); }}
+          style={{
+            marginTop: '22px',
+            background: 'rgba(22, 163, 74, 0.15)',
+            color: '#16a34a',
+            border: '1.5px solid rgba(22, 163, 74, 0.35)',
+            padding: '10px 24px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '0.92rem',
+            fontWeight: '700',
+            transition: 'all 0.2s ease',
+            zIndex: 10
+          }}
+        >
+          Start Section Now
+        </button>
       </div>
     );
   }
@@ -2660,28 +2730,167 @@ const MultiSectionAssessment = () => {
 
         <main className="msa-content">
           {currentSecIdx === -1 ? (
-            <div className="msa-intro-card">
-              <h2>Welcome to the Assessment</h2>
-              <p>This exam consists of multiple sections. Each section has a separate countdown timer and questions.</p>
-              <div className="msa-rules-box">
-                <h4>Guidelines:</h4>
-                <ul>
-                  <li>Once you start a section, its timer starts counting down and cannot be paused.</li>
-                  <li>When a section's timer expires, your progress is automatically saved and you proceed to the next section.</li>
-                  <li>You cannot navigate back to a completed or submitted section.</li>
-                  <li>Fullscreen mode is monitored and proctored. Tab switches will log violations.</li>
-                </ul>
+            <div className="msa-preflight-card">
+              {/* Preflight Header */}
+              <div className="msa-preflight-header">
+                <div className="msa-preflight-badge-row">
+                  <span className="msa-type-pill">{assessment.type?.toUpperCase() || 'ASSESSMENT'}</span>
+                  <span className="msa-meta-pill">
+                    <FaClock style={{ color: 'var(--accent-primary, #16a34a)' }} /> {assessment.duration || 60} Mins
+                  </span>
+                  <span className="msa-meta-pill">
+                    <FaListUl style={{ color: 'var(--accent-primary, #16a34a)' }} /> {assessment.sections?.length || 1} Section{(assessment.sections?.length || 1) !== 1 ? 's' : ''}
+                  </span>
+                  {shouldUseProctoring && (
+                    <span className="msa-meta-pill" style={{ color: '#0284c7', background: 'rgba(2, 132, 199, 0.1)' }}>
+                      <FaShieldAlt /> Monitored
+                    </span>
+                  )}
+                </div>
+                <h1 className="msa-preflight-title">{assessment.name}</h1>
               </div>
-              <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                <button
-                  className="msa-action-btn primary"
-                  onClick={() => {
-                    const targetIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
-                    handleStartSection(targetIdx >= 0 ? targetIdx : 0);
+
+              {/* Access Passkey Box (if mandatory) */}
+              {assessment.passkey ? (
+                <div
+                  className="msa-passkey-box"
+                  style={{
+                    border: `1.5px solid ${
+                      passkeyError
+                        ? '#ef4444'
+                        : passkeyInput.trim() === assessment.passkey
+                        ? '#16a34a'
+                        : 'var(--border-color)'
+                    }`
                   }}
                 >
-                  Proceed to Assessment Section <FaChevronRight />
-                </button>
+                  <div className="msa-passkey-label-row">
+                    <label className="msa-passkey-label">
+                      <FaKey style={{ color: 'var(--accent-primary, #16a34a)' }} />
+                      <span>Access Passkey</span>
+                    </label>
+                    {passkeyInput.trim() === assessment.passkey ? (
+                      <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <FaCheckCircle /> Passkey Verified
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Required
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="msa-passkey-input-wrapper">
+                    <input
+                      ref={passkeyInputRef}
+                      type={showPasskey ? 'text' : 'password'}
+                      value={passkeyInput}
+                      onChange={(e) => {
+                        setPasskeyInput(e.target.value);
+                        if (passkeyError) setPasskeyError('');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleBeginAssessment();
+                        }
+                      }}
+                      placeholder="Enter the access passkey provided by your instructor"
+                      autoFocus
+                      className="msa-passkey-input"
+                      style={{
+                        letterSpacing: showPasskey ? 'normal' : '0.12em'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasskey(!showPasskey)}
+                      className="msa-passkey-toggle-btn"
+                      title={showPasskey ? 'Hide passkey' : 'Show passkey'}
+                    >
+                      {showPasskey ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
+
+                  {passkeyError && (
+                    <div style={{ color: '#ef4444', fontSize: '12.5px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FaExclamationTriangle /> {passkeyError}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
+              {/* System Readiness Panel */}
+              <div className="msa-readiness-panel">
+                <div className="msa-readiness-chip">
+                  <div className="msa-readiness-chip-top">
+                    <span>Internet</span>
+                    <FaWifi style={{ color: navigator.onLine ? '#16a34a' : '#ef4444' }} />
+                  </div>
+                  <div className="msa-readiness-chip-val" style={{ color: navigator.onLine ? '#16a34a' : '#ef4444' }}>
+                    {navigator.onLine ? 'Connected' : 'Offline'}
+                  </div>
+                </div>
+
+                <div className="msa-readiness-chip">
+                  <div className="msa-readiness-chip-top">
+                    <span>Environment</span>
+                    <FaExpand style={{ color: 'var(--accent-primary, #16a34a)' }} />
+                  </div>
+                  <div className="msa-readiness-chip-val" style={{ color: 'var(--accent-primary, #16a34a)' }}>
+                    Fullscreen Enforced
+                  </div>
+                </div>
+
+                <div className="msa-readiness-chip">
+                  <div className="msa-readiness-chip-top">
+                    <span>Proctoring</span>
+                    <FaShieldAlt style={{ color: shouldUseProctoring ? '#0284c7' : '#94a3b8' }} />
+                  </div>
+                  <div className="msa-readiness-chip-val" style={{ color: shouldUseProctoring ? '#0284c7' : 'var(--text-main)' }}>
+                    {shouldUseProctoring ? 'Active' : 'Standard'}
+                  </div>
+                </div>
+
+                <div className="msa-readiness-chip">
+                  <div className="msa-readiness-chip-top">
+                    <span>Auto-Save</span>
+                    <FaCheckCircle style={{ color: '#16a34a' }} />
+                  </div>
+                  <div className="msa-readiness-chip-val" style={{ color: '#16a34a' }}>
+                    Cloud Synced
+                  </div>
+                </div>
+              </div>
+
+              {/* Examination Guidelines */}
+              <div className="msa-preflight-guidelines">
+                <div className="msa-preflight-guidelines-header">
+                  <FaInfoCircle style={{ color: 'var(--accent-primary, #16a34a)' }} />
+                  <span>Important Examination Instructions:</span>
+                </div>
+                <div className="msa-guidelines-grid">
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                    <span>Fullscreen mode is strictly enforced during the exam.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                    <span>Switching tabs or minimizing the window will log violations.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                    <span>Each section has its own timer running continuously once started.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <FaCheckCircle style={{ color: 'var(--accent-primary, #16a34a)', fontSize: '13px', marginTop: '3px', flexShrink: 0 }} />
+                    <span>Responses and code drafts are automatically saved to the cloud.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preflight Actions */}
+              <div className="msa-preflight-actions">
                 <button
                   type="button"
                   onClick={() => {
@@ -2690,20 +2899,51 @@ const MultiSectionAssessment = () => {
                     navigate('/student/dashboard', { replace: true });
                   }}
                   style={{
-                    background: 'rgba(100, 116, 139, 0.2)',
-                    color: '#94a3b8',
-                    border: '1px solid rgba(148, 163, 184, 0.3)',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
+                    background: 'transparent',
+                    color: 'var(--text-muted, #64748b)',
+                    border: '1.5px solid var(--border-color, #cbd5e1)',
+                    padding: '11px 22px',
+                    borderRadius: '10px',
+                    fontSize: '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '8px',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  Back to Dashboard
+                  <FaArrowLeft /> Return to Dashboard
+                </button>
+
+                <button
+                  type="button"
+                  className="msa-action-btn primary"
+                  onClick={handleBeginAssessment}
+                  disabled={Boolean(assessment.passkey && passkeyInput.trim() !== assessment.passkey)}
+                  style={{
+                    padding: '12px 28px',
+                    borderRadius: '10px',
+                    fontSize: '14.5px',
+                    fontWeight: '700',
+                    background: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
+                      ? 'var(--border-color, #cbd5e1)'
+                      : 'var(--accent-primary, #16a34a)',
+                    color: '#ffffff',
+                    border: 'none',
+                    boxShadow: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
+                      ? 'none'
+                      : '0 4px 14px rgba(22, 163, 74, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: (assessment.passkey && passkeyInput.trim() !== assessment.passkey)
+                      ? 'not-allowed'
+                      : 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <FaPlay style={{ fontSize: '12px' }} /> Begin Assessment <FaChevronRight style={{ fontSize: '11px' }} />
                 </button>
               </div>
             </div>

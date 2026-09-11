@@ -16,8 +16,11 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminQuestionsRouteImport } from './routes/admin.questions'
+import { Route as StudentAiInterviewRouteImport } from './routes/student.ai-interview'
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
 import { Route as StudentAssessmentAssessmentSlugRouteImport } from './routes/student.assessment.$assessmentSlug'
+import { Route as StudentAssessmentFeedbackRouteImport } from './routes/student.assessment.feedback'
+import { Route as StudentLearningCourseIdRouteImport } from './routes/student.learning.$courseId'
 import { Route as StudentAssessmentIdAssessmentSlugRouteImport } from './routes/student.assessment.id.$assessmentSlug'
 import { Route as StudentPracticeSolveQuestionIdRouteImport } from './routes/student.practice.solve.$questionId'
 import { Route as StudentPracticeCourseCourseIdQuestionIdRouteImport } from './routes/student.practice.course.$courseId.$questionId'
@@ -57,6 +60,11 @@ const AdminQuestionsRoute = AdminQuestionsRouteImport.update({
   path: '/admin/questions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentAiInterviewRoute = StudentAiInterviewRouteImport.update({
+  id: '/student/ai-interview',
+  path: '/student/ai-interview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
   id: '/student/dashboard',
   path: '/student/dashboard',
@@ -68,6 +76,17 @@ const StudentAssessmentAssessmentSlugRoute =
     path: '/student/assessment/$assessmentSlug',
     getParentRoute: () => rootRouteImport,
   } as any)
+const StudentAssessmentFeedbackRoute =
+  StudentAssessmentFeedbackRouteImport.update({
+    id: '/student/assessment/feedback',
+    path: '/student/assessment/feedback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const StudentLearningCourseIdRoute = StudentLearningCourseIdRouteImport.update({
+  id: '/student/learning/$courseId',
+  path: '/student/learning/$courseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentAssessmentIdAssessmentSlugRoute =
   StudentAssessmentIdAssessmentSlugRouteImport.update({
     id: '/student/assessment/id/$assessmentSlug',
@@ -94,9 +113,12 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/admin/questions': typeof AdminQuestionsRoute
+  '/student/ai-interview': typeof StudentAiInterviewRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin/': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
+  '/student/assessment/feedback': typeof StudentAssessmentFeedbackRoute
+  '/student/learning/$courseId': typeof StudentLearningCourseIdRoute
   '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
   '/student/practice/course/$courseId/$questionId': typeof StudentPracticeCourseCourseIdQuestionIdRoute
@@ -108,9 +130,12 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/admin/questions': typeof AdminQuestionsRoute
+  '/student/ai-interview': typeof StudentAiInterviewRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
+  '/student/assessment/feedback': typeof StudentAssessmentFeedbackRoute
+  '/student/learning/$courseId': typeof StudentLearningCourseIdRoute
   '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
   '/student/practice/course/$courseId/$questionId': typeof StudentPracticeCourseCourseIdQuestionIdRoute
@@ -123,9 +148,12 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/admin/questions': typeof AdminQuestionsRoute
+  '/student/ai-interview': typeof StudentAiInterviewRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/admin/': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
+  '/student/assessment/feedback': typeof StudentAssessmentFeedbackRoute
+  '/student/learning/$courseId': typeof StudentLearningCourseIdRoute
   '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
   '/student/practice/course/$courseId/$questionId': typeof StudentPracticeCourseCourseIdQuestionIdRoute
@@ -139,9 +167,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/admin/questions'
+    | '/student/ai-interview'
     | '/student/dashboard'
     | '/admin/'
     | '/student/assessment/$assessmentSlug'
+    | '/student/assessment/feedback'
+    | '/student/learning/$courseId'
     | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
     | '/student/practice/course/$courseId/$questionId'
@@ -153,9 +184,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/admin/questions'
+    | '/student/ai-interview'
     | '/student/dashboard'
     | '/admin'
     | '/student/assessment/$assessmentSlug'
+    | '/student/assessment/feedback'
+    | '/student/learning/$courseId'
     | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
     | '/student/practice/course/$courseId/$questionId'
@@ -167,9 +201,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/admin/questions'
+    | '/student/ai-interview'
     | '/student/dashboard'
     | '/admin/'
     | '/student/assessment/$assessmentSlug'
+    | '/student/assessment/feedback'
+    | '/student/learning/$courseId'
     | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
     | '/student/practice/course/$courseId/$questionId'
@@ -182,9 +219,12 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   AdminQuestionsRoute: typeof AdminQuestionsRoute
+  StudentAiInterviewRoute: typeof StudentAiInterviewRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
   AdminIndexRoute: typeof AdminIndexRoute
   StudentAssessmentAssessmentSlugRoute: typeof StudentAssessmentAssessmentSlugRoute
+  StudentAssessmentFeedbackRoute: typeof StudentAssessmentFeedbackRoute
+  StudentLearningCourseIdRoute: typeof StudentLearningCourseIdRoute
   StudentAssessmentIdAssessmentSlugRoute: typeof StudentAssessmentIdAssessmentSlugRoute
   StudentPracticeSolveQuestionIdRoute: typeof StudentPracticeSolveQuestionIdRoute
   StudentPracticeCourseCourseIdQuestionIdRoute: typeof StudentPracticeCourseCourseIdQuestionIdRoute
@@ -241,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminQuestionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/ai-interview': {
+      id: '/student/ai-interview'
+      path: '/student/ai-interview'
+      fullPath: '/student/ai-interview'
+      preLoaderRoute: typeof StudentAiInterviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/student/dashboard': {
       id: '/student/dashboard'
       path: '/student/dashboard'
@@ -253,6 +300,20 @@ declare module '@tanstack/react-router' {
       path: '/student/assessment/$assessmentSlug'
       fullPath: '/student/assessment/$assessmentSlug'
       preLoaderRoute: typeof StudentAssessmentAssessmentSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/student/assessment/feedback': {
+      id: '/student/assessment/feedback'
+      path: '/student/assessment/feedback'
+      fullPath: '/student/assessment/feedback'
+      preLoaderRoute: typeof StudentAssessmentFeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/student/learning/$courseId': {
+      id: '/student/learning/$courseId'
+      path: '/student/learning/$courseId'
+      fullPath: '/student/learning/$courseId'
+      preLoaderRoute: typeof StudentLearningCourseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/student/assessment/id/$assessmentSlug': {
@@ -286,9 +347,12 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   AdminQuestionsRoute: AdminQuestionsRoute,
+  StudentAiInterviewRoute: StudentAiInterviewRoute,
   StudentDashboardRoute: StudentDashboardRoute,
   AdminIndexRoute: AdminIndexRoute,
   StudentAssessmentAssessmentSlugRoute: StudentAssessmentAssessmentSlugRoute,
+  StudentAssessmentFeedbackRoute: StudentAssessmentFeedbackRoute,
+  StudentLearningCourseIdRoute: StudentLearningCourseIdRoute,
   StudentAssessmentIdAssessmentSlugRoute:
     StudentAssessmentIdAssessmentSlugRoute,
   StudentPracticeSolveQuestionIdRoute: StudentPracticeSolveQuestionIdRoute,

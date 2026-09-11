@@ -947,14 +947,15 @@ export const getTopicActivityStatus = (topic, topicProgress) => {
         cp.readingCompleted || 
         cp.videoWatched || 
         cp.watchAiClass || 
+        cp.sqlExercisePassed ||
         (totalCps > 0 && passedCps.length >= totalCps)
       );
       if (isLessonDone) completedCount++;
       items.push({
         key: 'lesson',
-        label: topic.mode === 'VIDEO' ? 'Video Lesson' : 'Lesson Content',
+        label: (topic.sqlExercise || topic.mode === 'SQL_INTERACTIVE') ? 'SQL Exercise' : (topic.mode === 'VIDEO' ? 'Video Lesson' : 'Lesson Content'),
         done: isLessonDone,
-        type: topic.mode === 'VIDEO' ? 'video' : 'reading'
+        type: (topic.sqlExercise || topic.mode === 'SQL_INTERACTIVE') ? 'sql' : (topic.mode === 'VIDEO' ? 'video' : 'reading')
       });
     } else if (req === 'examples') {
       const done = isTopicMarkedCompleted || Boolean(cp.exampleRun || cp.examplesViewed);

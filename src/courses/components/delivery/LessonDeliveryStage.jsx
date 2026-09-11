@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaVideo, FaBookOpen, FaLayerGroup } from 'react-icons/fa';
+import { FaVideo, FaBookOpen, FaLayerGroup, FaDatabase } from 'react-icons/fa';
 import VideoCheckpointPlayer from './VideoCheckpointPlayer';
 import TextPageViewer from './TextPageViewer';
+import LessonMarkdownRenderer from './LessonMarkdownRenderer';
+import SQLInteractiveStage from '../activities/SQLInteractiveStage';
 import learningEngineService from '../../services/learningEngineService';
 
 const LessonDeliveryStage = ({
@@ -16,6 +18,7 @@ const LessonDeliveryStage = ({
   const uid = user?.uid || 'demo-student';
 
   // Determine available modes
+  const isSqlExercise = Boolean(topic?.sqlExercise || topic?.mode === 'SQL_INTERACTIVE');
   const hasVideo = Boolean(topic?.videoUrl || topic?.lessonContent?.videoUrl);
   const hasText = Boolean(topic?.pages?.length > 0 || topic?.lessonContent?.textAndVisuals || topic?.description);
   
@@ -57,6 +60,46 @@ const LessonDeliveryStage = ({
   };
 
   const showModeSwitcher = authorMode === 'VIDEO_TEXT' || (hasVideo && hasText);
+
+  if (isSqlExercise && topic?.sqlExercise) {
+    return (
+      <div className="lesson-delivery-stage sql-delivery-mode">
+        {topic && (
+          <div className="sql-topic-intro-card">
+            <h3 className="sql-topic-intro-title">
+              {topic.title}
+            </h3>
+            {topic.description && (
+              <p className="sql-topic-intro-desc">
+                {topic.description}
+              </p>
+            )}
+            {topic.lessonMarkdown && (
+              <div className="sql-topic-intro-markdown">
+                <LessonMarkdownRenderer content={topic.lessonMarkdown} />
+              </div>
+            )}
+            {topic.lessonContent?.textAndVisuals?.content && (
+              <div className="sql-topic-intro-markdown">
+                <LessonMarkdownRenderer content={topic.lessonContent.textAndVisuals.content} />
+              </div>
+            )}
+          </div>
+        )}
+        <SQLInteractiveStage
+          exercise={topic.sqlExercise}
+          onComplete={() => {
+            handleCheckpointPassed('sqlExercisePassed', 0);
+            onCheckpointComplete?.('sqlExercisePassed');
+            onTopicComplete?.();
+          }}
+          onNextLesson={() => {
+            onTopicComplete?.();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="lesson-delivery-stage">
