@@ -461,8 +461,26 @@ service cloud.firestore {
 
     match /payments/{paymentId} {
       allow read: if isPortal() || (isSignedIn() && (resource == null || resource.data.get('userId', '') == request.auth.uid));
-      allow create: if isSignedIn() && request.resource.data.get('userId', '') == request.auth.uid;
+      allow create: if isSignedIn() && (request.resource.data.get('userId', '') == request.auth.uid || isPortal());
       allow update, delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 8.8 Verifiable Course Certificates & Sequential Counters
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /certificates/{certId} {
+      // Anyone can verify and view authentic course completion certificates
+      allow read: if true;
+      allow create, update: if isSignedIn() || isPortal();
+      allow delete: if isAdmin();
+    }
+
+    match /counters/{counterId} {
+      // Atomic sequence counters (e.g., certificates counter starting from 1001)
+      allow read: if isSignedIn() || isPortal();
+      allow create, update: if isSignedIn() || isPortal();
+      allow delete: if isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════════════════
