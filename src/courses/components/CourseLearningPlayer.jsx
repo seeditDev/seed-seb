@@ -22,6 +22,8 @@ import learningEngineService, {
   findTopicInCourse
 } from '../services/learningEngineService';
 import { toast } from 'sonner';
+import { checkCourseEntitlement } from '../services/courseEntitlementService';
+import { startCourseSession } from '../services/courseSessionTracker';
 import '../styles/CourseLearningPlayer.css';
 import '../styles/LessonDelivery.css';
 import '../styles/CourseMSA.css';
@@ -35,6 +37,24 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   const [activePlayerView, setActivePlayerView] = useState(initialView); // 'CLASS' | 'OVERVIEW'
   const [activeStep, setActiveStep] = useState('LESSON'); // 'LESSON' | 'CHECKPOINTS' | 'EXAMPLES' | 'PRACTICE' | 'MSA'
 
+  const entitlement = useMemo(() => {
+    return checkCourseEntitlement(course, user);
+  }, [course, user]);
+
+  // Mount bounded active session tracker when in active learning class mode
+  useEffect(() => {
+    if (!course?.courseId || !uid || uid === 'demo-student' || entitlement.isLocked || activePlayerView !== 'CLASS') {
+      return;
+    }
+    const stopSession = startCourseSession(uid, course.courseId, {
+      tenantId: user?.tenantId || user?.college,
+      cohortId: user?.cohortId || user?.year,
+    });
+    return () => {
+      stopSession();
+    };
+  }, [course?.courseId, uid, user?.tenantId, user?.cohortId, entitlement.isLocked, activePlayerView]);
+
   const [expandedModules, setExpandedModules] = useState(() => ({
     [firstMod?.moduleId || '']: true
   }));
@@ -42,6 +62,18 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   const [selectedTopicId, setSelectedTopicId] = useState(() => firstTop?.topicId || '');
 
   const [progress, setProgress] = useState(null);
+
+  const isEnrolled = useMemo(() => {
+    if (!progress) return false;
+    return Boolean(progress.enrolledAt || progress.completed || (progress.topics && Object.keys(progress.topics).length > 0));
+  }, [progress]);
+
+  // Safety: If course is locked or unentitled, immediately force back to OVERVIEW
+  useEffect(() => {
+    if (entitlement.isLocked && activePlayerView === 'CLASS') {
+      setActivePlayerView('OVERVIEW');
+    }
+  }, [entitlement.isLocked, activePlayerView]);
 
   // Sidebar Collapsible Focus State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -373,6 +405,44 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
     }
   };
 
+  // If course is cohort-restricted/locked and user attempts to enter CLASS view directly
+  if (entitlement.isLocked && activePlayerView === 'CLASS') {
+    return (
+      <div className="learning-player-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--lp-bg)' }}>
+        <div style={{
+          background: 'var(--lp-surface)',
+          border: '1px solid var(--lp-border)',
+          borderRadius: '16px',
+          padding: '40px 32px',
+          maxWidth: '520px',
+          width: '90%',
+          textAlign: 'center',
+          boxShadow: 'var(--lp-card-shadow)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+            <FaLock />
+          </div>
+          <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--lp-text)' }}>Course Access Restricted</h2>
+          <p style={{ margin: 0, fontSize: '14px', color: 'var(--lp-text-muted)', lineHeight: 1.6 }}>
+            {entitlement.reason || "This interactive course is only available to assigned college cohorts or SEED Premium members."}
+          </p>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+            <button className="bottom-footer-btn prev" onClick={() => setActivePlayerView('OVERVIEW')}>
+              View Syllabus Overview
+            </button>
+            <button className="bottom-footer-btn next" onClick={onExit}>
+              Back to Catalog
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Full Course Overview landing & curriculum view
   if (activePlayerView === 'OVERVIEW') {
     return (
@@ -386,10 +456,28 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
             setProgress(null);
           }}
           onStartLearning={() => {
+            if (entitlement.isLocked) {
+              toast.error(entitlement.reason, { duration: 6000 });
+              return;
+            }
+            if (!isEnrolled) {
+              toast.warning(`Please enroll in "${course?.title || 'this course'}" first before launching lessons.`);
+              return;
+            }
             setActivePlayerView('CLASS');
             setActiveStep('LESSON');
           }}
-          onSelectTopic={(m, t) => handleSelectTopic(m, t)}
+          onSelectTopic={(m, t) => {
+            if (entitlement.isLocked) {
+              toast.error(entitlement.reason, { duration: 6000 });
+              return;
+            }
+            if (!isEnrolled) {
+              toast.warning(`Please enroll in "${course?.title || 'this course'}" first before launching lessons.`);
+              return;
+            }
+            handleSelectTopic(m, t);
+          }}
         />
       </div>
     );

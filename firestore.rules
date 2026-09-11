@@ -209,6 +209,27 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    // 3c. Real Course Entitlements (Cohort mappings for interactive courses)
+    //     realCourseEntitlements/{tenantId_cohortId_courseId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /realCourseEntitlements/{entitlementId} {
+      allow read: if isSignedIn() || isPortal();
+      allow write: if isPortal();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 3d. Daily Aggregated Course Metrics
+    //     dailyCourseMetrics/{tenantId_cohortId_date}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /dailyCourseMetrics/{metricId} {
+      allow read: if isSignedIn() || isPortal();
+      allow create, update: if isSignedIn() || isPortal();
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     // 4. Assessments (Authoring store - seed-admin & staff portal)
     // ══════════════════════════════════════════════════════════════════════
 
@@ -435,9 +456,24 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════════════════
-    // 9. Collection Group Queries
-    //    (Live Assessment Monitor in seed-admin & Presence Counts)
+    // 8.7 Payments & Subscriptions (Razorpay Audit Trail & Upgrades)
     // ══════════════════════════════════════════════════════════════════════
+
+    match /payments/{paymentId} {
+      allow read: if isPortal() || (isSignedIn() && (resource == null || resource.data.get('userId', '') == request.auth.uid));
+      allow create: if isSignedIn() && request.resource.data.get('userId', '') == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 9. Collection Group Queries
+    //    (Live Assessment Monitor in seed-admin, Presence Counts & Global Contests)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /{path=**}/tests/{testId} {
+      allow read: if true;
+      allow create, update, delete: if isPortal();
+    }
 
     match /{path=**}/messages/{messageId} {
       allow read, write: if isPortal() || isSignedIn() || true;

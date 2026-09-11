@@ -23,6 +23,7 @@ import { CATEGORIZED_SHEETS } from '../config/sheetsData';
 import { getAuthData } from '../utils/storageUtils';
 import { getGitHubConfig, fetchGitHubConfigFromFirestore } from '../services/githubSyncService';
 import GitHubSyncModal from './common/GitHubSyncModal';
+import PremiumUpgradeModal from './PremiumUpgradeModal';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
 
@@ -3561,22 +3562,16 @@ const PracticeHome = ({
     </div>
   )}
 
-      {/* Premium Upgrade Modal */}
-      {showPremiumModal && (
-        <div className="pcont-modal-overlay" onClick={() => setShowPremiumModal(false)}>
-          <div className="pcont-modal" onClick={e => e.stopPropagation()}>
-            <div className="pcont-modal-icon"><FaStar style={{ fontSize: '32px', color: '#fbbf24' }} /></div>
-            <div className="pcont-modal-title">Premium Access Required</div>
-            <div className="pcont-modal-desc" style={{ marginBottom: '20px', lineHeight: '1.5' }}>
-              This question or course is part of the Premium package.
-              To upgrade, please reach out to your Placement Department or contact your SEED-IT Training Manager.
-            </div>
-            <button className="pcont-modal-btn primary" onClick={() => setShowPremiumModal(false)} style={{ width: '100%' }}>
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Premium Upgrade Modal with Razorpay Checkout */}
+      <PremiumUpgradeModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        user={user}
+        onUpgradeSuccess={() => {
+          setUser(p => ({ ...p, isPremium: true, premium: true }));
+          toast.success("Welcome to SEED Premium! All questions and courses are now unlocked.");
+        }}
+      />
       {/* Article Reader Modal */}
       {activeArticle && (
         <div className="ph-modal-overlay" onClick={() => setActiveArticle(null)}>

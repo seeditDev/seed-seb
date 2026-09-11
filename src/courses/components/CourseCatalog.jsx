@@ -19,6 +19,7 @@ import {
   enrollCourse,
   unenrollCourse
 } from '../services/learningEngineService';
+import { fetchUserEntitledCourseIds, checkCourseEntitlement } from '../services/courseEntitlementService';
 import { toast } from 'sonner';
 import SeedCreditCoin from '../../components/SeedCreditCoin';
 import { calculateCourseRewards } from '../../utils/gamificationService';
@@ -211,6 +212,7 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
   const uid = user?.uid || 'guest';
   const [courses, setCourses] = useState(() => COURSE_CATALOG.filter(c => c.enabled !== false));
   const [enrolledIds, setEnrolledIds] = useState(() => getEnrolledCourseIds(uid));
+  const [entitledSet, setEntitledSet] = useState(null);
   const [progressMap, setProgressMap] = useState({});
 
   // Sync enrolled course IDs and fetch live real metadata from Firestore
@@ -232,6 +234,10 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
       const ids = await fetchEnrolledCourseIds(uid);
       if (isMounted) setEnrolledIds(ids);
 
+      fetchUserEntitledCourseIds(user).then((entitled) => {
+        if (isMounted) setEntitledSet(entitled);
+      });
+
       const map = {};
       for (const course of activeCourses) {
         try {
@@ -246,13 +252,18 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
 
     initCatalogAndProgress();
     return () => { isMounted = false; };
-  }, [uid]);
+  }, [uid, user]);
 
   const [unenrollCourseTarget, setUnenrollCourseTarget] = useState(null);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
 
   const handleEnrollCourse = async (course) => {
     if (!course) return;
+    const ent = checkCourseEntitlement(course, user, entitledSet);
+    if (ent.isLocked) {
+      toast.error(ent.reason, { duration: 6000 });
+      return;
+    }
     await enrollCourse(uid, course.courseId);
     setEnrolledIds(prev => Array.from(new Set([...prev, course.courseId])));
     toast.success(`Successfully enrolled in "${course.title}"!`);
@@ -622,6 +633,9 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
               const coursePct = courseProg?.percentage || 0;
               const isCompleted = coursePct >= 100;
               const isInProgress = isEnrolled && coursePct > 0 && !isCompleted;
+              const entitlement = checkCourseEntitlement(course, user, entitledSet);
+              const ent = entitlement;
+              const isLocked = entitlement.isLocked;
 
               const totalModules = course.modules?.length || course.modulesCount || 3;
               const totalLessons = course.lessonsCount || course.modules?.reduce((acc, m) => acc + (m.topics?.length || 0), 0) || 8;
@@ -631,8 +645,13 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
               let primaryButtonIcon = <FaPlay />;
 
               if (!isEnrolled) {
-                primaryButtonLabel = 'Enroll in Course';
-                primaryButtonIcon = <FaPlus />;
+                if (ent.isLocked) {
+                  primaryButtonLabel = 'Locked';
+                  primaryButtonIcon = <FaLock />;
+                } else {
+                  primaryButtonLabel = 'Enroll in Course';
+                  primaryButtonIcon = <FaPlus />;
+                }
               } else if (isCompleted) {
                 primaryButtonLabel = 'Review Course';
                 primaryButtonIcon = <FaCheckCircle />;
@@ -645,14 +664,14 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
               }
 
               return (
-                <div key={course.courseId} className="mockup-course-card">
+                <div key={course.courseId} className={`mockup-course-card ${ent.isLocked && !isEnrolled ? 'course-locked-border' : ''}`}>
                   {/* Top Dark Gradient Vector Banner */}
                   <CourseBannerGraphic 
                     category={course.category} 
                     slug={course.slug} 
                     title={course.title}
                     isPopular={course.isPopular}
-                    badgeText={course.badgeText}
+                    badgeText={ent.isLocked && !isEnrolled ? ent.badge : course.badgeText}
                     isEnrolled={isEnrolled}
                   />
 
@@ -726,12 +745,28 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
                         </span>
                       </div>
 
-                      {isEnrolled && (
+                      {isLocked ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '3px 8px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          color: '#ef4444',
+                          border: '1px solid rgba(239, 68, 68, 0.25)'
+                        }}>
+                          <FaLock style={{ fontSize: '10px' }} />
+                          <span>{entitlement.badge || 'Cohort Restricted'}</span>
+                        </span>
+                      ) : isEnrolled ? (
                         <span className="card-enrolled-status-pill">
                           <FaCheckCircle style={{ fontSize: '11px' }} />
                           <span>Enrolled</span>
                         </span>
-                      )}
+                      ) : null}
                     </div>
 
                     {/* Progress Bar (when enrolled & in progress) */}
@@ -752,11 +787,17 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
                       <div className="mockup-actions-row enrolled-actions">
                         <button 
                           className="mockup-continue-btn"
-                          onClick={() => onStartCourse(course, 'CLASS')}
-                          title={`Continue learning ${course.title}`}
+                          onClick={() => {
+                            if (isLocked) {
+                              toast.error(entitlement.reason, { duration: 6000 });
+                              return;
+                            }
+                            onStartCourse(course, 'CLASS');
+                          }}
+                          title={isLocked ? entitlement.reason : `Continue learning ${course.title}`}
                         >
-                          <FaPlay style={{ fontSize: '10px' }} />
-                          <span>Continue Learning</span>
+                          {isLocked ? <FaLock style={{ fontSize: '10px' }} /> : <FaPlay style={{ fontSize: '10px' }} />}
+                          <span>{isLocked ? 'Restricted' : 'Continue Learning'}</span>
                         </button>
                         <button
                           type="button"
@@ -772,11 +813,13 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
                     ) : (
                       <div className="mockup-actions-row single-action">
                         <button 
-                          className="mockup-details-btn"
+                          className={`mockup-details-btn ${ent.isLocked ? 'locked' : ''}`}
                           onClick={() => onStartCourse(course, 'OVERVIEW')}
-                          title={`View details and curriculum for ${course.title}`}
+                          title={ent.isLocked ? `Course locked: ${ent.reason}` : `View details and curriculum for ${course.title}`}
+                          style={ent.isLocked ? { borderColor: 'rgba(239, 68, 68, 0.4)', color: '#94a3b8' } : {}}
                         >
-                          <span>Details</span>
+                          {ent.isLocked && <FaLock style={{ fontSize: '11px', color: '#f59e0b' }} />}
+                          <span>{ent.isLocked ? 'Locked (Tenant Restricted)' : 'Details'}</span>
                           <FaArrowRight style={{ fontSize: '11px' }} />
                         </button>
                       </div>

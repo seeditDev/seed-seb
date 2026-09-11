@@ -85,6 +85,9 @@ export interface TestDoc {
   maxAttempts: number;
   passkey: string;
   isPremium: boolean;
+  isGlobal?: boolean;
+  accessTier?: "free" | "premium" | "paid_entry";
+  entryFeeINR?: number;
   display_order: number;
   schedule: ScheduleConfig;
   settings: TestSettings;
@@ -160,6 +163,9 @@ function mapTest(
     maxAttempts: Number(d["maxAttempts"] ?? 1),
     passkey: String(d["passkey"] ?? ""),
     isPremium: Boolean(d["isPremium"]),
+    isGlobal: Boolean(d["isGlobal"]),
+    accessTier: (d["accessTier"] as TestDoc["accessTier"]) ?? (d["isPremium"] ? "premium" : "free"),
+    entryFeeINR: d["entryFeeINR"] != null ? Number(d["entryFeeINR"]) : 0,
     display_order: Number(d["display_order"] ?? 999),
     schedule: (d["schedule"] as ScheduleConfig) ?? { start: null, end: null, autoClose: false },
     settings: {
@@ -275,4 +281,57 @@ export async function getAllowedTests(allowedModules: string[]): Promise<TestDoc
   );
 
   return results.sort((a, b) => a.display_order - b.display_order);
+}
+
+/**
+ * Fetch all active global contests (isGlobal == true) across all courses.
+ * Available to every SEED-IT user (free or premium).
+ */
+export async function getGlobalTests(): Promise<TestDoc[]> {
+  try {
+    const db = getDb();
+    const q = query(collectionGroup(db, "tests"), where("isGlobal", "==", true));
+    const snap = await getDocs(q);
+    if (snap.empty) return [];
+
+    const results: TestDoc[] = [];
+    const courseTitles = new Map<string, string>();
+    const seriesTitles = new Map<string, string>();
+
+    for (const d of snap.docs) {
+      const pathParts = d.ref.path.split("/");
+      // courses/{courseId}/series/{seriesId}/tests/{testId}
+      const courseId = pathParts[1] || "";
+      const seriesId = pathParts[3] || "";
+      const test = mapTest(d.id, courseId, seriesId, d.data() as Record<string, unknown>);
+      test.isGlobal = true;
+      results.push(test);
+    }
+
+    // Enrich titles
+    await Promise.all(
+      results.map(async (t) => {
+        try {
+          if (t.courseId && !courseTitles.has(t.courseId)) {
+            const cSnap = await getDoc(doc(db, "courses", t.courseId));
+            if (cSnap.exists()) courseTitles.set(t.courseId, String(cSnap.data()["title"] ?? t.courseId));
+          }
+          if (t.courseId && t.seriesId && !seriesTitles.has(`${t.courseId}::${t.seriesId}`)) {
+            const sSnap = await getDoc(doc(db, "courses", t.courseId, "series", t.seriesId));
+            if (sSnap.exists()) seriesTitles.set(`${t.courseId}::${t.seriesId}`, String(sSnap.data()["title"] ?? t.seriesId));
+          }
+          t.courseTitle = courseTitles.get(t.courseId) ?? "Global Contests";
+          t.seriesTitle = seriesTitles.get(`${t.courseId}::${t.seriesId}`) ?? "Open Challenges";
+        } catch {
+          t.courseTitle = "Global Contests";
+          t.seriesTitle = "Open Challenges";
+        }
+      }),
+    );
+
+    return results.sort((a, b) => a.display_order - b.display_order);
+  } catch (err) {
+    console.warn("[courses.ts] getGlobalTests query fallback/error:", err);
+    return [];
+  }
 }

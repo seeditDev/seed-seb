@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   FaPlay, FaBookOpen, FaClock, FaCheckCircle, FaLock, 
   FaGraduationCap, FaChevronRight, FaStar, FaAward, 
@@ -11,8 +11,10 @@ import {
 import { calculateCourseDuration } from '../../services/courseDurationCalculator';
 import { getCourseMetadata, addCourseReview, incrementCourseEnrollment } from '../../services/courseMetadataService';
 import { enrollCourse, unenrollCourse } from '../../services/learningEngineService';
+import { checkCourseEntitlement } from '../../services/courseEntitlementService';
 import { calculateCourseRewards } from '../../../utils/gamificationService';
 import SeedCreditCoin from '../../../components/SeedCreditCoin';
+import PremiumUpgradeModal from '../../../components/PremiumUpgradeModal';
 import { toast } from 'sonner';
 
 /**
@@ -31,6 +33,7 @@ const CourseOverviewView = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'curriculum' | 'learn' | 'prerequisites' | 'reviews'
   const [showTrailerModal, setShowTrailerModal] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [showUnenrollModal, setShowUnenrollModal] = useState(false);
@@ -90,9 +93,18 @@ const CourseOverviewView = ({
     Math.max(1, (course?.modules || []).findIndex(m => m.moduleId === progress?.currentModuleId) + 1 || 1)
   );
 
+  const entitlement = useMemo(() => {
+    return checkCourseEntitlement(course, user);
+  }, [course, user]);
+
   // Enroll or Continue learning handler
   const handleEnrollOrResume = async () => {
     if (!isEnrolled) {
+      if (entitlement.isLocked) {
+        toast.error(entitlement.reason, { duration: 6000 });
+        setShowPremiumModal(true);
+        return;
+      }
       setIsEnrolling(true);
       try {
         const uid = user?.uid || 'demo-student';
@@ -102,9 +114,15 @@ const CourseOverviewView = ({
         toast.success(`You are now enrolled in "${course?.title || 'Course'}"!`);
       } catch (err) {
         console.warn('Enroll notice:', err.message);
+        toast.error(err.message, { duration: 6000 });
+        return;
       } finally {
         setIsEnrolling(false);
       }
+    } else if (entitlement.isLocked) {
+      toast.error(entitlement.reason, { duration: 6000 });
+      setShowPremiumModal(true);
+      return;
     }
     if (onStartLearning) {
       onStartLearning(course);
@@ -241,12 +259,15 @@ const CourseOverviewView = ({
         {/* Hero Enroll / Resume Action Pane */}
         <div className="hero-right-action-col">
           <button 
-            className={`hero-enroll-primary-btn ${isEnrolled ? (isCompleted ? 'completed' : 'in-progress') : 'enroll'}`}
+            className={`hero-enroll-primary-btn ${isEnrolled ? (isCompleted ? 'completed' : 'in-progress') : (entitlement.isLocked ? 'locked' : 'enroll')}`}
             onClick={handleEnrollOrResume}
             disabled={isEnrolling}
+            style={entitlement.isLocked && !isEnrolled ? { background: '#64748b', cursor: 'not-allowed' } : {}}
           >
             {isEnrolled ? (
               isCompleted ? <FaCheckCircle /> : <FaPlay style={{ fontSize: '12px' }} />
+            ) : entitlement.isLocked ? (
+              <FaLock style={{ fontSize: '14px' }} />
             ) : (
               <FaGraduationCap style={{ fontSize: '15px' }} />
             )}
@@ -254,7 +275,7 @@ const CourseOverviewView = ({
               {isEnrolling 
                 ? 'Enrolling...' 
                 : !isEnrolled 
-                  ? 'Enroll in Course' 
+                  ? (entitlement.isLocked ? 'Locked (Tenant Restricted)' : 'Enroll in Course') 
                   : isCompleted 
                     ? 'Review Course' 
                     : (progressPct > 0 ? `Resume Learning (${progressPct}%)` : 'Start Learning')}
@@ -518,15 +539,25 @@ const CourseOverviewView = ({
                         const topicProg = progress?.topics?.[topic.topicId];
                         const isTopicDone = Boolean(topicProg?.completed);
                         const isTopicCurrent = topic.topicId === progress?.currentTopicId;
+                        const isTopicRowLocked = entitlement.isLocked || !isEnrolled;
 
                         return (
                           <div 
                             key={topic.topicId}
-                            className={`curriculum-topic-row ${isTopicCurrent ? 'current' : ''}`}
+                            className={`curriculum-topic-row ${isTopicCurrent ? 'current' : ''} ${isTopicRowLocked ? 'locked-topic-row' : ''}`}
                             onClick={() => {
+                              if (entitlement.isLocked) {
+                                toast.error(entitlement.reason || "This course is restricted to institutional or SEED Premium access.", { duration: 6000 });
+                                return;
+                              }
+                              if (!isEnrolled) {
+                                toast.warning(`Please enroll in "${course?.title || 'this course'}" first before launching lessons.`, { duration: 5000 });
+                                return;
+                              }
                               onSelectTopic(module, topic);
                               onStartLearning(course);
                             }}
+                            style={isTopicRowLocked ? { cursor: 'pointer', opacity: 0.85 } : {}}
                           >
                             <div className="topic-row-left">
                               <span className={`topic-icon-bullet ${isTopicDone ? 'done' : isTopicCurrent ? 'current' : ''}`}>
@@ -537,8 +568,22 @@ const CourseOverviewView = ({
 
                             <div className="topic-row-right">
                               <span className="topic-duration-tag"><FaClock style={{ marginRight: '4px', fontSize: '10px' }} /> {topic.duration || '08:25'}</span>
-                              <button className="topic-launch-btn">
-                                {isTopicCurrent ? 'Continue Lesson' : 'View Lesson'}
+                              <button 
+                                className="topic-launch-btn"
+                                disabled={entitlement.isLocked || !isEnrolled}
+                                style={entitlement.isLocked || !isEnrolled ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
+                              >
+                                {entitlement.isLocked ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    <FaLock style={{ fontSize: '10px' }} /> Locked
+                                  </span>
+                                ) : !isEnrolled ? (
+                                  'Enroll to View'
+                                ) : isTopicCurrent ? (
+                                  'Continue Lesson'
+                                ) : (
+                                  'View Lesson'
+                                )}
                               </button>
                             </div>
                           </div>
@@ -550,16 +595,24 @@ const CourseOverviewView = ({
                         const isMsaUnlocked = (completedModTopics === modTopics.length && modTopics.length > 0) || Boolean(progress?.modules?.[module.moduleId]?.msa?.passed);
                         return (
                           <div 
-                            className={`curriculum-assessment-row ${isMsaUnlocked ? 'unlocked' : 'locked'}`}
+                            className={`curriculum-assessment-row ${isMsaUnlocked && !entitlement.isLocked && isEnrolled ? 'unlocked' : 'locked'}`}
                             onClick={() => {
+                              if (entitlement.isLocked) {
+                                toast.error(entitlement.reason || "This course is restricted to institutional or SEED Premium access.", { duration: 6000 });
+                                return;
+                              }
+                              if (!isEnrolled) {
+                                toast.warning(`Please enroll in "${course?.title || 'this course'}" first before taking assessments.`, { duration: 5000 });
+                                return;
+                              }
                               if (isMsaUnlocked) {
                                 onStartLearning(course);
                               } else {
                                 toast.warning(`Module Assessment Locked: Complete all ${modTopics.length} lessons in "${module.title}" first.`);
                               }
                             }}
-                            title={isMsaUnlocked ? "Launch Module Assessment" : `Complete all ${modTopics.length} lessons to unlock`}
-                            style={!isMsaUnlocked ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
+                            title={isMsaUnlocked && isEnrolled && !entitlement.isLocked ? "Launch Module Assessment" : `Complete all ${modTopics.length} lessons to unlock`}
+                            style={(!isMsaUnlocked || entitlement.isLocked || !isEnrolled) ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
                           >
                             <div className="assessment-left">
                               {isMsaUnlocked ? (
@@ -810,6 +863,17 @@ const CourseOverviewView = ({
           </div>
         </div>
       )}
+
+      {/* Premium Upgrade Modal */}
+      <PremiumUpgradeModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        user={user}
+        onUpgradeSuccess={() => {
+          setLocalEnrolled(true);
+          toast.success("Account upgraded to Premium! You can now enroll and learn.");
+        }}
+      />
     </div>
   );
 };

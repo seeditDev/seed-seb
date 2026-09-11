@@ -25,14 +25,14 @@ const CourseLearningPage = () => {
     }
   }, []);
 
-  // Determine initial view (CLASS or OVERVIEW)
+  // Determine initial view (CLASS or OVERVIEW) - Default safely to OVERVIEW
   const initialView = useMemo(() => {
     try {
       const searchParams = new URLSearchParams(location.search || '');
       const viewParam = searchParams.get('view') || location.state?.view;
       if (viewParam === 'OVERVIEW' || viewParam === 'CLASS') return viewParam;
     } catch (_) {}
-    return 'CLASS';
+    return 'OVERVIEW';
   }, [location.search, location.state]);
 
   useEffect(() => {

@@ -9,6 +9,7 @@ import { db } from '../../lib/firebase-config';
 import { doc, getDoc, setDoc, collection, getDocs, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { markQuestionSolved } from '../../services/codingProgressService';
 import { awardUserXPAndCredits, COURSE_GAMIFICATION_SPEC, calculateCourseRewards } from '../../utils/gamificationService';
+import { flushActiveSessionTime, recordDailyProblemMetric } from './courseSessionTracker';
 
 const LOCAL_PROGRESS_PREFIX = 'seed_learning_progress_';
 const LOCAL_ENROLLED_KEY = 'seed_enrolled_courses_';
@@ -119,6 +120,22 @@ export const fetchEnrolledCourseIds = async (uid) => {
  */
 export const enrollCourse = async (uid, courseId) => {
   if (!uid || !courseId) return;
+
+  // Strict entitlement check: standard users cannot enroll unless mapped to their tenant!
+  try {
+    const { fetchUserEntitledCourseIds, checkCourseEntitlement } = await import('./courseEntitlementService');
+    const entitledSet = await fetchUserEntitledCourseIds();
+    const ent = checkCourseEntitlement({ courseId }, null, entitledSet);
+    if (ent.isLocked) {
+      console.warn(`[LearningEngineService] Enrollment blocked: course "${courseId}" is not entitled for user ${uid}`);
+      throw new Error(ent.reason || 'This course is restricted to assigned college cohorts or SEED Premium members.');
+    }
+  } catch (err) {
+    if (err.message && (err.message.includes('restricted') || err.message.includes('not mapped') || err.message.includes('unavailable') || err.message.includes('Restricted'))) {
+      throw err;
+    }
+  }
+
   const current = getEnrolledCourseIds(uid);
   if (!current.includes(courseId)) {
     const updated = [...current, courseId];
@@ -401,6 +418,8 @@ export const buildCompactFirestoreProgress = (progress, course, uid) => {
     solvedProblems: solvedProblemsMap,
     msaResults,                                    // ONLY marks
     miniAssessments,                               // ONLY marks
+    timeSpentSeconds: progress.timeSpentSeconds || 0,
+    lastHeartbeatAt: progress.lastHeartbeatAt || null,
     lastActivityAt: progress.lastActivityAt || new Date().toISOString()
   };
 };
@@ -487,6 +506,8 @@ export const hydrateProgressFromFirestore = (firestoreData, course) => {
   base.currentModuleId = firestoreData.ongoingModuleId || base.currentModuleId;
   base.currentTopicId = firestoreData.ongoingTopicId || base.currentTopicId;
   base.percentage = firestoreData.progressPercent || 0;
+  base.timeSpentSeconds = firestoreData.timeSpentSeconds || 0;
+  base.lastHeartbeatAt = firestoreData.lastHeartbeatAt || null;
   base.completedModules = (firestoreData.completedModules || []).length;
   base.completedTopics = (firestoreData.completedTopics || []).length;
   base.lastActivityAt = firestoreData.lastActivityAt || base.lastActivityAt;
@@ -708,6 +729,7 @@ export const updateTopicCheckpoint = async (uid, course, moduleId, topicId, chec
     progress.topics[topicId].completed = true;
     progress.topics[topicId].completedAt = new Date().toISOString();
     awardCourseMilestone(uid, progress, course, 'topic_complete', topicId, COURSE_GAMIFICATION_SPEC.TOPIC_COMPLETION_XP, COURSE_GAMIFICATION_SPEC.TOPIC_COMPLETION_CREDITS);
+    flushActiveSessionTime('topic_complete');
   } else if (checkpointKey === 'readingCompleted' || checkpointKey === 'videoWatched') {
     awardCourseMilestone(uid, progress, course, 'checkpoint', `${topicId}_${checkpointKey}`, COURSE_GAMIFICATION_SPEC.TOPIC_READING_XP, 0);
   }
@@ -1077,6 +1099,12 @@ export const recordTopicPracticeSolved = async (uid, course, moduleId, topicId, 
   saveLocalCourseProgress(uid, courseId, progress);
   syncCourseProgressToFirestore(uid, courseId, progress, course);
 
+  flushActiveSessionTime('practice_solved');
+  try {
+    const authData = JSON.parse(localStorage.getItem('auth_data') || '{}');
+    recordDailyProblemMetric(authData.tenantId, authData.cohortId, courseId, true);
+  } catch (_) {}
+
   return progress;
 };
 
@@ -1166,6 +1194,7 @@ export const submitCourseMSA = async (uid, course, moduleId, {
 
   saveLocalCourseProgress(uid, courseId, progress);
   syncCourseProgressToFirestore(uid, courseId, progress, course);
+  flushActiveSessionTime('msa_submitted');
 
   return {
     success: true,

@@ -403,6 +403,44 @@ export async function getOrCreateRepo(token, owner, repoName, isPrivate = false)
 }
 
 /**
+  * Alias for getOrCreateRepo for dashboard backwards-compatibility.
+  */
+export const createRepository = getOrCreateRepo;
+
+/**
+  * Convenience alias to save personal access token.
+  */
+export const saveGitHubPat = (token) => saveGitHubConfig({ token, authMethod: 'pat' });
+
+/**
+  * Disconnect GitHub integration and wipe local config.
+  */
+export const disconnectGitHub = clearGitHubConfig;
+
+/**
+  * Verify GitHub token and credentials.
+  */
+export const testGitHubConnection = verifyGitHubToken;
+
+/**
+  * Fetch list of user's personal repositories.
+  */
+export async function fetchUserRepositories(token) {
+  if (!token) return [];
+  try {
+    const res = await fetch(`${GITHUB_API_BASE}/user/repos?sort=updated&per_page=100`, {
+      headers: getHeaders(token),
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.warn('[githubSyncService] fetchUserRepositories error:', err);
+    return [];
+  }
+}
+
+
+/**
  * Fetch a file from the repository to get its current content and SHA.
  */
 export async function getRepoFile(token, owner, repo, path) {

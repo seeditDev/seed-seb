@@ -6,6 +6,8 @@ import {
     signInAnonymously,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
     updateProfile,
@@ -28,11 +30,14 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
 export const rtdb = getDatabase(app);
+export const googleProvider = new GoogleAuthProvider();
 
 // Re-export auth helpers so services can import from a single place
 export {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
     updateProfile,

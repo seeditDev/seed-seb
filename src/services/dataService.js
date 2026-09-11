@@ -10,8 +10,13 @@ import {
     auth,
     db,
     signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signInWithPopup,
+    googleProvider,
     signOut,
     onAuthStateChanged,
+    updateProfile,
+    sendPasswordResetEmail,
 } from '../lib/firebase-config';
 import {
     doc,
@@ -174,6 +179,145 @@ class DataService {
             return null;
         }
     }
+
+    /**
+     * Register a new global user with email and password.
+     * Creates Firebase Auth user and default standard user profile in Firestore.
+     */
+    static async registerGlobalUser(name, email, password) {
+        try {
+            sessionStorage.setItem('is_logging_in', 'true');
+            const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+            localStorage.setItem('active_session_id', sessionId);
+            sessionStorage.setItem('active_session_id', sessionId);
+
+            const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+            const firebaseUser = credential.user;
+
+            if (name && name.trim()) {
+                await updateProfile(firebaseUser, { displayName: name.trim() }).catch(() => {});
+            }
+
+            const initialProfile = {
+                uid: firebaseUser.uid,
+                email: email.trim().toLowerCase(),
+                name: name.trim() || email.split('@')[0],
+                role: ROLES.STUDENT || 'student',
+                tenantId: null,
+                college: 'Independent Learner (Global)',
+                cohortId: null,
+                department: null,
+                rollNumber: null,
+                isPremium: false,
+                isGlobalUser: true,
+                seedCredits: 500,
+                streak: 1,
+                totalXP: 0,
+                level: 1,
+                lastStreakDate: new Date().toISOString().slice(0, 10),
+                assignedRealCourses: [],
+                activeSessionId: sessionId,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            };
+
+            await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), initialProfile);
+
+            const authData = buildAuthData(firebaseUser, initialProfile, null);
+            localStorage.setItem('auth_data', JSON.stringify(authData));
+            setTimeout(() => sessionStorage.removeItem('is_logging_in'), 3000);
+            return authData;
+        } catch (error) {
+            sessionStorage.removeItem('is_logging_in');
+            console.error('[DataService] registerGlobalUser error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Sign in or register seamlessly with Google OAuth popup.
+     */
+    static async signInWithGoogle() {
+        try {
+            sessionStorage.setItem('is_logging_in', 'true');
+            const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+            localStorage.setItem('active_session_id', sessionId);
+            sessionStorage.setItem('active_session_id', sessionId);
+
+            const credential = await signInWithPopup(auth, googleProvider);
+            const firebaseUser = credential.user;
+
+            let profile = await DataService.getUserProfile(firebaseUser.uid);
+            if (!profile && firebaseUser.email) {
+                profile = await DataService.getUserProfileByEmail(firebaseUser.email.toLowerCase());
+            }
+
+            if (!profile) {
+                profile = {
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email.toLowerCase(),
+                    name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                    photoURL: firebaseUser.photoURL || '',
+                    role: ROLES.STUDENT || 'student',
+                    tenantId: null,
+                    college: 'Independent Learner (Global)',
+                    cohortId: null,
+                    department: null,
+                    rollNumber: null,
+                    isPremium: false,
+                    isGlobalUser: true,
+                    seedCredits: 500,
+                    streak: 1,
+                    totalXP: 0,
+                    level: 1,
+                    lastStreakDate: new Date().toISOString().slice(0, 10),
+                    assignedRealCourses: [],
+                    activeSessionId: sessionId,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                };
+                await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), profile);
+            } else {
+                await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
+                    activeSessionId: sessionId,
+                    lastLoginAt: serverTimestamp()
+                }).catch(() => {});
+            }
+
+            let tenantDetails = null;
+            if (profile.tenantId && profile.role !== 'superadmin' && profile.role !== 'admin') {
+                try {
+                    const tenantSnap = await getDoc(doc(db, 'tenants', profile.tenantId));
+                    if (tenantSnap.exists()) {
+                        tenantDetails = {
+                            id: profile.tenantId,
+                            name: tenantSnap.data().name || profile.college || profile.tenantId,
+                            active: tenantSnap.data().active !== false,
+                        };
+                    }
+                } catch (_) {}
+            }
+
+            const authData = buildAuthData(firebaseUser, profile, tenantDetails);
+            localStorage.setItem('auth_data', JSON.stringify(authData));
+            setTimeout(() => sessionStorage.removeItem('is_logging_in'), 3000);
+            return authData;
+        } catch (error) {
+            sessionStorage.removeItem('is_logging_in');
+            console.error('[DataService] signInWithGoogle error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Send password reset email.
+     */
+    static async sendPasswordReset(email) {
+        if (!email || !email.trim()) throw new Error("Please enter your email address.");
+        await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+        return true;
+    }
+
 
     /**
      * Verifies if the active user session's college tenant is active and within validity.
@@ -533,31 +677,43 @@ class DataService {
                 authData = fresh;
             }
 
-            const { getAllowedTests } = await import('../lib/firestore/courses');
+            const { getAllowedTests, getGlobalTests } = await import('../lib/firestore/courses');
             const { tenantId, cohortId } = authData;
 
-            // ── Primary path: cohort allowedModules from courses schema ───────────
-            // SCENARIO 6: Only tests explicitly listed in allowedModules are returned.
-            // If allowedModules is empty, the student sees no tests.
-            // Do NOT fall back to loading all tests for the tenant.
-            if (tenantId && cohortId) {
-                const cohort = await DataService.getTenantCohort(tenantId, cohortId);
-                const allowedModules = cohort?.allowedModules || [];
-                if (allowedModules.length > 0) {
-                    return await getAllowedTests(allowedModules);
-                }
-                // No allowed modules — correct behaviour: student sees nothing
-                console.warn(
-                    '[DataService] getAllowedTestDocs: allowedModules is empty for ' +
-                    `tenantId=${tenantId} cohortId=${cohortId}. ` +
-                    'No tests are assigned to this cohort. Contact admin to configure allowedModules.'
-                );
-                return [];
+            // 1. Fetch all active Global Contests (available to every SEED-IT user)
+            let globalTests = [];
+            try {
+                globalTests = await getGlobalTests();
+            } catch (gErr) {
+                console.warn('[DataService] getGlobalTests error:', gErr);
             }
 
-            // No tenantId/cohortId — user profile incomplete
-            console.warn('[DataService] getAllowedTestDocs: auth_data missing tenantId or cohortId. Returning empty.');
-            return [];
+            // 2. Fetch tenant cohort assigned tests (if student is in a college cohort)
+            let cohortTests = [];
+            if (tenantId && cohortId) {
+                try {
+                    const cohort = await DataService.getTenantCohort(tenantId, cohortId);
+                    const allowedModules = cohort?.allowedModules || [];
+                    if (allowedModules.length > 0) {
+                        cohortTests = await getAllowedTests(allowedModules);
+                    }
+                } catch (cErr) {
+                    console.warn('[DataService] getAllowedTests error for cohort:', cErr);
+                }
+            }
+
+            // 3. Deduplicate by unique test id
+            const testMap = new Map();
+            for (const t of cohortTests) {
+                testMap.set(t.id, t);
+            }
+            for (const t of globalTests) {
+                if (!testMap.has(t.id)) {
+                    testMap.set(t.id, t);
+                }
+            }
+
+            return Array.from(testMap.values());
         } catch (err) {
             console.error('[DataService] getAllowedTestDocs error:', err);
             return [];

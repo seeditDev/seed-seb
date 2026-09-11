@@ -119,6 +119,8 @@ import {
 import { ensureUserHasUsername } from '../services/usernameService';
 import { publishPublicProfile } from '../services/publicProfileService';
 import GitHubSyncModal from './common/GitHubSyncModal';
+import PremiumUpgradeModal from './PremiumUpgradeModal';
+import { purchaseContestPass } from '../services/razorpayService';
 import {
   getGitHubConfig,
   saveGitHubConfig,
@@ -217,6 +219,37 @@ const StudentDashboard = () => {
     return localStorage.getItem('portal_theme') || 'seed-seb';
   });
   const [showSupportModal, setShowSupportModal] = useState(false);
+
+  useEffect(() => {
+    const onPremiumUpdated = () => {
+      setUser((prev) => {
+        const next = { ...(prev || {}), isPremium: true, premium: true };
+        loadAssessments(next);
+        return next;
+      });
+    };
+    window.addEventListener('seedit:premium-updated', onPremiumUpdated);
+    return () => window.removeEventListener('seedit:premium-updated', onPremiumUpdated);
+  }, []);
+
+  const handleContestPassCheckout = async (contest) => {
+    try {
+      const res = await purchaseContestPass(user, contest);
+      if (res.success) {
+        toast.success(`Entry pass confirmed for "${contest.name}"!`);
+        const updated = {
+          ...(user || {}),
+          contestPasses: { ...(user?.contestPasses || {}), [contest.id]: true }
+        };
+        setUser(updated);
+        loadAssessments(updated);
+      } else if (res.error) {
+        toast.error(res.error);
+      }
+    } catch (e) {
+      toast.error(e.message || "Failed to initiate pass checkout.");
+    }
+  };
   const [supportInitialCategory, setSupportInitialCategory] = useState('download_seb');
   const [showDocModal, setShowDocModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1704,9 +1737,7 @@ const StudentDashboard = () => {
 
       const isPremiumUser = Boolean(userData?.isPremium) === true;
 
-      const combined = (testDocs || [])
-        .filter(t => !t.isPremium || isPremiumUser)
-        .map(t => {
+      const combined = (testDocs || []).map(t => {
           // Normalise schedule from { startDate, startTime, endDate, endTime } or { start, end }
           let schedule = null;
           if (t.schedule) {
@@ -1768,7 +1799,14 @@ const StudentDashboard = () => {
             schedule,
             // ── access ──
             passkey: t.passkey ?? '',
-            isPremium: t.isPremium,
+            isPremium: Boolean(t.isPremium || t.accessTier === 'premium'),
+            isGlobal: Boolean(t.isGlobal),
+            accessTier: t.accessTier || (t.isPremium ? 'premium' : 'free'),
+            entryFeeINR: t.entryFeeINR || 0,
+            isLocked: Boolean(
+              ((t.isPremium || t.accessTier === 'premium') && !isPremiumUser) ||
+              (t.accessTier === 'paid_entry' && !isPremiumUser && !userData?.contestPasses?.[t.id])
+            ),
             guestEnabled: t.guestEnabled,
             // ── proctor ──
             proctored: t.proctored !== false,
@@ -2023,6 +2061,17 @@ const StudentDashboard = () => {
 
     if (assessment.completed) {
       toast.error('You have already completed and submitted this assessment. Re-attempts are not permitted.');
+      return;
+    }
+
+    // Guard: Premium or Paid Contest Pass access
+    if (assessment.isLocked) {
+      if (assessment.accessTier === 'paid_entry') {
+        handleContestPassCheckout(assessment);
+      } else {
+        toast.info("⭐ This assessment or contest requires SEED Premium access.");
+        setShowPremiumModal(true);
+      }
       return;
     }
 
@@ -2903,9 +2952,28 @@ const StudentDashboard = () => {
                         >
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
-                              <h3 className="ps-card-title" style={{ margin: 0, fontSize: '15px', fontWeight: 700, lineHeight: '1.3' }}>
-                                {a.name}
-                              </h3>
+                              <div>
+                                <h3 className="ps-card-title" style={{ margin: 0, fontSize: '15px', fontWeight: 700, lineHeight: '1.3' }}>
+                                  {a.name}
+                                </h3>
+                                <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                  {a.isGlobal && (
+                                    <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      🌐 Global
+                                    </span>
+                                  )}
+                                  {a.isPremium && (
+                                    <span style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      ⭐ Premium
+                                    </span>
+                                  )}
+                                  {a.accessTier === 'paid_entry' && (
+                                    <span style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      🎟️ Pass ₹{a.entryFeeINR || 99}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                               {a.completed ? (
                                 <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '11px', padding: '3px 9px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, whiteSpace: 'nowrap' }}>
                                   <FaCheck size={10} /> Done
@@ -2962,6 +3030,50 @@ const StudentDashboard = () => {
                                 <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '7px 16px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600 }}>
                                   <FaLock /> Locked
                                 </button>
+                              ) : a.isLocked ? (
+                                a.accessTier === 'paid_entry' ? (
+                                  <button
+                                    onClick={() => handleContestPassCheckout(a)}
+                                    className="ps-action-btn"
+                                    style={{
+                                      padding: '7px 16px',
+                                      fontSize: '12.5px',
+                                      fontWeight: '700',
+                                      color: '#ffffff',
+                                      background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                                      border: '1px solid #4338ca',
+                                      borderRadius: '8px',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)'
+                                    }}
+                                  >
+                                    🎟️ Get Pass ₹{a.entryFeeINR || 99}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => setShowPremiumModal(true)}
+                                    className="ps-action-btn"
+                                    style={{
+                                      padding: '7px 16px',
+                                      fontSize: '12.5px',
+                                      fontWeight: '700',
+                                      color: '#000000',
+                                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                      border: '1px solid #b45309',
+                                      borderRadius: '8px',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)'
+                                    }}
+                                  >
+                                    <FaLock size={11} /> Unlock Premium
+                                  </button>
+                                )
                               ) : (
                                 <button
                                   onClick={() => handleStartClick(a)}
@@ -6538,6 +6650,18 @@ const StudentDashboard = () => {
           }}
         />
       )}
+
+      {/* Premium Upgrade Modal */}
+      <PremiumUpgradeModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        user={user}
+        onUpgradeSuccess={() => {
+          const updated = { ...(user || {}), isPremium: true, premium: true };
+          setUser(updated);
+          loadAssessments(updated);
+        }}
+      />
 
       {/* Logout animation screen */}
       {showLogoutAnimation && (
