@@ -23,6 +23,7 @@ import learningEngineService, {
 } from '../services/learningEngineService';
 import { toast } from 'sonner';
 import { checkCourseEntitlement } from '../services/courseEntitlementService';
+import { issueCourseCertificate } from '../services/certificateService';
 import { startCourseSession } from '../services/courseSessionTracker';
 import '../styles/CourseLearningPlayer.css';
 import '../styles/LessonDelivery.css';
@@ -169,6 +170,13 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   };
 
   const handleSelectTopic = (module, topic, bypassLockCheck = false) => {
+    // Freemium Preview Guard: Only Module 1 is free for preview users
+    const modIdx = course?.modules?.findIndex(m => m.moduleId === module.moduleId) ?? 0;
+    if (modIdx > 0 && entitlement?.isPreview) {
+      toast.error('Module locked. Free preview covers Module 1. Upgrade to SEED Premium on seedit.site to unlock Module 2 onwards.');
+      return;
+    }
+
     // Check if topic is locked (prior topic in module must be completed)
     const tIdx = module.topics?.findIndex(t => t.topicId === topic.topicId) ?? -1;
     if (tIdx > 0 && !bypassLockCheck) {
@@ -199,6 +207,12 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   };
 
   const handleSelectSubActivity = (module, topic, subKey) => {
+    const modIdx = course?.modules?.findIndex(m => m.moduleId === module.moduleId) ?? 0;
+    if (modIdx > 0 && entitlement?.isPreview) {
+      toast.error('Module locked. Free preview covers Module 1. Upgrade to SEED Premium on seedit.site to unlock Module 2 onwards.');
+      return;
+    }
+
     setSelectedModuleId(module.moduleId);
     setSelectedTopicId(topic.topicId);
     setExpandedModules({ [module.moduleId]: true });
@@ -214,6 +228,12 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   const handleSelectMSA = (module) => {
     const targetModule = module || activeModule || course?.modules?.find(m => m.moduleId === selectedModuleId) || course?.modules?.[0];
     if (!targetModule) return;
+
+    const modIdx = course?.modules?.findIndex(m => m.moduleId === targetModule.moduleId) ?? 0;
+    if (modIdx > 0 && entitlement?.isPreview) {
+      toast.error('Assessment locked. Free preview covers Module 1. Upgrade to SEED Premium on seedit.site to unlock all remaining modules.');
+      return;
+    }
 
     // Strict Rule: MSA is allowed ONLY if all submodules within the module are completed
     const modTopics = targetModule.topics || [];
@@ -279,6 +299,11 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   const handleContinueNextModule = () => {
     setShowCompletionModal(false);
     const currentIdx = course?.modules?.findIndex(m => m.moduleId === selectedModuleId) ?? -1;
+    if (currentIdx === 0 && entitlement?.isPreview) {
+      toast.info("🎉 You've completed the Free Preview of Module 1! Upgrade to SEED Premium on seedit.site to unlock Module 2 onwards.");
+      setActivePlayerView('OVERVIEW');
+      return;
+    }
     const nextMod = course?.modules?.[currentIdx + 1];
     if (nextMod) {
       setSelectedModuleId(nextMod.moduleId);
@@ -286,6 +311,14 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
         setSelectedTopicId(nextMod.topics[0].topicId);
       }
       setExpandedModules({ [nextMod.moduleId]: true });
+    } else {
+      // 100% Course Finished! Issue and display certificate
+      issueCourseCertificate(user, course).then(() => {
+        setShowCertificateModal(true);
+      }).catch(err => {
+        console.warn('Certificate generation notice:', err);
+        setShowCertificateModal(true);
+      });
     }
     setActivePlayerView('CLASS');
     setActiveStep('LESSON');
@@ -701,7 +734,8 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
           <div className="tree-modules-list">
             {course?.modules?.map((m, mIdx) => {
               const isExpanded = !!expandedModules[m.moduleId];
-              const isLocked = progress?.modules?.[m.moduleId]?.isUnlocked === false && mIdx > 0;
+              const isPreviewLocked = mIdx > 0 && entitlement?.isPreview;
+              const isLocked = (progress?.modules?.[m.moduleId]?.isUnlocked === false && mIdx > 0) || isPreviewLocked;
               const isCompleted = Boolean(progress?.modules?.[m.moduleId]?.completed);
               const isCurrentModule = selectedModuleId === m.moduleId;
 
@@ -717,15 +751,30 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
                 >
                   <div 
                     className="module-block-header"
-                    onClick={() => !isLocked && toggleModuleAccordion(m.moduleId)}
+                    onClick={() => {
+                      if (isPreviewLocked) {
+                        toast.info('Module 2 onwards requires SEED Premium on seedit.site to continue.');
+                        return;
+                      }
+                      if (!isLocked) toggleModuleAccordion(m.moduleId);
+                    }}
                   >
                     <div className="module-title-col">
                       <span className="module-title-text">{m.title}</span>
+                      {mIdx === 0 && entitlement?.isPreview && (
+                        <span style={{ fontSize: '9.5px', fontWeight: 800, color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>
+                          ✨ Free Preview
+                        </span>
+                      )}
                     </div>
 
                     <div className="module-status-icon">
                       {isCompleted ? (
                         <FaCheckCircle className="status-done-icon" />
+                      ) : isPreviewLocked ? (
+                        <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <FaLock style={{ fontSize: '9px' }} /> Pro
+                        </span>
                       ) : isLocked ? (
                         <FaLock className="status-lock-icon" />
                       ) : (

@@ -3502,16 +3502,26 @@ const StudentDashboard = () => {
                         className="profile-badge-pill"
                         onClick={() => setShowPremiumModal(true)}
                         style={{
-                          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.25))',
-                          border: '1px solid rgba(245, 158, 11, 0.5)',
-                          color: '#fbbf24',
+                          background: subscriptionInfo?.daysLeft <= 3 && subscriptionInfo?.daysLeft > 0
+                            ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(245, 158, 11, 0.3))'
+                            : 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.25))',
+                          border: subscriptionInfo?.daysLeft <= 3 && subscriptionInfo?.daysLeft > 0
+                            ? '1px solid rgba(239, 68, 68, 0.6)'
+                            : '1px solid rgba(245, 158, 11, 0.5)',
+                          color: subscriptionInfo?.daysLeft <= 3 && subscriptionInfo?.daysLeft > 0 ? '#f87171' : '#fbbf24',
                           fontWeight: '800',
                           cursor: 'pointer'
                         }}
                         title={`Active SEED Premium until ${subscriptionInfo.endDate ? new Date(subscriptionInfo.endDate).toLocaleDateString() : 'N/A'}`}
                       >
-                        <FaCrown size={11} style={{ marginRight: '4px' }} />
-                        {subscriptionInfo.plan === 'premium_annual' ? 'PRO ANNUAL' : 'PRO MONTHLY'}
+                        {subscriptionInfo?.daysLeft <= 3 && subscriptionInfo?.daysLeft > 0 ? (
+                          <>⏳ PRO ({subscriptionInfo.daysLeft}d left)</>
+                        ) : (
+                          <>
+                            <FaCrown size={11} style={{ marginRight: '4px' }} />
+                            {subscriptionInfo.plan === 'premium_annual' ? 'PRO ANNUAL' : 'PRO MONTHLY'}
+                          </>
+                        )}
                       </span>
                     ) : (
                       <span
@@ -6319,37 +6329,64 @@ const StudentDashboard = () => {
             </span>
           </div>
 
-          {/* User Tier Badge: PRO vs STANDARD */}
-          <div 
-            onClick={() => setShowPremiumModal(true)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              background: subscriptionInfo?.isPremium 
-                ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%)' 
-                : 'rgba(255, 255, 255, 0.06)',
-              border: subscriptionInfo?.isPremium 
-                ? '1px solid rgba(245, 158, 11, 0.5)' 
-                : '1px solid rgba(255, 255, 255, 0.15)',
-              color: subscriptionInfo?.isPremium ? '#fbbf24' : '#94a3b8',
-              fontSize: '11px',
-              fontWeight: '800',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              boxShadow: subscriptionInfo?.isPremium ? '0 0 12px rgba(245, 158, 11, 0.25)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-            title={subscriptionInfo?.isPremium 
-              ? `SEED Premium Active (${subscriptionInfo.plan === 'premium_annual' ? 'Annual Pro' : 'Monthly'}) until ${subscriptionInfo.endDate ? new Date(subscriptionInfo.endDate).toLocaleDateString() : ''}` 
-              : 'Standard Edition — Click to view Premium plans'}
-          >
-            {subscriptionInfo?.isPremium ? <FaCrown style={{ color: '#f59e0b' }} /> : <FaUserShield />}
-            <span>{subscriptionInfo?.isPremium ? (subscriptionInfo.plan === 'premium_annual' ? 'PRO ANNUAL' : 'PRO MONTHLY') : 'STANDARD'}</span>
-          </div>
+          {/* User Tier Badge: PRO vs STANDARD with Grace Expiry Alert */}
+          {(() => {
+            const isExpiringSoon = subscriptionInfo?.isPremium && typeof subscriptionInfo?.daysLeft === 'number' && subscriptionInfo.daysLeft <= 3 && subscriptionInfo.daysLeft > 0;
+            return (
+              <div 
+                onClick={() => setShowPremiumModal(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  background: isExpiringSoon
+                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(245, 158, 11, 0.3) 100%)'
+                    : subscriptionInfo?.isPremium 
+                      ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%)' 
+                      : 'rgba(255, 255, 255, 0.06)',
+                  border: isExpiringSoon
+                    ? '1px solid rgba(239, 68, 68, 0.6)'
+                    : subscriptionInfo?.isPremium 
+                      ? '1px solid rgba(245, 158, 11, 0.5)' 
+                      : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: isExpiringSoon ? '#f87171' : subscriptionInfo?.isPremium ? '#fbbf24' : '#94a3b8',
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  boxShadow: isExpiringSoon 
+                    ? '0 0 12px rgba(239, 68, 68, 0.4)' 
+                    : subscriptionInfo?.isPremium 
+                      ? '0 0 12px rgba(245, 158, 11, 0.25)' 
+                      : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                title={isExpiringSoon
+                  ? `Warning: SEED Premium expiring in ${subscriptionInfo.daysLeft} day(s)! Click to extend on seedit.site.`
+                  : subscriptionInfo?.isPremium 
+                    ? `SEED Premium Active (${subscriptionInfo.plan === 'premium_annual' ? 'Annual Pro' : 'Monthly'}) until ${subscriptionInfo.endDate ? new Date(subscriptionInfo.endDate).toLocaleDateString() : ''}` 
+                    : 'Standard Edition — Click to view Premium plans'}
+              >
+                {isExpiringSoon ? (
+                  <span>⏳</span>
+                ) : subscriptionInfo?.isPremium ? (
+                  <FaCrown style={{ color: '#f59e0b' }} />
+                ) : (
+                  <FaUserShield />
+                )}
+                <span>
+                  {isExpiringSoon 
+                    ? `PRO (${subscriptionInfo.daysLeft}d left)`
+                    : subscriptionInfo?.isPremium 
+                      ? (subscriptionInfo.plan === 'premium_annual' ? 'PRO ANNUAL' : 'PRO MONTHLY') 
+                      : 'STANDARD'}
+                </span>
+              </div>
+            );
+          })()}
 
           <div className="header-user-avatar-pill" onClick={() => setActiveTab('profile')}>
             <div className="header-user-avatar-circle">

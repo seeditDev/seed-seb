@@ -1,14 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaCertificate, FaDownload, FaPrint, FaTimes, FaShieldAlt, FaAward, FaStar } from 'react-icons/fa';
+import { issueCourseCertificate, getCourseCertificate } from '../../services/certificateService';
 
 const CourseCertificateModal = ({ 
   course, 
   user, 
   onClose 
 }) => {
-  const studentName = user?.name || 'Ambika';
-  const certId = `SEED-DSA-${new Date().getFullYear()}-09842`;
-  const completionDate = 'September 2026';
+  const [certData, setCertData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadCert() {
+      try {
+        const uid = user?.uid || user?.id;
+        const courseId = course?.courseId || course?.id || course?.slug;
+        let c = await getCourseCertificate(uid, courseId);
+        if (!c && user && course) {
+          c = await issueCourseCertificate(user, course);
+        }
+        if (mounted && c) {
+          setCertData(c);
+        }
+      } catch (err) {
+        console.warn('Certificate load notice:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    loadCert();
+    return () => { mounted = false; };
+  }, [user, course]);
+
+  const studentName = certData?.studentName || user?.name || user?.displayName || 'Learner';
+  const certId = certData?.certificateId || 'SEED-CERT-1001';
+  const completionDate = certData?.issuedAt 
+    ? new Date(certData.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'September 2026';
 
   const handlePrint = () => {
     window.print();

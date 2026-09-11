@@ -100,7 +100,7 @@ const CourseOverviewView = ({
   // Enroll or Continue learning handler
   const handleEnrollOrResume = async () => {
     if (!isEnrolled) {
-      if (entitlement.isLocked) {
+      if (entitlement.isLocked && !entitlement.isPreview) {
         toast.error(entitlement.reason, { duration: 6000 });
         setShowPremiumModal(true);
         return;
@@ -111,7 +111,9 @@ const CourseOverviewView = ({
         await enrollCourse(uid, course?.courseId || courseId);
         await incrementCourseEnrollment(course?.courseId || courseId);
         setLocalEnrolled(true);
-        toast.success(`You are now enrolled in "${course?.title || 'Course'}"!`);
+        toast.success(entitlement.isPreview 
+          ? `Module 1 Free Preview started for "${course?.title || 'Course'}"!` 
+          : `You are now enrolled in "${course?.title || 'Course'}"!`);
       } catch (err) {
         console.warn('Enroll notice:', err.message);
         toast.error(err.message, { duration: 6000 });
@@ -119,7 +121,7 @@ const CourseOverviewView = ({
       } finally {
         setIsEnrolling(false);
       }
-    } else if (entitlement.isLocked) {
+    } else if (entitlement.isLocked && !entitlement.isPreview) {
       toast.error(entitlement.reason, { duration: 6000 });
       setShowPremiumModal(true);
       return;
@@ -275,10 +277,12 @@ const CourseOverviewView = ({
               {isEnrolling 
                 ? 'Enrolling...' 
                 : !isEnrolled 
-                  ? (entitlement.isLocked ? 'Locked (Tenant Restricted)' : 'Enroll in Course') 
+                  ? (entitlement.isPreview ? 'Start Free Preview (Module 1)' : (entitlement.isLocked ? 'Locked (Tenant Restricted)' : 'Enroll in Course')) 
                   : isCompleted 
                     ? 'Review Course' 
-                    : (progressPct > 0 ? `Resume Learning (${progressPct}%)` : 'Start Learning')}
+                    : (progressPct > 0 
+                        ? `${entitlement.isPreview ? 'Resume Preview' : 'Resume Learning'} (${progressPct}%)` 
+                        : (entitlement.isPreview ? 'Start Free Preview (Module 1)' : 'Start Learning'))}
             </span>
           </button>
           {isEnrolled && progressPct > 0 && (
@@ -490,7 +494,9 @@ const CourseOverviewView = ({
               const modProgress = progress?.modules?.[module.moduleId];
               const isModCompleted = Boolean(modProgress?.completed);
               const prevModuleCompleted = idx === 0 || Boolean(progress?.modules?.[course.modules[idx - 1]?.moduleId]?.completed);
-              const isUnlocked = isModCompleted || Boolean(modProgress?.isUnlocked) || prevModuleCompleted;
+              const isPreviewModule = idx === 0 && entitlement?.isPreview;
+              const isPreviewLocked = idx > 0 && entitlement?.isPreview;
+              const isUnlocked = isPreviewModule || (!isPreviewLocked && (isModCompleted || Boolean(modProgress?.isUnlocked) || prevModuleCompleted));
               const isLocked = !isUnlocked;
 
               const modTopics = module.topics || [];
@@ -518,6 +524,12 @@ const CourseOverviewView = ({
                     <div className="module-right-status">
                       {isModCompleted ? (
                         <span className="status-badge-pill completed"><FaCheck /> 100%</span>
+                      ) : isPreviewModule ? (
+                        <span className="status-badge-pill in-progress" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', borderColor: 'rgba(59, 130, 246, 0.3)' }}>✨ Free Preview</span>
+                      ) : isPreviewLocked ? (
+                        <span className="status-badge-pill locked" style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setShowPremiumModal(true); }}>
+                          <FaLock /> Pro Required
+                        </span>
                       ) : isLocked ? (
                         <span className="status-badge-pill locked"><FaLock /> Locked</span>
                       ) : completedModTopics === modTopics.length && modTopics.length > 0 ? (
@@ -539,15 +551,21 @@ const CourseOverviewView = ({
                         const topicProg = progress?.topics?.[topic.topicId];
                         const isTopicDone = Boolean(topicProg?.completed);
                         const isTopicCurrent = topic.topicId === progress?.currentTopicId;
-                        const isTopicRowLocked = entitlement.isLocked || !isEnrolled;
+                        const isTopicRowLocked = isPreviewLocked || (entitlement.isLocked && !isPreviewModule) || !isEnrolled;
 
                         return (
                           <div 
                             key={topic.topicId}
                             className={`curriculum-topic-row ${isTopicCurrent ? 'current' : ''} ${isTopicRowLocked ? 'locked-topic-row' : ''}`}
                             onClick={() => {
-                              if (entitlement.isLocked) {
+                              if (isPreviewLocked) {
+                                toast.info('Module 2 onwards requires SEED Premium or individual course purchase for lifetime access.');
+                                setShowPremiumModal(true);
+                                return;
+                              }
+                              if (entitlement.isLocked && !isPreviewModule) {
                                 toast.error(entitlement.reason || "This course is restricted to institutional or SEED Premium access.", { duration: 6000 });
+                                setShowPremiumModal(true);
                                 return;
                               }
                               if (!isEnrolled) {

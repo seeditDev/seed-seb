@@ -248,7 +248,17 @@ export const checkCourseEntitlement = (course, arg2 = null, arg3 = null) => {
     };
   }
 
-  // 3. Standard user: Check institutional tenant/cohort assignment
+  // 3. Free Track Check
+  if (course.isFree) {
+    return {
+      entitled: true,
+      reason: 'Free track provided by SEED-IT Academy',
+      badge: 'Free Track',
+      isLocked: false,
+    };
+  }
+
+  // 4. Standard user: Check institutional tenant/cohort assignment
   const rawSet = entitledCourseIds || memoryCache;
   const set = (rawSet instanceof Set || (rawSet && typeof rawSet.has === 'function'))
     ? rawSet
@@ -263,16 +273,40 @@ export const checkCourseEntitlement = (course, arg2 = null, arg3 = null) => {
     };
   }
 
-  // Standard user without mapping or expired premium
+  // 5. Standard user without full access: FREEMIUM PREVIEW (Module 1 Free)
   return {
     entitled: false,
+    isLocked: false, // Accessible in preview mode
+    isPreview: true,
+    previewMaxModuleIndex: 0, // Module 1 (index 0) is completely free
     reason: subStatus.status === 'expired'
-      ? 'Your SEED Premium has expired. Upgrade on seedit.site or purchase this course individually for lifetime access.'
-      : 'Restricted: This course is not mapped to your institution. Purchase individually on seedit.site or subscribe to SEED Premium.',
-    badge: '🔒 Locked',
-    isLocked: true,
+      ? 'Your SEED Premium has expired. Module 1 is available as Free Preview. Renew or buy lifetime access to continue.'
+      : 'Free Preview: Module 1 is unlocked for you. Upgrade to SEED Premium or buy lifetime access to continue to Module 2 and beyond.',
+    badge: '✨ Free Preview',
+    canPreview: true,
   };
 };
+
+/**
+ * Checks whether a student can access a specific module by index (0-based).
+ * @param {number} moduleIndex - 0-based module index (Module 1 is index 0).
+ * @param {object} entitlement - Result from checkCourseEntitlement().
+ * @returns {{ canAccess: boolean, reason?: string }}
+ */
+export function checkModuleAccess(moduleIndex, entitlement) {
+  if (!entitlement) return { canAccess: true };
+  if (entitlement.entitled || !entitlement.isPreview) {
+    return { canAccess: true };
+  }
+  // Freemium preview: only Module 1 (index 0) is allowed
+  if (moduleIndex === 0) {
+    return { canAccess: true };
+  }
+  return {
+    canAccess: false,
+    reason: 'Module locked. Free preview covers Module 1. Upgrade to SEED Premium or purchase lifetime access to unlock Module 2 and beyond.'
+  };
+}
 
 /**
  * Invalidate cached entitlements (e.g. on user login, logout, or refresh).
