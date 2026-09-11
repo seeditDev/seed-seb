@@ -875,11 +875,8 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
 
 const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, proctoringData, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   // Normalize all possible coding content field names into a single `questions` array.
-  // Admin Hub (StaffCodingCreator) uses `challenges[]`.
-  // CDN JSON may use `codingQuestions[]`, `questions[]`, or `items[]`.
-  // This guard ensures CodingAssessmentPage never receives an empty questions array
-  // when the content exists under a different field name.
-  const resolvedQuestions = (() => {
+  // Memoized so secTimer ticks don't generate new array/object references every second.
+  const resolvedQuestions = useMemo(() => {
     let rawList = [];
     if (Array.isArray(sectionData?.questions) && sectionData.questions.length > 0) {
       rawList = sectionData.questions;
@@ -891,21 +888,21 @@ const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, pr
       rawList = sectionData.items;
     }
     return rawList.map(normalizeQuestion);
-  })();
+  }, [sectionData?.questions, sectionData?.challenges, sectionData?.codingQuestions, sectionData?.items]);
 
-  const testData = {
+  const testData = useMemo(() => ({
     ...sectionData,
     assessmentId: assessmentId || sectionData?.assessmentId || '',
     assessmentName: assessmentName || sectionData?.assessmentName || '',
     sectionId: sectionData?.sectionId || sectionData?.id || '',
     questions: resolvedQuestions
-  };
+  }), [sectionData, assessmentId, assessmentName, resolvedQuestions]);
 
-  const embeddedSettings = {
+  const embeddedSettings = useMemo(() => ({
     ...settings,
     proctored: false,
     audioProctored: false
-  };
+  }), [settings]);
 
   return (
     <CodingAssessmentPage
@@ -2564,7 +2561,7 @@ const MultiSectionAssessment = () => {
       : activeSection.type === 'mcq'
         ? (
           <MCQSectionView
-            key={`mcq-${activeSection.sectionId}`}
+            key={`mcq-${activeSection.sectionId || activeSection.id || currentSecIdx}`}
             sectionData={activeSecData}
             secTimer={secTimer}
             secStarted={secStarted}
@@ -2577,7 +2574,7 @@ const MultiSectionAssessment = () => {
         )
         : (
           <CodingSectionView
-            key={`coding-${activeSection.sectionId}`}
+            key={`coding-${activeSection.sectionId || activeSection.id || currentSecIdx}`}
             sectionData={activeSecData}
             secTimer={secTimer}
             settings={sectionSettings}
@@ -2696,14 +2693,18 @@ const MultiSectionAssessment = () => {
           <h3 className="msa-sidebar-title">Exam Sections</h3>
           <div className="msa-section-list">
             {(() => {
-              const firstUncompletedIdx = (assessment?.sections || []).findIndex(sec => !secCompleted[sec.sectionId]);
+              const firstUncompletedIdx = (assessment?.sections || []).findIndex(sec => {
+                const sid = sec.sectionId || sec.id;
+                return !secCompleted[sid] && !secCompleted[sec.sectionId] && !secCompleted[sec.id];
+              });
               const activeIdx = currentSecIdx >= 0 ? currentSecIdx : (firstUncompletedIdx >= 0 ? firstUncompletedIdx : 0);
               return (assessment?.sections || []).map((sec, idx) => {
-                const isCompleted = !!secCompleted[sec.sectionId];
+                const secId = sec.sectionId || sec.id || `msa-sec-${idx}`;
+                const isCompleted = !!(secCompleted[secId] || secCompleted[sec.sectionId] || secCompleted[sec.id]);
                 const isActive = idx === currentSecIdx;
                 const isLocked = !isCompleted && idx > activeIdx;
                 return (
-                  <div key={sec.sectionId} className={`msa-sec-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}>
+                  <div key={secId} className={`msa-sec-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}>
                     <div className="msa-sec-card-header">
                       <span className="msa-sec-icon">{sec.type === 'mcq' ? <FaBookOpen /> : <FaCode />}</span>
                       <span className="msa-sec-name">{sec.name}</span>

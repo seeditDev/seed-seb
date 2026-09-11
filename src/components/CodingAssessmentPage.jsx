@@ -732,7 +732,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             };
 
             if (testData.questions.length > 0) {
-                syncEmbeddedQuestions();
+                const currIds = (questions || []).map(q => q.id || q.questionId).join('|');
+                const nextIds = (testData.questions || []).map(q => q.id || q.questionId).join('|');
+                if (!currIds || currIds !== nextIds) {
+                    syncEmbeddedQuestions();
+                }
             }
 
             // Sync user details if not set
@@ -775,7 +779,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         } catch (_) {}
 
         const availableLanguages = ["cpp", "c", "python", "java", "javascript"];
-        const nextCodingState = { ...codingStateByQuestionRef.current, ...savedStateMap };
+        // Priority: current in-memory ref takes precedence over saved localStorage state!
+        const nextCodingState = { ...savedStateMap, ...codingStateByQuestionRef.current };
         const nextCodeMap = { ...codeMapRef.current };
 
         questions.forEach((q, idx) => {
@@ -801,7 +806,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
 
             nextCodingState[qKey] = {
                 codeByLang: populatedCodes,
-                selectedLanguage: existingQState.selectedLanguage || language || 'cpp',
+                selectedLanguage: (codingStateByQuestionRef.current[qKey]?.selectedLanguage) || existingQState.selectedLanguage || language || 'cpp',
                 samplesPassedAll: existingQState.samplesPassedAll || false,
                 sampleRunCode: existingQState.sampleRunCode || '',
                 runResults: existingQState.runResults || null,
@@ -1735,17 +1740,24 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         const qId = currentQuestion.id || currentQuestion.questionId || `q_${activeQuestionIndex}`;
         codeMapRef.current[`${qId}_${newLang}`] = finalCode;
 
+        // Persist immediately to localStorage so no background timer or sync can overwrite it with stale state
+        const storageKey = getCodeStorageKey();
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(codingStateByQuestionRef.current));
+        } catch (_) {}
+
         setCodingStateByQuestion(prev => ({
             ...prev,
             [currKey]: updatedQState
         }));
         // CRITICAL FIX: Do NOT call editorRef.current.setValue(targetCode).
         // The React key includes language, so Monaco remounts cleanly.
-    }, [currentQuestion, activeQuestionIndex, isRunning, isEvaluating, activeQState.isRunning, activeQState.isEvaluating, getCanonicalQKey, saveCurrentEditorToMap]);
+    }, [currentQuestion, activeQuestionIndex, isRunning, isEvaluating, activeQState.isRunning, activeQState.isEvaluating, getCanonicalQKey, saveCurrentEditorToMap, getCodeStorageKey]);
 
     const getCurrentCode = useCallback((q = currentQuestion, lang = (activeQState?.selectedLanguage || language)) => {
         if (!q) return "";
-        const qKey = getCanonicalQKey(q);
+        const qIdx = questions.findIndex(item => (item.id || item.questionId) === (q.id || q.questionId));
+        const qKey = getCanonicalQKey(q, qIdx >= 0 ? qIdx : activeQuestionIndex);
         const qState = codingStateByQuestionRef.current[qKey];
         if (qState?.codeByLang?.[lang] !== undefined && qState.codeByLang[lang] !== null) {
             return qState.codeByLang[lang];
@@ -1755,7 +1767,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             return codeMapRef.current[simpleKey];
         }
         return getQuestionBoilerplate(q, lang);
-    }, [currentQuestion, activeQState?.selectedLanguage, language, getCanonicalQKey]);
+    }, [currentQuestion, activeQState?.selectedLanguage, language, getCanonicalQKey, questions, activeQuestionIndex]);
 
     // Handle code editor change: update ref & throttled local storage with question isolation
     const handleCodeChange = useCallback((targetQKey, targetLang, newVal) => {
@@ -3757,7 +3769,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                                 <div className="editor-top-toolbar">
                                     <div className="editor-toolbar-left-pills">
                                         <select
-                                            value={language}
+                                            value={activeQState.selectedLanguage || language || 'cpp'}
                                             onChange={(e) => handleLanguageChange(e.target.value)}
                                             className="editor-pill-select"
                                         >
