@@ -87,6 +87,7 @@ import CodingAssessmentService from '../services/codingAssessmentService';
 import timeService from '../services/timeService';
 import ProctoringInstructions from './ProctoringInstructions';
 import PracticeHome from './PracticeHome';
+import ContestsView from './contests/ContestsView';
 import MyLearningDashboard from '../courses/components/MyLearningDashboard';
 import CourseCatalog from '../courses/components/CourseCatalog';
 import '../courses/styles/CourseLearningPlayer.css';
@@ -2707,6 +2708,23 @@ const StudentDashboard = () => {
           */}
         </div>
       </div>
+    );
+  };
+
+  
+  const renderContests = () => {
+    return (
+      <ContestsView
+        user={user}
+        onNavigateToArena={(target) => {
+          const dest = typeof target === 'string' && target.startsWith('/') ? target : `/student/contest/${target}`;
+          navigate({ to: dest });
+        }}
+        onOpenSEBModal={(contest) => {
+          navigate({ to: `/student/contest/${contest.id}` });
+        }}
+        onUpgradePro={() => setShowPremiumModal(true)}
+      />
     );
   };
 
@@ -6439,6 +6457,13 @@ const StudentDashboard = () => {
                 {!collapsed && <span>Assessments</span>}
               </button>
               <button
+                className={`sidebar-nav-pill ${activeTab === "contests" ? "active" : ""}`}
+                onClick={() => setActiveTab("contests")}
+              >
+                <FaTrophy />
+                {!collapsed && <span>Contests</span>}
+              </button>
+              <button
                 className={`sidebar-nav-pill ${activeTab === "practice" ? "active" : ""}`}
                 onClick={() => {
                   setPracticeInitialTab('bank');
@@ -6770,6 +6795,7 @@ const StudentDashboard = () => {
               />
             ) :
             activeTab === "assessments" ? renderAssessments() :
+             activeTab === "contests" ? renderContests() :
               activeTab === "practice" ? (
                 <PracticeHome 
                   initialTab={practiceInitialTab} 

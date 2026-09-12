@@ -20,6 +20,7 @@ import { Route as StudentAiInterviewRouteImport } from './routes/student.ai-inte
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
 import { Route as StudentAssessmentAssessmentSlugRouteImport } from './routes/student.assessment.$assessmentSlug'
 import { Route as StudentAssessmentFeedbackRouteImport } from './routes/student.assessment.feedback'
+import { Route as StudentContestContestIdRouteImport } from './routes/student.contest.$contestId'
 import { Route as StudentLearningCourseIdRouteImport } from './routes/student.learning.$courseId'
 import { Route as StudentAssessmentIdAssessmentSlugRouteImport } from './routes/student.assessment.id.$assessmentSlug'
 import { Route as StudentPracticeSolveQuestionIdRouteImport } from './routes/student.practice.solve.$questionId'
@@ -82,6 +83,11 @@ const StudentAssessmentFeedbackRoute =
     path: '/student/assessment/feedback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const StudentContestContestIdRoute = StudentContestContestIdRouteImport.update({
+  id: '/student/contest/$contestId',
+  path: '/student/contest/$contestId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentLearningCourseIdRoute = StudentLearningCourseIdRouteImport.update({
   id: '/student/learning/$courseId',
   path: '/student/learning/$courseId',
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
   '/student/assessment/feedback': typeof StudentAssessmentFeedbackRoute
+  '/student/contest/$contestId': typeof StudentContestContestIdRoute
   '/student/learning/$courseId': typeof StudentLearningCourseIdRoute
   '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
   '/student/assessment/feedback': typeof StudentAssessmentFeedbackRoute
+  '/student/contest/$contestId': typeof StudentContestContestIdRoute
   '/student/learning/$courseId': typeof StudentLearningCourseIdRoute
   '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/student/assessment/$assessmentSlug': typeof StudentAssessmentAssessmentSlugRoute
   '/student/assessment/feedback': typeof StudentAssessmentFeedbackRoute
+  '/student/contest/$contestId': typeof StudentContestContestIdRoute
   '/student/learning/$courseId': typeof StudentLearningCourseIdRoute
   '/student/assessment/id/$assessmentSlug': typeof StudentAssessmentIdAssessmentSlugRoute
   '/student/practice/solve/$questionId': typeof StudentPracticeSolveQuestionIdRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/student/assessment/$assessmentSlug'
     | '/student/assessment/feedback'
+    | '/student/contest/$contestId'
     | '/student/learning/$courseId'
     | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/student/assessment/$assessmentSlug'
     | '/student/assessment/feedback'
+    | '/student/contest/$contestId'
     | '/student/learning/$courseId'
     | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/student/assessment/$assessmentSlug'
     | '/student/assessment/feedback'
+    | '/student/contest/$contestId'
     | '/student/learning/$courseId'
     | '/student/assessment/id/$assessmentSlug'
     | '/student/practice/solve/$questionId'
@@ -224,6 +236,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   StudentAssessmentAssessmentSlugRoute: typeof StudentAssessmentAssessmentSlugRoute
   StudentAssessmentFeedbackRoute: typeof StudentAssessmentFeedbackRoute
+  StudentContestContestIdRoute: typeof StudentContestContestIdRoute
   StudentLearningCourseIdRoute: typeof StudentLearningCourseIdRoute
   StudentAssessmentIdAssessmentSlugRoute: typeof StudentAssessmentIdAssessmentSlugRoute
   StudentPracticeSolveQuestionIdRoute: typeof StudentPracticeSolveQuestionIdRoute
@@ -309,6 +322,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentAssessmentFeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/contest/$contestId': {
+      id: '/student/contest/$contestId'
+      path: '/student/contest/$contestId'
+      fullPath: '/student/contest/$contestId'
+      preLoaderRoute: typeof StudentContestContestIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/student/learning/$courseId': {
       id: '/student/learning/$courseId'
       path: '/student/learning/$courseId'
@@ -352,6 +372,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   StudentAssessmentAssessmentSlugRoute: StudentAssessmentAssessmentSlugRoute,
   StudentAssessmentFeedbackRoute: StudentAssessmentFeedbackRoute,
+  StudentContestContestIdRoute: StudentContestContestIdRoute,
   StudentLearningCourseIdRoute: StudentLearningCourseIdRoute,
   StudentAssessmentIdAssessmentSlugRoute:
     StudentAssessmentIdAssessmentSlugRoute,

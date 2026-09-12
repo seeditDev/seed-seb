@@ -277,6 +277,52 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    // Contests & Hackathons (Global & College-Hoisted)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /contests/{contestId} {
+      allow get, list: if true;
+      allow create, delete: if isPortal();
+      allow update: if isPortal() || (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredCount']));
+
+      match /problems/{problemId} {
+        allow get, list: if isSignedIn() || isPortal();
+        allow write: if isPortal();
+      }
+
+      match /registrations/{userId} {
+        allow read: if isSignedIn() || isPortal();
+        allow create, update: if isSignedIn() && (request.auth.uid == userId || isPortal());
+        allow delete: if isPortal() || (isSignedIn() && request.auth.uid == userId);
+      }
+
+      match /submissions/{submissionId} {
+        allow read: if isPortal() || (isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId));
+        allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+        allow update, delete: if isPortal();
+      }
+
+      match /leaderboard/{userId} {
+        allow read: if true;
+        allow write: if isPortal() || (isSignedIn() && request.auth.uid == userId);
+      }
+
+      match /announcements/{announcementId} {
+        allow read: if true;
+        allow write: if isPortal();
+      }
+
+      match /drafts/{userId} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isPortal());
+      }
+
+      match /{allSub=**} {
+        allow read: if true;
+        allow write: if isPortal();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     // 5. Assessment Results (seed-seb submissions & seed-admin reports)
     //    Path: assessmentResults/{tenantId}/{assessmentId}/{userId}
     // ══════════════════════════════════════════════════════════════════════
@@ -503,6 +549,11 @@ service cloud.firestore {
     }
 
     match /{path=**}/sessions/{sessionId} {
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal() || isSignedIn();
+    }
+
+    match /{path=**}/submissions/{submissionId} {
       allow read: if isPortal() || isSignedIn();
       allow write: if isPortal() || isSignedIn();
     }
