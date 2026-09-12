@@ -561,41 +561,45 @@ export async function prepareContestMSAAssessment(contest, user) {
 /**
  * Submit solution for a contest problem
  */
-export async function submitContestSolution(contestId, problemId, submissionData) {
-  const {
-    userId,
-    displayName,
-    tenantId,
-    tenantName,
-    code,
-    language,
-    status,
-    passedTestCases,
-    totalTestCases,
-    executionTimeMs,
-    score,
-  } = submissionData;
+export async function submitContestSolution(contestId, arg2, arg3) {
+  let userId, problemId, submissionData;
+  if (typeof arg2 === 'string' && arg3 && typeof arg3 === 'object') {
+    if (arg3.userId) {
+      userId = arg3.userId;
+      problemId = arg2;
+      submissionData = { ...arg3, problemId };
+    } else {
+      userId = arg2;
+      submissionData = arg3;
+      problemId = arg3.problemId || '';
+    }
+  } else {
+    submissionData = arg2 || {};
+    userId = submissionData.userId;
+    problemId = submissionData.problemId || '';
+  }
 
-  const col = collection(db, CONTESTS, contestId, 'submissions');
-  const subDoc = doc(col);
+  if (!contestId || !userId) return null;
+
+  const subDoc = doc(db, CONTESTS, contestId, 'submissions', userId);
 
   await setDoc(subDoc, {
-    submissionId: subDoc.id,
+    submissionId: userId,
     contestId,
     problemId,
     userId,
-    displayName,
-    tenantId: tenantId || 'global',
-    tenantName: tenantName || 'Global Arena',
-    code,
-    language,
-    status,
-    passedTestCases,
-    totalTestCases,
-    executionTimeMs,
-    score,
+    displayName: submissionData.displayName || 'Student',
+    tenantId: submissionData.tenantId || 'global',
+    tenantName: submissionData.tenantName || 'Global Arena',
+    code: submissionData.code || '',
+    language: submissionData.language || '',
+    status: submissionData.status || 'accepted',
+    passedTestCases: submissionData.passedTestCases || 0,
+    totalTestCases: submissionData.totalTestCases || 0,
+    executionTimeMs: submissionData.executionTimeMs || 0,
+    score: submissionData.score || 0,
     submittedAt: serverTimestamp(),
-  });
+  }, { merge: true });
 
   // Increment contest submission count
   try {
@@ -606,15 +610,15 @@ export async function submitContestSolution(contestId, problemId, submissionData
 
   // Update Live Leaderboard
   await updateLeaderboardEntry(contestId, userId, {
-    displayName,
-    tenantId,
-    tenantName,
+    displayName: submissionData.displayName,
+    tenantId: submissionData.tenantId,
+    tenantName: submissionData.tenantName,
     problemId,
-    isAccepted: status === 'accepted',
-    scoreDelta: score || 0,
+    isAccepted: submissionData.status === 'accepted',
+    scoreDelta: submissionData.score || 0,
   });
 
-  return subDoc.id;
+  return userId;
 }
 
 /**

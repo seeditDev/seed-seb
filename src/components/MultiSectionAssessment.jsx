@@ -2295,6 +2295,57 @@ const MultiSectionAssessment = () => {
           await setDoc(doc(db, v2DocPath), attemptData);
           console.log('[MSA] Final result saved to Firestore canonical path:', v2DocPath);
           resultWriteSuccess = true;
+
+          // ── If this assessment is a Contest, sync single submission & leaderboard entry ──
+          const isContest = Boolean(
+            assessment?.isContest ||
+            assessment?.contestId ||
+            sessionStorage.getItem('msaCourseCtx')?.includes('"isContest":true')
+          );
+          if (isContest) {
+            const contestId = assessment?.contestId || assessment?.id;
+            try {
+              // 1. Single submission doc keyed by userId
+              const subRef = doc(db, 'contests', contestId, 'submissions', userId);
+              await setDoc(subRef, {
+                submissionId: userId,
+                contestId,
+                userId,
+                displayName: user.displayName || user.name || 'Student',
+                email: tenant.email || user.email || '',
+                tenantId: tenant.tenantId || 'global',
+                tenantName: tenant.college || 'Global Arena',
+                totalScore,
+                maxScore: totalMarksSum,
+                percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
+                timeTakenSeconds: timeTaken,
+                status: 'submitted',
+                submittedAt: serverTimestamp(),
+                codingSubmissions: aggregatedCoding,
+                sections: sectionsList,
+              }, { merge: true });
+
+              // 2. Leaderboard entry keyed by userId
+              const solvedCount = aggregatedCoding.filter((c) => (c.passedTestCases || 0) > 0).length;
+              const lbRef = doc(db, 'contests', contestId, 'leaderboard', userId);
+              await setDoc(lbRef, {
+                userId,
+                displayName: user.displayName || user.name || 'Student',
+                email: tenant.email || user.email || '',
+                tenantId: tenant.tenantId || 'global',
+                tenantName: tenant.college || 'Global Arena',
+                totalScore,
+                maxScore: totalMarksSum,
+                timeTakenSeconds: timeTaken,
+                solvedCount,
+                percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
+                lastActivity: serverTimestamp(),
+              }, { merge: true });
+              console.log('[MSA] Contest submission & leaderboard synced for contestId:', contestId);
+            } catch (contestSyncErr) {
+              console.warn('[MSA] Contest sync warning (non-fatal):', contestSyncErr);
+            }
+          }
         } catch (writeErr) {
           console.error('[MSA] handleFinalSubmit: Firestore write failed — preserving pending envelope:', writeErr);
           const envKey = `msa_pending_submission_${userId}_${assessment.id}`;

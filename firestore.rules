@@ -296,10 +296,10 @@ service cloud.firestore {
         allow delete: if isPortal() || (isSignedIn() && request.auth.uid == userId);
       }
 
-      match /submissions/{submissionId} {
-        allow read: if isPortal() || (isSignedIn() && (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId));
-        allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
-        allow update, delete: if isPortal();
+      match /submissions/{userId} {
+        allow read: if isPortal() || (isSignedIn() && (request.auth.uid == userId || (resource != null && resource.data.userId == request.auth.uid)));
+        allow create, update: if isPortal() || (isSignedIn() && request.auth.uid == userId);
+        allow delete: if isPortal();
       }
 
       match /leaderboard/{userId} {
