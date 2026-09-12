@@ -254,9 +254,27 @@ const StudentDashboard = () => {
   }, []);
 
   const handleContestPassCheckout = async (contest) => {
-    toast.info(`Contest passes must be purchased on the website (seedit.site) from your personal browser. Once acquired, this contest will unlock here.`, {
-      duration: 6000
-    });
+    if (!user?.uid) {
+      toast.error('Please sign in to purchase a contest entry pass.');
+      return;
+    }
+    try {
+      const res = await purchaseContestPass(user, contest);
+      if (res.success) {
+        toast.success(`Entry pass activated! You are registered for ${contest.title || contest.name || 'contest'}!`);
+        setUserData((prev) => ({
+          ...prev,
+          contestPasses: {
+            ...(prev?.contestPasses || {}),
+            [contest.id]: true,
+          }
+        }));
+      } else if (res.error && !res.error.includes('cancelled')) {
+        toast.error(res.error);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Payment failed');
+    }
   };
   const [supportInitialCategory, setSupportInitialCategory] = useState('download_seb');
   const [showDocModal, setShowDocModal] = useState(false);

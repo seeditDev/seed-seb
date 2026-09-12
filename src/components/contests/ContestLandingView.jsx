@@ -45,6 +45,7 @@ import {
   subscribeToContestRegistration,
   prepareContestMSAAssessment,
 } from '../../services/contestService';
+import { purchaseContestPass } from '../../services/razorpayService';
 import '../../styles/ContestsView.css';
 
 const TrophySvg = () => (
@@ -201,6 +202,15 @@ export default function ContestLandingView({
     });
   }, [contest?.startTime]);
 
+  const contestFee = Number(contest?.entryFeeINR || contest?.entryFee || 0);
+  const isPaidContest = contest?.accessTier === 'paid_entry' || contestFee > 0;
+  const hasPass = Boolean(
+    user?.isPremium ||
+    user?.isPro ||
+    user?.contestPasses?.[contest?.id] ||
+    isRegistered
+  );
+
   // Handle Registration
   const handleRegisterClick = async () => {
     if (!user?.uid) {
@@ -208,9 +218,28 @@ export default function ContestLandingView({
       return;
     }
 
-    if (contest.accessTier === 'pro_only' && !user.isPremium) {
+    if (contest.accessTier === 'pro_only' && !user.isPremium && !user.isPro) {
       if (onUpgradePro) onUpgradePro();
       else toast.error('This contest is exclusive to Pro members.');
+      return;
+    }
+
+    // Check if contest requires a paid pass and user hasn't unlocked it yet
+    if (isPaidContest && !hasPass) {
+      setIsRegistering(true);
+      try {
+        const res = await purchaseContestPass(user, contest);
+        if (res.success) {
+          toast.success(`Entry pass unlocked! Successfully registered for ${contest.title}!`);
+          setIsRegistered(true);
+        } else if (res.error && !res.error.includes('cancelled')) {
+          toast.error(res.error);
+        }
+      } catch (err) {
+        toast.error(err.message || 'Contest pass checkout failed.');
+      } finally {
+        setIsRegistering(false);
+      }
       return;
     }
 
@@ -341,6 +370,16 @@ export default function ContestLandingView({
                   ⭐ RATED
                 </span>
               )}
+              {isPaidContest && (
+                <span className="hero-pill paid-pill" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+                  🎟️ Pass ₹{contestFee}
+                </span>
+              )}
+              {contest.accessTier === 'pro_only' && (
+                <span className="hero-pill pro-pill" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#A855F7', borderColor: 'rgba(168, 85, 247, 0.3)' }}>
+                  👑 PRO ONLY
+                </span>
+              )}
             </div>
 
             {/* Title & Subtitle */}
@@ -408,7 +447,11 @@ export default function ContestLandingView({
                   onClick={handleRegisterClick}
                   disabled={isRegistering}
                 >
-                  {isRegistering ? 'Registering…' : 'Register for Contest →'}
+                  {isRegistering
+                    ? 'Processing…'
+                    : isPaidContest && !hasPass
+                    ? `💳 Pay ₹${contestFee} & Register →`
+                    : 'Register for Contest →'}
                 </button>
               )}
 
@@ -1006,7 +1049,11 @@ export default function ContestLandingView({
                   onClick={handleRegisterClick}
                   disabled={isRegistering}
                 >
-                  {isRegistering ? 'Registering…' : 'Register for Contest →'}
+                  {isRegistering
+                    ? 'Processing…'
+                    : isPaidContest && !hasPass
+                    ? `💳 Pay ₹${contestFee} & Register →`
+                    : 'Register for Contest →'}
                 </button>
               )}
             </div>

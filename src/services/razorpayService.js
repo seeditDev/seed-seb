@@ -10,7 +10,7 @@
  */
 
 import { getApps } from "firebase/app";
-import { getFirestore, doc, updateDoc, setDoc, serverTimestamp, arrayUnion } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp, arrayUnion, increment } from "firebase/firestore";
 
 const RAZORPAY_SCRIPT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
 
@@ -58,6 +58,40 @@ export const SUBSCRIPTION_PLANS = [
     ],
   },
 ];
+
+/**
+ * Fetches dynamic subscription plans configured by admin in Firestore systemSettings/subscription,
+ * falling back to default SUBSCRIPTION_PLANS if not set.
+ */
+export async function getSubscriptionPlans() {
+  try {
+    const db = getDb();
+    const snap = await getDoc(doc(db, "systemSettings", "subscription"));
+    if (snap.exists()) {
+      const data = snap.data();
+      return SUBSCRIPTION_PLANS.map((plan) => {
+        if (plan.id === "premium_annual" && data.annualPriceINR) {
+          return {
+            ...plan,
+            priceINR: Number(data.annualPriceINR),
+            originalPriceINR: Number(data.annualOriginalPriceINR || plan.originalPriceINR),
+          };
+        }
+        if (plan.id === "premium_monthly" && data.monthlyPriceINR) {
+          return {
+            ...plan,
+            priceINR: Number(data.monthlyPriceINR),
+            originalPriceINR: Number(data.monthlyOriginalPriceINR || plan.originalPriceINR),
+          };
+        }
+        return plan;
+      });
+    }
+  } catch (err) {
+    console.warn("[razorpayService] Error loading dynamic plans:", err);
+  }
+  return SUBSCRIPTION_PLANS;
+}
 
 /**
  * Dynamically loads Razorpay checkout script if not already present.
@@ -123,7 +157,7 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
         planName: plan.name,
       },
       theme: {
-        color: "#16a34a", // SEED primary emerald
+        color: "#16a34a",
       },
       modal: {
         ondismiss: function () {
@@ -132,8 +166,11 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
       },
       handler: async function (response) {
         try {
-          const paymentId = response.razorpay_payment_id || `pay_${Date.now()}`;
           const db = getDb();
+          const paymentId = response.razorpay_payment_id || `pay_${Date.now()}`;
+          const startDate = new Date().toISOString();
+          const durationDays = plan.id === 'premium_annual' ? 365 : 30;
+          const endDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
           // 1. Record payment audit trail in payments/{paymentId}
           const paymentRef = doc(db, "payments", paymentId);
@@ -147,6 +184,9 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
             type: "premium_upgrade",
             planId: plan.id,
             planName: plan.name,
+            durationDays,
+            premiumStartDate: startDate,
+            premiumEndDate: endDate,
             amountINR: plan.priceINR,
             currency: "INR",
             status: "success",
@@ -158,9 +198,15 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
           await updateDoc(userRef, {
             isPremium: true,
             premium: true,
+            isPro: true,
+            subscriptionTier: 'pro',
+            subscriptionStatus: 'active',
             premiumPlan: plan.id,
+            premiumStartDate: startDate,
+            premiumEndDate: endDate,
             premiumSince: serverTimestamp(),
             lastPaymentId: paymentId,
+            updatedAt: serverTimestamp(),
           });
 
           // 3. Update localStorage session cache
@@ -169,6 +215,12 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
             if (cached && (cached.uid === user.uid || cached.email === user.email)) {
               cached.isPremium = true;
               cached.premium = true;
+              cached.isPro = true;
+              cached.subscriptionTier = 'pro';
+              cached.subscriptionStatus = 'active';
+              cached.premiumPlan = plan.id;
+              cached.premiumStartDate = startDate;
+              cached.premiumEndDate = endDate;
               localStorage.setItem("auth_data", JSON.stringify(cached));
             }
           } catch (_) {}
@@ -176,7 +228,7 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
           // 4. Notify all UI components via custom event
           if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("seedit:premium-updated", {
-              detail: { isPremium: true, planId: plan.id, paymentId }
+              detail: { isPremium: true, planId: plan.id, paymentId, startDate, endDate }
             }));
           }
 
@@ -218,18 +270,19 @@ export async function purchaseContestPass(user, contest) {
   await loadRazorpayScript();
 
   return new Promise((resolve) => {
-    const feeINR = contest.entryFeeINR || 99;
+    const feeINR = Number(contest.entryFeeINR || contest.entryFee || 99);
     const amountPaise = feeINR * 100;
 
     const options = {
       key: keyId,
       amount: amountPaise,
       currency: "INR",
-      name: "SEED-IT Global Contests",
-      description: `Entry Pass: ${contest.name || "Global Competition"}`,
+      name: "SEED-IT Contests",
+      description: `Entry Pass: ${contest.title || contest.name || "Global Competition"}`,
       prefill: {
-        name: user.name || "Learner",
+        name: user.name || user.displayName || "Learner",
         email: user.email || "",
+        contact: user.phone || "",
       },
       theme: { color: "#4f46e5" },
       modal: {
@@ -245,12 +298,16 @@ export async function purchaseContestPass(user, contest) {
           // 1. Audit log
           await setDoc(doc(db, "payments", paymentId), {
             paymentId,
+            razorpay_order_id: response.razorpay_order_id || null,
+            razorpay_signature: response.razorpay_signature || null,
             userId: user.uid,
             userEmail: user.email || "",
+            userName: user.name || user.displayName || "Learner",
             type: "contest_pass",
             contestId: contest.id,
-            contestName: contest.name,
+            contestName: contest.title || contest.name || "Contest",
             amountINR: feeINR,
+            currency: "INR",
             status: "success",
             createdAt: serverTimestamp(),
           });
@@ -259,9 +316,44 @@ export async function purchaseContestPass(user, contest) {
           const contestKey = `contestPasses.${contest.id}`;
           await updateDoc(doc(db, "users", user.uid), {
             [contestKey]: true,
+            lastPaymentId: paymentId,
+            updatedAt: serverTimestamp(),
           });
 
-          // 3. Dispatch event
+          // 3. Register user directly for contest
+          try {
+            const regRef = doc(db, "contests", contest.id, "registrations", user.uid);
+            await setDoc(regRef, {
+              userId: user.uid,
+              displayName: user.displayName || user.name || "Student",
+              email: user.email || "",
+              tenantId: user.tenantId || "",
+              tenantName: user.tenantName || (user.tenantId ? user.tenantId.toUpperCase() : "Student"),
+              cohortId: user.cohortId || "",
+              registeredAt: serverTimestamp(),
+              status: "registered",
+              paymentId,
+              passPurchased: true,
+            }, { merge: true });
+
+            await updateDoc(doc(db, "contests", contest.id), {
+              registeredCount: increment(1),
+            });
+          } catch (regErr) {
+            console.warn("[razorpayService] Auto-registration warning:", regErr);
+          }
+
+          // 4. Update localStorage session cache
+          try {
+            const cached = JSON.parse(localStorage.getItem("auth_data") || "{}");
+            if (cached && (cached.uid === user.uid || cached.email === user.email)) {
+              if (!cached.contestPasses) cached.contestPasses = {};
+              cached.contestPasses[contest.id] = true;
+              localStorage.setItem("auth_data", JSON.stringify(cached));
+            }
+          } catch (_) {}
+
+          // 5. Dispatch event
           if (typeof window !== "undefined") {
             window.dispatchEvent(new CustomEvent("seedit:pass-purchased", {
               detail: { contestId: contest.id, paymentId }
@@ -274,6 +366,131 @@ export async function purchaseContestPass(user, contest) {
           resolve({ success: false, error: err.message });
         }
       },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  });
+}
+
+/**
+ * Initiate Razorpay checkout for an individual RealCourse purchase.
+ */
+export async function purchaseCourse(user, course) {
+  if (!user || !user.uid) {
+    throw new Error("User must be logged in to purchase a course.");
+  }
+  const keyId = getActiveRazorpayKey() || RAZORPAY_KEY_ID;
+  if (!keyId) {
+    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your environment.");
+  }
+  await loadRazorpayScript();
+
+  return new Promise((resolve) => {
+    const courseId = course.courseId || course.id || course.slug;
+    const priceINR = typeof course.offerPriceINR === 'number' && course.offerPriceINR > 0
+      ? course.offerPriceINR
+      : (typeof course.priceINR === 'number' && course.priceINR > 0 ? course.priceINR : 149);
+    const amountPaise = priceINR * 100;
+
+    const options = {
+      key: keyId,
+      amount: amountPaise,
+      currency: "INR",
+      name: "SEED-IT Courses",
+      description: `Lifetime Enrollment: ${course.title || course.name}`,
+      prefill: {
+        name: user.name || user.displayName || "Learner",
+        email: user.email || "",
+      },
+      notes: {
+        userId: user.uid,
+        userEmail: user.email || "",
+        courseId,
+        courseTitle: course.title || course.name || "",
+        type: "course_purchase",
+        amountINR: priceINR,
+        standardPriceINR: course.priceINR || 999,
+        offerPriceINR: course.offerPriceINR || 149,
+      },
+      theme: { color: "#16a34a" },
+      modal: {
+        ondismiss: function () {
+          resolve({ success: false, error: "Course checkout cancelled." });
+        },
+      },
+      handler: async function (response) {
+        try {
+          const paymentId = response.razorpay_payment_id || `course_${Date.now()}`;
+          const db = getDb();
+
+          // 1. Audit log in payments/{paymentId}
+          await setDoc(doc(db, "payments", paymentId), {
+            paymentId,
+            razorpay_order_id: response.razorpay_order_id || null,
+            razorpay_signature: response.razorpay_signature || null,
+            userId: user.uid,
+            userEmail: user.email || "",
+            userName: user.name || user.displayName || "Learner",
+            type: "course_purchase",
+            courseId,
+            courseTitle: course.title || course.name,
+            amountINR: priceINR,
+            standardPriceINR: course.priceINR || 999,
+            offerPriceINR: course.offerPriceINR || 149,
+            status: "success",
+            createdAt: serverTimestamp(),
+          });
+
+          // 2. Grant course in user document as permanent / lifetime
+          await updateDoc(doc(db, "users", user.uid), {
+            assignedRealCourses: arrayUnion(courseId),
+            [`purchasedCourses.${courseId}`]: {
+              courseId,
+              courseTitle: course.title || course.name,
+              purchasedAt: new Date().toISOString(),
+              paymentId,
+              amountPaidINR: priceINR,
+              lifetime: true
+            },
+            lastPaymentId: paymentId,
+            updatedAt: serverTimestamp()
+          });
+
+          // 3. Update localStorage session cache
+          try {
+            const cached = JSON.parse(localStorage.getItem("auth_data") || "{}");
+            if (cached && (cached.uid === user.uid || cached.email === user.email)) {
+              const currentAssigned = cached.assignedRealCourses || [];
+              if (!currentAssigned.includes(courseId)) {
+                cached.assignedRealCourses = [...currentAssigned, courseId];
+              }
+              if (!cached.purchasedCourses) cached.purchasedCourses = {};
+              cached.purchasedCourses[courseId] = {
+                courseId,
+                courseTitle: course.title || course.name,
+                purchasedAt: new Date().toISOString(),
+                paymentId,
+                amountPaidINR: priceINR,
+                lifetime: true
+              };
+              localStorage.setItem("auth_data", JSON.stringify(cached));
+            }
+          } catch (_) {}
+
+          // 4. Dispatch event
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("seedit:course-purchased", {
+              detail: { courseId, paymentId }
+            }));
+          }
+
+          resolve({ success: true, paymentId });
+        } catch (err) {
+          console.error("[razorpayService] Course purchase fulfillment failed:", err);
+          resolve({ success: false, error: err.message });
+        }
+      }
     };
 
     const rzp = new window.Razorpay(options);

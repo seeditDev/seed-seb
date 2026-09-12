@@ -505,9 +505,18 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════
 
     match /payments/{paymentId} {
-      allow read: if isPortal() || (isSignedIn() && (resource == null || resource.data.get('userId', '') == request.auth.uid));
-      allow create: if isSignedIn() && (request.resource.data.get('userId', '') == request.auth.uid || isPortal());
-      allow update, delete: if isAdmin();
+      allow read: if isPortal() || isSignedIn();
+      allow create, update: if isPortal() || isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 8.7b System & Platform Settings (Subscription Pricing, Config)
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /systemSettings/{settingId} {
+      allow read: if true;
+      allow write: if isPortal();
     }
 
     // ══════════════════════════════════════════════════════════════════════

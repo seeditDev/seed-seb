@@ -300,8 +300,21 @@ export async function registerForContest(contest, user, passkeyInput = '') {
   }
 
   // Validate Pro tier if required
-  if (contest.accessTier === 'pro_only' && !user.isPremium) {
+  if (contest.accessTier === 'pro_only' && !user.isPremium && !user.isPro) {
     throw new Error('This contest requires an active Pro subscription to register.');
+  }
+
+  // Validate Paid Entry if required
+  const entryFee = Number(contest.entryFeeINR || contest.entryFee || 0);
+  if (contest.accessTier === 'paid_entry' || entryFee > 0) {
+    const hasPass = Boolean(
+      user.isPremium ||
+      user.isPro ||
+      user.contestPasses?.[contest.id]
+    );
+    if (!hasPass) {
+      throw new Error(`This contest requires an entry pass of ₹${entryFee}. Please complete payment to register.`);
+    }
   }
 
   // Validate Passkey if required

@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaStar, FaCheck, FaTimes, FaShieldAlt, FaSyncAlt, FaInfoCircle, FaLock } from 'react-icons/fa';
-import { SUBSCRIPTION_PLANS } from '../services/razorpayService';
+import { SUBSCRIPTION_PLANS, getSubscriptionPlans } from '../services/razorpayService';
 import { db } from '../lib/firebase-config';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { checkSubscriptionStatus } from '../services/subscriptionValidator';
 
 export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSuccess }) {
+  const [plans, setPlans] = useState(SUBSCRIPTION_PLANS);
   const [selectedPlanId, setSelectedPlanId] = useState('premium_annual');
   const [verifying, setVerifying] = useState(false);
   const [statusMsg, setStatusMsg] = useState(null);
 
+  useEffect(() => {
+    let isMounted = true;
+    getSubscriptionPlans().then((loadedPlans) => {
+      if (isMounted && loadedPlans && loadedPlans.length) {
+        setPlans(loadedPlans);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
   if (!isOpen) return null;
 
-  const selectedPlan = SUBSCRIPTION_PLANS.find(p => p.id === selectedPlanId) || SUBSCRIPTION_PLANS[0];
+  const selectedPlan = plans.find(p => p.id === selectedPlanId) || plans[0];
 
   const handleVerifyStatus = async () => {
     if (!user?.uid) {
@@ -297,7 +308,7 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
 
         {/* Plan Cards Selection */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '18px' }}>
-          {SUBSCRIPTION_PLANS.map((plan) => {
+          {plans.map((plan) => {
             const isSelected = plan.id === selectedPlanId;
             return (
               <div

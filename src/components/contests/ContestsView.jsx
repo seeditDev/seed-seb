@@ -24,6 +24,7 @@ import {
   FaStar,
   FaChevronRight,
   FaFilter,
+  FaTicketAlt,
 } from 'react-icons/fa';
 import { toast } from 'sonner';
 import {
@@ -32,6 +33,7 @@ import {
   registerForContest,
   prepareContestMSAAssessment,
 } from '../../services/contestService';
+import { purchaseContestPass } from '../../services/razorpayService';
 import ContestLandingView from './ContestLandingView';
 import '../../styles/ContestsView.css';
 
@@ -117,6 +119,17 @@ const ContestsView = ({
     });
   }, [contests, statusFilter, scopeFilter, searchQuery, registeredMap]);
 
+  const getFee = (c) => Number(c?.entryFeeINR || c?.entryFee || 0);
+  const isPaidContest = (c) => c?.accessTier === 'paid_entry' || getFee(c) > 0;
+  const hasUserContestAccess = (c) => {
+    if (!c) return false;
+    if (c.accessTier === 'pro_only') return Boolean(user?.isPremium);
+    if (isPaidContest(c)) {
+      return Boolean(user?.isPremium || user?.contestPasses?.[c.id] || registeredMap[c.id]);
+    }
+    return true;
+  };
+
   // Handle Registration Click
   const handleOpenRegister = (contest, e) => {
     if (e) e.stopPropagation();
@@ -131,6 +144,32 @@ const ContestsView = ({
 
   const handleConfirmRegister = async () => {
     if (!registerModalContest) return;
+
+    // Check if contest requires a paid pass and user hasn't paid yet
+    if (isPaidContest(registerModalContest) && !hasUserContestAccess(registerModalContest)) {
+      if (!user?.uid) {
+        toast.error('Please log in to purchase a contest pass.');
+        return;
+      }
+      setIsRegistering(true);
+      try {
+        const res = await purchaseContestPass(user, registerModalContest);
+        if (res.success) {
+          toast.success(`Entry pass activated! Successfully registered for ${registerModalContest.title}!`);
+          setRegisteredMap((prev) => ({ ...prev, [registerModalContest.id]: true }));
+          setRegisterModalContest(null);
+          fetchContests();
+        } else if (res.error && !res.error.includes('cancelled')) {
+          toast.error(res.error);
+        }
+      } catch (err) {
+        toast.error(err.message || 'Payment checkout failed.');
+      } finally {
+        setIsRegistering(false);
+      }
+      return;
+    }
+
     setIsRegistering(true);
     try {
       await registerForContest(registerModalContest, user, passkeyInput);
@@ -444,6 +483,11 @@ const ContestsView = ({
                           👑 Pro Only
                         </span>
                       )}
+                      {isPaidContest(c) && (
+                        <span className="pro-tag" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.35)' }}>
+                          🎟️ Pass ₹{getFee(c)}
+                        </span>
+                      )}
                     </div>
 
                     {!c.bannerUrl && !c.imageUrl && (
@@ -509,9 +553,16 @@ const ContestsView = ({
                   ) : (
                     <button
                       className="btn-card-register"
+                      style={isPaidContest(c) && !hasUserContestAccess(c) ? {
+                        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                        color: '#000',
+                        fontWeight: '700'
+                      } : {}}
                       onClick={(e) => handleOpenRegister(c, e)}
                     >
-                      Register Now
+                      {isPaidContest(c) && !hasUserContestAccess(c)
+                        ? `🎟️ Get Pass ₹${getFee(c)}`
+                        : 'Register Now'}
                     </button>
                   )}
                 </div>
@@ -547,6 +598,38 @@ const ContestsView = ({
                 </div>
               </div>
 
+              {isPaidContest(registerModalContest) && !hasUserContestAccess(registerModalContest) && (
+                <div style={{
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '800', color: '#f59e0b' }}>
+                      Entry Pass Fee Required
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff' }}>
+                      ₹{getFee(registerModalContest)}
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    padding: '4px 10px',
+                    borderRadius: '8px',
+                    background: '#f59e0b',
+                    color: '#000'
+                  }}>
+                    Razorpay Checkout
+                  </span>
+                </div>
+              )}
+
               {registerModalContest.passkey && (
                 <div className="passkey-input-block">
                   <label><FaKey /> Event Access Passkey Required</label>
@@ -576,10 +659,19 @@ const ContestsView = ({
               </button>
               <button
                 className="btn-confirm-reg"
+                style={isPaidContest(registerModalContest) && !hasUserContestAccess(registerModalContest) ? {
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  color: '#000000',
+                  fontWeight: '800'
+                } : {}}
                 onClick={handleConfirmRegister}
                 disabled={isRegistering}
               >
-                {isRegistering ? 'Registering...' : 'Confirm Registration'}
+                {isRegistering
+                  ? 'Processing...'
+                  : (isPaidContest(registerModalContest) && !hasUserContestAccess(registerModalContest))
+                    ? `💳 Pay ₹${getFee(registerModalContest)} & Register`
+                    : 'Confirm Registration'}
               </button>
             </div>
           </div>
