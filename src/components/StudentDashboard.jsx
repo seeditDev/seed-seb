@@ -2718,10 +2718,10 @@ const StudentDashboard = () => {
         user={user}
         onNavigateToArena={(target) => {
           const dest = typeof target === 'string' && target.startsWith('/') ? target : `/student/contest/${target}`;
-          navigate({ to: dest });
+          navigate(dest);
         }}
         onOpenSEBModal={(contest) => {
-          navigate({ to: `/student/contest/${contest.id}` });
+          navigate(`/student/contest/${contest.id}`);
         }}
         onUpgradePro={() => setShowPremiumModal(true)}
       />

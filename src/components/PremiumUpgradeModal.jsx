@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaStar, FaCheck, FaTimes, FaShieldAlt, FaSyncAlt, FaInfoCircle, FaLock } from 'react-icons/fa';
 import { SUBSCRIPTION_PLANS } from '../services/razorpayService';
 import { db } from '../lib/firebase-config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { checkSubscriptionStatus } from '../services/subscriptionValidator';
 
 export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSuccess }) {
@@ -33,17 +33,54 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
       }
 
       const userData = snap.data();
-      const subscription = checkSubscriptionStatus(userData);
 
-      if (subscription.isPremium && subscription.status === 'active') {
-        const expiryDate = new Date(subscription.endDate).toLocaleDateString(undefined, {
+      // 1. Query payments collection to verify genuine Razorpay transaction
+      const paymentsRef = collection(db, 'payments');
+      const paymentsQuery = query(
+        paymentsRef,
+        where('userId', '==', user.uid),
+        where('status', '==', 'success')
+      );
+      const paymentsSnap = await getDocs(paymentsQuery);
+
+      let activePayment = null;
+      paymentsSnap.docs.forEach((docSnap) => {
+        const pData = docSnap.data();
+        const endMs = pData.premiumEndDate ? new Date(pData.premiumEndDate).getTime() : NaN;
+        if (!isNaN(endMs) && endMs > Date.now()) {
+          if (!activePayment || endMs > new Date(activePayment.premiumEndDate).getTime()) {
+            activePayment = { id: docSnap.id, ...pData };
+          }
+        }
+      });
+
+      // 2. Check for active campus institution license
+      const isInstitutionPro = Boolean(userData.cohortIsPremium || userData.institutionIsPremium || userData.tenantIsPremium);
+      const institutionEndDateStr = userData.cohortPremiumEndDate || userData.tenantPremiumEndDate;
+      const instEndMs = institutionEndDateStr ? new Date(institutionEndDateStr).getTime() : NaN;
+      const hasActiveInstitution = isInstitutionPro && (!isNaN(instEndMs) ? Date.now() <= instEndMs : true);
+
+      if (activePayment) {
+        const expiryDate = new Date(activePayment.premiumEndDate).toLocaleDateString(undefined, {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
         });
         setStatusMsg({
           type: 'success',
-          text: `Verified! Active SEED Premium (${subscription.plan === 'premium_annual' ? 'Annual Pro' : 'Monthly'}) confirmed until ${expiryDate}.`,
+          text: `Verified! Active SEED Premium (${activePayment.planName || 'Annual Pro'}) confirmed until ${expiryDate}.`,
+        });
+
+        // Update user document in Firestore to persist verified status
+        await updateDoc(userRef, {
+          isPremium: true,
+          premium: true,
+          subscriptionStatus: 'active',
+          premiumPlan: activePayment.planId || 'premium_annual',
+          premiumStartDate: activePayment.premiumStartDate || new Date().toISOString(),
+          premiumEndDate: activePayment.premiumEndDate,
+          lastPaymentId: activePayment.paymentId || activePayment.id,
+          updatedAt: serverTimestamp(),
         });
 
         // Update local session
@@ -53,9 +90,10 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
             cached.isPremium = true;
             cached.premium = true;
             cached.subscriptionStatus = 'active';
-            cached.premiumPlan = subscription.plan;
-            cached.premiumStartDate = subscription.startDate;
-            cached.premiumEndDate = subscription.endDate;
+            cached.premiumPlan = activePayment.planId || 'premium_annual';
+            cached.premiumStartDate = activePayment.premiumStartDate;
+            cached.premiumEndDate = activePayment.premiumEndDate;
+            cached.lastPaymentId = activePayment.paymentId || activePayment.id;
             localStorage.setItem('auth_data', JSON.stringify(cached));
           }
         } catch (_) {}
@@ -64,22 +102,53 @@ export default function PremiumUpgradeModal({ isOpen, onClose, user, onUpgradeSu
           onUpgradeSuccess({
             success: true,
             isPremium: true,
-            plan: subscription.plan,
-            endDate: subscription.endDate,
+            plan: activePayment.planId || 'premium_annual',
+            endDate: activePayment.premiumEndDate,
           });
         }
 
         setTimeout(() => onClose(), 2000);
-      } else if (subscription.status === 'expired') {
-        const expiredOn = subscription.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'recently';
+      } else if (hasActiveInstitution) {
+        const instExpiry = !isNaN(instEndMs)
+          ? new Date(instEndMs).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          : 'Campus Session';
         setStatusMsg({
-          type: 'error',
-          text: `Your subscription expired on ${expiredOn}. Please visit seedit.site on your browser to renew.`,
+          type: 'success',
+          text: `Verified! Campus Pro License confirmed active (${instExpiry}).`,
         });
+        if (onUpgradeSuccess) {
+          onUpgradeSuccess({
+            success: true,
+            isPremium: true,
+            plan: 'institution_pro',
+            endDate: institutionEndDateStr || null,
+          });
+        }
+        setTimeout(() => onClose(), 2000);
       } else {
+        // No valid payment and no campus license: clean up any stale flags
+        if (userData.isPremium || userData.subscriptionStatus === 'active') {
+          await updateDoc(userRef, {
+            isPremium: false,
+            premium: false,
+            subscriptionStatus: 'none',
+            updatedAt: serverTimestamp(),
+          }).catch(() => {});
+
+          try {
+            const cached = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            if (cached) {
+              cached.isPremium = false;
+              cached.premium = false;
+              cached.subscriptionStatus = 'none';
+              localStorage.setItem('auth_data', JSON.stringify(cached));
+            }
+          } catch (_) {}
+        }
+
         setStatusMsg({
           type: 'error',
-          text: 'No active subscription found. Complete payment on seedit.site in your personal browser, then click Verify.',
+          text: 'No active subscription or completed payment found. Please purchase SEED Premium on seedit.site first.',
         });
       }
     } catch (err) {

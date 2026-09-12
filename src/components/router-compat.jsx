@@ -9,8 +9,12 @@ import { useRouter, useRouterState } from "@tanstack/react-router";
 function toHref(to) {
   if (typeof to === "string") return to;
   if (!to) return "/";
-  const { pathname = "/", search = "", hash = "" } = to;
-  return `${pathname}${search}${hash}`;
+  if (typeof to === "object") {
+    if (typeof to.to === "string") return to.to;
+    const { pathname = "/", search = "", hash = "" } = to;
+    return `${pathname}${search}${hash}`;
+  }
+  return "/";
 }
 
 export function useNavigate() {

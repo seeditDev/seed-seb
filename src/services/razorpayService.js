@@ -14,9 +14,16 @@ import { getFirestore, doc, updateDoc, setDoc, serverTimestamp, arrayUnion } fro
 
 const RAZORPAY_SCRIPT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
 
-// Razorpay Key ID: Loaded from Vite env or test fallback
-export const RAZORPAY_KEY_ID =
-  import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_1DP5mmOlF5G5ag"; // Safe test public key fallback
+// Razorpay Key ID: Loaded from Vite/Netlify environment variables (active production key)
+export function getActiveRazorpayKey() {
+  const envKey =
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_RAZORPAY_KEY_ID) ||
+    (typeof window !== "undefined" && (window.__ENV__?.VITE_RAZORPAY_KEY_ID || window.VITE_RAZORPAY_KEY_ID)) ||
+    "";
+  return envKey ? envKey.trim() : "";
+}
+
+export const RAZORPAY_KEY_ID = getActiveRazorpayKey();
 
 export const SUBSCRIPTION_PLANS = [
   {
@@ -87,13 +94,18 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
     throw new Error("User must be logged in to upgrade to SEED Premium.");
   }
 
+  const keyId = getActiveRazorpayKey() || RAZORPAY_KEY_ID;
+  if (!keyId) {
+    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your environment.");
+  }
+
   await loadRazorpayScript();
 
   return new Promise((resolve) => {
     const amountPaise = plan.priceINR * 100;
 
     const options = {
-      key: RAZORPAY_KEY_ID,
+      key: keyId,
       amount: amountPaise,
       currency: "INR",
       name: "SEED-IT Platform",
@@ -198,6 +210,11 @@ export async function purchaseContestPass(user, contest) {
   if (!user || !user.uid) {
     throw new Error("User must be logged in to purchase a contest entry pass.");
   }
+  const keyId = getActiveRazorpayKey() || RAZORPAY_KEY_ID;
+  if (!keyId) {
+    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your environment.");
+  }
+
   await loadRazorpayScript();
 
   return new Promise((resolve) => {
@@ -205,7 +222,7 @@ export async function purchaseContestPass(user, contest) {
     const amountPaise = feeINR * 100;
 
     const options = {
-      key: RAZORPAY_KEY_ID,
+      key: keyId,
       amount: amountPaise,
       currency: "INR",
       name: "SEED-IT Global Contests",

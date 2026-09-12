@@ -71,27 +71,10 @@ export function checkSubscriptionStatus(user) {
     }
   }
 
-  // If there are no subscription dates, check if explicitly set active by admin
+  // If there are no subscription dates and no institution license, the user is NOT premium.
+  // A verified payment with an explicit future endDate is strictly required.
   if (!endDateStr) {
-    const isExplicitlyActive = Boolean(user.isPremium || user.premium || user.subscriptionStatus === 'active');
-    // If explicitly marked active by admin without explicit date, grant 30-day grace rather than instant wipe
-    if (isExplicitlyActive) {
-      return {
-        isPremium: true,
-        isPro: true,
-        tier: 'pro',
-        status: 'active',
-        daysLeft: 30,
-        plan: rawPlan,
-        displayPlan: isTrial ? 'Pro Trial' : 'SEED Pro',
-        startDate: startDateStr || new Date().toISOString(),
-        endDate: null,
-        isExpiringSoon: false,
-        isTrial,
-        trialUsed,
-        needsDowngrade: false,
-      };
-    }
+    const hasSpuriousActive = Boolean(user.isPremium || user.premium || user.subscriptionStatus === 'active');
     return {
       isPremium: false,
       isPro: false,
@@ -105,7 +88,7 @@ export function checkSubscriptionStatus(user) {
       isExpiringSoon: false,
       isTrial: false,
       trialUsed,
-      needsDowngrade: false,
+      needsDowngrade: hasSpuriousActive,
     };
   }
 

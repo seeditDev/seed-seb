@@ -328,14 +328,13 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════
 
     match /assessmentResults/{tenantId} {
-      allow get, list: if isPortal() || isSignedIn();
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal() || isSignedIn();
 
       match /{assessmentId}/{userId} {
-        allow get:    if isUser(userId) || isPortal();
-        allow list:   if isPortal();
-        allow create: if isUser(userId) || isPortal() || isSignedIn();
-        allow update: if isUser(userId) || isPortal() || isSignedIn();
-        allow delete: if isAdmin();
+        allow read: if isPortal() || isSignedIn();
+        allow create, update: if isUser(userId) || isPortal() || isSignedIn();
+        allow delete: if isPortal() || isAdmin();
       }
 
       match /{document=**} {
