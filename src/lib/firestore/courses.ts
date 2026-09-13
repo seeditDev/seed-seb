@@ -162,7 +162,7 @@ function mapTest(
     maxAudioViolations: Number(d["maxAudioViolations"] ?? 3),
     maxAttempts: Number(d["maxAttempts"] ?? 1),
     passkey: String(d["passkey"] ?? ""),
-    isPremium: Boolean(d["isPremium"]),
+    isPremium: Boolean(d["isPremium"] || d["accessTier"] === "premium"),
     isGlobal: Boolean(d["isGlobal"]),
     accessTier: (d["accessTier"] as TestDoc["accessTier"]) ?? (d["isPremium"] ? "premium" : "free"),
     entryFeeINR: d["entryFeeINR"] != null ? Number(d["entryFeeINR"]) : 0,

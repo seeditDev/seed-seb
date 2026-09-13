@@ -267,8 +267,9 @@ const StudentDashboard = () => {
   }, []);
 
   const handleContestPassCheckout = async (contest) => {
+    const fee = contest.entryFeeINR !== undefined && contest.entryFeeINR !== null ? contest.entryFeeINR : 99;
     toast.info(
-      `This test requires SEED Pro, full course enrollment, or an individual pass (₹${contest.entryFeeINR || 99}). Please visit https://seedit.site to activate access.`,
+      `This test requires SEED Pro, full course enrollment, or an individual pass (₹${fee}). Please visit https://seedit.site to activate access.`,
       { duration: 6000 }
     );
   };
@@ -1858,20 +1859,19 @@ const StudentDashboard = () => {
             passkey: t.passkey ?? '',
             isPremium: Boolean(t.isPremium || t.accessTier === 'premium'),
             isGlobal: Boolean(t.isGlobal),
-            accessTier: Boolean(t.isGlobal)
-              ? (t.accessTier === 'free' ? 'paid_entry' : (t.accessTier || 'paid_entry'))
-              : (t.accessTier || (t.isPremium ? 'premium' : 'free')),
-            entryFeeINR: t.entryFeeINR || (t.isGlobal ? 99 : 0),
+            accessTier: t.accessTier || (t.isPremium ? 'premium' : 'free'),
+            entryFeeINR: t.entryFeeINR !== undefined && t.entryFeeINR !== null
+              ? Number(t.entryFeeINR)
+              : (t.priceINR !== undefined && t.priceINR !== null ? Number(t.priceINR) : 0),
             maxAttempts: 1, // Strictly 1 attempt allowed
             isLocked: Boolean(
-              t.isGlobal
+              (t.accessTier === 'paid_entry')
                 ? (!isPremiumUser &&
                    !userData?.enrolledCourses?.includes(t.courseId) &&
                    !userData?.coursePurchases?.[t.courseId] &&
                    !userData?.contestPasses?.[t.id] &&
                    !userData?.assessmentPasses?.[t.id])
-                : (((t.isPremium || t.accessTier === 'premium') && !isPremiumUser) ||
-                   (t.accessTier === 'paid_entry' && !isPremiumUser && !userData?.contestPasses?.[t.id] && !userData?.assessmentPasses?.[t.id]))
+                : ((t.isPremium || t.accessTier === 'premium') && !isPremiumUser)
             ),
             guestEnabled: t.guestEnabled,
             // ── proctor ──
@@ -3062,14 +3062,19 @@ const StudentDashboard = () => {
                                       🌐 Global
                                     </span>
                                   )}
-                                  {a.isPremium && (
+                                  {a.accessTier === 'premium' && (
                                     <span style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                      ⭐ Premium
+                                      ⭐ Pro
                                     </span>
                                   )}
                                   {a.accessTier === 'paid_entry' && (
                                     <span style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                      🎟️ Pass ₹{a.entryFeeINR || 99}
+                                      🎟️ Pass ₹{a.entryFeeINR}
+                                    </span>
+                                  )}
+                                  {a.isGlobal && a.accessTier === 'free' && (
+                                    <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      🆓 Free
                                     </span>
                                   )}
                                 </div>
@@ -3150,7 +3155,7 @@ const StudentDashboard = () => {
                                       boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)'
                                     }}
                                   >
-                                    🎟️ Get Pass ₹{a.entryFeeINR || 99}
+                                    🎟️ Get Pass ₹{a.entryFeeINR}
                                   </button>
                                 ) : (
                                   <button
