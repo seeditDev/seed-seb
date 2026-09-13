@@ -1556,33 +1556,47 @@ const MultiSectionAssessment = () => {
     assessmentRef.current = assessmentData;
     localStorage.setItem(`msaActiveAssessment_${assessmentData.id}`, JSON.stringify(assessmentData));
 
-    // Verify if already completed/submitted on server
+    // Verify if already completed/submitted on server (Strict 1-attempt policy)
     const checkAttempt = async () => {
       try {
-        // CANONICAL: use Firebase Auth UID for the result path.
         const uid = auth?.currentUser?.uid || authData.uid;
-        if (!uid) {
-          console.warn('[MSA] checkAttempt: not authenticated, skipping server check.');
+        if (!uid) return;
+
+        // 1. Check user profile completedAssessmentIds array
+        if (authData.completedAssessmentIds?.includes(assessmentData.id)) {
+          localStorage.setItem(`msaCompleted_${assessmentData.id}`, 'true');
+          toast.error('You have already completed your 1 permitted attempt for this assessment. Re-attempts are not permitted.');
+          sessionStorage.removeItem('multisectionAssessmentData');
+          localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+          localStorage.removeItem(`msaProgress_${assessmentData.id}`);
+          navigate('/student/dashboard', { replace: true });
           return;
         }
-        const tenantId = authData.tenantId;
-        if (!tenantId) {
-          console.warn('[MSA] checkAttempt: missing tenantId, skipping server check.');
-          return;
-        }
-        const canonDocPath = `assessmentResults/${tenantId}/${assessmentData.id}/${uid}`;
-        const docSnap = await getDoc(doc(db, canonDocPath));
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.completed === true || data.status === 'submitted') {
-            localStorage.setItem(`msaCompleted_${assessmentData.id}`, 'true');
-            toast.error('You have already completed and submitted this assessment. Re-attempts are not permitted.');
-            sessionStorage.removeItem('multisectionAssessmentData');
-            localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
-            localStorage.removeItem(`msaProgress_${assessmentData.id}`);
-            navigate('/student/dashboard', { replace: true });
-            return;
-          }
+
+        // 2. Check canonical multi-tenant result paths
+        const tenantId = authData.tenantId || 'global';
+        const candidatePaths = [
+          `assessmentResults/${tenantId}/${assessmentData.id}/${uid}`,
+          `assessmentResults/global/${assessmentData.id}/${uid}`,
+          `assessmentResults/ALL/${assessmentData.id}/${uid}`,
+        ];
+
+        for (const canonDocPath of candidatePaths) {
+          try {
+            const docSnap = await getDoc(doc(db, canonDocPath));
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              if (data.completed === true || data.status === 'submitted' || data.submitted === true) {
+                localStorage.setItem(`msaCompleted_${assessmentData.id}`, 'true');
+                toast.error('You have already completed your 1 permitted attempt for this assessment. Re-attempts are not permitted.');
+                sessionStorage.removeItem('multisectionAssessmentData');
+                localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+                localStorage.removeItem(`msaProgress_${assessmentData.id}`);
+                navigate('/student/dashboard', { replace: true });
+                return;
+              }
+            }
+          } catch (_) {}
         }
       } catch (err) {
         console.error('[MSA] Failed to check existing attempt:', err);

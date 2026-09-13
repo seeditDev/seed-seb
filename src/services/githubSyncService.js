@@ -342,9 +342,11 @@ export async function verifyGitHubToken(token) {
 
   return {
     username: data.login,
+    login: data.login,
     name: data.name || data.login,
     email,
     avatarUrl: data.avatar_url,
+    avatar_url: data.avatar_url,
     publicRepos: data.public_repos,
     totalPrivateRepos: data.total_private_repos || 0,
   };

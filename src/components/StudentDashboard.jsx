@@ -261,7 +261,7 @@ const StudentDashboard = () => {
 
   const handleContestPassCheckout = async (contest) => {
     toast.info(
-      `Contest passes for "${contest.title || contest.name || 'this event'}" must be purchased on the SEED Website. Please visit https://seedit.site to activate your pass.`,
+      `This test requires SEED Pro, full course enrollment, or an individual pass (₹${contest.entryFeeINR || 99}). Please visit https://seedit.site to activate access.`,
       { duration: 6000 }
     );
   };
@@ -548,12 +548,13 @@ const StudentDashboard = () => {
     setIsVerifyingPat(true);
     try {
       const userMeta = await verifyGitHubToken(trimmed);
+      const ghUsername = userMeta.username || userMeta.login || '';
       const updatedConfig = {
         token: trimmed,
-        username: userMeta.login,
-        name: userMeta.name || userMeta.login,
+        username: ghUsername,
+        name: userMeta.name || ghUsername,
         email: userMeta.email || '',
-        avatar: userMeta.avatar_url || '',
+        avatar: userMeta.avatarUrl || userMeta.avatar_url || '',
         repo: githubRepoName || DEFAULT_REPO_NAME,
         autoSync: githubAutoSync,
         isPrivate: githubIsPrivate,
@@ -561,7 +562,7 @@ const StudentDashboard = () => {
       };
       await saveGitHubConfigToFirestore(uid, updatedConfig);
       setGithubConfig({ ...updatedConfig, isConnected: true });
-      toast.success(`Verified & Saved PAT for @${userMeta.login}!`);
+      toast.success(`Verified & Saved PAT for @${ghUsername}!`);
     } catch (err) {
       toast.error(`PAT Verification Failed: ${err.message}`);
     } finally {
@@ -1850,11 +1851,20 @@ const StudentDashboard = () => {
             passkey: t.passkey ?? '',
             isPremium: Boolean(t.isPremium || t.accessTier === 'premium'),
             isGlobal: Boolean(t.isGlobal),
-            accessTier: t.accessTier || (t.isPremium ? 'premium' : 'free'),
-            entryFeeINR: t.entryFeeINR || 0,
+            accessTier: Boolean(t.isGlobal)
+              ? (t.accessTier === 'free' ? 'paid_entry' : (t.accessTier || 'paid_entry'))
+              : (t.accessTier || (t.isPremium ? 'premium' : 'free')),
+            entryFeeINR: t.entryFeeINR || (t.isGlobal ? 99 : 0),
+            maxAttempts: 1, // Strictly 1 attempt allowed
             isLocked: Boolean(
-              ((t.isPremium || t.accessTier === 'premium') && !isPremiumUser) ||
-              (t.accessTier === 'paid_entry' && !isPremiumUser && !userData?.contestPasses?.[t.id])
+              t.isGlobal
+                ? (!isPremiumUser &&
+                   !userData?.enrolledCourses?.includes(t.courseId) &&
+                   !userData?.coursePurchases?.[t.courseId] &&
+                   !userData?.contestPasses?.[t.id] &&
+                   !userData?.assessmentPasses?.[t.id])
+                : (((t.isPremium || t.accessTier === 'premium') && !isPremiumUser) ||
+                   (t.accessTier === 'paid_entry' && !isPremiumUser && !userData?.contestPasses?.[t.id] && !userData?.assessmentPasses?.[t.id]))
             ),
             guestEnabled: t.guestEnabled,
             // ── proctor ──
@@ -1888,7 +1898,13 @@ const StudentDashboard = () => {
         const { fetchCompletionMap } = await import('../services/attemptStatusService');
         const forceRefresh = !!(location?.state?.justCompleted);
         const completionMap = await fetchCompletionMap(userData, combined.map(i => i.id), { force: forceRefresh });
-        combined.forEach(item => { item.completed = completionMap[item.id] === true; });
+        combined.forEach(item => {
+          item.completed = Boolean(
+            completionMap[item.id] === true ||
+            userData?.completedAssessmentIds?.includes(item.id) ||
+            localStorage.getItem(`msaCompleted_${item.id}`) === 'true'
+          );
+        });
       } catch (e) {
         console.warn('[loadAssessments] completion map failed:', e?.message);
       }
@@ -2093,6 +2109,17 @@ const StudentDashboard = () => {
 
   // Direct Streamlined Launch on test click
   const handleStartClick = (assessment) => {
+    // 0. Single attempt guard: strictly 1 attempt only
+    if (assessment.completed || localStorage.getItem(`msaCompleted_${assessment.id}`) === 'true') {
+      toast.info("You have already completed your 1 permitted attempt for this assessment.");
+      return;
+    }
+
+    // 0B. Global / Locked assessment guard
+    if (assessment.isLocked) {
+      handleContestPassCheckout(assessment);
+      return;
+    }
     if (!assessment) return;
 
     // 0. Schedule restriction guard
@@ -3042,7 +3069,7 @@ const StudentDashboard = () => {
                               </div>
                               {a.completed ? (
                                 <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontSize: '11px', padding: '3px 9px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                                  <FaCheck size={10} /> Done
+                                  <FaCheck size={10} /> Completed (1/1 Used)
                                 </span>
                               ) : (
                                 <span className={`difficulty-badge diff-${(a.difficulty || 'Medium').toLowerCase()}`} style={{ whiteSpace: 'nowrap' }}>
@@ -3086,7 +3113,7 @@ const StudentDashboard = () => {
                             <div className="ps-card-actions">
                               {a.completed ? (
                                 <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '7px 16px', borderRadius: '8px', cursor: 'default', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600 }}>
-                                  <FaCheck /> Done
+                                  <FaCheck style={{ color: '#10b981' }} /> Attempt Completed (1/1 Used)
                                 </button>
                               ) : isExpired ? (
                                 <button className="ps-action-btn" disabled style={{ background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '7px 16px', borderRadius: '8px', cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600 }}>
