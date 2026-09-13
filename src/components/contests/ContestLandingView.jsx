@@ -226,20 +226,10 @@ export default function ContestLandingView({
 
     // Check if contest requires a paid pass and user hasn't unlocked it yet
     if (isPaidContest && !hasPass) {
-      setIsRegistering(true);
-      try {
-        const res = await purchaseContestPass(user, contest);
-        if (res.success) {
-          toast.success(`Entry pass unlocked! Successfully registered for ${contest.title}!`);
-          setIsRegistered(true);
-        } else if (res.error && !res.error.includes('cancelled')) {
-          toast.error(res.error);
-        }
-      } catch (err) {
-        toast.error(err.message || 'Contest pass checkout failed.');
-      } finally {
-        setIsRegistering(false);
-      }
+      toast.info(
+        `Contest pass (₹${contestFee}) for "${contest.title}" must be purchased on the SEED Website. Please log into the SEED Website (https://seedit.site) to activate your pass.`,
+        { duration: 6000 }
+      );
       return;
     }
 

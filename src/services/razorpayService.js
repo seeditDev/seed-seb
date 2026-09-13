@@ -4,15 +4,21 @@
  * Provides client-side checkout for:
  * 1. SEED Premium Subscriptions (Annual ₹999 / Monthly ₹149)
  * 2. Paid Global Contest Passes (₹49 - ₹199)
- * 3. Individual RealCourse Unlock Passes
+ * 3. Individual RealCourse Unlock Passes (₹499)
  *
- * Automatically verifies payment and updates Firestore user profiles with zero data loss.
+ * Automatically records transaction audit in Firestore payments/{paymentId}
+ * and updates users/{uid} with zero data loss.
  */
 
 import { getApps } from "firebase/app";
-import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp, arrayUnion, increment } from "firebase/firestore";
+import { getFirestore, doc, updateDoc, setDoc, getDoc, serverTimestamp, arrayUnion, increment, collection, query, where, getDocs } from "firebase/firestore";
 
 const RAZORPAY_SCRIPT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
+
+export const SEED_LOGO_URL =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/SEED_Logo_Transparent.png`
+    : "https://seedit.site/SEED_Logo_Transparent.png";
 
 // Razorpay Key ID: Loaded from Vite/Netlify environment variables (active production key)
 export function getActiveRazorpayKey() {
@@ -130,7 +136,7 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
 
   const keyId = getActiveRazorpayKey() || RAZORPAY_KEY_ID;
   if (!keyId) {
-    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your environment.");
+    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your Netlify site settings.");
   }
 
   await loadRazorpayScript();
@@ -144,7 +150,7 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
       currency: "INR",
       name: "SEED-IT Platform",
       description: `Upgrade: ${plan.name} (${plan.duration})`,
-      image: "https://raw.githubusercontent.com/seeditDev/seed-contents/main/assets/seed-logo.png",
+      image: SEED_LOGO_URL,
       prefill: {
         name: user.name || user.displayName || "SEED-IT Learner",
         email: user.email || "",
@@ -237,20 +243,14 @@ export async function purchasePremiumPlan(user, plan = SUBSCRIPTION_PLANS[0]) {
           console.error("[razorpayService] Post-payment fulfillment error:", err);
           resolve({
             success: false,
-            error: "Payment succeeded but account activation failed. Please contact support with payment ID: " + response.razorpay_payment_id,
-            paymentId: response.razorpay_payment_id,
+            error: "Payment succeeded with Razorpay but profile activation failed. Please contact support.",
+            paymentId: response.razorpay_payment_id
           });
         }
       },
     };
 
     const rzp = new window.Razorpay(options);
-    rzp.on("payment.failed", function (resp) {
-      resolve({
-        success: false,
-        error: resp.error?.description || "Payment failed. Please try a different payment method.",
-      });
-    });
     rzp.open();
   });
 }
@@ -264,9 +264,8 @@ export async function purchaseContestPass(user, contest) {
   }
   const keyId = getActiveRazorpayKey() || RAZORPAY_KEY_ID;
   if (!keyId) {
-    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your environment.");
+    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your Netlify site settings.");
   }
-
   await loadRazorpayScript();
 
   return new Promise((resolve) => {
@@ -279,6 +278,7 @@ export async function purchaseContestPass(user, contest) {
       currency: "INR",
       name: "SEED-IT Contests",
       description: `Entry Pass: ${contest.title || contest.name || "Global Competition"}`,
+      image: SEED_LOGO_URL,
       prefill: {
         name: user.name || user.displayName || "Learner",
         email: user.email || "",
@@ -382,7 +382,7 @@ export async function purchaseCourse(user, course) {
   }
   const keyId = getActiveRazorpayKey() || RAZORPAY_KEY_ID;
   if (!keyId) {
-    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your environment.");
+    throw new Error("Razorpay Key ID is not configured. Please ensure VITE_RAZORPAY_KEY_ID is set in your Netlify site settings.");
   }
   await loadRazorpayScript();
 
@@ -399,6 +399,7 @@ export async function purchaseCourse(user, course) {
       currency: "INR",
       name: "SEED-IT Courses",
       description: `Lifetime Enrollment: ${course.title || course.name}`,
+      image: SEED_LOGO_URL,
       prefill: {
         name: user.name || user.displayName || "Learner",
         email: user.email || "",
@@ -464,17 +465,8 @@ export async function purchaseCourse(user, course) {
               const currentAssigned = cached.assignedRealCourses || [];
               if (!currentAssigned.includes(courseId)) {
                 cached.assignedRealCourses = [...currentAssigned, courseId];
+                localStorage.setItem("auth_data", JSON.stringify(cached));
               }
-              if (!cached.purchasedCourses) cached.purchasedCourses = {};
-              cached.purchasedCourses[courseId] = {
-                courseId,
-                courseTitle: course.title || course.name,
-                purchasedAt: new Date().toISOString(),
-                paymentId,
-                amountPaidINR: priceINR,
-                lifetime: true
-              };
-              localStorage.setItem("auth_data", JSON.stringify(cached));
             }
           } catch (_) {}
 
@@ -487,13 +479,46 @@ export async function purchaseCourse(user, course) {
 
           resolve({ success: true, paymentId });
         } catch (err) {
-          console.error("[razorpayService] Course purchase fulfillment failed:", err);
+          console.error("[razorpayService] Course enrollment fulfillment failed:", err);
           resolve({ success: false, error: err.message });
         }
-      }
+      },
     };
 
     const rzp = new window.Razorpay(options);
     rzp.open();
   });
 }
+
+/**
+ * Fetch purchase and payment history for a user from Firestore
+ */
+export async function fetchUserPurchaseHistory(userId) {
+  if (!userId) return [];
+  try {
+    const db = getDb();
+    const paymentsRef = collection(db, "payments");
+    const q = query(paymentsRef, where("userId", "==", userId));
+    const snap = await getDocs(q);
+    const history = [];
+    snap.forEach((d) => {
+      history.push({ id: d.id, ...d.data() });
+    });
+    // Sort descending by timestamp
+    history.sort((a, b) => {
+      const getMs = (val) => {
+        if (!val) return 0;
+        if (typeof val.toMillis === "function") return val.toMillis();
+        if (val.seconds) return val.seconds * 1000;
+        const d = new Date(val).getTime();
+        return isNaN(d) ? 0 : d;
+      };
+      return getMs(b.createdAt) - getMs(a.createdAt);
+    });
+    return history;
+  } catch (err) {
+    console.warn("[razorpayService] Failed to fetch purchase history:", err);
+    return [];
+  }
+}
+

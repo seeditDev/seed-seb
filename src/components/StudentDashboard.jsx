@@ -17,6 +17,7 @@ import {
   FaLock,
   FaEye,
   FaEyeSlash,
+  FaReceipt,
   FaShieldAlt,
   FaTimes,
   FaCheck,
@@ -120,7 +121,7 @@ import {
 import { ensureUserHasUsername } from '../services/usernameService';
 import { publishPublicProfile } from '../services/publicProfileService';
 import GitHubSyncModal from './common/GitHubSyncModal';
-import PremiumUpgradeModal from './PremiumUpgradeModal';
+import PurchaseHistoryTab from './profile/PurchaseHistoryTab';
 import { checkSubscriptionStatus, syncAndValidateSubscription } from '../services/subscriptionValidator';
 import { purchaseContestPass } from '../services/razorpayService';
 import {
@@ -194,7 +195,12 @@ const StudentDashboard = () => {
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [loadingProfileProgress, setLoadingProfileProgress] = useState(false);
   const [showLogoutAnimation, setShowLogoutAnimation] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const handleUpgradeProToast = () => {
+    toast.info(
+      'Payments and Pro upgrades are disabled in SEED-SEB lockdown. Please log into the SEED Website (https://seedit.site/subscription) to upgrade or complete payments.',
+      { duration: 6000 }
+    );
+  };
   const [userPremiumState, setUserPremiumState] = useState(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState(() => checkSubscriptionStatus(user));
   const [profileSubTab, setProfileSubTab] = useState('info'); // 'info', 'utilisation', 'widget', 'password'
@@ -254,27 +260,10 @@ const StudentDashboard = () => {
   }, []);
 
   const handleContestPassCheckout = async (contest) => {
-    if (!user?.uid) {
-      toast.error('Please sign in to purchase a contest entry pass.');
-      return;
-    }
-    try {
-      const res = await purchaseContestPass(user, contest);
-      if (res.success) {
-        toast.success(`Entry pass activated! You are registered for ${contest.title || contest.name || 'contest'}!`);
-        setUserData((prev) => ({
-          ...prev,
-          contestPasses: {
-            ...(prev?.contestPasses || {}),
-            [contest.id]: true,
-          }
-        }));
-      } else if (res.error && !res.error.includes('cancelled')) {
-        toast.error(res.error);
-      }
-    } catch (err) {
-      toast.error(err.message || 'Payment failed');
-    }
+    toast.info(
+      `Contest passes for "${contest.title || contest.name || 'this event'}" must be purchased on the SEED Website. Please visit https://seedit.site to activate your pass.`,
+      { duration: 6000 }
+    );
   };
   const [supportInitialCategory, setSupportInitialCategory] = useState('download_seb');
   const [showDocModal, setShowDocModal] = useState(false);
@@ -2130,7 +2119,7 @@ const StudentDashboard = () => {
         handleContestPassCheckout(assessment);
       } else {
         toast.info("⭐ This assessment or contest requires SEED Premium access.");
-        setShowPremiumModal(true);
+        handleUpgradeProToast();
       }
       return;
     }
@@ -2741,7 +2730,7 @@ const StudentDashboard = () => {
         onOpenSEBModal={(contest) => {
           navigate(`/student/contest/${contest.id}`);
         }}
-        onUpgradePro={() => setShowPremiumModal(true)}
+        onUpgradePro={() => handleUpgradeProToast()}
       />
     );
   };
@@ -3131,7 +3120,7 @@ const StudentDashboard = () => {
                                   </button>
                                 ) : (
                                   <button
-                                    onClick={() => setShowPremiumModal(true)}
+                                    onClick={() => handleUpgradeProToast()}
                                     className="ps-action-btn"
                                     style={{
                                       padding: '7px 16px',
@@ -3536,7 +3525,7 @@ const StudentDashboard = () => {
                     {subscriptionInfo?.isPremium ? (
                       <span
                         className="profile-badge-pill"
-                        onClick={() => setShowPremiumModal(true)}
+                        onClick={() => handleUpgradeProToast()}
                         style={{
                           background: subscriptionInfo?.daysLeft <= 3 && subscriptionInfo?.daysLeft > 0
                             ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(245, 158, 11, 0.3))'
@@ -3562,7 +3551,7 @@ const StudentDashboard = () => {
                     ) : (
                       <span
                         className="profile-badge-pill"
-                        onClick={() => setShowPremiumModal(true)}
+                        onClick={() => handleUpgradeProToast()}
                         style={{
                           background: 'rgba(255, 255, 255, 0.08)',
                           border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -6370,7 +6359,7 @@ const StudentDashboard = () => {
             const isExpiringSoon = subscriptionInfo?.isPremium && typeof subscriptionInfo?.daysLeft === 'number' && subscriptionInfo.daysLeft <= 3 && subscriptionInfo.daysLeft > 0;
             return (
               <div 
-                onClick={() => setShowPremiumModal(true)}
+                onClick={() => handleUpgradeProToast()}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -6708,7 +6697,7 @@ const StudentDashboard = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowPremiumModal(true)}
+                  onClick={() => handleUpgradeProToast()}
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
@@ -6766,7 +6755,7 @@ const StudentDashboard = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowPremiumModal(true)}
+                  onClick={() => handleUpgradeProToast()}
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
@@ -6868,25 +6857,7 @@ const StudentDashboard = () => {
         />
       )}
 
-      {/* Premium Upgrade Modal */}
-      <PremiumUpgradeModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        user={user}
-        onUpgradeSuccess={(res) => {
-          const updated = {
-            ...(user || {}),
-            isPremium: true,
-            premium: true,
-            subscriptionStatus: 'active',
-            premiumPlan: res?.plan || 'premium_annual',
-            premiumEndDate: res?.endDate || null,
-          };
-          setUser(updated);
-          setSubscriptionInfo(checkSubscriptionStatus(updated));
-          loadAssessments(updated);
-        }}
-      />
+      /* Premium Upgrade Modal removed in SEB environment */
 
       {/* Logout animation screen */}
       {showLogoutAnimation && (

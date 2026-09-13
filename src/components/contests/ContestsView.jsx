@@ -147,26 +147,11 @@ const ContestsView = ({
 
     // Check if contest requires a paid pass and user hasn't paid yet
     if (isPaidContest(registerModalContest) && !hasUserContestAccess(registerModalContest)) {
-      if (!user?.uid) {
-        toast.error('Please log in to purchase a contest pass.');
-        return;
-      }
-      setIsRegistering(true);
-      try {
-        const res = await purchaseContestPass(user, registerModalContest);
-        if (res.success) {
-          toast.success(`Entry pass activated! Successfully registered for ${registerModalContest.title}!`);
-          setRegisteredMap((prev) => ({ ...prev, [registerModalContest.id]: true }));
-          setRegisterModalContest(null);
-          fetchContests();
-        } else if (res.error && !res.error.includes('cancelled')) {
-          toast.error(res.error);
-        }
-      } catch (err) {
-        toast.error(err.message || 'Payment checkout failed.');
-      } finally {
-        setIsRegistering(false);
-      }
+      toast.info(
+        `Contest pass (₹${getFee(registerModalContest)}) for "${registerModalContest.title}" must be purchased on the SEED Website. Please log into the SEED Website (https://seedit.site) to activate your pass.`,
+        { duration: 6000 }
+      );
+      setRegisterModalContest(null);
       return;
     }
 
