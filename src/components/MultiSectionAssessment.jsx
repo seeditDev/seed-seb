@@ -2210,8 +2210,46 @@ const MultiSectionAssessment = () => {
           }, {});
 
         const totalMarksSum = Object.values(updatedResults).reduce((a, s) => a + (s.data?.maxScore || s.data?.totalQuestions || 0), 0);
-        const totalScore = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
-        const pct = totalMarksSum > 0 ? totalScore / totalMarksSum : 0;
+        const totalScorePartial = Object.values(updatedResults).reduce((a, s) => a + (s.data?.score || 0), 0);
+
+        // Calculate All-Testcases-Pass Score (strictly 100% testcases passed for each question)
+        let allPassTotalScore = 0;
+        let solvedAllPassCount = 0;
+        let partialSolvedCount = 0;
+
+        Object.values(updatedResults).forEach((sec) => {
+          if (sec.type === 'mcq') {
+            allPassTotalScore += (sec.data?.score || 0);
+            const correctCount = (sec.data?.questions || []).filter((q) => q.isCorrect).length;
+            solvedAllPassCount += correctCount;
+          } else if (sec.type === 'coding') {
+            const codingList = sec.data?.questions || sec.data?.coding || [];
+            codingList.forEach((c) => {
+              const passed = c.testsPassed || c.passedTestCases || 0;
+              const total = c.totalTests || c.totalTestCases || 0;
+              const weight = c.maxScore || c.weight || 20;
+              if (passed > 0) {
+                partialSolvedCount++;
+              }
+              if (total > 0 && passed === total) {
+                allPassTotalScore += weight;
+                solvedAllPassCount++;
+              }
+            });
+          } else {
+            allPassTotalScore += (sec.data?.score || 0);
+          }
+        });
+
+        const isContest = Boolean(
+          assessment?.isContest ||
+          assessment?.contestId ||
+          sessionStorage.getItem('msaCourseCtx')?.includes('"isContest":true')
+        );
+
+        const primaryTotalScore = isContest ? allPassTotalScore : totalScorePartial;
+        const pct = totalMarksSum > 0 ? primaryTotalScore / totalMarksSum : 0;
+        const partialPct = totalMarksSum > 0 ? totalScorePartial / totalMarksSum : 0;
 
         let authorizedStartedAt = examStartTimeRef.current;
         try {
@@ -2263,10 +2301,15 @@ const MultiSectionAssessment = () => {
             assessmentType: 'multi_section',
           },
           scores: {
-            totalScore,
+            totalScore: primaryTotalScore,
+            allPassTotalScore,
+            allPassScore: allPassTotalScore,
+            partialScore: totalScorePartial,
             maxScore: totalMarksSum,
             percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
-            passed: totalMarksSum > 0 && (totalScore / totalMarksSum >= 0.5),
+            partialPercentage: totalMarksSum > 0 ? Math.min(100, Math.round(partialPct * 100)) : 0,
+            passed: totalMarksSum > 0 && (primaryTotalScore / totalMarksSum >= 0.5),
+            evaluationType: isContest ? 'all_pass_strict' : 'dual_captured',
           },
           timing: {
             startedAt: authorizedStartedAt,
@@ -2311,11 +2354,6 @@ const MultiSectionAssessment = () => {
           resultWriteSuccess = true;
 
           // ── If this assessment is a Contest, sync single submission & leaderboard entry ──
-          const isContest = Boolean(
-            assessment?.isContest ||
-            assessment?.contestId ||
-            sessionStorage.getItem('msaCourseCtx')?.includes('"isContest":true')
-          );
           if (isContest) {
             const contestId = assessment?.contestId || assessment?.id;
             try {
@@ -2329,18 +2367,23 @@ const MultiSectionAssessment = () => {
                 email: tenant.email || user.email || '',
                 tenantId: tenant.tenantId || 'global',
                 tenantName: tenant.college || 'Global Arena',
-                totalScore,
+                totalScore: allPassTotalScore,
+                allPassTotalScore,
+                partialScore: totalScorePartial,
                 maxScore: totalMarksSum,
-                percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
+                percentage: totalMarksSum > 0 ? Math.min(100, Math.round((allPassTotalScore / totalMarksSum) * 100)) : 0,
+                partialPercentage: totalMarksSum > 0 ? Math.min(100, Math.round(partialPct * 100)) : 0,
                 timeTakenSeconds: timeTaken,
+                timeTakenFormatted,
+                solvedCount: solvedAllPassCount,
+                partialSolvedCount,
                 status: 'submitted',
                 submittedAt: serverTimestamp(),
                 codingSubmissions: aggregatedCoding,
                 sections: sectionsList,
               }, { merge: true });
 
-              // 2. Leaderboard entry keyed by userId
-              const solvedCount = aggregatedCoding.filter((c) => (c.passedTestCases || 0) > 0).length;
+              // 2. Leaderboard entry keyed by userId (Strictly based on all testcases passed only & speed)
               const lbRef = doc(db, 'contests', contestId, 'leaderboard', userId);
               await setDoc(lbRef, {
                 userId,
@@ -2348,11 +2391,15 @@ const MultiSectionAssessment = () => {
                 email: tenant.email || user.email || '',
                 tenantId: tenant.tenantId || 'global',
                 tenantName: tenant.college || 'Global Arena',
-                totalScore,
+                totalScore: allPassTotalScore,
+                allPassTotalScore,
+                partialScore: totalScorePartial,
                 maxScore: totalMarksSum,
                 timeTakenSeconds: timeTaken,
-                solvedCount,
-                percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
+                timeTakenFormatted,
+                solvedCount: solvedAllPassCount,
+                partialSolvedCount,
+                percentage: totalMarksSum > 0 ? Math.min(100, Math.round((allPassTotalScore / totalMarksSum) * 100)) : 0,
                 lastActivity: serverTimestamp(),
               }, { merge: true });
               console.log('[MSA] Contest submission & leaderboard synced for contestId:', contestId);

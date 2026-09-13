@@ -2,6 +2,26 @@ import React, { useMemo, useState, useEffect } from 'react';
 import '../styles/SecurityWatermark.css';
 import { getAuthData } from '../utils/storageUtils';
 
+const resolveUserIdentifier = (u, propR, propE) => {
+  if (propR && propR !== 'CANDIDATE') return propR;
+  if (!u) return propE ? propE.split('@')[0] : 'CANDIDATE';
+  // Use custom rollNumber if present and not matching raw uid
+  if (u.rollNumber && u.rollNumber !== u.uid) return u.rollNumber;
+  // For global users, use username, displayName, name, or email prefix (never raw uid)
+  if (u.username) return u.username;
+  if (u.displayName) return u.displayName;
+  if (u.name) return u.name;
+  if (u.email) return u.email.split('@')[0];
+  if (propE) return propE.split('@')[0];
+  return 'CANDIDATE';
+};
+
+const resolveTenant = (u, propT) => {
+  const t = propT || u?.tenantId || u?.collegeName;
+  if (!t || t === 'global' || t === 'SEED-SEB') return 'GLOBAL ARENA';
+  return t;
+};
+
 /**
  * Synchronously read initial auth data from localStorage so watermark
  * renders instantly on 1st frame before any assessment logic or async state.
@@ -9,12 +29,11 @@ import { getAuthData } from '../utils/storageUtils';
 const getInitialAuth = () => {
   try {
     const authData = getAuthData();
-    const user = authData;
-    const roll = (user.rollNumber ?? user.uid ?? user.email) ?? '';
-    const tenant = user.tenantId;
+    const roll = resolveUserIdentifier(authData);
+    const tenant = resolveTenant(authData);
     return { roll, tenant };
   } catch (_) {
-    return { roll: '', tenant: 'SEED-SEB' };
+    return { roll: 'CANDIDATE', tenant: 'GLOBAL ARENA' };
   }
 };
 
@@ -26,16 +45,13 @@ const getInitialAuth = () => {
 const SecurityWatermark = ({ email: propEmail, rollNumber: propRoll, tenantId: propTenant, customText }) => {
   const initial = useMemo(() => getInitialAuth(), []);
   const [candidateRoll, setCandidateRoll] = useState(propRoll || initial.roll || 'CANDIDATE');
-  const [candidateTenant, setCandidateTenant] = useState(propTenant || initial.tenant || 'SEED-SEB');
+  const [candidateTenant, setCandidateTenant] = useState(propTenant || initial.tenant || 'GLOBAL ARENA');
 
   useEffect(() => {
-    if (propRoll) setCandidateRoll(propRoll);
-    if (propTenant) setCandidateTenant(propTenant);
-
     try {
       const user = getAuthData();
-      const resolvedRoll = propRoll || user.rollNumber || user.uid || user.email || (propEmail ?? '');
-      const resolvedTenant = propTenant || user.tenantId;
+      const resolvedRoll = resolveUserIdentifier(user, propRoll, propEmail);
+      const resolvedTenant = resolveTenant(user, propTenant);
 
       if (resolvedRoll) setCandidateRoll(resolvedRoll);
       if (resolvedTenant) setCandidateTenant(resolvedTenant);

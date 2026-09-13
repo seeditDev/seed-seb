@@ -116,10 +116,15 @@ export function buildResultDoc({
     scoring_authority: 'client_provisional',
 
     // Scores
-    totalScore: typeof scores?.totalScore === 'number' ? scores.totalScore : 0,
-    maxScore:   typeof scores?.maxScore === 'number' ? scores.maxScore : 0,
-    percentage: typeof scores?.percentage === 'number' ? scores.percentage : 0,
-    passed:     Boolean(scores?.passed),
+    totalScore:         typeof scores?.totalScore === 'number' ? scores.totalScore : 0,
+    allPassTotalScore:  typeof scores?.allPassTotalScore === 'number' ? scores.allPassTotalScore : (typeof scores?.totalScore === 'number' ? scores.totalScore : 0),
+    allPassScore:       typeof scores?.allPassScore === 'number' ? scores.allPassScore : (typeof scores?.allPassTotalScore === 'number' ? scores.allPassTotalScore : (typeof scores?.totalScore === 'number' ? scores.totalScore : 0)),
+    partialScore:       typeof scores?.partialScore === 'number' ? scores.partialScore : (typeof scores?.totalScore === 'number' ? scores.totalScore : 0),
+    partialPercentage:  typeof scores?.partialPercentage === 'number' ? scores.partialPercentage : 0,
+    maxScore:           typeof scores?.maxScore === 'number' ? scores.maxScore : 0,
+    percentage:         typeof scores?.percentage === 'number' ? scores.percentage : 0,
+    passed:             Boolean(scores?.passed),
+    evaluationType:     scores?.evaluationType || 'dual_captured',
 
     // Detail arrays
     sections,

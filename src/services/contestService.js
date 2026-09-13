@@ -30,7 +30,17 @@ export function normaliseContest(id, raw = {}) {
   const registrationStartTime = raw.registrationStartTime || '';
   const registrationEndTime = raw.registrationEndTime || '';
   const roundCount = Number(raw.roundCount || (Array.isArray(raw.rounds) ? raw.rounds.length : 1));
-  const rounds = Array.isArray(raw.rounds) ? raw.rounds : [];
+  const rounds = Array.isArray(raw.rounds) ? raw.rounds.map((r, idx) => ({
+    ...r,
+    roundNumber: r.roundNumber || idx + 1,
+    roundName: r.roundName || r.name || `Round ${r.roundNumber || idx + 1}`,
+    name: r.roundName || r.name || `Round ${r.roundNumber || idx + 1}`,
+    durationMinutes: Number(r.durationMinutes || 60),
+    passPercentage: r.passPercentage !== undefined ? Number(r.passPercentage) : 50,
+    msaSlug: r.msaSlug || r.assessmentSlug || '',
+    passkey: r.passkey || '',
+    requiresSeb: r.requiresSeb !== undefined ? Boolean(r.requiresSeb) : (raw.requiresSeb !== false),
+  })) : [];
   const currentRoundNumber = Number(raw.currentRoundNumber || 1);
   const rulesText = typeof raw.rulesText === 'string' ? raw.rulesText : '';
   const winners = Array.isArray(raw.winners) ? raw.winners : [];
@@ -452,7 +462,7 @@ export async function listContestProblems(contestId) {
  * Fetches sections and question data strictly from Firestore (never static JSON)
  * and initializes MultiSectionAssessment runtime storage.
  */
-export async function prepareContestMSAAssessment(contest, user, preferredRoundNumber = null) {
+export async function prepareContestMSAAssessment(contest, user, preferredRoundNumber = null, userPasskey = '') {
   if (!contest?.id) throw new Error('Invalid contest provided');
 
   let sections = [];
@@ -479,8 +489,32 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
       }
     }
 
+    // Validate round passkey if configured
+    if (targetRound?.passkey && targetRound.passkey.trim() !== '') {
+      const entered = (userPasskey || '').trim();
+      if (!entered || entered.toLowerCase() !== targetRound.passkey.trim().toLowerCase()) {
+        throw new Error(`Round ${targetRound.roundNumber} is protected. Please enter the valid round passkey.`);
+      }
+    }
+
     if (targetRound && Array.isArray(targetRound.sections) && targetRound.sections.length > 0) {
       sections = targetRound.sections;
+    }
+
+    // If round has an msaSlug mapped directly in Firebase
+    if (sections.length === 0 && targetRound?.msaSlug) {
+      try {
+        const slugDocRef = doc(db, ASSESSMENTS, targetRound.msaSlug.trim());
+        const slugSnap = await getDoc(slugDocRef);
+        if (slugSnap.exists()) {
+          const msaData = slugSnap.data();
+          if (Array.isArray(msaData.sections) && msaData.sections.length > 0) {
+            sections = msaData.sections;
+          }
+        }
+      } catch (err) {
+        console.warn('[contestService] Error fetching mapped round msaSlug:', err);
+      }
     }
   }
 
@@ -746,12 +780,24 @@ export function subscribeContestLeaderboard(contestId, onUpdate) {
     }));
 
     list.sort((a, b) => {
-      if ((b.totalScore || 0) !== (a.totalScore || 0)) {
-        return (b.totalScore || 0) - (a.totalScore || 0);
-      }
-      if ((b.solvedCount || 0) !== (a.solvedCount || 0)) {
-        return (b.solvedCount || 0) - (a.solvedCount || 0);
-      }
+      // 1. Total score (strictly all testcase pass score for each question)
+      const scoreDiff = (b.totalScore || 0) - (a.totalScore || 0);
+      if (scoreDiff !== 0) return scoreDiff;
+
+      // 2. Candidate assessment timing (how fast they solved all questions: timeTakenSeconds asc)
+      const timeA = typeof a.timeTakenSeconds === 'number' ? a.timeTakenSeconds : Infinity;
+      const timeB = typeof b.timeTakenSeconds === 'number' ? b.timeTakenSeconds : Infinity;
+      if (timeA !== timeB) return timeA - timeB;
+
+      // 3. Solved count (count of problems with all testcases passed)
+      const solvedDiff = (b.solvedCount || 0) - (a.solvedCount || 0);
+      if (solvedDiff !== 0) return solvedDiff;
+
+      // 4. Partial score
+      const partialDiff = (b.partialScore || 0) - (a.partialScore || 0);
+      if (partialDiff !== 0) return partialDiff;
+
+      // 5. Total penalty minutes
       return (a.totalPenaltyMinutes || 0) - (b.totalPenaltyMinutes || 0);
     });
 

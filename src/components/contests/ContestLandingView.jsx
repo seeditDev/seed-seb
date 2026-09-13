@@ -99,6 +99,8 @@ export default function ContestLandingView({
   const [isLaunching, setIsLaunching] = useState(false);
   const [passkeyInput, setPasskeyInput] = useState('');
   const [showPasskeyModal, setShowPasskeyModal] = useState(false);
+  const [selectedRoundForPasskey, setSelectedRoundForPasskey] = useState(null);
+  const [roundPasskeyInput, setRoundPasskeyInput] = useState('');
   const [leaderboard, setLeaderboard] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [participants, setParticipants] = useState([]);
@@ -335,7 +337,7 @@ export default function ContestLandingView({
   };
 
   // Launch Contest Assessment for Active or Chosen Round
-  const handleStartContestAssessment = async (targetRoundNumber = null) => {
+  const handleStartContestAssessment = async (targetRoundNumber = null, roundPasskey = '') => {
     if (!isRegistered) {
       toast.error('You must register for this contest before entering.');
       return;
@@ -350,6 +352,20 @@ export default function ContestLandingView({
         `You have not been shortlisted for Round ${roundToEnter.roundNumber} ("${roundToEnter.name}"). Only qualified candidates can enter this round.`
       );
       return;
+    }
+
+    // Check if round requires a passkey
+    if (roundToEnter?.passkey && roundToEnter.passkey.trim() !== '' && !roundPasskey) {
+      setSelectedRoundForPasskey(roundToEnter);
+      setRoundPasskeyInput('');
+      return;
+    }
+
+    if (roundToEnter?.passkey && roundToEnter.passkey.trim() !== '') {
+      if (roundPasskey.trim().toLowerCase() !== roundToEnter.passkey.trim().toLowerCase()) {
+        toast.error(`Invalid passkey for ${roundToEnter.name || `Round ${roundToEnter.roundNumber}`}. Check the live announcements banner for the broadcasted key.`);
+        return;
+      }
     }
 
     // Check SEB Lockdown if required
@@ -368,7 +384,9 @@ export default function ContestLandingView({
 
     setIsLaunching(true);
     try {
-      const targetUrl = await prepareContestMSAAssessment(contest, user, roundToEnter?.roundNumber);
+      const targetUrl = await prepareContestMSAAssessment(contest, user, roundToEnter?.roundNumber, roundPasskey);
+      setSelectedRoundForPasskey(null);
+      setRoundPasskeyInput('');
       if (onLaunchAssessment) {
         onLaunchAssessment(targetUrl);
       } else {
@@ -669,6 +687,19 @@ export default function ContestLandingView({
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="overview-tab-content space-y-6">
+              {/* LIVE ANNOUNCEMENT BANNER */}
+              {announcements && announcements.length > 0 && (
+                <div className="p-3.5 rounded-2xl border border-primary/40 bg-primary/10 flex items-center justify-between gap-3 text-xs shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
+                    <span className="font-bold text-primary">📢 Broadcast:</span>
+                    <span className="text-foreground font-medium">{announcements[0]?.message}</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    by {announcements[0]?.author || 'Admin'}
+                  </span>
+                </div>
+              )}
               {/* WINNERS PODIUM BANNER (If Declared by Admin) */}
               {hasDeclaredWinners && (
                 <div className="contest-card bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-amber-500/10 border-amber-500/30 p-6 rounded-2xl">
@@ -970,7 +1001,7 @@ export default function ContestLandingView({
                       </div>
 
                       {/* Round details & settings */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 my-4 text-xs">
                         <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
                           <span className="text-muted-foreground font-medium block mb-0.5">Format:</span>
                           <span className="font-semibold text-foreground">
@@ -981,9 +1012,16 @@ export default function ContestLandingView({
                         </div>
 
                         <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
-                          <span className="text-muted-foreground font-medium block mb-0.5">Environment:</span>
+                          <span className="text-muted-foreground font-medium block mb-0.5">Pass Percentage:</span>
+                          <span className="font-bold text-primary">
+                            {round.passPercentage ? `>= ${round.passPercentage}% to Advance` : 'Open Qualifier'}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
+                          <span className="text-muted-foreground font-medium block mb-0.5">Passkey Access:</span>
                           <span className="font-semibold text-foreground">
-                            {round.requiresSeb || contest.requiresSeb ? 'SEED-SEB Lockdown Enforced' : 'Standard Browser'}
+                            {round.passkey ? '🔐 Passkey Protected' : 'Open Round'}
                           </span>
                         </div>
 
@@ -1078,9 +1116,11 @@ export default function ContestLandingView({
                         <th>Rank</th>
                         <th>Participant</th>
                         <th>Institution</th>
-                        <th>Score</th>
+                        <th>Total Marks (All-Pass)</th>
+                        <th>Partial Score</th>
+                        <th>Assessment Timing (Speed)</th>
                         <th>Solved</th>
-                        <th>Penalty</th>
+                        <th>Score %</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1097,13 +1137,21 @@ export default function ContestLandingView({
                             </span>
                           </td>
                           <td className="text-xs text-muted-foreground">
-                            {entry.tenantName || 'Global'}
+                            {entry.tenantName || 'Global Arena'}
                           </td>
                           <td className="font-mono font-bold text-emerald-600">
-                            {entry.totalScore}
+                            {entry.allPassTotalScore ?? entry.totalScore}
                           </td>
-                          <td className="font-mono">{entry.solvedCount || 0}</td>
-                          <td className="font-mono text-xs text-muted-foreground">{entry.totalPenaltyMinutes || 0}m</td>
+                          <td className="font-mono text-xs text-muted-foreground">
+                            {entry.partialScore !== undefined ? `${entry.partialScore} pts` : '—'}
+                          </td>
+                          <td className="font-mono text-xs text-primary font-semibold">
+                            {entry.timeTakenFormatted || (entry.timeTakenSeconds ? `${Math.floor(entry.timeTakenSeconds / 60)}m ${entry.timeTakenSeconds % 60}s` : '—')}
+                          </td>
+                          <td className="font-mono font-medium">{entry.solvedCount || 0}</td>
+                          <td className="font-mono text-xs font-semibold">
+                            {entry.percentage !== undefined ? `${entry.percentage}%` : '—'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1527,6 +1575,58 @@ export default function ContestLandingView({
             <div className="modal-footer">
               <button className="hero-primary-btn register-btn" onClick={() => executeRegistration(passkeyInput)} disabled={isRegistering}>
                 {isRegistering ? 'Verifying…' : 'Submit & Register'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ROUND PASSKEY PROMPT MODAL */}
+      {selectedRoundForPasskey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in">
+            <div className="flex items-center gap-3 text-amber-500">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-lg">
+                <FaLock />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-foreground">
+                  Round Passkey Verification
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {selectedRoundForPasskey.name || `Round ${selectedRoundForPasskey.roundNumber}`}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This round is protected. Please enter the passkey broadcasted by the contest administrator to access this round.
+            </p>
+            <input
+              type="text"
+              placeholder="Enter Round Passkey..."
+              value={roundPasskeyInput}
+              onChange={(e) => setRoundPasskeyInput(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/30 font-mono text-sm tracking-wider focus:outline-none focus:ring-2 focus:ring-primary"
+              autoFocus
+            />
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-muted text-muted-foreground"
+                onClick={() => {
+                  setSelectedRoundForPasskey(null);
+                  setRoundPasskeyInput('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                disabled={!roundPasskeyInput.trim() || isLaunching}
+                onClick={() => handleStartContestAssessment(selectedRoundForPasskey.roundNumber, roundPasskeyInput)}
+              >
+                {isLaunching ? 'Validating...' : 'Unlock & Enter Round →'}
               </button>
             </div>
           </div>
