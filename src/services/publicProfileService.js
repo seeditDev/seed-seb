@@ -15,7 +15,7 @@
  */
 
 import { db } from '../lib/firebase-config';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from 'firebase/firestore';
 import { sanitizeUsernameComponent } from './usernameService';
 import { isQuestionBankProblem } from './codingProgressService';
 import { calculateLevel } from '../utils/gamificationService';
@@ -199,27 +199,46 @@ export async function publishPublicProfile(uid, userProfile = {}, progressData =
   const heatmap = generateYearHeatmapData(progressData.activity, progressData.problemDetails);
   const badges = computeStudentBadges(solvedCount, completedAssessments, streak);
 
-  // Common Curriculum tracks
-  const tracks = [
-    {
-      id: 'c_programming',
-      name: 'C Programming & Pointers',
-      category: 'Systems',
-      progress: Math.min(100, Math.round((solvedCount / 25) * 100)),
-    },
-    {
-      id: 'dsa_core',
-      name: 'Data Structures & Algorithms',
-      category: 'Core Computer Science',
-      progress: Math.min(100, Math.round((solvedCount / 40) * 100)),
-    },
-    {
-      id: 'java_oops',
-      name: 'Java & Object Oriented Design',
-      category: 'Backend',
-      progress: Math.min(100, Math.round((solvedCount / 30) * 100)),
-    },
-  ];
+  // Fetch authentic course curriculum and enrolled courses from users/{uid}/courseProgress
+  const tracks = [];
+  try {
+    const cpCol = collection(db, 'users', uid, 'courseProgress');
+    const cpSnap = await getDocs(cpCol);
+    if (!cpSnap.empty) {
+      cpSnap.forEach(d => {
+        const cData = d.data();
+        const pct = Math.min(100, Math.max(0, Math.round(Number(cData.progressPercent ?? cData.progress ?? 0))));
+        tracks.push({
+          id: d.id,
+          name: cData.title || cData.courseTitle || cData.name || d.id,
+          category: cData.category || 'Curriculum',
+          progress: pct,
+          completedModules: Number(cData.completedModulesCount ?? (Array.isArray(cData.completedModules) ? cData.completedModules.length : 0)),
+          status: cData.status || (pct >= 100 ? 'COMPLETED' : 'IN_PROGRESS'),
+          certificateId: cData.certificateId || ''
+        });
+      });
+    }
+  } catch (cpErr) {
+    console.warn('[publicProfileService] Failed to load genuine courseProgress in seed-seb:', cpErr.message);
+  }
+
+  if (tracks.length === 0 && Array.isArray(userProfile.enrolledCourses) && userProfile.enrolledCourses.length > 0) {
+    for (const cItem of userProfile.enrolledCourses) {
+      const cId = typeof cItem === 'string' ? cItem : (cItem?.id || cItem?.courseId || '');
+      if (cId) {
+        tracks.push({
+          id: cId,
+          name: typeof cItem === 'object' && cItem.title ? cItem.title : cId,
+          category: 'Curriculum',
+          progress: typeof cItem === 'object' && typeof cItem.progress === 'number' ? cItem.progress : 0,
+          completedModules: 0,
+          status: 'ENROLLED',
+          certificateId: ''
+        });
+      }
+    }
+  }
 
   const publicPayload = {
     username,

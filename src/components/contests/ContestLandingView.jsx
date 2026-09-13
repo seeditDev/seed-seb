@@ -31,6 +31,8 @@ import {
   FaChevronRight,
   FaChevronDown,
   FaChevronUp,
+  FaLayerGroup,
+  FaUserCheck,
 } from 'react-icons/fa';
 import { toast } from 'sonner';
 import {
@@ -38,7 +40,6 @@ import {
   registerForContest,
   unregisterFromContest,
   listContestParticipants,
-  listContestProblems,
   subscribeContestLeaderboard,
   subscribeContestAnnouncements,
   subscribeToContest,
@@ -66,24 +67,16 @@ const TrophySvg = () => (
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
     </defs>
-    {/* Pedestal Base */}
     <ellipse cx="100" cy="172" rx="64" ry="16" fill="url(#pedestalGrad)" stroke="#334155" strokeWidth="2" />
     <path d="M42 166 L60 142 L140 142 L158 166 Z" fill="url(#pedestalGrad)" stroke="#334155" strokeWidth="1.5" />
-    {/* Pedestal Top */}
     <ellipse cx="100" cy="142" rx="40" ry="10" fill="#0F172A" stroke="#475569" strokeWidth="1.5" />
-    {/* Stem */}
     <path d="M92 118 L88 140 L112 140 L108 118 Z" fill="url(#trophyGold)" />
     <ellipse cx="100" cy="118" rx="16" ry="6" fill="#F5B800" />
-    {/* Cup Body */}
     <path d="M60 48 Q60 112 100 114 Q140 112 140 48 Z" fill="url(#trophyGold)" filter="url(#glow)" />
     <ellipse cx="100" cy="48" rx="40" ry="12" fill="#FFE875" />
-    {/* Cup Rim highlight */}
     <ellipse cx="100" cy="48" rx="35" ry="9" fill="#F5B800" />
-    {/* Left Handle */}
     <path d="M62 56 Q32 64 36 90 Q40 108 68 104" fill="none" stroke="url(#trophyGold)" strokeWidth="8" strokeLinecap="round" />
-    {/* Right Handle */}
     <path d="M138 56 Q168 64 164 90 Q160 108 132 104" fill="none" stroke="url(#trophyGold)" strokeWidth="8" strokeLinecap="round" />
-    {/* Code Symbol on Cup */}
     <text x="100" y="86" textAnchor="middle" fill="#5A3200" fontSize="22" fontWeight="900" fontFamily="monospace">
       &lt;/&gt;
     </text>
@@ -106,8 +99,6 @@ export default function ContestLandingView({
   const [isLaunching, setIsLaunching] = useState(false);
   const [passkeyInput, setPasskeyInput] = useState('');
   const [showPasskeyModal, setShowPasskeyModal] = useState(false);
-  const [selectedProblemPreview, setSelectedProblemPreview] = useState(null);
-  const [problems, setProblems] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [participants, setParticipants] = useState([]);
@@ -140,11 +131,6 @@ export default function ContestLandingView({
   useEffect(() => {
     if (!contest?.id) return;
 
-    listContestProblems(contest.id).then((pList) => {
-      if (pList.length > 0) setProblems(pList);
-      else if (contest.sampleProblems) setProblems(contest.sampleProblems);
-    });
-
     const unsubLb = subscribeContestLeaderboard(contest.id, (lb) => {
       setLeaderboard(lb);
     });
@@ -154,7 +140,7 @@ export default function ContestLandingView({
     });
 
     listContestParticipants(contest.id).then((partList) => {
-      setParticipants(partList);
+      setParticipants(partList || []);
     });
 
     return () => {
@@ -163,7 +149,7 @@ export default function ContestLandingView({
     };
   }, [contest?.id]);
 
-  // Status & Time Calculations
+  // Contest Lifecycle Status
   const dynamicStatus = useMemo(() => {
     if (!contest) return 'upcoming';
     const now = Date.now();
@@ -173,6 +159,61 @@ export default function ContestLandingView({
     if (now >= startMs && now <= endMs) return 'live';
     return 'ended';
   }, [contest]);
+
+  // Automated Registration Dates State
+  const registrationState = useMemo(() => {
+    if (!contest) return 'open';
+    const now = Date.now();
+    const regStartMs = contest.registrationStartTime ? new Date(contest.registrationStartTime).getTime() : null;
+    const regEndMs = contest.registrationEndTime
+      ? new Date(contest.registrationEndTime).getTime()
+      : (contest.startTime ? new Date(contest.startTime).getTime() : null);
+
+    if (regStartMs && now < regStartMs) return 'upcoming';
+    if (regEndMs && now > regEndMs) return 'closed';
+    return 'open';
+  }, [contest]);
+
+  // Current Active Round Determination
+  const roundsList = useMemo(() => {
+    if (Array.isArray(contest?.rounds) && contest.rounds.length > 0) {
+      return contest.rounds;
+    }
+    return [
+      {
+        roundNumber: 1,
+        name: 'Main Round',
+        status: contest?.status || 'upcoming',
+        durationMinutes: contest?.durationMinutes || 120,
+        startTime: contest?.startTime,
+        endTime: contest?.endTime,
+        sections: contest?.sections || [],
+        requiresSeb: contest?.requiresSeb,
+        proctorConfig: contest?.proctorConfig,
+        shortlistedUids: [],
+      }
+    ];
+  }, [contest]);
+
+  const activeRound = useMemo(() => {
+    const live = roundsList.find((r) => r.status === 'live');
+    if (live) return live;
+    const byCurrentNum = roundsList.find((r) => r.roundNumber === (contest?.currentRoundNumber || 1));
+    return byCurrentNum || roundsList[0];
+  }, [roundsList, contest?.currentRoundNumber]);
+
+  // Check if current user is qualified for a specific round
+  const isUserQualifiedForRound = (round) => {
+    if (!round) return false;
+    if (round.roundNumber === 1) return true; // Round 1 open to all registered users
+    const shortlisted = Array.isArray(round.shortlistedUids) ? round.shortlistedUids : (round.qualifiers || []);
+    if (shortlisted.length === 0) return true; // If admin hasn't restricted yet
+    return Boolean(user?.uid && shortlisted.includes(user.uid));
+  };
+
+  const isUserQualifiedForActiveRound = useMemo(() => {
+    return isUserQualifiedForRound(activeRound);
+  }, [activeRound, user?.uid]);
 
   const timeCountdownText = useMemo(() => {
     if (!contest?.startTime) return '';
@@ -189,18 +230,25 @@ export default function ContestLandingView({
     return `Starts in ${diffMins} minutes`;
   }, [contest?.startTime]);
 
-  const formattedStartTime = useMemo(() => {
-    if (!contest?.startTime) return 'TBA';
-    const d = new Date(contest.startTime);
-    return d.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short',
-    });
-  }, [contest?.startTime]);
+  const formatDateTime = (isoStr) => {
+    if (!isoStr) return 'TBA';
+    try {
+      const d = new Date(isoStr);
+      return d.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return isoStr;
+    }
+  };
+
+  const formattedStartTime = useMemo(() => formatDateTime(contest?.startTime), [contest?.startTime]);
+  const formattedRegStart = useMemo(() => formatDateTime(contest?.registrationStartTime), [contest?.registrationStartTime]);
+  const formattedRegEnd = useMemo(() => formatDateTime(contest?.registrationEndTime || contest?.startTime), [contest?.registrationEndTime, contest?.startTime]);
 
   const contestFee = Number(contest?.entryFeeINR || contest?.entryFee || 0);
   const isPaidContest = contest?.accessTier === 'paid_entry' || contestFee > 0;
@@ -211,10 +259,20 @@ export default function ContestLandingView({
     isRegistered
   );
 
-  // Handle Registration
+  // Handle Registration Click
   const handleRegisterClick = async () => {
     if (!user?.uid) {
       toast.error('Please log in to register for this contest.');
+      return;
+    }
+
+    if (registrationState === 'upcoming') {
+      toast.info(`Registration opens on ${formattedRegStart}. Please check back then!`);
+      return;
+    }
+
+    if (registrationState === 'closed') {
+      toast.error('Registration for this contest has already closed.');
       return;
     }
 
@@ -224,12 +282,21 @@ export default function ContestLandingView({
       return;
     }
 
-    // Check if contest requires a paid pass and user hasn't unlocked it yet
     if (isPaidContest && !hasPass) {
-      toast.info(
-        `Contest pass (₹${contestFee}) for "${contest.title}" must be purchased on the SEED Website. Please log into the SEED Website (https://seedit.site) to activate your pass.`,
-        { duration: 6000 }
-      );
+      setIsRegistering(true);
+      try {
+        const res = await purchaseContestPass(user, contest);
+        if (res.success) {
+          toast.success(`Entry pass unlocked! Successfully registered for ${contest.title}!`);
+          setIsRegistered(true);
+        } else if (res.error && !res.error.includes('cancelled')) {
+          toast.error(res.error);
+        }
+      } catch (err) {
+        toast.error(err.message || 'Contest pass checkout failed.');
+      } finally {
+        setIsRegistering(false);
+      }
       return;
     }
 
@@ -267,16 +334,29 @@ export default function ContestLandingView({
     }
   };
 
-  // Launch Contest into Unified MultiSectionAssessment runtime
-  const handleStartContestAssessment = async () => {
+  // Launch Contest Assessment for Active or Chosen Round
+  const handleStartContestAssessment = async (targetRoundNumber = null) => {
     if (!isRegistered) {
       toast.error('You must register for this contest before entering.');
       return;
     }
 
+    const roundToEnter = targetRoundNumber
+      ? roundsList.find((r) => r.roundNumber === targetRoundNumber)
+      : activeRound;
+
+    if (roundToEnter && roundToEnter.roundNumber > 1 && !isUserQualifiedForRound(roundToEnter)) {
+      toast.error(
+        `You have not been shortlisted for Round ${roundToEnter.roundNumber} ("${roundToEnter.name}"). Only qualified candidates can enter this round.`
+      );
+      return;
+    }
+
     // Check SEB Lockdown if required
-    if (contest.requiresSeb) {
-      const isRunningInSEB = window.__seedSebActive === true ||
+    const requiresSebLockdown = roundToEnter?.requiresSeb !== undefined ? roundToEnter.requiresSeb : contest.requiresSeb;
+    if (requiresSebLockdown) {
+      const isRunningInSEB =
+        window.__seedSebActive === true ||
         navigator.userAgent.includes('SEED-SEB') ||
         navigator.userAgent.includes('QtWebEngine');
 
@@ -288,7 +368,7 @@ export default function ContestLandingView({
 
     setIsLaunching(true);
     try {
-      const targetUrl = await prepareContestMSAAssessment(contest, user);
+      const targetUrl = await prepareContestMSAAssessment(contest, user, roundToEnter?.roundNumber);
       if (onLaunchAssessment) {
         onLaunchAssessment(targetUrl);
       } else {
@@ -321,9 +401,24 @@ export default function ContestLandingView({
     }
   };
 
+  // Filtered Participants List
+  const filteredParticipants = useMemo(() => {
+    if (!searchFilter.trim()) return participants;
+    const q = searchFilter.toLowerCase();
+    return participants.filter(
+      (p) =>
+        (p.displayName || '').toLowerCase().includes(q) ||
+        (p.tenantName || '').toLowerCase().includes(q) ||
+        (p.email || '').toLowerCase().includes(q)
+    );
+  }, [participants, searchFilter]);
+
+  const hasDeclaredWinners = Array.isArray(contest?.winners) && contest.winners.length > 0;
+  const prizesList = Array.isArray(contest?.prizes) && contest.prizes.length > 0 ? contest.prizes : [];
+
   return (
     <div className="contest-landing-wrapper">
-      {/* ── Top Bar Navigation (if launched inside portal) ── */}
+      {/* ── Top Bar Navigation ── */}
       {onBack && (
         <div className="contest-back-bar">
           <button className="contest-back-btn" onClick={onBack}>
@@ -340,7 +435,7 @@ export default function ContestLandingView({
             {/* Top Pill Badges Row */}
             <div className="hero-pill-row">
               <span className="hero-pill global-pill">
-                <FaGlobe className="pill-icon" /> GLOBAL ARENA
+                <FaGlobe className="pill-icon" /> {contest.isGlobal ? 'GLOBAL ARENA' : (contest.tenantName || 'COLLEGE ARENA')}
               </span>
               {dynamicStatus === 'live' ? (
                 <span className="hero-pill live-pill animate-pulse">
@@ -348,13 +443,16 @@ export default function ContestLandingView({
                 </span>
               ) : dynamicStatus === 'ended' ? (
                 <span className="hero-pill ended-pill">
-                  ⚪ COMPLETED
+                  ⚪ CONTEST ENDED
                 </span>
               ) : (
                 <span className="hero-pill upcoming-pill">
                   🟡 UPCOMING
                 </span>
               )}
+              <span className="hero-pill" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#C084FC', borderColor: 'rgba(168, 85, 247, 0.3)' }}>
+                <FaLayerGroup className="pill-icon" /> {roundsList.length} {roundsList.length === 1 ? 'Round' : 'Rounds'}
+              </span>
               {contest.isRated && (
                 <span className="hero-pill rated-pill">
                   ⭐ RATED
@@ -375,7 +473,7 @@ export default function ContestLandingView({
             {/* Title & Subtitle */}
             <h1 className="hero-contest-title">{contest.title}</h1>
             <p className="hero-contest-description">
-              {contest.description || 'Compete in real-time against coders worldwide, solve algorithmic challenges, and climb the global leaderboard.'}
+              {contest.description || 'Compete in real-time against coders worldwide, solve multi-round algorithmic challenges, and climb the leaderboard.'}
             </p>
 
             {/* Metadata Strip */}
@@ -391,37 +489,54 @@ export default function ContestLandingView({
                 <FaClock className="meta-icon" />
                 <div className="meta-text">
                   <span className="meta-val">{contest.durationMinutes} Minutes</span>
-                  <span className="meta-sub">Duration</span>
+                  <span className="meta-sub">Per Session</span>
                 </div>
               </div>
               <div className="hero-meta-chip">
                 <FaUsers className="meta-icon" />
                 <div className="meta-text">
-                  <span className="meta-val">{contest.isGlobal ? 'Global' : (contest.tenantName || 'College')}</span>
-                  <span className="meta-sub">{contest.isGlobal ? 'Open to all' : 'Restricted'}</span>
-                </div>
-              </div>
-              <div className="hero-meta-chip">
-                <FaUsers className="meta-icon" />
-                <div className="meta-text">
-                  <span className="meta-val">{contest.registeredCount || 0} Registered</span>
+                  <span className="meta-val">{contest.registeredCount || participants.length || 0} Registered</span>
                   <span className="meta-sub">
-                    {contest.registeredCount === 0 ? 'Be the first!' : 'Participants'}
+                    {registrationState === 'closed'
+                      ? 'Registration Closed'
+                      : registrationState === 'upcoming'
+                      ? 'Opens Soon'
+                      : 'Registration Open'}
                   </span>
                 </div>
               </div>
+              {contest.prizePool && (
+                <div className="hero-meta-chip">
+                  <FaTrophy className="meta-icon text-amber-400" />
+                  <div className="meta-text">
+                    <span className="meta-val text-amber-400">{contest.prizePool}</span>
+                    <span className="meta-sub">Prize Pool</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Hero CTA Buttons */}
             <div className="hero-cta-group">
               {dynamicStatus === 'live' && isRegistered ? (
-                <button
-                  className="hero-primary-btn launch-btn"
-                  onClick={handleStartContestAssessment}
-                  disabled={isLaunching}
-                >
-                  <FaPlay className="btn-icon" /> {isLaunching ? 'Entering Arena…' : 'Enter Contest Workspace →'}
-                </button>
+                isUserQualifiedForActiveRound ? (
+                  <button
+                    className="hero-primary-btn launch-btn"
+                    onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
+                    disabled={isLaunching}
+                  >
+                    <FaPlay className="btn-icon" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button className="hero-primary-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
+                      🔒 Round {activeRound?.roundNumber} Shortlist Required
+                    </button>
+                    <span className="text-xs text-amber-400">
+                      (Only shortlisted candidates advanced by judges can enter Round {activeRound?.roundNumber})
+                    </span>
+                  </div>
+                )
               ) : isRegistered ? (
                 <div className="registered-badge-group">
                   <button className="hero-primary-btn registered-btn" disabled>
@@ -431,6 +546,14 @@ export default function ContestLandingView({
                     Unregister
                   </button>
                 </div>
+              ) : registrationState === 'upcoming' ? (
+                <button className="hero-primary-btn" style={{ background: '#334155', cursor: 'not-allowed' }} disabled>
+                  Registration Opens {formattedRegStart}
+                </button>
+              ) : registrationState === 'closed' ? (
+                <button className="hero-primary-btn" style={{ background: '#1E293B', color: '#94A3B8', cursor: 'not-allowed' }} disabled>
+                  Registration Closed
+                </button>
               ) : (
                 <button
                   className="hero-primary-btn register-btn"
@@ -457,33 +580,32 @@ export default function ContestLandingView({
                 <FaHeart />
               </button>
               <span className="hero-helper-note">
-                {isRegistered ? 'You are registered for this contest!' : 'Be the first to register!'}
+                {isRegistered
+                  ? 'You are registered for this championship!'
+                  : registrationState === 'open'
+                  ? `Registration closes on ${formattedRegEnd}`
+                  : ''}
               </span>
             </div>
           </div>
 
-          {/* Right Column: 3D Trophy Showcase with Floating Badges */}
+          {/* Right Column: 3D Trophy Showcase */}
           <div className="hero-right-col">
             <button className="hero-share-corner-btn" onClick={() => handleShare('copy')}>
               <FaShareAlt /> Share
             </button>
 
             <div className="trophy-stage-container">
-              {/* Floating Glassmorphic Chips */}
               <div className="floating-chip chip-leaderboard">
-                <span className="chip-symbol">🌱</span> Real-time Leaderboard
+                <span className="chip-symbol">🌱</span> Multi-Round MSA
               </div>
               <div className="floating-chip chip-rankings">
-                <span className="chip-symbol">🌐</span> Global Rankings
+                <span className="chip-symbol">🌐</span> Global Standings
               </div>
               <div className="floating-chip chip-prizes">
-                <span className="chip-symbol">⭐</span> Exciting Prizes
-              </div>
-              <div className="floating-chip chip-certificates">
-                <span className="chip-symbol">🏅</span> Skill Certificates
+                <span className="chip-symbol">⭐</span> Cash &amp; Trophies
               </div>
 
-              {/* Central Trophy Artwork (or Custom Contest Image if provided) */}
               {contest.bannerUrl || contest.imageUrl ? (
                 <img
                   src={contest.bannerUrl || contest.imageUrl}
@@ -495,9 +617,8 @@ export default function ContestLandingView({
                 <TrophySvg />
               )}
 
-              {/* Bottom Stage Slogan */}
               <div className="stage-motto-breadcrumbs">
-                Challenge &gt; Code &gt; Improve &gt; Lead
+                Challenge &gt; Advance &gt; Win
               </div>
             </div>
           </div>
@@ -509,12 +630,12 @@ export default function ContestLandingView({
         <div className="tab-buttons-scroll">
           {[
             { id: 'overview', label: 'Overview' },
-            { id: 'problems', label: 'Problems' },
+            { id: 'rounds', label: `Rounds (${roundsList.length})` },
             { id: 'leaderboard', label: 'Leaderboard' },
-            { id: 'discussions', label: 'Discussions' },
-            { id: 'participants', label: 'Participants' },
+            { id: 'registrations', label: `Registrations (${contest.registeredCount || participants.length})` },
             { id: 'rules', label: 'Rules' },
             { id: 'prizes', label: 'Prizes' },
+            { id: 'discussions', label: 'Broadcasts' },
             { id: 'faq', label: 'FAQ' },
           ].map((tab) => (
             <button
@@ -527,18 +648,7 @@ export default function ContestLandingView({
           ))}
         </div>
 
-        {/* Right Search & Filter in Tab Bar */}
         <div className="tab-nav-right-tools">
-          <div className="scope-select-wrapper">
-            <select
-              className="scope-dropdown"
-              value={contest.isGlobal ? 'global' : 'college'}
-              disabled
-            >
-              <option value="global">All Scopes (Global + College)</option>
-              <option value="college">College Specific</option>
-            </select>
-          </div>
           <div className="tab-search-wrapper">
             <FaSearch className="search-icon" />
             <input
@@ -559,7 +669,53 @@ export default function ContestLandingView({
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="overview-tab-content space-y-6">
-              {/* Card 1: About This Contest */}
+              {/* WINNERS PODIUM BANNER (If Declared by Admin) */}
+              {hasDeclaredWinners && (
+                <div className="contest-card bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-amber-500/10 border-amber-500/30 p-6 rounded-2xl">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-500 text-xl">
+                      <FaTrophy />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-amber-500 tracking-tight">
+                        Official Contest Winners Declared! 🏆
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Congratulations to all champions and podium finalists.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {contest.winners.map((w, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl border border-amber-500/30 bg-black/40 backdrop-blur flex flex-col justify-between"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
+                            {w.rank}
+                          </span>
+                          <span className="text-lg">
+                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🎖️'}
+                          </span>
+                        </div>
+                        <div className="font-bold text-base text-foreground truncate">
+                          {w.displayName || w.name || 'Champion'}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate mb-2">
+                          {w.tenantName || 'Global Coder'}
+                        </div>
+                        <div className="text-xs font-semibold text-amber-300 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
+                          {w.prize || 'Champion Reward'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Card: About This Contest */}
               <div className="contest-card about-card">
                 <div className="about-card-left">
                   <div className="card-header-row">
@@ -569,11 +725,10 @@ export default function ContestLandingView({
                     <h2 className="card-title">About This Contest</h2>
                   </div>
                   <p className="card-text">
-                    {contest.description || 'SEED Coding Challenges is a global competitive programming contest designed to test your problem-solving skills, algorithmic thinking, and coding ability. Compete with participants from around the world, solve challenging problems, and climb the leaderboard.'}
+                    {contest.description || 'SEED Coding Challenges is a multi-round competitive programming event designed to test your algorithmic problem solving and development skills under lockdown conditions.'}
                   </p>
-                  {/* Category / Topic Pills */}
                   <div className="topic-pills-row">
-                    {['Data Structures', 'Algorithms', 'Problem Solving', 'Competitive Programming', 'Logic', 'Real-time Ranking'].map((t) => (
+                    {['Multi-Round Elimination', 'Automated Progression', 'SEED-SEB Lockdown', 'Proctored Arena', 'ICPC Penalty Rules'].map((t) => (
                       <span key={t} className="topic-pill">{t}</span>
                     ))}
                   </div>
@@ -590,89 +745,137 @@ export default function ContestLandingView({
                   <div className="prize-box-header">
                     <div className="prize-box-trophy">🏆</div>
                     <div>
-                      <h4 className="prize-box-title">Exciting Prizes for Top Performers</h4>
+                      <h4 className="prize-box-title">
+                        {contest.prizePool ? `Prize Pool: ${contest.prizePool}` : 'Exciting Prizes for Winners'}
+                      </h4>
                     </div>
                     <FaChevronRight className="prize-box-arrow" />
                   </div>
                   <ul className="prize-box-checklist">
-                    <li><FaCheck className="green-check" /> Global Leaderboard</li>
-                    <li><FaCheck className="green-check" /> Certificates for all participants</li>
-                    <li><FaCheck className="green-check" /> Goodies for top rankers</li>
-                    <li><FaCheck className="green-check" /> Recognition on SEED</li>
+                    <li><FaCheck className="green-check" /> Cash rewards &amp; Gold/Silver trophies</li>
+                    <li><FaCheck className="green-check" /> PRO yearly access passes</li>
+                    <li><FaCheck className="green-check" /> Verifiable achievement certificates</li>
+                    <li><FaCheck className="green-check" /> Global SEED rating points</li>
                   </ul>
                 </div>
               </div>
 
-              {/* Card 2: Sample Problems Table */}
-              <div className="contest-card sample-problems-card">
+              {/* Card: Multi-Round Tournament Pathway */}
+              <div className="contest-card space-y-4">
                 <div className="card-header-row justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="card-icon-bubble purple-bubble">
-                      <FaCode />
+                      <FaLayerGroup />
                     </div>
                     <div>
-                      <h2 className="card-title">Sample Problems</h2>
-                      <p className="card-subtitle">Here are a few example problems from this contest.</p>
+                      <h2 className="card-title">Tournament Rounds &amp; Progression</h2>
+                      <p className="card-subtitle">Complete each round to earn qualification for subsequent stages.</p>
                     </div>
                   </div>
-                  <button className="view-all-link" onClick={() => setActiveTab('problems')}>
-                    View All Problems →
+                  <button className="view-all-link" onClick={() => setActiveTab('rounds')}>
+                    View All Rounds Details →
                   </button>
                 </div>
 
-                <div className="sample-problems-table-wrapper">
-                  <table className="sample-problems-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Title</th>
-                        <th>Difficulty</th>
-                        <th>Topics</th>
-                        <th className="text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(problems.length > 0 ? problems : contest.sampleProblems).slice(0, 4).map((p, idx) => (
-                        <tr key={p.id || idx}>
-                          <td className="font-mono text-muted">{idx + 1}</td>
-                          <td>
-                            <div className="flex items-center gap-2">
-                              <FaFileAlt className="text-muted-icon" />
-                              <span className="font-semibold text-slate-800 dark:text-slate-100">{p.title}</span>
-                            </div>
-                          </td>
-                          <td>
-                            <span className={`diff-badge diff-${(p.difficulty || 'Medium').toLowerCase()}`}>
-                              {p.difficulty || 'Medium'}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {roundsList.map((r) => {
+                    const isQualified = isUserQualifiedForRound(r);
+                    const isCurrentLive = r.status === 'live';
+
+                    return (
+                      <div
+                        key={r.roundNumber}
+                        className={`p-4 rounded-xl border transition-all ${
+                          isCurrentLive
+                            ? 'border-emerald-500/50 bg-emerald-500/5 shadow-sm'
+                            : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                            Round {r.roundNumber}
+                          </span>
+                          {isCurrentLive ? (
+                            <span className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> LIVE
                             </span>
-                          </td>
-                          <td className="text-sm text-slate-600 dark:text-slate-300">
-                            {p.topics || 'Algorithms, Implementation'}
-                          </td>
-                          <td className="text-right">
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground uppercase">
+                              {r.status || 'Upcoming'}
+                            </span>
+                          )}
+                        </div>
+
+                        <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1 line-clamp-1">
+                          {r.name}
+                        </h4>
+
+                        <div className="text-xs text-muted-foreground mb-3 space-y-0.5">
+                          <div>Duration: <span className="font-semibold text-foreground">{r.durationMinutes || 120} mins</span></div>
+                          {r.startTime && <div>Window: {formatDateTime(r.startTime)}</div>}
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                          {r.roundNumber === 1 ? (
+                            <span className="text-slate-600 dark:text-slate-400">Open to all registrants</span>
+                          ) : isQualified ? (
+                            <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                              <FaUserCheck /> Qualified
+                            </span>
+                          ) : (
+                            <span className="text-amber-500 flex items-center gap-1">
+                              <FaLock /> Shortlist Required
+                            </span>
+                          )}
+
+                          {isCurrentLive && isRegistered && isQualified && (
                             <button
-                              className="table-view-btn"
-                              onClick={() => setSelectedProblemPreview(p)}
+                              className="text-xs font-bold text-purple-600 hover:underline"
+                              onClick={() => handleStartContestAssessment(r.roundNumber)}
                             >
-                              View
+                              Enter →
                             </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Card 3 & 4: Two-card row (Who Can Participate & Why Participate) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Who Can Participate? */}
-                <div className="contest-card">
-                  <div className="card-header-row">
-                    <div className="card-icon-bubble blue-bubble">
-                      <FaUsers />
+              {/* Card: Single-Box Contest Rules Preview */}
+              <div className="contest-card space-y-3">
+                <div className="card-header-row justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="card-icon-bubble red-bubble">
+                      <FaShieldAlt />
                     </div>
-                    <h3 className="card-title text-base">Who Can Participate?</h3>
+                    <div>
+                      <h2 className="card-title">Official Contest Rules</h2>
+                      <p className="card-subtitle">Fair play and integrity guidelines enforced across all rounds.</p>
+                    </div>
+                  </div>
+                  <button className="view-all-link" onClick={() => setActiveTab('rules')}>
+                    View Full Rulebook →
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-xl border border-border/80 bg-slate-900/40 text-sm leading-relaxed whitespace-pre-line font-mono text-slate-300">
+                  {contest.rulesText ||
+                    (Array.isArray(contest.rules)
+                      ? contest.rules.map((r, i) => `${i + 1}. ${typeof r === 'string' ? r : (r.title + ': ' + r.text)}`).join('\n\n')
+                      : '1. Individual participation only. External help or AI assistants are strictly prohibited.\n2. Full screen lockdown and proctoring is enforced.\n3. Final rankings will be locked after round conclusion.')}
+                </div>
+              </div>
+
+              {/* Card: Participation Benefits */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="contest-card">
+                  <div className="card-header-row mb-3">
+                    <div className="card-icon-bubble green-bubble">
+                      <FaAward />
+                    </div>
+                    <h3 className="card-title text-base">Eligibility &amp; Requirements</h3>
                   </div>
                   <ul className="benefit-checklist">
                     {(contest.whoCanParticipate || []).map((item, i) => (
@@ -684,9 +887,8 @@ export default function ContestLandingView({
                   </ul>
                 </div>
 
-                {/* Why Participate? */}
                 <div className="contest-card">
-                  <div className="card-header-row">
+                  <div className="card-header-row mb-3">
                     <div className="card-icon-bubble gold-bubble">
                       <FaStar />
                     </div>
@@ -705,61 +907,145 @@ export default function ContestLandingView({
             </div>
           )}
 
-          {/* TAB 2: PROBLEMS */}
-          {activeTab === 'problems' && (
-            <div className="contest-card space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h2 className="card-title">Contest Problems ({problems.length})</h2>
-                  <p className="card-subtitle">Solve algorithmic challenges to earn points and climb the leaderboard.</p>
-                </div>
-                {dynamicStatus === 'live' && isRegistered && (
-                  <button className="hero-primary-btn launch-btn scale-90" onClick={handleStartContestAssessment}>
-                    Solve in Arena →
-                  </button>
-                )}
+          {/* TAB 2: ROUNDS & PROGRESSION */}
+          {activeTab === 'rounds' && (
+            <div className="contest-card space-y-6">
+              <div>
+                <h2 className="card-title">Contest Rounds &amp; Qualification Pathway</h2>
+                <p className="card-subtitle">
+                  This contest consists of {roundsList.length} stage{roundsList.length > 1 ? 's' : ''}. Only shortlisted candidates chosen by judges proceed to further rounds.
+                </p>
               </div>
 
-              <div className="sample-problems-table-wrapper">
-                <table className="sample-problems-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Problem Title</th>
-                      <th>Score</th>
-                      <th>Difficulty</th>
-                      <th>Topics</th>
-                      <th className="text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {problems.map((p, idx) => (
-                      <tr key={p.id || idx}>
-                        <td className="font-mono text-muted">{idx + 1}</td>
-                        <td>
-                          <div className="flex items-center gap-2">
-                            <FaFileAlt className="text-muted-icon" />
-                            <span className="font-semibold text-slate-800 dark:text-slate-100">{p.title}</span>
-                          </div>
-                        </td>
-                        <td className="font-mono font-semibold text-emerald-600">{p.points || 100} pts</td>
-                        <td>
-                          <span className={`diff-badge diff-${(p.difficulty || 'Medium').toLowerCase()}`}>
-                            {p.difficulty || 'Medium'}
+              <div className="space-y-4">
+                {roundsList.map((round) => {
+                  const isQualified = isUserQualifiedForRound(round);
+                  const isCurrentLive = round.status === 'live';
+                  const isEnded = round.status === 'ended';
+
+                  return (
+                    <div
+                      key={round.roundNumber}
+                      className={`p-5 rounded-2xl border transition-all ${
+                        isCurrentLive
+                          ? 'border-emerald-500/60 bg-emerald-500/5 shadow-md'
+                          : 'border-slate-200 dark:border-slate-800 bg-card'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/60">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 font-bold flex items-center justify-center text-sm">
+                            R{round.roundNumber}
                           </span>
-                        </td>
-                        <td className="text-sm text-slate-600 dark:text-slate-300">
-                          {p.topics || 'Data Structures, Logic'}
-                        </td>
-                        <td className="text-right">
-                          <button className="table-view-btn" onClick={() => setSelectedProblemPreview(p)}>
-                            Preview
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <div>
+                            <h3 className="font-bold text-base text-foreground">
+                              {round.name}
+                            </h3>
+                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                              <span>Duration: {round.durationMinutes || 120} mins</span>
+                              <span>•</span>
+                              <span>
+                                {round.startTime ? formatDateTime(round.startTime) : 'Schedule TBA'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          {isCurrentLive ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                              LIVE ARENA
+                            </span>
+                          ) : isEnded ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground">
+                              ROUND CONCLUDED
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-600 border border-amber-500/30">
+                              UPCOMING
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Round details & settings */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4 text-xs">
+                        <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
+                          <span className="text-muted-foreground font-medium block mb-0.5">Format:</span>
+                          <span className="font-semibold text-foreground">
+                            {Array.isArray(round.sections) && round.sections.length > 0
+                              ? `${round.sections.length} Assessment Sections`
+                              : 'Coding & Algorithmic Problem Solving'}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
+                          <span className="text-muted-foreground font-medium block mb-0.5">Environment:</span>
+                          <span className="font-semibold text-foreground">
+                            {round.requiresSeb || contest.requiresSeb ? 'SEED-SEB Lockdown Enforced' : 'Standard Browser'}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
+                          <span className="text-muted-foreground font-medium block mb-0.5">Your Qualification:</span>
+                          {round.roundNumber === 1 ? (
+                            <span className="font-semibold text-emerald-600">Open to all registered</span>
+                          ) : isQualified ? (
+                            <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                              <FaUserCheck /> Shortlisted for this Round!
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-amber-500 flex items-center gap-1">
+                              <FaLock /> Awaiting Admin Shortlist
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Row */}
+                      <div className="flex items-center justify-between pt-3 border-t border-border/60">
+                        <div className="text-xs text-muted-foreground">
+                          {round.roundNumber > 1 && Array.isArray(round.shortlistedUids) && round.shortlistedUids.length > 0 && (
+                            <span>{round.shortlistedUids.length} candidates advanced to this round</span>
+                          )}
+                        </div>
+
+                        <div>
+                          {isCurrentLive ? (
+                            isRegistered ? (
+                              isQualified ? (
+                                <button
+                                  className="hero-primary-btn launch-btn py-1.5 px-4 text-xs font-bold"
+                                  onClick={() => handleStartContestAssessment(round.roundNumber)}
+                                  disabled={isLaunching}
+                                >
+                                  Enter Round {round.roundNumber} Workspace →
+                                </button>
+                              ) : (
+                                <span className="text-xs text-amber-500 font-medium">
+                                  Not shortlisted for this round
+                                </span>
+                              )
+                            ) : (
+                              <button className="hero-primary-btn register-btn py-1.5 px-4 text-xs" onClick={handleRegisterClick}>
+                                Register First
+                              </button>
+                            )
+                          ) : isEnded ? (
+                            <button className="view-all-link text-xs" onClick={() => setActiveTab('leaderboard')}>
+                              View Results →
+                            </button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              Scheduled for {formatDateTime(round.startTime)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -827,120 +1113,182 @@ export default function ContestLandingView({
             </div>
           )}
 
-          {/* TAB 4: DISCUSSIONS */}
+          {/* TAB 4: REGISTRATIONS LIST */}
+          {activeTab === 'registrations' && (
+            <div className="contest-card space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h2 className="card-title">Registered Candidates ({contest.registeredCount || participants.length})</h2>
+                  <p className="card-subtitle">Official participants registered for this competition.</p>
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs" />
+                  <input
+                    type="text"
+                    placeholder="Search candidate name..."
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border bg-transparent text-xs"
+                  />
+                </div>
+              </div>
+
+              {filteredParticipants.length === 0 ? (
+                <div className="py-12 text-center text-slate-500">
+                  <FaUsers className="mx-auto text-4xl text-slate-300 mb-2" />
+                  <p>No matching participants found.</p>
+                  <p className="text-xs">Register now to reserve your spot!</p>
+                </div>
+              ) : (
+                <div className="sample-problems-table-wrapper">
+                  <table className="sample-problems-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Candidate Name</th>
+                        <th>Institution / Arena</th>
+                        <th>Registration Date</th>
+                        <th className="text-right">Stage Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredParticipants.map((p, idx) => {
+                        const isSelf = p.userId === user?.uid;
+                        return (
+                          <tr key={p.id || p.userId || idx} className={isSelf ? 'bg-purple-500/10 font-semibold' : ''}>
+                            <td className="font-mono text-muted text-xs">{idx + 1}</td>
+                            <td>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-purple-500/10 text-purple-600 font-bold flex items-center justify-center text-xs">
+                                  {(p.displayName || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
+                                    {p.displayName || 'Participant'} {isSelf && '(You)'}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="text-xs text-muted-foreground">
+                              {p.tenantName || 'Global Arena'}
+                            </td>
+                            <td className="text-xs text-muted-foreground font-mono">
+                              {p.registeredAt?.toDate
+                                ? p.registeredAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                : 'Registered'}
+                            </td>
+                            <td className="text-right">
+                              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                Round 1 Confirmed ✓
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5: RULES (SINGLE BOX) */}
+          {activeTab === 'rules' && (
+            <div className="contest-card space-y-6">
+              <div>
+                <h2 className="card-title">Official Contest Rules &amp; Regulations</h2>
+                <p className="card-subtitle">
+                  Academic integrity, proctoring requirements, and competitive code of conduct.
+                </p>
+              </div>
+
+              {/* Single Box Rulebook */}
+              <div className="p-6 rounded-2xl border-2 border-purple-500/30 bg-slate-900/60 backdrop-blur shadow-inner">
+                <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider mb-4">
+                  <FaShieldAlt /> Single Rulebook Policy Box
+                </div>
+
+                <div className="text-sm leading-relaxed text-slate-200 whitespace-pre-line font-mono space-y-2">
+                  {contest.rulesText ||
+                    (Array.isArray(contest.rules)
+                      ? contest.rules
+                          .map((r, i) => `${i + 1}. ${typeof r === 'string' ? r : `${r.title}\n   ${r.text}`}`)
+                          .join('\n\n')
+                      : `1. Eligibility & Registration: All registered students must verify their identity before contest start.
+2. Multi-Round Progression: Candidates must meet passing criteria set by judges to advance to Round 2 and Final rounds.
+3. Integrity & Lockdown: All rounds are proctored via SEED-SEB desktop lockdown. Full-screen violations, multiple faces, and secondary monitors will result in disqualification.
+4. AI Assistance Prohibition: Use of ChatGPT, GitHub Copilot, or external communication during live contest window is strictly banned.
+5. Finality of Results: Judge shortlists and podium announcements are final.`)}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: PRIZES */}
+          {activeTab === 'prizes' && (
+            <div className="contest-card space-y-6">
+              <div>
+                <h2 className="card-title">Contest Prizes &amp; Recognition</h2>
+                <p className="card-subtitle">
+                  {contest.prizePool ? `Total Prize Pool: ${contest.prizePool}.` : 'Compete for verifiable rewards and certificates.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {prizesList.map((prize, idx) => (
+                  <div
+                    key={idx}
+                    className="p-5 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-black/20 to-transparent flex items-start gap-3.5 shadow-sm"
+                  >
+                    <div className="text-3xl mt-0.5">
+                      {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🎖️'}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-0.5">
+                        {prize.rank}
+                      </div>
+                      <h4 className="font-bold text-base text-foreground">
+                        {prize.title || prize.rank}
+                      </h4>
+                      <p className="text-sm text-amber-300 font-semibold mt-1">
+                        {prize.prize || prize.reward}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: BROADCASTS & DISCUSSIONS */}
           {activeTab === 'discussions' && (
             <div className="contest-card space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
-                  <h2 className="card-title">Announcements &amp; Community Clarifications</h2>
-                  <p className="card-subtitle">Official broadcasts from judges and organizers.</p>
+                  <h2 className="card-title">Live Announcements &amp; Clarifications</h2>
+                  <p className="card-subtitle">Official broadcasts sent in real-time by judges.</p>
                 </div>
               </div>
 
               {announcements.length === 0 ? (
                 <div className="py-10 text-center text-slate-500">
                   <FaComments className="mx-auto text-3xl text-slate-300 mb-2" />
-                  <p>No announcements yet for this contest.</p>
+                  <p>No broadcasts issued yet for this contest.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {announcements.map((ann) => (
-                    <div key={ann.id} className="p-4 rounded-xl border border-blue-100 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-900/40">
-                      <div className="flex items-center justify-between mb-1 text-xs text-blue-600 dark:text-blue-400 font-semibold">
-                        <span>📢 Broadcast by {ann.author || 'Contest Admin'}</span>
+                    <div key={ann.id} className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/10">
+                      <div className="flex items-center justify-between mb-1 text-xs text-blue-400 font-semibold">
+                        <span>📢 Broadcast by {ann.author || 'Judge Admin'}</span>
                         <span>{ann.createdAt?.toDate ? ann.createdAt.toDate().toLocaleTimeString() : 'Just now'}</span>
                       </div>
-                      <p className="text-sm text-slate-800 dark:text-slate-200">{ann.message}</p>
+                      <p className="text-sm text-foreground">{ann.message}</p>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* TAB 5: PARTICIPANTS */}
-          {activeTab === 'participants' && (
-            <div className="contest-card space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h2 className="card-title">Registered Participants ({contest.registeredCount || participants.length})</h2>
-                  <p className="card-subtitle">Coders competing in this global arena.</p>
-                </div>
-              </div>
-
-              {participants.length === 0 ? (
-                <div className="py-12 text-center text-slate-500">
-                  <FaUsers className="mx-auto text-4xl text-slate-300 mb-2" />
-                  <p>No participants registered yet.</p>
-                  <p className="text-xs">Register now to reserve your spot!</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {participants.map((p) => (
-                    <div key={p.id || p.userId} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
-                        {(p.displayName || 'U').charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-semibold text-sm truncate text-slate-800 dark:text-slate-100">
-                          {p.displayName || 'Student'}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {p.tenantName || 'Global Participant'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 6: RULES */}
-          {activeTab === 'rules' && (
-            <div className="contest-card space-y-6">
-              <div>
-                <h2 className="card-title">Official Contest Rules &amp; Integrity Policy</h2>
-                <p className="card-subtitle">Please read carefully before entering the contest arena.</p>
-              </div>
-
-              <div className="grid gap-4">
-                {(contest.rules || []).map((rule, idx) => (
-                  <div key={idx} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">
-                        {idx + 1}
-                      </span>
-                      {rule.title}
-                    </h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 pl-7">{rule.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 7: PRIZES */}
-          {activeTab === 'prizes' && (
-            <div className="contest-card space-y-6">
-              <div>
-                <h2 className="card-title">Contest Prizes &amp; Recognition</h2>
-                <p className="card-subtitle">Earn rewards, verifiable certificates, and climb the SEED rankings.</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(contest.prizes || []).map((prize, idx) => (
-                  <div key={idx} className="p-4 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent flex items-start gap-3">
-                    <div className="text-2xl mt-0.5">
-                      {prize.icon === 'gold' ? '🥇' : prize.icon === 'silver' ? '🥈' : prize.icon === 'bronze' ? '🥉' : '🎖️'}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-slate-100">{prize.rank}</h4>
-                      <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">{prize.reward}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
@@ -949,11 +1297,16 @@ export default function ContestLandingView({
             <div className="contest-card space-y-4">
               <div>
                 <h2 className="card-title">Frequently Asked Questions</h2>
-                <p className="card-subtitle">Common questions regarding contest setup and execution.</p>
+                <p className="card-subtitle">Common questions regarding contest setup, rounds, and execution.</p>
               </div>
 
               <div className="space-y-3">
-                {(contest.faqs || []).map((faq, idx) => (
+                {(contest.faqs || [
+                  { q: 'How do multiple rounds work?', a: 'All registered candidates start in Round 1. After Round 1 concludes, judges evaluate submissions and shortlist top performers for subsequent rounds.' },
+                  { q: 'Do I need SEED-SEB desktop app?', a: 'Yes, competitive rated contests enforce secure desktop lockdown to ensure academic integrity.' },
+                  { q: 'What programming languages are supported?', a: 'C++, Java, Python 3, and JavaScript are supported with standard execution time and memory limits.' },
+                  { q: 'How are winners awarded?', a: 'After the final round, judges declare the official podium winners, and prizes/certificates are disbursed within 48 hours.' },
+                ]).map((faq, idx) => (
                   <div
                     key={idx}
                     className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden cursor-pointer"
@@ -988,50 +1341,64 @@ export default function ContestLandingView({
 
             <div className="details-table-list">
               <div className="detail-row">
-                <span className="detail-label"><FaCalendarAlt className="detail-icon" /> Start Date</span>
+                <span className="detail-label"><FaCalendarAlt className="detail-icon" /> Contest Start</span>
                 <span className="detail-value">{formattedStartTime}</span>
               </div>
               <div className="detail-row">
-                <span className="detail-label"><FaClock className="detail-icon" /> Duration</span>
-                <span className="detail-value font-semibold">{contest.durationMinutes} Minutes</span>
+                <span className="detail-label"><FaClock className="detail-icon" /> Reg. Window</span>
+                <span className="detail-value text-xs">
+                  {contest.registrationStartTime ? `${formattedRegStart} - ${formattedRegEnd}` : `Until ${formattedStartTime}`}
+                </span>
               </div>
               <div className="detail-row">
-                <span className="detail-label"><FaCode className="detail-icon" /> Contest Type</span>
-                <span className="detail-value">Algorithmic + Data Structures</span>
+                <span className="detail-label"><FaLayerGroup className="detail-icon" /> Rounds</span>
+                <span className="detail-value font-semibold">{roundsList.length} Stages</span>
               </div>
               <div className="detail-row">
-                <span className="detail-label"><FaUsers className="detail-icon" /> Participants</span>
+                <span className="detail-label"><FaUsers className="detail-icon" /> Arena Scope</span>
                 <span className="detail-value">{contest.isGlobal ? 'Global (Open to all)' : contest.tenantName}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label"><FaCheckCircle className="detail-icon" /> Registration</span>
-                <span className="detail-value text-emerald-600 font-semibold">
-                  {isRegistered ? 'Registered ✓' : 'Open - Be the first!'}
+                <span className={`detail-value font-semibold ${isRegistered ? 'text-emerald-500' : 'text-purple-400'}`}>
+                  {isRegistered ? 'Registered ✓' : registrationState === 'closed' ? 'Closed' : 'Open'}
                 </span>
               </div>
               <div className="detail-row">
-                <span className="detail-label"><FaCode className="detail-icon" /> Language Support</span>
-                <span className="detail-value">C++, Java, Python, JavaScript</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label"><FaShieldAlt className="detail-icon" /> Platform</span>
-                <span className="detail-value">SEED-SEB (Secure Environment)</span>
+                <span className="detail-label"><FaShieldAlt className="detail-icon" /> Security</span>
+                <span className="detail-value">
+                  {contest.requiresSeb ? 'SEED-SEB Lockdown' : 'Standard Browser'}
+                </span>
               </div>
             </div>
 
             {/* CTA in sidebar */}
             <div className="mt-5">
               {dynamicStatus === 'live' && isRegistered ? (
-                <button
-                  className="sidebar-cta-btn launch-btn"
-                  onClick={handleStartContestAssessment}
-                  disabled={isLaunching}
-                >
-                  <FaPlay className="mr-2" /> {isLaunching ? 'Entering Arena…' : 'Enter Contest Workspace →'}
-                </button>
+                isUserQualifiedForActiveRound ? (
+                  <button
+                    className="sidebar-cta-btn launch-btn"
+                    onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
+                    disabled={isLaunching}
+                  >
+                    <FaPlay className="mr-2" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
+                  </button>
+                ) : (
+                  <button className="sidebar-cta-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
+                    🔒 Shortlist Required for Round {activeRound?.roundNumber}
+                  </button>
+                )
               ) : isRegistered ? (
                 <button className="sidebar-cta-btn registered-btn" disabled>
                   <FaCheck className="mr-2" /> You are Registered ✓
+                </button>
+              ) : registrationState === 'upcoming' ? (
+                <button className="sidebar-cta-btn" style={{ background: '#334155', cursor: 'not-allowed' }} disabled>
+                  Registration Opens {formattedRegStart}
+                </button>
+              ) : registrationState === 'closed' ? (
+                <button className="sidebar-cta-btn" style={{ background: '#1E293B', color: '#94A3B8', cursor: 'not-allowed' }} disabled>
+                  Registration Closed
                 </button>
               ) : (
                 <button
@@ -1049,28 +1416,30 @@ export default function ContestLandingView({
             </div>
 
             {/* SEED-SEB Lockdown Alert */}
-            <div className="seb-lockdown-alert-box mt-4">
-              <div className="alert-lock-icon">
-                <FaLock />
+            {contest.requiresSeb && (
+              <div className="seb-lockdown-alert-box mt-4">
+                <div className="alert-lock-icon">
+                  <FaLock />
+                </div>
+                <div className="alert-body">
+                  <div className="alert-title">Requires SEED-SEB Desktop App Lockdown</div>
+                  <a
+                    href="/seed-seb"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="alert-link"
+                    onClick={(e) => {
+                      if (onOpenSEBModal) {
+                        e.preventDefault();
+                        onOpenSEBModal(contest);
+                      }
+                    }}
+                  >
+                    Download SEB App →
+                  </a>
+                </div>
               </div>
-              <div className="alert-body">
-                <div className="alert-title">Requires SEED-SEB Desktop App Lockdown</div>
-                <a
-                  href="/seed-seb"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="alert-link"
-                  onClick={(e) => {
-                    if (onOpenSEBModal) {
-                      e.preventDefault();
-                      onOpenSEBModal(contest);
-                    }
-                  }}
-                >
-                  Download SEB App →
-                </a>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Sidebar Card 2: Organizer */}
@@ -1132,62 +1501,6 @@ export default function ContestLandingView({
           </div>
         </div>
       </div>
-
-      {/* ────────────────── Problem Preview Modal ────────────────── */}
-      {selectedProblemPreview && (
-        <div className="contest-modal-backdrop" onClick={() => setSelectedProblemPreview(null)}>
-          <div className="contest-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <span className={`diff-badge diff-${(selectedProblemPreview.difficulty || 'Medium').toLowerCase()}`}>
-                  {selectedProblemPreview.difficulty || 'Medium'}
-                </span>
-                <h3 className="text-xl font-bold mt-1 text-slate-900 dark:text-slate-100">
-                  {selectedProblemPreview.title}
-                </h3>
-              </div>
-              <button className="modal-close-btn" onClick={() => setSelectedProblemPreview(null)}>
-                <FaTimes />
-              </button>
-            </div>
-            <div className="modal-body space-y-4">
-              <div>
-                <h5 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                  Problem Description
-                </h5>
-                <p className="text-sm text-slate-700 dark:text-slate-300">
-                  {selectedProblemPreview.description || `Given standard competitive input, implement an optimal solution for ${selectedProblemPreview.title}.`}
-                </p>
-              </div>
-              <div>
-                <h5 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                  Topics Tested
-                </h5>
-                <div className="topic-pills-row">
-                  {(selectedProblemPreview.topics || 'Data Structures, Optimization').split(',').map((t) => (
-                    <span key={t} className="topic-pill">{t.trim()}</span>
-                  ))}
-                </div>
-              </div>
-              {selectedProblemPreview.constraints && (
-                <div>
-                  <h5 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                    Constraints
-                  </h5>
-                  <pre className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-900 text-xs font-mono">
-                    {selectedProblemPreview.constraints}
-                  </pre>
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="table-view-btn" onClick={() => setSelectedProblemPreview(null)}>
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ────────────────── Passkey Modal ────────────────── */}
       {showPasskeyModal && (

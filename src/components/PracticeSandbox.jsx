@@ -38,30 +38,38 @@ const MONACO_LANG_MAP = {
 const getBoilerplate = (boilerplatesObj, langKey) => {
   if (!langKey) return '';
   const clean = String(langKey).trim().toLowerCase();
-  // const b = boilerplatesObj || {};
+  const b = (boilerplatesObj && typeof boilerplatesObj === 'object') ? boilerplatesObj : {};
   
   if (clean === 'java') {
-    // return b.java || b.Java || FREE_BOILERPLATES.java;
+    const code = b.java || b.Java || b.JAVA || b['Java'] || b['java'];
+    if (typeof code === 'string' && code.trim()) return code;
     return FREE_BOILERPLATES.java;
   }
   if (clean === 'python' || clean === 'python3' || clean === 'py') {
-    // return b.python3 || b.Python3 || b.python || b.Python || FREE_BOILERPLATES.python3;
+    const code = b.python3 || b.Python3 || b.python || b.Python || b.PYTHON3 || b.PYTHON || b['Python3'] || b['python'];
+    if (typeof code === 'string' && code.trim()) return code;
     return FREE_BOILERPLATES.python3;
   }
   if (clean === 'cpp' || clean === 'c++') {
-    // return b.cpp || b['C++'] || b['c++'] || FREE_BOILERPLATES.cpp;
+    const code = b.cpp || b.Cpp || b.CPP || b['C++'] || b['c++'] || b['cpp'];
+    if (typeof code === 'string' && code.trim()) return code;
     return FREE_BOILERPLATES.cpp;
   }
   if (clean === 'c') {
-    // return b.c || b.C || FREE_BOILERPLATES.c;
+    const code = b.c || b.C || b['c'] || b['C'];
+    if (typeof code === 'string' && code.trim()) return code;
     return FREE_BOILERPLATES.c;
   }
   if (clean === 'javascript' || clean === 'js') {
-    // return b.javascript || b.JavaScript || b.js || FREE_BOILERPLATES.javascript;
+    const code = b.javascript || b.JavaScript || b.JAVASCRIPT || b.js || b.JS || b['JavaScript'] || b['javascript'];
+    if (typeof code === 'string' && code.trim()) return code;
     return FREE_BOILERPLATES.javascript;
   }
-  // return b[clean] || (FREE_BOILERPLATES[clean] ?? '');
-  return FREE_BOILERPLATES[clean] ?? '';
+  
+  const direct = b[clean] || b[langKey];
+  if (typeof direct === 'string' && direct.trim()) return direct;
+
+  return FREE_BOILERPLATES[clean] ?? FREE_BOILERPLATES.cpp;
 };
 
 const normalizeQuestion = (q) => {
@@ -94,19 +102,18 @@ const normalizeQuestion = (q) => {
   // alongside real language keys. We whitelist only recognized language keys.
   const VALID_LANG_NAMES = new Set(['c', 'cpp', 'c++', 'java', 'python', 'python3', 'javascript', 'js', 'csharp', 'cs', 'ruby', 'go', 'rust', 'kotlin', 'swift', 'typescript', 'ts']);
 
-  const rawBoilerplates = q.boilerPlates ?? q.boilerplates ?? {};
+  const rawBoilerplates = q.boilerPlates ?? q.boilerplates ?? q.content?.boilerPlates ?? q.content?.boilerplates ?? q.starterCode ?? q.starterCodes ?? {};
   const boilerplates = {};
 
   Object.entries(rawBoilerplates).forEach(([lang, val]) => {
-    // Skip non-language keys that exist in canonical Q JSON boilerPlates
-    if (!VALID_LANG_NAMES.has(String(lang).trim().toLowerCase())) return;
-    if (typeof val !== 'string') return; // skip non-string values (e.g. nested objects)
+    if (typeof val !== 'string') return;
+    // Store original key as well as normalized key
+    boilerplates[lang] = val;
     const norm = getNormalizedLangKey(lang);
+    boilerplates[norm] = val;
     if (norm === 'python') {
       boilerplates.python = val;
       boilerplates.python3 = val;
-    } else {
-      boilerplates[norm] = val;
     }
   });
 
@@ -453,16 +460,27 @@ const PracticeSandbox = () => {
 
   const prevLangRef = useRef(language);
   const prevQuestionIdRef = useRef(questionId);
+  const userCodeByLangRef = useRef({});
 
-  // Switch template only on manual language or questionId change
-  // Uses editorRef.setValue() directly — never triggers a React re-render or cursor reset
+  // Switch template and preserve code per language
   useEffect(() => {
     if (!question) return;
-    if (prevLangRef.current !== language || prevQuestionIdRef.current !== questionId) {
-      prevLangRef.current = language;
+    if (prevQuestionIdRef.current !== questionId) {
+      userCodeByLangRef.current = {};
       prevQuestionIdRef.current = questionId;
-      const newCode = getBoilerplate(question.boilerplates, language).replace(/\r\n/g, '\n');
+      prevLangRef.current = language;
+    } else if (prevLangRef.current !== language) {
+      // Save current code to previous language before switching
+      if (prevLangRef.current && (codeRef.current || code)) {
+        userCodeByLangRef.current[prevLangRef.current] = codeRef.current || code;
+      }
+      prevLangRef.current = language;
+      const savedCode = userCodeByLangRef.current[language];
+      const newCode = (typeof savedCode === 'string' && savedCode.trim())
+        ? savedCode
+        : getBoilerplate(question.boilerplates, language).replace(/\r\n/g, '\n');
       setCode(newCode);
+      codeRef.current = newCode;
       if (editorRef.current) {
         editorRef.current.setValue(newCode);
       }
@@ -472,7 +490,7 @@ const PracticeSandbox = () => {
       setSubmitResults([]);
       setSubmitScore(null);
     }
-  }, [language, questionId, question]);
+  }, [language, questionId, question, code]);
 
   const handleResetCode = () => {
     const defaultCode = getBoilerplate(question?.boilerplates, language).replace(/\r\n/g, '\n');

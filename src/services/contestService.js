@@ -27,6 +27,13 @@ export function normaliseContest(id, raw = {}) {
   const startTime = raw.startTime || new Date().toISOString();
   const endTime = raw.endTime || new Date(Date.now() + 7200000).toISOString();
   const durationMinutes = Number(raw.durationMinutes || raw.duration || 120);
+  const registrationStartTime = raw.registrationStartTime || '';
+  const registrationEndTime = raw.registrationEndTime || '';
+  const roundCount = Number(raw.roundCount || (Array.isArray(raw.rounds) ? raw.rounds.length : 1));
+  const rounds = Array.isArray(raw.rounds) ? raw.rounds : [];
+  const currentRoundNumber = Number(raw.currentRoundNumber || 1);
+  const rulesText = typeof raw.rulesText === 'string' ? raw.rulesText : '';
+  const winners = Array.isArray(raw.winners) ? raw.winners : [];
 
   // Default sample problems if not provided
   const sampleProblems = Array.isArray(raw.sampleProblems) && raw.sampleProblems.length > 0
@@ -114,6 +121,13 @@ export function normaliseContest(id, raw = {}) {
     endTime,
     durationMinutes,
     duration: durationMinutes,
+    registrationStartTime,
+    registrationEndTime,
+    roundCount,
+    rounds,
+    currentRoundNumber,
+    rulesText,
+    winners,
     status: raw.status || 'upcoming',
     isRated: raw.isRated !== false,
     scoringStrategy: raw.scoringStrategy || 'icpc',
@@ -438,13 +452,40 @@ export async function listContestProblems(contestId) {
  * Fetches sections and question data strictly from Firestore (never static JSON)
  * and initializes MultiSectionAssessment runtime storage.
  */
-export async function prepareContestMSAAssessment(contest, user) {
+export async function prepareContestMSAAssessment(contest, user, preferredRoundNumber = null) {
   if (!contest?.id) throw new Error('Invalid contest provided');
 
   let sections = [];
+  let targetRound = null;
 
-  // 1. If contest links directly to an authored Assessment doc in Firestore
-  if (contest.assessmentId) {
+  // 1. If contest has multi-rounds configured
+  if (Array.isArray(contest.rounds) && contest.rounds.length > 0) {
+    if (preferredRoundNumber) {
+      targetRound = contest.rounds.find((r) => r.roundNumber === preferredRoundNumber);
+    }
+    if (!targetRound) {
+      targetRound = contest.rounds.find((r) => r.status === 'live') ||
+                    contest.rounds.find((r) => r.roundNumber === (contest.currentRoundNumber || 1)) ||
+                    contest.rounds[0];
+    }
+
+    // Qualification check for subsequent rounds (Round 2+)
+    if (targetRound && targetRound.roundNumber > 1) {
+      const shortlisted = Array.isArray(targetRound.shortlistedUids) ? targetRound.shortlistedUids : [];
+      if (shortlisted.length > 0 && user?.uid && !shortlisted.includes(user.uid)) {
+        throw new Error(
+          `You have not been shortlisted for Round ${targetRound.roundNumber} ("${targetRound.name || 'Next Round'}"). Only qualified candidates can enter this round.`
+        );
+      }
+    }
+
+    if (targetRound && Array.isArray(targetRound.sections) && targetRound.sections.length > 0) {
+      sections = targetRound.sections;
+    }
+  }
+
+  // 2. If contest links directly to an authored Assessment doc in Firestore
+  if (sections.length === 0 && contest.assessmentId) {
     try {
       const assDocRef = doc(db, ASSESSMENTS, contest.assessmentId);
       const assSnap = await getDoc(assDocRef);
@@ -470,12 +511,12 @@ export async function prepareContestMSAAssessment(contest, user) {
     }
   }
 
-  // 2. If contest has embedded sections
+  // 3. If contest has embedded sections
   if (sections.length === 0 && Array.isArray(contest.sections) && contest.sections.length > 0) {
     sections = contest.sections;
   }
 
-  // 3. If contest has a 'problems' subcollection in Firestore, build a Coding section
+  // 4. If contest has a 'problems' subcollection in Firestore, build a Coding section
   if (sections.length === 0) {
     const firestoreProblems = await listContestProblems(contest.id);
     if (firestoreProblems.length > 0) {
@@ -536,23 +577,39 @@ export async function prepareContestMSAAssessment(contest, user) {
     }];
   }
 
+  // Determine active round duration, SEB, and proctoring overrides
+  const effectiveDuration = targetRound?.durationMinutes || contest.durationMinutes || 120;
+  const effectiveRequiresSeb = targetRound?.requiresSeb !== undefined ? targetRound.requiresSeb : (contest.requiresSeb !== false);
+  const effectiveProctorConfig = targetRound?.proctorConfig || contest.proctorConfig || {
+    enabled: true,
+    cameraRequired: true,
+    audioRequired: false,
+    tabSwitchLimit: 3,
+    maxViolations: 5,
+    autoSubmitOnViolation: true,
+  };
+
   // Build canonical MSA Assessment payload
   const canonicalAss = {
     id: contest.id,
-    name: contest.title,
-    title: contest.title,
+    name: targetRound ? `${contest.title} — ${targetRound.name}` : contest.title,
+    title: targetRound ? `${contest.title} — ${targetRound.name}` : contest.title,
     slug: contest.slug || contest.id,
-    duration: contest.durationMinutes || 120,
-    duration_minutes: contest.durationMinutes || 120,
-    proctored: contest.requiresSeb !== false && contest.isProctored !== false,
-    audioProctored: Boolean(contest.proctorConfig?.audioRequired),
+    duration: effectiveDuration,
+    duration_minutes: effectiveDuration,
+    proctored: effectiveRequiresSeb !== false && contest.isProctored !== false,
+    audioProctored: Boolean(effectiveProctorConfig?.audioRequired),
     isMultiSection: true,
     sections,
     isContest: true,
     contestId: contest.id,
+    roundNumber: targetRound?.roundNumber || 1,
+    roundName: targetRound?.name || 'Main Round',
     tenantId: contest.tenantId || 'global',
     maxScore: contest.maxScore || 600,
     scoringStrategy: contest.scoringStrategy || 'icpc',
+    requiresSeb: effectiveRequiresSeb,
+    proctorConfig: effectiveProctorConfig,
   };
 
   // Securely store in session storage for MultiSectionAssessment runtime

@@ -401,6 +401,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
     const [selectedTestCaseSet, setSelectedTestCaseSet] = useState('sample');
     const [editorTheme, setEditorTheme] = useState('vs-dark'); // 'vs-dark' | 'light'
     const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
+    const [sampleRunBanner, setSampleRunBanner] = useState(null);
     const [showEditorialModal, setShowEditorialModal] = useState(false);
     const [showDiscussModal, setShowDiscussModal] = useState(false);
 
@@ -1901,6 +1902,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
     const runSampleTestCases = async () => {
         if (!currentQuestion || isRunningQuestionRef.current || isRunning || isEvaluating || isSubmittingQuestionRef.current) return;
         isRunningQuestionRef.current = true;
+        const runStartTime = Date.now();
 
         const targetQ = currentQuestion;
         const targetQIdx = activeQuestionIndex;
@@ -2100,13 +2102,20 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 if (isRunAll) setEvalResults(results);
                 setStdout(primaryStdout);
                 setStderr(primaryStderr);
-                setActiveResultTab(primaryStderr ? 'console' : 'output');
+                setActiveResultTab('output');
                 if (useCustomInput && customCase) {
                     setExpandedTestCaseIndex('custom');
                 } else {
                     setExpandedTestCaseIndex(0);
                 }
                 setActiveRightTab('testcases');
+                setSampleRunBanner({
+                    status: runStatus,
+                    passed: passedCases,
+                    total: totalCases,
+                    time: new Date().toLocaleTimeString()
+                });
+                setTimeout(() => setSampleRunBanner(null), 8000);
             }
 
             // Record run history and sync into questionScores
@@ -2161,6 +2170,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             };
             setCodingStateByQuestion(prev => ({ ...prev, [targetQKey]: errQState }));
         } finally {
+            // Keep sample test feedback / compiling HUD visible for min 3 seconds
+            const elapsed = Date.now() - (typeof runStartTime !== 'undefined' ? runStartTime : Date.now());
+            if (elapsed < 3000) {
+                await new Promise(r => setTimeout(r, 3000 - elapsed));
+            }
             setIsRunning(false);
             isRunningQuestionRef.current = false;
             setEvalProgressText('');
@@ -3667,7 +3681,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         {/* 2. MIDDLE-LEFT: Problem Statement Card (Resizable width) */}
                         <main
                             className="coding-col-problem-card"
-                            style={{ width: `${leftPaneWidth}%`, minWidth: '260px', maxWidth: '75%', flex: 'none' }}
+                            style={isEditorFullscreen ? { display: 'none' } : { width: `${leftPaneWidth}%`, minWidth: '260px', maxWidth: '75%', flex: 'none' }}
                         >
                             <div className="problem-card-top-row">
                                 <span className="problem-q-count">
@@ -3754,16 +3768,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         </main>
 
                         {/* VERTICAL DIVIDER: Drag to resize Problem Card vs Right Workspace */}
-                        <div
-                            className="coding-pane-resizer-vertical"
-                            onMouseDown={startVertDrag}
-                            title="Drag to resize problem statement and workspace panes"
-                        >
-                            <div className="resizer-handle-grip" />
-                        </div>
+                        {!isEditorFullscreen && (
+                            <div
+                                className="coding-pane-resizer-vertical"
+                                onMouseDown={startVertDrag}
+                                title="Drag to resize problem statement and workspace panes"
+                            >
+                                <div className="resizer-handle-grip" />
+                            </div>
+                        )}
 
                         {/* 3. RIGHT WORKSPACE: Code Editor (Top) & Test Cases Pane (Bottom) */}
-                        <section className="coding-col-center-workspace" ref={rightPaneRef} style={{ flex: 1, minWidth: '320px' }}>
+                        <section className="coding-col-center-workspace" ref={rightPaneRef} style={{ flex: 1, minWidth: '320px', width: isEditorFullscreen ? '100%' : 'auto' }}>
                             {/* Editor Card */}
                             <div className={`coding-editor-card ${editorTheme === 'light' ? 'light-mode' : 'dark-mode'}`} style={{ flex: 1, minHeight: '180px' }}>
                                 <div className="editor-top-toolbar">
@@ -3802,11 +3818,32 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                                         >
                                             <FaUndo />
                                         </button>
+                                        {isEditorFullscreen && (
+                                            <button
+                                                type="button"
+                                                className="editor-pill-select"
+                                                style={{ background: 'rgba(59, 130, 246, 0.18)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 600 }}
+                                                onClick={() => {
+                                                    setIsEditorFullscreen(false);
+                                                    setTimeout(() => editorRef.current?.layout?.(), 50);
+                                                }}
+                                                title="Restore Question Statement Pane"
+                                            >
+                                                <FaBookOpen style={{ fontSize: '11px' }} />
+                                                <span>Show Problem Pane</span>
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
-                                            className="editor-toolbar-icon-btn"
-                                            onClick={() => setIsEditorFullscreen(f => !f)}
-                                            title={isEditorFullscreen ? "Exit Fullscreen" : "Fullscreen Editor"}
+                                            className={`editor-toolbar-icon-btn ${isEditorFullscreen ? 'active' : ''}`}
+                                            onClick={() => {
+                                                setIsEditorFullscreen(f => {
+                                                    const next = !f;
+                                                    setTimeout(() => editorRef.current?.layout?.(), 50);
+                                                    return next;
+                                                });
+                                            }}
+                                            title={isEditorFullscreen ? "Exit Fullscreen (Restore Question Pane)" : "Fullscreen Editor (Minimise Question Pane)"}
                                         >
                                             {isEditorFullscreen ? <FaCompress /> : <FaExpand />}
                                         </button>
@@ -3950,6 +3987,32 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                                 </div>
 
                                 <div className="testcases-card-body">
+                                    {sampleRunBanner && (
+                                        <div className={`sample-run-banner ${sampleRunBanner.passed === sampleRunBanner.total ? 'success' : 'warning'}`} style={{
+                                            margin: '8px 12px 10px 12px',
+                                            padding: '8px 14px',
+                                            borderRadius: '8px',
+                                            background: sampleRunBanner.passed === sampleRunBanner.total ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)',
+                                            border: `1px solid ${sampleRunBanner.passed === sampleRunBanner.total ? 'rgba(16, 185, 129, 0.4)' : 'rgba(234, 179, 8, 0.4)'}`,
+                                            color: sampleRunBanner.passed === sampleRunBanner.total ? '#10b981' : '#facc15',
+                                            fontSize: '12.5px',
+                                            fontWeight: 600,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>{sampleRunBanner.passed === sampleRunBanner.total ? '✓' : '⚠'}</span>
+                                                <span>
+                                                    {sampleRunBanner.passed === sampleRunBanner.total 
+                                                        ? `All ${sampleRunBanner.total} Sample Test Cases Passed!` 
+                                                        : `${sampleRunBanner.passed} of ${sampleRunBanner.total} Sample Test Cases Passed`}
+                                                </span>
+                                            </div>
+                                            <span style={{ fontSize: '11px', opacity: 0.75, color: 'var(--text-muted)' }}>{sampleRunBanner.time}</span>
+                                        </div>
+                                    )}
                                     {activeResultTab === 'input' ? (
                                         <textarea
                                             className="custom-stdin-textarea"

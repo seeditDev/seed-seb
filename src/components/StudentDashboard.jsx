@@ -220,6 +220,13 @@ const StudentDashboard = () => {
   }, [location.state]);
   const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('portal_primary_color') || 'green');
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('portal_font_size') || 'medium');
+
+  // Apply persisted font & page zoom level to root DOM
+  useEffect(() => {
+    const savedFontSize = localStorage.getItem('portal_font_size') || 'medium';
+    document.documentElement.setAttribute('data-font-size', savedFontSize);
+    document.body.setAttribute('data-font-size', savedFontSize);
+  }, [fontSize]);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [practiceReminders, setPracticeReminders] = useState(true);
   const [assessmentAlerts, setAssessmentAlerts] = useState(true);
@@ -5121,6 +5128,7 @@ const StudentDashboard = () => {
     const handleFontSizeChange = (size) => {
       localStorage.setItem('portal_font_size', size);
       document.documentElement.setAttribute('data-font-size', size);
+      document.body.setAttribute('data-font-size', size);
       setFontSize(size);
     };
 
@@ -5319,22 +5327,36 @@ const StudentDashboard = () => {
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Adjust the platform font size</div>
               <div className="font-size-group">
                 <button
+                  type="button"
                   className={`font-size-btn ${fontSize === 'small' ? 'active' : ''}`}
                   onClick={() => handleFontSizeChange('small')}
+                  title="90% Scale — Reduce Size"
                 >
-                  A- Small
+                  A- Small (90%)
                 </button>
                 <button
+                  type="button"
                   className={`font-size-btn ${fontSize === 'medium' ? 'active' : ''}`}
                   onClick={() => handleFontSizeChange('medium')}
+                  title="100% Scale — Default"
                 >
-                  Medium
+                  Medium (100%)
                 </button>
                 <button
+                  type="button"
                   className={`font-size-btn ${fontSize === 'large' ? 'active' : ''}`}
                   onClick={() => handleFontSizeChange('large')}
+                  title="112% Scale — Increase Size"
                 >
-                  A+ Large
+                  A+ Large (112%)
+                </button>
+                <button
+                  type="button"
+                  className={`font-size-btn ${fontSize === 'xlarge' ? 'active' : ''}`}
+                  onClick={() => handleFontSizeChange('xlarge')}
+                  title="122% Scale — Extra Large"
+                >
+                  A++ X-Large (122%)
                 </button>
               </div>
             </div>
@@ -6097,7 +6119,7 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`}>
+    <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`} data-font-size={fontSize}>
       {/* Welcome Quote Verification Popup (Commented out) */}
       {/*
       {showWelcomeModal && (
@@ -6355,9 +6377,7 @@ const StudentDashboard = () => {
             />
           </div>
 
-          <button className="header-action-icon-btn" title="Settings" onClick={() => setActiveTab('settings')}>
-            <FaCog />
-          </button>
+          
           <div
             className="header-gamification-pill"
             onClick={() => {
