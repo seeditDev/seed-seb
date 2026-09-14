@@ -19,7 +19,7 @@ import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
 import { db, auth } from '../lib/firebase-config';
-import { doc, setDoc, getDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
@@ -1832,7 +1832,34 @@ const MultiSectionAssessment = () => {
             return;
           }
 
-          // 1. Fetch via contentApi or cdnUrl
+          // 1. Check Firebase Firestore as primary source of truth (assessments/{slug} or assessments/{id})
+          const slugOrId = sec.slug || sec.assessmentId || sec.id;
+          if (slugOrId && typeof slugOrId === 'string' && !slugOrId.startsWith('http') && !slugOrId.endsWith('.json')) {
+            try {
+              // Direct doc lookup by ID or slug
+              const assessSnap = await getDoc(doc(db, 'assessments', slugOrId));
+              if (assessSnap.exists()) {
+                const assessData = assessSnap.data();
+                console.log(`[MSA] Loaded section "${sec.name}" (${slugOrId}) from Firestore assessments/`);
+                await processData(assessData, sec.type || assessData.type);
+                return;
+              }
+
+              // Query by slug field if direct ID didn't match
+              const q = query(collection(db, 'assessments'), where('slug', '==', slugOrId));
+              const qSnap = await getDocs(q);
+              if (!qSnap.empty) {
+                const assessData = qSnap.docs[0].data();
+                console.log(`[MSA] Loaded section "${sec.name}" by slug "${slugOrId}" from Firestore assessments/`);
+                await processData(assessData, sec.type || assessData.type);
+                return;
+              }
+            } catch (fsErr) {
+              console.warn(`[MSA] Firestore lookup for section "${slugOrId}" failed, trying fallback:`, fsErr);
+            }
+          }
+
+          // 2. Fetch via contentApi or cdnUrl fallback
           let fetchUrl = sec.cdnUrl || sec.url || sec.assessmentId || (sec.slug ?? '');
           if (!fetchUrl || (!fetchUrl.endsWith('.json') && !fetchUrl.startsWith('http'))) {
             fetchUrl = sec.type === 'mcq'

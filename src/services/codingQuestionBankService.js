@@ -13,13 +13,22 @@ const GITHUB_SEED_CONTENTS_BASE = 'https://raw.githubusercontent.com/seeditDev/s
 const LOCAL_BASE = '/seed-contents';
 
 /**
- * Fetch a JSON file: GitHub Raw Primary (1st), Local Fallback (2nd).
+ * Fetch a JSON file: Local Public Primary (1st), GitHub Raw Fallback (2nd).
  * @param {string} path - Relative path (e.g. 'coding/questions/Q1001.json')
  */
 const fetchJson = async (path) => {
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
   
-  // 1st: GitHub Raw Primary
+  // 1st: Local Public Primary (/seed-contents/coding/questions/...)
+  const localUrl = `${LOCAL_BASE}/${cleanPath}`;
+  try {
+    const response = await fetch(localUrl);
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (_) {}
+
+  // 2nd: GitHub Raw Fallback
   const githubUrl = `${GITHUB_SEED_CONTENTS_BASE}/${cleanPath}`;
   try {
     const response = await fetch(githubUrl);
@@ -28,11 +37,7 @@ const fetchJson = async (path) => {
     }
   } catch (_) {}
 
-  // 2nd: Local Fallback
-  const localUrl = `${LOCAL_BASE}/${cleanPath}`;
-  const response = await fetch(localUrl);
-  if (!response.ok) throw new Error(`Failed to load ${localUrl}: HTTP ${response.status}`);
-  return await response.json();
+  throw new Error(`Failed to load ${cleanPath} from both local and remote`);
 };
 
 // ── Question Bank ─────────────────────────────────────────────────────────────
