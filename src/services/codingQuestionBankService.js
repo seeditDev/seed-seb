@@ -9,17 +9,14 @@
  */
 import { fetchArticleFile } from '../utils/articleFetcher';
 
-const GITHUB_SEED_CONTENTS_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
 const LOCAL_BASE = '/seed-contents';
 
 /**
- * Fetch a JSON file: Local Public Primary (1st), GitHub Raw Fallback (2nd).
+ * Fetch a JSON file strictly from the local public directory.
  * @param {string} path - Relative path (e.g. 'coding/questions/Q1001.json')
  */
 const fetchJson = async (path) => {
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  
-  // 1st: Local Public Primary (/seed-contents/coding/questions/...)
   const localUrl = `${LOCAL_BASE}/${cleanPath}`;
   try {
     const response = await fetch(localUrl);
@@ -28,16 +25,7 @@ const fetchJson = async (path) => {
     }
   } catch (_) {}
 
-  // 2nd: GitHub Raw Fallback
-  const githubUrl = `${GITHUB_SEED_CONTENTS_BASE}/${cleanPath}`;
-  try {
-    const response = await fetch(githubUrl);
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (_) {}
-
-  throw new Error(`Failed to load ${cleanPath} from both local and remote`);
+  throw new Error(`Failed to load ${cleanPath} from local storage (${localUrl})`);
 };
 
 export const isCompleteQuestion = (q) => {
@@ -48,34 +36,81 @@ export const isCompleteQuestion = (q) => {
     (typeof q.description === 'string' && q.description.trim().length > 0) ||
     (typeof q.statement === 'string' && q.statement.trim().length > 0)
   );
-  const hasTestCases = Boolean(
+  const hasSampleTestCases = Boolean(
     (Array.isArray(q.content?.sampleTestCases) && q.content.sampleTestCases.length > 0) ||
     (Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0) ||
-    (Array.isArray(q.testCases) && q.testCases.length > 0) ||
+    (Array.isArray(q.sampleTests) && q.sampleTests.length > 0) ||
+    (Array.isArray(q.testCases?.sample) && q.testCases.sample.length > 0)
+  );
+  const hasHiddenTestCases = Boolean(
+    (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) ||
+    (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) ||
+    (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) ||
     (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0)
   );
-  return hasStatement && hasTestCases;
+  return hasStatement && hasSampleTestCases && hasHiddenTestCases;
 };
 
 export const mergeQuestionObjects = (fullQ, stub) => {
   if (!fullQ) return stub || null;
   if (!stub || typeof stub !== 'object') return fullQ;
+
+  // Resolve sample test cases from fullQ or stub
+  const sampleTestCases = (Array.isArray(fullQ.sampleTestCases) && fullQ.sampleTestCases.length > 0)
+    ? fullQ.sampleTestCases
+    : (Array.isArray(fullQ.content?.sampleTestCases) && fullQ.content.sampleTestCases.length > 0
+      ? fullQ.content.sampleTestCases
+      : (Array.isArray(fullQ.testCases?.sample) && fullQ.testCases.sample.length > 0
+        ? fullQ.testCases.sample
+        : (Array.isArray(stub.sampleTestCases) && stub.sampleTestCases.length > 0
+          ? stub.sampleTestCases
+          : (Array.isArray(stub.content?.sampleTestCases) && stub.content.sampleTestCases.length > 0
+            ? stub.content.sampleTestCases
+            : []))));
+
+  // Resolve hidden test cases from fullQ or stub
+  const hiddenTestCases = (Array.isArray(fullQ.testCases?.hidden) && fullQ.testCases.hidden.length > 0)
+    ? fullQ.testCases.hidden
+    : (Array.isArray(fullQ.hiddenTestCases) && fullQ.hiddenTestCases.length > 0)
+      ? fullQ.hiddenTestCases
+      : (Array.isArray(fullQ.hiddenTests) && fullQ.hiddenTests.length > 0)
+        ? fullQ.hiddenTests
+        : (Array.isArray(fullQ.content?.testCases) && fullQ.content.testCases.length > 0)
+          ? fullQ.content.testCases
+          : (Array.isArray(stub.testCases?.hidden) && stub.testCases.hidden.length > 0
+            ? stub.testCases.hidden
+            : (Array.isArray(stub.hiddenTestCases) && stub.hiddenTestCases.length > 0
+              ? stub.hiddenTestCases
+              : (Array.isArray(stub.hiddenTests) && stub.hiddenTests.length > 0
+                ? stub.hiddenTests
+                : [])));
+
+  const resolvedTestCases = {
+    ...(typeof fullQ.testCases === 'object' && !Array.isArray(fullQ.testCases) ? fullQ.testCases : {}),
+    sample: sampleTestCases,
+    hidden: hiddenTestCases,
+  };
+
   return {
     ...fullQ,
     ...stub,
     id: fullQ.id || fullQ.questionId || stub.id || stub.questionId || '',
     questionId: fullQ.questionId || fullQ.id || stub.questionId || stub.id || '',
     title: stub.title || fullQ.title || '',
-    content: fullQ.content || stub.content,
+    content: {
+      ...(fullQ.content || {}),
+      ...(stub.content || {}),
+      sampleTestCases,
+      testCases: hiddenTestCases,
+    },
     description: fullQ.description || fullQ.content?.problemStatement || fullQ.problemStatement || stub.description || stub.statement || '',
     problemStatement: fullQ.problemStatement || fullQ.content?.problemStatement || stub.problemStatement || stub.statement || '',
     statement: fullQ.statement || fullQ.problemStatement || fullQ.content?.problemStatement || stub.statement || '',
-    sampleTestCases: (Array.isArray(fullQ.sampleTestCases) && fullQ.sampleTestCases.length > 0)
-      ? fullQ.sampleTestCases
-      : (Array.isArray(fullQ.content?.sampleTestCases) && fullQ.content.sampleTestCases.length > 0 ? fullQ.content.sampleTestCases : (stub.sampleTestCases || [])),
-    testCases: (Array.isArray(fullQ.testCases) && fullQ.testCases.length > 0)
-      ? fullQ.testCases
-      : (Array.isArray(stub.testCases) && stub.testCases.length > 0 ? stub.testCases : (fullQ.content?.sampleTestCases || [])),
+    sampleTestCases,
+    sampleTests: sampleTestCases,
+    hiddenTestCases,
+    hiddenTests: hiddenTestCases,
+    testCases: resolvedTestCases,
     boilerPlates: fullQ.boilerPlates || fullQ.content?.boilerPlates || stub.boilerPlates || {},
     boilerplates: fullQ.boilerplates || fullQ.content?.boilerplates || stub.boilerplates || {},
     marks: Number(stub.marks || fullQ.marks || 100),

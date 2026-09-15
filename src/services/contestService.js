@@ -641,8 +641,13 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
     audioRequired: false,
     tabSwitchLimit: 3,
     maxViolations: 5,
+    maxCameraViolations: 5,
+    maxAudioViolations: 5,
     autoSubmitOnViolation: true,
   };
+
+  const cameraLimit = Number(effectiveProctorConfig?.maxCameraViolations ?? effectiveProctorConfig?.maxViolations) || 5;
+  const audioLimit = Number(effectiveProctorConfig?.maxAudioViolations) || 5;
 
   // Build canonical MSA Assessment payload
   const canonicalAss = {
@@ -654,7 +659,9 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
     duration_minutes: effectiveDuration,
     proctored: effectiveRequiresSeb !== false && contest.isProctored !== false,
     audioProctored: Boolean(effectiveProctorConfig?.audioRequired),
-    maxViolations: Number(effectiveProctorConfig?.maxViolations) || 5,
+    maxViolations: cameraLimit,
+    maxCameraViolations: cameraLimit,
+    maxAudioViolations: audioLimit,
     tabSwitchLimit: Number(effectiveProctorConfig?.tabSwitchLimit) || 3,
     autoSubmitOnViolation: effectiveProctorConfig?.autoSubmitOnViolation !== false,
     isMultiSection: true,
@@ -667,7 +674,12 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
     maxScore: contest.maxScore || 600,
     scoringStrategy: contest.scoringStrategy || 'icpc',
     requiresSeb: effectiveRequiresSeb,
-    proctorConfig: effectiveProctorConfig,
+    proctorConfig: {
+      ...effectiveProctorConfig,
+      maxViolations: cameraLimit,
+      maxCameraViolations: cameraLimit,
+      maxAudioViolations: audioLimit,
+    },
   };
 
   // Securely store in session storage for MultiSectionAssessment runtime

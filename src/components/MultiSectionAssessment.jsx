@@ -127,13 +127,29 @@ const normalizeQuestion = (q, idx = 0) => {
     if (norm === 'javascript') boilerPlates.js = val;
   });
 
-  const testCases = normalizeTestCaseArray(q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || q.testCases?.sample || []);
+  const testCases = normalizeTestCaseArray(
+    q.content?.sampleTestCases ||
+    q.sampleTestCases ||
+    q.sampleTests ||
+    q.testCases?.sample ||
+    (Array.isArray(q.testCases) ? q.testCases.filter(tc => !tc.hidden) : []) ||
+    []
+  );
 
   let hidden = [];
-  if (q.testCases?.hidden) {
+  if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
+    hidden = normalizeTestCaseArray(q.hiddenTestCases);
+  } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
+    hidden = normalizeTestCaseArray(q.hiddenTests);
+  } else if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
     hidden = normalizeTestCaseArray(q.testCases.hidden);
-  } else if (Array.isArray(q.testCases)) {
-    hidden = normalizeTestCaseArray(q.testCases);
+  } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
+    hidden = normalizeTestCaseArray(q.content.testCases);
+  } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
+    const hList = q.testCases.filter(tc => tc.hidden);
+    hidden = normalizeTestCaseArray(hList.length > 0 ? hList : q.testCases);
+  } else if (testCases.length > 0) {
+    hidden = testCases;
   }
 
   return {
@@ -148,12 +164,13 @@ const normalizeQuestion = (q, idx = 0) => {
     boilerplates: boilerPlates,
     sampleTestCases: testCases,
     sampleTests: testCases,
+    hiddenTestCases: hidden,
+    hiddenTests: hidden,
     testCases: {
-      ...q.testCases,
+      ...(typeof q.testCases === 'object' && !Array.isArray(q.testCases) ? q.testCases : {}),
       sample: testCases,
       hidden
     },
-    hiddenTests: hidden
   };
 };
 
@@ -523,7 +540,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
               {settings.proctored && (
                 <div className="mcq-proctor-badge" title="Camera Proctoring">
                   <span className={`status-dot ${(proctoringData?.violationCount || 0) > 0 ? 'bad' : 'good'}`} />
-                  Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 7}
+                  Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 5}
                 </div>
               )}
             </div>
@@ -993,7 +1010,7 @@ const MultiSectionAssessment = () => {
 
   const maxViolations = useMemo(() => {
     if (!assessment) return 5;
-    return Number(assessment.proctorConfig?.maxViolations ?? assessment.maxViolations) || 5;
+    return Number(assessment.proctorConfig?.maxCameraViolations ?? assessment.proctorConfig?.maxViolations ?? assessment.maxCameraViolations ?? assessment.maxViolations) || 5;
   }, [assessment]);
 
   const tabSwitchLimit = useMemo(() => {
@@ -2739,18 +2756,20 @@ const MultiSectionAssessment = () => {
         proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
         // audioProctored is independent of camera proctoring — only use its own flag
         audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
-        maxViolations: Number(assessment.maxViolations) || 7,
-        maxAudioViolations: Number(assessment.maxAudioViolations) || 5
+        maxViolations,
+        maxCameraViolations: maxViolations,
+        maxAudioViolations
       }
       : {
         timerRestrictedSubmit: isTruthy(activeSection.timerRestrictedSubmit),
         questionTimers: codingQTimers,
         forwardOnly: isTruthy(activeSection.forwardOnly) || (codingQTimers.length > 0),
         proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
-        maxViolations: Number(assessment.maxViolations) || 7,
+        maxViolations,
+        maxCameraViolations: maxViolations,
         // audioProctored is independent of camera proctoring — only use its own flag
         audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
-        maxAudioViolations: Number(assessment.maxAudioViolations) || 5
+        maxAudioViolations
       };
     const sectionView = (activeSection.type === 'spoken_english' || activeSection.type === 'speech' || activeSection.type === 'sea')
       ? (

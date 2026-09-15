@@ -356,14 +356,17 @@ export function getQuestionSampleTestCases(q) {
 export function getQuestionHiddenTestCases(q) {
   if (!q) return [];
   let raw = [];
-  if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
+  if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
+    raw = q.hiddenTestCases;
+  } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
     raw = q.hiddenTests;
   } else if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
     raw = q.testCases.hidden;
   } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
     raw = q.content.testCases;
   } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
-    raw = q.testCases;
+    const hList = q.testCases.filter(tc => tc.hidden);
+    raw = hList.length > 0 ? hList : q.testCases;
   } else if (Array.isArray(q.test_cases) && q.test_cases.length > 0) {
     raw = q.test_cases;
   } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {

@@ -210,15 +210,17 @@ const normalizeQuestion = (q, idx = 0) => {
 
     // Normalize hidden test cases from all potential schemas
     let hidden = [];
-    if (Array.isArray(q.testCases)) {
-        const hList = q.testCases.filter(tc => tc.hidden);
-        hidden = normalizeTestCaseArray(hList.length > 0 ? hList : q.testCases);
-    } else if (q.testCases?.hidden && Array.isArray(q.testCases.hidden) && q.testCases.hidden.length > 0) {
-        hidden = normalizeTestCaseArray(q.testCases.hidden);
+    if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
+        hidden = normalizeTestCaseArray(q.hiddenTestCases);
     } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
         hidden = normalizeTestCaseArray(q.hiddenTests);
+    } else if (q.testCases?.hidden && Array.isArray(q.testCases.hidden) && q.testCases.hidden.length > 0) {
+        hidden = normalizeTestCaseArray(q.testCases.hidden);
     } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
         hidden = normalizeTestCaseArray(q.content.testCases);
+    } else if (Array.isArray(q.testCases)) {
+        const hList = q.testCases.filter(tc => tc.hidden);
+        hidden = normalizeTestCaseArray(hList.length > 0 ? hList : q.testCases);
     } else if (Array.isArray(q.test_cases) && q.test_cases.length > 0) {
         hidden = normalizeTestCaseArray(q.test_cases);
     } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {
@@ -238,9 +240,11 @@ const normalizeQuestion = (q, idx = 0) => {
         boilerplates: boilerPlates,
         sampleTestCases,
         sampleTests: sampleTestCases,
+        hiddenTestCases: hidden,
         hiddenTests: hidden,
         testCases: {
-            ...q.testCases,
+            ...(typeof q.testCases === 'object' && !Array.isArray(q.testCases) ? q.testCases : {}),
+            sample: sampleTestCases,
             hidden: hidden
         }
     };
@@ -3567,13 +3571,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                             {shouldUseAudioProctoring && (
                                 <div className="coding-proctor-pill" title="Audio Violations">
                                     <span className={`status-dot ${(isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? 'bad' : 'good'}`} />
-                                    Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || currentAssessment?.maxAudioViolations || parentSettings?.maxAudioViolations) || 5}
+                                    Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || parentSettings?.maxAudioViolations || currentAssessment?.maxAudioViolations || currentAssessment?.proctorConfig?.maxAudioViolations) || 5}
                                 </div>
                             )}
                             {shouldUseProctoring && (
                                 <div className="coding-proctor-pill" title="Camera Violations">
                                     <span className={`status-dot ${(isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? 'bad' : 'good'}`} />
-                                    Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{currentAssessment?.maxViolations || settings?.maxViolations || parentSettings?.maxViolations || 5}
+                                    Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{Number(settings.maxViolations || parentSettings?.maxViolations || currentAssessment?.maxViolations || currentAssessment?.proctorConfig?.maxCameraViolations || currentAssessment?.proctorConfig?.maxViolations) || 5}
                                 </div>
                             )}
                         </div>
