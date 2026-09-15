@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   FaTrophy,
   FaCalendarAlt,
@@ -45,18 +45,19 @@ import {
   subscribeToContest,
   subscribeToContestRegistration,
   prepareContestMSAAssessment,
+  getContestDynamicStatus,
 } from '../../services/contestService';
 import { purchaseContestPass } from '../../services/razorpayService';
 import '../../styles/ContestsView.css';
 
-const TrophySvg = () => (
-  <svg className="contest-trophy-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+// SVG Trophy illustration for hero banner
+const TrophyIllustration = () => (
+  <svg viewBox="0 0 200 200" className="trophy-illustration" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="trophyGold" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#FFF2A1" />
-        <stop offset="35%" stopColor="#F5B800" />
-        <stop offset="70%" stopColor="#D98200" />
-        <stop offset="100%" stopColor="#B36200" />
+        <stop offset="0%" stopColor="#FFE875" />
+        <stop offset="50%" stopColor="#F5B800" />
+        <stop offset="100%" stopColor="#D48B00" />
       </linearGradient>
       <linearGradient id="pedestalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#1E293B" />
@@ -94,6 +95,7 @@ export default function ContestLandingView({
   const [contest, setContest] = useState(initialContest);
   const [activeTab, setActiveTab] = useState('overview');
   const [isRegistered, setIsRegistered] = useState(false);
+  const [userRegistration, setUserRegistration] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
@@ -120,6 +122,7 @@ export default function ContestLandingView({
     if (user?.uid) {
       unsubReg = subscribeToContestRegistration(initialContest.id, user.uid, (regStatus) => {
         setIsRegistered(Boolean(regStatus));
+        setUserRegistration(regStatus);
       });
     }
 
@@ -151,15 +154,9 @@ export default function ContestLandingView({
     };
   }, [contest?.id]);
 
-  // Contest Lifecycle Status
+  // Contest Lifecycle Status (Strictly timestamp-driven)
   const dynamicStatus = useMemo(() => {
-    if (!contest) return 'upcoming';
-    const now = Date.now();
-    const startMs = new Date(contest.startTime).getTime();
-    const endMs = new Date(contest.endTime).getTime();
-    if (now < startMs) return 'upcoming';
-    if (now >= startMs && now <= endMs) return 'live';
-    return 'ended';
+    return getContestDynamicStatus(contest);
   }, [contest]);
 
   // Automated Registration Dates State
@@ -217,6 +214,22 @@ export default function ContestLandingView({
     return isUserQualifiedForRound(activeRound);
   }, [activeRound, user?.uid]);
 
+  const isRoundCompleted = useCallback((roundNumber) => {
+    if (!userRegistration) return false;
+    const rNum = Number(roundNumber);
+    const completedList = Array.isArray(userRegistration.completedRounds)
+      ? userRegistration.completedRounds.map(Number)
+      : [];
+    if (completedList.includes(rNum)) return true;
+    if (userRegistration.status === `round_${rNum}_completed`) return true;
+    if (userRegistration.status === 'completed') return true;
+    return false;
+  }, [userRegistration]);
+
+  const isCurrentActiveRoundCompleted = useMemo(() => {
+    return isRoundCompleted(activeRound?.roundNumber || 1);
+  }, [isRoundCompleted, activeRound]);
+
   const timeCountdownText = useMemo(() => {
     if (!contest?.startTime) return '';
     const now = Date.now();
@@ -268,6 +281,11 @@ export default function ContestLandingView({
       return;
     }
 
+    if (dynamicStatus === 'ended') {
+      toast.error('This contest has already ended. Registration is closed.');
+      return;
+    }
+
     if (registrationState === 'upcoming') {
       toast.info(`Registration opens on ${formattedRegStart}. Please check back then!`);
       return;
@@ -291,6 +309,7 @@ export default function ContestLandingView({
         if (res.success) {
           toast.success(`Entry pass unlocked! Successfully registered for ${contest.title}!`);
           setIsRegistered(true);
+          setUserRegistration({ userId: user.uid, status: 'registered', registeredAt: new Date().toISOString() });
         } else if (res.error && !res.error.includes('cancelled')) {
           toast.error(res.error);
         }
@@ -315,6 +334,7 @@ export default function ContestLandingView({
     try {
       await registerForContest(contest, user, passkey);
       setIsRegistered(true);
+      setUserRegistration({ userId: user.uid, status: 'registered', registeredAt: new Date().toISOString() });
       toast.success(`Successfully registered for ${contest.title}!`);
       setShowPasskeyModal(false);
       setPasskeyInput('');
@@ -330,6 +350,7 @@ export default function ContestLandingView({
     try {
       await unregisterFromContest(contest.id, user.uid);
       setIsRegistered(false);
+      setUserRegistration(null);
       toast.success('Successfully unregistered.');
     } catch (err) {
       toast.error('Failed to unregister.');
@@ -343,9 +364,25 @@ export default function ContestLandingView({
       return;
     }
 
+    if (dynamicStatus === 'ended') {
+      toast.error('This contest has already ended. Arena workspace is closed.');
+      return;
+    }
+
+    if (dynamicStatus === 'upcoming') {
+      toast.error('This contest has not started yet. Please wait for the scheduled start time.');
+      return;
+    }
+
     const roundToEnter = targetRoundNumber
       ? roundsList.find((r) => r.roundNumber === targetRoundNumber)
       : activeRound;
+
+    const roundNum = Number(roundToEnter?.roundNumber || 1);
+    if (isRoundCompleted(roundNum)) {
+      toast.info(`You have already completed Round ${roundNum}. Multiple attempts are not permitted.`);
+      return;
+    }
 
     if (roundToEnter && roundToEnter.roundNumber > 1 && !isUserQualifiedForRound(roundToEnter)) {
       toast.error(
@@ -536,34 +573,57 @@ export default function ContestLandingView({
 
             {/* Hero CTA Buttons */}
             <div className="hero-cta-group">
-              {dynamicStatus === 'live' && isRegistered ? (
-                isUserQualifiedForActiveRound ? (
+              {dynamicStatus === 'ended' ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button className="hero-primary-btn" style={{ background: '#1E293B', color: '#94A3B8', cursor: 'not-allowed' }} disabled>
+                    Contest Ended
+                  </button>
                   <button
-                    className="hero-primary-btn launch-btn"
-                    onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
-                    disabled={isLaunching}
+                    className="hero-primary-btn"
+                    style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+                    onClick={() => setActiveTab('leaderboard')}
                   >
-                    <FaPlay className="btn-icon" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <button className="hero-primary-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
-                      🔒 Round {activeRound?.roundNumber} Shortlist Required
-                    </button>
-                    <span className="text-xs text-amber-400">
-                      (Only shortlisted candidates advanced by judges can enter Round {activeRound?.roundNumber})
-                    </span>
-                  </div>
-                )
-              ) : isRegistered ? (
-                <div className="registered-badge-group">
-                  <button className="hero-primary-btn registered-btn" disabled>
-                    <FaCheck className="btn-icon" /> Registered ✓
-                  </button>
-                  <button className="hero-unregister-btn" onClick={handleUnregister}>
-                    Unregister
+                    🏆 View Results & Leaderboard →
                   </button>
                 </div>
+              ) : isRegistered ? (
+                dynamicStatus === 'live' ? (
+                  isCurrentActiveRoundCompleted ? (
+                    <button
+                      className="hero-primary-btn registered-btn"
+                      style={{ background: '#059669', borderColor: '#10B981', color: '#FFFFFF', cursor: 'default' }}
+                      disabled
+                    >
+                      <FaCheck className="btn-icon" /> Round {activeRound?.roundNumber || 1} Completed ✓
+                    </button>
+                  ) : isUserQualifiedForActiveRound ? (
+                    <button
+                      className="hero-primary-btn launch-btn"
+                      onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
+                      disabled={isLaunching}
+                    >
+                      <FaPlay className="btn-icon" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button className="hero-primary-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
+                        🔒 Round {activeRound?.roundNumber} Shortlist Required
+                      </button>
+                      <span className="text-xs text-amber-400">
+                        (Only shortlisted candidates advanced by judges can enter Round {activeRound?.roundNumber})
+                      </span>
+                    </div>
+                  )
+                ) : (
+                  <div className="registered-badge-group">
+                    <button className="hero-primary-btn registered-btn" disabled>
+                      <FaCheck className="btn-icon" /> Registered ✓ ({timeCountdownText || 'Starting Soon'})
+                    </button>
+                    <button className="hero-unregister-btn" onClick={handleUnregister}>
+                      Unregister
+                    </button>
+                  </div>
+                )
               ) : registrationState === 'upcoming' ? (
                 <button className="hero-primary-btn" style={{ background: '#334155', cursor: 'not-allowed' }} disabled>
                   Registration Opens {formattedRegStart}
@@ -687,6 +747,95 @@ export default function ContestLandingView({
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="overview-tab-content space-y-6">
+              {/* ATTEMPT SUMMARY / SCORE PREVIEW CARD (Immediate Post-Round Feedback) */}
+              {(userRegistration?.lastCompletedRound || userRegistration?.lastScore !== undefined || isRoundCompleted(activeRound?.roundNumber)) && (
+                <div className="p-6 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-emerald-900/30 shadow-2xl backdrop-blur-md relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-2xl shadow-inner">
+                        <FaCheckCircle />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            Round {userRegistration?.lastCompletedRound || activeRound?.roundNumber || 1} Attempt Recorded
+                          </span>
+                          <span className="text-xs text-slate-400 font-medium">
+                            {userRegistration?.submittedAt ? new Date(userRegistration.submittedAt?.seconds ? userRegistration.submittedAt.seconds * 1000 : userRegistration.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Verified'}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-black text-white mt-1">
+                          Submission Confirmed &amp; Evaluated 🎉
+                        </h3>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('leaderboard')}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg self-start sm:self-auto cursor-pointer"
+                    >
+                      <FaTrophy /> View Live Standings <FaArrowRight />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Score Achieved</span>
+                      <span className="text-2xl font-black text-emerald-400 font-mono mt-1">
+                        {userRegistration?.lastScore ?? 0}
+                        <span className="text-xs text-slate-400 font-normal"> / {userRegistration?.maxScore || 100}</span>
+                      </span>
+                      <span className="text-[11px] text-emerald-400/80 font-medium mt-0.5">
+                        {userRegistration?.percentage !== undefined ? `${userRegistration.percentage}% Accuracy` : 'Evaluated'}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Problems Solved</span>
+                      <span className="text-2xl font-black text-cyan-400 font-mono mt-1">
+                        {userRegistration?.solvedCount ?? 0}
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-medium mt-0.5">
+                        {userRegistration?.partialSolvedCount ? `+${userRegistration.partialSolvedCount} partial` : 'All testcases passed'}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Time Taken</span>
+                      <span className="text-2xl font-black text-indigo-300 font-mono mt-1">
+                        {userRegistration?.timeTakenFormatted || (userRegistration?.timeTakenSeconds ? `${Math.floor(userRegistration.timeTakenSeconds / 60)}m ${userRegistration.timeTakenSeconds % 60}s` : 'Completed')}
+                      </span>
+                      <span className="text-[11px] text-indigo-300/80 font-medium mt-0.5">Speed metric</span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Proctoring Status</span>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <FaShieldAlt className="text-emerald-400 text-lg" />
+                        <span className="text-sm font-bold text-emerald-300">Clean Session</span>
+                      </div>
+                      <span className="text-[11px] text-slate-400 mt-0.5">Zero critical breaches</span>
+                    </div>
+                  </div>
+
+                  {/* Stage guidance */}
+                  <div className="mt-4 p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">ℹ️</span>
+                      <span>
+                        {rounds.length > 1 && (userRegistration?.lastCompletedRound || 1) < rounds.length
+                          ? `Round ${(userRegistration?.lastCompletedRound || 1) + 1} qualification results will be declared by the administrator following automated evaluation.`
+                          : dynamicStatus === 'ended'
+                          ? 'The contest has concluded. Final official rankings are displayed on the Leaderboard.'
+                          : 'Your attempt has been safely synchronized. You may review your current rank on the live scoreboard.'}
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[11px] whitespace-nowrap self-start sm:self-auto border border-emerald-500/30">
+                      Status: Saved
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* LIVE ANNOUNCEMENT BANNER */}
               {announcements && announcements.length > 0 && (
                 <div className="p-3.5 rounded-2xl border border-primary/40 bg-primary/10 flex items-center justify-between gap-3 text-xs shadow-sm">
@@ -847,7 +996,11 @@ export default function ContestLandingView({
                         </div>
 
                         <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                          {r.roundNumber === 1 ? (
+                          {isRoundCompleted(r.roundNumber) ? (
+                            <span className="text-emerald-500 font-semibold flex items-center gap-1">
+                              <FaCheck /> Completed ✓
+                            </span>
+                          ) : r.roundNumber === 1 ? (
                             <span className="text-slate-600 dark:text-slate-400">Open to all registrants</span>
                           ) : isQualified ? (
                             <span className="text-emerald-600 font-semibold flex items-center gap-1">
@@ -859,7 +1012,7 @@ export default function ContestLandingView({
                             </span>
                           )}
 
-                          {isCurrentLive && isRegistered && isQualified && (
+                          {dynamicStatus === 'live' && isCurrentLive && isRegistered && isQualified && !isRoundCompleted(r.roundNumber) && (
                             <button
                               className="text-xs font-bold text-purple-600 hover:underline"
                               onClick={() => handleStartContestAssessment(r.roundNumber)}
@@ -1050,7 +1203,11 @@ export default function ContestLandingView({
                         </div>
 
                         <div>
-                          {isCurrentLive ? (
+                          {isRoundCompleted(round.roundNumber) ? (
+                            <span className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                              <FaCheck /> Round {round.roundNumber} Completed ✓
+                            </span>
+                          ) : dynamicStatus === 'live' && isCurrentLive ? (
                             isRegistered ? (
                               isQualified ? (
                                 <button
@@ -1070,7 +1227,7 @@ export default function ContestLandingView({
                                 Register First
                               </button>
                             )
-                          ) : isEnded ? (
+                          ) : isEnded || dynamicStatus === 'ended' ? (
                             <button className="view-all-link text-xs" onClick={() => setActiveTab('leaderboard')}>
                               View Results →
                             </button>
@@ -1102,6 +1259,28 @@ export default function ContestLandingView({
                 </div>
               </div>
 
+              {/* TIE-BREAKING PROTOCOL CALLOUT */}
+              <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-base">⚖️</span>
+                  <div>
+                    <span className="font-bold text-white">Official Tie-Breaking Protocol: </span>
+                    <span className="text-slate-300">
+                      1️⃣ <strong>Total Score</strong> (Higher wins) &rarr; 2️⃣ <strong>Questions Solved</strong> (Higher wins) &rarr; 3️⃣ <strong>Assessment Timing</strong> (Faster wins)
+                    </span>
+                  </div>
+                </div>
+                <div className="relative group cursor-help text-xs text-primary font-medium flex items-center gap-1 self-start sm:self-auto whitespace-nowrap">
+                  <FaQuestionCircle />
+                  <span>How it works</span>
+                  {/* Tooltip */}
+                  <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block w-72 p-3 bg-slate-950 text-slate-200 rounded-xl shadow-2xl border border-slate-700 text-[11px] leading-relaxed z-50 pointer-events-none">
+                    <p className="font-bold text-white mb-1">Tie-Breaking Resolution Logic</p>
+                    <p>When multiple participants achieve identical scores, ranking priority resolves to the candidate who fully passed more problems. If still tied, the candidate with the lowest elapsed completion time is awarded the higher rank.</p>
+                  </div>
+                </div>
+              </div>
+
               {leaderboard.length === 0 ? (
                 <div className="py-12 text-center text-slate-500">
                   <FaTrophy className="mx-auto text-4xl text-slate-300 mb-2" />
@@ -1116,10 +1295,25 @@ export default function ContestLandingView({
                         <th>Rank</th>
                         <th>Participant</th>
                         <th>Institution</th>
-                        <th>Total Marks (All-Pass)</th>
+                        <th>
+                          <div className="flex flex-col">
+                            <span>Total Marks</span>
+                            <span className="text-[10px] text-emerald-400 font-mono font-normal">#1 Priority</span>
+                          </div>
+                        </th>
                         <th>Partial Score</th>
-                        <th>Assessment Timing (Speed)</th>
-                        <th>Solved</th>
+                        <th>
+                          <div className="flex flex-col">
+                            <span>Assessment Timing</span>
+                            <span className="text-[10px] text-indigo-400 font-mono font-normal">#3 Priority</span>
+                          </div>
+                        </th>
+                        <th>
+                          <div className="flex flex-col">
+                            <span>Solved</span>
+                            <span className="text-[10px] text-cyan-400 font-mono font-normal">#2 Priority</span>
+                          </div>
+                        </th>
                         <th>Score %</th>
                       </tr>
                     </thead>
@@ -1422,24 +1616,34 @@ export default function ContestLandingView({
 
             {/* CTA in sidebar */}
             <div className="mt-5">
-              {dynamicStatus === 'live' && isRegistered ? (
-                isUserQualifiedForActiveRound ? (
-                  <button
-                    className="sidebar-cta-btn launch-btn"
-                    onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
-                    disabled={isLaunching}
-                  >
-                    <FaPlay className="mr-2" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
-                  </button>
+              {dynamicStatus === 'ended' ? (
+                <button className="sidebar-cta-btn" style={{ background: '#1E293B', color: '#94A3B8', cursor: 'not-allowed' }} disabled>
+                  Contest Ended
+                </button>
+              ) : isRegistered ? (
+                dynamicStatus === 'live' ? (
+                  isCurrentActiveRoundCompleted ? (
+                    <button className="sidebar-cta-btn registered-btn" style={{ background: '#059669', borderColor: '#10B981', color: '#FFFFFF', cursor: 'default' }} disabled>
+                      <FaCheck className="mr-2" /> Round {activeRound?.roundNumber || 1} Completed ✓
+                    </button>
+                  ) : isUserQualifiedForActiveRound ? (
+                    <button
+                      className="sidebar-cta-btn launch-btn"
+                      onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
+                      disabled={isLaunching}
+                    >
+                      <FaPlay className="mr-2" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
+                    </button>
+                  ) : (
+                    <button className="sidebar-cta-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
+                      🔒 Shortlist Required for Round {activeRound?.roundNumber}
+                    </button>
+                  )
                 ) : (
-                  <button className="sidebar-cta-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
-                    🔒 Shortlist Required for Round {activeRound?.roundNumber}
+                  <button className="sidebar-cta-btn registered-btn" disabled>
+                    <FaCheck className="mr-2" /> You are Registered ✓
                   </button>
                 )
-              ) : isRegistered ? (
-                <button className="sidebar-cta-btn registered-btn" disabled>
-                  <FaCheck className="mr-2" /> You are Registered ✓
-                </button>
               ) : registrationState === 'upcoming' ? (
                 <button className="sidebar-cta-btn" style={{ background: '#334155', cursor: 'not-allowed' }} disabled>
                   Registration Opens {formattedRegStart}

@@ -757,15 +757,12 @@ class DataService {
                 if (cohort) allowedModules = cohort.allowedModules || [];
             }
 
-            // Load static practice content index
+            // Load static practice content index (local only, no external GitHub fallback)
             let coursesData = {};
             try {
                 const localRes = await fetch('/seed-contents/courses.json');
                 if (localRes.ok) {
                     coursesData = await localRes.json();
-                } else {
-                    const rawRes = await fetch('https://raw.githubusercontent.com/seeditDev/seed-contents/main/courses.json');
-                    if (rawRes.ok) coursesData = await rawRes.json();
                 }
             } catch (_) { }
 
@@ -931,48 +928,7 @@ class DataService {
         }
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Portal Links (Firestore or static fallback)
-    // ────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Get portal links from Firestore systemConfig/portalLinks.
-     * Falls back to the GitHub CDN if Firestore doesn't have the doc.
-     */
-    static async getPortalLinks() {
-        try {
-            const sessionData = sessionStorage.getItem('portal_links');
-            if (sessionData) {
-                return JSON.parse(sessionData);
-            }
-
-            // Try Firestore systemConfig
-            try {
-                const snap = await getDoc(doc(db, COLLECTIONS.SYSTEM_CONFIG, 'portalLinks'));
-                if (snap.exists()) {
-                    const links = snap.data();
-                    sessionStorage.setItem('portal_links', JSON.stringify(links));
-                    return links;
-                }
-            } catch (_) {
-                // Fall through to CDN
-            }
-
-            // Fallback: raw GitHub CDN
-            const url = 'https://raw.githubusercontent.com/seeditDev/SEEDDB/main/portalLinks/portalLinks.json';
-            const response = await fetch(url);
-            if (response.ok) {
-                const links = await response.json();
-                sessionStorage.setItem('portal_links', JSON.stringify(links));
-                return links;
-            }
-
-            throw new Error('Failed to fetch portal links from all sources');
-        } catch (error) {
-            console.error('[DataService] getPortalLinks error:', error);
-            throw error;
-        }
-    }
 
     // ────────────────────────────────────────────────────────────────────────
     // Legacy compatibility shims

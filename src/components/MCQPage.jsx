@@ -24,7 +24,8 @@ import { throttledLocalStorageSet, flushThrottledWrites } from '../utils/throttl
 import { createSubmitGuard } from '../utils/submitGuard';
 import { markAssessmentCompleted } from '../services/attemptStatusService';
 import * as AttemptStatusService from '../services/attemptStatusService';
-import { auth } from '../lib/firebase-config';
+import { auth, db } from '../lib/firebase-config';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import SecurityWatermark from './SecurityWatermark';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 import { toast } from 'sonner';
@@ -887,8 +888,8 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                 return;
             }
 
-            // Fetch test data from JSON
-            const testData = await fetchTestData(test.url);
+            // Fetch test data from JSON or Firestore
+            const testData = await fetchTestData(test.url, test);
 
             // Use data from fetched JSON, with fallback to access_control data
             const derivedSlug = test.slug || slugify(test.id || test.name || test.key || 'mcq-test');
@@ -970,9 +971,53 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         }
     };
 
-    // Fetch test data from JSON
-    const fetchTestData = async (url) => {
+    // Fetch test data from JSON or Firestore
+    const fetchTestData = async (url, testObj = null) => {
         try {
+            // First check Firestore assessments collection by slug or test ID
+            const targetSlug = testObj?.slug || testObj?.test_slug || testObj?.id;
+            if (targetSlug) {
+                try {
+                    const docSnap = await getDoc(doc(db, "assessments", targetSlug));
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        console.log(`[MCQPage] Loaded assessment from Firestore assessments/${targetSlug}`);
+                        return {
+                            ...data,
+                            questions: data.questions || data.content?.questions || data.data?.questions || []
+                        };
+                    }
+                    const qSnap = await getDocs(query(collection(db, "assessments"), where("slug", "==", targetSlug)));
+                    if (!qSnap.empty) {
+                        const data = qSnap.docs[0].data();
+                        console.log(`[MCQPage] Loaded assessment from Firestore by query assessments slug=${targetSlug}`);
+                        return {
+                            ...data,
+                            questions: data.questions || data.content?.questions || data.data?.questions || []
+                        };
+                    }
+                } catch (fsErr) {
+                    console.warn(`[MCQPage] Firestore assessment fetch error for ${targetSlug}:`, fsErr);
+                }
+            }
+
+            // If url contains slug and no questions yet, also check if url itself has slug
+            if (url && typeof url === 'string' && !url.includes('http') && !url.endsWith('.json')) {
+                try {
+                    const cleanSlug = url.replace(/^\/+/, '');
+                    const docSnap = await getDoc(doc(db, "assessments", cleanSlug));
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        return {
+                            ...data,
+                            questions: data.questions || data.content?.questions || data.data?.questions || []
+                        };
+                    }
+                } catch (fsErr) {
+                    console.warn(`[MCQPage] Firestore assessment fetch error for url slug:`, fsErr);
+                }
+            }
+
             // Extract test path from URL or use it directly
             // Assuming URL format: /mcqs/test-name.json or full URL
             let testPath = url;

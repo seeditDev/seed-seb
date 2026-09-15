@@ -230,6 +230,26 @@ service cloud.firestore {
     }
 
     // ══════════════════════════════════════════════════════════════════════
+    // 3e. Tenant Courses (Denormalized per-college tests for Guest & SEB)
+    //     tenantCourses/{tenantId}/tests/{testId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /tenantCourses/{tenantId} {
+      allow read: if true;
+      allow write: if isPortal();
+
+      match /tests/{testId} {
+        allow read: if true;
+        allow write: if isPortal();
+      }
+
+      match /{allSub=**} {
+        allow read: if true;
+        allow write: if isPortal();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
     // 4. Assessments (Authoring store - seed-admin & staff portal)
     // ══════════════════════════════════════════════════════════════════════
 
@@ -269,6 +289,21 @@ service cloud.firestore {
         allow create, update: if isSignedIn();
         allow delete: if isAdmin();
       }
+
+      match /{allSub=**} {
+        allow read: if true;
+        allow write: if isPortal();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 4b. Coding Challenges Bank (Authoring & Question Bank)
+    //     codingChallenges/{challengeId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /codingChallenges/{challengeId} {
+      allow read: if true;
+      allow write: if isPortal();
 
       match /{allSub=**} {
         allow read: if true;
@@ -439,12 +474,12 @@ service cloud.firestore {
     }
 
     match /contentUrls/{urlId} {
-      allow read:  if isSignedIn();
+      allow read:  if true;
       allow write: if isPortal();
     }
 
     match /contestUrls/{urlId} {
-      allow read:  if isSignedIn();
+      allow read:  if true;
       allow write: if isPortal();
     }
 
@@ -542,9 +577,29 @@ service cloud.firestore {
     //    (Live Assessment Monitor in seed-admin, Presence Counts & Global Contests)
     // ══════════════════════════════════════════════════════════════════════
 
+    match /{path=**}/series/{seriesId} {
+      allow read: if true;
+      allow create, update, delete: if isPortal();
+    }
+
     match /{path=**}/tests/{testId} {
       allow read: if true;
       allow create, update, delete: if isPortal();
+    }
+
+    match /{path=**}/cohorts/{cohortId} {
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal();
+    }
+
+    match /{path=**}/events/{eventId} {
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal() || isSignedIn();
+    }
+
+    match /{path=**}/students/{studentId} {
+      allow read: if isPortal() || isSignedIn();
+      allow write: if isPortal() || isSignedIn();
     }
 
     match /{path=**}/messages/{messageId} {

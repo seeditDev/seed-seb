@@ -65,9 +65,9 @@ export const fetchQuestion = async (questionId) => {
 
   // Normalized ID forms
   let normId = rawId;
-  if (/^\d+$/.test(rawId)) {
+  if (/^\d+(\.\d+)?$/.test(rawId)) {
     normId = `Q${rawId}`;
-  } else if (/^q\d+$/i.test(rawId)) {
+  } else if (/^q\d+/i.test(rawId)) {
     normId = `Q${rawId.slice(1)}`;
   }
 
@@ -169,7 +169,11 @@ export const fetchQuestionsForContest = async (questionIds = []) => {
       const qId = item.id || (item.questionId  ?? '');
       const { cdnUrl } = item;
       if (cdnUrl) {
-        return fetchJson(cdnUrl.replace(/^https?:\/\/raw\.githubusercontent\.com\/seeditDev\/seed-contents\/main\//, ''))
+        const cleanPath = String(cdnUrl)
+          .replace(/^https?:\/\/raw\.githubusercontent\.com\/seeditDev\/seed-contents\/main\//, '')
+          .replace(/^\/seed-contents\//, '')
+          .replace(/^seed-contents\//, '');
+        return fetchJson(cleanPath)
           .catch(() => fetchQuestion(qId || item));
       }
       return fetchQuestion(qId || item);

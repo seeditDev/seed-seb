@@ -19,7 +19,7 @@ import '../styles/MultiSectionAssessment.css';
 import '../styles/MCQPage.css';
 import '../styles/CodingAssessmentSandbox.css';
 import { db, auth } from '../lib/firebase-config';
-import { doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { fetchQuestionsForContest } from '../services/codingQuestionBankService';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
@@ -985,13 +985,18 @@ const MultiSectionAssessment = () => {
   }, [assessment]);
 
   const maxViolations = useMemo(() => {
-    if (!assessment) return 7;
-    return Number(assessment.maxViolations) || 7;
+    if (!assessment) return 5;
+    return Number(assessment.proctorConfig?.maxViolations ?? assessment.maxViolations) || 5;
+  }, [assessment]);
+
+  const tabSwitchLimit = useMemo(() => {
+    if (!assessment) return 3;
+    return Number(assessment.proctorConfig?.tabSwitchLimit ?? assessment.tabSwitchLimit) || 3;
   }, [assessment]);
 
   const maxAudioViolations = useMemo(() => {
     if (!assessment) return 5;
-    return Number(assessment.maxAudioViolations) || 5;
+    return Number(assessment.proctorConfig?.maxAudioViolations ?? assessment.maxAudioViolations) || 5;
   }, [assessment]);
 
   // Crash recovery
@@ -1358,8 +1363,12 @@ const MultiSectionAssessment = () => {
     setProctoringData(prev => {
       const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
       const nextCount = typeof info.violationCount === 'number' ? info.violationCount : (prev.violationCount + 1);
-      if (maxViolations > 0 && nextCount >= maxViolations) {
-        console.warn(`[MSA] maxViolations (${maxViolations}) reached (count: ${nextCount}). Auto-submitting exam...`);
+      const isTabSwitch = info.violationType === 'tab_switch';
+      const prevTabSwitches = (prev.violations || []).filter(v => v.type === 'tab_switch').length;
+      const nextTabSwitches = isTabSwitch ? prevTabSwitches + 1 : prevTabSwitches;
+
+      if ((maxViolations > 0 && nextCount >= maxViolations) || (tabSwitchLimit > 0 && nextTabSwitches >= tabSwitchLimit)) {
+        console.warn(`[MSA] Violation limit reached (count: ${nextCount}/${maxViolations}, tabs: ${nextTabSwitches}/${tabSwitchLimit}). Auto-submitting exam...`);
         window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
         stopAllMediaAndAI();
         setTimeout(() => {
@@ -1372,7 +1381,7 @@ const MultiSectionAssessment = () => {
         violations: isReal ? [...prev.violations, { type: info.violationType, timestamp: info.timestamp }] : prev.violations
       };
     });
-  }, [maxViolations, autoSubmitEntireExam, assessment?.id]);
+  }, [maxViolations, tabSwitchLimit, autoSubmitEntireExam, assessment?.id]);
 
 
   const handleProctorAutoSubmit = useCallback(() => {
@@ -2383,12 +2392,14 @@ const MultiSectionAssessment = () => {
           // ── If this assessment is a Contest, sync single submission & leaderboard entry ──
           if (isContest) {
             const contestId = assessment?.contestId || assessment?.id;
+            const roundNum = assessment?.roundNumber || 1;
             try {
               // 1. Single submission doc keyed by userId
               const subRef = doc(db, 'contests', contestId, 'submissions', userId);
               await setDoc(subRef, {
                 submissionId: userId,
                 contestId,
+                roundNumber: roundNum,
                 userId,
                 displayName: user.displayName || user.name || 'Student',
                 email: tenant.email || user.email || '',
@@ -2429,7 +2440,25 @@ const MultiSectionAssessment = () => {
                 percentage: totalMarksSum > 0 ? Math.min(100, Math.round((allPassTotalScore / totalMarksSum) * 100)) : 0,
                 lastActivity: serverTimestamp(),
               }, { merge: true });
-              console.log('[MSA] Contest submission & leaderboard synced for contestId:', contestId);
+
+              // 3. Update participant registration state with completed round info and attempt preview metrics
+              const regRef = doc(db, 'contests', contestId, 'registrations', userId);
+              await setDoc(regRef, {
+                status: `round_${roundNum}_completed`,
+                completedRounds: arrayUnion(roundNum),
+                lastCompletedRound: roundNum,
+                lastScore: allPassTotalScore,
+                maxScore: totalMarksSum,
+                timeTakenFormatted,
+                timeTakenSeconds: timeTaken,
+                solvedCount: solvedAllPassCount,
+                partialSolvedCount,
+                percentage: totalMarksSum > 0 ? Math.min(100, Math.round((allPassTotalScore / totalMarksSum) * 100)) : 0,
+                submittedAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+              }, { merge: true });
+
+              console.log('[MSA] Contest submission, registration status & leaderboard synced for contestId:', contestId, 'Round:', roundNum);
             } catch (contestSyncErr) {
               console.warn('[MSA] Contest sync warning (non-fatal):', contestSyncErr);
             }
@@ -2569,12 +2598,17 @@ const MultiSectionAssessment = () => {
           <button
             onClick={() => {
               try { stopAllMediaAndAI(); } catch (_) {}
+              const cId = assessment?.contestId;
               window.history.replaceState(null, '', '/student/dashboard');
-              navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+              if (cId) {
+                navigate('/student/dashboard', { replace: true, state: { tab: 'contests', contestId: cId, justCompleted: true } });
+              } else {
+                navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+              }
             }}
             style={{ background: '#ef4444', color: 'white', border: 'none', padding: '14px 35px', fontSize: '1.05rem', fontWeight: '700', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
           >
-            Return to Dashboard
+            {assessment?.contestId ? 'View Attempt Summary & Contest Standings →' : 'Return to Dashboard'}
           </button>
         </div>
       );
@@ -2588,8 +2622,13 @@ const MultiSectionAssessment = () => {
         attemptId={completedAttemptId || attemptDocId(user?.uid || user?.email, assessment?.id)}
         onComplete={() => {
           try { stopAllMediaAndAI(); } catch (_) {}
+          const cId = assessment?.contestId;
           window.history.replaceState(null, '', '/student/dashboard');
-          navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+          if (cId) {
+            navigate('/student/dashboard', { replace: true, state: { tab: 'contests', contestId: cId, justCompleted: true } });
+          } else {
+            navigate('/student/dashboard', { replace: true, state: { justCompleted: true } });
+          }
         }}
       />
     );

@@ -133,6 +133,10 @@ const ContestsView = ({
   // Handle Registration Click
   const handleOpenRegister = (contest, e) => {
     if (e) e.stopPropagation();
+    if (contest.dynamicStatus === 'ended' || contest.status === 'ended') {
+      toast.error('This contest has ended. Registration is closed.');
+      return;
+    }
     if (contest.accessTier === 'pro_only' && !user?.isPremium) {
       if (onUpgradePro) onUpgradePro();
       else toast.error('This contest is exclusive to Pro members. Upgrade to unlock.');

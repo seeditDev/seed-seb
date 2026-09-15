@@ -179,16 +179,21 @@ export function normaliseContest(id, raw = {}) {
  * Determine dynamic status based on time
  */
 export function getContestDynamicStatus(contest) {
+  if (!contest) return 'upcoming';
   if (contest.status === 'draft') return 'draft';
   if (contest.status === 'archived') return 'archived';
+  if (contest.status === 'ended') return 'ended';
 
   const now = Date.now();
-  const startMs = new Date(contest.startTime).getTime();
-  const endMs = new Date(contest.endTime).getTime();
+  const startMs = contest.startTime ? new Date(contest.startTime).getTime() : NaN;
+  const endMs = contest.endTime ? new Date(contest.endTime).getTime() : NaN;
 
-  if (now < startMs) return 'upcoming';
-  if (now >= startMs && now <= endMs) return 'live';
-  return 'ended';
+  if (!isNaN(endMs) && now > endMs) return 'ended';
+  if (!isNaN(startMs) && now < startMs) return 'upcoming';
+  if (!isNaN(startMs) && !isNaN(endMs) && now >= startMs && now <= endMs) return 'live';
+  if (!isNaN(startMs) && isNaN(endMs) && now >= startMs) return 'live';
+
+  return contest.status || 'upcoming';
 }
 
 /**
@@ -633,6 +638,9 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
     duration_minutes: effectiveDuration,
     proctored: effectiveRequiresSeb !== false && contest.isProctored !== false,
     audioProctored: Boolean(effectiveProctorConfig?.audioRequired),
+    maxViolations: Number(effectiveProctorConfig?.maxViolations) || 5,
+    tabSwitchLimit: Number(effectiveProctorConfig?.tabSwitchLimit) || 3,
+    autoSubmitOnViolation: effectiveProctorConfig?.autoSubmitOnViolation !== false,
     isMultiSection: true,
     sections,
     isContest: true,

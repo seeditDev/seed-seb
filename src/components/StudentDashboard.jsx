@@ -207,11 +207,15 @@ const StudentDashboard = () => {
   const [studentUsername, setStudentUsername] = useState(() => user?.username || '');
   const [practiceInitialTab, setPracticeInitialTab] = useState(() => location.state?.practiceTab || 'bank');
   const [practiceInitialCourse, setPracticeInitialCourse] = useState(null);
+  const [contestInitialId, setContestInitialId] = useState(() => location.state?.contestId || null);
 
-  // Synchronize dashboard tab and practice tab when navigating via location.state (e.g. Home button from PracticeSandbox)
+  // Synchronize dashboard tab, contestId and practice tab when navigating via location.state
   useEffect(() => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
+    }
+    if (location.state?.contestId) {
+      setContestInitialId(location.state.contestId);
     }
     if (location.state?.practiceTab) {
       setPracticeInitialTab(location.state.practiceTab);
@@ -1262,10 +1266,6 @@ const StudentDashboard = () => {
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
 
-  // ─── Welcome Popup State ──────────────────────────────────────────
-  const [welcomeQuote, setWelcomeQuote] = useState("");
-  const [welcomeInput, setWelcomeInput] = useState("");
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [welcomeUpdates, setWelcomeUpdates] = useState(null);
   const [showUpdatesModal, setShowUpdatesModal] = useState(false);
   const [isAiInterviewAllowed, setIsAiInterviewAllowed] = useState(false);
@@ -1467,122 +1467,7 @@ const StudentDashboard = () => {
     checkAiInterviewAccess();
   }, [user]);
 
-  // Initial welcome quote fetch (Commented out)
-  /*
-  useEffect(() => {
-    // Check session storage to only prompt once per browser session
-    if (sessionStorage.getItem('welcome_shown')) return;
 
-    const fetchWelcomeQuote = async () => {
-      // 31 default motivational quotes
-      const DEFAULT_QUOTES = [
-        "Believe you can and you're halfway there.",
-        "Act as if what you do makes a difference. It does.",
-        "Success is not final, failure is not fatal: it is the courage to continue that counts.",
-        "Never bend your head. Always hold it high. Look the world straight in the eye.",
-        "What you get by achieving your goals is not as important as what you become by achieving your goals.",
-        "Believe in yourself. You are braver than you think, more talented than you know.",
-        "I can't change the direction of the wind, but I can adjust my sails to always reach my destination.",
-        "No matter what you're going through, there's a light at the end of the tunnel.",
-        "It is our attitude at the beginning of a difficult undertaking which, more than anything else, will determine its successful outcome.",
-        "Life is like riding a bicycle. To keep your balance, you must keep moving.",
-        "Limit your 'always' and your 'nevers.'",
-        "You are never too old to set another goal or to dream a new dream.",
-        "Try to be a rainbow in someone's cloud.",
-        "You do not find a happy life. You make it.",
-        "The most wasted of all days is one without laughter.",
-        "Make each day your masterpiece.",
-        "Write it on your heart that every day is the best day in the year.",
-        "Keep your face always toward the sunshine—and shadows will fall behind you.",
-        "The only limit to our realization of tomorrow will be our doubts of today.",
-        "It always seems impossible until it's done.",
-        "The best way to predict the future is to create it.",
-        "You miss 100% of the shots you don't take.",
-        "In the middle of difficulty lies opportunity.",
-        "Success is walking from failure to failure with no loss of enthusiasm.",
-        "Opportunity does not knock, it presents itself when you beat down the door.",
-        "Don't count the days, make the days count.",
-        "Dream big and dare to fail.",
-        "Keep clean, be useful, and make a friend.",
-        "Action is the foundational key to all success.",
-        "Focus on the journey, not the destination.",
-        "Every moment is a fresh beginning."
-      ];
-
-      const dayOfMonth = new Date().getDate(); // 1 to 31
-      let quoteOfTheDay = DEFAULT_QUOTES[(dayOfMonth - 1) % 31];
-
-      try {
-        let data = null;
-        try {
-          const res = await fetch("https://raw.githubusercontent.com/seeditDev/seed-contents/main/welcome.json");
-          if (res.ok) data = await res.json();
-        } catch (githubErr) {
-          console.warn("GitHub welcome fetch failed, trying local fallback:", githubErr);
-        }
-
-        if (!data) {
-          try {
-            const localRes = await fetch("/seed-contents/welcome.json");
-            if (localRes.ok) data = await localRes.json();
-          } catch (localErr) {
-            console.error("Local welcome fallback failed:", localErr);
-          }
-        }
-
-        if (data) {
-          if (typeof data === 'object' && !Array.isArray(data)) {
-            // Check if structured: { quotes: ..., updates: ... }
-            if (data.quotes) {
-              const qData = data.quotes;
-              if (Array.isArray(qData)) {
-                quoteOfTheDay = qData[(dayOfMonth - 1) % qData.length] || quoteOfTheDay;
-              } else if (typeof qData === 'object') {
-                quoteOfTheDay = qData[dayOfMonth] || qData[String(dayOfMonth)] || Object.values(qData)[0] || quoteOfTheDay;
-              }
-            } else {
-              quoteOfTheDay = data[dayOfMonth] || data[String(dayOfMonth)] || Object.values(data)[0] || quoteOfTheDay;
-            }
-
-            // Save updates if present
-            if (data.updates) {
-              setWelcomeUpdates(data.updates);
-            } else if (data.update) {
-              setWelcomeUpdates(data.update);
-            }
-          } else if (Array.isArray(data)) {
-            quoteOfTheDay = data[(dayOfMonth - 1) % data.length] || quoteOfTheDay;
-          }
-        }
-      } catch (err) {
-        console.warn("Could not fetch welcome.json, using fallback quote.", err);
-      }
-
-      setWelcomeQuote(quoteOfTheDay);
-      setShowWelcomeModal(true);
-    };
-
-    fetchWelcomeQuote();
-  }, []);
-  */
-
-  const handleCloseWelcomeModal = () => {
-    if (welcomeInput.trim() === welcomeQuote.trim()) {
-      sessionStorage.setItem('welcome_shown', 'true');
-      setShowWelcomeModal(false);
-      if (welcomeUpdates) {
-        setShowUpdatesModal(true);
-      }
-    }
-  };
-
-  const handleSkipWelcomeModal = () => {
-    sessionStorage.setItem('welcome_shown', 'true');
-    setShowWelcomeModal(false);
-    if (welcomeUpdates) {
-      setShowUpdatesModal(true);
-    }
-  };
 
   // ─── Streamlined Launch State ─────────────────────────────────────
   const [launchStep, setLaunchStep] = useState(null); // null | 'modal'
@@ -2757,6 +2642,7 @@ const StudentDashboard = () => {
     return (
       <ContestsView
         user={user}
+        initialContestId={contestInitialId}
         onNavigateToArena={(target) => {
           const dest = typeof target === 'string' && target.startsWith('/') ? target : `/student/contest/${target}`;
           navigate(dest);
@@ -6125,100 +6011,6 @@ const StudentDashboard = () => {
 
   return (
     <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`} data-font-size={fontSize}>
-      {/* Welcome Quote Verification Popup (Commented out) */}
-      {/*
-      {showWelcomeModal && (
-        <div className="lw-overlay" style={{ zIndex: 1500 }}>
-          <div className="lw-card" style={{ maxWidth: '550px', padding: '30px', margin: '20px' }}>
-            <div className="lw-card-header" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-              <h3 className="lw-title" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-coding)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FaStar style={{ color: 'var(--accent-coding)', fontSize: '18px' }} /> Welcome to SEED Portal
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0' }}>
-                Please type the exact quote of the day to close this window and enter the platform.
-              </p>
-            </div>
-            <div className="lw-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{
-                background: 'var(--bg-primary)',
-                border: '1px dashed var(--border-color)',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                fontSize: '15px',
-                fontWeight: '600',
-                color: 'var(--text-main)',
-                lineHeight: '1.5',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                msUserSelect: 'none'
-              }}>
-                "{welcomeQuote}"
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600' }}>
-                  Verification Input:
-                </label>
-                <input
-                  type="text"
-                  className="lw-input"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'var(--bg-primary)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-main)',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder="Type the exact quote..."
-                  value={welcomeInput}
-                  onChange={e => setWelcomeInput(e.target.value)}
-                  onPaste={e => e.preventDefault()}
-                />
-              </div>
-            </div>
-            <div className="lw-card-footer" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button
-                type="button"
-                onClick={handleSkipWelcomeModal}
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  background: 'transparent',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-muted)',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                Skip
-              </button>
-              <button
-                className="lw-btn-primary"
-                disabled={welcomeInput.trim() !== welcomeQuote.trim()}
-                onClick={handleCloseWelcomeModal}
-                style={{
-                  padding: '10px 24px',
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  borderRadius: '8px',
-                  cursor: welcomeInput.trim() === welcomeQuote.trim() ? 'pointer' : 'not-allowed',
-                  opacity: welcomeInput.trim() === welcomeQuote.trim() ? 1 : 0.5
-                }}
-              >
-                Proceed to Portal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showUpdatesModal && welcomeUpdates && (
         <div className="lw-overlay" style={{ zIndex: 1500 }}>

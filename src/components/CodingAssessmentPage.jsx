@@ -18,7 +18,7 @@ import DataService from '../services/dataService';
 import timeService from '../services/timeService';
 import { clearAllProctorCache, getViolations, recordViolation } from '../utils/proctorCache';
 import { auth, db } from '../lib/firebase-config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import ProctoringInstructions from './ProctoringInstructions';
@@ -167,7 +167,7 @@ const normalizeQuestion = (q, idx = 0) => {
     const rawId = q.id || q.questionId || q.challengeId || q._id;
     const id = String(rawId !== undefined && rawId !== null && String(rawId).trim() !== '' ? rawId : `q_${idx}`).trim();
     const title = q.title || q.name || (q.content?.title  ?? '');
-    const description = q.content?.problemStatement || q.description || (q.problemStatement  ?? '');
+    const description = q.content?.problemStatement || q.description || q.problemStatement || q.statement || '';
     const constraints = Array.isArray(q.content?.constraints) 
         ? q.content.constraints.join('\n') 
         : (q.constraints ?? '');
@@ -204,22 +204,21 @@ const normalizeQuestion = (q, idx = 0) => {
     });
 
     // Normalize sample test cases
-    const sampleTestCases = normalizeTestCaseArray(
-        q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || []
-    );
+    const rawSample = (Array.isArray(q.testCases) ? q.testCases.filter(tc => !tc.hidden) : null) ||
+        q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || [];
+    const sampleTestCases = normalizeTestCaseArray(rawSample);
 
     // Normalize hidden test cases from all potential schemas
     let hidden = [];
-    if (q.testCases?.hidden && Array.isArray(q.testCases.hidden) && q.testCases.hidden.length > 0) {
+    if (Array.isArray(q.testCases)) {
+        const hList = q.testCases.filter(tc => tc.hidden);
+        hidden = normalizeTestCaseArray(hList.length > 0 ? hList : q.testCases);
+    } else if (q.testCases?.hidden && Array.isArray(q.testCases.hidden) && q.testCases.hidden.length > 0) {
         hidden = normalizeTestCaseArray(q.testCases.hidden);
     } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
         hidden = normalizeTestCaseArray(q.hiddenTests);
-    } else if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
-        hidden = normalizeTestCaseArray(q.testCases.hidden);
     } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
         hidden = normalizeTestCaseArray(q.content.testCases);
-    } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
-        hidden = normalizeTestCaseArray(q.testCases);
     } else if (Array.isArray(q.test_cases) && q.test_cases.length > 0) {
         hidden = normalizeTestCaseArray(q.test_cases);
     } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {
@@ -1060,9 +1059,16 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                                     console.log('[CodingAssessmentPage] Restoring remote attempt from Firestore:', canonDocPath);
                                     let resolvedQuestions = [];
                                     try {
-                                        const cdnRes = await fetchContentJSON(remoteData.url || remoteData.cdnUrl || `coding/testbank/${assessmentSlug}.json`);
-                                        if (cdnRes) {
-                                            resolvedQuestions = cdnRes.questions || cdnRes.challenges || [];
+                                        const lookupKey = remoteData.assessmentId || assessmentSlug;
+                                        const directSnap = await getDoc(doc(db, 'assessments', lookupKey));
+                                        if (directSnap.exists()) {
+                                            const aData = directSnap.data();
+                                            resolvedQuestions = aData.challenges || aData.questions || [];
+                                        } else {
+                                            const cdnRes = await fetchContentJSON(remoteData.url || remoteData.cdnUrl || `coding/testbank/${assessmentSlug}.json`);
+                                            if (cdnRes) {
+                                                resolvedQuestions = cdnRes.questions || cdnRes.challenges || [];
+                                            }
                                         }
                                     } catch (_) {}
 
@@ -1268,11 +1274,42 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         setFilteredAssessments(filtered);
     }, [searchTerm, filterDifficulty, filterStatus, availableAssessments, userAttempts]);
 
-    // Fetch assessment questions JSON
-    const fetchAssessmentJSON = async (url) => {
+    // Fetch assessment questions JSON or load from Firestore
+    const fetchAssessmentJSON = async (url, assessmentObj = null) => {
         try {
+            // 1. Primary Source of Truth: Check Firebase Firestore assessments/{slug} or assessments/{id}
+            const candidateKey = assessmentObj?.slug || assessmentObj?.test_slug || assessmentObj?.id || assessmentObj?.assessmentId || (url && !url.includes('/') && !url.endsWith('.json') ? url : null);
+            if (candidateKey && typeof candidateKey === 'string' && !candidateKey.startsWith('http')) {
+                try {
+                    const directSnap = await getDoc(doc(db, 'assessments', candidateKey));
+                    if (directSnap.exists()) {
+                        const data = directSnap.data();
+                        console.log(`[CodingAssessmentPage] Loaded assessment "${candidateKey}" directly from Firestore`);
+                        const rawQ = data.challenges || data.questions || data.content?.questions || [];
+                        return {
+                            ...data,
+                            questions: rawQ,
+                            challenges: rawQ
+                        };
+                    }
+                    const qSnap = await getDocs(query(collection(db, 'assessments'), where('slug', '==', candidateKey)));
+                    if (!qSnap.empty) {
+                        const data = qSnap.docs[0].data();
+                        console.log(`[CodingAssessmentPage] Loaded assessment by slug "${candidateKey}" from Firestore`);
+                        const rawQ = data.challenges || data.questions || data.content?.questions || [];
+                        return {
+                            ...data,
+                            questions: rawQ,
+                            challenges: rawQ
+                        };
+                    }
+                } catch (fsErr) {
+                    console.warn(`[CodingAssessmentPage] Firestore assessment fetch error for "${candidateKey}":`, fsErr);
+                }
+            }
+
             let cleanUrl = url;
-            if (url.startsWith('http')) {
+            if (url && url.startsWith('http')) {
                 if (url.includes('/seed-contents/main/')) {
                     cleanUrl = url.split('/seed-contents/main/')[1];
                 } else if (url.includes('/SEEDDB/main/')) {
@@ -1281,30 +1318,34 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     cleanUrl = url.split('/contents/')[1];
                 }
             }
-            // 1. Try local fetch first
-            const localUrl = `${LOCAL_BASE_URL}${cleanUrl.startsWith('/') ? '' : '/'}${cleanUrl}`;
-            try {
-                const response = await fetch(localUrl);
-                if (response.ok) return await response.json();
-            } catch (err) {
-                console.log("Local JSON fetch failed, trying GitHub repository fallback");
+            // 2. Try local fetch first
+            if (cleanUrl) {
+                const localUrl = `${LOCAL_BASE_URL}${cleanUrl.startsWith('/') ? '' : '/'}${cleanUrl}`;
+                try {
+                    const response = await fetch(localUrl);
+                    if (response.ok) return await response.json();
+                } catch (err) {
+                    console.log("Local JSON fetch failed, trying GitHub repository fallback");
+                }
+
+                // 3. Authenticated fallback via the server-side content proxy.
+                try {
+                    const proxied = await fetchContentJSON(cleanUrl, { localFirst: false });
+                    if (proxied !== undefined) return proxied;
+                } catch (_) {}
             }
 
-            // 2. Authenticated fallback via the server-side content proxy.
-            // SECURITY: no GitHub token is present in the client bundle any more.
-            try {
-                const proxied = await fetchContentJSON(cleanUrl, { localFirst: false });
-                if (proxied !== undefined) return proxied;
-            } catch (_) {}
+            // 4. Try raw github contents as last resort if url looks like a path
+            if (url && (url.includes('/') || url.endsWith('.json'))) {
+                const rawUrl = url.startsWith('http') ? url : `${GITHUB_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+                const rawRes = await fetch(rawUrl);
+                if (rawRes.ok) return await rawRes.json();
+            }
 
-            // 3. Try raw github contents as last resort
-            const rawUrl = `${GITHUB_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-            const rawRes = await fetch(rawUrl);
-            if (!rawRes.ok) throw new Error("Could not download assessment questions JSON.");
-            return await rawRes.json();
+            return {};
         } catch (err) {
             console.error("All assessment fetch attempts failed:", err);
-            throw err;
+            return {};
         }
     };
 
@@ -1475,8 +1516,8 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             // 2. Fetch assessment question set JSON
             let data = {};
             try {
-                if (assessment.url) {
-                    data = await fetchAssessmentJSON(assessment.url);
+                if (assessment.url || assessment.id || assessment.slug) {
+                    data = await fetchAssessmentJSON(assessment.url, assessment);
                 }
             } catch (err) {
                 console.warn("Failed to fetch assessment JSON file, using access_control data:", err.message);
@@ -1509,8 +1550,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
 
             collectIds(assessment.questionIds);
             collectIds(assessment.questions);
+            collectIds(assessment.challenges);
             collectIds(data.questionIds);
             collectIds(data.questions);
+            collectIds(data.challenges);
 
             questionIds = [...new Set(questionIds)].filter(Boolean);
 
@@ -1530,14 +1573,16 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 const addInline = (src) => {
                     if (Array.isArray(src)) {
                         src.forEach(item => {
-                            if (item && typeof item === 'object' && (item.id || item.questionId)) {
+                            if (item && typeof item === 'object' && (item.id || item.questionId || item.title)) {
                                 inline.push(item);
                             }
                         });
                     }
                 };
-                addInline(assessment.questions);
+                addInline(data.challenges);
                 addInline(data.questions);
+                addInline(assessment.challenges);
+                addInline(assessment.questions);
                 resolvedQuestions = inline;
             }
 
@@ -3423,13 +3468,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         }, 300);
                     }}
                     isTestActive={!!currentAssessment && !submissionSuccess}
-                    maxViolations={Number(currentAssessment.maxViolations) || 5}
+                    maxViolations={Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 5}
                     onReady={() => {
                         console.log('[CodingAssessmentPage] Camera proctoring ready');
                     }}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
-                        const maxLimit = Number(currentAssessment.maxViolations) || 5;
+                        const maxLimit = Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 5;
                         const currentCount = typeof violationInfo.violationCount === 'number' ? violationInfo.violationCount : 0;
                         if (currentCount >= maxLimit) {
                             window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
