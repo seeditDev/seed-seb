@@ -1,31 +1,17 @@
 {
-  "questionId": "Q936",
-  "title": "Stamping The Sequence Problem",
   "slug": "stamping-the-sequence",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Strings",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "string",
-      "stack",
-      "greedy",
-      "queue"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "string",
-      "stack",
-      "greedy",
-      "queue"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Try reversing the process: instead of building target from '?', ask which stamp occurrences can be removed from target.",
+    "A window is removable when every non-'?' character matches the corresponding stamp character and at least one real character is removed.",
+    "When one position becomes '?', only stamp windows covering that position can become newly removable.",
+    "Use a queue to process newly erased positions and avoid repeatedly scanning every window."
+  ],
+  "title": "Stamping The Sequence Problem",
   "content": {
-    "problemStatement": "You receive two strings `stamp` and `target`. At the beginning, there is a string `s` of length `target.length` with all `s[i] == '?'`.\n\nIn one turn, you can place `stamp` over `s` and replace every letter in the `s` with the corresponding letter from `stamp`.\n\n* As an example, if `stamp = \"abc\"` and `target = \"abcba\"`, then `s` is `\"?????\"` initially. In one turn you can:\n  + place `stamp` at index `0` of `s` to obtain `\"abc??\"`,\n  + place `stamp` at index `1` of `s` to obtain `\"?abc?\"`, or\n  + place `stamp` at index `2` of `s` to obtain `\"??abc\"`.Keep in mind that `stamp` must be fully contained in the boundaries of `s` in order to stamp (i.e., you cannot place `stamp` at index `3` of `s`).\n\nWe want to convert `s` to `target` using **no more than** `10 * target.length` turns.\n\nOutput *an array of the index of the left-most letter being stamped at each turn*. If we cannot obtain `target` from `s` within `10 * target.length` turns, output an empty array.\n\n**Example 1:**\n\n```\nInput: stamp = \"abc\", target = \"ababc\"\nOutput: [0,2]\nExplanation: Initially s = \"?????\".\n- Place stamp at index 0 to get \"abc??\".\n- Place stamp at index 2 to get \"ababc\".\n[1,0,2] would also be accepted as an answer, as well as some other answers.\n```\n\n**Example 2:**\n\n```\nInput: stamp = \"abca\", target = \"aabcaca\"\nOutput: [3,0,1]\nExplanation: Initially s = \"???????\".\n- Place stamp at index 3 to get \"???abca\".\n- Place stamp at index 0 to get \"abcabca\".\n- Place stamp at index 1 to get \"aabcaca\".\n```\n\n**Constraints:**\n\n* `1 <= stamp.length <= target.length <= 1000`\n* `stamp` and `target` consist of lowercase English letters.",
+    "notes": [
+      "The returned sequence may not be unique; any valid sequence of at most 10 * target.length stamp positions is accepted.",
+      "If target cannot be produced from the initial all-'?' string, return an empty array."
+    ],
     "constraints": [
       "1 <= stamp.length <= target.length <= 1000",
       "stamp and target consist of lowercase English letters."
@@ -48,267 +34,35 @@
         "explanation": "Initially s = \"???????\".\n- Place stamp at index 3 to get \"???abca\".\n- Place stamp at index 0 to get \"abcabca\".\n- Place stamp at index 1 to get \"aabcaca\"."
       }
     ],
-    "notes": []
+    "problemStatement": "You receive two strings `stamp` and `target`. At the beginning, there is a string `s` of length `target.length` with all `s[i] == '?'`.\n\nIn one turn, you can place `stamp` over `s` and replace every letter in the `s` with the corresponding letter from `stamp`.\n\n* As an example, if `stamp = \"abc\"` and `target = \"abcba\"`, then `s` is `\"?????\"` initially. In one turn you can:\n  + place `stamp` at index `0` of `s` to obtain `\"abc??\"`,\n  + place `stamp` at index `1` of `s` to obtain `\"?abc?\"`, or\n  + place `stamp` at index `2` of `s` to obtain `\"??abc\"`.Keep in mind that `stamp` must be fully contained in the boundaries of `s` in order to stamp (i.e., you cannot place `stamp` at index `3` of `s`).\n\nWe want to convert `s` to `target` using **no more than** `10 * target.length` turns.\n\nOutput *an array of the index of the left-most letter being stamped at each turn*. If we cannot obtain `target` from `s` within `10 * target.length` turns, output an empty array.\n\n**Example 1:**\n\n```\nInput: stamp = \"abc\", target = \"ababc\"\nOutput: [0,2]\nExplanation: Initially s = \"?????\".\n- Place stamp at index 0 to get \"abc??\".\n- Place stamp at index 2 to get \"ababc\".\n[1,0,2] would also be accepted as an answer, as well as some other answers.\n```\n\n**Example 2:**\n\n```\nInput: stamp = \"abca\", target = \"aabcaca\"\nOutput: [3,0,1]\nExplanation: Initially s = \"???????\".\n- Place stamp at index 3 to get \"???abca\".\n- Place stamp at index 0 to get \"abcabca\".\n- Place stamp at index 1 to get \"aabcaca\".\n```\n\n**Constraints:**\n\n* `1 <= stamp.length <= target.length <= 1000`\n* `stamp` and `target` consist of lowercase English letters."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Length 1",
-        "input": "[\"a\", \"a\"]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Length 2",
-        "input": "[\"ab\", \"ab\"]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Same characters",
-        "input": "[\"aaaa\", \"aaaa\"]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Unique characters",
-        "input": "[\"abc\", \"abc\"]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Mixed uppercase/lowercase",
-        "input": "[\"aBc\", \"aBc\"]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Symbols",
-        "input": "[\"!@#\", \"!@#\"]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Palindrome",
-        "input": "[\"aba\", \"aba\"]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Repeated substring",
-        "input": "[\"ab\", \"abababababab\"]",
-        "expectedOutput": "[9, 7, 5, 3, 1, 10, 8, 6, 4, 2, 0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Alternating characters",
-        "input": "[\"ab\", \"ababababab\"]",
-        "expectedOutput": "[7, 5, 3, 1, 8, 6, 4, 2, 0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "Because multiple stamping sequences can be valid, the judge should validate the returned sequence by simulating the stamps from an all-'?' string and checking the final target and turn-count bound."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -330,57 +84,334 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "string",
+      "greedy",
+      "queue"
     ],
-    "notes": []
+    "category": "Strings",
+    "isPremium": false,
+    "topicTags": [
+      "string",
+      "greedy",
+      "queue"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses a queue-based algorithm to iteratively stamp the target string, utilizing a lookup table to track stamped characters and a deque to manage the stamping process.",
-    "timeComplexity": "O((n - m) * m)",
-    "spaceComplexity": "O((n - m) * m)",
-    "code": {
-      "Python3": "# Time:  O((n - m) * m)\n# Space: O((n - m) * m)\n\nimport collections\n\n\nclass Solution(object):\n    def movesToStamp(self, stamp, target):\n        M, N = len(stamp), len(target)\n\n        q = collections.deque()\n        lookup = [False]*N\n        result = []\n        A = []\n        for i in range(N-M+1):\n            made, todo = set(), set()\n            for j, c in enumerate(stamp):\n                if c == target[i+j]:\n                    made.add(i+j)\n                else:\n                    todo.add(i+j)\n            A.append((made, todo))\n            if todo:\n                continue\n            result.append(i)\n            for m in made:\n                if lookup[m]:\n                    continue\n                q.append(m)\n                lookup[m] = True\n\n        while q:\n            i = q.popleft()\n            for j in range(max(0, i-M+1), min(N-M, i)+1):\n                made, todo = A[j]\n                if i not in todo:\n                    continue\n                todo.discard(i)\n                if todo:\n                    continue\n                result.append(j)\n                for m in made:\n                    if lookup[m]:\n                        continue\n                    q.append(m)\n                    lookup[m] = True\n        return result[::-1] if all(lookup) else []"
-    },
-    "notes": [],
+    "notes": [
+      "A reverse erasure is safe only when every non-'?' character in the window matches the corresponding stamp character and at least one character is erased.",
+      "Each target position is erased at most once, and each window is completed at most once.",
+      "The forward answer is the reverse of the reverse-erasure order."
+    ],
+    "approach": "Work backwards from target. Treat '?' as an already erased character. For each possible stamp window, keep the positions that already match the stamp (made) and the positions that still conflict (todo). Windows with no todo can be erased immediately. Put every newly erased position into a queue; when an erased position removes the final todo entry of a neighboring window, that window becomes erasable and is queued as well. If every target position is erased, reverse the collected window indices to obtain a valid forward stamping order; otherwise return an empty array.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n * (n - m + 1) * m) worst-case time and O(n) to O(nm) space depending on the implementation.",
+        "description": "Work backwards from target and repeatedly scan every possible window. Whenever a window contains only matching characters and at least one not-yet-erased character, replace its matching characters with '?'. Repeat until no progress is possible. This removes the need to enumerate forward sequences, but repeated full rescans can be quadratic in the target length."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O((n - m + 1) * m) time and O((n - m + 1) * m) space.",
+        "description": "Use the same reverse-erasure idea with a queue. For each window, store its matching positions in made and its mismatching positions in todo. Fully matching windows are immediately erasable. When a character becomes '?', only windows containing that character can change, so inspect those nearby windows instead of rescanning the entire target. Once a window's todo set becomes empty, erase it and enqueue its made positions. If all positions are erased, reverse the collected indices."
+      },
+      "bruteForce": {
+        "complexity": "Exponential in the number of possible stamp placements and turns; impractical for the constraints.",
+        "description": "Try sequences of stamp positions from the initial all-'?' string and simulate each sequence until the target is reached or the turn limit is exceeded. This explores an exponential search space and is useful only for very small inputs."
       }
-    }
+    },
+    "timeComplexity": "O((n - m + 1) * m), where n = target.length and m = stamp.length.",
+    "spaceComplexity": "O((n - m + 1) * m) for the per-window made/todo state and O(n) auxiliary queue/state."
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "stamp",
+        "type": "string"
+      },
+      {
+        "name": "target",
+        "type": "string"
+      }
+    ],
+    "methodName": "movesToStamp"
+  },
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Can you reduce the memory used by storing window state more compactly?",
+    "How would the algorithm change if the turn limit were smaller than 10 * target.length?",
+    "Can the reverse process be implemented without hash sets?",
+    "Why is reversing the order of the reverse-erasure operations necessary?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[\"a\",\"a\"]",
+        "label": "Single-character exact match",
+        "weight": 4,
+        "expectedOutput": "[0]"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[\"ab\",\"ab\"]",
+        "label": "Stamp equals target",
+        "weight": 4,
+        "expectedOutput": "[0]"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[\"aaa\",\"aaaa\"]",
+        "label": "Single overlap with repeated characters",
+        "weight": 4,
+        "expectedOutput": "[1,0]"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[\"abc\",\"abc\"]",
+        "label": "Unique-character exact match",
+        "weight": 4,
+        "expectedOutput": "[0]"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[\"abc\",\"acb\"]",
+        "label": "Impossible same-length permutation",
+        "weight": 4,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[\"a\",\"b\"]",
+        "label": "Impossible one-character target",
+        "weight": 4,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[\"a\",\"aaaa\"]",
+        "label": "Length-one stamp covers every position",
+        "weight": 4,
+        "expectedOutput": "[3,2,1,0]"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[\"ab\",\"ababababab\"]",
+        "label": "Repeated alternating target",
+        "weight": 4,
+        "expectedOutput": "[7,5,3,1,8,6,4,2,0]"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[\"aba\",\"ababa\"]",
+        "label": "Overlapping palindrome stamp",
+        "weight": 4,
+        "expectedOutput": "[1,2,0]"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[\"abc\",\"abcabc\"]",
+        "label": "Two non-overlapping placements",
+        "weight": 4,
+        "expectedOutput": "[2,1,3,0]"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[\"aba\",\"abaaba\"]",
+        "label": "Overlapping repeated stamp",
+        "weight": 3,
+        "expectedOutput": "[2,1,3,0]"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[\"ab\",\"aab\"]",
+        "label": "Overlapping placement requiring overwrite",
+        "weight": 3,
+        "expectedOutput": "[0,1]"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[\"abca\",\"aabcaca\"]",
+        "label": "Sample-pattern overlap",
+        "weight": 3,
+        "expectedOutput": "[2,3,0,1]"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[\"abc\",\"ababcababc\"]",
+        "label": "Multiple overlapping placements",
+        "weight": 3,
+        "expectedOutput": "[6,4,3,1,5,0,7,2]"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[\"abc\",\"abcabcabcabc\"]",
+        "label": "Disjoint placements covering target",
+        "weight": 3,
+        "expectedOutput": "[8,7,5,4,2,1,9,6,3,0]"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[\"aa\",\"aaaaa\"]",
+        "label": "Repeated-character overlap",
+        "weight": 3,
+        "expectedOutput": "[3,2,1,0]"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[\"ab\",\"aabb\"]",
+        "label": "Conflicting overlap resolved by overwrite",
+        "weight": 3,
+        "expectedOutput": "[2,0,1]"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[\"abc\",\"abbc\"]",
+        "label": "Impossible near-match with local compatibility trap",
+        "weight": 3,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[\"abc\",\"abcc\"]",
+        "label": "Boundary overlap producing final suffix",
+        "weight": 3,
+        "expectedOutput": "[1,0]"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[\"a\",\"bbbb\"]",
+        "label": "Impossible maximum-value alphabet mismatch",
+        "weight": 3,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[\"abcd\",\"aabcababcd\"]",
+        "label": "Heavy overlap with four-character stamp",
+        "weight": 3,
+        "expectedOutput": "[3,2,0,5,1,4,6]"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[\"xyz\",\"xyzxyxyzxyzxxyz\"]",
+        "label": "Nontrivial overlapping placements",
+        "weight": 3,
+        "expectedOutput": "[10,9,4,2,1,11,7,6,3,12,8,5,0]"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[\"abca\",\"ababcabca\"]",
+        "label": "Long stamp with overlapping placements",
+        "weight": 3,
+        "expectedOutput": "[1,4,3,0,5,2]"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[\"abc\",\"ababc\"]",
+        "label": "Alternative valid two-placement construction",
+        "weight": 3,
+        "expectedOutput": "[1,0,2]"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[\"abc\",\"abcabca\"]",
+        "label": "Impossible repeated-prefix suffix trap",
+        "weight": 3,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[\"aba\",\"aababa\"]",
+        "label": "Overlapping palindrome adversarial case",
+        "weight": 3,
+        "expectedOutput": "[2,0,3,1]"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[\"abcd\",\"abcabcdd\"]",
+        "label": "Overlapping long-stamp case",
+        "weight": 3,
+        "expectedOutput": "[2,1,4,0,3]"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+        "label": "Maximum stamp and target lengths with repeated characters",
+        "weight": 3,
+        "expectedOutput": "[500,499,498,497,496,495,494,493,492,491,490,489,488,487,486,485,484,483,482,481,480,479,478,477,476,475,474,473,472,471,470,469,468,467,466,465,464,463,462,461,460,459,458,457,456,455,454,453,452,451,450,449,448,447,446,445,444,443,442,441,440,439,438,437,436,435,434,433,432,431,430,429,428,427,426,425,424,423,422,421,420,419,418,417,416,415,414,413,412,411,410,409,408,407,406,405,404,403,402,401,400,399,398,397,396,395,394,393,392,391,390,389,388,387,386,385,384,383,382,381,380,379,378,377,376,375,374,373,372,371,370,369,368,367,366,365,364,363,362,361,360,359,358,357,356,355,354,353,352,351,350,349,348,347,346,345,344,343,342,341,340,339,338,337,336,335,334,333,332,331,330,329,328,327,326,325,324,323,322,321,320,319,318,317,316,315,314,313,312,311,310,309,308,307,306,305,304,303,302,301,300,299,298,297,296,295,294,293,292,291,290,289,288,287,286,285,284,283,282,281,280,279,278,277,276,275,274,273,272,271,270,269,268,267,266,265,264,263,262,261,260,259,258,257,256,255,254,253,252,251,250,249,248,247,246,245,244,243,242,241,240,239,238,237,236,235,234,233,232,231,230,229,228,227,226,225,224,223,222,221,220,219,218,217,216,215,214,213,212,211,210,209,208,207,206,205,204,203,202,201,200,199,198,197,196,195,194,193,192,191,190,189,188,187,186,185,184,183,182,181,180,179,178,177,176,175,174,173,172,171,170,169,168,167,166,165,164,163,162,161,160,159,158,157,156,155,154,153,152,151,150,149,148,147,146,145,144,143,142,141,140,139,138,137,136,135,134,133,132,131,130,129,128,127,126,125,124,123,122,121,120,119,118,117,116,115,114,113,112,111,110,109,108,107,106,105,104,103,102,101,100,99,98,97,96,95,94,93,92,91,90,89,88,87,86,85,84,83,82,81,80,79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,61,60,59,58,57,56,55,54,53,52,51,50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[\"ab\",\"abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab\"]",
+        "label": "Maximum target length with dense overlapping coverage",
+        "weight": 3,
+        "expectedOutput": "[997,995,993,991,989,987,985,983,981,979,977,975,973,971,969,967,965,963,961,959,957,955,953,951,949,947,945,943,941,939,937,935,933,931,929,927,925,923,921,919,917,915,913,911,909,907,905,903,901,899,897,895,893,891,889,887,885,883,881,879,877,875,873,871,869,867,865,863,861,859,857,855,853,851,849,847,845,843,841,839,837,835,833,831,829,827,825,823,821,819,817,815,813,811,809,807,805,803,801,799,797,795,793,791,789,787,785,783,781,779,777,775,773,771,769,767,765,763,761,759,757,755,753,751,749,747,745,743,741,739,737,735,733,731,729,727,725,723,721,719,717,715,713,711,709,707,705,703,701,699,697,695,693,691,689,687,685,683,681,679,677,675,673,671,669,667,665,663,661,659,657,655,653,651,649,647,645,643,641,639,637,635,633,631,629,627,625,623,621,619,617,615,613,611,609,607,605,603,601,599,597,595,593,591,589,587,585,583,581,579,577,575,573,571,569,567,565,563,561,559,557,555,553,551,549,547,545,543,541,539,537,535,533,531,529,527,525,523,521,519,517,515,513,511,509,507,505,503,501,499,497,495,493,491,489,487,485,483,481,479,477,475,473,471,469,467,465,463,461,459,457,455,453,451,449,447,445,443,441,439,437,435,433,431,429,427,425,423,421,419,417,415,413,411,409,407,405,403,401,399,397,395,393,391,389,387,385,383,381,379,377,375,373,371,369,367,365,363,361,359,357,355,353,351,349,347,345,343,341,339,337,335,333,331,329,327,325,323,321,319,317,315,313,311,309,307,305,303,301,299,297,295,293,291,289,287,285,283,281,279,277,275,273,271,269,267,265,263,261,259,257,255,253,251,249,247,245,243,241,239,237,235,233,231,229,227,225,223,221,219,217,215,213,211,209,207,205,203,201,199,197,195,193,191,189,187,185,183,181,179,177,175,173,171,169,167,165,163,161,159,157,155,153,151,149,147,145,143,141,139,137,135,133,131,129,127,125,123,121,119,117,115,113,111,109,107,105,103,101,99,97,95,93,91,89,87,85,83,81,79,77,75,73,71,69,67,65,63,61,59,57,55,53,51,49,47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,998,996,994,992,990,988,986,984,982,980,978,976,974,972,970,968,966,964,962,960,958,956,954,952,950,948,946,944,942,940,938,936,934,932,930,928,926,924,922,920,918,916,914,912,910,908,906,904,902,900,898,896,894,892,890,888,886,884,882,880,878,876,874,872,870,868,866,864,862,860,858,856,854,852,850,848,846,844,842,840,838,836,834,832,830,828,826,824,822,820,818,816,814,812,810,808,806,804,802,800,798,796,794,792,790,788,786,784,782,780,778,776,774,772,770,768,766,764,762,760,758,756,754,752,750,748,746,744,742,740,738,736,734,732,730,728,726,724,722,720,718,716,714,712,710,708,706,704,702,700,698,696,694,692,690,688,686,684,682,680,678,676,674,672,670,668,666,664,662,660,658,656,654,652,650,648,646,644,642,640,638,636,634,632,630,628,626,624,622,620,618,616,614,612,610,608,606,604,602,600,598,596,594,592,590,588,586,584,582,580,578,576,574,572,570,568,566,564,562,560,558,556,554,552,550,548,546,544,542,540,538,536,534,532,530,528,526,524,522,520,518,516,514,512,510,508,506,504,502,500,498,496,494,492,490,488,486,484,482,480,478,476,474,472,470,468,466,464,462,460,458,456,454,452,450,448,446,444,442,440,438,436,434,432,430,428,426,424,422,420,418,416,414,412,410,408,406,404,402,400,398,396,394,392,390,388,386,384,382,380,378,376,374,372,370,368,366,364,362,360,358,356,354,352,350,348,346,344,342,340,338,336,334,332,330,328,326,324,322,320,318,316,314,312,310,308,306,304,302,300,298,296,294,292,290,288,286,284,282,280,278,276,274,272,270,268,266,264,262,260,258,256,254,252,250,248,246,244,242,240,238,236,234,232,230,228,226,224,222,220,218,216,214,212,210,208,206,204,202,200,198,196,194,192,190,188,186,184,182,180,178,176,174,172,170,168,166,164,162,160,158,156,154,152,150,148,146,144,142,140,138,136,134,132,130,128,126,124,122,120,118,116,114,112,110,108,106,104,102,100,98,96,94,92,90,88,86,84,82,80,78,76,74,72,70,68,66,64,62,60,58,56,54,52,50,48,46,44,42,40,38,36,34,32,30,28,26,24,22,20,18,16,14,12,10,8,6,4,2,0]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[\"abc\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
+        "label": "Maximum target length with impossible pattern",
+        "weight": 3,
+        "expectedOutput": "[]"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q936",
   "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* movesToStamp(char* stamp, char* target, int* returnSize) {\n    \n    *returnSize = 0;\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        char* stamp = parse_string(&tok);\n        char* target = parse_string(&tok);\n        int returnSize = 0;\n        int* result = movesToStamp(stamp, target, &returnSize);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; i++) {\n            printf(\"%d\", result[i]);\n            if (i < returnSize - 1) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def movesToStamp(self, stamp: str, target: str) -> List[int]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _stamp = _args[0]\n    _target = _args[1]\n    _result = Solution().movesToStamp(_stamp, _target)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string} stamp\n * @param {string} target\n * @return {number[]}\n */\nvar movesToStamp = function(stamp, target) {\n    \n    return [];\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = movesToStamp(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int[] movesToStamp(String stamp, String target) {\n        \n        return new int[0];\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        String stamp = nextToken().replaceAll(\"^\\\"|\\\"$\", \"\");\n        String target = nextToken().replaceAll(\"^\\\"|\\\"$\", \"\");\n        int[] result = new Solution().movesToStamp(stamp, target);\n        System.out.println(java.util.Arrays.toString(result).replace(\", \", \",\").replace(\" \", \"\"));\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    vector<int> movesToStamp(string stamp, string target) {\n        \n        return {};\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    string stamp = readStr(tok);\n    string target = readStr(tok);\n    auto result = Solution().movesToStamp(stamp, target);\n    cout << \"[\";\n    for(int i=0;i<(int)result.size();i++){\n        cout << result[i];\n        if(i+1<(int)result.size()) cout << \",\";\n    }\n    cout << \"]\" << endl;\n    return 0;\n}"
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' ||\n           t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' &&\n               t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n    }\n    int token_len = t->pos - start;\n    char* token = (char*)malloc((size_t)token_len + 1);\n    memcpy(token, t->s + start, (size_t)token_len);\n    token[token_len] = '\\0';\n    return token;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = (int)strlen(tok);\n        char* res = (char*)malloc((size_t)len - 1);\n        memcpy(res, tok + 1, (size_t)len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\n/* YOUR SOLUTION */\nint* movesToStamp(char* stamp, char* target, int* returnSize) {\n    int m = (int)strlen(stamp);\n    int n = (int)strlen(target);\n    int windows = n - m + 1;\n\n    int* made = (int*)calloc(windows * m, sizeof(int));\n    int* madeCount = (int*)calloc(windows, sizeof(int));\n    int* todo = (int*)calloc(windows * m, sizeof(int));\n    int* todoCount = (int*)calloc(windows, sizeof(int));\n    bool* erased = (bool*)calloc(n, sizeof(bool));\n    int* queue = (int*)malloc(n * sizeof(int));\n    int qHead = 0, qTail = 0;\n    int* answer = (int*)malloc(n * sizeof(int));\n    int answerCount = 0;\n\n    for (int i = 0; i < windows; ++i) {\n        for (int j = 0; j < m; ++j) {\n            int p = i + j;\n            if (target[p] == stamp[j])\n                made[i * m + madeCount[i]++] = p;\n            else\n                todo[i * m + todoCount[i]++] = p;\n        }\n        if (todoCount[i] == 0) {\n            answer[answerCount++] = i;\n            for (int k = 0; k < madeCount[i]; ++k) {\n                int p = made[i * m + k];\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue[qTail++] = p;\n                }\n            }\n        }\n    }\n\n    while (qHead < qTail) {\n        int pos = queue[qHead++];\n        int start = pos - m + 1;\n        if (start < 0) start = 0;\n        int end = pos;\n        if (end > n - m) end = n - m;\n\n        for (int i = start; i <= end; ++i) {\n            bool found = false;\n            for (int k = 0; k < todoCount[i]; ++k) {\n                if (todo[i * m + k] == pos) {\n                    todo[i * m + k] = todo[i * m + (--todoCount[i])];\n                    found = true;\n                    break;\n                }\n            }\n            if (!found || todoCount[i] != 0) continue;\n\n            answer[answerCount++] = i;\n            for (int k = 0; k < madeCount[i]; ++k) {\n                int p = made[i * m + k];\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue[qTail++] = p;\n                }\n            }\n        }\n    }\n\n    for (int i = 0; i < n; ++i) {\n        if (!erased[i]) {\n            free(made); free(madeCount); free(todo); free(todoCount);\n            free(erased); free(queue); free(answer);\n            *returnSize = 0;\n            return NULL;\n        }\n    }\n\n    for (int i = 0; i < answerCount / 2; ++i) {\n        int tmp = answer[i];\n        answer[i] = answer[answerCount - 1 - i];\n        answer[answerCount - 1 - i] = tmp;\n    }\n\n    free(made); free(madeCount); free(todo); free(todoCount);\n    free(erased); free(queue);\n    *returnSize = answerCount;\n    return answer;\n}\n\nint main() {\n    char line[1000005];\n    if (fgets(line, sizeof(line), stdin)) {\n        int len = (int)strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[--len] = '\\0';\n        }\n        char* raw = (char*)malloc((size_t)len - 1);\n        memcpy(raw, line + 1, (size_t)len - 2);\n        raw[len - 2] = '\\0';\n\n        Tok tok = {raw, 0, (int)strlen(raw)};\n        char* stamp = parse_string(&tok);\n        char* target = parse_string(&tok);\n\n        int returnSize = 0;\n        int* result = movesToStamp(stamp, target, &returnSize);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; ++i) {\n            if (i) printf(\",\");\n            printf(\"%d\", result[i]);\n        }\n        printf(\"]\\n\");\n\n        free(result);\n        free(stamp);\n        free(target);\n        free(raw);\n    }\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\n/* YOUR SOLUTION */\nclass Solution {\npublic:\n    vector<int> movesToStamp(string stamp, string target) {\n        int m = stamp.size(), n = target.size();\n        vector<vector<int>> made(n - m + 1);\n        vector<unordered_set<int>> todo(n - m + 1);\n        queue<int> q;\n        vector<char> erased(n, false);\n        vector<int> answer;\n\n        for (int i = 0; i <= n - m; ++i) {\n            for (int j = 0; j < m; ++j) {\n                if (target[i + j] == stamp[j]) made[i].push_back(i + j);\n                else todo[i].insert(i + j);\n            }\n            if (todo[i].empty()) {\n                answer.push_back(i);\n                for (int p : made[i]) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        q.push(p);\n                    }\n                }\n            }\n        }\n\n        while (!q.empty()) {\n            int pos = q.front();\n            q.pop();\n            int start = max(0, pos - m + 1);\n            int end = min(n - m, pos);\n            for (int i = start; i <= end; ++i) {\n                auto it = todo[i].find(pos);\n                if (it == todo[i].end()) continue;\n                todo[i].erase(it);\n                if (!todo[i].empty()) continue;\n                answer.push_back(i);\n                for (int p : made[i]) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        q.push(p);\n                    }\n                }\n            }\n        }\n\n        for (char x : erased) if (!x) return {};\n        reverse(answer.begin(), answer.end());\n        return answer;\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    int pos = 0;\n\n    auto readString = [&]() {\n        while (pos < (int)line.size() && (line[pos] != '\"')) ++pos;\n        ++pos;\n        int start = pos;\n        while (pos < (int)line.size() && line[pos] != '\"') ++pos;\n        string s = line.substr(start, pos - start);\n        ++pos;\n        return s;\n    };\n\n    string stamp = readString();\n    string target = readString();\n    vector<int> result = Solution().movesToStamp(stamp, target);\n\n    cout << \"[\";\n    for (int i = 0; i < (int)result.size(); ++i) {\n        if (i) cout << \",\";\n        cout << result[i];\n    }\n    cout << \"]\\n\";\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public int[] movesToStamp(String stamp, String target) {\n        int m = stamp.length(), n = target.length();\n        List<int[]> made = new ArrayList<>();\n        List<Set<Integer>> todo = new ArrayList<>();\n        ArrayDeque<Integer> queue = new ArrayDeque<>();\n        boolean[] erased = new boolean[n];\n        List<Integer> answer = new ArrayList<>();\n\n        for (int i = 0; i <= n - m; i++) {\n            List<Integer> madeList = new ArrayList<>();\n            Set<Integer> todoSet = new HashSet<>();\n            for (int j = 0; j < m; j++) {\n                if (target.charAt(i + j) == stamp.charAt(j)) {\n                    madeList.add(i + j);\n                } else {\n                    todoSet.add(i + j);\n                }\n            }\n            int[] madeArray = new int[madeList.size()];\n            for (int k = 0; k < madeList.size(); k++) madeArray[k] = madeList.get(k);\n            made.add(madeArray);\n            todo.add(todoSet);\n\n            if (todoSet.isEmpty()) {\n                answer.add(i);\n                for (int p : madeArray) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        queue.add(p);\n                    }\n                }\n            }\n        }\n\n        while (!queue.isEmpty()) {\n            int pos = queue.remove();\n            int start = Math.max(0, pos - m + 1);\n            int end = Math.min(n - m, pos);\n            for (int i = start; i <= end; i++) {\n                if (!todo.get(i).remove(pos)) continue;\n                if (!todo.get(i).isEmpty()) continue;\n                answer.add(i);\n                for (int p : made.get(i)) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        queue.add(p);\n                    }\n                }\n            }\n        }\n\n        if (!allErased(erased)) return new int[0];\n        int[] result = new int[answer.size()];\n        for (int i = 0; i < answer.size(); i++) {\n            result[i] = answer.get(answer.size() - 1 - i);\n        }\n        return result;\n    }\n\n    private boolean allErased(boolean[] erased) {\n        for (boolean x : erased) if (!x) return false;\n        return true;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        int[] cursor = {0};\n\n        String stamp = readString(line, cursor);\n        String target = readString(line, cursor);\n\n        int[] result = new Solution().movesToStamp(stamp, target);\n        System.out.println(Arrays.toString(result).replace(\", \", \",\"));\n    }\n\n    private static String readString(String s, int[] cursor) {\n        while (cursor[0] < s.length() && s.charAt(cursor[0]) != '\"') cursor[0]++;\n        cursor[0]++;\n        int start = cursor[0];\n        while (cursor[0] < s.length() && s.charAt(cursor[0]) != '\"') cursor[0]++;\n        String result = s.substring(start, cursor[0]);\n        cursor[0]++;\n        return result;\n    }\n}\n",
+    "Python3": "from collections import deque\nfrom typing import List\n\nclass Solution:\n    def movesToStamp(self, stamp: str, target: str) -> List[int]:\n        m, n = len(stamp), len(target)\n        windows = []\n        queue = deque()\n        erased = [False] * n\n        answer = []\n\n        for i in range(n - m + 1):\n            made = set()\n            todo = set()\n            for j, ch in enumerate(stamp):\n                if target[i + j] == ch:\n                    made.add(i + j)\n                else:\n                    todo.add(i + j)\n            windows.append([made, todo])\n\n            if not todo:\n                answer.append(i)\n                for pos in made:\n                    if not erased[pos]:\n                        erased[pos] = True\n                        queue.append(pos)\n\n        while queue:\n            pos = queue.popleft()\n            start = max(0, pos - m + 1)\n            end = min(n - m, pos) + 1\n            for i in range(start, end):\n                made, todo = windows[i]\n                if pos not in todo:\n                    continue\n                todo.remove(pos)\n                if todo:\n                    continue\n                answer.append(i)\n                for p in made:\n                    if not erased[p]:\n                        erased[p] = True\n                        queue.append(p)\n\n        return answer[::-1] if all(erased) else []\n\nif __name__ == \"__main__\":\n    import json, sys\n    args = json.loads(sys.stdin.readline())\n    result = Solution().movesToStamp(args[0], args[1])\n    print(json.dumps(result, separators=(\",\", \":\")))\n",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar movesToStamp = function(stamp, target) {\n    const m = stamp.length, n = target.length;\n    const made = new Array(n - m + 1);\n    const todo = new Array(n - m + 1);\n    const queue = [];\n    const erased = new Array(n).fill(false);\n    const answer = [];\n\n    for (let i = 0; i <= n - m; i++) {\n        made[i] = [];\n        todo[i] = [];\n        for (let j = 0; j < m; j++) {\n            if (target[i + j] === stamp[j]) made[i].push(i + j);\n            else todo[i].push(i + j);\n        }\n        if (todo[i].length === 0) {\n            answer.push(i);\n            for (const p of made[i]) {\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue.push(p);\n                }\n            }\n        }\n    }\n\n    let head = 0;\n    while (head < queue.length) {\n        const pos = queue[head++];\n        const start = Math.max(0, pos - m + 1);\n        const end = Math.min(n - m, pos);\n        for (let i = start; i <= end; i++) {\n            const idx = todo[i].indexOf(pos);\n            if (idx === -1) continue;\n            todo[i].splice(idx, 1);\n            if (todo[i].length !== 0) continue;\n            answer.push(i);\n            for (const p of made[i]) {\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue.push(p);\n                }\n            }\n        }\n    }\n\n    return erased.every(Boolean) ? answer.reverse() : [];\n};\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    const result = movesToStamp(args[0], args[1]);\n    console.log(JSON.stringify(result));\n    rl.close();\n});\n"
   },
-  "_internal": {},
-  "verified": false
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–60 minutes",
+  "learningObjectives": [
+    "Recognize when reversing a constructive process makes greedy decisions easier.",
+    "Use a queue to propagate newly satisfied constraints through overlapping windows.",
+    "Design an efficient reverse-simulation algorithm for overlapping string operations.",
+    "Analyze time and space complexity when per-window state is maintained."
+  ]
 }

@@ -320,8 +320,14 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
     // weights (e.g. MCQ section = 40 marks, Coding section = 60 marks).
     let score = 0;
     questions.forEach((q, i) => {
-      if (answers[i] !== undefined && q.options[answers[i]] === q.correctAnswer) {
-        score += (Number(q.marks) > 0 ? Number(q.marks) : 1);
+      const userAnsIdx = answers[i];
+      if (userAnsIdx !== undefined) {
+        const userChoice = q.options?.[userAnsIdx];
+        const isMatch = (q.correctAnswer !== undefined && (userChoice === q.correctAnswer || String(userChoice).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase())) ||
+                        (typeof q.correctIndex === 'number' && userAnsIdx === q.correctIndex);
+        if (isMatch) {
+          score += (Number(q.marks) > 0 ? Number(q.marks) : 1);
+        }
       }
     });
     const total = questions.length;
@@ -336,17 +342,18 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
     const questionsDetails = questions.map((q, idx) => {
       const selectedIdx = answers[idx];
       const selectedAnswer = selectedIdx !== undefined ? (q.options?.[selectedIdx] ?? '') : '';
-      const isCorrect = selectedAnswer === q.correctAnswer;
+      const isCorrect = (q.correctAnswer !== undefined && (selectedAnswer === q.correctAnswer || String(selectedAnswer).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase())) ||
+                        (typeof q.correctIndex === 'number' && selectedIdx === q.correctIndex);
       const timeSpent = timeSpentPerQ[idx] || 0;
       return {
         questionNumber: idx + 1,
-        questionText: q.question || (q.text ?? ''),
+        questionText: q.question || q.text || q.questionText || '',
         difficulty: (q.difficulty || 'medium').toLowerCase(),
         topic: q.topic || q.tag || (q.tags ? (Array.isArray(q.tags) ? q.tags[0] : q.tags) : 'General'),
         tags: Array.isArray(q.tags) ? q.tags : (q.tags ? [q.tags] : (q.topic ? [q.topic] : ['General'])),
         isCorrect,
         selectedAnswer,
-        correctAnswer: q.correctAnswer ?? '',
+        correctAnswer: q.correctAnswer ?? (typeof q.correctIndex === 'number' ? q.options?.[q.correctIndex] : ''),
         timeSpent
       };
     });
@@ -567,7 +574,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
                   <span>Question {idx + 1}</span>
                   <span>{formatSecs(timeSpentPerQ[idx] || 0)}</span>
                 </div>
-                <div className="mcq-review-question">{renderTextWithCode(rq.question)}</div>
+                <div className="mcq-review-question">{renderTextWithCode(rq.question || rq.text || rq.questionText || '')}</div>
                 {(rq.imageUrl || rq.image || rq.figure || rq.diagram || rq.questionImage || rq.assetUrl || rq.content?.imageUrl || rq.content?.image) && (
                   <div className="mcq-review-image" style={{ margin: '8px 0', maxWidth: '320px' }}>
                     <ProblemImage 
@@ -691,7 +698,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
 
                 <div className="mcq-q-text-line">
                   <span className="mcq-q-num-badge">Q{questionIndex + 1}.</span>
-                  <span className="mcq-q-content">{renderTextWithCode(q.question)}</span>
+                  <span className="mcq-q-content">{renderTextWithCode(q.question || q.text || q.questionText || '')}</span>
                 </div>
 
                 {/* Render question illustration if present on question object */}
@@ -1796,29 +1803,48 @@ const MultiSectionAssessment = () => {
         (exam.sections || []).map(async (sec, idx) => {
           const processData = async (data, secType) => {
             if (secType === 'mcq') {
-              // Normalize MCQ questions for student view (keep order, no answer stripping needed here)
-              data.questions = (data.questions || []).map((q) => ({ ...q }));
+              // Normalize MCQ questions for student view (support both Firestore 'text'/'correctIndex' and static 'question'/'correctAnswer')
+              data.questions = (data.questions || []).map((q, qIdx) => {
+                const qText = q.question || q.text || q.questionText || q.prompt || q.statement || q.title || '';
+                const qOptions = Array.isArray(q.options) ? q.options : (Array.isArray(q.choices) ? q.choices : []);
+                const cIdx = typeof q.correctIndex === 'number' ? q.correctIndex : (typeof q.correctAnswerIndex === 'number' ? q.correctAnswerIndex : undefined);
+                const cAns = q.correctAnswer !== undefined 
+                  ? q.correctAnswer 
+                  : (cIdx !== undefined && qOptions[cIdx] !== undefined 
+                    ? (typeof qOptions[cIdx] === 'object' ? (qOptions[cIdx].text || qOptions[cIdx].value || qOptions[cIdx].label) : qOptions[cIdx]) 
+                    : undefined);
+                return {
+                  ...q,
+                  id: q.id || q.questionId || q.qid || `mcq_${qIdx}`,
+                  question: qText,
+                  text: qText,
+                  questionText: qText,
+                  options: qOptions,
+                  correctAnswer: cAns,
+                  correctIndex: cIdx !== undefined ? cIdx : (cAns !== undefined ? qOptions.indexOf(cAns) : undefined),
+                  marks: Number(q.marks || 1),
+                };
+              });
             } else if (secType === 'coding') {
-              // Prefer challenges array (has cdnUrl) or questionIds
+              // Prefer challenges array (has cdnUrl/qid/id) or questionIds or questions array
               let questionRefs = [];
               if (Array.isArray(data.challenges) && data.challenges.length > 0) {
                 questionRefs = data.challenges;
-              } else if (Array.isArray(data.questionIds)) {
+              } else if (Array.isArray(data.questionIds) && data.questionIds.length > 0) {
                 questionRefs = data.questionIds;
-              } else if (Array.isArray(data.questions) && data.questions.length > 0 && typeof data.questions[0] === 'string') {
+              } else if (Array.isArray(data.questions) && data.questions.length > 0) {
                 questionRefs = data.questions;
               }
 
               if (questionRefs.length > 0) {
                 try {
                   const resolved = await fetchQuestionsForContest(questionRefs);
-                  data.questions = resolved.map(normalizeQuestion);
+                  data.questions = (resolved || []).map(normalizeQuestion);
+                  data.challenges = data.questions;
                 } catch (resErr) {
                   console.error('[MSA] Failed to resolve coding questions:', resErr);
                   data.questions = [];
                 }
-              } else if (Array.isArray(data.questions) && data.questions.length > 0 && typeof data.questions[0] === 'object') {
-                data.questions = data.questions.map(normalizeQuestion);
               } else {
                 data.questions = [];
               }

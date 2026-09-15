@@ -1,317 +1,81 @@
 {
-  "questionId": "Q57",
-  "title": "Insert Interval Problem",
   "slug": "insert-interval",
-  "version": 1,
-  "createdAt": "2026-07-09",
-  "updatedAt": "2026-07-09",
-  "metadata": {
-    "category": "Intervals",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "array"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Because the input intervals are already sorted and non-overlapping, you do not need to sort them again.",
+    "First copy every interval whose end is strictly before newInterval's start.",
+    "Merge intervals while their start is less than or equal to the current end of the new interval.",
+    "After the merge finishes, append all remaining intervals unchanged."
+  ],
+  "title": "Insert Interval Problem",
   "content": {
-    "problemStatement": "You receive an array of non-overlapping intervals `intervals` where `intervals[i] = [start_i, end_i]` represent the start and the end of the `i^th` interval and `intervals` is sorted in ascending order by `start_i`. You are also given an interval `newInterval = [start, end]` that represents the start and end of another interval.\n\nInsert `newInterval` into `intervals` such that `intervals` is still sorted in ascending order by `start_i` and `intervals` still does not have any overlapping intervals (merge overlapping intervals if necessary).\n\nThe task is to output `intervals` *after the insertion*.\n\n**Note** that you don't need to modify `intervals` in-place. You can make a new array and output it.",
+    "notes": [
+      "Intervals are closed, so intervals that touch at an endpoint are considered overlapping and must be merged."
+    ],
     "constraints": [
-      "0 <= start <= end <= 10^6"
+      "0 <= intervals.length <= 10^4",
+      "intervals[i].length == 2",
+      "0 <= start_i <= end_i <= 10^5",
+      "intervals is sorted in ascending order by start_i and contains non-overlapping intervals",
+      "newInterval.length == 2",
+      "0 <= start <= end <= 10^5"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "notes": [],
     "sampleTestCases": [
       {
         "id": "sample_1",
         "type": "reg",
         "input": "[[[1,3],[6,9]],[2,5]]",
         "output": "[[1,5],[6,9]]",
-        "explanation": "For this input, applying the required rules of Insert Interval produces [[1,5],[6,9]]."
+        "explanation": "The new interval [2,5] overlaps [1,3], so they merge into [1,5], while [6,9] remains separate."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[[1,2],[3,5],[6,7],[8,10],[12,16]],[4,8]]",
         "output": "[[1,2],[3,10],[12,16]]",
-        "explanation": "Because the new interval [4,8] overlaps with [3,5],[6,7],[8,10]."
-      }
-    ]
-  },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Empty intervals",
-        "input": "[[],[5,7]]",
-        "expectedOutput": "[[5,7]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Single interval overlap",
-        "input": "[[[1,3]],[2,4]]",
-        "expectedOutput": "[[1,4]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Single interval before",
-        "input": "[[[5,7]],[1,3]]",
-        "expectedOutput": "[[1,3],[5,7]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Single interval after",
-        "input": "[[[1,3]],[5,7]]",
-        "expectedOutput": "[[1,3],[5,7]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Insert before all",
-        "input": "[[[5,7],[10,15]],[1,3]]",
-        "expectedOutput": "[[1,3],[5,7],[10,15]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Insert after all",
-        "input": "[[[1,3],[5,7]],[10,15]]",
-        "expectedOutput": "[[1,3],[5,7],[10,15]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Insert into gap",
-        "input": "[[[1,3],[7,10]],[4,6]]",
-        "expectedOutput": "[[1,3],[4,6],[7,10]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Merge with first interval",
-        "input": "[[[1,3],[5,7]],[0,2]]",
-        "expectedOutput": "[[0,3],[5,7]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Merge with last interval",
-        "input": "[[[1,3],[5,7]],[6,10]]",
-        "expectedOutput": "[[1,3],[5,10]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "Merge middle interval",
-        "input": "[[[1,3],[5,7],[10,15]],[6,8]]",
-        "expectedOutput": "[[1,3],[5,8],[10,15]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "Merge all intervals",
-        "input": "[[[2,3],[5,7],[9,11]],[1,20]]",
-        "expectedOutput": "[[1,20]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "Touching boundaries",
-        "input": "[[[0,1],[2,3]],[1,2]]",
-        "expectedOutput": "[[0,3]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "Nested interval",
-        "input": "[[[1,10]],[3,5]]",
-        "expectedOutput": "[[1,10]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "Point interval insertion",
-        "input": "[[[2,2],[5,5]],[3,3]]",
-        "expectedOutput": "[[2,2],[3,3],[5,5]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "Duplicate endpoint merge",
-        "input": "[[[1,5]],[5,5]]",
-        "expectedOutput": "[[1,5]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "Maximum boundary merge",
-        "input": "[[[999999,1000000]],[999998,999999]]",
-        "expectedOutput": "[[999998,1000000]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "Large values without merge",
-        "input": "[[[999990,999995]],[999998,1000000]]",
-        "expectedOutput": "[[999990,999995],[999998,1000000]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "Merge multiple consecutive intervals",
-        "input": "[[[1,2],[4,5],[7,8],[10,12]],[3,11]]",
-        "expectedOutput": "[[1,2],[3,12]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "Insert between intervals",
-        "input": "[[[1,2],[5,6]],[3,4]]",
-        "expectedOutput": "[[1,2],[3,4],[5,6]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "Official sample regression",
-        "input": "[[[1,2],[3,5],[6,7],[8,10],[12,16]],[4,8]]",
-        "expectedOutput": "[[1,2],[3,10],[12,16]]",
-        "weight": 5
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "Merge first two intervals",
-        "input": "[[[1,2],[4,5],[8,9]],[2,4]]",
-        "expectedOutput": "[[1,5],[8,9]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "New interval covers all",
-        "input": "[[[5,6],[8,9],[12,15]],[1,20]]",
-        "expectedOutput": "[[1,20]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "Insert before all intervals",
-        "input": "[[[3,4],[6,7]],[0,1]]",
-        "expectedOutput": "[[0,1],[3,4],[6,7]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "Insert after all intervals",
-        "input": "[[[1,2],[4,5]],[8,9]]",
-        "expectedOutput": "[[1,2],[4,5],[8,9]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "Merge adjacent chain",
-        "input": "[[[1,2],[3,4],[5,6]],[2,5]]",
-        "expectedOutput": "[[1,6]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "Insert into middle gap",
-        "input": "[[[1,3],[7,9]],[4,5]]",
-        "expectedOutput": "[[1,3],[4,5],[7,9]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "Touch right endpoint",
-        "input": "[[[2,5]],[5,8]]",
-        "expectedOutput": "[[2,8]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "Touch left endpoint",
-        "input": "[[[5,8]],[2,5]]",
-        "expectedOutput": "[[2,8]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "Point interval insertion",
-        "input": "[[[1,2],[4,5],[7,8],[10,11]],[6,6]]",
-        "expectedOutput": "[[1,2],[4,5],[6,6],[7,8],[10,11]]",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "Complex multiple merge",
-        "input": "[[[1,2],[5,6],[8,10],[15,18]],[4,16]]",
-        "expectedOutput": "[[1,2],[4,18]]",
-        "weight": 3
+        "explanation": "The new interval [4,8] overlaps [3,5], [6,7], and [8,10], so those intervals merge into [3,10]."
       }
     ],
-    "totalTestCases": 30,
-    "totalWeight": 130
+    "problemStatement": "You receive an array of non-overlapping intervals `intervals` where `intervals[i] = [start_i, end_i]` represent the start and the end of the `i^th` interval and `intervals` is sorted in ascending order by `start_i`. You are also given an interval `newInterval = [start, end]` that represents the start and end of another interval.\n\nInsert `newInterval` into `intervals` such that `intervals` is still sorted in ascending order by `start_i` and `intervals` still does not have any overlapping intervals (merge overlapping intervals if necessary).\n\nThe task is to output `intervals` *after the insertion*.\n\n**Note** that you don't need to modify `intervals` in-place. You can make a new array and output it."
+  },
+  "judging": {
+    "notes": [
+      "Solutions are judged against the JSON-serialised return value."
+    ],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
-      5,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
       3,
       3,
       3,
@@ -323,79 +87,334 @@
       3,
       3
     ],
-    "maxScore": 130
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "intervals",
+      "two-pointers"
     ],
-    "notes": []
+    "category": "Intervals",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "intervals",
+      "two-pointers"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses a two-pointer technique to iterate through the intervals and insert the new interval, merging any overlapping intervals.",
-    "timeComplexity": "O(n)",
-    "spaceComplexity": "O(n)",
-    "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "# Time:  O(n)\n# Space: O(1) (excluding result storage)\n\nclass Solution(object):\n    def insert(self, intervals, newInterval):\n        \"\"\"\n        :type intervals: List[List[int]]\n        :type newInterval: List[int]\n        :rtype: List[List[int]]\n        \"\"\"\n        result = []\n        i = 0\n        while i < len(intervals) and newInterval[0] > intervals[i][1]:\n            result += intervals[i],\n            i += 1\n        while i < len(intervals) and newInterval[1] >= intervals[i][0]:\n            newInterval = [min(newInterval[0], intervals[i][0]),\n                           max(newInterval[1], intervals[i][1])]\n            i += 1\n        result.append(newInterval)\n        result.extend(intervals[i:])\n        return result",
-      "JavaScript": ""
-    },
-    "notes": [],
+    "notes": [
+      "Because the input is already sorted and non-overlapping, no sorting is required.",
+      "Overlap uses intervals[i][0] <= currentEnd and non-overlap before insertion uses intervals[i][1] < currentStart."
+    ],
+    "approach": "Scan the intervals from left to right in three phases: copy intervals completely before the new interval, merge every interval that overlaps or touches the new interval, then append the remaining intervals.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(log n + k) comparisons to locate and merge the affected region, plus O(n) to materialize the returned result in the worst case.",
+        "description": "Use binary search to locate the first interval whose end can reach the new interval, then scan only the potentially affected suffix while preserving the already ordered prefix. The final result still requires O(n) output space and, in the worst case, O(n) total work."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n) time and O(n) space for the returned array.",
+        "description": "Exploit the sorted, non-overlapping input directly. First copy intervals ending before the new interval starts. Then expand the new interval while existing intervals start at or before its current end. Finally append all untouched intervals. The invariant is that every copied prefix interval is strictly before the merged interval and every skipped interval overlaps or touches it."
+      },
+      "bruteForce": {
+        "complexity": "O(n log n) time and O(n) auxiliary space for the combined list/result.",
+        "description": "Append newInterval to the existing intervals, sort all intervals by start, and then perform a standard merge pass. This is correct but performs unnecessary sorting because the original intervals are already sorted."
       }
+    },
+    "timeComplexity": "O(n), where n is the number of existing intervals.",
+    "spaceComplexity": "O(n) for the returned interval array.",
+    "code": {
+      "Python3": "class Solution:\n    def insert(self, intervals: List[List[int]], newInterval: List[int]) -> List[List[int]]:\n        result = []\n        i = 0\n        while i < len(intervals) and intervals[i][1] < newInterval[0]:\n            result.append(intervals[i][:])\n            i += 1\n        start, end = newInterval\n        while i < len(intervals) and intervals[i][0] <= end:\n            start = min(start, intervals[i][0])\n            end = max(end, intervals[i][1])\n            i += 1\n        result.append([start, end])\n        result.extend(intervals[i:])\n        return result"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Return an array of arrays of size *returnSize.\n * The sizes of the arrays are returned as *returnColumnSizes array.\n * Note: Both returned array and *columnSizes array must be malloced, assume caller calls free().\n */\nint** insert(int** intervals, int intervalsSize, int* intervalsColSize, int* newInterval, int newIntervalSize, int* returnSize, int** returnColumnSizes) {\n    \n    *returnSize = 0;\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int intervalsSize = 0;\n        int* intervalsColSize = NULL;\n        int** intervals = parse_int_2d(&tok, &intervalsSize, &intervalsColSize);\n        int newIntervalSize = 0;\n        int* newInterval = parse_int_array(&tok, &newIntervalSize);\n        int returnSize = 0;\n        int* returnColumnSizes = NULL;\n        int** result = insert(intervals, intervalsSize, intervalsColSize, newInterval, newIntervalSize, &returnSize, &returnColumnSizes);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; i++) {\n            printf(\"[\");\n            for (int j = 0; j < returnColumnSizes[i]; j++) {\n                printf(\"%d\", result[i][j]);\n                if (j < returnColumnSizes[i] - 1) printf(\",\");\n            }\n            printf(\"]\");\n            if (i < returnSize - 1) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    vector<vector<int>> insert(vector<vector<int>>& intervals, vector<int>& newInterval) {\n        \n        return {};\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto intervals = readInt2D(tok);\n    auto newInterval = readIntVec(tok);\n    auto result = Solution().insert(intervals, newInterval);\n    cout << \"[\";\n    for(int i=0;i<(int)result.size();i++){\n        cout << \"[\";\n        for(int j=0;j<(int)result[i].size();j++){\n            cout << result[i][j];\n            if(j+1<(int)result[i].size()) cout << \",\";\n        }\n        cout << \"]\";\n        if(i+1<(int)result.size()) cout << \",\";\n    }\n    cout << \"]\" << endl;\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int[][] insert(int[][] intervals, int[] newInterval) {\n        \n        return new int[0][0];\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[][] intervals = toInt2D(nextToken());\n        int[] newInterval = toIntArray(nextToken());\n        int[][] result = new Solution().insert(intervals, newInterval);\n        StringBuilder sb=new StringBuilder(\"[\");for(int i=0;i<result.length;i++){sb.append(java.util.Arrays.toString(result[i]).replace(\", \",\",\").replace(\" \",\"\"));if(i<result.length-1)sb.append(\",\");}sb.append(\"]\");System.out.println(sb);\n    }\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def insert(self, intervals: List[List[int]], newInterval: List[int]) -> List[List[int]]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _intervals = _args[0]\n    _newInterval = _args[1]\n    _result = Solution().insert(_intervals, _newInterval)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[][]} intervals\n * @param {number[]} newInterval\n * @return {number[][]}\n */\nvar insert = function(intervals, newInterval) {\n    \n    return [];\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = insert(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "solution": {
-      "approach": "The approach uses a two-pointer technique to iterate through the intervals and insert the new interval, merging any overlapping intervals.",
-      "timeComplexity": "O(n)",
-      "spaceComplexity": "O(n)",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "# Time:  O(n)\n# Space: O(1) (excluding result storage)\n\nclass Solution(object):\n    def insert(self, intervals, newInterval):\n        \"\"\"\n        :type intervals: List[List[int]]\n        :type newInterval: List[int]\n        :rtype: List[List[int]]\n        \"\"\"\n        result = []\n        i = 0\n        while i < len(intervals) and newInterval[0] > intervals[i][1]:\n            result += intervals[i],\n            i += 1\n        while i < len(intervals) and newInterval[1] >= intervals[i][0]:\n            newInterval = [min(newInterval[0], intervals[i][0]),\n                           max(newInterval[1], intervals[i][1])]\n            i += 1\n        result.append(newInterval)\n        result.extend(intervals[i:])\n        return result",
-        "JavaScript": ""
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "intervals",
+        "type": "int[][]"
+      },
+      {
+        "name": "newInterval",
+        "type": "int[]"
       }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    ],
+    "methodName": "insert"
   },
-  "_internal": {},
-  "verified": true
+  "createdAt": "2026-07-09",
+  "followUps": [
+    "Can the returned result be constructed while modifying the input array in place?",
+    "How would the approach change if the input intervals were not sorted?",
+    "What changes would be needed if intervals that only touch at an endpoint were not considered overlapping?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[],[0,0]]",
+        "label": "Empty input with minimum point interval",
+        "weight": 4,
+        "expectedOutput": "[[0,0]]"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[[0,0]],[0,0]]",
+        "label": "Exact duplicate point interval",
+        "weight": 4,
+        "expectedOutput": "[[0,0]]"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[[0,5]],[0,5]]",
+        "label": "Exact duplicate interval",
+        "weight": 4,
+        "expectedOutput": "[[0,5]]"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[[0,5],[10,15]],[5,10]]",
+        "label": "Touch both neighboring intervals",
+        "weight": 4,
+        "expectedOutput": "[[0,15]]"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[[1,2],[4,6],[8,10]],[3,3]]",
+        "label": "Point interval in a strict gap",
+        "weight": 4,
+        "expectedOutput": "[[1,2],[3,3],[4,6],[8,10]]"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[[1,3],[6,9]],[2,5]]",
+        "label": "Partial overlap with first",
+        "weight": 4,
+        "expectedOutput": "[[1,5],[6,9]]"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[[1,2],[3,5],[6,7],[8,10],[12,16]],[4,8]]",
+        "label": "Merge several consecutive intervals",
+        "weight": 4,
+        "expectedOutput": "[[1,2],[3,10],[12,16]]"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[[1,5],[7,10],[12,15]],[6,6]]",
+        "label": "Point joins neither side",
+        "weight": 4,
+        "expectedOutput": "[[1,5],[6,6],[7,10],[12,15]]"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[[1,5],[7,10],[12,15]],[5,7]]",
+        "label": "Touch both sides at endpoints",
+        "weight": 4,
+        "expectedOutput": "[[1,10],[12,15]]"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[[1,10]],[2,9]]",
+        "label": "New interval nested inside existing",
+        "weight": 4,
+        "expectedOutput": "[[1,10]]"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[[2,5]],[0,100]]",
+        "label": "New interval contains existing",
+        "weight": 3,
+        "expectedOutput": "[[0,100]]"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[[2,5],[8,10],[13,15]],[5,13]]",
+        "label": "Merge chain through touching endpoints",
+        "weight": 3,
+        "expectedOutput": "[[2,15]]"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[[0,1],[3,4],[6,7]],[2,2]]",
+        "label": "Zero-length insertion between gaps",
+        "weight": 3,
+        "expectedOutput": "[[0,1],[2,2],[3,4],[6,7]]"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[[0,1],[3,4],[6,7]],[1,6]]",
+        "label": "Merge from first through last",
+        "weight": 3,
+        "expectedOutput": "[[0,7]]"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[[5,7],[10,15]],[0,4]]",
+        "label": "Insert before all with no overlap",
+        "weight": 3,
+        "expectedOutput": "[[0,4],[5,7],[10,15]]"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[[5,7],[10,15]],[16,20]]",
+        "label": "Insert after all with no overlap",
+        "weight": 3,
+        "expectedOutput": "[[5,7],[10,15],[16,20]]"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[[100,200],[300,400]],[201,299]]",
+        "label": "Single gap filling without touching",
+        "weight": 3,
+        "expectedOutput": "[[100,200],[201,299],[300,400]]"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[[100,200],[300,400]],[200,300]]",
+        "label": "Gap interval touches both endpoints",
+        "weight": 3,
+        "expectedOutput": "[[100,400]]"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[[99998,100000]],[0,99998]]",
+        "label": "Lower and upper coordinate boundaries",
+        "weight": 3,
+        "expectedOutput": "[[0,100000]]"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[[0,2],[5,7],[10,12]],[2,10]]",
+        "label": "Boundary-touch merge across multiple intervals",
+        "weight": 3,
+        "expectedOutput": "[[0,12]]"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[[1,2],[5,6],[9,10]],[3,8]]",
+        "label": "Overlap only at two interior boundaries",
+        "weight": 3,
+        "expectedOutput": "[[1,2],[3,8],[9,10]]"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[[1,4],[6,9],[11,14]],[4,11]]",
+        "label": "Touching merge with two separated intervals",
+        "weight": 3,
+        "expectedOutput": "[[1,14]]"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[[1,100]],[50,100000]]",
+        "label": "Large upper endpoint with overlap",
+        "weight": 3,
+        "expectedOutput": "[[1,100000]]"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[[0,100000]],[0,100000]]",
+        "label": "Full coordinate-range exact duplicate",
+        "weight": 3,
+        "expectedOutput": "[[0,100000]]"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[[10000,20000],[30000,40000],[50000,60000]],[15000,55000]]",
+        "label": "Large-coordinate multi-merge",
+        "weight": 3,
+        "expectedOutput": "[[10000,60000]]"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[[0,0],[2,2],[4,4],[6,6]],[1,5]]",
+        "label": "Merge multiple point intervals",
+        "weight": 3,
+        "expectedOutput": "[[0,0],[1,5],[6,6]]"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],[4,12]]",
+        "label": "Merge middle block leaving both sides",
+        "weight": 3,
+        "expectedOutput": "[[1,3],[4,12],[13,15]]"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],[0,16]]",
+        "label": "Cover every interval",
+        "weight": 3,
+        "expectedOutput": "[[0,16]]"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[[1,2],[10,11],[20,21]],[3,9]]",
+        "label": "Large empty gap insertion",
+        "weight": 3,
+        "expectedOutput": "[[1,2],[3,9],[10,11],[20,21]]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28],[30,31],[33,34],[36,37],[39,40],[42,43],[45,46],[48,49],[51,52],[54,55],[57,58],[60,61],[63,64],[66,67],[69,70],[72,73],[75,76],[78,79],[81,82],[84,85],[87,88],[90,91],[93,94],[96,97],[99,100],[102,103],[105,106],[108,109],[111,112],[114,115],[117,118],[120,121],[123,124],[126,127],[129,130],[132,133],[135,136],[138,139],[141,142],[144,145],[147,148],[150,151],[153,154],[156,157],[159,160],[162,163],[165,166],[168,169],[171,172],[174,175],[177,178],[180,181],[183,184],[186,187],[189,190],[192,193],[195,196],[198,199],[201,202],[204,205],[207,208],[210,211],[213,214],[216,217],[219,220],[222,223],[225,226],[228,229],[231,232],[234,235],[237,238],[240,241],[243,244],[246,247],[249,250],[252,253],[255,256],[258,259],[261,262],[264,265],[267,268],[270,271],[273,274],[276,277],[279,280],[282,283],[285,286],[288,289],[291,292],[294,295],[297,298]],[150,151]]",
+        "label": "Many sorted intervals with one middle overlap",
+        "weight": 3,
+        "expectedOutput": "[[0,1],[3,4],[6,7],[9,10],[12,13],[15,16],[18,19],[21,22],[24,25],[27,28],[30,31],[33,34],[36,37],[39,40],[42,43],[45,46],[48,49],[51,52],[54,55],[57,58],[60,61],[63,64],[66,67],[69,70],[72,73],[75,76],[78,79],[81,82],[84,85],[87,88],[90,91],[93,94],[96,97],[99,100],[102,103],[105,106],[108,109],[111,112],[114,115],[117,118],[120,121],[123,124],[126,127],[129,130],[132,133],[135,136],[138,139],[141,142],[144,145],[147,148],[150,151],[153,154],[156,157],[159,160],[162,163],[165,166],[168,169],[171,172],[174,175],[177,178],[180,181],[183,184],[186,187],[189,190],[192,193],[195,196],[198,199],[201,202],[204,205],[207,208],[210,211],[213,214],[216,217],[219,220],[222,223],[225,226],[228,229],[231,232],[234,235],[237,238],[240,241],[243,244],[246,247],[249,250],[252,253],[255,256],[258,259],[261,262],[264,265],[267,268],[270,271],[273,274],[276,277],[279,280],[282,283],[285,286],[288,289],[291,292],[294,295],[297,298]]"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-09",
+  "questionId": "Q57",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Return an array of arrays of size *returnSize.\n * The sizes of the arrays are returned as *returnColumnSizes array.\n * Note: Both returned array and *columnSizes array must be malloced, assume caller calls free().\n */\nint** insert(int** intervals, int intervalsSize, int* intervalsColSize, int* newInterval, int newIntervalSize, int* returnSize, int** returnColumnSizes) {\n    (void)intervalsColSize;\n    (void)newIntervalSize;\n    int** result = (int**)malloc((intervalsSize + 1) * sizeof(int*));\n    *returnColumnSizes = (int*)malloc((intervalsSize + 1) * sizeof(int));\n    int i = 0, r = 0;\n\n    while (i < intervalsSize && intervals[i][1] < newInterval[0]) {\n        result[r] = (int*)malloc(2 * sizeof(int));\n        result[r][0] = intervals[i][0];\n        result[r][1] = intervals[i][1];\n        (*returnColumnSizes)[r++] = 2;\n        i++;\n    }\n\n    int start = newInterval[0], end = newInterval[1];\n    while (i < intervalsSize && intervals[i][0] <= end) {\n        if (intervals[i][0] < start) start = intervals[i][0];\n        if (intervals[i][1] > end) end = intervals[i][1];\n        i++;\n    }\n\n    result[r] = (int*)malloc(2 * sizeof(int));\n    result[r][0] = start;\n    result[r][1] = end;\n    (*returnColumnSizes)[r++] = 2;\n\n    while (i < intervalsSize) {\n        result[r] = (int*)malloc(2 * sizeof(int));\n        result[r][0] = intervals[i][0];\n        result[r][1] = intervals[i][1];\n        (*returnColumnSizes)[r++] = 2;\n        i++;\n    }\n\n    *returnSize = r;\n    return result;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int intervalsSize = 0;\n        int* intervalsColSize = NULL;\n        int** intervals = parse_int_2d(&tok, &intervalsSize, &intervalsColSize);\n        int newIntervalSize = 0;\n        int* newInterval = parse_int_array(&tok, &newIntervalSize);\n        int returnSize = 0;\n        int* returnColumnSizes = NULL;\n        int** result = insert(intervals, intervalsSize, intervalsColSize, newInterval, newIntervalSize, &returnSize, &returnColumnSizes);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; i++) {\n            printf(\"[\");\n            for (int j = 0; j < returnColumnSizes[i]; j++) {\n                printf(\"%d\", result[i][j]);\n                if (j < returnColumnSizes[i] - 1) printf(\",\");\n            }\n            printf(\"]\");\n            if (i < returnSize - 1) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstatic void skip(const string& s, size_t& p) {\n    while (p < s.size() && (s[p]==' ' || s[p]=='\\t' || s[p]=='\\n' || s[p]=='\\r' || s[p]==',')) ++p;\n}\nstatic int parseInt(const string& s, size_t& p) {\n    skip(s,p);\n    int sign=1;\n    if (s[p]=='-') { sign=-1; ++p; }\n    int v=0;\n    while (p<s.size() && isdigit((unsigned char)s[p])) { v=v*10+(s[p]-'0'); ++p; }\n    return sign*v;\n}\nstatic vector<int> parse1D(const string& s, size_t& p) {\n    skip(s,p);\n    vector<int> v;\n    ++p; // [\n    skip(s,p);\n    while (p<s.size() && s[p]!=']') {\n        v.push_back(parseInt(s,p));\n        skip(s,p);\n    }\n    if (p<s.size()) ++p;\n    return v;\n}\nstatic vector<vector<int>> parse2D(const string& s, size_t& p) {\n    skip(s,p);\n    vector<vector<int>> v;\n    ++p; // [\n    skip(s,p);\n    while (p<s.size() && s[p]!=']') {\n        v.push_back(parse1D(s,p));\n        skip(s,p);\n    }\n    if (p<s.size()) ++p;\n    return v;\n}\n\nclass Solution {\npublic:\n    vector<vector<int>> insert(vector<vector<int>>& intervals, vector<int>& newInterval) {\n        vector<vector<int>> result;\n        int i=0, n=(int)intervals.size();\n        while (i<n && intervals[i][1] < newInterval[0]) {\n            result.push_back(intervals[i++]);\n        }\n        int start=newInterval[0], end=newInterval[1];\n        while (i<n && intervals[i][0] <= end) {\n            start=min(start, intervals[i][0]);\n            end=max(end, intervals[i][1]);\n            ++i;\n        }\n        result.push_back({start,end});\n        while (i<n) result.push_back(intervals[i++]);\n        return result;\n    }\n};\n\nint main() {\n    string line; getline(cin,line);\n    size_t p=0; skip(line,p);\n    ++p; // outer [\n    auto intervals=parse2D(line,p);\n    skip(line,p);\n    auto newInterval=parse1D(line,p);\n    auto result=Solution().insert(intervals,newInterval);\n    cout<<\"[\";\n    for(size_t i=0;i<result.size();++i){\n        if(i) cout<<\",\";\n        cout<<\"[\"<<result[i][0]<<\",\"<<result[i][1]<<\"]\";\n    }\n    cout<<\"]\\n\";\n    return 0;\n}\n",
+    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int[][] insert(int[][] intervals, int[] newInterval) {\n        java.util.List<int[]> result = new java.util.ArrayList<>();\n        int i = 0, n = intervals.length;\n\n        while (i < n && intervals[i][1] < newInterval[0]) {\n            result.add(new int[]{intervals[i][0], intervals[i][1]});\n            i++;\n        }\n\n        int start = newInterval[0];\n        int end = newInterval[1];\n        while (i < n && intervals[i][0] <= end) {\n            start = Math.min(start, intervals[i][0]);\n            end = Math.max(end, intervals[i][1]);\n            i++;\n        }\n\n        result.add(new int[]{start, end});\n        while (i < n) {\n            result.add(new int[]{intervals[i][0], intervals[i][1]});\n            i++;\n        }\n\n        return result.toArray(new int[result.size()][]);\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[][] intervals = toInt2D(nextToken());\n        int[] newInterval = toIntArray(nextToken());\n        int[][] result = new Solution().insert(intervals, newInterval);\n        StringBuilder sb=new StringBuilder(\"[\");for(int i=0;i<result.length;i++){sb.append(java.util.Arrays.toString(result[i]).replace(\", \",\",\").replace(\" \",\"\"));if(i<result.length-1)sb.append(\",\");}sb.append(\"]\");System.out.println(sb);\n    }\n}",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def insert(self, intervals: List[List[int]], newInterval: List[int]) -> List[List[int]]:\n        result = []\n        i = 0\n        while i < len(intervals) and intervals[i][1] < newInterval[0]:\n            result.append(intervals[i][:])\n            i += 1\n        start, end = newInterval\n        while i < len(intervals) and intervals[i][0] <= end:\n            start = min(start, intervals[i][0])\n            end = max(end, intervals[i][1])\n            i += 1\n        result.append([start, end])\n        result.extend(intervals[i:])\n        return result\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().insert(args[0], args[1]), separators=(',', ':')))\n",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nfunction insert(intervals, newInterval) {\n    const result = [];\n    let i = 0;\n    while (i < intervals.length && intervals[i][1] < newInterval[0]) {\n        result.push([intervals[i][0], intervals[i][1]]);\n        i++;\n    }\n    let start = newInterval[0];\n    let end = newInterval[1];\n    while (i < intervals.length && intervals[i][0] <= end) {\n        start = Math.min(start, intervals[i][0]);\n        end = Math.max(end, intervals[i][1]);\n        i++;\n    }\n    result.push([start, end]);\n    while (i < intervals.length) {\n        result.push([intervals[i][0], intervals[i][1]]);\n        i++;\n    }\n    return result;\n}\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(insert(args[0], args[1])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "25\u201335 minutes",
+  "learningObjectives": [
+    "Apply linear scanning to sorted interval data.",
+    "Identify and merge overlapping intervals using boundary comparisons.",
+    "Design adversarial cases for endpoint and multi-interval merging."
+  ]
 }

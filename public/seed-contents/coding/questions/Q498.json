@@ -284,6 +284,14 @@
         "label": "1x8",
         "weight": 3,
         "expectedOutput": "[8,7,6,5,4,3,2,1]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[8],[7],[6],[5],[4],[3],[2],[1]]]",
+        "label": "8x1 column vector",
+        "weight": 3,
+        "expectedOutput": "[8, 7, 6, 5, 4, 3, 2, 1]"
       }
     ],
     "totalWeight": 100,
@@ -292,9 +300,36 @@
   "scoring": {
     "maxScore": 100,
     "testCaseWeights": [
-      4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
     ],
     "defaultScoringType": "PARTIAL_SCORE"
   },
@@ -356,7 +391,7 @@
   ],
   "similarProblems": [],
   "acceptanceRate": null,
-  "estimatedSolveTime": "25–35 minutes",
+  "estimatedSolveTime": "25\u201335 minutes",
   "recommendedAfter": [],
   "boilerPlates": {
     "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nstatic int parse_int(const char *s, int *pos) {\n    while (s[*pos] == ' ' || s[*pos] == ',') (*pos)++;\n    int sign = 1;\n    if (s[*pos] == '-') { sign = -1; (*pos)++; }\n    int v = 0;\n    while (s[*pos] >= '0' && s[*pos] <= '9') {\n        v = v * 10 + (s[*pos] - '0');\n        (*pos)++;\n    }\n    return sign * v;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* findDiagonalOrder(int** mat, int matSize, int* matColSize, int* returnSize) {\n    \n    *returnSize = 0;\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main(void) {\n    static char line[2000000];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n\n    int m = 0, n = 0, capacity = 16;\n    int **mat = (int**)malloc((size_t)capacity * sizeof(int*));\n    int *cols = (int*)malloc((size_t)capacity * sizeof(int));\n    int pos = 0;\n\n    while (line[pos] && line[pos] != '[') pos++;\n    if (line[pos] == '[') pos++;\n    if (line[pos] == '[') pos++;\n\n    while (line[pos]) {\n        while (line[pos] == ' ' || line[pos] == ',') pos++;\n        if (line[pos] == ']') break;\n        if (line[pos] != '[') { pos++; continue; }\n        pos++;\n\n        int cap = 16, size = 0;\n        int *row = (int*)malloc((size_t)cap * sizeof(int));\n        while (line[pos] && line[pos] != ']') {\n            if (line[pos] == ',' || line[pos] == ' ') { pos++; continue; }\n            if (size == cap) {\n                cap *= 2;\n                row = (int*)realloc(row, (size_t)cap * sizeof(int));\n            }\n            row[size++] = parse_int(line, &pos);\n        }\n        if (line[pos] == ']') pos++;\n\n        if (m == capacity) {\n            capacity *= 2;\n            mat = (int**)realloc(mat, (size_t)capacity * sizeof(int*));\n            cols = (int*)realloc(cols, (size_t)capacity * sizeof(int));\n        }\n        mat[m] = row;\n        cols[m] = size;\n        if (m == 0) n = size;\n        m++;\n    }\n\n    int returnSize = 0;\n    int *result = findDiagonalOrder(mat, m, cols, &returnSize);\n    printf(\"[\");\n    for (int i = 0; i < returnSize; ++i) {\n        if (i) printf(\",\");\n        printf(\"%d\", result[i]);\n    }\n    printf(\"]\\n\");\n\n    for (int i = 0; i < m; ++i) free(mat[i]);\n    free(mat);\n    free(cols);\n    free(result);\n    return 0;\n}\n",

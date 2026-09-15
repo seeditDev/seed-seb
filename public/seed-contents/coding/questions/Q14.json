@@ -1,29 +1,19 @@
 {
-  "questionId": "Q14",
-  "title": "Maximum-Length Common Prefix",
   "slug": "longest-common-prefix",
-  "version": 5,
-  "createdAt": "2026-07-09",
-  "updatedAt": "2026-07-24",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Easy",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "string",
-      "trie"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "string",
-      "trie"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Start with the first string as a candidate prefix.",
+    "Compare the candidate with each remaining string from left to right.",
+    "When a mismatch or end of a string is reached, shorten the candidate to the matched portion.",
+    "If the candidate becomes empty, the answer is immediately \"\"."
+  ],
+  "title": "Maximum-Length Common Prefix",
   "content": {
-    "problemStatement": "Write a function that returns the longest common prefix string shared among an array of strings. If there is no common prefix, output an empty string \"\".\n\nThe longest common prefix is the longest string that is a prefix of every string in the input array. The function should be case-sensitive and treat digits and lowercase letters as distinct characters.\n\nDesign an algorithm that runs in O(n * m) time where n is the number of strings and m is the length of the common prefix, and uses O(m) extra space for the result.",
+    "notes": [
+      "Return the longest prefix common to all strings in the input array.",
+      "If any string is empty, the result is the empty string.",
+      "The input may contain digits and lowercase letters; matching is exact and case-sensitive.",
+      "A straightforward approach is to use the first string as a reference and compare characters position-by-position across all other strings."
+    ],
     "constraints": [
       "1 <= strs.length <= 200",
       "0 <= strs[i].length <= 200",
@@ -32,288 +22,53 @@
     ],
     "inputFormat": "Single line: JSON array containing one array of strings: [[\"str1\",\"str2\",...]]. Example: [[\"flower\",\"flow\",\"flight\"]]",
     "outputFormat": "Single line: JSON-serialized string representing the longest common prefix, e.g. \"fl\"",
-    "notes": [
-      "Return the longest prefix common to all strings in the input array.",
-      "If any string is empty, the result is the empty string.",
-      "The input may contain digits and lowercase letters; matching is exact and case-sensitive.",
-      "A straightforward approach is to use the first string as a reference and compare characters position-by-position across all other strings."
-    ],
     "sampleTestCases": [
       {
         "id": "sample_1",
         "type": "reg",
         "input": "[[\"flower\",\"flow\",\"flight\"]]",
         "output": "\"fl\"",
-        "explanation": "The longest prefix common to all strings is \"fl\"."
+        "explanation": "The longest prefix common to all three strings is \"fl\"."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[\"dog\",\"racecar\",\"car\"]]",
         "output": "\"\"",
-        "explanation": "There is no common prefix among the input strings, so return an empty string."
-      }
-    ]
-  },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size single short string",
-        "input": "[[\"a\"]]",
-        "expectedOutput": "\"a\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "All identical strings",
-        "input": "[[\"hello\",\"hello\",\"hello\"]]",
-        "expectedOutput": "\"hello\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Common prefix at beginning",
-        "input": "[[\"abc\",\"abcd\",\"abce\"]]",
-        "expectedOutput": "\"abc\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Common prefix in middle",
-        "input": "[[\"abcde\",\"abxyz\",\"abpqr\"]]",
-        "expectedOutput": "\"ab\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "All identical short strings",
-        "input": "[[\"xyz\",\"xyz\",\"xyz\"]]",
-        "expectedOutput": "\"xyz\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "One string is prefix of others",
-        "input": "[[\"prefix\",\"prefixsuffix\",\"prefixmore\",\"prefixend\"]]",
-        "expectedOutput": "\"prefix\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "No common prefix",
-        "input": "[[\"dog\",\"racecar\",\"car\"]]",
-        "expectedOutput": "\"\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Empty string present",
-        "input": "[[\"\",\"abc\",\"ab\"]]",
-        "expectedOutput": "\"\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "All empty strings",
-        "input": "[[\"\",\"\",\"\"]]",
-        "expectedOutput": "\"\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "Single very long string",
-        "input": "[[\"singleverylongstringwithnocomparison\"]]",
-        "expectedOutput": "\"singleverylongstringwithnocomparison\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "Many strings with long common prefix",
-        "input": "[[\"longcommonprefixaaa\",\"longcommonprefixbbb\",\"longcommonprefixccc\",\"longcommonprefixddd\",\"longcommonprefixeee\",\"longcommonprefixfff\",\"longcommonprefixggg\",\"longcommonprefixhhh\",\"longcommonprefixiii\",\"longcommonprefixjjj\"]]",
-        "expectedOutput": "\"longcommonprefix\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "Short strings with single char prefix",
-        "input": "[[\"a\",\"ab\",\"ac\",\"ad\"]]",
-        "expectedOutput": "\"a\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "Diverging at last character",
-        "input": "[[\"commonprefixx\",\"commonprefixy\",\"commonprefixz\"]]",
-        "expectedOutput": "\"commonprefix\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "Strings with different lengths, shortest is prefix",
-        "input": "[[\"develop\",\"development\",\"developer\",\"developing\"]]",
-        "expectedOutput": "\"develop\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "Unsorted input with common prefix",
-        "input": "[[\"application\",\"app\",\"apple\"]]",
-        "expectedOutput": "\"app\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "Reverse lexicographic order with common prefix",
-        "input": "[[\"zebra\",\"zeal\",\"zen\"]]",
-        "expectedOutput": "\"ze\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "Many short strings share small prefix",
-        "input": "[[\"pre1\",\"pre2\",\"pre3\",\"pre4\",\"pre5\",\"pre6\",\"pre7\",\"pre8\",\"pre9\",\"pre10\"]]",
-        "expectedOutput": "\"pre\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "Very long common prefix, strings diverge slightly",
-        "input": "[[\"baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac\",\"baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad\"]]",
-        "expectedOutput": "\"baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "Transport family (replace duplicate)",
-        "input": "[[\"transport\",\"transmit\",\"transaction\"]]",
-        "expectedOutput": "\"trans\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "Single-character strings",
-        "input": "[[\"x\",\"x\",\"x\",\"x\"]]",
-        "expectedOutput": "\"x\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "No strings share first character",
-        "input": "[[\"apple\",\"banana\",\"cherry\"]]",
-        "expectedOutput": "\"\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "Common prefix equals entire shortest string",
-        "input": "[[\"ab\",\"abc\",\"abcd\",\"abcde\"]]",
-        "expectedOutput": "\"ab\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "Long list with small prefix",
-        "input": "[[\"s1\",\"s2\",\"s3\",\"s4\",\"s5\",\"s6\",\"s7\",\"s8\",\"s9\",\"s10\",\"s11\",\"s12\",\"s13\",\"s14\",\"s15\",\"s16\",\"s17\",\"s18\",\"s19\",\"s20\"]]",
-        "expectedOutput": "\"s\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "Edge case: one empty string among many identical",
-        "input": "[[\"same\",\"same\",\"\", \"same\"]]",
-        "expectedOutput": "\"\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "Maximum number of strings with short common prefix",
-        "input": "[[\"p0\",\"p1\",\"p2\",\"p3\",\"p4\",\"p5\",\"p6\",\"p7\",\"p8\",\"p9\",\"p10\",\"p11\",\"p12\",\"p13\",\"p14\",\"p15\",\"p16\",\"p17\",\"p18\",\"p19\",\"p20\",\"p21\",\"p22\",\"p23\",\"p24\",\"p25\",\"p26\",\"p27\",\"p28\",\"p29\",\"p30\",\"p31\",\"p32\",\"p33\",\"p34\",\"p35\",\"p36\",\"p37\",\"p38\",\"p39\",\"p40\",\"p41\",\"p42\",\"p43\",\"p44\",\"p45\",\"p46\",\"p47\",\"p48\",\"p49\",\"p50\",\"p51\",\"p52\",\"p53\",\"p54\",\"p55\",\"p56\",\"p57\",\"p58\",\"p59\",\"p60\",\"p61\",\"p62\",\"p63\",\"p64\",\"p65\",\"p66\",\"p67\",\"p68\",\"p69\",\"p70\",\"p71\",\"p72\",\"p73\",\"p74\",\"p75\",\"p76\",\"p77\",\"p78\",\"p79\",\"p80\",\"p81\",\"p82\",\"p83\",\"p84\",\"p85\",\"p86\",\"p87\",\"p88\",\"p89\",\"p90\",\"p91\",\"p92\",\"p93\",\"p94\",\"p95\",\"p96\",\"p97\",\"p98\",\"p99\",\"p100\",\"p101\",\"p102\",\"p103\",\"p104\",\"p105\",\"p106\",\"p107\",\"p108\",\"p109\",\"p110\",\"p111\",\"p112\",\"p113\",\"p114\",\"p115\",\"p116\",\"p117\",\"p118\",\"p119\",\"p120\",\"p121\",\"p122\",\"p123\",\"p124\",\"p125\",\"p126\",\"p127\",\"p128\",\"p129\",\"p130\",\"p131\",\"p132\",\"p133\",\"p134\",\"p135\",\"p136\",\"p137\",\"p138\",\"p139\",\"p140\",\"p141\",\"p142\",\"p143\",\"p144\",\"p145\",\"p146\",\"p147\",\"p148\",\"p149\",\"p150\",\"p151\",\"p152\",\"p153\",\"p154\",\"p155\",\"p156\",\"p157\",\"p158\",\"p159\",\"p160\",\"p161\",\"p162\",\"p163\",\"p164\",\"p165\",\"p166\",\"p167\",\"p168\",\"p169\",\"p170\",\"p171\",\"p172\",\"p173\",\"p174\",\"p175\",\"p176\",\"p177\",\"p178\",\"p179\",\"p180\",\"p181\",\"p182\",\"p183\",\"p184\",\"p185\",\"p186\",\"p187\",\"p188\",\"p189\",\"p190\",\"p191\",\"p192\",\"p193\",\"p194\",\"p195\",\"p196\",\"p197\",\"p198\",\"p199\"]]",
-        "expectedOutput": "\"p\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "Randomized-like strings with common prefix",
-        "input": "[[\"random1\",\"random2\",\"random3\",\"random4\",\"random5\",\"random6\",\"random7\",\"random8\",\"random9\",\"random10\"]]",
-        "expectedOutput": "\"random\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "Common prefix with numbers and letters",
-        "input": "[[\"a1b2\",\"a1b3\",\"a1b4\"]]",
-        "expectedOutput": "\"a1b\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "Divergence at first char with long strings",
-        "input": "[[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]]",
-        "expectedOutput": "\"\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "Common prefix equals entire shortest string (edge)",
-        "input": "[[\"short\",\"shorter\",\"shortest\"]]",
-        "expectedOutput": "\"short\"",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "Empty string first (new)",
-        "input": "[[\"\",\"abc\",\"abcd\"]]",
-        "expectedOutput": "\"\"",
-        "weight": 3
+        "explanation": "The strings have no common starting character, so the longest common prefix is empty."
       }
     ],
-    "totalTestCases": 30,
-    "totalWeight": 90
+    "problemStatement": "Write a function that returns the longest common prefix string shared among an array of strings. If there is no common prefix, output an empty string \"\".\n\nThe longest common prefix is the longest string that is a prefix of every string in the input array. The function should be case-sensitive and treat digits and lowercase letters as distinct characters.\n\nDesign an algorithm that runs in O(n * m) time where n is the number of strings and m is the length of the common prefix, and uses O(m) extra space for the result."
+  },
+  "judging": {
+    "notes": [
+      "Hidden tests cover minimum and maximum string counts, empty strings, duplicate-heavy inputs, alphanumeric matching, and 200-character boundary cases.",
+      "All expected outputs are exact JSON string equality comparisons.",
+      "Whitespace around the output line is trimmed by the harness before comparison."
+    ],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      3,
-      3,
-      3,
-      3,
-      3,
-      3,
-      3,
-      3,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -335,88 +90,327 @@
       3,
       3
     ],
-    "maxScore": 90
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 5,
+  "metadata": {
+    "tags": [
+      "array",
+      "string"
     ],
-    "notes": [
-      "Hidden tests include empty-string edge cases, single-element arrays, maximum-count arrays, and exact 200-character boundary tests.",
-      "All expected outputs are exact string equality comparisons (JSON string).",
-      "Whitespace around the output line will be trimmed by the harness before comparison."
-    ]
+    "category": "Strings",
+    "isPremium": false,
+    "topicTags": [
+      "string",
+      "array"
+    ],
+    "QBCategory": "String",
+    "difficulty": "Easy",
+    "companyTags": []
   },
   "solution": {
-    "approach": "Use the first string as a reference and compare characters position-by-position across all other strings. Stop at the first mismatch or when the reference string ends. Return the prefix up to that point. This approach runs in O(n * m) time where n is the number of strings and m is the length of the common prefix, and uses O(m) space for the result.",
+    "notes": [
+      "The algorithm uses the current prefix as the only working state and stops immediately after the first mismatch."
+    ],
+    "approach": "Use the first string as the current prefix. For each remaining string, compare characters from the beginning until either string ends or a mismatch occurs, then shorten the current prefix to the matching portion. If the prefix becomes empty, stop early. The final prefix is common to every string.",
+    "editorial": {
+      "better": {
+        "complexity": "O(n * m) time and O(m) space for the returned prefix.",
+        "description": "Use the first string as a reference and compare each character position across all strings. Stop at the first mismatch or when any string ends."
+      },
+      "optimal": {
+        "complexity": "O(n * m) time and O(m) space for the result.",
+        "description": "Maintain a current common prefix and shrink it while scanning the remaining strings. Each character that remains in the prefix is validated against the other strings, and the scan stops immediately when no common prefix remains."
+      },
+      "bruteForce": {
+        "complexity": "O(n * m^2) in the worst case because multiple candidate prefixes may be checked.",
+        "description": "Check every possible prefix of the first string, starting from the longest, and test whether it is a prefix of every other string. Stop at the first valid prefix."
+      }
+    },
     "timeComplexity": "O(n * m)",
     "spaceComplexity": "O(m)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "class Solution(object):\n    def longestCommonPrefix(self, strs):\n        if not strs:\n            return \"\"\n        for i, ch in enumerate(strs[0]):\n            for s in strs[1:]:\n                if i >= len(s) or s[i] != ch:\n                    return strs[0][:i]\n        return strs[0]",
-      "JavaScript": ""
-    },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "Python3": "class Solution:\n    def longestCommonPrefix(self, strs):\n        prefix = strs[0]\n        for s in strs[1:]:\n            limit = min(len(prefix), len(s))\n            i = 0\n            while i < limit and prefix[i] == s[i]:\n                i += 1\n            prefix = prefix[:i]\n            if not prefix:\n                break\n        return prefix"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nchar* longestCommonPrefix(char** strs, int strsSize) {\n    if (strsSize == 0) return strdup(\"\");\n    if (strsSize == 1) return strdup(strs[0]);\n    int i = 0;\n    while (1) {\n        char c = strs[0][i];\n        if (c == '\\0') break;\n        for (int j = 1; j < strsSize; ++j) {\n            if (strs[j][i] == '\\0' || strs[j][i] != c) {\n                char* out = (char*)malloc(i + 1);\n                strncpy(out, strs[0], i);\n                out[i] = '\\0';\n                return out;\n            }\n        }\n        ++i;\n    }\n    return strdup(strs[0]);\n}\n\nint main(void) { return 0; }\n",
-    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstring longestCommonPrefix(const vector<string>& strs) {\n    if (strs.empty()) return \"\";\n    for (size_t i = 0; i < strs[0].size(); ++i) {\n        char c = strs[0][i];\n        for (size_t j = 1; j < strs.size(); ++j) {\n            if (i >= strs[j].size() || strs[j][i] != c) return strs[0].substr(0, i);\n        }\n    }\n    return strs[0];\n}\n\nint main() { return 0; }\n",
-    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public String longestCommonPrefix(String[] strs) {\n        if (strs == null || strs.length == 0) return \"\";\n        String first = strs[0];\n        for (int i = 0; i < first.length(); ++i) {\n            char c = first.charAt(i);\n            for (int j = 1; j < strs.length; ++j) {\n                if (i >= strs[j].length() || strs[j].charAt(i) != c) {\n                    return first.substring(0, i);\n                }\n            }\n        }\n        return first;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String inner = line.substring(1, line.length() - 1).trim();\n        inner = inner.substring(1, inner.length() - 1).trim();\n        List<String> parts = new ArrayList<>();\n        int i = 0;\n        while (i < inner.length()) {\n            while (i < inner.length() && Character.isWhitespace(inner.charAt(i))) i++;\n            if (i >= inner.length()) break;\n            if (inner.charAt(i) == '\"') {\n                int j = inner.indexOf('\"', i + 1);\n                String tok = inner.substring(i + 1, j);\n                parts.add(tok);\n                i = j + 1;\n                while (i < inner.length() && inner.charAt(i) != ',') i++;\n                if (i < inner.length() && inner.charAt(i) == ',') i++;\n            } else {\n                int j = i;\n                while (j < inner.length() && inner.charAt(j) != ',') j++;\n                parts.add(inner.substring(i, j).trim());\n                i = j + 1;\n            }\n        }\n        String[] strs = parts.toArray(new String[0]);\n        String result = new Solution().longestCommonPrefix(strs);\n        System.out.println(\"\\\"\" + result + \"\\\"\");\n    }\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def longestCommonPrefix(self, strs: List[str]) -> str:\n        if not strs:\n            return \"\"\n        for i, ch in enumerate(strs[0]):\n            for s in strs[1:]:\n                if i >= len(s) or s[i] != ch:\n                    return strs[0][:i]\n        return strs[0]\n\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _strs = _args[0]\n    _result = Solution().longestCommonPrefix(_strs)\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar longestCommonPrefix = function(strs) {\n    if (!strs || strs.length === 0) return \"\";\n    for (let i = 0; i < strs[0].length; ++i) {\n        const ch = strs[0][i];\n        for (let j = 1; j < strs.length; ++j) {\n            if (i >= strs[j].length || strs[j][i] !== ch) {\n                return strs[0].slice(0, i);\n            }\n        }\n    }\n    return strs[0];\n};\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = longestCommonPrefix(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "solution": {
-      "approach": "Use the first string as a reference and compare characters position-by-position across all other strings. Stop at the first mismatch or when the reference string ends. Return the prefix up to that point. This approach runs in O(n * m) time where n is the number of strings and m is the length of the common prefix, and uses O(m) space for the result.",
-      "timeComplexity": "O(n * m)",
-      "spaceComplexity": "O(m)",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "class Solution(object):\n    def longestCommonPrefix(self, strs):\n        if not strs:\n            return \"\"\n        for i, ch in enumerate(strs[0]):\n            for s in strs[1:]:\n                if i >= len(s) or s[i] != ch:\n                    return strs[0][:i]\n        return strs[0]",
-        "JavaScript": ""
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "strs",
+        "type": "string[]"
       }
-    },
-    "_internal": {
-      "methodName": "longestCommonPrefix",
-      "params": [
-        {
-          "name": "strs",
-          "type": "string[]"
-        }
-      ],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    ],
+    "methodName": "longestCommonPrefix"
   },
-  "_internal": {},
-  "verified": true
+  "createdAt": "2026-07-09",
+  "followUps": [
+    "Can you solve it by sorting the strings first? What trade-off does sorting introduce?",
+    "Can the solution be implemented using a trie? Compare its time and space costs with the direct comparison approach.",
+    "How would the solution change if uppercase letters or Unicode characters were allowed?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[\"a\"]]",
+        "label": "Minimum array size with one character",
+        "weight": 4,
+        "expectedOutput": "\"a\""
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[\"\"]]",
+        "label": "Single empty string boundary",
+        "weight": 4,
+        "expectedOutput": "\"\""
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[\"hello\",\"hello\",\"hello\"]]",
+        "label": "All strings identical",
+        "weight": 4,
+        "expectedOutput": "\"hello\""
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[\"flower\",\"flow\",\"flight\"]]",
+        "label": "Classic partial prefix divergence",
+        "weight": 4,
+        "expectedOutput": "\"fl\""
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[\"dog\",\"racecar\",\"car\"]]",
+        "label": "No common first character",
+        "weight": 4,
+        "expectedOutput": "\"\""
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[\"prefix\",\"prefixsuffix\",\"prefixmore\",\"prefixend\"]]",
+        "label": "Shortest string is the complete common prefix",
+        "weight": 4,
+        "expectedOutput": "\"prefix\""
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[\"ab\",\"abc\",\"abcd\",\"abcde\"]]",
+        "label": "Common prefix equals shortest string",
+        "weight": 4,
+        "expectedOutput": "\"ab\""
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[\"application\",\"app\",\"apple\"]]",
+        "label": "Unsorted input with prefix-ending middle string",
+        "weight": 4,
+        "expectedOutput": "\"app\""
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[\"zebra\",\"zeal\",\"zen\"]]",
+        "label": "Reverse-like ordering with two-character prefix",
+        "weight": 4,
+        "expectedOutput": "\"ze\""
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[\"commonprefixx\",\"commonprefixy\",\"commonprefixz\"]]",
+        "label": "Mismatch at final character after long prefix",
+        "weight": 4,
+        "expectedOutput": "\"commonprefix\""
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[\"a1b2\",\"a1b3\",\"a1b4\"]]",
+        "label": "Digits and letters match exactly",
+        "weight": 3,
+        "expectedOutput": "\"a1b\""
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[\"9abc\",\"9abd\",\"9aef\"]]",
+        "label": "Digit-leading strings",
+        "weight": 3,
+        "expectedOutput": "\"9a\""
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[\"0\",\"01\",\"0a\",\"0z\"]]",
+        "label": "Zero as first shared character",
+        "weight": 3,
+        "expectedOutput": "\"0\""
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[\"abc\",\"ab9\",\"ab0\"]]",
+        "label": "Digit breaks an otherwise alphabetic prefix",
+        "weight": 3,
+        "expectedOutput": "\"ab\""
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[\"same\",\"same\",\"\",\"same\"]]",
+        "label": "Empty string among identical strings",
+        "weight": 3,
+        "expectedOutput": "\"\""
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[\"\",\"\",\"\"]]",
+        "label": "All strings empty",
+        "weight": 3,
+        "expectedOutput": "\"\""
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[\"aa\",\"aa\",\"aa\",\"aa\"]]",
+        "label": "All equal short strings",
+        "weight": 3,
+        "expectedOutput": "\"aa\""
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[\"x\",\"xy\",\"xz\",\"x9\"]]",
+        "label": "Single-character common prefix with mixed suffixes",
+        "weight": 3,
+        "expectedOutput": "\"x\""
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[\"transport\",\"transmit\",\"transaction\"]]",
+        "label": "Shared prefix with different continuations",
+        "weight": 3,
+        "expectedOutput": "\"trans\""
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[\"develop\",\"development\",\"developer\",\"developing\"]]",
+        "label": "Shortest string terminates common prefix",
+        "weight": 3,
+        "expectedOutput": "\"develop\""
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[\"apple\",\"banana\",\"cherry\"]]",
+        "label": "Distinct first characters",
+        "weight": 3,
+        "expectedOutput": "\"\""
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[\"s1\",\"s2\",\"s3\",\"s4\",\"s5\",\"s6\",\"s7\",\"s8\",\"s9\",\"s10\",\"s11\",\"s12\",\"s13\",\"s14\",\"s15\",\"s16\",\"s17\",\"s18\",\"s19\",\"s20\"]]",
+        "label": "Many strings with small common prefix",
+        "weight": 3,
+        "expectedOutput": "\"s\""
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[\"q0\",\"q1\",\"q2\",\"q3\",\"q4\",\"q5\",\"q6\",\"q7\",\"q8\",\"q9\",\"q10\",\"q11\",\"q12\",\"q13\",\"q14\",\"q15\",\"q16\",\"q17\",\"q18\",\"q19\",\"q20\",\"q21\",\"q22\",\"q23\",\"q24\",\"q25\",\"q26\",\"q27\",\"q28\",\"q29\",\"q30\",\"q31\",\"q32\",\"q33\",\"q34\",\"q35\",\"q36\",\"q37\",\"q38\",\"q39\",\"q40\",\"q41\",\"q42\",\"q43\",\"q44\",\"q45\",\"q46\",\"q47\",\"q48\",\"q49\",\"q50\",\"q51\",\"q52\",\"q53\",\"q54\",\"q55\",\"q56\",\"q57\",\"q58\",\"q59\",\"q60\",\"q61\",\"q62\",\"q63\",\"q64\",\"q65\",\"q66\",\"q67\",\"q68\",\"q69\",\"q70\",\"q71\",\"q72\",\"q73\",\"q74\",\"q75\",\"q76\",\"q77\",\"q78\",\"q79\",\"q80\",\"q81\",\"q82\",\"q83\",\"q84\",\"q85\",\"q86\",\"q87\",\"q88\",\"q89\",\"q90\",\"q91\",\"q92\",\"q93\",\"q94\",\"q95\",\"q96\",\"q97\",\"q98\",\"q99\",\"q100\",\"q101\",\"q102\",\"q103\",\"q104\",\"q105\",\"q106\",\"q107\",\"q108\",\"q109\",\"q110\",\"q111\",\"q112\",\"q113\",\"q114\",\"q115\",\"q116\",\"q117\",\"q118\",\"q119\",\"q120\",\"q121\",\"q122\",\"q123\",\"q124\",\"q125\",\"q126\",\"q127\",\"q128\",\"q129\",\"q130\",\"q131\",\"q132\",\"q133\",\"q134\",\"q135\",\"q136\",\"q137\",\"q138\",\"q139\",\"q140\",\"q141\",\"q142\",\"q143\",\"q144\",\"q145\",\"q146\",\"q147\",\"q148\",\"q149\",\"q150\",\"q151\",\"q152\",\"q153\",\"q154\",\"q155\",\"q156\",\"q157\",\"q158\",\"q159\",\"q160\",\"q161\",\"q162\",\"q163\",\"q164\",\"q165\",\"q166\",\"q167\",\"q168\",\"q169\",\"q170\",\"q171\",\"q172\",\"q173\",\"q174\",\"q175\",\"q176\",\"q177\",\"q178\",\"q179\",\"q180\",\"q181\",\"q182\",\"q183\",\"q184\",\"q185\",\"q186\",\"q187\",\"q188\",\"q189\",\"q190\",\"q191\",\"q192\",\"q193\",\"q194\",\"q195\",\"q196\",\"q197\",\"q198\",\"q199\"]]",
+        "label": "Maximum string count boundary",
+        "weight": 3,
+        "expectedOutput": "\"q\""
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac\"]]",
+        "label": "Maximum string length with mismatch at final position",
+        "weight": 3,
+        "expectedOutput": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[\"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\",\"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\"]]",
+        "label": "Maximum length identical strings",
+        "weight": 3,
+        "expectedOutput": "\"zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\""
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa9\"]]",
+        "label": "Long alphabetic prefix followed by digits",
+        "weight": 3,
+        "expectedOutput": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[\"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a\",\"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b\",\"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c\"]]",
+        "label": "Long digit prefix with final divergence",
+        "weight": 3,
+        "expectedOutput": "\"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\""
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[\"abc9\",\"abc90\",\"abc91\",\"abc92\"]]",
+        "label": "One string equals the common prefix while others continue",
+        "weight": 3,
+        "expectedOutput": "\"abc9\""
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[\"7abc\",\"7abc\",\"7abd\",\"7ab9\"]]",
+        "label": "Duplicate-heavy numeric-leading input",
+        "weight": 3,
+        "expectedOutput": "\"7ab\""
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[\"a0\",\"a0a\",\"a0b\",\"a09\"]]",
+        "label": "Mixed alphanumeric prefix with late divergence",
+        "weight": 3,
+        "expectedOutput": "\"a0\""
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-24",
+  "questionId": "Q14",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nchar* longestCommonPrefix(char** strs, int strsSize) {\n    size_t prefixLen = strlen(strs[0]);\n    for (int k = 1; k < strsSize; ++k) {\n        size_t sLen = strlen(strs[k]);\n        size_t limit = prefixLen < sLen ? prefixLen : sLen;\n        size_t i = 0;\n        while (i < limit && strs[0][i] == strs[k][i]) ++i;\n        prefixLen = i;\n        if (prefixLen == 0) break;\n    }\n    char* out = (char*)malloc(prefixLen + 1);\n    if (!out) return NULL;\n    memcpy(out, strs[0], prefixLen);\n    out[prefixLen] = '\\0';\n    return out;\n}\n\nint main(void) {\n    char line[70000];\n    if (!fgets(line, sizeof(line), stdin)) return 1;\n    char* strs[201];\n    char storage[60000];\n    int count = 0;\n    size_t pos = 0;\n    int inString = 0;\n    for (char* p = line; *p; ++p) {\n        if (*p == '\"') {\n            if (!inString) {\n                strs[count++] = &storage[pos];\n                inString = 1;\n            } else {\n                storage[pos++] = '\\0';\n                inString = 0;\n            }\n        } else if (inString) {\n            storage[pos++] = *p;\n        }\n    }\n    if (count == 0) return 1;\n    char* result = longestCommonPrefix(strs, count);\n    if (!result) return 1;\n    printf(\"\\\"%s\\\"\\n\", result);\n    free(result);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstring longestCommonPrefix(const vector<string>& strs) {\n    string prefix = strs[0];\n    for (size_t k = 1; k < strs.size(); ++k) {\n        const string& s = strs[k];\n        size_t limit = min(prefix.size(), s.size());\n        size_t i = 0;\n        while (i < limit && prefix[i] == s[i]) ++i;\n        prefix.resize(i);\n        if (prefix.empty()) break;\n    }\n    return prefix;\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    string line;\n    getline(cin, line);\n    vector<string> strs;\n    string cur;\n    bool inString = false;\n    bool esc = false;\n    for (char c : line) {\n        if (esc) { cur += c; esc = false; continue; }\n        if (c == '\\\\') { esc = true; continue; }\n        if (c == '\"') {\n            if (inString) { strs.push_back(cur); cur.clear(); }\n            inString = !inString;\n        } else if (inString) { cur += c; }\n    }\n    cout << '\"' << longestCommonPrefix(strs) << '\"' << '\\n';\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public String longestCommonPrefix(String[] strs) {\n        String prefix = strs[0];\n        for (int k = 1; k < strs.length; k++) {\n            String s = strs[k];\n            int limit = Math.min(prefix.length(), s.length());\n            int i = 0;\n            while (i < limit && prefix.charAt(i) == s.charAt(i)) i++;\n            prefix = prefix.substring(0, i);\n            if (prefix.isEmpty()) break;\n        }\n        return prefix;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        List<String> strs = new ArrayList<>();\n        boolean inString = false;\n        StringBuilder cur = new StringBuilder();\n        boolean esc = false;\n        for (int p = 0; p < line.length(); p++) {\n            char c = line.charAt(p);\n            if (esc) { cur.append(c); esc = false; continue; }\n            if (c == '\\\\') { esc = true; continue; }\n            if (c == '\"') {\n                if (inString) { strs.add(cur.toString()); cur.setLength(0); }\n                inString = !inString;\n            } else if (inString) cur.append(c);\n        }\n        String result = new Solution().longestCommonPrefix(strs.toArray(new String[0]));\n        System.out.println(\"\\\"\" + result + \"\\\"\");\n    }\n}\n",
+    "Python3": "import sys, json\n\nclass Solution:\n    def longestCommonPrefix(self, strs):\n        prefix = strs[0]\n        for s in strs[1:]:\n            limit = min(len(prefix), len(s))\n            i = 0\n            while i < limit and prefix[i] == s[i]:\n                i += 1\n            prefix = prefix[:i]\n            if not prefix:\n                break\n        return prefix\n\nif __name__ == \"__main__\":\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().longestCommonPrefix(args[0])))\n",
+    "JavaScript": "\"use strict\";\n\nfunction longestCommonPrefix(strs) {\n    let prefix = strs[0];\n    for (let k = 1; k < strs.length; k++) {\n        const s = strs[k];\n        const limit = Math.min(prefix.length, s.length);\n        let i = 0;\n        while (i < limit && prefix[i] === s[i]) i++;\n        prefix = prefix.slice(0, i);\n        if (prefix.length === 0) break;\n    }\n    return prefix;\n}\n\nconst fs = require(\"fs\");\nconst args = JSON.parse(fs.readFileSync(0, \"utf8\").trim());\nprocess.stdout.write(JSON.stringify(longestCommonPrefix(args[0])) + \"\\n\");\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "15\u201325 minutes",
+  "learningObjectives": [
+    "Identify and maintain a prefix invariant across multiple strings.",
+    "Handle empty strings, unequal lengths, duplicates, and alphanumeric characters correctly.",
+    "Analyze time and auxiliary-space complexity for string comparison algorithms."
+  ]
 }

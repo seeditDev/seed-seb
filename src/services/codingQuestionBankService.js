@@ -40,6 +40,48 @@ const fetchJson = async (path) => {
   throw new Error(`Failed to load ${cleanPath} from both local and remote`);
 };
 
+export const isCompleteQuestion = (q) => {
+  if (!q || typeof q !== 'object') return false;
+  const hasStatement = Boolean(
+    (typeof q.content?.problemStatement === 'string' && q.content.problemStatement.trim().length > 0) ||
+    (typeof q.problemStatement === 'string' && q.problemStatement.trim().length > 0) ||
+    (typeof q.description === 'string' && q.description.trim().length > 0) ||
+    (typeof q.statement === 'string' && q.statement.trim().length > 0)
+  );
+  const hasTestCases = Boolean(
+    (Array.isArray(q.content?.sampleTestCases) && q.content.sampleTestCases.length > 0) ||
+    (Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0) ||
+    (Array.isArray(q.testCases) && q.testCases.length > 0) ||
+    (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0)
+  );
+  return hasStatement && hasTestCases;
+};
+
+export const mergeQuestionObjects = (fullQ, stub) => {
+  if (!fullQ) return stub || null;
+  if (!stub || typeof stub !== 'object') return fullQ;
+  return {
+    ...fullQ,
+    ...stub,
+    id: fullQ.id || fullQ.questionId || stub.id || stub.questionId || '',
+    questionId: fullQ.questionId || fullQ.id || stub.questionId || stub.id || '',
+    title: stub.title || fullQ.title || '',
+    content: fullQ.content || stub.content,
+    description: fullQ.description || fullQ.content?.problemStatement || fullQ.problemStatement || stub.description || stub.statement || '',
+    problemStatement: fullQ.problemStatement || fullQ.content?.problemStatement || stub.problemStatement || stub.statement || '',
+    statement: fullQ.statement || fullQ.problemStatement || fullQ.content?.problemStatement || stub.statement || '',
+    sampleTestCases: (Array.isArray(fullQ.sampleTestCases) && fullQ.sampleTestCases.length > 0)
+      ? fullQ.sampleTestCases
+      : (Array.isArray(fullQ.content?.sampleTestCases) && fullQ.content.sampleTestCases.length > 0 ? fullQ.content.sampleTestCases : (stub.sampleTestCases || [])),
+    testCases: (Array.isArray(fullQ.testCases) && fullQ.testCases.length > 0)
+      ? fullQ.testCases
+      : (Array.isArray(stub.testCases) && stub.testCases.length > 0 ? stub.testCases : (fullQ.content?.sampleTestCases || [])),
+    boilerPlates: fullQ.boilerPlates || fullQ.content?.boilerPlates || stub.boilerPlates || {},
+    boilerplates: fullQ.boilerplates || fullQ.content?.boilerplates || stub.boilerplates || {},
+    marks: Number(stub.marks || fullQ.marks || 100),
+  };
+};
+
 // ── Question Bank ─────────────────────────────────────────────────────────────
 
 /**
@@ -52,16 +94,31 @@ let questionMapCache = null;
 export const fetchQuestion = async (questionId) => {
   if (!questionId) return null;
 
+  let originalObj = null;
   // If already a full question object passed in
   if (typeof questionId === 'object') {
-    if (questionId.content?.problemStatement || questionId.problemStatement || questionId.description || questionId.testCases) {
+    originalObj = questionId;
+    if (isCompleteQuestion(questionId)) {
       return questionId;
     }
-    questionId = questionId.questionId || (questionId.id  ?? '');
+    // If cdnUrl is present directly on the object, try fetching it first
+    if (originalObj.cdnUrl) {
+      try {
+        const cleanPath = String(originalObj.cdnUrl)
+          .replace(/^https?:\/\/raw\.githubusercontent\.com\/seeditDev\/seed-contents\/main\//, '')
+          .replace(/^\/seed-contents\//, '')
+          .replace(/^seed-contents\//, '');
+        const cdnRes = await fetchJson(cleanPath);
+        if (cdnRes) {
+          return mergeQuestionObjects(cdnRes, originalObj);
+        }
+      } catch (_) {}
+    }
+    questionId = originalObj.qid || originalObj.id || originalObj.questionId || originalObj.challengeId || originalObj._id || originalObj.slug || '';
   }
 
   const rawId = String(questionId).trim();
-  if (!rawId) return null;
+  if (!rawId) return originalObj ? originalObj : null;
 
   // Normalized ID forms
   let normId = rawId;
@@ -129,14 +186,38 @@ export const fetchQuestion = async (questionId) => {
     }
   }
 
-  // 5. Last resort fetch
+  // 5. Lookup in questions_index.json by slug or title if normId didn't yield a direct file
+  if (!result && (originalObj?.title || originalObj?.slug || rawId)) {
+    try {
+      const index = await fetchQuestionsIndex();
+      if (Array.isArray(index)) {
+        const match = index.find(item => 
+          (item.questionId && (item.questionId === normId || item.questionId === rawId)) ||
+          (originalObj?.slug && item.slug && item.slug.toLowerCase() === String(originalObj.slug).toLowerCase()) ||
+          (originalObj?.title && item.title && item.title.trim().toLowerCase() === String(originalObj.title).trim().toLowerCase()) ||
+          (item.slug && item.slug.toLowerCase() === rawId.toLowerCase())
+        );
+        if (match?.questionId && match.questionId !== normId) {
+          try {
+            result = await fetchJson(`coding/questions/${match.questionId}.json`);
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 6. Last resort fetch
   if (!result) {
     try {
       result = await fetchJson(`coding/questions/${normId}.json`);
     } catch (_) {}
   }
 
-  return result ? result : null;
+  if (result && originalObj) {
+    return mergeQuestionObjects(result, originalObj);
+  }
+
+  return result ? result : (originalObj || null);
 };
 
 
@@ -162,11 +243,11 @@ export const fetchQuestionsForContest = async (questionIds = []) => {
   const results = await Promise.allSettled(questionIds.map(item => {
     if (item && typeof item === 'object') {
       // If already a complete question object, return immediately
-      if (item.content?.problemStatement || item.problemStatement || (item.title && (item.sampleTestCases || item.testCases))) {
+      if (isCompleteQuestion(item)) {
         return Promise.resolve(item);
       }
       // New slim slug format: { id, cdnUrl, title, difficulty, category }
-      const qId = item.id || (item.questionId  ?? '');
+      const qId = item.qid || item.id || item.questionId || item.challengeId || item._id || (typeof item.slug === 'string' ? item.slug : '');
       const { cdnUrl } = item;
       if (cdnUrl) {
         const cleanPath = String(cdnUrl)
@@ -174,6 +255,7 @@ export const fetchQuestionsForContest = async (questionIds = []) => {
           .replace(/^\/seed-contents\//, '')
           .replace(/^seed-contents\//, '');
         return fetchJson(cleanPath)
+          .then(res => mergeQuestionObjects(res, item))
           .catch(() => fetchQuestion(qId || item));
       }
       return fetchQuestion(qId || item);
@@ -183,8 +265,10 @@ export const fetchQuestionsForContest = async (questionIds = []) => {
 
   return results
     .map((r, i) => {
-      if (r.status === 'fulfilled' && r.value) return r.value;
       const originalItem = questionIds[i];
+      if (r.status === 'fulfilled' && r.value) {
+        return mergeQuestionObjects(r.value, originalItem);
+      }
       if (originalItem && typeof originalItem === 'object' && (originalItem.title || originalItem.id)) {
         return originalItem; // preserve inline object if fetch failed
       }

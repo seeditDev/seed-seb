@@ -1,31 +1,14 @@
 {
-  "questionId": "Q207",
-  "title": "Course Schedule Problem",
   "slug": "course-schedule",
-  "version": 1,
-  "createdAt": "2026-07-09",
-  "updatedAt": "2026-07-09",
-  "metadata": {
-    "category": "Sorting",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "depth-first-search",
-      "breadth-first-search",
-      "graph",
-      "topological-sort"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "depth-first-search",
-      "breadth-first-search",
-      "graph",
-      "topological-sort"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Think of each prerequisite pair as a directed edge from the course that must be taken first to the course that depends on it.",
+    "A course with zero remaining prerequisites can be taken immediately. Keep processing such courses.",
+    "If some courses remain but none has indegree zero, the remaining dependency graph contains a cycle.",
+    "Count how many courses are processed; finishing all numCourses courses means the schedule is possible."
+  ],
+  "title": "Course Schedule Problem",
   "content": {
-    "problemStatement": "There are a total of `numCourses` courses you have to take, labeled from `0` to `numCourses - 1`. You receive an array `prerequisites` where `prerequisites[i] = [a_i, b_i]` indicates that you **must** take course `b_i` first if you want to take course `a_i`.\n\n* As an example, the pair `[0, 1]`, indicates that to take course `0` you have to first take course `1`.\n\nOutput `true` if you can finish all courses. Otherwise, output `false`.\n\n**Example 1:**\n\n```\nInput: numCourses = 2, prerequisites = [[1,0]]\nOutput: true\nExplanation: There are a total of 2 courses to take. \nTo take course 1 you should have finished course 0. So it is possible.\n```\n\n**Example 2:**\n\n```\nInput: numCourses = 2, prerequisites = [[1,0],[0,1]]\nOutput: false\nExplanation: There are a total of 2 courses to take. \nTo take course 1 you should have finished course 0, and to take course 0 you should also have finished course 1. So it is impossible.\n```\n\n**Constraints:**\n\n* `1 <= numCourses <= 2000`\n* `0 <= prerequisites.length <= 5000`\n* `prerequisites[i].length == 2`\n* `0 <= a_i, b_i < numCourses`\n* All the pairs prerequisites[i] are **unique**.",
+    "notes": [],
     "constraints": [
       "1 <= numCourses <= 2000",
       "0 <= prerequisites.length <= 5000",
@@ -41,278 +24,46 @@
         "type": "reg",
         "input": "[2,[[1,0]]]",
         "output": "true",
-        "explanation": "There are a total of 2 courses to take. \nTo take course 1 you should have finished course 0. So it is possible."
+        "explanation": "There are a total of 2 courses to take. To take course 1 you should have finished course 0, so all courses can be completed."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[2,[[1,0],[0,1]]]",
         "output": "false",
-        "explanation": "There are a total of 2 courses to take. \nTo take course 1 you should have finished course 0, and to take course 0 you should also have finished course 1. So it is impossible."
+        "explanation": "Course 1 requires course 0, while course 0 requires course 1. This creates a cycle, so it is impossible to finish all courses."
       }
     ],
-    "notes": []
+    "problemStatement": "There are a total of `numCourses` courses you have to take, labeled from `0` to `numCourses - 1`. You receive an array `prerequisites` where `prerequisites[i] = [a_i, b_i]` indicates that you **must** take course `b_i` first if you want to take course `a_i`.\n\n* As an example, the pair `[0, 1]`, indicates that to take course `0` you have to first take course `1`.\n\nOutput `true` if you can finish all courses. Otherwise, output `false`.\n\n**Example 1:**\n\n```\nInput: numCourses = 2, prerequisites = [[1,0]]\nOutput: true\nExplanation: There are a total of 2 courses to take. \nTo take course 1 you should have finished course 0. So it is possible.\n```\n\n**Example 2:**\n\n```\nInput: numCourses = 2, prerequisites = [[1,0],[0,1]]\nOutput: false\nExplanation: There are a total of 2 courses to take. \nTo take course 1 you should have finished course 0, and to take course 0 you should also have finished course 1. So it is impossible.\n```\n\n**Constraints:**\n\n* `1 <= numCourses <= 2000`\n* `0 <= prerequisites.length <= 5000`\n* `prerequisites[i].length == 2`\n* `0 <= a_i, b_i < numCourses`\n* All the pairs prerequisites[i] are **unique**."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Already sorted ascending",
-        "input": "[4, [[1, 0], [2, 0], [3, 1]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Reverse sorted",
-        "input": "[4, [[0, 1], [0, 2], [0, 3]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Random order",
-        "input": "[4, [[3, 1], [0, 2], [1, 0]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "All duplicates",
-        "input": "[2, [[0, 0], [0, 0]]]",
-        "expectedOutput": "false",
-        "weight": 4
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Negative values",
-        "input": "[2, [[-1, -2]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[3, [[1, -1], [-1, 0]]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Two elements — in order",
-        "input": "[2, [[1, 0]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Two elements — out of order",
-        "input": "[2, [[0, 1]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Large input",
-        "input": "[2000, [[1999, 0], [1998, 1], [1997, 2], [1996, 3], [1995, 4], [1994, 5], [1993, 6], [1992, 7], [1991, 8], [1990, 9], [1989, 10], [1988, 11], [1987, 12], [1986, 13], [1985, 14], [1984, 15], [1983, 16], [1982, 17], [1981, 18], [1980, 19], [1979, 20], [1978, 21], [1977, 22], [1976, 23], [1975, 24], [1974, 25], [1973, 26], [1972, 27], [1971, 28], [1970, 29], [1969, 30], [1968, 31], [1967, 32], [1966, 33], [1965, 34], [1964, 35], [1963, 36], [1962, 37], [1961, 38], [1960, 39], [1959, 40], [1958, 41], [1957, 42], [1956, 43], [1955, 44], [1954, 45], [1953, 46], [1952, 47], [1951, 48], [1950, 49], [1949, 50], [1948, 51], [1947, 52], [1946, 53], [1945, 54], [1944, 55], [1943, 56], [1942, 57], [1941, 58], [1940, 59], [1939, 60], [1938, 61], [1937, 62], [1936, 63], [1935, 64], [1934, 65], [1933, 66], [1932, 67], [1931, 68], [1930, 69], [1929, 70], [1928, 71], [1927, 72], [1926, 73], [1925, 74], [1924, 75], [1923, 76], [1922, 77], [1921, 78], [1920, 79], [1919, 80], [1918, 81], [1917, 82], [1916, 83], [1915, 84], [1914, 85], [1913, 86], [1912, 87], [1911, 88], [1910, 89], [1909, 90], [1908, 91], [1907, 92], [1906, 93], [1905, 94], [1904, 95], [1903, 96], [1902, 97], [1901, 98], [1900, 99], [1899, 100], [1898, 101], [1897, 102], [1896, 103], [1895, 104], [1894, 105], [1893, 106], [1892, 107], [1891, 108], [1890, 109], [1889, 110], [1888, 111], [1887, 112], [1886, 113], [1885, 114], [1884, 115], [1883, 116], [1882, 117], [1881, 118], [1880, 119], [1879, 120], [1878, 121], [1877, 122], [1876, 123], [1875, 124], [1874, 125], [1873, 126], [1872, 127], [1871, 128], [1870, 129], [1869, 130], [1868, 131], [1867, 132], [1866, 133], [1865, 134], [1864, 135], [1863, 136], [1862, 137], [1861, 138], [1860, 139], [1859, 140], [1858, 141], [1857, 142], [1856, 143], [1855, 144], [1854, 145], [1853, 146], [1852, 147], [1851, 148], [1850, 149], [1849, 150], [1848, 151], [1847, 152], [1846, 153], [1845, 154], [1844, 155], [1843, 156], [1842, 157], [1841, 158], [1840, 159], [1839, 160], [1838, 161], [1837, 162], [1836, 163], [1835, 164], [1834, 165], [1833, 166], [1832, 167], [1831, 168], [1830, 169], [1829, 170], [1828, 171], [1827, 172], [1826, 173], [1825, 174], [1824, 175], [1823, 176], [1822, 177], [1821, 178], [1820, 179], [1819, 180], [1818, 181], [1817, 182], [1816, 183], [1815, 184], [1814, 185], [1813, 186], [1812, 187], [1811, 188], [1810, 189], [1809, 190], [1808, 191], [1807, 192], [1806, 193], [1805, 194], [1804, 195], [1803, 196], [1802, 197], [1801, 198], [1800, 199]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "Partial duplicates",
-        "input": "[4, [[0, 1], [1, 2], [2, 3], [3, 0], [0, 1]]]",
-        "expectedOutput": "false",
-        "weight": 4
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "Maximum value elements",
-        "input": "[2000, [[1999, 1998], [1998, 1997], [1997, 1996], [1996, 1995]]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "Reference and advertised boilerplates use Kahn's topological-sort algorithm with O(numCourses + prerequisites.length) time and space."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
       4,
-      2,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
       3,
       3,
       3,
@@ -333,59 +84,57 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "depth-first-search",
+      "breadth-first-search",
+      "graph",
+      "topological-sort"
     ],
-    "notes": []
+    "category": "Graph",
+    "isPremium": false,
+    "topicTags": [
+      "depth-first-search",
+      "breadth-first-search",
+      "graph",
+      "topological-sort"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses Khan's algorithm, a topological sorting technique with BFS to detect cycles in the graph.",
-    "timeComplexity": "O(n + m)",
-    "spaceComplexity": "O(n + m)",
-    "code": {
-      "Python3": "# Time:  O(|V| + |E|)\n# Space: O(|E|)\n\nimport collections\n\n\n# Khan's algorithm (bfs solution)\nclass Solution(object):\n    def canFinish(self, numCourses, prerequisites):\n        \"\"\"\n        :type numCourses: int\n        :type prerequisites: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        adj = collections.defaultdict(list)\n        in_degree = collections.Counter()\n        for u, v in prerequisites:\n            in_degree[u] += 1\n            adj[v].append(u)\n        result = []\n        q = [u for u in range(numCourses) if u not in in_degree]\n        while q:\n            new_q = []\n            for u in q:\n                result.append(u)\n                for v in adj[u]:\n                    in_degree[v] -= 1\n                    if in_degree[v] == 0:\n                        new_q.append(v)\n            q = new_q\n        return len(result) == numCourses"
-    },
-    "notes": [],
+    "notes": [
+      "The direction of every edge is prerequisite -> course.",
+      "A cycle is exactly the condition that prevents a complete topological ordering.",
+      "The queue is implemented with a head index in Python and JavaScript to avoid repeated front-removal costs."
+    ],
+    "approach": "Model each prerequisite pair [course, prerequisite] as a directed edge from prerequisite to course. Compute each course's indegree and repeatedly remove courses with indegree zero using Kahn's BFS topological-sort algorithm. If all courses are removed, there is no directed cycle and all courses can be finished; otherwise, a cycle prevents completion.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n + m) time and O(n + m) space, including the graph and recursion/visited state.",
+        "description": "Use DFS with three states for each course: unvisited, visiting, and finished. Following an edge to a visiting course detects a directed cycle. If no cycle is found, every course can be completed."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n + m) time and O(n + m) space.",
+        "description": "Use Kahn's BFS topological sort. Build adjacency lists and indegrees, enqueue every zero-indegree course, and decrement neighbors as courses are completed. If the number of completed courses equals numCourses, the graph is acyclic; otherwise, at least one cycle remains."
+      },
+      "bruteForce": {
+        "complexity": "O(nm) in a straightforward repeated-scan implementation; O(n) auxiliary state.",
+        "description": "Try to construct a valid course ordering by repeatedly searching for a course whose remaining prerequisites have all been completed. Without maintaining indegrees efficiently, this may require repeatedly scanning many prerequisite relationships and can become quadratic or worse."
       }
+    },
+    "timeComplexity": "O(n + m), where n = numCourses and m = prerequisites.length.",
+    "spaceComplexity": "O(n + m) for the adjacency list, indegree array, and queue.",
+    "code": {
+      "Python3": "class Solution:\n    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:\n        graph = [[] for _ in range(numCourses)]\n        indegree = [0] * numCourses\n\n        for course, prerequisite in prerequisites:\n            graph[prerequisite].append(course)\n            indegree[course] += 1\n\n        queue = [i for i in range(numCourses) if indegree[i] == 0]\n        head = 0\n        completed = 0\n\n        while head < len(queue):\n            course = queue[head]\n            head += 1\n            completed += 1\n            for nxt in graph[course]:\n                indegree[nxt] -= 1\n                if indegree[nxt] == 0:\n                    queue.append(nxt)\n\n        return completed == numCourses"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nbool canFinish(int numCourses, int** prerequisites, int prerequisitesSize, int* prerequisitesColSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int numCourses = parse_int(&tok);\n        int prerequisitesSize = 0;\n        int* prerequisitesColSize = NULL;\n        int** prerequisites = parse_int_2d(&tok, &prerequisitesSize, &prerequisitesColSize);\n        bool result = canFinish(numCourses, prerequisites, prerequisitesSize, prerequisitesColSize);\n        printf(\"%s\\n\", result ? \"true\" : \"false\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _numCourses = _args[0]\n    _prerequisites = _args[1]\n    _result = Solution().canFinish(_numCourses, _prerequisites)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number} numCourses\n * @param {number[][]} prerequisites\n * @return {boolean}\n */\nvar canFinish = function(numCourses, prerequisites) {\n    \n    return false;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = canFinish(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public boolean canFinish(int numCourses, int[][] prerequisites) {\n        \n        return false;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int numCourses = Integer.parseInt(nextToken());\n        int[][] prerequisites = toInt2D(nextToken());\n        boolean result = new Solution().canFinish(numCourses, prerequisites);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {\n        \n        return false;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    int numCourses = readInt(tok);\n    auto prerequisites = readInt2D(tok);\n    auto result = Solution().canFinish(numCourses, prerequisites);\n    cout << (result ? \"true\" : \"false\") << endl;\n    return 0;\n}"
-  },
+  "verified": true,
   "_internal": {
-    "methodName": "canFinish",
     "params": [
       {
         "name": "numCourses",
@@ -395,7 +144,279 @@
         "name": "prerequisites",
         "type": "integer[][]"
       }
-    ]
+    ],
+    "methodName": "canFinish"
   },
-  "verified": false
+  "createdAt": "2026-07-09",
+  "followUps": [
+    "Can you solve the problem using DFS cycle detection instead of BFS topological sorting?",
+    "What changes if you also need to return one valid course ordering?",
+    "How would you adapt the solution if prerequisites could be added dynamically?",
+    "Can the same cycle-detection idea be used to detect circular dependencies in a build system?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[1,[]]",
+        "label": "Single course with no prerequisites",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[2,[]]",
+        "label": "Two independent courses",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[2,[[1,0]]]",
+        "label": "Single dependency",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[2,[[0,1]]]",
+        "label": "Single dependency in reverse pair order",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[2,[[0,1],[1,0]]]",
+        "label": "Two-node cycle",
+        "weight": 4,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[1,[[0,0]]]",
+        "label": "Self-loop cycle",
+        "weight": 4,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[3,[[1,0],[2,1]]]",
+        "label": "Simple prerequisite chain",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[5,[[1,0],[2,1],[3,2],[4,3]]]",
+        "label": "Long chain",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[5,[[0,1],[0,2],[0,3],[0,4]]]",
+        "label": "Star with one dependent course",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[6,[[1,0],[2,0],[3,1],[3,2],[4,3]]]",
+        "label": "Diamond dependency DAG",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[6,[[1,0],[2,1],[3,2],[1,3]]]",
+        "label": "Cycle hidden in a longer chain",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[6,[[1,0],[2,3],[4,5]]]",
+        "label": "Multiple disconnected components",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[6,[[1,0],[2,1],[0,2]]]",
+        "label": "Three-node cycle",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[7,[[1,0],[2,0],[3,1],[4,1],[5,2],[6,4]]]",
+        "label": "Balanced branching DAG",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[7,[[1,0],[2,1],[3,2],[4,5]]]",
+        "label": "Chain plus independent edge",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[8,[[7,6],[6,5],[5,4],[4,3],[3,2],[2,1],[1,0]]]",
+        "label": "Deep chain with course IDs reversed",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[8,[[1,0],[2,1],[3,2],[4,3],[5,4],[2,5]]]",
+        "label": "Back edge creates cycle",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[10,[[1,0],[2,0],[3,1],[4,1],[5,2],[6,2],[7,3],[8,4],[9,5]]]",
+        "label": "Dense layered DAG",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[10,[[1,0],[2,0],[3,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[5,2]]]",
+        "label": "DAG with shortcut edge",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[10,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[2,9]]]",
+        "label": "Long chain with distant back edge",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[6,[[1,0],[2,0],[3,0],[4,0],[5,0],[2,1],[3,1],[4,2],[5,3]]]",
+        "label": "Dense acyclic prerequisite graph",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[8,[[0,1],[0,2],[1,3],[2,3],[3,4],[4,5],[5,6],[6,7]]]",
+        "label": "Converging and then continuing DAG",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[8,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[4,1]]]",
+        "label": "Deep chain with internal shortcut",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[9,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[0,8]]]",
+        "label": "Cycle closes through the root",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[12,[[1,0],[2,0],[3,0],[4,1],[5,1],[6,2],[7,2],[8,4],[8,5],[9,6],[10,7],[11,8]]]",
+        "label": "Wide multi-level DAG",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[12,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[6,2]]]",
+        "label": "Deep DAG with redundant shortcut",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[12,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[3,11]]]",
+        "label": "Cycle through a deep interior node",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[20,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18]]]",
+        "label": "Constraint-scale structure with a 20-course chain",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[2000,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],[22,21],[23,22],[24,23],[25,24],[26,25],[27,26],[28,27],[29,28],[30,29],[31,30],[32,31],[33,32],[34,33],[35,34],[36,35],[37,36],[38,37],[39,38],[40,39],[41,40],[42,41],[43,42],[44,43],[45,44],[46,45],[47,46],[48,47],[49,48],[50,49],[51,50],[52,51],[53,52],[54,53],[55,54],[56,55],[57,56],[58,57],[59,58],[60,59],[61,60],[62,61],[63,62],[64,63],[65,64],[66,65],[67,66],[68,67],[69,68],[70,69],[71,70],[72,71],[73,72],[74,73],[75,74],[76,75],[77,76],[78,77],[79,78],[80,79],[81,80],[82,81],[83,82],[84,83],[85,84],[86,85],[87,86],[88,87],[89,88],[90,89],[91,90],[92,91],[93,92],[94,93],[95,94],[96,95],[97,96],[98,97],[99,98],[100,99],[101,100],[102,101],[103,102],[104,103],[105,104],[106,105],[107,106],[108,107],[109,108],[110,109],[111,110],[112,111],[113,112],[114,113],[115,114],[116,115],[117,116],[118,117],[119,118],[120,119],[121,120],[122,121],[123,122],[124,123],[125,124],[126,125],[127,126],[128,127],[129,128],[130,129],[131,130],[132,131],[133,132],[134,133],[135,134],[136,135],[137,136],[138,137],[139,138],[140,139],[141,140],[142,141],[143,142],[144,143],[145,144],[146,145],[147,146],[148,147],[149,148],[150,149],[151,150],[152,151],[153,152],[154,153],[155,154],[156,155],[157,156],[158,157],[159,158],[160,159],[161,160],[162,161],[163,162],[164,163],[165,164],[166,165],[167,166],[168,167],[169,168],[170,169],[171,170],[172,171],[173,172],[174,173],[175,174],[176,175],[177,176],[178,177],[179,178],[180,179],[181,180],[182,181],[183,182],[184,183],[185,184],[186,185],[187,186],[188,187],[189,188],[190,189],[191,190],[192,191],[193,192],[194,193],[195,194],[196,195],[197,196],[198,197],[199,198],[200,199],[201,200],[202,201],[203,202],[204,203],[205,204],[206,205],[207,206],[208,207],[209,208],[210,209],[211,210],[212,211],[213,212],[214,213],[215,214],[216,215],[217,216],[218,217],[219,218],[220,219],[221,220],[222,221],[223,222],[224,223],[225,224],[226,225],[227,226],[228,227],[229,228],[230,229],[231,230],[232,231],[233,232],[234,233],[235,234],[236,235],[237,236],[238,237],[239,238],[240,239],[241,240],[242,241],[243,242],[244,243],[245,244],[246,245],[247,246],[248,247],[249,248],[250,249],[251,250],[252,251],[253,252],[254,253],[255,254],[256,255],[257,256],[258,257],[259,258],[260,259],[261,260],[262,261],[263,262],[264,263],[265,264],[266,265],[267,266],[268,267],[269,268],[270,269],[271,270],[272,271],[273,272],[274,273],[275,274],[276,275],[277,276],[278,277],[279,278],[280,279],[281,280],[282,281],[283,282],[284,283],[285,284],[286,285],[287,286],[288,287],[289,288],[290,289],[291,290],[292,291],[293,292],[294,293],[295,294],[296,295],[297,296],[298,297],[299,298],[300,299],[301,300],[302,301],[303,302],[304,303],[305,304],[306,305],[307,306],[308,307],[309,308],[310,309],[311,310],[312,311],[313,312],[314,313],[315,314],[316,315],[317,316],[318,317],[319,318],[320,319],[321,320],[322,321],[323,322],[324,323],[325,324],[326,325],[327,326],[328,327],[329,328],[330,329],[331,330],[332,331],[333,332],[334,333],[335,334],[336,335],[337,336],[338,337],[339,338],[340,339],[341,340],[342,341],[343,342],[344,343],[345,344],[346,345],[347,346],[348,347],[349,348],[350,349],[351,350],[352,351],[353,352],[354,353],[355,354],[356,355],[357,356],[358,357],[359,358],[360,359],[361,360],[362,361],[363,362],[364,363],[365,364],[366,365],[367,366],[368,367],[369,368],[370,369],[371,370],[372,371],[373,372],[374,373],[375,374],[376,375],[377,376],[378,377],[379,378],[380,379],[381,380],[382,381],[383,382],[384,383],[385,384],[386,385],[387,386],[388,387],[389,388],[390,389],[391,390],[392,391],[393,392],[394,393],[395,394],[396,395],[397,396],[398,397],[399,398],[400,399],[401,400],[402,401],[403,402],[404,403],[405,404],[406,405],[407,406],[408,407],[409,408],[410,409],[411,410],[412,411],[413,412],[414,413],[415,414],[416,415],[417,416],[418,417],[419,418],[420,419],[421,420],[422,421],[423,422],[424,423],[425,424],[426,425],[427,426],[428,427],[429,428],[430,429],[431,430],[432,431],[433,432],[434,433],[435,434],[436,435],[437,436],[438,437],[439,438],[440,439],[441,440],[442,441],[443,442],[444,443],[445,444],[446,445],[447,446],[448,447],[449,448],[450,449],[451,450],[452,451],[453,452],[454,453],[455,454],[456,455],[457,456],[458,457],[459,458],[460,459],[461,460],[462,461],[463,462],[464,463],[465,464],[466,465],[467,466],[468,467],[469,468],[470,469],[471,470],[472,471],[473,472],[474,473],[475,474],[476,475],[477,476],[478,477],[479,478],[480,479],[481,480],[482,481],[483,482],[484,483],[485,484],[486,485],[487,486],[488,487],[489,488],[490,489],[491,490],[492,491],[493,492],[494,493],[495,494],[496,495],[497,496],[498,497],[499,498],[500,499],[501,500],[502,501],[503,502],[504,503],[505,504],[506,505],[507,506],[508,507],[509,508],[510,509],[511,510],[512,511],[513,512],[514,513],[515,514],[516,515],[517,516],[518,517],[519,518],[520,519],[521,520],[522,521],[523,522],[524,523],[525,524],[526,525],[527,526],[528,527],[529,528],[530,529],[531,530],[532,531],[533,532],[534,533],[535,534],[536,535],[537,536],[538,537],[539,538],[540,539],[541,540],[542,541],[543,542],[544,543],[545,544],[546,545],[547,546],[548,547],[549,548],[550,549],[551,550],[552,551],[553,552],[554,553],[555,554],[556,555],[557,556],[558,557],[559,558],[560,559],[561,560],[562,561],[563,562],[564,563],[565,564],[566,565],[567,566],[568,567],[569,568],[570,569],[571,570],[572,571],[573,572],[574,573],[575,574],[576,575],[577,576],[578,577],[579,578],[580,579],[581,580],[582,581],[583,582],[584,583],[585,584],[586,585],[587,586],[588,587],[589,588],[590,589],[591,590],[592,591],[593,592],[594,593],[595,594],[596,595],[597,596],[598,597],[599,598],[600,599],[601,600],[602,601],[603,602],[604,603],[605,604],[606,605],[607,606],[608,607],[609,608],[610,609],[611,610],[612,611],[613,612],[614,613],[615,614],[616,615],[617,616],[618,617],[619,618],[620,619],[621,620],[622,621],[623,622],[624,623],[625,624],[626,625],[627,626],[628,627],[629,628],[630,629],[631,630],[632,631],[633,632],[634,633],[635,634],[636,635],[637,636],[638,637],[639,638],[640,639],[641,640],[642,641],[643,642],[644,643],[645,644],[646,645],[647,646],[648,647],[649,648],[650,649],[651,650],[652,651],[653,652],[654,653],[655,654],[656,655],[657,656],[658,657],[659,658],[660,659],[661,660],[662,661],[663,662],[664,663],[665,664],[666,665],[667,666],[668,667],[669,668],[670,669],[671,670],[672,671],[673,672],[674,673],[675,674],[676,675],[677,676],[678,677],[679,678],[680,679],[681,680],[682,681],[683,682],[684,683],[685,684],[686,685],[687,686],[688,687],[689,688],[690,689],[691,690],[692,691],[693,692],[694,693],[695,694],[696,695],[697,696],[698,697],[699,698],[700,699],[701,700],[702,701],[703,702],[704,703],[705,704],[706,705],[707,706],[708,707],[709,708],[710,709],[711,710],[712,711],[713,712],[714,713],[715,714],[716,715],[717,716],[718,717],[719,718],[720,719],[721,720],[722,721],[723,722],[724,723],[725,724],[726,725],[727,726],[728,727],[729,728],[730,729],[731,730],[732,731],[733,732],[734,733],[735,734],[736,735],[737,736],[738,737],[739,738],[740,739],[741,740],[742,741],[743,742],[744,743],[745,744],[746,745],[747,746],[748,747],[749,748],[750,749],[751,750],[752,751],[753,752],[754,753],[755,754],[756,755],[757,756],[758,757],[759,758],[760,759],[761,760],[762,761],[763,762],[764,763],[765,764],[766,765],[767,766],[768,767],[769,768],[770,769],[771,770],[772,771],[773,772],[774,773],[775,774],[776,775],[777,776],[778,777],[779,778],[780,779],[781,780],[782,781],[783,782],[784,783],[785,784],[786,785],[787,786],[788,787],[789,788],[790,789],[791,790],[792,791],[793,792],[794,793],[795,794],[796,795],[797,796],[798,797],[799,798],[800,799],[801,800],[802,801],[803,802],[804,803],[805,804],[806,805],[807,806],[808,807],[809,808],[810,809],[811,810],[812,811],[813,812],[814,813],[815,814],[816,815],[817,816],[818,817],[819,818],[820,819],[821,820],[822,821],[823,822],[824,823],[825,824],[826,825],[827,826],[828,827],[829,828],[830,829],[831,830],[832,831],[833,832],[834,833],[835,834],[836,835],[837,836],[838,837],[839,838],[840,839],[841,840],[842,841],[843,842],[844,843],[845,844],[846,845],[847,846],[848,847],[849,848],[850,849],[851,850],[852,851],[853,852],[854,853],[855,854],[856,855],[857,856],[858,857],[859,858],[860,859],[861,860],[862,861],[863,862],[864,863],[865,864],[866,865],[867,866],[868,867],[869,868],[870,869],[871,870],[872,871],[873,872],[874,873],[875,874],[876,875],[877,876],[878,877],[879,878],[880,879],[881,880],[882,881],[883,882],[884,883],[885,884],[886,885],[887,886],[888,887],[889,888],[890,889],[891,890],[892,891],[893,892],[894,893],[895,894],[896,895],[897,896],[898,897],[899,898],[900,899],[901,900],[902,901],[903,902],[904,903],[905,904],[906,905],[907,906],[908,907],[909,908],[910,909],[911,910],[912,911],[913,912],[914,913],[915,914],[916,915],[917,916],[918,917],[919,918],[920,919],[921,920],[922,921],[923,922],[924,923],[925,924],[926,925],[927,926],[928,927],[929,928],[930,929],[931,930],[932,931],[933,932],[934,933],[935,934],[936,935],[937,936],[938,937],[939,938],[940,939],[941,940],[942,941],[943,942],[944,943],[945,944],[946,945],[947,946],[948,947],[949,948],[950,949],[951,950],[952,951],[953,952],[954,953],[955,954],[956,955],[957,956],[958,957],[959,958],[960,959],[961,960],[962,961],[963,962],[964,963],[965,964],[966,965],[967,966],[968,967],[969,968],[970,969],[971,970],[972,971],[973,972],[974,973],[975,974],[976,975],[977,976],[978,977],[979,978],[980,979],[981,980],[982,981],[983,982],[984,983],[985,984],[986,985],[987,986],[988,987],[989,988],[990,989],[991,990],[992,991],[993,992],[994,993],[995,994],[996,995],[997,996],[998,997],[999,998],[1000,999],[1001,1000],[1002,1001],[1003,1002],[1004,1003],[1005,1004],[1006,1005],[1007,1006],[1008,1007],[1009,1008],[1010,1009],[1011,1010],[1012,1011],[1013,1012],[1014,1013],[1015,1014],[1016,1015],[1017,1016],[1018,1017],[1019,1018],[1020,1019],[1021,1020],[1022,1021],[1023,1022],[1024,1023],[1025,1024],[1026,1025],[1027,1026],[1028,1027],[1029,1028],[1030,1029],[1031,1030],[1032,1031],[1033,1032],[1034,1033],[1035,1034],[1036,1035],[1037,1036],[1038,1037],[1039,1038],[1040,1039],[1041,1040],[1042,1041],[1043,1042],[1044,1043],[1045,1044],[1046,1045],[1047,1046],[1048,1047],[1049,1048],[1050,1049],[1051,1050],[1052,1051],[1053,1052],[1054,1053],[1055,1054],[1056,1055],[1057,1056],[1058,1057],[1059,1058],[1060,1059],[1061,1060],[1062,1061],[1063,1062],[1064,1063],[1065,1064],[1066,1065],[1067,1066],[1068,1067],[1069,1068],[1070,1069],[1071,1070],[1072,1071],[1073,1072],[1074,1073],[1075,1074],[1076,1075],[1077,1076],[1078,1077],[1079,1078],[1080,1079],[1081,1080],[1082,1081],[1083,1082],[1084,1083],[1085,1084],[1086,1085],[1087,1086],[1088,1087],[1089,1088],[1090,1089],[1091,1090],[1092,1091],[1093,1092],[1094,1093],[1095,1094],[1096,1095],[1097,1096],[1098,1097],[1099,1098],[1100,1099],[1101,1100],[1102,1101],[1103,1102],[1104,1103],[1105,1104],[1106,1105],[1107,1106],[1108,1107],[1109,1108],[1110,1109],[1111,1110],[1112,1111],[1113,1112],[1114,1113],[1115,1114],[1116,1115],[1117,1116],[1118,1117],[1119,1118],[1120,1119],[1121,1120],[1122,1121],[1123,1122],[1124,1123],[1125,1124],[1126,1125],[1127,1126],[1128,1127],[1129,1128],[1130,1129],[1131,1130],[1132,1131],[1133,1132],[1134,1133],[1135,1134],[1136,1135],[1137,1136],[1138,1137],[1139,1138],[1140,1139],[1141,1140],[1142,1141],[1143,1142],[1144,1143],[1145,1144],[1146,1145],[1147,1146],[1148,1147],[1149,1148],[1150,1149],[1151,1150],[1152,1151],[1153,1152],[1154,1153],[1155,1154],[1156,1155],[1157,1156],[1158,1157],[1159,1158],[1160,1159],[1161,1160],[1162,1161],[1163,1162],[1164,1163],[1165,1164],[1166,1165],[1167,1166],[1168,1167],[1169,1168],[1170,1169],[1171,1170],[1172,1171],[1173,1172],[1174,1173],[1175,1174],[1176,1175],[1177,1176],[1178,1177],[1179,1178],[1180,1179],[1181,1180],[1182,1181],[1183,1182],[1184,1183],[1185,1184],[1186,1185],[1187,1186],[1188,1187],[1189,1188],[1190,1189],[1191,1190],[1192,1191],[1193,1192],[1194,1193],[1195,1194],[1196,1195],[1197,1196],[1198,1197],[1199,1198],[1200,1199],[1201,1200],[1202,1201],[1203,1202],[1204,1203],[1205,1204],[1206,1205],[1207,1206],[1208,1207],[1209,1208],[1210,1209],[1211,1210],[1212,1211],[1213,1212],[1214,1213],[1215,1214],[1216,1215],[1217,1216],[1218,1217],[1219,1218],[1220,1219],[1221,1220],[1222,1221],[1223,1222],[1224,1223],[1225,1224],[1226,1225],[1227,1226],[1228,1227],[1229,1228],[1230,1229],[1231,1230],[1232,1231],[1233,1232],[1234,1233],[1235,1234],[1236,1235],[1237,1236],[1238,1237],[1239,1238],[1240,1239],[1241,1240],[1242,1241],[1243,1242],[1244,1243],[1245,1244],[1246,1245],[1247,1246],[1248,1247],[1249,1248],[1250,1249],[1251,1250],[1252,1251],[1253,1252],[1254,1253],[1255,1254],[1256,1255],[1257,1256],[1258,1257],[1259,1258],[1260,1259],[1261,1260],[1262,1261],[1263,1262],[1264,1263],[1265,1264],[1266,1265],[1267,1266],[1268,1267],[1269,1268],[1270,1269],[1271,1270],[1272,1271],[1273,1272],[1274,1273],[1275,1274],[1276,1275],[1277,1276],[1278,1277],[1279,1278],[1280,1279],[1281,1280],[1282,1281],[1283,1282],[1284,1283],[1285,1284],[1286,1285],[1287,1286],[1288,1287],[1289,1288],[1290,1289],[1291,1290],[1292,1291],[1293,1292],[1294,1293],[1295,1294],[1296,1295],[1297,1296],[1298,1297],[1299,1298],[1300,1299],[1301,1300],[1302,1301],[1303,1302],[1304,1303],[1305,1304],[1306,1305],[1307,1306],[1308,1307],[1309,1308],[1310,1309],[1311,1310],[1312,1311],[1313,1312],[1314,1313],[1315,1314],[1316,1315],[1317,1316],[1318,1317],[1319,1318],[1320,1319],[1321,1320],[1322,1321],[1323,1322],[1324,1323],[1325,1324],[1326,1325],[1327,1326],[1328,1327],[1329,1328],[1330,1329],[1331,1330],[1332,1331],[1333,1332],[1334,1333],[1335,1334],[1336,1335],[1337,1336],[1338,1337],[1339,1338],[1340,1339],[1341,1340],[1342,1341],[1343,1342],[1344,1343],[1345,1344],[1346,1345],[1347,1346],[1348,1347],[1349,1348],[1350,1349],[1351,1350],[1352,1351],[1353,1352],[1354,1353],[1355,1354],[1356,1355],[1357,1356],[1358,1357],[1359,1358],[1360,1359],[1361,1360],[1362,1361],[1363,1362],[1364,1363],[1365,1364],[1366,1365],[1367,1366],[1368,1367],[1369,1368],[1370,1369],[1371,1370],[1372,1371],[1373,1372],[1374,1373],[1375,1374],[1376,1375],[1377,1376],[1378,1377],[1379,1378],[1380,1379],[1381,1380],[1382,1381],[1383,1382],[1384,1383],[1385,1384],[1386,1385],[1387,1386],[1388,1387],[1389,1388],[1390,1389],[1391,1390],[1392,1391],[1393,1392],[1394,1393],[1395,1394],[1396,1395],[1397,1396],[1398,1397],[1399,1398],[1400,1399],[1401,1400],[1402,1401],[1403,1402],[1404,1403],[1405,1404],[1406,1405],[1407,1406],[1408,1407],[1409,1408],[1410,1409],[1411,1410],[1412,1411],[1413,1412],[1414,1413],[1415,1414],[1416,1415],[1417,1416],[1418,1417],[1419,1418],[1420,1419],[1421,1420],[1422,1421],[1423,1422],[1424,1423],[1425,1424],[1426,1425],[1427,1426],[1428,1427],[1429,1428],[1430,1429],[1431,1430],[1432,1431],[1433,1432],[1434,1433],[1435,1434],[1436,1435],[1437,1436],[1438,1437],[1439,1438],[1440,1439],[1441,1440],[1442,1441],[1443,1442],[1444,1443],[1445,1444],[1446,1445],[1447,1446],[1448,1447],[1449,1448],[1450,1449],[1451,1450],[1452,1451],[1453,1452],[1454,1453],[1455,1454],[1456,1455],[1457,1456],[1458,1457],[1459,1458],[1460,1459],[1461,1460],[1462,1461],[1463,1462],[1464,1463],[1465,1464],[1466,1465],[1467,1466],[1468,1467],[1469,1468],[1470,1469],[1471,1470],[1472,1471],[1473,1472],[1474,1473],[1475,1474],[1476,1475],[1477,1476],[1478,1477],[1479,1478],[1480,1479],[1481,1480],[1482,1481],[1483,1482],[1484,1483],[1485,1484],[1486,1485],[1487,1486],[1488,1487],[1489,1488],[1490,1489],[1491,1490],[1492,1491],[1493,1492],[1494,1493],[1495,1494],[1496,1495],[1497,1496],[1498,1497],[1499,1498],[1500,1499],[1501,1500],[1502,1501],[1503,1502],[1504,1503],[1505,1504],[1506,1505],[1507,1506],[1508,1507],[1509,1508],[1510,1509],[1511,1510],[1512,1511],[1513,1512],[1514,1513],[1515,1514],[1516,1515],[1517,1516],[1518,1517],[1519,1518],[1520,1519],[1521,1520],[1522,1521],[1523,1522],[1524,1523],[1525,1524],[1526,1525],[1527,1526],[1528,1527],[1529,1528],[1530,1529],[1531,1530],[1532,1531],[1533,1532],[1534,1533],[1535,1534],[1536,1535],[1537,1536],[1538,1537],[1539,1538],[1540,1539],[1541,1540],[1542,1541],[1543,1542],[1544,1543],[1545,1544],[1546,1545],[1547,1546],[1548,1547],[1549,1548],[1550,1549],[1551,1550],[1552,1551],[1553,1552],[1554,1553],[1555,1554],[1556,1555],[1557,1556],[1558,1557],[1559,1558],[1560,1559],[1561,1560],[1562,1561],[1563,1562],[1564,1563],[1565,1564],[1566,1565],[1567,1566],[1568,1567],[1569,1568],[1570,1569],[1571,1570],[1572,1571],[1573,1572],[1574,1573],[1575,1574],[1576,1575],[1577,1576],[1578,1577],[1579,1578],[1580,1579],[1581,1580],[1582,1581],[1583,1582],[1584,1583],[1585,1584],[1586,1585],[1587,1586],[1588,1587],[1589,1588],[1590,1589],[1591,1590],[1592,1591],[1593,1592],[1594,1593],[1595,1594],[1596,1595],[1597,1596],[1598,1597],[1599,1598],[1600,1599],[1601,1600],[1602,1601],[1603,1602],[1604,1603],[1605,1604],[1606,1605],[1607,1606],[1608,1607],[1609,1608],[1610,1609],[1611,1610],[1612,1611],[1613,1612],[1614,1613],[1615,1614],[1616,1615],[1617,1616],[1618,1617],[1619,1618],[1620,1619],[1621,1620],[1622,1621],[1623,1622],[1624,1623],[1625,1624],[1626,1625],[1627,1626],[1628,1627],[1629,1628],[1630,1629],[1631,1630],[1632,1631],[1633,1632],[1634,1633],[1635,1634],[1636,1635],[1637,1636],[1638,1637],[1639,1638],[1640,1639],[1641,1640],[1642,1641],[1643,1642],[1644,1643],[1645,1644],[1646,1645],[1647,1646],[1648,1647],[1649,1648],[1650,1649],[1651,1650],[1652,1651],[1653,1652],[1654,1653],[1655,1654],[1656,1655],[1657,1656],[1658,1657],[1659,1658],[1660,1659],[1661,1660],[1662,1661],[1663,1662],[1664,1663],[1665,1664],[1666,1665],[1667,1666],[1668,1667],[1669,1668],[1670,1669],[1671,1670],[1672,1671],[1673,1672],[1674,1673],[1675,1674],[1676,1675],[1677,1676],[1678,1677],[1679,1678],[1680,1679],[1681,1680],[1682,1681],[1683,1682],[1684,1683],[1685,1684],[1686,1685],[1687,1686],[1688,1687],[1689,1688],[1690,1689],[1691,1690],[1692,1691],[1693,1692],[1694,1693],[1695,1694],[1696,1695],[1697,1696],[1698,1697],[1699,1698],[1700,1699],[1701,1700],[1702,1701],[1703,1702],[1704,1703],[1705,1704],[1706,1705],[1707,1706],[1708,1707],[1709,1708],[1710,1709],[1711,1710],[1712,1711],[1713,1712],[1714,1713],[1715,1714],[1716,1715],[1717,1716],[1718,1717],[1719,1718],[1720,1719],[1721,1720],[1722,1721],[1723,1722],[1724,1723],[1725,1724],[1726,1725],[1727,1726],[1728,1727],[1729,1728],[1730,1729],[1731,1730],[1732,1731],[1733,1732],[1734,1733],[1735,1734],[1736,1735],[1737,1736],[1738,1737],[1739,1738],[1740,1739],[1741,1740],[1742,1741],[1743,1742],[1744,1743],[1745,1744],[1746,1745],[1747,1746],[1748,1747],[1749,1748],[1750,1749],[1751,1750],[1752,1751],[1753,1752],[1754,1753],[1755,1754],[1756,1755],[1757,1756],[1758,1757],[1759,1758],[1760,1759],[1761,1760],[1762,1761],[1763,1762],[1764,1763],[1765,1764],[1766,1765],[1767,1766],[1768,1767],[1769,1768],[1770,1769],[1771,1770],[1772,1771],[1773,1772],[1774,1773],[1775,1774],[1776,1775],[1777,1776],[1778,1777],[1779,1778],[1780,1779],[1781,1780],[1782,1781],[1783,1782],[1784,1783],[1785,1784],[1786,1785],[1787,1786],[1788,1787],[1789,1788],[1790,1789],[1791,1790],[1792,1791],[1793,1792],[1794,1793],[1795,1794],[1796,1795],[1797,1796],[1798,1797],[1799,1798],[1800,1799],[1801,1800],[1802,1801],[1803,1802],[1804,1803],[1805,1804],[1806,1805],[1807,1806],[1808,1807],[1809,1808],[1810,1809],[1811,1810],[1812,1811],[1813,1812],[1814,1813],[1815,1814],[1816,1815],[1817,1816],[1818,1817],[1819,1818],[1820,1819],[1821,1820],[1822,1821],[1823,1822],[1824,1823],[1825,1824],[1826,1825],[1827,1826],[1828,1827],[1829,1828],[1830,1829],[1831,1830],[1832,1831],[1833,1832],[1834,1833],[1835,1834],[1836,1835],[1837,1836],[1838,1837],[1839,1838],[1840,1839],[1841,1840],[1842,1841],[1843,1842],[1844,1843],[1845,1844],[1846,1845],[1847,1846],[1848,1847],[1849,1848],[1850,1849],[1851,1850],[1852,1851],[1853,1852],[1854,1853],[1855,1854],[1856,1855],[1857,1856],[1858,1857],[1859,1858],[1860,1859],[1861,1860],[1862,1861],[1863,1862],[1864,1863],[1865,1864],[1866,1865],[1867,1866],[1868,1867],[1869,1868],[1870,1869],[1871,1870],[1872,1871],[1873,1872],[1874,1873],[1875,1874],[1876,1875],[1877,1876],[1878,1877],[1879,1878],[1880,1879],[1881,1880],[1882,1881],[1883,1882],[1884,1883],[1885,1884],[1886,1885],[1887,1886],[1888,1887],[1889,1888],[1890,1889],[1891,1890],[1892,1891],[1893,1892],[1894,1893],[1895,1894],[1896,1895],[1897,1896],[1898,1897],[1899,1898],[1900,1899],[1901,1900],[1902,1901],[1903,1902],[1904,1903],[1905,1904],[1906,1905],[1907,1906],[1908,1907],[1909,1908],[1910,1909],[1911,1910],[1912,1911],[1913,1912],[1914,1913],[1915,1914],[1916,1915],[1917,1916],[1918,1917],[1919,1918],[1920,1919],[1921,1920],[1922,1921],[1923,1922],[1924,1923],[1925,1924],[1926,1925],[1927,1926],[1928,1927],[1929,1928],[1930,1929],[1931,1930],[1932,1931],[1933,1932],[1934,1933],[1935,1934],[1936,1935],[1937,1936],[1938,1937],[1939,1938],[1940,1939],[1941,1940],[1942,1941],[1943,1942],[1944,1943],[1945,1944],[1946,1945],[1947,1946],[1948,1947],[1949,1948],[1950,1949],[1951,1950],[1952,1951],[1953,1952],[1954,1953],[1955,1954],[1956,1955],[1957,1956],[1958,1957],[1959,1958],[1960,1959],[1961,1960],[1962,1961],[1963,1962],[1964,1963],[1965,1964],[1966,1965],[1967,1966],[1968,1967],[1969,1968],[1970,1969],[1971,1970],[1972,1971],[1973,1972],[1974,1973],[1975,1974],[1976,1975],[1977,1976],[1978,1977],[1979,1978],[1980,1979],[1981,1980],[1982,1981],[1983,1982],[1984,1983],[1985,1984],[1986,1985],[1987,1986],[1988,1987],[1989,1988],[1990,1989],[1991,1990],[1992,1991],[1993,1992],[1994,1993],[1995,1994],[1996,1995],[1997,1996],[1998,1997],[1999,1998]]]",
+        "label": "Maximum-course near-boundary chain",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[15,[[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0],[10,0],[11,0],[12,0],[13,0],[14,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13]]]",
+        "label": "Highly connected acyclic fan-and-chain",
+        "weight": 3,
+        "expectedOutput": "true"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-09",
+  "questionId": "Q207",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\ntypedef struct {\n    char *s;\n    int pos;\n    int len;\n} Parser;\n\nstatic void skip_separators(Parser *p) {\n    while (p->pos < p->len) {\n        char c = p->s[p->pos];\n        if (c == ',' || c == ' ' || c == '\\t' || c == '\\n' || c == '\\r') p->pos++;\n        else break;\n    }\n}\n\nstatic char *next_token(Parser *p) {\n    skip_separators(p);\n    if (p->pos >= p->len) return NULL;\n\n    int start = p->pos;\n    if (p->s[p->pos] == '[') {\n        int depth = 0;\n        do {\n            char c = p->s[p->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') depth--;\n        } while (p->pos < p->len && depth > 0);\n    } else {\n        while (p->pos < p->len &&\n               p->s[p->pos] != ',' &&\n               p->s[p->pos] != ']') {\n            p->pos++;\n        }\n    }\n\n    int n = p->pos - start;\n    char *token = (char *)malloc((size_t)n + 1);\n    memcpy(token, p->s + start, (size_t)n);\n    token[n] = '\\0';\n    return token;\n}\n\nstatic int parse_int(Parser *p) {\n    char *tok = next_token(p);\n    int value = atoi(tok);\n    free(tok);\n    return value;\n}\n\nstatic int **parse_pairs(Parser *p, int *rows) {\n    char *outer = next_token(p);\n    if (strcmp(outer, \"[]\") == 0) {\n        free(outer);\n        *rows = 0;\n        return NULL;\n    }\n\n    int len = (int)strlen(outer);\n    char *inner = (char *)malloc((size_t)len - 1);\n    memcpy(inner, outer + 1, (size_t)len - 2);\n    inner[len - 2] = '\\0';\n    free(outer);\n\n    int count = 0, depth = 0;\n    for (int i = 0; inner[i]; ++i) {\n        if (inner[i] == '[') {\n            if (depth == 0) count++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n\n    int **pairs = (int **)malloc((size_t)count * sizeof(int *));\n    Parser q = {inner, 0, (int)strlen(inner)};\n\n    for (int i = 0; i < count; ++i) {\n        char *row = next_token(&q);\n        int row_len = (int)strlen(row);\n        Parser r = {row + 1, 0, row_len - 2};\n        pairs[i] = (int *)malloc(2 * sizeof(int));\n        pairs[i][0] = parse_int(&r);\n        pairs[i][1] = parse_int(&r);\n        free(row);\n    }\n\n    free(inner);\n    *rows = count;\n    return pairs;\n}\n\nbool canFinish(int numCourses, int **prerequisites, int prerequisitesSize, int *prerequisitesColSize) {\n    (void)prerequisitesColSize;\n\n    int *indegree = (int *)calloc((size_t)numCourses, sizeof(int));\n    int *head = (int *)malloc((size_t)numCourses * sizeof(int));\n    int *to = (int *)malloc((size_t)prerequisitesSize * sizeof(int));\n    int *next = (int *)malloc((size_t)prerequisitesSize * sizeof(int));\n\n    for (int i = 0; i < numCourses; ++i) head[i] = -1;\n\n    for (int i = 0; i < prerequisitesSize; ++i) {\n        int course = prerequisites[i][0];\n        int prerequisite = prerequisites[i][1];\n        to[i] = course;\n        next[i] = head[prerequisite];\n        head[prerequisite] = i;\n        indegree[course]++;\n    }\n\n    int *queue = (int *)malloc((size_t)numCourses * sizeof(int));\n    int front = 0, back = 0, completed = 0;\n\n    for (int i = 0; i < numCourses; ++i) {\n        if (indegree[i] == 0) queue[back++] = i;\n    }\n\n    while (front < back) {\n        int course = queue[front++];\n        completed++;\n\n        for (int edge = head[course]; edge != -1; edge = next[edge]) {\n            int nxt = to[edge];\n            if (--indegree[nxt] == 0) queue[back++] = nxt;\n        }\n    }\n\n    free(indegree);\n    free(head);\n    free(to);\n    free(next);\n    free(queue);\n\n    return completed == numCourses;\n}\n\nint main(void) {\n    char line[1000000];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n\n    size_t len = strlen(line);\n    while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n        line[--len] = '\\0';\n    }\n\n    if (len < 2) return 0;\n\n    char *raw = (char *)malloc(len - 1);\n    memcpy(raw, line + 1, len - 2);\n    raw[len - 2] = '\\0';\n\n    Parser p = {raw, 0, (int)strlen(raw)};\n    int numCourses = parse_int(&p);\n    int prerequisitesSize = 0;\n    int **prerequisites = parse_pairs(&p, &prerequisitesSize);\n\n    int *colSizes = NULL;\n    if (prerequisitesSize > 0) {\n        colSizes = (int *)malloc((size_t)prerequisitesSize * sizeof(int));\n        for (int i = 0; i < prerequisitesSize; ++i) colSizes[i] = 2;\n    }\n\n    bool result = canFinish(numCourses, prerequisites, prerequisitesSize, colSizes);\n    printf(\"%s\\n\", result ? \"true\" : \"false\");\n\n    for (int i = 0; i < prerequisitesSize; ++i) free(prerequisites[i]);\n    free(prerequisites);\n    free(colSizes);\n    free(raw);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {\n        vector<vector<int>> graph(numCourses);\n        vector<int> indegree(numCourses, 0);\n\n        for (const auto& edge : prerequisites) {\n            int course = edge[0], prerequisite = edge[1];\n            graph[prerequisite].push_back(course);\n            ++indegree[course];\n        }\n\n        queue<int> q;\n        for (int i = 0; i < numCourses; ++i) {\n            if (indegree[i] == 0) q.push(i);\n        }\n\n        int completed = 0;\n        while (!q.empty()) {\n            int course = q.front();\n            q.pop();\n            ++completed;\n            for (int next : graph[course]) {\n                if (--indegree[next] == 0) q.push(next);\n            }\n        }\n        return completed == numCourses;\n    }\n};\n\nstatic vector<string> splitTop(const string& s) {\n    string t = s;\n    if (t == \"[]\") return {};\n    t = t.substr(1, t.size() - 2);\n    vector<string> parts;\n    int depth = 0, start = 0;\n    for (int i = 0; i < (int)t.size(); ++i) {\n        if (t[i] == '[') ++depth;\n        else if (t[i] == ']') --depth;\n        else if (t[i] == ',' && depth == 0) {\n            parts.push_back(t.substr(start, i - start));\n            start = i + 1;\n        }\n    }\n    parts.push_back(t.substr(start));\n    return parts;\n}\n\nstatic vector<int> toIntVector(const string& s) {\n    vector<string> parts = splitTop(s);\n    vector<int> result;\n    for (const string& p : parts) result.push_back(stoi(p));\n    return result;\n}\n\nstatic vector<vector<int>> toInt2D(const string& s) {\n    vector<string> rows = splitTop(s);\n    vector<vector<int>> result;\n    for (const string& row : rows) result.push_back(toIntVector(row));\n    return result;\n}\n\nint main() {\n    string line;\n    getline(cin, line);\n    string inner = line.substr(1, line.size() - 2);\n\n    size_t comma = inner.find(',');\n    int numCourses = stoi(inner.substr(0, comma));\n    string prereqText = inner.substr(comma + 1);\n\n    vector<vector<int>> prerequisites = toInt2D(prereqText);\n    bool result = Solution().canFinish(numCourses, prerequisites);\n    cout << (result ? \"true\" : \"false\") << '\\n';\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public boolean canFinish(int numCourses, int[][] prerequisites) {\n        List<Integer>[] graph = new ArrayList[numCourses];\n        for (int i = 0; i < numCourses; i++) graph[i] = new ArrayList<>();\n\n        int[] indegree = new int[numCourses];\n        for (int[] edge : prerequisites) {\n            int course = edge[0], prerequisite = edge[1];\n            graph[prerequisite].add(course);\n            indegree[course]++;\n        }\n\n        ArrayDeque<Integer> queue = new ArrayDeque<>();\n        for (int i = 0; i < numCourses; i++) {\n            if (indegree[i] == 0) queue.add(i);\n        }\n\n        int completed = 0;\n        while (!queue.isEmpty()) {\n            int course = queue.remove();\n            completed++;\n            for (int next : graph[course]) {\n                if (--indegree[next] == 0) queue.add(next);\n            }\n        }\n        return completed == numCourses;\n    }\n}\n\npublic class Main {\n    static String[] splitTop(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[') depth++;\n            else if (c == ']') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n\n    static int[] toIntArray(String s) {\n        String[] parts = splitTop(s);\n        int[] result = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) result[i] = Integer.parseInt(parts[i].trim());\n        return result;\n    }\n\n    static int[][] toInt2D(String s) {\n        String[] rows = splitTop(s);\n        int[][] result = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) result[i] = toIntArray(rows[i]);\n        return result;\n    }\n\n    static String nextToken(String s, int[] pos) {\n        while (pos[0] < s.length() && (s.charAt(pos[0]) == ',' || Character.isWhitespace(s.charAt(pos[0])))) pos[0]++;\n        int start = pos[0];\n        if (s.charAt(pos[0]) == '[') {\n            int depth = 0;\n            while (pos[0] < s.length()) {\n                char c = s.charAt(pos[0]++);\n                if (c == '[') depth++;\n                else if (c == ']') {\n                    depth--;\n                    if (depth == 0) break;\n                }\n            }\n        } else {\n            while (pos[0] < s.length() && s.charAt(pos[0]) != ',') pos[0]++;\n        }\n        return s.substring(start, pos[0]).trim();\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String inner = line.substring(1, line.length() - 1);\n        int[] pos = {0};\n        int numCourses = Integer.parseInt(nextToken(inner, pos));\n        int[][] prerequisites = toInt2D(nextToken(inner, pos));\n        System.out.println(new Solution().canFinish(numCourses, prerequisites));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:\n        graph = [[] for _ in range(numCourses)]\n        indegree = [0] * numCourses\n\n        for course, prerequisite in prerequisites:\n            graph[prerequisite].append(course)\n            indegree[course] += 1\n\n        queue = [i for i in range(numCourses) if indegree[i] == 0]\n        head = 0\n        completed = 0\n\n        while head < len(queue):\n            course = queue[head]\n            head += 1\n            completed += 1\n            for nxt in graph[course]:\n                indegree[nxt] -= 1\n                if indegree[nxt] == 0:\n                    queue.append(nxt)\n\n        return completed == numCourses\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    result = Solution().canFinish(args[0], args[1])\n    print(json.dumps(result))\n",
+    "JavaScript": "const readline = require('readline');\n\n/**\n * @param {number} numCourses\n * @param {number[][]} prerequisites\n * @return {boolean}\n */\nfunction canFinish(numCourses, prerequisites) {\n    const graph = Array.from({ length: numCourses }, () => []);\n    const indegree = new Array(numCourses).fill(0);\n\n    for (const [course, prerequisite] of prerequisites) {\n        graph[prerequisite].push(course);\n        indegree[course]++;\n    }\n\n    const queue = [];\n    for (let i = 0; i < numCourses; i++) {\n        if (indegree[i] === 0) queue.push(i);\n    }\n\n    let head = 0;\n    let completed = 0;\n    while (head < queue.length) {\n        const course = queue[head++];\n        completed++;\n        for (const next of graph[course]) {\n            indegree[next]--;\n            if (indegree[next] === 0) queue.push(next);\n        }\n    }\n\n    return completed === numCourses;\n}\n\nconst rl = readline.createInterface({ input: process.stdin, terminal: false });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(canFinish(args[0], args[1])));\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "25\u201335 min",
+  "learningObjectives": [
+    "Represent prerequisite relationships as a directed graph.",
+    "Understand indegree and topological sorting.",
+    "Detect directed cycles using Kahn's BFS algorithm.",
+    "Analyze graph algorithms in O(V + E) time."
+  ]
 }

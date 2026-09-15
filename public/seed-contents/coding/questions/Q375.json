@@ -1,41 +1,28 @@
 {
-  "questionId": "Q375",
-  "title": "Guess Number Higher or Lower II Problem",
   "slug": "guess-number-higher-or-lower-ii",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Dynamic Programming",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "math",
-      "dynamic-programming",
-      "game-theory"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "math",
-      "dynamic-programming",
-      "game-theory"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Think of each possible range of remaining numbers as a subproblem.",
+    "If you guess x first and are wrong, the secret number is in either the left or right subrange.",
+    "Because your budget must handle the worse branch, the continuation cost for guess x is x plus the maximum of the two subproblem costs.",
+    "Compute interval states from shorter ranges to longer ranges."
+  ],
+  "title": "Guess Number Higher or Lower II Problem",
   "content": {
-    "problemStatement": "<p>We are playing the Guessing Game. The game will work as follows:</p>\n\n<ol>\n\t<li>I pick a number between&nbsp;<code>1</code>&nbsp;and&nbsp;<code>n</code>.</li>\n\t<li>You guess a number.</li>\n\t<li>If you guess the right number, <strong>you win the game</strong>.</li>\n\t<li>If you guess the wrong number, then I will tell you whether the number I picked is <strong>higher or lower</strong>, and you will continue guessing.</li>\n\t<li>Every time you guess a wrong number&nbsp;<code>x</code>, you will pay&nbsp;<code>x</code>&nbsp;dollars. If you run out of money, <strong>you lose the game</strong>.</li>\n</ol>\n\n<p>With a particular&nbsp;<code>n</code>, output&nbsp;<em>the smallest amount of money you need to&nbsp;<strong>guarantee a win regardless of what number I pick</strong></em>.</p>\n\n<p>&nbsp;</p>\n<p><strong class=\"example\">Example 1:</strong></p>\n<img alt=\"\" src=\"https://assets.leetcode.com/uploads/2020/09/10/graph.png\" style=\"width: 505px; height: 388px;\" />\n<pre>\n<strong>Input:</strong> n = 10\n<strong>Output:</strong> 16\n<strong>Explanation:</strong> The winning strategy is as follows:\n- The range is [1,10]. Guess 7.\n&nbsp;   - If this is my number, your total is $0. Otherwise, you pay $7.\n&nbsp;   - If my number is higher, the range is [8,10]. Guess 9.\n&nbsp;       - If this is my number, your total is $7. Otherwise, you pay $9.\n&nbsp;       - If my number is higher, it must be 10. Guess 10. Your total is $7 + $9 = $16.\n&nbsp;       - If my number is lower, it must be 8. Guess 8. Your total is $7 + $9 = $16.\n&nbsp;   - If my number is lower, the range is [1,6]. Guess 3.\n&nbsp;       - If this is my number, your total is $7. Otherwise, you pay $3.\n&nbsp;       - If my number is higher, the range is [4,6]. Guess 5.\n&nbsp;           - If this is my number, your total is $7 + $3 = $10. Otherwise, you pay $5.\n&nbsp;           - If my number is higher, it must be 6. Guess 6. Your total is $7 + $3 + $5 = $15.\n&nbsp;           - If my number is lower, it must be 4. Guess 4. Your total is $7 + $3 + $5 = $15.\n&nbsp;       - If my number is lower, the range is [1,2]. Guess 1.\n&nbsp;           - If this is my number, your total is $7 + $3 = $10. Otherwise, you pay $1.\n&nbsp;           - If my number is higher, it must be 2. Guess 2. Your total is $7 + $3 + $1 = $11.\nThe worst case in all these scenarios is that you pay $16. Hence, you only need $16 to guarantee a win.\n</pre>\n\n<p><strong class=\"example\">Example 2:</strong></p>\n\n<pre>\n<strong>Input:</strong> n = 1\n<strong>Output:</strong> 0\n<strong>Explanation:</strong>&nbsp;There is only one possible number, so you can guess 1 and not have to pay anything.\n</pre>\n\n<p><strong class=\"example\">Example 3:</strong></p>\n\n<pre>\n<strong>Input:</strong> n = 2\n<strong>Output:</strong> 1\n<strong>Explanation:</strong>&nbsp;There are two possible numbers, 1 and 2.\n- Guess 1.\n&nbsp;   - If this is my number, your total is $0. Otherwise, you pay $1.\n&nbsp;   - If my number is higher, it must be 2. Guess 2. Your total is $1.\nThe worst case is that you pay $1.\n</pre>\n\n<p>&nbsp;</p>\n<p><strong>Constraints:</strong></p>\n\n<ul>\n\t<li><code>1 &lt;= n &lt;= 200</code></li>\n</ul>\n",
+    "notes": [
+      "The cost of a wrong guess x is x dollars; a correct guess costs nothing. The goal is to minimize the worst-case total cost over all possible hidden numbers."
+    ],
     "constraints": [
       "1 <= n <= 200"
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
+    "inputFormat": "Single line: JSON array containing the single argument n, for example [10].",
+    "outputFormat": "Single line: JSON-serialised return value.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "type": "reg",
         "input": "[10]",
         "output": "16",
-        "explanation": "The winning strategy is as follows:\n- The range is [1,10]. Guess 7.\n    - If this is my number, your total is $0. Otherwise, you pay $7.\n    - If my number is higher, the range is [8,10]. Guess 9.\n        - If this is my number, your total is $7. Otherwise, you pay $9.\n        - If my number is higher, it must be 10. Guess 10. Your total is $7 + $9 = $16.\n        - If my number is lower, it must be 8. Guess 8. Your total is $7 + $9 = $16.\n    - If my number is lower, the range is [1,6]. Guess 3.\n        - If this is my number, your total is $7. Otherwise, you pay $3.\n        - If my number is higher, the range is [4,6]. Guess 5.\n            - If this is my number, your total is $7 + $3 = $10. Otherwise, you pay $5.\n            - If my number is higher, it must be 6. Guess 6. Your total is $7 + $3 + $5 = $15.\n            - If my number is lower, it must be 4. Guess 4. Your total is $7 + $3 + $5 = $15.\n        - If my number is lower, the range is [1,2]. Guess 1.\n            - If this is my number, your total is $7 + $3 = $10. Otherwise, you pay $1.\n            - If my number is higher, it must be 2. Guess 2. Your total is $7 + $3 + $1 = $11.\nThe worst case in all these scenarios is that you pay $16. Hence, you only need $16 to guarantee a win."
+        "explanation": "The winning strategy is as follows:\n- The range is [1,10]. Guess 7.\n   - If this is my number, your total is $0. Otherwise, you pay $7.\n   - If my number is higher, the range is [8,10]. Guess 9.\n      - If this is my number, your total is $7. Otherwise, you pay $9.\n      - If my number is higher, it must be 10. Guess 10. Your total is $7 + $9 = $16.\n      - If my number is lower, it must be 8. Your total is $7 + $9 = $16.\n- The range is [1,6] if the number is lower than 7; choosing 3 first and then 5 handles the remaining interval optimally.\nThe worst case is $16."
       },
       {
         "id": "sample_2",
@@ -49,270 +36,38 @@
         "type": "reg",
         "input": "[2]",
         "output": "1",
-        "explanation": "There are two possible numbers, 1 and 2.\n- Guess 1.\n    - If this is my number, your total is $0. Otherwise, you pay $1.\n    - If my number is higher, it must be 2. Guess 2. Your total is $1.\nThe worst case is that you pay $1."
+        "explanation": "With two possible numbers, guessing 1 first costs $1 only when the hidden number is 2, so $1 guarantees a win."
       }
     ],
-    "notes": []
+    "problemStatement": "<p>We are playing the Guessing Game. The game will work as follows:</p>\n\n<ol>\n\t<li>I pick a number between&nbsp;<code>1</code>&nbsp;and&nbsp;<code>n</code>.</li>\n\t<li>You guess a number.</li>\n\t<li>If you guess the right number, <strong>you win the game</strong>.</li>\n\t<li>If you guess the wrong number, then I will tell you whether the number I picked is <strong>higher or lower</strong>, and you will continue guessing.</li>\n\t<li>Every time you guess a wrong number&nbsp;<code>x</code>, you will pay&nbsp;<code>x</code>&nbsp;dollars. If you run out of money, <strong>you lose the game</strong>.</li>\n</ol>\n\n<p>With a particular&nbsp;<code>n</code>, output&nbsp;<em>the smallest amount of money you need to&nbsp;<strong>guarantee a win regardless of what number I pick</strong></em>.</p>\n\n<p>&nbsp;</p>\n<p><strong class=\"example\">Example 1:</strong></p>\n<img alt=\"\" src=\"https://assets.leetcode.com/uploads/2020/09/10/graph.png\" style=\"width: 505px; height: 388px;\" />\n<pre>\n<strong>Input:</strong> n = 10\n<strong>Output:</strong> 16\n<strong>Explanation:</strong> The winning strategy is as follows:\n- The range is [1,10]. Guess 7.\n&nbsp;   - If this is my number, your total is $0. Otherwise, you pay $7.\n&nbsp;   - If my number is higher, the range is [8,10]. Guess 9.\n&nbsp;       - If this is my number, your total is $7. Otherwise, you pay $9.\n&nbsp;       - If my number is higher, it must be 10. Guess 10. Your total is $7 + $9 = $16.\n&nbsp;       - If my number is lower, it must be 8. Guess 8. Your total is $7 + $9 = $16.\n&nbsp;   - If my number is lower, the range is [1,6]. Guess 3.\n&nbsp;       - If this is my number, your total is $7. Otherwise, you pay $3.\n&nbsp;       - If my number is higher, the range is [4,6]. Guess 5.\n&nbsp;           - If this is my number, your total is $7 + $3 = $10. Otherwise, you pay $5.\n&nbsp;           - If my number is higher, it must be 6. Guess 6. Your total is $7 + $3 + $5 = $15.\n&nbsp;           - If my number is lower, it must be 4. Guess 4. Your total is $7 + $3 + $5 = $15.\n&nbsp;       - If my number is lower, the range is [1,2]. Guess 1.\n&nbsp;           - If this is my number, your total is $7 + $3 = $10. Otherwise, you pay $1.\n&nbsp;           - If my number is higher, it must be 2. Guess 2. Your total is $7 + $3 + $1 = $11.\nThe worst case in all these scenarios is that you pay $16. Hence, you only need $16 to guarantee a win.\n</pre>\n\n<p><strong class=\"example\">Example 2:</strong></p>\n\n<pre>\n<strong>Input:</strong> n = 1\n<strong>Output:</strong> 0\n<strong>Explanation:</strong>&nbsp;There is only one possible number, so you can guess 1 and not have to pay anything.\n</pre>\n\n<p><strong class=\"example\">Example 3:</strong></p>\n\n<pre>\n<strong>Input:</strong> n = 2\n<strong>Output:</strong> 1\n<strong>Explanation:</strong>&nbsp;There are two possible numbers, 1 and 2.\n- Guess 1.\n&nbsp;   - If this is my number, your total is $0. Otherwise, you pay $1.\n&nbsp;   - If my number is higher, it must be 2. Guess 2. Your total is $1.\nThe worst case is that you pay $1.\n</pre>\n\n<p>&nbsp;</p>\n<p><strong>Constraints:</strong></p>\n\n<ul>\n\t<li><code>1 &lt;= n &lt;= 200</code></li>\n</ul>\n"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Smallest input",
-        "input": "[1]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Two elements",
-        "input": "[2]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "All same values",
-        "input": "[5]",
-        "expectedOutput": "6",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Strictly increasing",
-        "input": "[10]",
-        "expectedOutput": "16",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Largest input",
-        "input": "[200]",
-        "expectedOutput": "952",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Memoization stress",
-        "input": "[100]",
-        "expectedOutput": "400",
-        "weight": 10
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Repeated states",
-        "input": "[50]",
-        "expectedOutput": "172",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Random large input",
-        "input": "[199]",
-        "expectedOutput": "946",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "The reference dynamic program runs in O(n^3) time and O(n^2) auxiliary space, which is appropriate for n <= 200."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      2,
-      2,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -334,65 +89,332 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "math",
+      "dynamic-programming",
+      "game-theory"
     ],
-    "notes": []
+    "category": "Dynamic Programming",
+    "isPremium": false,
+    "topicTags": [
+      "math",
+      "dynamic-programming",
+      "game-theory"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses dynamic programming to find the minimum amount of money needed to guarantee a win, by considering all possible guesses and their outcomes.",
+    "notes": [
+      "Intervals of length 0 or 1 need no payment because the remaining number can be guessed directly.",
+      "The recurrence deliberately uses the maximum of the two subinterval costs because the strategy must guarantee a win against the worst possible hidden number.",
+      "The cost is always far below the range of a signed 32-bit integer for n <= 200."
+    ],
+    "approach": "Use interval dynamic programming. Let dp[left][right] be the minimum money needed to guarantee a win when the secret number lies in the inclusive interval [left, right]. For every possible first wrong guess x in that interval, paying x leaves either [left, x-1] or [x+1, right]. Because the hidden number can be in either side, the worst-case continuation cost is max(dp[left][x-1], dp[x+1][right]). Therefore dp[left][right] = min over x of x + max(dp[left][x-1], dp[x+1][right]). Evaluate intervals from shorter to longer.",
+    "editorial": {
+      "better": {
+        "complexity": "O(n^3) time and O(n^2) space.",
+        "description": "Add memoization to the recursive interval recurrence so each interval [left, right] is solved once. This removes repeated work but still considers every possible first guess for every interval."
+      },
+      "optimal": {
+        "complexity": "O(n^3) time and O(n^2) space.",
+        "description": "Use bottom-up interval dynamic programming. Build solutions for increasing interval lengths, and for each interval test every possible first guess using the recurrence dp[left][right] = min(x + max(dp[left][x-1], dp[x+1][right])). Empty and single-element intervals have cost 0."
+      },
+      "bruteForce": {
+        "complexity": "Exponential time in the worst case; O(n) recursion depth.",
+        "description": "Recursively try every possible first guess in an interval and choose the guess that minimizes the worst-case total. Without memoization, the same subproblems are recomputed many times."
+      }
+    },
     "timeComplexity": "O(n^3)",
     "spaceComplexity": "O(n^2)",
     "code": {
-      "Python3": "# Time:  O(n^3)\n# Space: O(n^2)\nclass Solution(object):\n    def getMoneyAmount(self, n):\n        \"\"\"\n        :type n: int\n        :rtype: int\n        \"\"\"\n        dp = [[0]*(n+1) for _ in range(n+1)]  # dp[i][j]: min pay in [i+1, j+1)\n        for j in range(n+1):\n            for i in reversed(range(j-1)):\n                dp[i][j] = min((k+1) + max(dp[i][k], dp[k+1][j]) for k in range(i, j))\n        return dp[0][n]"
-    },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "Python3": "class Solution:\n    def getMoneyAmount(self, n: int) -> int:\n        dp = [[0] * (n + 2) for _ in range(n + 2)]\n        for length in range(2, n + 1):\n            for left in range(1, n - length + 2):\n                right = left + length - 1\n                best = float(\"inf\")\n                for guess in range(left, right):\n                    cost = guess + max(dp[left][guess - 1], dp[guess + 1][right])\n                    best = min(best, cost)\n                dp[left][right] = best\n        return dp[1][n]"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint getMoneyAmount(int n) {\n    \n    return 0;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int n = parse_int(&tok);\n        int result = getMoneyAmount(n);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def getMoneyAmount(self, n: int) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _n = _args[0]\n    _result = Solution().getMoneyAmount(_n)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number} n\n * @return {number}\n */\nvar getMoneyAmount = function(n) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = getMoneyAmount(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int getMoneyAmount(int n) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int n = Integer.parseInt(nextToken());\n        int result = new Solution().getMoneyAmount(n);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int getMoneyAmount(int n) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    int n = readInt(tok);\n    auto result = Solution().getMoneyAmount(n);\n    cout << result << endl;\n    return 0;\n}"
-  },
+  "verified": true,
   "_internal": {
-    "methodName": "getMoneyAmount",
     "params": [
       {
         "name": "n",
         "type": "integer"
       }
-    ]
+    ],
+    "methodName": "getMoneyAmount"
   },
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Can you implement the same recurrence top-down with memoization?",
+    "Can you exploit additional mathematical properties of the recurrence to reduce the constant factors?",
+    "How would the strategy change if the cost of a wrong guess were a function of x instead of exactly x dollars?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[1]",
+        "label": "Minimum interval with one possible value",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[2]",
+        "label": "Minimum non-trivial interval",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[3]",
+        "label": "First interval requiring a paid guess",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[4]",
+        "label": "Small interval recurrence boundary",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[5]",
+        "label": "Five-value strategy boundary",
+        "weight": 4,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[6]",
+        "label": "Six-value strategy boundary",
+        "weight": 4,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[7]",
+        "label": "Odd small interval",
+        "weight": 4,
+        "expectedOutput": "10"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[8]",
+        "label": "Even small interval",
+        "weight": 4,
+        "expectedOutput": "12"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[9]",
+        "label": "Compact interval sanity check",
+        "weight": 4,
+        "expectedOutput": "14"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[10]",
+        "label": "Known sample-scale boundary",
+        "weight": 4,
+        "expectedOutput": "16"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[11]",
+        "label": "First double-digit interval",
+        "weight": 3,
+        "expectedOutput": "18"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[12]",
+        "label": "Recurrence transition change at 12",
+        "weight": 3,
+        "expectedOutput": "21"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[13]",
+        "label": "Prime-sized small interval",
+        "weight": 3,
+        "expectedOutput": "24"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[15]",
+        "label": "Mid-small recurrence boundary",
+        "weight": 3,
+        "expectedOutput": "30"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[16]",
+        "label": "Power-of-two-sized interval",
+        "weight": 3,
+        "expectedOutput": "34"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[20]",
+        "label": "Balanced medium interval",
+        "weight": 3,
+        "expectedOutput": "49"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[25]",
+        "label": "Non-power-of-two medium interval",
+        "weight": 3,
+        "expectedOutput": "64"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[30]",
+        "label": "Thirty-value interval",
+        "weight": 3,
+        "expectedOutput": "79"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[31]",
+        "label": "Prime-sized medium interval",
+        "weight": 3,
+        "expectedOutput": "82"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[40]",
+        "label": "Medium interval with deeper recursion",
+        "weight": 3,
+        "expectedOutput": "119"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[50]",
+        "label": "Memoization-sensitive medium case",
+        "weight": 3,
+        "expectedOutput": "172"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[64]",
+        "label": "Power-of-two medium boundary",
+        "weight": 3,
+        "expectedOutput": "230"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[75]",
+        "label": "Large interval below upper range",
+        "weight": 3,
+        "expectedOutput": "274"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[99]",
+        "label": "Near-century boundary",
+        "weight": 3,
+        "expectedOutput": "394"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[100]",
+        "label": "Century boundary",
+        "weight": 3,
+        "expectedOutput": "400"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[125]",
+        "label": "Mid-range large case",
+        "weight": 3,
+        "expectedOutput": "560"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[150]",
+        "label": "Three-quarter-scale boundary",
+        "weight": 3,
+        "expectedOutput": "692"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[175]",
+        "label": "High-range interval",
+        "weight": 3,
+        "expectedOutput": "818"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[199]",
+        "label": "Maximum minus one boundary",
+        "weight": 3,
+        "expectedOutput": "946"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[200]",
+        "label": "Maximum constraint boundary",
+        "weight": 3,
+        "expectedOutput": "952"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q375",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint getMoneyAmount(int n) {\n    int size = n + 2;\n    int *dp = (int *)calloc((size_t)size * size, sizeof(int));\n    if (dp == NULL) return 0;\n\n    #define DP(l, r) dp[(l) * size + (r)]\n    for (int len = 2; len <= n; ++len) {\n        for (int left = 1; left + len - 1 <= n; ++left) {\n            int right = left + len - 1;\n            int best = 2147483647;\n            for (int guess = left; guess < right; ++guess) {\n                int leftCost = DP(left, guess - 1);\n                int rightCost = DP(guess + 1, right);\n                int cost = guess + (leftCost > rightCost ? leftCost : rightCost);\n                if (cost < best) best = cost;\n            }\n            DP(left, right) = best;\n        }\n    }\n\n    int result = DP(1, n);\n    free(dp);\n    return result;\n}\n\nint main(void) {\n    int n;\n    if (scanf(\" [ %d ] \", &n) != 1) return 1;\n    printf(\"%d\\n\", getMoneyAmount(n));\n    return 0;\n}\n#undef DP\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getMoneyAmount(int n) {\n        vector<vector<int>> dp(n + 2, vector<int>(n + 2, 0));\n        for (int len = 2; len <= n; ++len) {\n            for (int left = 1; left + len - 1 <= n; ++left) {\n                int right = left + len - 1;\n                int best = INT_MAX;\n                for (int guess = left; guess < right; ++guess) {\n                    int cost = guess + max(dp[left][guess - 1], dp[guess + 1][right]);\n                    best = min(best, cost);\n                }\n                dp[left][right] = best;\n            }\n        }\n        return dp[1][n];\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    int n = stoi(line.substr(1, line.size() - 2));\n    cout << Solution().getMoneyAmount(n) << '\\n';\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public int getMoneyAmount(int n) {\n        int[][] dp = new int[n + 2][n + 2];\n        for (int length = 2; length <= n; length++) {\n            for (int left = 1; left + length - 1 <= n; left++) {\n                int right = left + length - 1;\n                int best = Integer.MAX_VALUE;\n                for (int guess = left; guess < right; guess++) {\n                    int cost = guess + Math.max(dp[left][guess - 1], dp[guess + 1][right]);\n                    best = Math.min(best, cost);\n                }\n                dp[left][right] = best;\n            }\n        }\n        return dp[1][n];\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        int n = Integer.parseInt(line.substring(1, line.length() - 1).trim());\n        System.out.println(new Solution().getMoneyAmount(n));\n    }\n}\n",
+    "Python3": "import sys, json\n\nclass Solution:\n    def getMoneyAmount(self, n: int) -> int:\n        dp = [[0] * (n + 2) for _ in range(n + 2)]\n        for length in range(2, n + 1):\n            for left in range(1, n - length + 2):\n                right = left + length - 1\n                best = float(\"inf\")\n                for guess in range(left, right):\n                    cost = guess + max(dp[left][guess - 1], dp[guess + 1][right])\n                    best = min(best, cost)\n                dp[left][right] = best\n        return dp[1][n]\n\nif __name__ == \"__main__\":\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().getMoneyAmount(args[0])))\n",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar getMoneyAmount = function(n) {\n    const dp = Array.from({ length: n + 2 }, () => Array(n + 2).fill(0));\n    for (let length = 2; length <= n; length++) {\n        for (let left = 1; left + length - 1 <= n; left++) {\n            const right = left + length - 1;\n            let best = Infinity;\n            for (let guess = left; guess < right; guess++) {\n                const cost = guess + Math.max(dp[left][guess - 1], dp[guess + 1][right]);\n                best = Math.min(best, cost);\n            }\n            dp[left][right] = best;\n        }\n    }\n    return dp[1][n];\n};\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(getMoneyAmount(args[0])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "30\u201345 minutes",
+  "learningObjectives": [
+    "Model worst-case decision problems with interval dynamic programming.",
+    "Derive a minimax recurrence from the two possible outcomes of a guess.",
+    "Implement bottom-up DP over increasing interval lengths.",
+    "Distinguish total time complexity from auxiliary space complexity."
+  ]
 }
