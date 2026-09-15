@@ -16,6 +16,7 @@ import {
   FaKey,
   FaCrown,
   FaMedal,
+  FaAward,
   FaLaptopCode,
   FaDownload,
   FaExternalLinkAlt,
