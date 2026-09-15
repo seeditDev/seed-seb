@@ -6,7 +6,7 @@ import { fetchContentJSON } from '../utils/contentApi';
 
 // Content URLs configuration
 const LOCAL_BASE_URL = '/seed-contents';
-const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
+const GITHUB_BASE_URL = '/seed-contents';
 
 const AptitudeTest = () => {
     // State variables

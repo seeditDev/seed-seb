@@ -32,7 +32,7 @@ export const COLLECTIONS = {
 // GitHub CDN — ONLY for practice content (seed-contents repo, read-only CDN)
 // DO NOT add SEEDDB URLs here — all user data now lives in Firestore.
 // ────────────────────────────────────────────────────────────────────────────
-export const SEED_CONTENTS_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
+export const SEED_CONTENTS_BASE_URL = '/seed-contents';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Academic Years (display labels; actual cohort IDs are stored in Firestore)

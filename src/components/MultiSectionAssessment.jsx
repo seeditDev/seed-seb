@@ -128,27 +128,39 @@ const normalizeQuestion = (q, idx = 0) => {
   });
 
   const testCases = normalizeTestCaseArray(
+    q.testCases?.sample ||
     q.content?.sampleTestCases ||
     q.sampleTestCases ||
     q.sampleTests ||
-    q.testCases?.sample ||
-    (Array.isArray(q.testCases) ? q.testCases.filter(tc => !tc.hidden) : []) ||
+    (Array.isArray(q.testCases) ? q.testCases.filter(tc => !tc.hidden && !tc.isHidden) : []) ||
     []
   );
 
   let hidden = [];
-  if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
+  if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
+    hidden = normalizeTestCaseArray(q.testCases.hidden);
+  } else if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
     hidden = normalizeTestCaseArray(q.hiddenTestCases);
   } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
     hidden = normalizeTestCaseArray(q.hiddenTests);
-  } else if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
-    hidden = normalizeTestCaseArray(q.testCases.hidden);
   } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
     hidden = normalizeTestCaseArray(q.content.testCases);
-  } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
-    const hList = q.testCases.filter(tc => tc.hidden);
-    hidden = normalizeTestCaseArray(hList.length > 0 ? hList : q.testCases);
-  } else if (testCases.length > 0) {
+  } else if (Array.isArray(q.testCases)) {
+    const hList = q.testCases.filter(tc => tc.hidden || tc.isHidden);
+    if (hList.length > 0) {
+      hidden = normalizeTestCaseArray(hList);
+    }
+  } else if (Array.isArray(q.test_cases)) {
+    const hList = q.test_cases.filter(tc => tc.hidden || tc.isHidden);
+    if (hList.length > 0) {
+      hidden = normalizeTestCaseArray(hList);
+    }
+  } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {
+    hidden = normalizeTestCaseArray(q.hidden_test_cases);
+  }
+
+  // Fallback to sample test cases only if no hidden test cases exist anywhere
+  if (hidden.length === 0 && testCases.length > 0) {
     hidden = testCases;
   }
 
@@ -534,13 +546,13 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
               {settings.audioProctored && (
                 <div className="mcq-proctor-badge" title="Audio Proctoring">
                   <span className={`status-dot ${(proctoringData?.audioViolationCount || 0) > 0 ? 'bad' : 'good'}`} />
-                  Audio: {proctoringData?.audioViolationCount || 0}/{settings.maxAudioViolations || 5}
+                  Audio: {proctoringData?.audioViolationCount || 0}/{settings.maxAudioViolations || 200}
                 </div>
               )}
               {settings.proctored && (
                 <div className="mcq-proctor-badge" title="Camera Proctoring">
                   <span className={`status-dot ${(proctoringData?.violationCount || 0) > 0 ? 'bad' : 'good'}`} />
-                  Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 5}
+                  Camera: {proctoringData?.violationCount || 0}/{settings.maxViolations || 200}
                 </div>
               )}
             </div>
@@ -1009,8 +1021,8 @@ const MultiSectionAssessment = () => {
   }, [assessment]);
 
   const maxViolations = useMemo(() => {
-    if (!assessment) return 5;
-    return Number(assessment.proctorConfig?.maxCameraViolations ?? assessment.proctorConfig?.maxViolations ?? assessment.maxCameraViolations ?? assessment.maxViolations) || 5;
+    if (!assessment) return 200;
+    return Number(assessment.proctorConfig?.maxCameraViolations ?? assessment.proctorConfig?.maxViolations ?? assessment.maxCameraViolations ?? assessment.maxViolations) || 200;
   }, [assessment]);
 
   const tabSwitchLimit = useMemo(() => {
@@ -1019,8 +1031,8 @@ const MultiSectionAssessment = () => {
   }, [assessment]);
 
   const maxAudioViolations = useMemo(() => {
-    if (!assessment) return 5;
-    return Number(assessment.proctorConfig?.maxAudioViolations ?? assessment.maxAudioViolations) || 5;
+    if (!assessment) return 200;
+    return Number(assessment.proctorConfig?.maxAudioViolations ?? assessment.maxAudioViolations) || 200;
   }, [assessment]);
 
   // Crash recovery
@@ -1819,7 +1831,11 @@ const MultiSectionAssessment = () => {
       await Promise.all(
         (exam.sections || []).map(async (sec, idx) => {
           const processData = async (data, secType) => {
-            if (secType === 'mcq') {
+            const rawType = (secType || data.contentCategory || data.type || sec.type || '').toLowerCase();
+            const isMcq = rawType === 'mcq' || data.contentCategory === 'mcq';
+            const isCoding = rawType === 'coding' || rawType === 'code' || data.contentCategory === 'coding' || Array.isArray(data.challenges) || Array.isArray(data.codingQuestions) || Boolean(data.problem);
+
+            if (isMcq) {
               // Normalize MCQ questions for student view (support both Firestore 'text'/'correctIndex' and static 'question'/'correctAnswer')
               data.questions = (data.questions || []).map((q, qIdx) => {
                 const qText = q.question || q.text || q.questionText || q.prompt || q.statement || q.title || '';
@@ -1842,15 +1858,19 @@ const MultiSectionAssessment = () => {
                   marks: Number(q.marks || 1),
                 };
               });
-            } else if (secType === 'coding') {
-              // Prefer challenges array (has cdnUrl/qid/id) or questionIds or questions array
+            } else if (isCoding) {
+              // Prefer challenges array (has cdnUrl/qid/id) or questionIds or questions array or data.problem
               let questionRefs = [];
               if (Array.isArray(data.challenges) && data.challenges.length > 0) {
                 questionRefs = data.challenges;
-              } else if (Array.isArray(data.questionIds) && data.questionIds.length > 0) {
-                questionRefs = data.questionIds;
               } else if (Array.isArray(data.questions) && data.questions.length > 0) {
                 questionRefs = data.questions;
+              } else if (Array.isArray(data.questionIds) && data.questionIds.length > 0) {
+                questionRefs = data.questionIds;
+              } else if (Array.isArray(data.codingQuestions) && data.codingQuestions.length > 0) {
+                questionRefs = data.codingQuestions;
+              } else if (data.problem) {
+                questionRefs = [data.problem];
               }
 
               if (questionRefs.length > 0) {
@@ -1874,18 +1894,8 @@ const MultiSectionAssessment = () => {
             });
           };
 
-          // 0. If section already contains inline questions/challenges, use them directly
-          if (Array.isArray(sec.questions) && sec.questions.length > 0) {
-            await processData({ questions: sec.questions }, sec.type);
-            return;
-          }
-          if (Array.isArray(sec.challenges) && sec.challenges.length > 0) {
-            await processData({ challenges: sec.challenges }, sec.type);
-            return;
-          }
-
           // 1. Check Firebase Firestore as primary source of truth (assessments/{slug} or assessments/{id})
-          const slugOrId = sec.slug || sec.assessmentId || sec.id;
+          const slugOrId = sec.assessmentId || sec.slug || sec.id;
           if (slugOrId && typeof slugOrId === 'string' && !slugOrId.startsWith('http') && !slugOrId.endsWith('.json')) {
             try {
               // Direct doc lookup by ID or slug
@@ -1893,7 +1903,7 @@ const MultiSectionAssessment = () => {
               if (assessSnap.exists()) {
                 const assessData = assessSnap.data();
                 console.log(`[MSA] Loaded section "${sec.name}" (${slugOrId}) from Firestore assessments/`);
-                await processData(assessData, sec.type || assessData.type);
+                await processData({ ...assessData, ...sec, id: assessSnap.id, assessmentId: assessSnap.id }, sec.type || assessData.type || assessData.contentCategory);
                 return;
               }
 
@@ -1901,14 +1911,25 @@ const MultiSectionAssessment = () => {
               const q = query(collection(db, 'assessments'), where('slug', '==', slugOrId));
               const qSnap = await getDocs(q);
               if (!qSnap.empty) {
-                const assessData = qSnap.docs[0].data();
+                const assessDoc = qSnap.docs[0];
+                const assessData = assessDoc.data();
                 console.log(`[MSA] Loaded section "${sec.name}" by slug "${slugOrId}" from Firestore assessments/`);
-                await processData(assessData, sec.type || assessData.type);
+                await processData({ ...assessData, ...sec, id: assessDoc.id, assessmentId: assessDoc.id }, sec.type || assessData.type || assessData.contentCategory);
                 return;
               }
             } catch (fsErr) {
               console.warn(`[MSA] Firestore lookup for section "${slugOrId}" failed, trying fallback:`, fsErr);
             }
+          }
+
+          // 2. If section already contains inline questions/challenges, use them directly
+          if (Array.isArray(sec.questions) && sec.questions.length > 0) {
+            await processData({ questions: sec.questions, ...sec }, sec.type);
+            return;
+          }
+          if (Array.isArray(sec.challenges) && sec.challenges.length > 0) {
+            await processData({ challenges: sec.challenges, ...sec }, sec.type);
+            return;
           }
 
           // 2. Fetch via contentApi or cdnUrl fallback

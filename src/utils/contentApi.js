@@ -18,8 +18,8 @@ export const CONTENT_REPOS = {
 };
 
 const RAW_BASE = {
-  [CONTENT_REPOS.SEED_CONTENTS]: 'https://raw.githubusercontent.com/seeditDev/seed-contents/main',
-  [CONTENT_REPOS.SEEDDB]: 'https://raw.githubusercontent.com/seeditDev/SEEDDB/main',
+  [CONTENT_REPOS.SEED_CONTENTS]: '/seed-contents',
+  [CONTENT_REPOS.SEEDDB]: '/SEEDDB',
 };
 
 const LOCAL_BASE = {

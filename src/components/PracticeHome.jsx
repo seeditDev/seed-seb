@@ -1673,25 +1673,12 @@ const PracticeHome = ({
           cleanPath = cleanPath.substring(1);
         }
 
-        const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
         const LOCAL_BASE = '/seed-contents';
-
-        const githubUrl = `${GITHUB_RAW_BASE}/${cleanPath}`;
         const localUrl = `${LOCAL_BASE}/${cleanPath}`;
 
-        let data = null;
-        try {
-          // 1. Try raw GitHub CDN first
-          const response = await fetch(githubUrl, { cache: 'no-store' });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          data = await response.json();
-        } catch (githubErr) {
-          console.warn('[PracticeHome] GitHub raw fetch failed, trying local fallback:', githubErr.message);
-          // 2. Try local desktop path fallback
-          const localResponse = await fetch(localUrl);
-          if (!localResponse.ok) throw new Error(`Local fetch failed: HTTP ${localResponse.status}`);
-          data = await localResponse.json();
-        }
+        const localResponse = await fetch(localUrl);
+        if (!localResponse.ok) throw new Error(`Local fetch failed: HTTP ${localResponse.status}`);
+        const data = await localResponse.json();
 
         // Mapped questions array from the contest file
         let questionsList = data.questions || [];

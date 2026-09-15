@@ -35,8 +35,9 @@ import SecurityWatermark from './SecurityWatermark';
 import { stopAllMediaAndAI } from '../utils/hardwareTeardown';
 import { toast } from 'sonner';
 
+import { isCompleteQuestion } from '../services/codingQuestionBankService';
+
 const LOCAL_BASE_URL = '/seed-contents';
-const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
 
 
 const FREE_BOILERPLATES = {
@@ -204,28 +205,36 @@ const normalizeQuestion = (q, idx = 0) => {
     });
 
     // Normalize sample test cases
-    const rawSample = (Array.isArray(q.testCases) ? q.testCases.filter(tc => !tc.hidden) : null) ||
+    const rawSample = q.testCases?.sample ||
+        (Array.isArray(q.testCases) ? q.testCases.filter(tc => !tc.hidden && !tc.isHidden) : null) ||
         q.content?.sampleTestCases || q.sampleTestCases || q.sampleTests || [];
     const sampleTestCases = normalizeTestCaseArray(rawSample);
 
     // Normalize hidden test cases from all potential schemas
     let hidden = [];
-    if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
+    if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
+        hidden = normalizeTestCaseArray(q.testCases.hidden);
+    } else if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
         hidden = normalizeTestCaseArray(q.hiddenTestCases);
     } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
         hidden = normalizeTestCaseArray(q.hiddenTests);
-    } else if (q.testCases?.hidden && Array.isArray(q.testCases.hidden) && q.testCases.hidden.length > 0) {
-        hidden = normalizeTestCaseArray(q.testCases.hidden);
     } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
         hidden = normalizeTestCaseArray(q.content.testCases);
     } else if (Array.isArray(q.testCases)) {
-        const hList = q.testCases.filter(tc => tc.hidden);
-        hidden = normalizeTestCaseArray(hList.length > 0 ? hList : q.testCases);
-    } else if (Array.isArray(q.test_cases) && q.test_cases.length > 0) {
-        hidden = normalizeTestCaseArray(q.test_cases);
+        const hList = q.testCases.filter(tc => tc.hidden || tc.isHidden);
+        if (hList.length > 0) {
+            hidden = normalizeTestCaseArray(hList);
+        }
+    } else if (Array.isArray(q.test_cases)) {
+        const hList = q.test_cases.filter(tc => tc.hidden || tc.isHidden);
+        if (hList.length > 0) {
+            hidden = normalizeTestCaseArray(hList);
+        }
     } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {
         hidden = normalizeTestCaseArray(q.hidden_test_cases);
-    } else if (sampleTestCases.length > 0) {
+    }
+
+    if (hidden.length === 0 && sampleTestCases.length > 0) {
         // Fallback: if no hidden test cases exist, use sample test cases for official grading
         hidden = sampleTestCases;
     }
@@ -713,7 +722,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 if (!Array.isArray(testData.questions) || testData.questions.length === 0) return;
 
                 let fullQuestions = testData.questions;
-                const isStub = fullQuestions.some(q => q && !q.content?.problemStatement && !q.description && !q.problemStatement);
+                const isStub = fullQuestions.some(q => !isCompleteQuestion(q));
                 if (isStub) {
                     try {
                         const { fetchQuestionsForContest } = await import('../services/codingQuestionBankService');
@@ -752,7 +761,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
             // Sync settings to currentAssessment avoiding loops
             const proctored = settings.proctored || false;
             const audioProctored = settings.audioProctored || false;
-            const maxViolations = settings.maxViolations || 5;
+            const maxViolations = settings.maxViolations || 200;
 
             if (!currentAssessment ||
                 currentAssessment.proctored !== proctored ||
@@ -1339,11 +1348,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 } catch (_) {}
             }
 
-            // 4. Try raw github contents as last resort if url looks like a path
+            // 4. Try local contents as last resort if url looks like a path
             if (url && (url.includes('/') || url.endsWith('.json'))) {
-                const rawUrl = url.startsWith('http') ? url : `${GITHUB_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-                const rawRes = await fetch(rawUrl);
-                if (rawRes.ok) return await rawRes.json();
+                const cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+                const localRes = await fetch(`${LOCAL_BASE_URL}/${cleanUrl}`);
+                if (localRes.ok) return await localRes.json();
             }
 
             return {};
@@ -3472,13 +3481,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         }, 300);
                     }}
                     isTestActive={!!currentAssessment && !submissionSuccess}
-                    maxViolations={Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 5}
+                    maxViolations={Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 200}
                     onReady={() => {
                         console.log('[CodingAssessmentPage] Camera proctoring ready');
                     }}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
-                        const maxLimit = Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 5;
+                        const maxLimit = Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 200;
                         const currentCount = typeof violationInfo.violationCount === 'number' ? violationInfo.violationCount : 0;
                         if (currentCount >= maxLimit) {
                             window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
@@ -3510,7 +3519,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     uid={user.uid || user.id}
                     assessmentId={currentAssessment.id ?? ''}
                     isTestActive={!!currentAssessment && !submissionSuccess}
-                    maxViolations={Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 5}
+                    maxViolations={Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 200}
                     onReady={() => {
                         console.log('[CodingAssessmentPage] Audio proctoring ready');
                     }}
@@ -3518,7 +3527,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         if (!info?.type) return;
                         setProctoringData(prev => {
                             const nextAudioCount = (prev.audioViolationCount || 0) + 1;
-                            const maxLimit = Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 5;
+                            const maxLimit = Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 200;
                             if (nextAudioCount >= maxLimit) {
                                 window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
                                 stopAllMediaAndAI();
@@ -3571,13 +3580,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                             {shouldUseAudioProctoring && (
                                 <div className="coding-proctor-pill" title="Audio Violations">
                                     <span className={`status-dot ${(isEmbedded ? parentProctoringData?.audioViolationCount : proctoringData.audioViolationCount) > 0 ? 'bad' : 'good'}`} />
-                                    Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || parentSettings?.maxAudioViolations || currentAssessment?.maxAudioViolations || currentAssessment?.proctorConfig?.maxAudioViolations) || 5}
+                                    Audio: {isEmbedded ? parentProctoringData?.audioViolationCount || 0 : proctoringData.audioViolationCount}/{Number(settings.maxAudioViolations || parentSettings?.maxAudioViolations || currentAssessment?.maxAudioViolations || currentAssessment?.proctorConfig?.maxAudioViolations) || 200}
                                 </div>
                             )}
                             {shouldUseProctoring && (
                                 <div className="coding-proctor-pill" title="Camera Violations">
                                     <span className={`status-dot ${(isEmbedded ? parentProctoringData?.violationCount : proctoringData.violationCount) > 0 ? 'bad' : 'good'}`} />
-                                    Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{Number(settings.maxViolations || parentSettings?.maxViolations || currentAssessment?.maxViolations || currentAssessment?.proctorConfig?.maxCameraViolations || currentAssessment?.proctorConfig?.maxViolations) || 5}
+                                    Camera: {isEmbedded ? parentProctoringData?.violationCount || 0 : proctoringData.violationCount}/{Number(settings.maxViolations || parentSettings?.maxViolations || currentAssessment?.maxViolations || currentAssessment?.proctorConfig?.maxCameraViolations || currentAssessment?.proctorConfig?.maxViolations) || 200}
                                 </div>
                             )}
                         </div>

@@ -40,7 +40,7 @@ const ENABLE_PROCTORING = true;
 
 // Content URLs configuration
 const LOCAL_BASE_URL = '/seed-contents';
-const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
+const GITHUB_BASE_URL = '/seed-contents';
 
 const slugify = (value = '') => {
     if (!value) return 'mcq-test';
@@ -2415,13 +2415,13 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                                 {shouldUseAudioProctoring && (
                                     <div className="mcq-proctor-badge" title="Audio Proctoring">
                                         <span className={`status-dot ${proctoringData.audioViolationCount > 0 ? 'bad' : 'good'}`} />
-                                        Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 5}
+                                        Audio: {proctoringData.audioViolationCount}/{currentTest.testInfo?.maxAudioViolations || 200}
                                     </div>
                                 )}
                                 {shouldUseProctoring && (
                                     <div className="mcq-proctor-badge" title="Camera Proctoring">
                                         <span className={`status-dot ${proctoringData.violationCount > 0 ? 'bad' : 'good'}`} />
-                                        Camera: {proctoringData.violationCount}/{currentTest.testInfo?.maxViolations || currentTest.maxViolations || 5}
+                                        Camera: {proctoringData.violationCount}/{currentTest.testInfo?.maxViolations || currentTest.maxViolations || 200}
                                     </div>
                                 )}
                             </div>
@@ -3370,13 +3370,13 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                         }, 300);
                     }}
                     isTestActive={!!currentTest && !currentTest.submitted}
-                    maxViolations={Number(currentTest.testInfo?.maxViolations) || 5}
+                    maxViolations={Number(currentTest.testInfo?.maxViolations) || 200}
                     onReady={() => {
                         console.log('[MCQPage] Camera proctoring ready');
                     }}
                     onViolationUpdate={(violationInfo) => {
                         if (!violationInfo?.violationType) return;
-                        const maxLimit = Number(currentTest.testInfo?.maxViolations) || 5;
+                        const maxLimit = Number(currentTest.testInfo?.maxViolations) || 200;
                         const count = typeof violationInfo.violationCount === 'number' ? violationInfo.violationCount : 0;
                         if (count >= maxLimit) {
                             window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
@@ -3412,7 +3412,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     uid={user.uid || user.id}
                     assessmentId={currentTest.testInfo?.id || currentTest.id || 'unknown'}
                     isTestActive={!!currentTest && !currentTest.submitted}
-                    maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 5}
+                    maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 200}
                     onReady={() => {
                         console.log('[MCQPage] Audio proctoring ready');
                     }}
@@ -3420,7 +3420,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                         if (!info?.type) return;
                         setProctoringData(prev => {
                             const nextAudioCount = (prev.audioViolationCount || 0) + 1;
-                            const maxLimit = Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 5;
+                            const maxLimit = Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 200;
                             if (nextAudioCount >= maxLimit) {
                                 window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
                                 stopGlobalCameraStream();

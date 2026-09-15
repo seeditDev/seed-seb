@@ -4,8 +4,6 @@
  * with local fallback support.
  */
 
-const GITHUB_SEED_CONTENTS_BASE = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
-
 /**
  * Clean path helper to ensure relative path without leading slashes.
  */
@@ -19,8 +17,7 @@ export function normalizeArticlePath(relativePath) {
 }
 
 /**
- * Fetch an article or syllabus mapping JSON using GitHub seed-contents primary URL,
- * with local fallback options.
+ * Fetch an article or syllabus mapping JSON strictly from local /seed-contents/ or /articles/
  * @param {string} relativePath - e.g. 'CourseMappingFiles/learn-c-syllabus.json' or 'seed-contents/coding/learn-c-syllabus.json'
  * @returns {Promise<Response>} Fetch Response object
  */
@@ -28,27 +25,28 @@ export async function fetchArticleFile(relativePath) {
   if (!relativePath) return null;
   const rawPath = relativePath.trim().replace(/^\/+/, '');
 
-  let githubUrl = `${GITHUB_SEED_CONTENTS_BASE}/${rawPath}`;
-  if (!rawPath.startsWith('seed-contents/') && !rawPath.startsWith('articles/')) {
-    githubUrl = `${GITHUB_SEED_CONTENTS_BASE}/articles/${rawPath}`;
-  } else if (rawPath.startsWith('seed-contents/')) {
-    githubUrl = `${GITHUB_SEED_CONTENTS_BASE}/${rawPath.replace(/^seed-contents\//, '')}`;
+  const candidatePaths = [];
+  if (rawPath.startsWith('seed-contents/')) {
+    candidatePaths.push(`/${rawPath}`);
+    candidatePaths.push(`/${rawPath.replace(/^seed-contents\//, '')}`);
+  } else if (rawPath.startsWith('articles/')) {
+    candidatePaths.push(`/${rawPath}`);
+    candidatePaths.push(`/seed-contents/${rawPath}`);
+  } else {
+    candidatePaths.push(`/seed-contents/${rawPath}`);
+    candidatePaths.push(`/seed-contents/articles/${rawPath}`);
+    candidatePaths.push(`/articles/${rawPath}`);
+    candidatePaths.push(`/${rawPath}`);
   }
 
-  // 1. Primary: GitHub Raw (seed-contents repo)
-  try {
-    const res = await fetch(githubUrl);
-    if (res.ok) return res;
-  } catch (_) {}
+  for (const p of candidatePaths) {
+    try {
+      const res = await fetch(p);
+      if (res.ok) return res;
+    } catch (_) {}
+  }
 
-  // 2. Local Fallback: /seed-contents/ or /articles/
-  try {
-    const localRes = await fetch(`/${rawPath}`);
-    if (localRes.ok) return localRes;
-  } catch (_) {}
-
-  // 3. Last-resort fetch directly against GitHub Raw URL
-  return await fetch(githubUrl);
+  return null;
 }
 
 /**

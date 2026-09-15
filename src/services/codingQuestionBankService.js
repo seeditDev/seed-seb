@@ -40,13 +40,16 @@ export const isCompleteQuestion = (q) => {
     (Array.isArray(q.content?.sampleTestCases) && q.content.sampleTestCases.length > 0) ||
     (Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0) ||
     (Array.isArray(q.sampleTests) && q.sampleTests.length > 0) ||
-    (Array.isArray(q.testCases?.sample) && q.testCases.sample.length > 0)
+    (Array.isArray(q.testCases?.sample) && q.testCases.sample.length > 0) ||
+    (Array.isArray(q.testCases) && q.testCases.some(tc => !tc.hidden && !tc.isHidden))
   );
   const hasHiddenTestCases = Boolean(
     (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) ||
     (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) ||
     (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) ||
-    (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0)
+    (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) ||
+    (Array.isArray(q.testCases) && q.testCases.some(tc => tc.hidden || tc.isHidden)) ||
+    (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0)
   );
   return hasStatement && hasSampleTestCases && hasHiddenTestCases;
 };
@@ -62,11 +65,17 @@ export const mergeQuestionObjects = (fullQ, stub) => {
       ? fullQ.content.sampleTestCases
       : (Array.isArray(fullQ.testCases?.sample) && fullQ.testCases.sample.length > 0
         ? fullQ.testCases.sample
-        : (Array.isArray(stub.sampleTestCases) && stub.sampleTestCases.length > 0
-          ? stub.sampleTestCases
-          : (Array.isArray(stub.content?.sampleTestCases) && stub.content.sampleTestCases.length > 0
-            ? stub.content.sampleTestCases
-            : []))));
+        : (Array.isArray(fullQ.testCases) && fullQ.testCases.some(tc => !tc.hidden && !tc.isHidden))
+          ? fullQ.testCases.filter(tc => !tc.hidden && !tc.isHidden)
+          : (Array.isArray(stub.sampleTestCases) && stub.sampleTestCases.length > 0
+            ? stub.sampleTestCases
+            : (Array.isArray(stub.content?.sampleTestCases) && stub.content.sampleTestCases.length > 0
+              ? stub.content.sampleTestCases
+              : (Array.isArray(stub.testCases?.sample) && stub.testCases.sample.length > 0
+                ? stub.testCases.sample
+                : (Array.isArray(stub.testCases) && stub.testCases.some(tc => !tc.hidden && !tc.isHidden))
+                  ? stub.testCases.filter(tc => !tc.hidden && !tc.isHidden)
+                  : [])))));
 
   // Resolve hidden test cases from fullQ or stub
   const hiddenTestCases = (Array.isArray(fullQ.testCases?.hidden) && fullQ.testCases.hidden.length > 0)
@@ -77,13 +86,17 @@ export const mergeQuestionObjects = (fullQ, stub) => {
         ? fullQ.hiddenTests
         : (Array.isArray(fullQ.content?.testCases) && fullQ.content.testCases.length > 0)
           ? fullQ.content.testCases
-          : (Array.isArray(stub.testCases?.hidden) && stub.testCases.hidden.length > 0
-            ? stub.testCases.hidden
-            : (Array.isArray(stub.hiddenTestCases) && stub.hiddenTestCases.length > 0
-              ? stub.hiddenTestCases
-              : (Array.isArray(stub.hiddenTests) && stub.hiddenTests.length > 0
-                ? stub.hiddenTests
-                : [])));
+          : (Array.isArray(fullQ.testCases) && fullQ.testCases.some(tc => tc.hidden || tc.isHidden))
+            ? fullQ.testCases.filter(tc => tc.hidden || tc.isHidden)
+            : (Array.isArray(stub.testCases?.hidden) && stub.testCases.hidden.length > 0
+              ? stub.testCases.hidden
+              : (Array.isArray(stub.hiddenTestCases) && stub.hiddenTestCases.length > 0
+                ? stub.hiddenTestCases
+                : (Array.isArray(stub.hiddenTests) && stub.hiddenTests.length > 0
+                  ? stub.hiddenTests
+                  : (Array.isArray(stub.testCases) && stub.testCases.some(tc => tc.hidden || tc.isHidden))
+                    ? stub.testCases.filter(tc => tc.hidden || tc.isHidden)
+                    : [])));
 
   const resolvedTestCases = {
     ...(typeof fullQ.testCases === 'object' && !Array.isArray(fullQ.testCases) ? fullQ.testCases : {}),
@@ -100,6 +113,7 @@ export const mergeQuestionObjects = (fullQ, stub) => {
     content: {
       ...(fullQ.content || {}),
       ...(stub.content || {}),
+      problemStatement: fullQ.content?.problemStatement || fullQ.problemStatement || stub.content?.problemStatement || stub.description || stub.problemStatement || '',
       sampleTestCases,
       testCases: hiddenTestCases,
     },

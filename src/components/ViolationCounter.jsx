@@ -2,7 +2,7 @@ import React from 'react';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import '../styles/ViolationCounter.css';
 
-const ViolationCounter = ({ count = 0, maxViolations = 5 }) => {
+const ViolationCounter = ({ count = 0, maxViolations = 200 }) => {
   const getSeverityClass = () => {
     if (count === 0) return 'safe';
     if (count < Math.round(maxViolations * 0.4)) return 'low';

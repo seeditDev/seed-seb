@@ -137,7 +137,7 @@ import {
 } from '../services/githubSyncService';
 
 const LOCAL_BASE_URL = '/seed-contents';
-const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/seeditDev/seed-contents/main';
+const GITHUB_BASE_URL = '/seed-contents';
 
 
 const slugify = (value = '') => {
@@ -1762,8 +1762,8 @@ const StudentDashboard = () => {
             // ── proctor ──
             proctored: t.proctored !== false,
             audioProctored: Boolean(t.audioProctored),
-            maxViolations: t.maxViolations ?? 5,
-            maxAudioViolations: t.maxAudioViolations ?? 3,
+            maxViolations: t.maxViolations ?? 200,
+            maxAudioViolations: t.maxAudioViolations ?? 200,
             // ── settings ──
             settings: t.settings,
             display_order: t.display_order ?? 999,
@@ -1922,9 +1922,9 @@ const StudentDashboard = () => {
     ].filter(Boolean);
 
     for (const cPath of candidatePaths) {
-      // 2nd: seed-contents CDN (public, fast)
+      // 2nd: seed-contents local (bundled public)
       try {
-        const rawRes = await fetch(`https://raw.githubusercontent.com/seeditDev/seed-contents/main/${cPath}?_t=${Date.now()}`);
+        const rawRes = await fetch(`/seed-contents/${cPath}?_t=${Date.now()}`);
         if (rawRes.ok) return await rawRes.json();
       } catch (_) { }
 

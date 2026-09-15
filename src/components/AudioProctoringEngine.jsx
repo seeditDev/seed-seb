@@ -18,7 +18,7 @@ const AudioProctoringEngine = ({
   assessmentId,
   isTestActive = true,
   isProctorActive = true,
-  maxViolations = 5,
+  maxViolations = 200,
   onViolationUpdate,
   onReady,
 }) => {

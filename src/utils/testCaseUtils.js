@@ -333,22 +333,27 @@ export const compareOutputs = isOutputMatching;
 export function getQuestionSampleTestCases(q) {
   if (!q) return [];
   let raw = [];
-  if (Array.isArray(q.sampleTests) && q.sampleTests.length > 0) {
-    raw = q.sampleTests;
-  } else if (Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0) {
-    raw = q.sampleTestCases;
+  if (Array.isArray(q.testCases?.sample) && q.testCases.sample.length > 0) {
+    raw = q.testCases.sample;
   } else if (Array.isArray(q.content?.sampleTestCases) && q.content.sampleTestCases.length > 0) {
     raw = q.content.sampleTestCases;
+  } else if (Array.isArray(q.sampleTestCases) && q.sampleTestCases.length > 0) {
+    raw = q.sampleTestCases;
+  } else if (Array.isArray(q.sampleTests) && q.sampleTests.length > 0) {
+    raw = q.sampleTests;
   } else if (Array.isArray(q.content?.sampleTests) && q.content.sampleTests.length > 0) {
     raw = q.content.sampleTests;
+  } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
+    const sList = q.testCases.filter(tc => !tc.hidden && !tc.isHidden);
+    raw = sList.length > 0 ? sList : q.testCases;
   }
   return normalizeTestCaseArray(raw);
 }
 
 /**
  * Extracts and normalizes hidden test cases from a question object.
- * Checks all possible schemas (q.hiddenTests, q.testCases.hidden, q.content.testCases, etc.)
- * and falls back to sample test cases if no hidden test cases are present.
+ * Checks all possible schemas (q.testCases.hidden, q.hiddenTestCases, q.content.testCases, etc.)
+ * and falls back to sample test cases only if no hidden test cases are present.
  *
  * @param {Object} q - Question object
  * @returns {Array} Array of normalized hidden test cases
@@ -356,19 +361,18 @@ export function getQuestionSampleTestCases(q) {
 export function getQuestionHiddenTestCases(q) {
   if (!q) return [];
   let raw = [];
-  if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
+  if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
+    raw = q.testCases.hidden;
+  } else if (Array.isArray(q.hiddenTestCases) && q.hiddenTestCases.length > 0) {
     raw = q.hiddenTestCases;
   } else if (Array.isArray(q.hiddenTests) && q.hiddenTests.length > 0) {
     raw = q.hiddenTests;
-  } else if (Array.isArray(q.testCases?.hidden) && q.testCases.hidden.length > 0) {
-    raw = q.testCases.hidden;
   } else if (Array.isArray(q.content?.testCases) && q.content.testCases.length > 0) {
     raw = q.content.testCases;
-  } else if (Array.isArray(q.testCases) && q.testCases.length > 0) {
-    const hList = q.testCases.filter(tc => tc.hidden);
-    raw = hList.length > 0 ? hList : q.testCases;
-  } else if (Array.isArray(q.test_cases) && q.test_cases.length > 0) {
-    raw = q.test_cases;
+  } else if (Array.isArray(q.testCases) && q.testCases.some(tc => tc.hidden || tc.isHidden)) {
+    raw = q.testCases.filter(tc => tc.hidden || tc.isHidden);
+  } else if (Array.isArray(q.test_cases) && q.test_cases.some(tc => tc.hidden || tc.isHidden)) {
+    raw = q.test_cases.filter(tc => tc.hidden || tc.isHidden);
   } else if (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0) {
     raw = q.hidden_test_cases;
   } else {

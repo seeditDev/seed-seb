@@ -224,7 +224,7 @@ const ProctoringEngine = ({
   assessmentId, 
   onAutoSubmit,
   isTestActive = true,
-  maxViolations = 5,
+  maxViolations = 200,
   onViolationUpdate,
   isProctorActive = true,
   onReady,

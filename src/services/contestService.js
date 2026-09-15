@@ -150,8 +150,10 @@ export function normaliseContest(id, raw = {}) {
       enabled: true,
       cameraRequired: true,
       audioRequired: false,
-      tabSwitchLimit: 3,
-      maxViolations: 5,
+      tabSwitchLimit: 0,
+      maxViolations: 200,
+      maxCameraViolations: 200,
+      maxAudioViolations: 200,
       autoSubmitOnViolation: true,
     },
     xpMultiplier: Number(raw.xpMultiplier || 1.5),
@@ -639,15 +641,15 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
     enabled: true,
     cameraRequired: true,
     audioRequired: false,
-    tabSwitchLimit: 3,
-    maxViolations: 5,
-    maxCameraViolations: 5,
-    maxAudioViolations: 5,
+    tabSwitchLimit: 0,
+    maxViolations: 200,
+    maxCameraViolations: 200,
+    maxAudioViolations: 200,
     autoSubmitOnViolation: true,
   };
 
-  const cameraLimit = Number(effectiveProctorConfig?.maxCameraViolations ?? effectiveProctorConfig?.maxViolations) || 5;
-  const audioLimit = Number(effectiveProctorConfig?.maxAudioViolations) || 5;
+  const cameraLimit = Number(effectiveProctorConfig?.maxCameraViolations ?? effectiveProctorConfig?.maxViolations) || 200;
+  const audioLimit = Number(effectiveProctorConfig?.maxAudioViolations) || 200;
 
   // Build canonical MSA Assessment payload
   const canonicalAss = {
