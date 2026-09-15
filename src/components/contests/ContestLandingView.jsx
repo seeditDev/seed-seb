@@ -505,15 +505,15 @@ export default function ContestLandingView({
               </span>
               {dynamicStatus === 'live' ? (
                 <span className="hero-pill live-pill animate-pulse">
-                  🔴 LIVE NOW
+                  LIVE NOW
                 </span>
               ) : dynamicStatus === 'ended' ? (
                 <span className="hero-pill ended-pill">
-                  ⚪ CONTEST ENDED
+                  CONTEST ENDED
                 </span>
               ) : (
                 <span className="hero-pill upcoming-pill">
-                  🟡 UPCOMING
+                  UPCOMING
                 </span>
               )}
               <span className="hero-pill" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#C084FC', borderColor: 'rgba(168, 85, 247, 0.3)' }}>
@@ -521,17 +521,17 @@ export default function ContestLandingView({
               </span>
               {contest.isRated && (
                 <span className="hero-pill rated-pill">
-                  ⭐ RATED
+                  RATED
                 </span>
               )}
               {isPaidContest && (
                 <span className="hero-pill paid-pill" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-                  🎟️ Pass ₹{contestFee}
+                  Pass ₹{contestFee}
                 </span>
               )}
               {contest.accessTier === 'pro_only' && (
                 <span className="hero-pill pro-pill" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#A855F7', borderColor: 'rgba(168, 85, 247, 0.3)' }}>
-                  👑 PRO ONLY
+                  PRO ONLY
                 </span>
               )}
             </div>
@@ -600,7 +600,7 @@ export default function ContestLandingView({
                     style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)' }}
                     onClick={() => setActiveTab('leaderboard')}
                   >
-                    🏆 View Results & Leaderboard →
+                    View Results & Leaderboard →
                   </button>
                 </div>
               ) : isRegistered ? (
@@ -611,7 +611,7 @@ export default function ContestLandingView({
                       style={{ background: '#059669', borderColor: '#10B981', color: '#FFFFFF', cursor: 'default' }}
                       disabled
                     >
-                      <FaCheck className="btn-icon" /> Round {activeRound?.roundNumber || 1} Completed ✓
+                      <FaCheck className="btn-icon" /> Round {activeRound?.roundNumber || 1} Completed
                     </button>
                   ) : isUserQualifiedForActiveRound ? (
                     <button
@@ -624,7 +624,7 @@ export default function ContestLandingView({
                   ) : (
                     <div className="flex items-center gap-2">
                       <button className="hero-primary-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
-                        🔒 Round {activeRound?.roundNumber} Shortlist Required
+                        Round {activeRound?.roundNumber} Shortlist Required
                       </button>
                       <span className="text-xs text-amber-400">
                         (Only shortlisted candidates advanced by judges can enter Round {activeRound?.roundNumber})
@@ -634,7 +634,7 @@ export default function ContestLandingView({
                 ) : (
                   <div className="registered-badge-group">
                     <button className="hero-primary-btn registered-btn" disabled>
-                      <FaCheck className="btn-icon" /> Registered ✓ ({timeCountdownText || 'Starting Soon'})
+                      <FaCheck className="btn-icon" /> Registered ({timeCountdownText || 'Starting Soon'})
                     </button>
                     <button className="hero-unregister-btn" onClick={handleUnregister}>
                       Unregister
@@ -662,7 +662,7 @@ export default function ContestLandingView({
                   {isRegistering
                     ? 'Processing…'
                     : isPaidContest && !hasPass
-                    ? `💳 Pay ₹${contestFee} & Register →`
+                    ? `Pay ₹${contestFee} & Register →`
                     : 'Register for Contest →'}
                 </button>
               )}
@@ -696,13 +696,13 @@ export default function ContestLandingView({
 
             <div className="trophy-stage-container">
               <div className="floating-chip chip-leaderboard">
-                <span className="chip-symbol">🌱</span> Multi-Round MSA
+                <span className="chip-symbol">MSA</span> Multi-Round
               </div>
               <div className="floating-chip chip-rankings">
-                <span className="chip-symbol">🌐</span> Global Standings
+                <span className="chip-symbol">RANK</span> Global Standings
               </div>
               <div className="floating-chip chip-prizes">
-                <span className="chip-symbol">⭐</span> Cash &amp; Trophies
+                <span className="chip-symbol">AWARDS</span> Prizes &amp; Trophies
               </div>
 
               {contest.bannerUrl || contest.imageUrl ? (
@@ -787,7 +787,7 @@ export default function ContestLandingView({
                             </span>
                           </div>
                           <h3 className="text-xl font-black text-white mt-1">
-                            Submission Confirmed &amp; Evaluated 🎉
+                            Submission Confirmed &amp; Evaluated
                           </h3>
                         </div>
                       </div>
@@ -842,7 +842,7 @@ export default function ContestLandingView({
                     {/* Stage guidance */}
                     <div className="mt-4 p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">ℹ️</span>
+                        <span className="text-xs font-bold text-emerald-400">NOTE:</span>
                         <span>
                           {rounds.length > 1 && (userRegistration?.lastCompletedRound || 1) < rounds.length
                             ? `Round ${(userRegistration?.lastCompletedRound || 1) + 1} qualification results will be declared by the administrator following automated evaluation.`
@@ -868,7 +868,7 @@ export default function ContestLandingView({
                             Round {userRegistration?.lastCompletedRound || activeRound?.roundNumber || 1}
                           </span>
                           <span className="text-xs text-slate-400">
-                            Attempt Safely Submitted ✓
+                            Attempt Safely Submitted
                           </span>
                         </div>
                         <h4 className="text-base font-bold text-white mt-1">
@@ -888,7 +888,7 @@ export default function ContestLandingView({
                 <div className="p-3.5 rounded-2xl border border-primary/40 bg-primary/10 flex items-center justify-between gap-3 text-xs shadow-sm">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-                    <span className="font-bold text-primary">📢 Broadcast:</span>
+                    <span className="font-bold text-primary">Broadcast:</span>
                     <span className="text-foreground font-medium">{announcements[0]?.message}</span>
                   </div>
                   <span className="text-[11px] text-muted-foreground whitespace-nowrap">
@@ -905,7 +905,7 @@ export default function ContestLandingView({
                     </div>
                     <div>
                       <h3 className="text-xl font-black text-amber-500 tracking-tight">
-                        Official Contest Winners Declared! 🏆
+                        Official Contest Winners Declared
                       </h3>
                       <p className="text-xs text-muted-foreground">
                         Congratulations to all champions and podium finalists.
@@ -924,7 +924,7 @@ export default function ContestLandingView({
                             {w.rank}
                           </span>
                           <span className="text-lg">
-                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🎖️'}
+                            '#' + (idx + 1)
                           </span>
                         </div>
                         <div className="font-bold text-base text-foreground truncate">
@@ -970,7 +970,7 @@ export default function ContestLandingView({
                   onKeyDown={(e) => e.key === 'Enter' && setActiveTab('prizes')}
                 >
                   <div className="prize-box-header">
-                    <div className="prize-box-trophy">🏆</div>
+                    <div className="prize-box-trophy"><FaTrophy /></div>
                     <div>
                       <h4 className="prize-box-title">
                         {contest.prizePool ? `Prize Pool: ${contest.prizePool}` : 'Exciting Prizes for Winners'}
@@ -1045,7 +1045,7 @@ export default function ContestLandingView({
                         <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
                           {isRoundCompleted(r.roundNumber) ? (
                             <span className="text-emerald-500 font-semibold flex items-center gap-1">
-                              <FaCheck /> Completed ✓
+                              <FaCheck /> Completed
                             </span>
                           ) : r.roundNumber === 1 ? (
                             <span className="text-slate-600 dark:text-slate-400">Open to all registrants</span>
@@ -1221,7 +1221,7 @@ export default function ContestLandingView({
                         <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
                           <span className="text-muted-foreground font-medium block mb-0.5">Passkey Access:</span>
                           <span className="font-semibold text-foreground">
-                            {round.passkey ? '🔐 Passkey Protected' : 'Open Round'}
+                            {round.passkey ? 'Passkey Protected' : 'Open Round'}
                           </span>
                         </div>
 
@@ -1252,7 +1252,7 @@ export default function ContestLandingView({
                         <div>
                           {isRoundCompleted(round.roundNumber) ? (
                             <span className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                              <FaCheck /> Round {round.roundNumber} Completed ✓
+                              <FaCheck /> Round {round.roundNumber} Completed
                             </span>
                           ) : dynamicStatus === 'live' && isCurrentLive ? (
                             isRegistered ? (
@@ -1309,11 +1309,11 @@ export default function ContestLandingView({
               {/* TIE-BREAKING PROTOCOL CALLOUT */}
               <div className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-base">⚖️</span>
+                  <span className="text-xs font-bold text-primary">Tie-break:</span>
                   <div>
                     <span className="font-bold text-white">Official Tie-Breaking Protocol: </span>
                     <span className="text-slate-300">
-                      1️⃣ <strong>Total Score</strong> (Higher wins) &rarr; 2️⃣ <strong>Questions Solved</strong> (Higher wins) &rarr; 3️⃣ <strong>Assessment Timing</strong> (Faster wins)
+                      1. <strong>Total Score</strong> (Higher wins) &rarr; 2. <strong>Questions Solved</strong> (Higher wins) &rarr; 3. <strong>Assessment Timing</strong> (Faster wins)
                     </span>
                   </div>
                 </div>
@@ -1469,7 +1469,7 @@ export default function ContestLandingView({
                             </td>
                             <td className="text-right">
                               <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                                Round 1 Confirmed ✓
+                                Round 1 Confirmed
                               </span>
                             </td>
                           </tr>
@@ -1531,7 +1531,7 @@ export default function ContestLandingView({
                     className="p-5 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-black/20 to-transparent flex items-start gap-3.5 shadow-sm"
                   >
                     <div className="text-3xl mt-0.5">
-                      {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🎖️'}
+                      '#' + (idx + 1)
                     </div>
                     <div>
                       <div className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-0.5">
@@ -1570,7 +1570,7 @@ export default function ContestLandingView({
                   {announcements.map((ann) => (
                     <div key={ann.id} className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/10">
                       <div className="flex items-center justify-between mb-1 text-xs text-blue-400 font-semibold">
-                        <span>📢 Broadcast by {ann.author || 'Judge Admin'}</span>
+                        <span>Broadcast by {ann.author || 'Judge Admin'}</span>
                         <span>{ann.createdAt?.toDate ? ann.createdAt.toDate().toLocaleTimeString() : 'Just now'}</span>
                       </div>
                       <p className="text-sm text-foreground">{ann.message}</p>
@@ -1650,7 +1650,7 @@ export default function ContestLandingView({
               <div className="detail-row">
                 <span className="detail-label"><FaCheckCircle className="detail-icon" /> Registration</span>
                 <span className={`detail-value font-semibold ${isRegistered ? 'text-emerald-500' : registrationState === 'closed' || registrationState === 'full' ? 'text-rose-400' : 'text-purple-400'}`}>
-                  {isRegistered ? 'Registered ✓' : registrationState === 'closed' ? 'Closed' : registrationState === 'full' ? 'Full' : 'Open'}
+                  {isRegistered ? 'Registered' : registrationState === 'closed' ? 'Closed' : registrationState === 'full' ? 'Full' : 'Open'}
                 </span>
               </div>
               {contest.registrationLimit && (
@@ -1679,7 +1679,7 @@ export default function ContestLandingView({
                 dynamicStatus === 'live' ? (
                   isCurrentActiveRoundCompleted ? (
                     <button className="sidebar-cta-btn registered-btn" style={{ background: '#059669', borderColor: '#10B981', color: '#FFFFFF', cursor: 'default' }} disabled>
-                      <FaCheck className="mr-2" /> Round {activeRound?.roundNumber || 1} Completed ✓
+                      <FaCheck className="mr-2" /> Round {activeRound?.roundNumber || 1} Completed
                     </button>
                   ) : isUserQualifiedForActiveRound ? (
                     <button
@@ -1691,12 +1691,12 @@ export default function ContestLandingView({
                     </button>
                   ) : (
                     <button className="sidebar-cta-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
-                      🔒 Shortlist Required for Round {activeRound?.roundNumber}
+                      Shortlist Required for Round {activeRound?.roundNumber}
                     </button>
                   )
                 ) : (
                   <button className="sidebar-cta-btn registered-btn" disabled>
-                    <FaCheck className="mr-2" /> You are Registered ✓
+                    <FaCheck className="mr-2" /> You are Registered
                   </button>
                 )
               ) : registrationState === 'upcoming' ? (
@@ -1720,7 +1720,7 @@ export default function ContestLandingView({
                   {isRegistering
                     ? 'Processing…'
                     : isPaidContest && !hasPass
-                    ? `💳 Pay ₹${contestFee} & Register →`
+                    ? `Pay ₹${contestFee} & Register →`
                     : 'Register for Contest →'}
                 </button>
               )}

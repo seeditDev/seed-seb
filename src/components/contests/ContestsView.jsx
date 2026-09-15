@@ -259,17 +259,17 @@ const ContestsView = ({
                   </span>
                 ) : (
                   <span className="hero-pill-badge upcoming-badge">
-                    🟡 UPCOMING CONTEST
+                    UPCOMING CONTEST
                   </span>
                 )}
                 {featuredContest.isRated && (
                   <span className="hero-pill-badge rated-badge">
-                    ⭐ RATED
+                    RATED
                   </span>
                 )}
                 {featuredContest.accessTier === 'pro_only' && (
                   <span className="hero-pill-badge pro-badge">
-                    👑 PRO ONLY
+                    PRO ONLY
                   </span>
                 )}
               </div>
@@ -359,15 +359,15 @@ const ContestsView = ({
               </div>
               <div className="hero-floating-chips">
                 <div className="floating-chip chip-1">
-                  <span className="chip-emoji">🏆</span>
+                  <span className="chip-emoji"><FaTrophy /></span>
                   <span>{featuredContest.prizePool || '₹25,000 Prizes'}</span>
                 </div>
                 <div className="floating-chip chip-2">
-                  <span className="chip-emoji">🌱</span>
+                  <span className="chip-emoji"><FaGlobe /></span>
                   <span>Live Leaderboard</span>
                 </div>
                 <div className="floating-chip chip-3">
-                  <span className="chip-emoji">🏅</span>
+                  <span className="chip-emoji"><FaAward /></span>
                   <span>Certificates</span>
                 </div>
               </div>
@@ -381,7 +381,7 @@ const ContestsView = ({
         <div className="filter-tabs">
           {[
             { id: 'all', label: 'All Contests' },
-            { id: 'live', label: '🔴 Live Now' },
+            { id: 'live', label: 'Live Now' },
             { id: 'upcoming', label: 'Upcoming' },
             { id: 'registered', label: 'My Registered' },
             { id: 'ended', label: 'Completed' },
@@ -408,13 +408,13 @@ const ContestsView = ({
               className={`scope-pill ${scopeFilter === 'global' ? 'active' : ''}`}
               onClick={() => setScopeFilter('global')}
             >
-              🌐 Global
+              Global
             </button>
             <button
               className={`scope-pill ${scopeFilter === 'college' ? 'active' : ''}`}
               onClick={() => setScopeFilter('college')}
             >
-              🏫 College
+              College
             </button>
           </div>
 
@@ -466,7 +466,7 @@ const ContestsView = ({
                     />
                     <div className="contest-card-banner-overlay" />
                     <span className={`status-badge-overlay ${c.dynamicStatus}`}>
-                      {c.dynamicStatus === 'live' ? '🔴 LIVE' : c.dynamicStatus.toUpperCase()}
+                      {c.dynamicStatus === 'live' ? 'LIVE' : c.dynamicStatus.toUpperCase()}
                     </span>
                   </div>
                 )}
@@ -483,7 +483,7 @@ const ContestsView = ({
                           <FaBuilding /> {c.tenantName || 'College Hosted'}
                         </span>
                       )}
-                      {c.isRated && <span className="rated-tag">⭐ Rated</span>}
+                      {c.isRated && <span className="rated-tag">Rated</span>}
                       {c.requiresSeb && (
                         <span className="seb-tag" title="Requires SEED-SEB desktop lockdown">
                           <FaLock /> SEB Enforced
@@ -491,19 +491,19 @@ const ContestsView = ({
                       )}
                       {c.accessTier === 'pro_only' && (
                         <span className="pro-tag">
-                          👑 Pro Only
+                          Pro Only
                         </span>
                       )}
                       {isPaidContest(c) && (
                         <span className="pro-tag" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.35)' }}>
-                          🎟️ Pass ₹{getFee(c)}
+                          Pass ₹{getFee(c)}
                         </span>
                       )}
                     </div>
 
                     {!c.bannerUrl && !c.imageUrl && (
                       <span className={`status-pill ${c.dynamicStatus}`}>
-                        {c.dynamicStatus === 'live' ? '🔴 LIVE' : c.dynamicStatus.toUpperCase()}
+                        {c.dynamicStatus === 'live' ? 'LIVE' : c.dynamicStatus.toUpperCase()}
                       </span>
                     )}
                   </div>
@@ -584,7 +584,7 @@ const ContestsView = ({
                       onClick={(e) => handleOpenRegister(c, e)}
                     >
                       {isPaidContest(c) && !hasUserContestAccess(c)
-                        ? `🎟️ Get Pass ₹${getFee(c)}`
+                        ? `Get Pass ₹${getFee(c)}`
                         : 'Register Now'}
                     </button>
                   )}
@@ -617,7 +617,7 @@ const ContestsView = ({
                 <div className="summary-tags">
                   <span><FaClock /> {registerModalContest.durationMinutes} mins</span>
                   <span><FaCalendarAlt /> {formatContestTime(registerModalContest.startTime)}</span>
-                  <span>{registerModalContest.isGlobal ? '🌐 Global' : '🏫 College'}</span>
+                  <span>{registerModalContest.isGlobal ? 'Global' : 'College'}</span>
                 </div>
               </div>
 
@@ -693,7 +693,7 @@ const ContestsView = ({
                 {isRegistering
                   ? 'Processing...'
                   : (isPaidContest(registerModalContest) && !hasUserContestAccess(registerModalContest))
-                    ? `💳 Pay ₹${getFee(registerModalContest)} & Register`
+                    ? `Pay ₹${getFee(registerModalContest)} & Register`
                     : 'Confirm Registration'}
               </button>
             </div>
