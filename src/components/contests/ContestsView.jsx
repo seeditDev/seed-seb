@@ -137,6 +137,16 @@ const ContestsView = ({
       toast.error('This contest has ended. Registration is closed.');
       return;
     }
+    if (contest.isRegistrationClosed) {
+      toast.error('Registration for this contest has been closed by the organizer.');
+      return;
+    }
+    if (contest.registrationLimit !== undefined && contest.registrationLimit !== null && Number(contest.registrationLimit) > 0) {
+      if (Number(contest.registeredCount || 0) >= Number(contest.registrationLimit)) {
+        toast.error(`This contest has reached its registration capacity limit (${contest.registrationLimit} seats).`);
+        return;
+      }
+    }
     if (contest.accessTier === 'pro_only' && !user?.isPremium) {
       if (onUpgradePro) onUpgradePro();
       else toast.error('This contest is exclusive to Pro members. Upgrade to unlock.');
@@ -293,7 +303,11 @@ const ContestsView = ({
                 </div>
                 <div className="meta-item">
                   <FaUsers className="meta-icon" />
-                  <span>{featuredContest.registeredCount || 0} Registered</span>
+                  <span>
+                    {featuredContest.registrationLimit
+                      ? `${featuredContest.registeredCount || 0} / ${featuredContest.registrationLimit} Slots`
+                      : `${featuredContest.registeredCount || 0} Registered`}
+                  </span>
                 </div>
                 {featuredContest.prizePool && (
                   <div className="meta-item text-amber font-semibold">
@@ -314,6 +328,14 @@ const ContestsView = ({
                 {registeredMap[featuredContest.id] ? (
                   <span className="hero-registered-chip">
                     <FaCheck /> You are Registered
+                  </span>
+                ) : featuredContest.isRegistrationClosed ? (
+                  <span className="hero-registered-chip" style={{ background: '#1e293b', color: '#94a3b8', border: '1px solid #334155' }}>
+                    Registration Closed
+                  </span>
+                ) : (featuredContest.registrationLimit && (featuredContest.registeredCount || 0) >= featuredContest.registrationLimit) ? (
+                  <span className="hero-registered-chip" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                    Seats Full (Limit Reached)
                   </span>
                 ) : (
                   <button
@@ -502,7 +524,11 @@ const ContestsView = ({
                     </div>
                     <div className="meta-line">
                       <FaUsers className="meta-icon" />
-                      <span>{c.registeredCount || 0} Registered</span>
+                      <span>
+                        {c.registrationLimit
+                          ? `${c.registeredCount || 0} / ${c.registrationLimit} Registered`
+                          : `${c.registeredCount || 0} Registered`}
+                      </span>
                     </div>
                     {c.prizePool && (
                       <div className="meta-line prize-highlight">
@@ -539,6 +565,14 @@ const ContestsView = ({
                     >
                       Leaderboard
                     </button>
+                  ) : c.isRegistrationClosed ? (
+                    <span className="card-registered-pill" style={{ background: '#1e293b', color: '#94a3b8', border: '1px solid #334155' }}>
+                      Registration Closed
+                    </span>
+                  ) : (c.registrationLimit && (c.registeredCount || 0) >= c.registrationLimit) ? (
+                    <span className="card-registered-pill" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                      Seats Full
+                    </span>
                   ) : (
                     <button
                       className="btn-card-register"

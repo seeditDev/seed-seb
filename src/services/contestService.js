@@ -158,6 +158,9 @@ export function normaliseContest(id, raw = {}) {
     seedCreditReward: Number(raw.seedCreditReward || 100),
     problemCount: Number(raw.problemCount || sampleProblems.length || 0),
     registeredCount: Number(raw.registeredCount || 0),
+    registrationLimit: raw.registrationLimit !== undefined && raw.registrationLimit !== null && raw.registrationLimit !== '' ? Number(raw.registrationLimit) : undefined,
+    isRegistrationClosed: Boolean(raw.isRegistrationClosed),
+    showAttemptSummary: Boolean(raw.showAttemptSummary),
     submissionCount: Number(raw.submissionCount || 0),
     maxScore: Number(raw.maxScore || 600),
     sections: Array.isArray(raw.sections) ? raw.sections : [],
@@ -326,6 +329,19 @@ export async function checkContestRegistration(contestId, userId) {
 export async function registerForContest(contest, user, passkeyInput = '') {
   if (!contest?.id || !user?.uid) {
     throw new Error('Invalid contest or user');
+  }
+
+  // Validate manual registration closure
+  if (contest.isRegistrationClosed) {
+    throw new Error('Registration for this contest has been closed by the organizer.');
+  }
+
+  // Validate registration limit if configured
+  if (contest.registrationLimit !== undefined && contest.registrationLimit !== null && Number(contest.registrationLimit) > 0) {
+    const currentCount = Number(contest.registeredCount || 0);
+    if (currentCount >= Number(contest.registrationLimit)) {
+      throw new Error(`Registration limit reached (${contest.registrationLimit} seats). No more registrations are allowed.`);
+    }
   }
 
   // Validate Pro tier if required

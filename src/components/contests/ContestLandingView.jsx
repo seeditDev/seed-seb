@@ -159,9 +159,15 @@ export default function ContestLandingView({
     return getContestDynamicStatus(contest);
   }, [contest]);
 
-  // Automated Registration Dates State
+  // Automated Registration Dates State & Capacity Limits
   const registrationState = useMemo(() => {
     if (!contest) return 'open';
+    if (contest.isRegistrationClosed) return 'closed';
+    if (contest.registrationLimit !== undefined && contest.registrationLimit !== null && Number(contest.registrationLimit) > 0) {
+      if (Number(contest.registeredCount || 0) >= Number(contest.registrationLimit)) {
+        return 'full';
+      }
+    }
     const now = Date.now();
     const regStartMs = contest.registrationStartTime ? new Date(contest.registrationStartTime).getTime() : null;
     const regEndMs = contest.registrationEndTime
@@ -293,6 +299,11 @@ export default function ContestLandingView({
 
     if (registrationState === 'closed') {
       toast.error('Registration for this contest has already closed.');
+      return;
+    }
+
+    if (registrationState === 'full') {
+      toast.error(`This contest has reached its registration capacity limit (${contest.registrationLimit} seats).`);
       return;
     }
 
@@ -550,10 +561,16 @@ export default function ContestLandingView({
               <div className="hero-meta-chip">
                 <FaUsers className="meta-icon" />
                 <div className="meta-text">
-                  <span className="meta-val">{contest.registeredCount || participants.length || 0} Registered</span>
+                  <span className="meta-val">
+                    {contest.registrationLimit
+                      ? `${contest.registeredCount || 0} / ${contest.registrationLimit} Slots`
+                      : `${contest.registeredCount || participants.length || 0} Registered`}
+                  </span>
                   <span className="meta-sub">
                     {registrationState === 'closed'
                       ? 'Registration Closed'
+                      : registrationState === 'full'
+                      ? 'Seats Full'
                       : registrationState === 'upcoming'
                       ? 'Opens Soon'
                       : 'Registration Open'}
@@ -631,6 +648,10 @@ export default function ContestLandingView({
               ) : registrationState === 'closed' ? (
                 <button className="hero-primary-btn" style={{ background: '#1E293B', color: '#94A3B8', cursor: 'not-allowed' }} disabled>
                   Registration Closed
+                </button>
+              ) : registrationState === 'full' ? (
+                <button className="hero-primary-btn" style={{ background: '#1E293B', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)', cursor: 'not-allowed' }} disabled>
+                  Seats Full (Limit Reached)
                 </button>
               ) : (
                 <button
@@ -747,93 +768,119 @@ export default function ContestLandingView({
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
             <div className="overview-tab-content space-y-6">
-              {/* ATTEMPT SUMMARY / SCORE PREVIEW CARD (Immediate Post-Round Feedback) */}
+              {/* ATTEMPT SUMMARY / SCORE PREVIEW CARD (Immediate Post-Round Feedback - Admin Enabled Only) */}
               {(userRegistration?.lastCompletedRound || userRegistration?.lastScore !== undefined || isRoundCompleted(activeRound?.roundNumber)) && (
-                <div className="p-6 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-emerald-900/30 shadow-2xl backdrop-blur-md relative overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-500/20">
+                Boolean(contest?.showAttemptSummary) ? (
+                  <div className="p-6 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-emerald-900/30 shadow-2xl backdrop-blur-md relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-2xl shadow-inner">
+                          <FaCheckCircle />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              Round {userRegistration?.lastCompletedRound || activeRound?.roundNumber || 1} Attempt Recorded
+                            </span>
+                            <span className="text-xs text-slate-400 font-medium">
+                              {userRegistration?.submittedAt ? new Date(userRegistration.submittedAt?.seconds ? userRegistration.submittedAt.seconds * 1000 : userRegistration.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Verified'}
+                            </span>
+                          </div>
+                          <h3 className="text-xl font-black text-white mt-1">
+                            Submission Confirmed &amp; Evaluated 🎉
+                          </h3>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('leaderboard')}
+                        className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg self-start sm:self-auto cursor-pointer"
+                      >
+                        <FaTrophy /> View Live Standings <FaArrowRight />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                      <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Score Achieved</span>
+                        <span className="text-2xl font-black text-emerald-400 font-mono mt-1">
+                          {userRegistration?.lastScore ?? 0}
+                          <span className="text-xs text-slate-400 font-normal"> / {userRegistration?.maxScore || 100}</span>
+                        </span>
+                        <span className="text-[11px] text-emerald-400/80 font-medium mt-0.5">
+                          {userRegistration?.percentage !== undefined ? `${userRegistration.percentage}% Accuracy` : 'Evaluated'}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Problems Solved</span>
+                        <span className="text-2xl font-black text-cyan-400 font-mono mt-1">
+                          {userRegistration?.solvedCount ?? 0}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-medium mt-0.5">
+                          {userRegistration?.partialSolvedCount ? `+${userRegistration.partialSolvedCount} partial` : 'All testcases passed'}
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Time Taken</span>
+                        <span className="text-2xl font-black text-indigo-300 font-mono mt-1">
+                          {userRegistration?.timeTakenFormatted || (userRegistration?.timeTakenSeconds ? `${Math.floor(userRegistration.timeTakenSeconds / 60)}m ${userRegistration.timeTakenSeconds % 60}s` : 'Completed')}
+                        </span>
+                        <span className="text-[11px] text-indigo-300/80 font-medium mt-0.5">Speed metric</span>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
+                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Proctoring Status</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <FaShieldAlt className="text-emerald-400 text-lg" />
+                          <span className="text-sm font-bold text-emerald-300">Clean Session</span>
+                        </div>
+                        <span className="text-[11px] text-slate-400 mt-0.5">Zero critical breaches</span>
+                      </div>
+                    </div>
+
+                    {/* Stage guidance */}
+                    <div className="mt-4 p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">ℹ️</span>
+                        <span>
+                          {rounds.length > 1 && (userRegistration?.lastCompletedRound || 1) < rounds.length
+                            ? `Round ${(userRegistration?.lastCompletedRound || 1) + 1} qualification results will be declared by the administrator following automated evaluation.`
+                            : dynamicStatus === 'ended'
+                            ? 'The contest has concluded. Final official rankings are displayed on the Leaderboard.'
+                            : 'Your attempt has been safely synchronized. You may review your current rank on the live scoreboard.'}
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[11px] whitespace-nowrap self-start sm:self-auto border border-emerald-500/30">
+                        Status: Saved
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-5 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/30 via-slate-900/70 to-slate-900/90 shadow-lg backdrop-blur-md">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-2xl shadow-inner">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl flex-shrink-0">
                         <FaCheckCircle />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            Round {userRegistration?.lastCompletedRound || activeRound?.roundNumber || 1} Attempt Recorded
+                            Round {userRegistration?.lastCompletedRound || activeRound?.roundNumber || 1}
                           </span>
-                          <span className="text-xs text-slate-400 font-medium">
-                            {userRegistration?.submittedAt ? new Date(userRegistration.submittedAt?.seconds ? userRegistration.submittedAt.seconds * 1000 : userRegistration.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Verified'}
+                          <span className="text-xs text-slate-400">
+                            Attempt Safely Submitted ✓
                           </span>
                         </div>
-                        <h3 className="text-xl font-black text-white mt-1">
-                          Submission Confirmed &amp; Evaluated 🎉
-                        </h3>
+                        <h4 className="text-base font-bold text-white mt-1">
+                          Submission Confirmed
+                        </h4>
+                        <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                          Your attempt has been safely recorded. Results, scores, and round rankings will be officially published by the administrator following evaluation.
+                        </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setActiveTab('leaderboard')}
-                      className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-lg self-start sm:self-auto cursor-pointer"
-                    >
-                      <FaTrophy /> View Live Standings <FaArrowRight />
-                    </button>
                   </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
-                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Score Achieved</span>
-                      <span className="text-2xl font-black text-emerald-400 font-mono mt-1">
-                        {userRegistration?.lastScore ?? 0}
-                        <span className="text-xs text-slate-400 font-normal"> / {userRegistration?.maxScore || 100}</span>
-                      </span>
-                      <span className="text-[11px] text-emerald-400/80 font-medium mt-0.5">
-                        {userRegistration?.percentage !== undefined ? `${userRegistration.percentage}% Accuracy` : 'Evaluated'}
-                      </span>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
-                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Problems Solved</span>
-                      <span className="text-2xl font-black text-cyan-400 font-mono mt-1">
-                        {userRegistration?.solvedCount ?? 0}
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-medium mt-0.5">
-                        {userRegistration?.partialSolvedCount ? `+${userRegistration.partialSolvedCount} partial` : 'All testcases passed'}
-                      </span>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
-                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Time Taken</span>
-                      <span className="text-2xl font-black text-indigo-300 font-mono mt-1">
-                        {userRegistration?.timeTakenFormatted || (userRegistration?.timeTakenSeconds ? `${Math.floor(userRegistration.timeTakenSeconds / 60)}m ${userRegistration.timeTakenSeconds % 60}s` : 'Completed')}
-                      </span>
-                      <span className="text-[11px] text-indigo-300/80 font-medium mt-0.5">Speed metric</span>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-700/70 flex flex-col">
-                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Proctoring Status</span>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <FaShieldAlt className="text-emerald-400 text-lg" />
-                        <span className="text-sm font-bold text-emerald-300">Clean Session</span>
-                      </div>
-                      <span className="text-[11px] text-slate-400 mt-0.5">Zero critical breaches</span>
-                    </div>
-                  </div>
-
-                  {/* Stage guidance */}
-                  <div className="mt-4 p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">ℹ️</span>
-                      <span>
-                        {rounds.length > 1 && (userRegistration?.lastCompletedRound || 1) < rounds.length
-                          ? `Round ${(userRegistration?.lastCompletedRound || 1) + 1} qualification results will be declared by the administrator following automated evaluation.`
-                          : dynamicStatus === 'ended'
-                          ? 'The contest has concluded. Final official rankings are displayed on the Leaderboard.'
-                          : 'Your attempt has been safely synchronized. You may review your current rank on the live scoreboard.'}
-                      </span>
-                    </div>
-                    <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[11px] whitespace-nowrap self-start sm:self-auto border border-emerald-500/30">
-                      Status: Saved
-                    </span>
-                  </div>
-                </div>
+                )
               )}
 
               {/* LIVE ANNOUNCEMENT BANNER */}
@@ -1602,10 +1649,18 @@ export default function ContestLandingView({
               </div>
               <div className="detail-row">
                 <span className="detail-label"><FaCheckCircle className="detail-icon" /> Registration</span>
-                <span className={`detail-value font-semibold ${isRegistered ? 'text-emerald-500' : 'text-purple-400'}`}>
-                  {isRegistered ? 'Registered ✓' : registrationState === 'closed' ? 'Closed' : 'Open'}
+                <span className={`detail-value font-semibold ${isRegistered ? 'text-emerald-500' : registrationState === 'closed' || registrationState === 'full' ? 'text-rose-400' : 'text-purple-400'}`}>
+                  {isRegistered ? 'Registered ✓' : registrationState === 'closed' ? 'Closed' : registrationState === 'full' ? 'Full' : 'Open'}
                 </span>
               </div>
+              {contest.registrationLimit && (
+                <div className="detail-row">
+                  <span className="detail-label"><FaUsers className="detail-icon" /> Capacity</span>
+                  <span className="detail-value font-semibold font-mono">
+                    {contest.registeredCount || 0} / {contest.registrationLimit} Slots
+                  </span>
+                </div>
+              )}
               <div className="detail-row">
                 <span className="detail-label"><FaShieldAlt className="detail-icon" /> Security</span>
                 <span className="detail-value">
@@ -1651,6 +1706,10 @@ export default function ContestLandingView({
               ) : registrationState === 'closed' ? (
                 <button className="sidebar-cta-btn" style={{ background: '#1E293B', color: '#94A3B8', cursor: 'not-allowed' }} disabled>
                   Registration Closed
+                </button>
+              ) : registrationState === 'full' ? (
+                <button className="sidebar-cta-btn" style={{ background: '#1E293B', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)', cursor: 'not-allowed' }} disabled>
+                  Seats Full (Limit Reached)
                 </button>
               ) : (
                 <button
