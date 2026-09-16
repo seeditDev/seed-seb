@@ -882,6 +882,14 @@ const ProctoringEngine = ({
       return;
     }
 
+    // Safety timer: Fire onReady within 4.5s regardless of model downloading latency or camera delay
+    const safetyTimer = setTimeout(() => {
+      if (onReadyRef.current) {
+        console.log('[ProctoringEngine] Safety timer fired onReady to prevent prelaunch hang');
+        onReadyRef.current();
+      }
+    }, 4500);
+
     const init = async () => {
       // Mark as initializing to prevent duplicates
       initializedRef.current = true;
@@ -891,6 +899,9 @@ const ProctoringEngine = ({
         const webcamInitialized = await initializeWebcam();
         if (!webcamInitialized) {
           initializedRef.current = false;
+          if (onReadyRef.current) {
+            onReadyRef.current();
+          }
           return;
         }
 
@@ -911,9 +922,10 @@ const ProctoringEngine = ({
                 runPresenceCheckSequence();
               }, CHECK_INTERVAL_MS);
               console.log('[ProctoringEngine] Scheduled proctoring AI checks started');
-              if (onReadyRef.current) {
-                onReadyRef.current();
-              }
+            }
+            // Always fire onReady whether modelsLoaded was true or false, so prelaunch is unblocked
+            if (onReadyRef.current) {
+              onReadyRef.current();
             }
           };
 
@@ -923,11 +935,18 @@ const ProctoringEngine = ({
           } else {
             videoRef.current.onloadedmetadata = handleLoadedMetadata;
           }
+        } else {
+          if (onReadyRef.current) {
+            onReadyRef.current();
+          }
         }
       } catch (error) {
         console.error('[ProctoringEngine] Initialization error:', error);
         setError('Failed to initialize proctoring system.');
         initializedRef.current = false;
+        if (onReadyRef.current) {
+          onReadyRef.current();
+        }
       }
     };
 
@@ -949,6 +968,7 @@ const ProctoringEngine = ({
     // Cleanup
     return () => {
       console.log('[ProctoringEngine] Cleanup running...');
+      clearTimeout(safetyTimer);
       window.removeEventListener('seb:stop-proctoring-hardware', handleHardwareTeardown);
       stopDetectionLoop();
       cleanupStream();

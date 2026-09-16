@@ -1,29 +1,17 @@
 {
-  "questionId": "Q741",
-  "title": "Cherry Pickup Problem",
   "slug": "cherry-pickup",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "dynamic-programming",
-      "matrix"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "dynamic-programming",
-      "matrix"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Think of the return journey in reverse: it becomes another path moving only right and down from the start to the destination.",
+    "At a fixed number of moves k, a cell's column is determined by its row: c = k - r. What information is needed to describe the positions of both paths?",
+    "For two current positions, there are four combinations of previous moves. Take the best reachable predecessor and add the current cherries, counting a shared cell once.",
+    "Because only the previous step is needed, keep two DP layers instead of the full four-dimensional table."
+  ],
+  "title": "Cherry Pickup Problem",
   "content": {
-    "problemStatement": "You receive an `n x n` `grid` representing a field of cherries, each cell is one of three possible integers.\n\n* `0` means the cell is empty, so you can pass through,\n* `1` means the cell includes a cherry that you can pick up and pass through, or\n* `-1` means the cell includes a thorn that blocks your way.\n\nOutput *the largest number of cherries you can collect by following the rules below*:\n\n* Starting at the position `(0, 0)` and reaching `(n - 1, n - 1)` by moving right or down through valid path cells (cells with value `0` or `1`).\n* After reaching `(n - 1, n - 1)`, returning to `(0, 0)` by moving left or up through valid path cells.\n* When passing through a path cell containing a cherry, you pick it up, and the cell becomes an empty cell `0`.\n* If there is no valid path between `(0, 0)` and `(n - 1, n - 1)`, then no cherries can be collected.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2020/12/14/grid.jpg)\n\n```\nInput: grid = [[0,1,-1],[1,0,-1],[1,1,1]]\nOutput: 5\nExplanation: The player started at (0, 0) and went down, down, right right to reach (2, 2).\n4 cherries were picked up during this single trip, and the matrix becomes [[0,1,-1],[0,0,-1],[0,0,0]].\nThen, the player went left, up, up, left to return home, picking up one more cherry.\nThe total number of cherries picked up is 5, and this is the maximum possible.\n```\n\n**Example 2:**\n\n```\nInput: grid = [[1,1,-1],[1,-1,1],[-1,1,1]]\nOutput: 0\n```\n\n**Constraints:**\n\n* `n == grid.length`\n* `n == grid[i].length`\n* `1 <= n <= 50`\n* `grid[i][j]` is `-1`, `0`, or `1`.\n* `grid[0][0] != -1`\n* `grid[n - 1][n - 1] != -1`",
+    "notes": [
+      "The return trip can be viewed as a second path from the destination back to the start; reversing that path turns the problem into choosing two synchronized paths from the start to the destination.",
+      "When both paths occupy the same cell at the same time, count that cell's cherry only once."
+    ],
     "constraints": [
       "n == grid.length",
       "n == grid[i].length",
@@ -47,270 +35,38 @@
         "type": "reg",
         "input": "[[[1,1,-1],[1,-1,1],[-1,1,1]]]",
         "output": "0",
-        "explanation": ""
+        "explanation": "There is no valid path from the top-left cell to the bottom-right cell, so no cherries can be collected."
       }
     ],
-    "notes": []
+    "problemStatement": "You receive an `n x n` `grid` representing a field of cherries, each cell is one of three possible integers.\n\n* `0` means the cell is empty, so you can pass through,\n* `1` means the cell includes a cherry that you can pick up and pass through, or\n* `-1` means the cell includes a thorn that blocks your way.\n\nOutput *the largest number of cherries you can collect by following the rules below*:\n\n* Starting at the position `(0, 0)` and reaching `(n - 1, n - 1)` by moving right or down through valid path cells (cells with value `0` or `1`).\n* After reaching `(n - 1, n - 1)`, returning to `(0, 0)` by moving left or up through valid path cells.\n* When passing through a path cell containing a cherry, you pick it up, and the cell becomes an empty cell `0`.\n* If there is no valid path between `(0, 0)` and `(n - 1, n - 1)`, then no cherries can be collected.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2020/12/14/grid.jpg)\n\n```\nInput: grid = [[0,1,-1],[1,0,-1],[1,1,1]]\nOutput: 5\nExplanation: The player started at (0, 0) and went down, down, right right to reach (2, 2).\n4 cherries were picked up during this single trip, and the matrix becomes [[0,1,-1],[0,0,-1],[0,0,0]].\nThen, the player went left, up, up, left to return home, picking up one more cherry.\nThe total number of cherries picked up is 5, and this is the maximum possible.\n```\n\n**Example 2:**\n\n```\nInput: grid = [[1,1,-1],[1,-1,1],[-1,1,1]]\nOutput: 0\n```\n\n**Constraints:**\n\n* `n == grid.length`\n* `n == grid[i].length`\n* `1 <= n <= 50`\n* `grid[i][j]` is `-1`, `0`, or `1`.\n* `grid[0][0] != -1`\n* `grid[n - 1][n - 1] != -1`"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[[0]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Zero values",
-        "input": "[[[0, 0, 0], [0, 0, 0], [0, 0, 0]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[[1, 1, 1], [1, 1, 1], [1, 1, 1]]]",
-        "expectedOutput": "8",
-        "weight": 4
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[[1, -1, 0], [0, 1, -1], [-1, 0, 1]]]",
-        "expectedOutput": "3",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[[1, 0, 0], [0, 0, 0], [0, 0, 0]]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[[0, 0, 0], [0, 1, 0], [0, 0, 0]]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[[0, 0, 0], [0, 0, 0], [0, 0, 1]]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Standard case (if applicable)",
-        "input": "[[[-1, -1, -1], [-1, 0, -1], [-1, -1, -1]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Maximum constraints stress",
-        "input": "[[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]]",
-        "expectedOutput": "72",
-        "weight": 10
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "All advertised implementations use the O(n^3) dynamic-programming approach and avoid recursion."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -332,57 +88,338 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "dynamic-programming",
+      "matrix",
+      "two-path-dp"
     ],
-    "notes": []
+    "category": "Arrays",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "dynamic-programming",
+      "matrix",
+      "two-path-dp"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The solution uses dynamic programming to track the maximum number of cherries that can be picked up by two paths of the same length, arriving at positions (i, k - i) and (j, k - j) respectively.",
+    "notes": [
+      "The two walkers always have made the same number of moves, so their column coordinates are determined by k and their row coordinates.",
+      "The DP may use a large negative sentinel for unreachable states; the final answer is clamped to 0 when no complete round trip exists."
+    ],
+    "approach": "Model the round trip as two synchronized forward trips from (0, 0) to (n - 1, n - 1). After k moves, a walker at row r is at column k - r, so a state is determined by k and the two row indices r1 and r2. For each state, take the best of the four predecessor combinations (both move down, first down/second right, first right/second down, or both right). Add the cherries at the two current cells, counting a shared cell only once. Thorn cells and unreachable states are discarded. Rolling two n x n layers keeps memory at O(n^2).",
+    "editorial": {
+      "better": {
+        "complexity": "O(n^3) time and O(n^3) memo space in a direct four-coordinate formulation; the synchronized formulation reduces the state storage to O(n^2).",
+        "description": "Memoize a recursive two-walker formulation. The two walkers move one step at a time from the start toward the destination, and a memoized state records their two positions after the same number of moves. This removes repeated subproblems from brute force and yields O(n^3) reachable states."
+      },
+      "optimal": {
+        "complexity": "O(n^3) time and O(n^2) auxiliary space.",
+        "description": "Use bottom-up synchronized two-walker DP. At step k, store the best cherry total for every pair of row positions (r1, r2), with columns k-r1 and k-r2. For each pair, combine the four possible predecessor states, skip thorns and unreachable states, and add one or two cherries depending on whether the walkers share a cell. Only the previous step is needed, so two n x n layers suffice."
+      },
+      "bruteForce": {
+        "complexity": "If P is the number of valid monotone paths, O(P^2 · n) time and O(P · n) space to store the paths.",
+        "description": "Enumerate every valid monotone path from the start to the destination, then consider every ordered pair of such paths. For each pair, count the union of their cherry cells so a shared cell contributes once. This directly follows the round-trip semantics but is exponential in n."
+      }
+    },
     "timeComplexity": "O(n^3)",
     "spaceComplexity": "O(n^2)",
     "code": {
-      "Python3": "# Time:  O(n^3)\n# Space: O(n^2)\n\nclass Solution(object):\n    def cherryPickup(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        # dp holds the max # of cherries two k-length paths can pickup.\n        # The two k-length paths arrive at (i, k - i) and (j, k - j),\n        # respectively.\n        n = len(grid)\n        dp = [[-1 for _ in range(n)] for _ in range(n)]\n        dp[0][0] = grid[0][0]\n        max_len = 2 * (n-1)\n        directions = [(0, 0), (-1, 0), (0, -1), (-1, -1)]\n        for k in range(1, max_len+1):\n            for i in reversed(range(max(0, k-n+1), min(k+1, n))):  # 0 <= i < n, 0 <= k-i < n\n                for j in reversed(range(i, min(k+1, n))):          # i <= j < n, 0 <= k-j < n\n                    if grid[i][k-i] == -1 or grid[j][k-j] == -1:\n                        dp[i][j] = -1\n                        continue\n                    cnt = grid[i][k-i]\n                    if i != j:\n                        cnt += grid[j][k-j]\n                    max_cnt = -1\n                    for direction in directions:\n                        ii, jj = i+direction[0], j+direction[1]\n                        if ii >= 0 and jj >= 0 and dp[ii][jj] >= 0:\n                            max_cnt = max(max_cnt, dp[ii][jj]+cnt)\n                    dp[i][j] = max_cnt\n        return max(dp[n-1][n-1], 0)"
-    },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "C": "// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint cherryPickup(int** grid, int gridSize, int* gridColSize) {\n    (void)gridColSize;\n    int n = gridSize;\n    const int NEG = -1000000000;\n\n    int* dp = (int*)malloc((size_t)n * n * sizeof(int));\n    int* ndp = (int*)malloc((size_t)n * n * sizeof(int));\n    for (int i = 0; i < n * n; ++i) dp[i] = NEG;\n    dp[0] = grid[0][0];\n\n    for (int k = 1; k <= 2 * n - 2; ++k) {\n        for (int i = 0; i < n * n; ++i) ndp[i] = NEG;\n        int lo = k - n + 1;\n        if (lo < 0) lo = 0;\n        int hi = k < n - 1 ? k : n - 1;\n\n        for (int r1 = lo; r1 <= hi; ++r1) {\n            int c1 = k - r1;\n            if (grid[r1][c1] == -1) continue;\n            for (int r2 = lo; r2 <= hi; ++r2) {\n                int c2 = k - r2;\n                if (grid[r2][c2] == -1) continue;\n\n                int best = dp[r1 * n + r2];\n                if (r1 > 0 && dp[(r1 - 1) * n + r2] > best)\n                    best = dp[(r1 - 1) * n + r2];\n                if (r2 > 0 && dp[r1 * n + (r2 - 1)] > best)\n                    best = dp[r1 * n + (r2 - 1)];\n                if (r1 > 0 && r2 > 0 && dp[(r1 - 1) * n + (r2 - 1)] > best)\n                    best = dp[(r1 - 1) * n + (r2 - 1)];\n                if (best == NEG) continue;\n\n                int gain = grid[r1][c1];\n                if (r1 != r2) gain += grid[r2][c2];\n                ndp[r1 * n + r2] = best + gain;\n            }\n        }\n        int* tmp = dp; dp = ndp; ndp = tmp;\n    }\n\n    int result = dp[(n - 1) * n + (n - 1)];\n    if (result < 0) result = 0;\n    free(dp);\n    free(ndp);\n    return result;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------",
+      "C++": "class Solution {\npublic:\n    int cherryPickup(vector<vector<int>>& grid) {\n        int n = (int)grid.size();\n        const int NEG = -1000000000;\n        vector<vector<int>> dp(n, vector<int>(n, NEG));\n        dp[0][0] = grid[0][0];\n\n        for (int k = 1; k <= 2 * n - 2; ++k) {\n            vector<vector<int>> ndp(n, vector<int>(n, NEG));\n            int lo = max(0, k - n + 1);\n            int hi = min(n - 1, k);\n\n            for (int r1 = lo; r1 <= hi; ++r1) {\n                int c1 = k - r1;\n                if (grid[r1][c1] == -1) continue;\n\n                for (int r2 = lo; r2 <= hi; ++r2) {\n                    int c2 = k - r2;\n                    if (grid[r2][c2] == -1) continue;\n\n                    int best = dp[r1][r2];\n                    if (r1 > 0) best = max(best, dp[r1 - 1][r2]);\n                    if (r2 > 0) best = max(best, dp[r1][r2 - 1]);\n                    if (r1 > 0 && r2 > 0) best = max(best, dp[r1 - 1][r2 - 1]);\n                    if (best == NEG) continue;\n\n                    int gain = grid[r1][c1];\n                    if (r1 != r2) gain += grid[r2][c2];\n                    ndp[r1][r2] = best + gain;\n                }\n            }\n            dp.swap(ndp);\n        }\n\n        return max(0, dp[n - 1][n - 1]);\n    }\n};",
+      "Java": "class Solution {\n    public int cherryPickup(int[][] grid) {\n        int n = grid.length;\n        int neg = -1_000_000_000;\n        int[][] dp = new int[n][n];\n        for (int[] row : dp) Arrays.fill(row, neg);\n        dp[0][0] = grid[0][0];\n\n        for (int k = 1; k <= 2 * n - 2; k++) {\n            int[][] ndp = new int[n][n];\n            for (int[] row : ndp) Arrays.fill(row, neg);\n\n            int lo = Math.max(0, k - n + 1);\n            int hi = Math.min(n - 1, k);\n            for (int r1 = lo; r1 <= hi; r1++) {\n                int c1 = k - r1;\n                if (grid[r1][c1] == -1) continue;\n\n                for (int r2 = lo; r2 <= hi; r2++) {\n                    int c2 = k - r2;\n                    if (grid[r2][c2] == -1) continue;\n\n                    int best = dp[r1][r2];\n                    if (r1 > 0) best = Math.max(best, dp[r1 - 1][r2]);\n                    if (r2 > 0) best = Math.max(best, dp[r1][r2 - 1]);\n                    if (r1 > 0 && r2 > 0) best = Math.max(best, dp[r1 - 1][r2 - 1]);\n                    if (best == neg) continue;\n\n                    int gain = grid[r1][c1];\n                    if (r1 != r2) gain += grid[r2][c2];\n                    ndp[r1][r2] = best + gain;\n                }\n            }\n            dp = ndp;\n        }\n\n        return Math.max(0, dp[n - 1][n - 1]);\n    }\n}",
+      "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def cherryPickup(self, grid: List[List[int]]) -> int:\n        n = len(grid)\n        neg = -10**9\n        dp = [[neg] * n for _ in range(n)]\n        dp[0][0] = grid[0][0]\n\n        for k in range(1, 2 * n - 1):\n            ndp = [[neg] * n for _ in range(n)]\n            lo = max(0, k - n + 1)\n            hi = min(n - 1, k)\n            for r1 in range(lo, hi + 1):\n                c1 = k - r1\n                if grid[r1][c1] == -1:\n                    continue\n                for r2 in range(lo, hi + 1):\n                    c2 = k - r2\n                    if grid[r2][c2] == -1:\n                        continue\n                    best = dp[r1][r2]\n                    if r1 > 0:\n                        best = max(best, dp[r1 - 1][r2])\n                    if r2 > 0:\n                        best = max(best, dp[r1][r2 - 1])\n                    if r1 > 0 and r2 > 0:\n                        best = max(best, dp[r1 - 1][r2 - 1])\n                    if best == neg:\n                        continue\n                    gain = grid[r1][c1]\n                    if r1 != r2:\n                        gain += grid[r2][c2]\n                    ndp[r1][r2] = best + gain\n            dp = ndp\n\n        return max(0, dp[n - 1][n - 1])\n\n#  DRIVER  (do not modify)",
+      "JavaScript": "const readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar cherryPickup = function(grid) {\n    const n = grid.length;\n    const NEG = -1e9;\n    let dp = Array.from({ length: n }, () => Array(n).fill(NEG));\n    dp[0][0] = grid[0][0];\n\n    for (let k = 1; k <= 2 * n - 2; k++) {\n        const ndp = Array.from({ length: n }, () => Array(n).fill(NEG));\n        const lo = Math.max(0, k - n + 1);\n        const hi = Math.min(n - 1, k);\n\n        for (let r1 = lo; r1 <= hi; r1++) {\n            const c1 = k - r1;\n            if (grid[r1][c1] === -1) continue;\n\n            for (let r2 = lo; r2 <= hi; r2++) {\n                const c2 = k - r2;\n                if (grid[r2][c2] === -1) continue;\n\n                let best = dp[r1][r2];\n                if (r1 > 0) best = Math.max(best, dp[r1 - 1][r2]);\n                if (r2 > 0) best = Math.max(best, dp[r1][r2 - 1]);\n                if (r1 > 0 && r2 > 0) best = Math.max(best, dp[r1 - 1][r2 - 1]);\n                if (best === NEG) continue;\n\n                let gain = grid[r1][c1];\n                if (r1 !== r2) gain += grid[r2][c2];\n                ndp[r1][r2] = best + gain;\n            }\n        }\n        dp = ndp;\n    }\n\n    return Math.max(0, dp[n - 1][n - 1]);\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint cherryPickup(int** grid, int gridSize, int* gridColSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int gridSize = 0;\n        int* gridColSize = NULL;\n        int** grid = parse_int_2d(&tok, &gridSize, &gridColSize);\n        int result = cherryPickup(grid, gridSize, gridColSize);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def cherryPickup(self, grid: List[List[int]]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _grid = _args[0]\n    _result = Solution().cherryPickup(_grid)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar cherryPickup = function(grid) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = cherryPickup(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int cherryPickup(int[][] grid) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[][] grid = toInt2D(nextToken());\n        int result = new Solution().cherryPickup(grid);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int cherryPickup(vector<vector<int>>& grid) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto grid = readInt2D(tok);\n    auto result = Solution().cherryPickup(grid);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "grid",
+        "type": "integer[][]"
+      }
+    ],
+    "methodName": "cherryPickup"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Can the O(n^2) auxiliary space be reduced further without changing the O(n^3) time bound?",
+    "How would the implementation change if the grid were rectangular instead of square?",
+    "Can the same two-walker state be implemented with top-down memoization?",
+    "How would the approach change if cell values could be negative rather than restricted to -1, 0, and 1?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[[0]]]",
+        "label": "Single empty cell",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[[1]]]",
+        "label": "Single cherry at start and destination",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[[0,0],[0,0]]]",
+        "label": "Minimum 2x2 empty grid",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[[1,1],[1,1]]]",
+        "label": "2x2 all cherries",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+        "label": "Endpoint cherries only",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[[0,1,0],[1,1,0],[0,0,0]]]",
+        "label": "Multiple overlapping optimal routes",
+        "weight": 4,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[[0,1,1],[1,1,1],[1,1,0]]]",
+        "label": "Dense cherries with shared cells",
+        "weight": 4,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[[1,1,1],[1,-1,1],[1,1,1]]]",
+        "label": "Central thorn forces route choice",
+        "weight": 4,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[[1,0,-1],[1,0,-1],[1,1,1]]]",
+        "label": "Single viable corridor",
+        "weight": 4,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[[1,-1,-1],[-1,-1,-1],[-1,-1,1]]]",
+        "label": "No valid path",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[[0,0,0],[0,-1,0],[0,0,0]]]",
+        "label": "One central obstacle",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[[0,1,-1,0],[1,0,-1,1],[1,1,1,1],[0,-1,1,1]]]",
+        "label": "Irregular obstacles and route tradeoff",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[[1,1,1,1],[0,0,0,1],[1,1,1,1],[1,1,1,1]]]",
+        "label": "Top-row versus lower-route tradeoff",
+        "weight": 3,
+        "expectedOutput": "11"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]]]",
+        "label": "Checkerboard cherries",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]]]",
+        "label": "4x4 all cherries",
+        "weight": 3,
+        "expectedOutput": "12"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1],[1,-1,-1,-1,1],[1,1,1,1,1],[1,-1,-1,-1,1],[1,1,1,1,1]]]",
+        "label": "Alternating bottleneck corridors",
+        "weight": 3,
+        "expectedOutput": "16"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+        "label": "Cherry ring with interior",
+        "weight": 3,
+        "expectedOutput": "16"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[[1,0,0,0,1],[0,1,1,1,0],[0,1,-1,1,0],[0,1,1,1,0],[1,0,0,0,1]]]",
+        "label": "Symmetric diamond around thorn",
+        "weight": 3,
+        "expectedOutput": "10"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[[0,1,1,0,0,1],[1,1,0,1,1,0],[0,1,1,1,0,1],[1,0,1,0,1,1],[1,1,0,1,1,0],[0,1,1,0,0,1]]]",
+        "label": "Mixed 6x6 route choices",
+        "weight": 3,
+        "expectedOutput": "14"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[[1,1,0,1,1,1],[1,-1,0,-1,0,1],[0,1,1,1,1,0],[1,0,-1,0,1,1],[1,1,1,1,-1,1],[0,1,0,1,1,1]]]",
+        "label": "Disconnected-looking obstacles with viable paths",
+        "weight": 3,
+        "expectedOutput": "17"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]]",
+        "label": "7x7 empty field",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]]",
+        "label": "7x7 all cherries",
+        "weight": 3,
+        "expectedOutput": "24"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "label": "Maximum-size all-cherry grid",
+        "weight": 3,
+        "expectedOutput": "196"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,-1,1],[1,1,1,1,1,-1,1,1],[1,1,1,1,-1,1,1,1],[1,1,1,-1,1,1,1,1],[1,1,-1,1,1,1,1,1],[1,-1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]]",
+        "label": "8x8 anti-diagonal thorn barrier",
+        "weight": 3,
+        "expectedOutput": "28"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[[1,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,1],[1,0,1,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,1],[1,0,0,0,1,0,0,0,1],[1,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,1,0,1],[1,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,1]]]",
+        "label": "9x9 sparse boundary cherries",
+        "weight": 3,
+        "expectedOutput": "18"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[[0,1,1,0,1,1,0,1,1,0],[1,1,0,1,1,0,1,1,0,1],[1,0,1,1,0,1,1,0,1,1],[0,1,1,0,1,1,0,1,1,0],[1,1,0,1,1,0,1,1,0,1],[1,0,1,1,0,1,1,0,1,1],[0,1,1,0,1,1,0,1,1,0],[1,1,0,1,1,0,1,1,0,1],[1,0,1,1,0,1,1,0,1,1],[0,1,1,0,1,1,0,1,1,0]]]",
+        "label": "10x10 periodic cherry pattern",
+        "weight": 3,
+        "expectedOutput": "24"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,0,1,0,1,0,1,1,1],[1,1,1,0,1,0,1,0,1,1],[1,1,0,1,0,1,0,1,1,1],[1,1,1,0,1,0,1,0,1,1],[1,1,0,1,0,1,0,1,1,1],[1,1,1,0,1,0,1,0,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]]]",
+        "label": "10x10 dense border with sparse interior",
+        "weight": 3,
+        "expectedOutput": "36"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1],[0,-1,1,1,1,1,1,1,1,1,1],[1,0,-1,1,1,1,1,1,1,1,1],[1,1,0,-1,1,1,1,1,1,1,1],[1,1,1,0,-1,1,1,1,1,1,1],[1,1,1,1,0,-1,1,1,1,1,1],[1,1,1,1,1,0,-1,1,1,1,1],[1,1,1,1,1,1,0,-1,1,1,1],[1,1,1,1,1,1,1,0,-1,1,1],[1,1,1,1,1,1,1,1,0,-1,1],[1,1,1,1,1,1,1,1,1,1,1]]]",
+        "label": "11x11 zigzag obstacle diagonal",
+        "weight": 3,
+        "expectedOutput": "39"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,0,1],[0,1,0,0,0,0,0,0,0,0,1,0],[0,0,1,0,0,0,1,0,0,1,0,0],[0,0,0,1,0,0,0,0,1,0,0,0],[0,0,0,0,1,0,0,1,0,0,0,0],[0,0,0,0,0,1,1,0,0,0,0,0],[0,0,0,0,0,1,1,0,0,0,0,0],[0,0,0,0,1,0,0,1,0,0,0,0],[0,0,0,1,0,0,1,0,1,0,0,0],[0,0,1,0,0,0,0,0,0,1,0,0],[0,1,0,0,0,0,0,0,0,0,1,0],[1,0,0,0,0,0,0,0,0,0,0,1]]]",
+        "label": "12x12 sparse crossing cherries",
+        "weight": 3,
+        "expectedOutput": "16"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[0,1,1,0,0,1,0,-1,-1,0,1,-1],[0,0,0,0,1,-1,1,0,1,-1,1,1],[0,1,1,0,0,-1,1,1,1,-1,1,0],[0,1,1,0,0,-1,0,0,1,0,0,0],[0,1,1,0,0,0,1,1,1,1,1,0],[0,0,0,1,1,0,0,1,1,0,1,1],[0,-1,1,0,0,1,0,0,1,1,0,1],[0,1,0,0,-1,0,0,-1,1,0,1,0],[0,1,0,1,-1,1,0,0,1,1,0,0],[0,1,1,1,1,0,1,1,1,0,0,1],[0,-1,0,-1,-1,1,1,0,1,0,1,0],[0,0,0,0,0,0,0,0,0,0,0,0]]]",
+        "label": "12x12 random-pattern field with guaranteed corridor",
+        "weight": 3,
+        "expectedOutput": "29"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q741",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' ||\n           t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char ch = t->s[t->pos++];\n            if (ch == '[') depth++;\n            else if (ch == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' &&\n               t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n    }\n    int token_len = t->pos - start;\n    char* token = (char*)malloc(token_len + 1);\n    memcpy(token, t->s + start, token_len);\n    token[token_len] = '\\0';\n    return token;\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = (int)strlen(tok);\n    char* inner = (char*)malloc((size_t)len - 1);\n    memcpy(inner, tok + 1, (size_t)len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; ++i) if (inner[i] == ',') ++size;\n    int* arr = (int*)malloc((size_t)size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; ++i) arr[i] = parse_int(&t2);\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = (int)strlen(tok);\n    char* inner = (char*)malloc((size_t)len - 1);\n    memcpy(inner, tok + 1, (size_t)len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0, depth = 0;\n    for (int i = 0; inner[i]; ++i) {\n        if (inner[i] == '[') {\n            if (depth == 0) ++rows;\n            ++depth;\n        } else if (inner[i] == ']') {\n            --depth;\n        }\n    }\n\n    int** mat = (int**)malloc((size_t)rows * sizeof(int*));\n    int* cols = (int*)malloc((size_t)rows * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; ++i) mat[i] = parse_int_array(&t2, &cols[i]);\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint cherryPickup(int** grid, int gridSize, int* gridColSize) {\n    return 0;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        int len = (int)strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            --len;\n        }\n        char* raw = (char*)malloc((size_t)len - 1);\n        memcpy(raw, line + 1, (size_t)len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n\n        int gridSize = 0;\n        int* gridColSize = NULL;\n        int** grid = parse_int_2d(&tok, &gridSize, &gridColSize);\n        int result = cherryPickup(grid, gridSize, gridColSize);\n        printf(\"%d\\n\", result);\n\n        for (int i = 0; i < gridSize; ++i) free(grid[i]);\n        free(grid);\n        free(gridColSize);\n        free(raw);\n    }\n    return 0;\n}",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int cherryPickup(vector<vector<int>>& grid) {\n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto grid = readInt2D(tok);\n    auto result = Solution().cherryPickup(grid);\n    cout << result << endl;\n    return 0;\n}",
+    "Java": "import java.util.*;\nimport java.io.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int cherryPickup(int[][] grid) {\n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[][] grid = toInt2D(nextToken());\n        int result = new Solution().cherryPickup(grid);\n        System.out.println(result);\n    }\n}",
+    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def cherryPickup(self, grid: List[List[int]]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _grid = _args[0]\n    _result = Solution().cherryPickup(_grid)\n\n    print(json.dumps(_result))",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar cherryPickup = function(grid) {\n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = cherryPickup(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–60 minutes",
+  "learningObjectives": [
+    "Recognize when a round trip can be transformed into two synchronized forward paths.",
+    "Design dynamic programming states using a fixed-step invariant.",
+    "Handle overlapping paths without double-counting shared resources.",
+    "Optimize multidimensional dynamic programming with rolling layers."
+  ]
 }

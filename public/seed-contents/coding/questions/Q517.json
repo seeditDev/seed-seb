@@ -1,27 +1,20 @@
 {
-  "questionId": "Q517",
-  "title": "Super Washing Machines Problem",
   "slug": "super-washing-machines",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "greedy"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "greedy"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "First check whether the total number of dresses can be divided evenly among all machines.",
+    "Let target be the required number of dresses in each machine, then compute each machine's surplus or deficit.",
+    "Track the cumulative surplus of the prefix as you scan from left to right; its magnitude tells you how much flow must cross a boundary.",
+    "The answer is the largest value among the positive local surplus and the absolute cumulative imbalance."
+  ],
+  "title": "Super Washing Machines Problem",
   "content": {
-    "problemStatement": "You have `n` super washing machines on a line. At the beginning, each washing machine has some dresses or is empty.\n\nFor each move, you could choose any `m` (`1 <= m <= n`) washing machines, and pass one dress of each washing machine to one of its adjacent washing machines at the same time.\n\nWith an integer array `machines` representing the number of dresses in each washing machine from left to right on the line, output *the smallest number of moves to make all the washing machines have the same number of dresses*. If it is not possible to do it, output `-1`.\n\n**Example 1:**\n\n```\nInput: machines = [1,0,5]\nOutput: 3\nExplanation:\n1st move:    1     0 <-- 5    =>    1     1     4\n2nd move:    1 <-- 1 <-- 4    =>    2     1     3\n3rd move:    2     1 <-- 3    =>    2     2     2\n```\n\n**Example 2:**\n\n```\nInput: machines = [0,3,0]\nOutput: 2\nExplanation:\n1st move:    0 <-- 3     0    =>    1     2     0\n2nd move:    1     2 --> 0    =>    1     1     1\n```\n\n**Example 3:**\n\n```\nInput: machines = [0,2,0]\nOutput: -1\nExplanation:\nIt's impossible to make all three washing machines have the same number of dresses.\n```\n\n**Constraints:**\n\n* `n == machines.length`\n* `1 <= n <= 10^4`\n* `0 <= machines[i] <= 10^5`",
+    "notes": [
+      "The total number of dresses must be divisible by n for an equal distribution to be possible.",
+      "Let target be the required average number of dresses per machine.",
+      "When scanning left to right, the cumulative imbalance is the net number of dresses that must cross the boundary of the processed prefix.",
+      "The minimum number of moves is the maximum of the positive local surplus and the absolute cumulative imbalance.",
+      "Use integer arithmetic; the total number of dresses is at most 10^9."
+    ],
     "constraints": [
       "n == machines.length",
       "1 <= n <= 10^4",
@@ -35,291 +28,59 @@
         "type": "reg",
         "input": "[[1,0,5]]",
         "output": "3",
-        "explanation": "1st move:    1     0 <-- 5    =>    1     1     4\n2nd move:    1 <-- 1 <-- 4    =>    2     1     3\n3rd move:    2     1 <-- 3    =>    2     2     2"
+        "explanation": "There are 6 dresses, so every machine must finish with 2. The optimal redistribution takes 3 moves."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[0,3,0]]",
         "output": "2",
-        "explanation": "1st move:    0 <-- 3     0    =>    1     2     0\n2nd move:    1     2 --> 0    =>    1     1     1"
+        "explanation": "There are 3 dresses, so every machine must finish with 1. Two moves redistribute the middle machine's surplus."
       },
       {
         "id": "sample_3",
         "type": "reg",
         "input": "[[0,2,0]]",
         "output": "-1",
-        "explanation": "It's impossible to make all three washing machines have the same number of dresses."
+        "explanation": "The total of 2 dresses is not divisible by 3, so an equal integer distribution is impossible."
       }
     ],
-    "notes": []
+    "problemStatement": "You have `n` super washing machines on a line. At the beginning, each washing machine has some dresses or is empty.\n\nFor each move, you could choose any `m` (`1 <= m <= n`) washing machines, and pass one dress of each washing machine to one of its adjacent washing machines at the same time.\n\nWith an integer array `machines` representing the number of dresses in each washing machine from left to right on the line, output *the smallest number of moves to make all the washing machines have the same number of dresses*. If it is not possible to do it, output `-1`.\n\n**Example 1:**\n\n```\nInput: machines = [1,0,5]\nOutput: 3\nExplanation:\n1st move:    1     0 <-- 5    =>    1     1     4\n2nd move:    1 <-- 1 <-- 4    =>    2     1     3\n3rd move:    2     1 <-- 3    =>    2     2     2\n```\n\n**Example 2:**\n\n```\nInput: machines = [0,3,0]\nOutput: 2\nExplanation:\n1st move:    0 <-- 3     0    =>    1     2     0\n2nd move:    1     2 --> 0    =>    1     1     1\n```\n\n**Example 3:**\n\n```\nInput: machines = [0,2,0]\nOutput: -1\nExplanation:\nIt's impossible to make all three washing machines have the same number of dresses.\n```\n\n**Constraints:**\n\n* `n == machines.length`\n* `1 <= n <= 10^4`\n* `0 <= machines[i] <= 10^5`"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[1]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Maximum array size",
-        "input": "[[10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Single element",
-        "input": "[[100000]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Two elements",
-        "input": "[[0, 100000]]",
-        "expectedOutput": "50000.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "All elements same",
-        "input": "[[10000, 10000, 10000, 10000, 10000]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Strictly increasing",
-        "input": "[[1, 2, 3, 4, 5]]",
-        "expectedOutput": "3.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Strictly decreasing",
-        "input": "[[100000, 99999, 99998, 99997, 99996]]",
-        "expectedOutput": "3.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Random order",
-        "input": "[[10000, 1, 99999, 5000, 25000]]",
-        "expectedOutput": "71999.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Large positive values",
-        "input": "[[99999, 99998, 99997, 99996, 99995]]",
-        "expectedOutput": "3.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "Large negative values",
-        "input": "[[0, 0, 0, 0, 0]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[5, 5, 5, 5, 5]]",
-        "expectedOutput": "0",
-        "weight": 4
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[10, -5, 0, 5, -10]]",
-        "expectedOutput": "10.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[10, 0, 0, 0, 0]]",
-        "expectedOutput": "8.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[0, 0, 10, 0, 0]]",
-        "expectedOutput": "8.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[0, 0, 0, 0, 10]]",
-        "expectedOutput": "8.0",
-        "weight": 2
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "Answer spans entire array",
-        "input": "[[1, 1, 1, 1, 1]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "Standard case (if applicable)",
-        "input": "[[0]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "Implementations use integer arithmetic; aggregate totals and cumulative balances use wider integer types where appropriate."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
       3,
       3,
       3,
@@ -334,57 +95,335 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "greedy"
     ],
-    "notes": []
+    "category": "Arrays",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "greedy"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses a single pass through the machines array to calculate the target number of dresses per machine and track the maximum imbalance.",
+    "notes": [
+      "The cumulative balance determines how many dresses must cross each boundary between adjacent machines.",
+      "A positive local surplus can require all surplus dresses to leave a machine in separate simultaneous transfers, so local surplus must also be considered.",
+      "The maximum of the local positive surplus and absolute prefix imbalance is both a lower bound and achievable under the simultaneous-transfer rules.",
+      "Use integer arithmetic throughout; the total number of dresses is at most 10^9."
+    ],
+    "approach": "First compute the total number of dresses. If it is not divisible by the number of machines, return -1. Otherwise let target be the average. Scan from left to right, maintaining balance, the net surplus of the processed prefix relative to its target amount. For each machine, update balance by machines[i] - target and maximize the answer with both the machine's positive surplus and abs(balance). This maximum is exactly the minimum number of moves.",
+    "editorial": {
+      "better": {
+        "complexity": "O(n) time and O(1) extra space.",
+        "description": "Avoid simulating individual moves. After checking divisibility, compute the target average and use prefix conservation: the cumulative imbalance gives the unavoidable flow across each boundary, while each machine's positive surplus gives the other necessary lower bound. This prefix-flow characterization is already the asymptotically optimal approach."
+      },
+      "optimal": {
+        "complexity": "O(n) time and O(1) extra space.",
+        "description": "Let target be the total dresses divided by n. During one left-to-right scan, set delta = machines[i] - target and add it to balance. abs(balance) is the number of dresses that must cross the boundary after i, while positive delta is the number that must leave the current machine. The maximum of these values over all positions is the exact minimum number of moves."
+      },
+      "bruteForce": {
+        "complexity": "Exponential in the worst case.",
+        "description": "Enumerate possible simultaneous transfers and resulting machine configurations until every machine is equal. This explores a rapidly growing state space and is practical only for tiny inputs."
+      }
+    },
     "timeComplexity": "O(n)",
     "spaceComplexity": "O(1)",
     "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(1) (excluding result storage)\n\nclass Solution(object):\n    def findMinMoves(self, machines):\n        \"\"\"\n        :type machines: List[int]\n        :rtype: int\n        \"\"\"\n        total = sum(machines)\n        if total % len(machines): return -1\n\n        result, target, curr = 0, total / len(machines), 0\n        for n in machines:\n            curr += n - target\n            result = max(result, max(n - target, abs(curr)))\n        return result"
-    },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint findMinMoves(int* machines, int machinesSize) {\n    long long total = 0;\n    for (int i = 0; i < machinesSize; ++i) total += machines[i];\n    if (total % machinesSize != 0) return -1;\n    long long target = total / machinesSize;\n    long long balance = 0, answer = 0;\n    for (int i = 0; i < machinesSize; ++i) {\n        long long delta = (long long)machines[i] - target;\n        balance += delta;\n        long long absBalance = balance < 0 ? -balance : balance;\n        if (delta > answer) answer = delta;\n        if (absBalance > answer) answer = absBalance;\n    }\n    return (int)answer;\n}",
+      "C++": "class Solution {\npublic:\n    int findMinMoves(vector<int>& machines) {\n        long long total = 0;\n        for (int x : machines) total += x;\n        int n = (int)machines.size();\n        if (total % n != 0) return -1;\n        long long target = total / n;\n        long long balance = 0, answer = 0;\n        for (int x : machines) {\n            long long delta = (long long)x - target;\n            balance += delta;\n            answer = max(answer, max(delta, llabs(balance)));\n        }\n        return (int)answer;\n    }\n};",
+      "Java": "class Solution {\n    public int findMinMoves(int[] machines) {\n        long total = 0;\n        for (int x : machines) total += x;\n        int n = machines.length;\n        if (total % n != 0) return -1;\n        long target = total / n;\n        long balance = 0, answer = 0;\n        for (int x : machines) {\n            long delta = x - target;\n            balance += delta;\n            answer = Math.max(answer, Math.max(delta, Math.abs(balance)));\n        }\n        return (int) answer;\n    }\n}",
+      "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def findMinMoves(self, machines: List[int]) -> int:\n        total = sum(machines)\n        n = len(machines)\n        if total % n != 0:\n            return -1\n        target = total // n\n        balance = 0\n        answer = 0\n        for dresses in machines:\n            delta = dresses - target\n            balance += delta\n            answer = max(answer, delta, abs(balance))\n        return answer",
+      "JavaScript": "const readline = require('readline');\nfunction findMinMoves(machines) {\n    const total = machines.reduce((a,b) => a+b, 0);\n    const n = machines.length;\n    if (total % n !== 0) return -1;\n    const target = total / n;\n    let balance = 0, answer = 0;\n    for (const dresses of machines) {\n        const delta = dresses - target;\n        balance += delta;\n        answer = Math.max(answer, delta, Math.abs(balance));\n    }\n    return answer;\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint findMinMoves(int* machines, int machinesSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int machinesSize = 0;\n        int* machines = parse_int_array(&tok, &machinesSize);\n        int result = findMinMoves(machines, machinesSize);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def findMinMoves(self, machines: List[int]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _machines = _args[0]\n    _result = Solution().findMinMoves(_machines)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[]} machines\n * @return {number}\n */\nvar findMinMoves = function(machines) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = findMinMoves(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int findMinMoves(int[] machines) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[] machines = toIntArray(nextToken());\n        int result = new Solution().findMinMoves(machines);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int findMinMoves(vector<int>& machines) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto machines = readIntVec(tok);\n    auto result = Solution().findMinMoves(machines);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "machines",
+        "type": "integer[]"
+      }
+    ],
+    "methodName": "findMinMoves"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Why does the maximum prefix imbalance give a lower bound on the number of moves?",
+    "How would you reconstruct one valid sequence of simultaneous moves that achieves the minimum?",
+    "How would the problem change if the washing machines were arranged in a circle instead of a line?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[1]]",
+        "label": "Minimum single machine",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[0,0]]",
+        "label": "Two empty machines already balanced",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[0,100000]]",
+        "label": "Two-machine maximum transfer",
+        "weight": 4,
+        "expectedOutput": "50000"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[100000,0]]",
+        "label": "Reversed two-machine imbalance",
+        "weight": 4,
+        "expectedOutput": "50000"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[0,0,0,0,8]]",
+        "label": "Impossible non-divisible total",
+        "weight": 4,
+        "expectedOutput": "-1"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[0,6,0]]",
+        "label": "Central donor with two neighboring deficits",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[2,0,4]]",
+        "label": "Three-machine asymmetric valid redistribution",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[0,0,6]]",
+        "label": "Single donor at right edge",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[6,0,0]]",
+        "label": "Single donor at left edge",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[0,0,2,2]]",
+        "label": "Prefix deficit dominates",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[2,2,0,0]]",
+        "label": "Prefix surplus in reverse direction",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[0,2,2,0]]",
+        "label": "One-step center-to-neighbor flow",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[0,10,0,0,0]]",
+        "label": "Early donor crosses multiple boundaries",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[0,0,0,0,10]]",
+        "label": "Late donor crosses multiple boundaries",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[10,0,0,0,0]]",
+        "label": "Leftmost donor crosses multiple boundaries",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[0,0,10,0,0]]",
+        "label": "Middle donor with symmetric deficits",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[4,0,0,4]]",
+        "label": "Separated donors with balanced total",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[4,0,4,0]]",
+        "label": "Alternating surplus and deficit",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[0,4,0,4,0]]",
+        "label": "Impossible five-machine total",
+        "weight": 3,
+        "expectedOutput": "-1"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[2,0,2,0,2]]",
+        "label": "Impossible irregular total",
+        "weight": 3,
+        "expectedOutput": "-1"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[0,0,0,4,1]]",
+        "label": "Final donor supplies accumulated deficit",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[1,3,1,3]]",
+        "label": "Alternating one-step transfers",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[100000,100000,0,0]]",
+        "label": "Large prefix surplus",
+        "weight": 3,
+        "expectedOutput": "100000"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[0,100000,0,0]]",
+        "label": "Maximum donor at second position",
+        "weight": 3,
+        "expectedOutput": "75000"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[0,0,100000,0]]",
+        "label": "Maximum donor at third position",
+        "weight": 3,
+        "expectedOutput": "75000"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[0,0,20,20,0]]",
+        "label": "Two donors near right edge",
+        "weight": 3,
+        "expectedOutput": "16"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[100000,0,0,0]]",
+        "label": "Maximum donor at left boundary",
+        "weight": 3,
+        "expectedOutput": "75000"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[0,100000,100000,0]]",
+        "label": "Maximum values split across middle",
+        "weight": 3,
+        "expectedOutput": "50000"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[0,0,0,6,4]]",
+        "label": "Cumulative deficit equals local surplus",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_30",
+        "type": "gen",
+        "input": "JSON.stringify([Array.from({length:10000},(_,i)=>i===9999?100000:0)])",
+        "label": "Near-maximum machine count with concentrated surplus",
+        "weight": 3,
+        "expectedOutput": "JSON.stringify(99990)"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q517",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint findMinMoves(int* machines, int machinesSize) {\n    return 0;\n}\n\nint main(void) {\n    char line[1000000];\n    if (!fgets(line, sizeof(line), stdin)) return 1;\n    int cap = 1024, n = 0;\n    int* machines = (int*)malloc((size_t)cap * sizeof(int));\n    const char* p = line;\n    while (*p) {\n        if (*p == '-' || (*p >= '0' && *p <= '9')) {\n            char* end;\n            long v = strtol(p, &end, 10);\n            if (n == cap) { cap *= 2; machines = (int*)realloc(machines, (size_t)cap * sizeof(int)); }\n            machines[n++] = (int)v;\n            p = end;\n        } else ++p;\n    }\n    if (n == 0) { free(machines); return 1; }\n    printf(\"%d\\n\", findMinMoves(machines, n));\n    free(machines);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMinMoves(vector<int>& machines) {\n        return 0;\n    }\n};\n\nint main() {\n    string line; getline(cin, line);\n    regex re(R\"(-?\\d+)\");\n    vector<int> machines;\n    for (sregex_iterator it(line.begin(), line.end(), re), end; it != end; ++it) machines.push_back(stoi(it->str()));\n    cout << Solution().findMinMoves(machines) << '\\n';\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\nimport java.util.regex.*;\n\nclass Solution {\n    public int findMinMoves(int[] machines) {\n        return 0;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        Matcher m = Pattern.compile(\"-?\\\\d+\").matcher(line);\n        ArrayList<Integer> values = new ArrayList<>();\n        while (m.find()) values.add(Integer.parseInt(m.group()));\n        int[] machines = new int[values.size()];\n        for (int i = 0; i < values.size(); i++) machines[i] = values.get(i);\n        System.out.println(new Solution().findMinMoves(machines));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def findMinMoves(self, machines: List[int]) -> int:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().findMinMoves(args[0])))\n",
+    "JavaScript": "\"use strict\";\nconst readline = require('readline');\nfunction findMinMoves(machines) {\n    return 0;\n}\nconst rl = readline.createInterface({input: process.stdin, crlfDelay: Infinity});\nrl.once('line', line => { const args = JSON.parse(line.trim()); console.log(JSON.stringify(findMinMoves(args[0]))); rl.close(); });\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "35–50 minutes",
+  "learningObjectives": [
+    "Use conservation of quantity to detect when equalization is impossible.",
+    "Interpret prefix imbalance as the minimum flow across an array boundary.",
+    "Derive an exact greedy invariant from simultaneous-transfer rules.",
+    "Implement the solution in O(n) time and O(1) extra space using safe integer arithmetic."
+  ]
 }

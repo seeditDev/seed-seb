@@ -186,17 +186,47 @@ const normalizeQuestion = (q, idx = 0) => {
   };
 };
 
+/**
+ * Robustly extracts the list of questions or challenges for a given section
+ * checking sectionData map (all alias keys) and active section inline properties.
+ */
+const getSectionQuestionsList = (sec, secDataMap, idx) => {
+  if (!sec) return [];
+  const secData = secDataMap ? (
+    secDataMap[sec.sectionId] ||
+    secDataMap[sec.id] ||
+    secDataMap[sec.name] ||
+    secDataMap[sec.slug] ||
+    secDataMap[String(idx)]
+  ) : null;
+
+  if (secData) {
+    if (Array.isArray(secData.questions) && secData.questions.length > 0) return secData.questions;
+    if (Array.isArray(secData.challenges) && secData.challenges.length > 0) return secData.challenges;
+    if (Array.isArray(secData.codingQuestions) && secData.codingQuestions.length > 0) return secData.codingQuestions;
+    if (Array.isArray(secData.qids) && secData.qids.length > 0) return secData.qids;
+    if (secData.problem) return [secData.problem];
+  }
+  if (Array.isArray(sec.questions) && sec.questions.length > 0) return sec.questions;
+  if (Array.isArray(sec.challenges) && sec.challenges.length > 0) return sec.challenges;
+  if (Array.isArray(sec.codingQuestions) && sec.codingQuestions.length > 0) return sec.codingQuestions;
+  if (Array.isArray(sec.qids) && sec.qids.length > 0) return sec.qids;
+  if (sec.problem) return [sec.problem];
+  return [];
+};
+
 
 // ─── MCQ Section Renderer ────────────────────────────────────────────────────
 
 const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, proctoringData = { violationCount: 0, violations: [] }, settings = {}, onSectionSubmit, assessmentName = '', assessmentId = '' }) => {
   const questions = useMemo(() => sectionData?.questions || [], [sectionData?.questions]);
-  const stateKey = `msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`;
+  const secId = sectionData?.sectionId || sectionData?.id || sectionData?.name || '';
+  const stateKey = `msa_active_mcq_state_${assessmentId}_${secId}`;
 
   const [answers, setAnswers] = useState(() => {
     try {
       if (typeof window === 'undefined') return {};
-      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`);
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${secId}`);
       if (saved) return JSON.parse(saved).answers || {};
     } catch (_) { }
     return {};
@@ -205,7 +235,7 @@ const MCQSectionView = React.memo(({ sectionData, secTimer, secStarted = false, 
   const [questionIndex, setQuestionIndex] = useState(() => {
     try {
       if (typeof window === 'undefined') return 0;
-      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${sectionData?.id ?? ''}`);
+      const saved = localStorage.getItem(`msa_active_mcq_state_${assessmentId}_${secId}`);
       if (saved) return JSON.parse(saved).questionIndex || 0;
     } catch (_) { }
     return 0;
@@ -922,9 +952,11 @@ const CodingSectionView = React.memo(({ sectionData, secTimer, settings = {}, pr
       rawList = sectionData.codingQuestions;
     } else if (Array.isArray(sectionData?.items) && sectionData.items.length > 0) {
       rawList = sectionData.items;
+    } else if (Array.isArray(sectionData?.qids) && sectionData.qids.length > 0) {
+      rawList = sectionData.qids.map(qid => typeof qid === 'string' ? { id: qid, questionId: qid } : qid);
     }
     return rawList.map(normalizeQuestion);
-  }, [sectionData?.questions, sectionData?.challenges, sectionData?.codingQuestions, sectionData?.items]);
+  }, [sectionData?.questions, sectionData?.challenges, sectionData?.codingQuestions, sectionData?.items, sectionData?.qids]);
 
   const testData = useMemo(() => ({
     ...sectionData,
@@ -980,6 +1012,7 @@ const MultiSectionAssessment = () => {
   const [secCompleted, setSecCompleted] = useState({});
   const [sectionCountdown, setSectionCountdown] = useState(null);
   const [countdownSecIdx, setCountdownSecIdx] = useState(-1);
+  const [prelaunchTick, setPrelaunchTick] = useState(0);
 
   // Data stores
   const [sectionData, setSectionData] = useState({});
@@ -1833,7 +1866,7 @@ const MultiSectionAssessment = () => {
           const processData = async (data, secType) => {
             const rawType = (secType || data.contentCategory || data.type || sec.type || '').toLowerCase();
             const isMcq = rawType === 'mcq' || data.contentCategory === 'mcq';
-            const isCoding = rawType === 'coding' || rawType === 'code' || data.contentCategory === 'coding' || Array.isArray(data.challenges) || Array.isArray(data.codingQuestions) || Boolean(data.problem);
+            const isCoding = rawType === 'coding' || rawType === 'code' || data.contentCategory === 'coding' || Array.isArray(data.challenges) || Array.isArray(data.codingQuestions) || Array.isArray(data.qids) || Array.isArray(data.questionIds) || Boolean(data.problem);
 
             if (isMcq) {
               // Normalize MCQ questions for student view (support both Firestore 'text'/'correctIndex' and static 'question'/'correctAnswer')
@@ -1859,16 +1892,20 @@ const MultiSectionAssessment = () => {
                 };
               });
             } else if (isCoding) {
-              // Prefer challenges array (has cdnUrl/qid/id) or questionIds or questions array or data.problem
+              // Prefer qids array (from Firebase), challenges array, questionIds, questions array, or problem
               let questionRefs = [];
-              if (Array.isArray(data.challenges) && data.challenges.length > 0) {
+              if (Array.isArray(data.qids) && data.qids.length > 0) {
+                questionRefs = data.qids;
+              } else if (Array.isArray(data.challenges) && data.challenges.length > 0) {
                 questionRefs = data.challenges;
-              } else if (Array.isArray(data.questions) && data.questions.length > 0) {
-                questionRefs = data.questions;
               } else if (Array.isArray(data.questionIds) && data.questionIds.length > 0) {
                 questionRefs = data.questionIds;
+              } else if (Array.isArray(data.questions) && data.questions.length > 0) {
+                questionRefs = data.questions;
               } else if (Array.isArray(data.codingQuestions) && data.codingQuestions.length > 0) {
                 questionRefs = data.codingQuestions;
+              } else if (Array.isArray(sec.qids) && sec.qids.length > 0) {
+                questionRefs = sec.qids;
               } else if (data.problem) {
                 questionRefs = [data.problem];
               }
@@ -1879,11 +1916,13 @@ const MultiSectionAssessment = () => {
                   data.questions = (resolved || []).map(normalizeQuestion);
                   data.challenges = data.questions;
                 } catch (resErr) {
-                  console.error('[MSA] Failed to resolve coding questions:', resErr);
-                  data.questions = [];
+                  console.error('[MSA] Failed to resolve coding questions via question bank, falling back to inline challenges:', resErr);
+                  data.questions = questionRefs.map(normalizeQuestion);
+                  data.challenges = data.questions;
                 }
               } else {
                 data.questions = [];
+                data.challenges = [];
               }
             }
 
@@ -1898,23 +1937,47 @@ const MultiSectionAssessment = () => {
           const slugOrId = sec.assessmentId || sec.slug || sec.id;
           if (slugOrId && typeof slugOrId === 'string' && !slugOrId.startsWith('http') && !slugOrId.endsWith('.json')) {
             try {
-              // Direct doc lookup by ID or slug
+              let assessData = null;
+              let resolvedDocId = slugOrId;
               const assessSnap = await getDoc(doc(db, 'assessments', slugOrId));
               if (assessSnap.exists()) {
-                const assessData = assessSnap.data();
+                assessData = assessSnap.data();
+                resolvedDocId = assessSnap.id;
                 console.log(`[MSA] Loaded section "${sec.name}" (${slugOrId}) from Firestore assessments/`);
-                await processData({ ...assessData, ...sec, id: assessSnap.id, assessmentId: assessSnap.id }, sec.type || assessData.type || assessData.contentCategory);
-                return;
+              } else {
+                // Query by slug field if direct ID didn't match
+                const q = query(collection(db, 'assessments'), where('slug', '==', slugOrId));
+                const qSnap = await getDocs(q);
+                if (!qSnap.empty) {
+                  const assessDoc = qSnap.docs[0];
+                  assessData = assessDoc.data();
+                  resolvedDocId = assessDoc.id;
+                  console.log(`[MSA] Loaded section "${sec.name}" by slug "${slugOrId}" from Firestore assessments/`);
+                }
               }
 
-              // Query by slug field if direct ID didn't match
-              const q = query(collection(db, 'assessments'), where('slug', '==', slugOrId));
-              const qSnap = await getDocs(q);
-              if (!qSnap.empty) {
-                const assessDoc = qSnap.docs[0];
-                const assessData = assessDoc.data();
-                console.log(`[MSA] Loaded section "${sec.name}" by slug "${slugOrId}" from Firestore assessments/`);
-                await processData({ ...assessData, ...sec, id: assessDoc.id, assessmentId: assessDoc.id }, sec.type || assessData.type || assessData.contentCategory);
+              if (assessData) {
+                const mergedData = {
+                  ...sec,
+                  ...assessData,
+                  sectionId: sec.sectionId || sec.id || resolvedDocId,
+                  name: sec.name || assessData.title || assessData.name || 'Assessment Section',
+                  type: assessData.contentCategory || sec.type || assessData.type || 'coding',
+                  duration_minutes: sec.duration_minutes || assessData.durationMinutes || 30,
+                  maxScore: sec.maxScore || assessData.maxScore || 100,
+                  id: resolvedDocId,
+                  assessmentId: resolvedDocId,
+                  questions: (Array.isArray(assessData.questions) && assessData.questions.length > 0)
+                    ? assessData.questions
+                    : (Array.isArray(sec.questions) && sec.questions.length > 0 ? sec.questions : []),
+                  challenges: (Array.isArray(assessData.challenges) && assessData.challenges.length > 0)
+                    ? assessData.challenges
+                    : (Array.isArray(sec.challenges) && sec.challenges.length > 0 ? sec.challenges : []),
+                  qids: (Array.isArray(assessData.qids) && assessData.qids.length > 0)
+                    ? assessData.qids
+                    : (Array.isArray(sec.qids) && sec.qids.length > 0 ? sec.qids : []),
+                };
+                await processData(mergedData, mergedData.type);
                 return;
               }
             } catch (fsErr) {
@@ -1950,6 +2013,13 @@ const MultiSectionAssessment = () => {
           } catch (e) {
             console.error(`[MSA] Failed to load section "${sec.name}":`, e);
           }
+
+          // Fallback guaranteed registration: NEVER leave sectionData[sec.sectionId] undefined!
+          await processData({
+            ...sec,
+            questions: sec.questions || sec.challenges || [],
+            challenges: sec.challenges || sec.questions || []
+          }, sec.type);
         })
       );
       setSectionData(loaded);
@@ -2037,7 +2107,7 @@ const MultiSectionAssessment = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [relaxationCountdown]);
 
-  // ── Pre-section countdown
+  // ── Pre-section countdown & environment readiness check
   useEffect(() => {
     if (sectionCountdown === null) {
       countdownWaitRef.current = 0;
@@ -2045,7 +2115,7 @@ const MultiSectionAssessment = () => {
     }
     if (sectionCountdown <= 0) {
       const activeSec = assessment?.sections?.[countdownSecIdx];
-      const qList = activeSec ? (sectionData[activeSec.sectionId]?.questions || sectionData[activeSec.id]?.questions || sectionData[activeSec.name]?.questions || sectionData[activeSec.slug]?.questions || sectionData[String(countdownSecIdx)]?.questions) : null;
+      const qList = getSectionQuestionsList(activeSec, sectionData, countdownSecIdx);
       const questionsLoaded = Array.isArray(qList) && qList.length > 0;
 
       const visualReady = !shouldUseProctoring || isVisualProctorReady;
@@ -2053,9 +2123,13 @@ const MultiSectionAssessment = () => {
 
       countdownWaitRef.current += 1;
 
-      if (questionsLoaded && ((visualReady && audioReady) || countdownWaitRef.current > 6)) {
-        // Section timer officially begins ONLY when prelaunch is fully cleared and workspace loads
-        const activeSec = assessment?.sections?.[countdownSecIdx];
+      // Fail-safe condition:
+      // Either resources are ready, OR we have waited >= 4 seconds at 0s.
+      // The candidate is GUARANTEED to advance into the assessment workspace!
+      const canProceed = (visualReady && audioReady && questionsLoaded) || countdownWaitRef.current >= 4;
+
+      if (canProceed) {
+        console.log('[MSA] Prelaunch cleared. Launching section workspace. waitCount:', countdownWaitRef.current);
         if (activeSec) {
           const durationSecs = (activeSec.durationMinutes || activeSec.duration_minutes || activeSec.duration || 30) * 60;
           sectionEndTimeMsRef.current = Date.now() + durationSecs * 1000;
@@ -2066,7 +2140,10 @@ const MultiSectionAssessment = () => {
         setSectionCountdown(null);
         countdownWaitRef.current = 0;
       } else {
-        const t = setTimeout(() => setSectionCountdown(0), 1000);
+        // Increment prelaunchTick state to guarantee React runs this effect every second
+        const t = setTimeout(() => {
+          setPrelaunchTick(prev => prev + 1);
+        }, 1000);
         return () => clearTimeout(t);
       }
       return;
@@ -2075,6 +2152,7 @@ const MultiSectionAssessment = () => {
     return () => clearTimeout(t);
   }, [
     sectionCountdown,
+    prelaunchTick,
     countdownSecIdx,
     sectionData,
     shouldUseProctoring,
@@ -2115,6 +2193,8 @@ const MultiSectionAssessment = () => {
       // Note: Timer will be anchored and started when prelaunch completes!
       setCountdownSecIdx(0);
       setSectionCountdown(5);
+      setPrelaunchTick(0);
+      countdownWaitRef.current = 0;
       setIsVisualProctorReady(false);
       setIsAudioProctorReady(false);
       setSecStarted(false);
@@ -2857,7 +2937,7 @@ const MultiSectionAssessment = () => {
         {/* Pre-section countdown overlay (SEB Boot Branded Theme) */}
         {sectionCountdown !== null && (() => {
           const activeSec = assessment?.sections?.[countdownSecIdx];
-          const qList = activeSec ? (sectionData[activeSec.sectionId]?.questions || sectionData[activeSec.id]?.questions || sectionData[activeSec.name]?.questions || sectionData[activeSec.slug]?.questions || sectionData[String(countdownSecIdx)]?.questions) : null;
+          const qList = getSectionQuestionsList(activeSec, sectionData, countdownSecIdx);
           const questionsLoaded = Array.isArray(qList) && qList.length > 0;
           return (
             <div className="seb-boot" style={{ zIndex: 99999 }}>
@@ -2887,6 +2967,40 @@ const MultiSectionAssessment = () => {
               <div className="seb-boot__progress-bar" style={{ width: '240px' }}>
                 <div className="seb-boot__progress-fill"></div>
               </div>
+
+              {/* Instant Manual Bypass Button: If countdown is at 0s or after 1s, candidate can click to immediately enter */}
+              {(sectionCountdown <= 1 || countdownWaitRef.current >= 1) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    console.log('[MSA] Candidate manually started section workspace');
+                    if (activeSec) {
+                      const durationSecs = (activeSec.durationMinutes || activeSec.duration_minutes || activeSec.duration || 30) * 60;
+                      sectionEndTimeMsRef.current = Date.now() + durationSecs * 1000;
+                      setSecTimer(durationSecs);
+                      sectionStartTimesRef.current[countdownSecIdx] = new Date().toISOString();
+                    }
+                    setSecStarted(true);
+                    setSectionCountdown(null);
+                    countdownWaitRef.current = 0;
+                  }}
+                  style={{
+                    marginTop: '22px',
+                    background: 'rgba(22, 163, 74, 0.15)',
+                    color: '#16a34a',
+                    border: '1.5px solid rgba(22, 163, 74, 0.35)',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.92rem',
+                    fontWeight: '700',
+                    transition: 'all 0.2s ease',
+                    zIndex: 10
+                  }}
+                >
+                  Start Assessment Workspace Now →
+                </button>
+              )}
             </div>
           );
         })()}

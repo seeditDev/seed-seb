@@ -1561,9 +1561,11 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 }
             };
 
+            collectIds(assessment.qids);
             collectIds(assessment.questionIds);
             collectIds(assessment.questions);
             collectIds(assessment.challenges);
+            collectIds(data.qids);
             collectIds(data.questionIds);
             collectIds(data.questions);
             collectIds(data.challenges);

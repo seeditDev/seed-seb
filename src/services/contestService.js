@@ -520,28 +520,50 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
       }
     }
 
-    if (targetRound && Array.isArray(targetRound.sections) && targetRound.sections.length > 0) {
-      sections = targetRound.sections;
-    }
-
-    // If round has an msaSlug mapped directly in Firebase
-    if (sections.length === 0 && targetRound?.msaSlug) {
+    // 1. If round has an msaSlug mapped directly in Firebase, fetch the assessment document
+    if (targetRound?.msaSlug && targetRound.msaSlug.trim() !== '') {
       try {
-        const slugDocRef = doc(db, ASSESSMENTS, targetRound.msaSlug.trim());
+        const slug = targetRound.msaSlug.trim();
+        let msaData = null;
+        const slugDocRef = doc(db, ASSESSMENTS, slug);
         const slugSnap = await getDoc(slugDocRef);
         if (slugSnap.exists()) {
-          const msaData = slugSnap.data();
+          msaData = slugSnap.data();
+        } else {
+          const q = query(collection(db, ASSESSMENTS), where('slug', '==', slug));
+          const qSnap = await getDocs(q);
+          if (!qSnap.empty) {
+            msaData = qSnap.docs[0].data();
+          }
+        }
+        if (msaData) {
           if (Array.isArray(msaData.sections) && msaData.sections.length > 0) {
             sections = msaData.sections;
+          } else {
+            sections = [{
+              sectionId: `${contest.id}_round_${targetRound.roundNumber}`,
+              name: msaData.title || msaData.name || targetRound.name || 'Contest Assessment',
+              type: msaData.contentCategory || (msaData.problem || msaData.challenges || msaData.qids ? 'coding' : 'mcq'),
+              duration_minutes: msaData.durationMinutes || targetRound.durationMinutes || contest.durationMinutes || 60,
+              maxScore: msaData.maxScore || targetRound.maxScore || 100,
+              slug,
+              assessmentId: slug,
+              ...msaData,
+            }];
           }
         }
       } catch (err) {
-        console.warn('[contestService] Error fetching mapped round msaSlug:', err);
+        console.warn('[contestService] Error fetching mapped round msaSlug from Firestore:', err);
       }
+    }
+
+    // 2. If sections not resolved via msaSlug, use round embedded sections
+    if (sections.length === 0 && targetRound && Array.isArray(targetRound.sections) && targetRound.sections.length > 0) {
+      sections = targetRound.sections;
     }
   }
 
-  // 2. If contest links directly to an authored Assessment doc in Firestore
+  // 3. If contest links directly to an authored Assessment doc in Firestore
   if (sections.length === 0 && contest.assessmentId) {
     try {
       const assDocRef = doc(db, ASSESSMENTS, contest.assessmentId);
@@ -550,16 +572,16 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
         const assData = assSnap.data();
         if (Array.isArray(assData.sections) && assData.sections.length > 0) {
           sections = assData.sections;
-        } else if (assData.questions && assData.questions.length > 0) {
-          // Wrap legacy single section
+        } else if (assData.questions?.length || assData.challenges?.length || assData.qids?.length || assData.problem) {
           sections = [{
             sectionId: `${contest.id}_sec_1`,
-            name: assData.title || 'Contest Questions',
-            type: assData.contentCategory || (assData.problem ? 'coding' : 'mcq'),
+            name: assData.title || contest.title || 'Contest Questions',
+            type: assData.contentCategory || (assData.problem || assData.challenges || assData.qids ? 'coding' : 'mcq'),
             duration_minutes: assData.durationMinutes || contest.durationMinutes || 60,
             maxScore: assData.maxScore || 100,
-            questions: assData.questions || [],
-            challenges: assData.challenges || (assData.problem ? [assData.problem] : []),
+            slug: contest.assessmentId,
+            assessmentId: contest.assessmentId,
+            ...assData,
           }];
         }
       }
@@ -568,71 +590,88 @@ export async function prepareContestMSAAssessment(contest, user, preferredRoundN
     }
   }
 
-  // 3. If contest has embedded sections
+  // 4. If contest has embedded sections
   if (sections.length === 0 && Array.isArray(contest.sections) && contest.sections.length > 0) {
     sections = contest.sections;
   }
 
-  // 4. If contest has a 'problems' subcollection in Firestore, build a Coding section
+  // 5. If contest has a 'problems' subcollection in Firestore, build a Coding section
   if (sections.length === 0) {
-    const firestoreProblems = await listContestProblems(contest.id);
-    if (firestoreProblems.length > 0) {
-      const challenges = firestoreProblems.map((p) => ({
-        id: p.id,
-        title: p.title,
-        difficulty: p.difficulty,
-        description: p.description,
-        problemStatement: p.description,
-        constraints: p.constraints,
-        inputFormat: p.inputFormat,
-        outputFormat: p.outputFormat,
-        sampleTestCases: p.sampleTestCases,
-        testCases: p.hiddenTestCases,
-        boilerplates: p.boilerplates,
-      }));
-
-      sections = [{
-        sectionId: `${contest.id}_coding_sec`,
-        name: 'Algorithmic Coding Challenges',
-        type: 'coding',
-        duration_minutes: contest.durationMinutes || 120,
-        maxScore: contest.maxScore || 600,
-        challenges,
-        questions: challenges,
-      }];
+    try {
+      const firestoreProblems = await listContestProblems(contest.id);
+      if (firestoreProblems.length > 0) {
+        sections = [{
+          sectionId: `${contest.id}_coding_sec`,
+          name: 'Algorithmic Coding Challenges',
+          type: 'coding',
+          duration_minutes: contest.durationMinutes || 120,
+          maxScore: contest.maxScore || 600,
+          challenges: firestoreProblems,
+          questions: firestoreProblems,
+        }];
+      }
+    } catch (err) {
+      console.warn('[contestService] Failed to query contest problems subcollection:', err);
     }
   }
 
-  // Fallback: If still no sections, create a standard problem set
-  if (sections.length === 0) {
-    const defaultChallenges = (contest.sampleProblems || []).map((sp) => ({
-      id: sp.id,
-      title: sp.title,
-      difficulty: sp.difficulty,
-      description: `Solve the problem: ${sp.title}. Optimize for time and memory limits.`,
-      constraints: '1 <= N <= 10^5, Time Limit: 2.0s, Memory Limit: 256MB',
-      inputFormat: 'First line contains integer T. Each test case consists of integers.',
-      outputFormat: 'Output the required answer on a new line.',
-      sampleTestCases: [{ input: '3\n1 2 3\n', expected: '6\n' }],
-      testCases: [{ input: '3\n1 2 3\n', expected: '6\n' }],
-      boilerplates: {
-        python: '# Write solution\ndef solve():\n    pass\n',
-        cpp: '#include <iostream>\nusing namespace std;\nint main() { return 0; }\n',
-        java: 'public class Main { public static void main(String[] args) {} }\n',
-        c: '#include <stdio.h>\nint main() { return 0; }\n',
-      },
-    }));
-
-    sections = [{
-      sectionId: `${contest.id}_primary_sec`,
-      name: 'Algorithmic Challenges',
-      type: 'coding',
-      duration_minutes: contest.durationMinutes || 120,
-      maxScore: contest.maxScore || 600,
-      challenges: defaultChallenges,
-      questions: defaultChallenges,
-    }];
-  }
+  // Ensure each section maintains canonical ID, slug, and assessmentId mapping,
+  // and enrich directly from Firestore assessments/{slug} if questions/challenges are not yet loaded.
+  sections = await Promise.all(
+    sections.map(async (sec, idx) => {
+      const slugOrId = sec.slug || sec.assessmentId;
+      let enriched = { ...sec };
+      if (slugOrId && typeof slugOrId === 'string' && !slugOrId.startsWith('http') && !slugOrId.endsWith('.json')) {
+        try {
+          let assessData = null;
+          let resolvedDocId = slugOrId;
+          const docRef = doc(db, ASSESSMENTS, slugOrId);
+          const snap = await getDoc(docRef);
+          if (snap.exists()) {
+            assessData = snap.data();
+            resolvedDocId = snap.id;
+          } else {
+            const q = query(collection(db, ASSESSMENTS), where('slug', '==', slugOrId));
+            const qSnap = await getDocs(q);
+            if (!qSnap.empty) {
+              assessData = qSnap.docs[0].data();
+              resolvedDocId = qSnap.docs[0].id;
+            }
+          }
+          if (assessData) {
+            enriched = {
+              ...sec,
+              ...assessData,
+              sectionId: sec.sectionId || sec.id || `${contest.id}_sec_${idx + 1}`,
+              name: sec.name || assessData.title || assessData.name || `Section ${idx + 1}`,
+              type: assessData.contentCategory || sec.type || assessData.type || 'coding',
+              duration_minutes: sec.duration_minutes || assessData.durationMinutes || 30,
+              maxScore: sec.maxScore || assessData.maxScore || 100,
+              slug: slugOrId,
+              assessmentId: resolvedDocId,
+              questions: (Array.isArray(assessData.questions) && assessData.questions.length > 0)
+                ? assessData.questions
+                : (Array.isArray(sec.questions) && sec.questions.length > 0 ? sec.questions : []),
+              challenges: (Array.isArray(assessData.challenges) && assessData.challenges.length > 0)
+                ? assessData.challenges
+                : (Array.isArray(sec.challenges) && sec.challenges.length > 0 ? sec.challenges : []),
+              qids: (Array.isArray(assessData.qids) && assessData.qids.length > 0)
+                ? assessData.qids
+                : (Array.isArray(sec.qids) && sec.qids.length > 0 ? sec.qids : []),
+            };
+          }
+        } catch (err) {
+          console.warn(`[contestService] Failed to load section assessment doc for slug "${slugOrId}":`, err);
+        }
+      }
+      return {
+        ...enriched,
+        sectionId: enriched.sectionId || enriched.id || `${contest.id}_sec_${idx + 1}`,
+        slug: enriched.slug || enriched.assessmentId || '',
+        assessmentId: enriched.assessmentId || enriched.slug || '',
+      };
+    })
+  );
 
   // Determine active round duration, SEB, and proctoring overrides
   const effectiveDuration = targetRound?.durationMinutes || contest.durationMinutes || 120;

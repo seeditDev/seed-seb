@@ -30,10 +30,10 @@
         "type": "reg",
         "input": "[10]",
         "output": "36",
-        "explanation": "10 = 3 + 3 + 4, giving 3 \u00d7 3 \u00d7 4 = 36."
+        "explanation": "10 = 3 + 3 + 4, giving 3 × 3 × 4 = 36."
       }
     ],
-    "problemStatement": "With an integer `n`, break it into the sum of `k` **positive integers**, where `k >= 2`, and maximize the product of those integers.\n\nOutput *the largest product you can get*.\n\n**Example 1:**\n\n```\nInput: n = 2\nOutput: 1\nExplanation: 2 = 1 + 1, 1 \u00d7 1 = 1.\n```\n\n**Example 2:**\n\n```\nInput: n = 10\nOutput: 36\nExplanation: 10 = 3 + 3 + 4, 3 \u00d7 3 \u00d7 4 = 36.\n```\n\n**Constraints:**\n\n* `2 <= n <= 58`"
+    "problemStatement": "With an integer `n`, break it into the sum of `k` **positive integers**, where `k >= 2`, and maximize the product of those integers.\n\nOutput *the largest product you can get*.\n\n**Example 1:**\n\n```\nInput: n = 2\nOutput: 1\nExplanation: 2 = 1 + 1, 1 × 1 = 1.\n```\n\n**Example 2:**\n\n```\nInput: n = 10\nOutput: 36\nExplanation: 10 = 3 + 3 + 4, 3 × 3 × 4 = 36.\n```\n\n**Constraints:**\n\n* `2 <= n <= 58`"
   },
   "judging": {
     "notes": [
@@ -125,7 +125,11 @@
     "timeComplexity": "O(n) time in the supplied implementations (at most floor(n/3) multiplications), with O(1) auxiliary space.",
     "spaceComplexity": "O(1) auxiliary space.",
     "code": {
-      "Python3": "class Solution:\n    def integerBreak(self, n: int) -> int:\n        if n <= 3:\n            return n - 1\n        q, r = divmod(n, 3)\n        if r == 0:\n            return 3 ** q\n        if r == 1:\n            return 3 ** (q - 1) * 4\n        return 3 ** q * 2"
+      "Python3": "class Solution:\n    def integerBreak(self, n: int) -> int:\n        if n <= 3:\n            return n - 1\n        q, r = divmod(n, 3)\n        if r == 0:\n            return 3 ** q\n        if r == 1:\n            return 3 ** (q - 1) * 4\n        return 3 ** q * 2",
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint integerBreak(int n) {\n    if (n <= 3) return n - 1;\n    int q = n / 3, r = n % 3;\n    long long p = 1;\n    int threes = q - (r == 1 ? 1 : 0);\n    for (int i = 0; i < threes; ++i) p *= 3;\n    if (r == 0) return (int)p;\n    if (r == 1) return (int)(p * 4);\n    return (int)(p * 2);\n}",
+      "C++": "class Solution {\npublic:\n    int integerBreak(int n) {\n        if (n <= 3) return n - 1;\n        int q = n / 3, r = n % 3;\n        long long p = 1;\n        for (int i = 0; i < q - (r == 1 ? 1 : 0); ++i) p *= 3;\n        if (r == 0) return (int)p;\n        if (r == 1) return (int)(p * 4);\n        return (int)(p * 2);\n    }\n};",
+      "Java": "class Solution {\n    public int integerBreak(int n) {\n        if (n <= 3) return n - 1;\n        int q = n / 3, r = n % 3;\n        long p = 1;\n        int threes = q - (r == 1 ? 1 : 0);\n        for (int i = 0; i < threes; ++i) p *= 3;\n        if (r == 0) return (int)p;\n        if (r == 1) return (int)(p * 4);\n        return (int)(p * 2);\n    }\n}",
+      "JavaScript": "const readline = require(\"readline\");\n\nfunction integerBreak(n) {\n    if (n <= 3) return n - 1;\n    const q = Math.floor(n / 3);\n    const r = n % 3;\n    if (r === 0) return Math.pow(3, q);\n    if (r === 1) return Math.pow(3, q - 1) * 4;\n    return Math.pow(3, q) * 2;\n}"
     }
   },
   "verified": true,
@@ -393,16 +397,16 @@
   "updatedAt": "2026-07-10",
   "questionId": "Q343",
   "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint integerBreak(int n) {\n    if (n <= 3) return n - 1;\n    int q = n / 3, r = n % 3;\n    long long p = 1;\n    int threes = q - (r == 1 ? 1 : 0);\n    for (int i = 0; i < threes; ++i) p *= 3;\n    if (r == 0) return (int)p;\n    if (r == 1) return (int)(p * 4);\n    return (int)(p * 2);\n}\n\nint main(void) {\n    char line[128];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    char *p = line;\n    while (*p && (*p < '0' || *p > '9')) ++p;\n    int n = atoi(p);\n    printf(\"%d\\n\", integerBreak(n));\n    return 0;\n}",
-    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int integerBreak(int n) {\n        if (n <= 3) return n - 1;\n        int q = n / 3, r = n % 3;\n        long long p = 1;\n        for (int i = 0; i < q - (r == 1 ? 1 : 0); ++i) p *= 3;\n        if (r == 0) return (int)p;\n        if (r == 1) return (int)(p * 4);\n        return (int)(p * 2);\n    }\n};\n\nint main() {\n    string line; getline(cin, line);\n    size_t i = 0;\n    while (i < line.size() && (line[i] == ' ' || line[i] == '[')) ++i;\n    size_t j = i;\n    while (j < line.size() && isdigit(static_cast<unsigned char>(line[j]))) ++j;\n    int n = stoi(line.substr(i, j - i));\n    cout << Solution().integerBreak(n) << '\\n';\n    return 0;\n}",
-    "Java": "import java.io.*;\n\nclass Solution {\n    public int integerBreak(int n) {\n        if (n <= 3) return n - 1;\n        int q = n / 3, r = n % 3;\n        long p = 1;\n        int threes = q - (r == 1 ? 1 : 0);\n        for (int i = 0; i < threes; ++i) p *= 3;\n        if (r == 0) return (int)p;\n        if (r == 1) return (int)(p * 4);\n        return (int)(p * 2);\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String s = line.replaceAll(\"[^0-9]\", \"\");\n        int n = Integer.parseInt(s);\n        System.out.println(new Solution().integerBreak(n));\n    }\n}",
-    "Python3": "import sys, json\n\nclass Solution:\n    def integerBreak(self, n: int) -> int:\n        if n <= 3:\n            return n - 1\n        q, r = divmod(n, 3)\n        if r == 0:\n            return 3 ** q\n        if r == 1:\n            return 3 ** (q - 1) * 4\n        return 3 ** q * 2\n\nif __name__ == \"__main__\":\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().integerBreak(args[0])))",
-    "JavaScript": "\"use strict\";\nconst readline = require(\"readline\");\n\nfunction integerBreak(n) {\n    if (n <= 3) return n - 1;\n    const q = Math.floor(n / 3);\n    const r = n % 3;\n    if (r === 0) return Math.pow(3, q);\n    if (r === 1) return Math.pow(3, q - 1) * 4;\n    return Math.pow(3, q) * 2;\n}\n\nconst rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });\nrl.on(\"line\", line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(integerBreak(args[0])));\n    rl.close();\n});"
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint integerBreak(int n) {\n    return 0;\n}\n\nint main(void) {\n    char line[128];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    char *p = line;\n    while (*p && (*p < '0' || *p > '9')) ++p;\n    int n = atoi(p);\n    printf(\"%d\\n\", integerBreak(n));\n    return 0;\n}",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int integerBreak(int n) {\n        return 0;\n    }\n};\n\nint main() {\n    string line; getline(cin, line);\n    size_t i = 0;\n    while (i < line.size() && (line[i] == ' ' || line[i] == '[')) ++i;\n    size_t j = i;\n    while (j < line.size() && isdigit(static_cast<unsigned char>(line[j]))) ++j;\n    int n = stoi(line.substr(i, j - i));\n    cout << Solution().integerBreak(n) << '\\n';\n    return 0;\n}",
+    "Java": "import java.io.*;\n\nclass Solution {\n    public int integerBreak(int n) {\n        return 0;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String s = line.replaceAll(\"[^0-9]\", \"\");\n        int n = Integer.parseInt(s);\n        System.out.println(new Solution().integerBreak(n));\n    }\n}",
+    "Python3": "import sys, json\n\nclass Solution:\n    def integerBreak(self, n: int) -> int:\n        pass\n\nif __name__ == \"__main__\":\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().integerBreak(args[0])))",
+    "JavaScript": "\"use strict\";\nconst readline = require(\"readline\");\n\nfunction integerBreak(n) {\n    return 0;\n}\n\nconst rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });\nrl.on(\"line\", line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(integerBreak(args[0])));\n    rl.close();\n});"
   },
   "acceptanceRate": null,
   "similarProblems": [],
   "recommendedAfter": [],
-  "estimatedSolveTime": "25\u201345 min",
+  "estimatedSolveTime": "25–45 min",
   "learningObjectives": [
     "Recognize when a mathematical exchange argument can replace a quadratic dynamic program.",
     "Use modulo arithmetic to characterize the optimal decomposition into 2s and 3s.",

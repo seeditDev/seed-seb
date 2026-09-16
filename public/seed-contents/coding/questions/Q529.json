@@ -1,31 +1,14 @@
 {
-  "questionId": "Q529",
-  "title": "Minesweeper Problem",
   "slug": "minesweeper",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "depth-first-search",
-      "breadth-first-search",
-      "matrix"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "depth-first-search",
-      "breadth-first-search",
-      "matrix"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "A click has up to eight neighboring cells, including diagonals.",
+    "For an E cell, first count how many of its eight neighbors are M.",
+    "If that count is zero, mark the cell B and continue exploring adjacent unrevealed E cells.",
+    "Use DFS or BFS, and mark cells when they are revealed so they are not processed repeatedly."
+  ],
+  "title": "Minesweeper Problem",
   "content": {
-    "problemStatement": "Let's play the minesweeper game ([Wikipedia](https://en.wikipedia.org/wiki/Minesweeper_(video_game)), [online game](http://minesweeperonline.com))!\n\nYou receive an `m x n` char matrix `board` representing the game board where:\n\n* `'M'` represents an unrevealed mine,\n* `'E'` represents an unrevealed empty square,\n* `'B'` represents a revealed blank square that has no adjacent mines (i.e., above, below, left, right, and all 4 diagonals),\n* digit (`'1'` to `'8'`) represents how many mines are adjacent to this revealed square, and\n* `'X'` represents a revealed mine.\n\nYou are also given an integer array `click` where `click = [click_r, click_c]` represents the next click position among all the unrevealed squares (`'M'` or `'E'`).\n\nOutput *the board after revealing this position according to the following rules*:\n\n1. If a mine `'M'` is revealed, then the game is over. You should change it to `'X'`.\n2. If an empty square `'E'` with no adjacent mines is revealed, then change it to a revealed blank `'B'` and all of its adjacent unrevealed squares should be revealed recursively.\n3. If an empty square `'E'` with no fewer than one adjacent mine is revealed, then change it to a digit (`'1'` to `'8'`) representing the number of adjacent mines.\n4. Output the board when no more squares will be revealed.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2023/08/09/untitled.jpeg)\n\n```\nInput: board = [[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"]], click = [3,0]\nOutput: [[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2023/08/09/untitled-2.jpeg)\n\n```\nInput: board = [[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]], click = [1,2]\nOutput: [[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"X\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]\n```\n\n**Constraints:**\n\n* `m == board.length`\n* `n == board[i].length`\n* `1 <= m, n <= 50`\n* `board[i][j]` is either `'M'`, `'E'`, `'B'`, or a digit from `'1'` to `'8'`.\n* `click.length == 2`\n* `0 <= click_r < m`\n* `0 <= click_c < n`\n* `board[click_r][click_c]` is either `'M'` or `'E'`.",
+    "notes": [],
     "constraints": [
       "m == board.length",
       "n == board[i].length",
@@ -36,7 +19,7 @@
       "0 <= click_c < n",
       "board[click_r][click_c] is either 'M' or 'E'."
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
@@ -44,277 +27,43 @@
         "type": "reg",
         "input": "[[[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"]],[3,0]]",
         "output": "[[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]",
-        "explanation": ""
+        "explanation": "Starting from [3,0], the click reveals a mine-free region. Empty cells become B, while boundary cells adjacent to the mine are revealed with their adjacent-mine counts."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]],[1,2]]",
         "output": "[[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"X\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]",
-        "explanation": ""
+        "explanation": "The click lands directly on the unrevealed mine at [1,2], so the mine is changed from M to X and the rest of the board is unchanged."
       }
     ],
-    "notes": []
+    "problemStatement": "Let's play the minesweeper game ([Wikipedia](https://en.wikipedia.org/wiki/Minesweeper_(video_game)), [online game](http://minesweeperonline.com))!\n\nYou receive an `m x n` char matrix `board` representing the game board where:\n\n* `'M'` represents an unrevealed mine,\n* `'E'` represents an unrevealed empty square,\n* `'B'` represents a revealed blank square that has no adjacent mines (i.e., above, below, left, right, and all 4 diagonals),\n* digit (`'1'` to `'8'`) represents how many mines are adjacent to this revealed square, and\n* `'X'` represents a revealed mine.\n\nYou are also given an integer array `click` where `click = [click_r, click_c]` represents the next click position among all the unrevealed squares (`'M'` or `'E'`).\n\nOutput *the board after revealing this position according to the following rules*:\n\n1. If a mine `'M'` is revealed, then the game is over. You should change it to `'X'`.\n2. If an empty square `'E'` with no adjacent mines is revealed, then change it to a revealed blank `'B'` and all of its adjacent unrevealed squares should be revealed recursively.\n3. If an empty square `'E'` with no fewer than one adjacent mine is revealed, then change it to a digit (`'1'` to `'8'`) representing the number of adjacent mines.\n4. Output the board when no more squares will be revealed.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2023/08/09/untitled.jpeg)\n\n```\nInput: board = [[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"]], click = [3,0]\nOutput: [[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2023/08/09/untitled-2.jpeg)\n\n```\nInput: board = [[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]], click = [1,2]\nOutput: [[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"X\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]\n```\n\n**Constraints:**\n\n* `m == board.length`\n* `n == board[i].length`\n* `1 <= m, n <= 50`\n* `board[i][j]` is either `'M'`, `'E'`, `'B'`, or a digit from `'1'` to `'8'`.\n* `click.length == 2`\n* `0 <= click_r < m`\n* `0 <= click_c < n`\n* `board[click_r][click_c]` is either `'M'` or `'E'`."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Zero values",
-        "input": "[[[\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"]], [1, 1]]",
-        "expectedOutput": "[[\"B\", \"B\", \"B\"], [\"B\", \"B\", \"B\"], [\"B\", \"B\", \"B\"]]",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[[\"E\", \"E\", \"E\"], [\"E\", \"M\", \"E\"], [\"E\", \"M\", \"E\"]], [0, 0]]",
-        "expectedOutput": "[[\"1\", \"E\", \"E\"], [\"E\", \"M\", \"E\"], [\"E\", \"M\", \"E\"]]",
-        "weight": 4
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[[\"E\", \"E\", \"E\"], [\"E\", \"M\", \"E\"], [\"E\", \"E\", \"E\"]], [1, 1]]",
-        "expectedOutput": "[[\"E\", \"E\", \"E\"], [\"E\", \"X\", \"E\"], [\"E\", \"E\", \"E\"]]",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[[\"M\", \"E\", \"E\"], [\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"]], [0, 0]]",
-        "expectedOutput": "[[\"X\", \"E\", \"E\"], [\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"]]",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[[\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"], [\"E\", \"E\", \"M\"]], [2, 2]]",
-        "expectedOutput": "[[\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"], [\"E\", \"E\", \"X\"]]",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Answer spans entire array",
-        "input": "[[[\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"], [\"E\", \"E\", \"E\"]], [0, 0]]",
-        "expectedOutput": "[[\"B\", \"B\", \"B\"], [\"B\", \"B\", \"B\"], [\"B\", \"B\", \"B\"]]",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Standard case (if applicable)",
-        "input": "[[[\"M\", \"M\", \"M\"], [\"M\", \"M\", \"M\"], [\"M\", \"M\", \"M\"]], [0, 0]]",
-        "expectedOutput": "[[\"X\", \"M\", \"M\"], [\"M\", \"M\", \"M\"], [\"M\", \"M\", \"M\"]]",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+  "judging": {
+    "notes": [],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      3,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -336,57 +85,342 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "depth-first-search",
+      "breadth-first-search",
+      "matrix"
     ],
-    "notes": []
+    "category": "Arrays",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "depth-first-search",
+      "breadth-first-search",
+      "matrix"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The solution uses a depth-first search (DFS) approach to reveal the clicked position and its adjacent unrevealed squares recursively.",
-    "timeComplexity": "O(m * n)",
-    "spaceComplexity": "O(m + n)",
-    "code": {
-      "Python3": "# Time:  O(m * n)\n# Space: O(m + n)\n\n# dfs\nclass Solution(object):\n    def updateBoard(self, board, click):\n        \"\"\"\n        :type board: List[List[str]]\n        :type click: List[int]\n        :rtype: List[List[str]]\n        \"\"\"\n        if board[click[0]][click[1]] == 'M':\n            board[click[0]][click[1]] = 'X'\n            return board\n        stk = [click]\n        while stk:\n            r, c = stk.pop()\n            cnt = 0\n            adj = []\n            for dr in range(-1, 2):\n                for dc in range(-1, 2):\n                    if dr == dc == 0:\n                        continue\n                    nr, nc = r+dr, c+dc\n                    if not (0 <= nr < len(board) and 0 <= nc < len(board[r])):\n                        continue\n                    if board[nr][nc] == 'M':\n                        cnt += 1\n                    elif board[nr][nc] == 'E':\n                        adj.append((nr, nc))\n            if cnt:\n                board[r][c] = chr(cnt + ord('0'))\n                continue\n            board[r][c] = 'B'\n            for nr, nc in adj:\n                board[nr][nc] = ' '\n                stk.append((nr, nc))\n        return board"
-    },
-    "notes": [],
+    "notes": [
+      "The implementation uses all eight neighboring directions, including diagonals.",
+      "An explicit stack avoids recursion-depth issues on boards as large as 50 x 50.",
+      "Cells are processed only while they are E, so revealed cells are not expanded repeatedly."
+    ],
+    "approach": "Use iterative DFS to reveal the clicked cell and recursively reveal adjacent unrevealed empty cells. For each revealed E cell, count adjacent mines across all eight directions. If the count is nonzero, replace the cell with that digit and stop expanding from it. If the count is zero, replace it with B and add each adjacent unrevealed E cell to the stack. If the initial click is M, immediately change it to X.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(m * n) time and O(m * n) worst-case auxiliary space.",
+        "description": "Use DFS or BFS from the clicked E cell. For every visited empty cell, count adjacent mines once and reveal neighboring E cells only when the count is zero."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(m * n) time and O(m * n) worst-case auxiliary space.",
+        "description": "Implement the traversal iteratively with a stack. Each E cell is converted to B or a digit the first time it is processed, preventing duplicate expansion. A mine click is handled immediately as X."
+      },
+      "bruteForce": {
+        "complexity": "O((m * n)^2) worst-case time and O(m * n) auxiliary space.",
+        "description": "Reveal the clicked cell and repeatedly scan the whole board to find newly exposed cells until no changes remain. This is correct but may rescan many cells unnecessarily."
       }
+    },
+    "timeComplexity": "O(m * n) in the worst case, because each cell is revealed and processed at most once.",
+    "spaceComplexity": "O(m * n) worst-case auxiliary space for the explicit DFS stack, excluding the board itself.",
+    "code": {
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <ctype.h>\n\ntypedef struct {\n    const char *s;\n    size_t pos;\n    size_t len;\n} Parser;\n\nstatic void skip_ws(Parser *p) {\n    while (p->pos < p->len && isspace((unsigned char)p->s[p->pos])) p->pos++;\n}\n\nstatic void expect(Parser *p, char ch) {\n    skip_ws(p);\n    if (p->pos >= p->len || p->s[p->pos] != ch) exit(EXIT_FAILURE);\n    p->pos++;\n}\n\nstatic char parse_char_string(Parser *p) {\n    skip_ws(p);\n    expect(p, '\"');\n    if (p->pos >= p->len) exit(EXIT_FAILURE);\n    char ch = p->s[p->pos++];\n    if (ch == '\\\\' && p->pos < p->len) ch = p->s[p->pos++];\n    expect(p, '\"');\n    return ch;\n}\n\nstatic int parse_int(Parser *p) {\n    skip_ws(p);\n    int sign = 1;\n    if (p->s[p->pos] == '-') {\n        sign = -1;\n        p->pos++;\n    }\n    int value = 0;\n    while (p->pos < p->len && isdigit((unsigned char)p->s[p->pos])) {\n        value = value * 10 + (p->s[p->pos++] - '0');\n    }\n    return sign * value;\n}\n\nstatic char **parse_board(Parser *p, int *rows_out, int **cols_out) {\n    expect(p, '[');\n\n    int rows_cap = 8;\n    int rows = 0;\n    char **board = (char **)malloc((size_t)rows_cap * sizeof(char *));\n    int *cols = (int *)malloc((size_t)rows_cap * sizeof(int));\n    if (!board || !cols) exit(EXIT_FAILURE);\n\n    skip_ws(p);\n    while (p->pos < p->len && p->s[p->pos] != ']') {\n        expect(p, '[');\n\n        int cap = 8;\n        int n = 0;\n        char *row = (char *)malloc((size_t)cap * sizeof(char));\n        if (!row) exit(EXIT_FAILURE);\n\n        skip_ws(p);\n        while (p->pos < p->len && p->s[p->pos] != ']') {\n            if (n == cap) {\n                cap *= 2;\n                row = (char *)realloc(row, (size_t)cap * sizeof(char));\n                if (!row) exit(EXIT_FAILURE);\n            }\n\n            row[n++] = parse_char_string(p);\n\n            skip_ws(p);\n            if (p->s[p->pos] == ',') {\n                p->pos++;\n                continue;\n            }\n            break;\n        }\n\n        expect(p, ']');\n\n        if (rows == rows_cap) {\n            rows_cap *= 2;\n            board = (char **)realloc(board, (size_t)rows_cap * sizeof(char *));\n            cols = (int *)realloc(cols, (size_t)rows_cap * sizeof(int));\n            if (!board || !cols) exit(EXIT_FAILURE);\n        }\n\n        board[rows] = row;\n        cols[rows] = n;\n        rows++;\n\n        skip_ws(p);\n        if (p->s[p->pos] == ',') {\n            p->pos++;\n            continue;\n        }\n        break;\n    }\n\n    expect(p, ']');\n    *rows_out = rows;\n    *cols_out = cols;\n    return board;\n}\n\nstatic int *parse_click(Parser *p) {\n    expect(p, '[');\n    int *click = (int *)malloc(2 * sizeof(int));\n    if (!click) exit(EXIT_FAILURE);\n    click[0] = parse_int(p);\n    expect(p, ',');\n    click[1] = parse_int(p);\n    expect(p, ']');\n    return click;\n}\n\nstatic char **updateBoard(char **board, int boardSize, int *boardColSize,\n                          int *click, int clickSize, int *returnSize,\n                          int **returnColumnSizes) {\n    (void)clickSize;\n\n    int m = boardSize;\n    int n = boardColSize[0];\n    int r = click[0], c = click[1];\n\n    if (board[r][c] == 'M') {\n        board[r][c] = 'X';\n        *returnSize = m;\n        *returnColumnSizes = (int *)malloc((size_t)m * sizeof(int));\n        for (int i = 0; i < m; ++i) (*returnColumnSizes)[i] = boardColSize[i];\n        return board;\n    }\n\n    int **stack = (int **)malloc((size_t)m * (size_t)n * sizeof(int *));\n    if (!stack) exit(EXIT_FAILURE);\n\n    int top = 0;\n    int *start = (int *)malloc(2 * sizeof(int));\n    start[0] = r; start[1] = c;\n    stack[top++] = start;\n    board[r][c] = 'V';\n\n    const int dirs[8][2] = {\n        {-1,-1}, {-1,0}, {-1,1},\n        {0,-1}, {0,1},\n        {1,-1}, {1,0}, {1,1}\n    };\n\n    while (top > 0) {\n        int *cur = stack[--top];\n        int cr = cur[0], cc = cur[1];\n        free(cur);\n\n        if (board[cr][cc] != 'V') continue;\n\n        int mines = 0;\n        int empty[8][2];\n        int ec = 0;\n\n        for (int d = 0; d < 8; ++d) {\n            int nr = cr + dirs[d][0];\n            int nc = cc + dirs[d][1];\n            if (nr >= 0 && nr < m && nc >= 0 && nc < n) {\n                if (board[nr][nc] == 'M') {\n                    mines++;\n                } else if (board[nr][nc] == 'E' || board[nr][nc] == 'V') {\n                    if (board[nr][nc] == 'E') {\n                        empty[ec][0] = nr;\n                        empty[ec][1] = nc;\n                        ec++;\n                    }\n                }\n            }\n        }\n\n        if (mines > 0) {\n            board[cr][cc] = (char)('0' + mines);\n        } else {\n            board[cr][cc] = 'B';\n            for (int i = 0; i < ec; ++i) {\n                int nr = empty[i][0];\n                int nc = empty[i][1];\n                board[nr][nc] = 'V';\n                int *next = (int *)malloc(2 * sizeof(int));\n                next[0] = nr;\n                next[1] = nc;\n                stack[top++] = next;\n            }\n        }\n    }\n\n    free(stack);\n\n    *returnSize = m;\n    *returnColumnSizes = (int *)malloc((size_t)m * sizeof(int));\n    for (int i = 0; i < m; ++i) (*returnColumnSizes)[i] = boardColSize[i];\n    return board;\n}",
+      "C++": "class Solution {\npublic:\n    vector<vector<char>> updateBoard(vector<vector<char>>& board, vector<int>& click) {\n        int m = board.size();\n        int n = board[0].size();\n        int r = click[0], c = click[1];\n\n        if (board[r][c] == 'M') {\n            board[r][c] = 'X';\n            return board;\n        }\n\n        const int dirs[8][2] = {\n            {-1,-1}, {-1,0}, {-1,1},\n            {0,-1},           {0,1},\n            {1,-1},  {1,0},   {1,1}\n        };\n\n        vector<pair<int,int>> st;\n        st.push_back({r,c});\n\n        while (!st.empty()) {\n            auto [cr, cc] = st.back();\n            st.pop_back();\n\n            if (board[cr][cc] != 'E') continue;\n\n            int mines = 0;\n            vector<pair<int,int>> emptyNeighbors;\n\n            for (auto &d : dirs) {\n                int nr = cr + d[0], nc = cc + d[1];\n                if (nr >= 0 && nr < m && nc >= 0 && nc < n) {\n                    if (board[nr][nc] == 'M') {\n                        ++mines;\n                    } else if (board[nr][nc] == 'E') {\n                        emptyNeighbors.push_back({nr,nc});\n                    }\n                }\n            }\n\n            if (mines > 0) {\n                board[cr][cc] = char('0' + mines);\n            } else {\n                board[cr][cc] = 'B';\n                for (auto cell : emptyNeighbors)\n                    st.push_back(cell);\n            }\n        }\n\n        return board;\n    }\n};",
+      "Java": "class Solution {\n    public char[][] updateBoard(char[][] board, int[] click) {\n        int m = board.length;\n        int n = board[0].length;\n        int r = click[0];\n        int c = click[1];\n\n        if (board[r][c] == 'M') {\n            board[r][c] = 'X';\n            return board;\n        }\n\n        int[][] dirs = {\n            {-1,-1}, {-1,0}, {-1,1},\n            {0,-1},           {0,1},\n            {1,-1},  {1,0},   {1,1}\n        };\n\n        ArrayDeque<int[]> stack = new ArrayDeque<>();\n        stack.push(new int[]{r, c});\n\n        while (!stack.isEmpty()) {\n            int[] cur = stack.pop();\n            int cr = cur[0], cc = cur[1];\n\n            if (board[cr][cc] != 'E') continue;\n\n            int mines = 0;\n            ArrayList<int[]> emptyNeighbors = new ArrayList<>();\n\n            for (int[] d : dirs) {\n                int nr = cr + d[0];\n                int nc = cc + d[1];\n\n                if (nr >= 0 && nr < m && nc >= 0 && nc < n) {\n                    if (board[nr][nc] == 'M') {\n                        mines++;\n                    } else if (board[nr][nc] == 'E') {\n                        emptyNeighbors.add(new int[]{nr, nc});\n                    }\n                }\n            }\n\n            if (mines > 0) {\n                board[cr][cc] = (char)('0' + mines);\n            } else {\n                board[cr][cc] = 'B';\n                for (int[] next : emptyNeighbors) {\n                    stack.push(next);\n                }\n            }\n        }\n\n        return board;\n    }\n}",
+      "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def updateBoard(self, board: List[List[str]], click: List[int]) -> List[List[str]]:\n        m, n = len(board), len(board[0])\n        r, c = click\n\n        if board[r][c] == 'M':\n            board[r][c] = 'X'\n            return board\n\n        directions = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]\n        stack = [(r, c)]\n\n        while stack:\n            cr, cc = stack.pop()\n            if board[cr][cc] != 'E':\n                continue\n\n            mines = 0\n            empty_neighbors = []\n\n            for dr, dc in directions:\n                nr, nc = cr + dr, cc + dc\n                if 0 <= nr < m and 0 <= nc < n:\n                    if board[nr][nc] == 'M':\n                        mines += 1\n                    elif board[nr][nc] == 'E':\n                        empty_neighbors.append((nr, nc))\n\n            if mines > 0:\n                board[cr][cc] = str(mines)\n            else:\n                board[cr][cc] = 'B'\n                for nr, nc in empty_neighbors:\n                    stack.append((nr, nc))\n\n        return board",
+      "JavaScript": "const fs = require(\"fs\");\n\nfunction updateBoard(board, click) {\n    const m = board.length;\n    const n = board[0].length;\n    const [r, c] = click;\n\n    if (board[r][c] === \"M\") {\n        board[r][c] = \"X\";\n        return board;\n    }\n\n    const directions = [\n        [-1,-1], [-1,0], [-1,1],\n        [0,-1],           [0,1],\n        [1,-1],  [1,0],   [1,1]\n    ];\n\n    const stack = [[r, c]];\n\n    while (stack.length > 0) {\n        const [cr, cc] = stack.pop();\n\n        if (board[cr][cc] !== \"E\") continue;\n\n        let mines = 0;\n        const emptyNeighbors = [];\n\n        for (const [dr, dc] of directions) {\n            const nr = cr + dr;\n            const nc = cc + dc;\n\n            if (nr >= 0 && nr < m && nc >= 0 && nc < n) {\n                if (board[nr][nc] === \"M\") {\n                    mines++;\n                } else if (board[nr][nc] === \"E\") {\n                    emptyNeighbors.push([nr, nc]);\n                }\n            }\n        }\n\n        if (mines > 0) {\n            board[cr][cc] = String(mines);\n        } else {\n            board[cr][cc] = \"B\";\n            for (const neighbor of emptyNeighbors) {\n                stack.push(neighbor);\n            }\n        }\n    }\n\n    return board;\n}\n\nconst args = JSON.parse(fs.readFileSync(0, \"utf8\").trim());\nconsole.log(JSON.stringify(updateBoard(args[0], args[1])));"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Return an array of arrays of size *returnSize.\n * The sizes of the arrays are returned as *returnColumnSizes array.\n * Note: Both returned array and *columnSizes array must be malloced, assume caller calls free().\n */\nchar** updateBoard(char** board, int boardSize, int* boardColSize, int* click, int clickSize, int* returnSize, int** returnColumnSizes) {\n    \n    *returnSize = 0;\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        // TODO: unpack logic for character[][] board\n        int clickSize = 0;\n        int* click = parse_int_array(&tok, &clickSize);\n        int returnSize = 0;\n        int* returnColumnSizes = NULL;\n        int** result = updateBoard(board, click, clickSize, &returnSize, &returnColumnSizes);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; i++) {\n            printf(\"[\");\n            for (int j = 0; j < returnColumnSizes[i]; j++) {\n                printf(\"%d\", result[i][j]);\n                if (j < returnColumnSizes[i] - 1) printf(\",\");\n            }\n            printf(\"]\");\n            if (i < returnSize - 1) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def updateBoard(self, board: List[List[str]], click: List[int]) -> List[List[str]]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _board = _args[0]\n    _click = _args[1]\n    _result = Solution().updateBoard(_board, _click)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {character[][]} board\n * @param {number[]} click\n * @return {character[][]}\n */\nvar updateBoard = function(board, click) {\n    \n    return [];\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = updateBoard(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public char[][] updateBoard(char[][] board, int[] click) {\n        \n        return new char[0][0];\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        // TODO: parse char[][] for board\n        int[] click = toIntArray(nextToken());\n        char[][] result = new Solution().updateBoard(board, click);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    vector<vector<char>> updateBoard(vector<vector<char>>& board, vector<int>& click) {\n        \n        return {};\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    /* TODO: parse vector<vector<char>> for board */\n    auto click = readIntVec(tok);\n    auto result = Solution().updateBoard(board, click);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "board",
+        "type": "char[][]"
+      },
+      {
+        "name": "click",
+        "type": "int[]"
+      }
+    ],
+    "methodName": "updateBoard"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Can you implement the traversal using BFS instead of DFS?",
+    "How would you adapt the solution if the board could be much larger than 50 x 50?",
+    "Can you avoid recursive calls while preserving the same O(m * n) complexity?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[[\"E\"]],[0,0]]",
+        "label": "Single empty cell",
+        "weight": 4,
+        "expectedOutput": "[[\"B\"]]"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[[\"M\"]],[0,0]]",
+        "label": "Single mine click",
+        "weight": 4,
+        "expectedOutput": "[[\"X\"]]"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\",\"E\"]],[0,1]]",
+        "label": "Single row zero-mine reveal",
+        "weight": 4,
+        "expectedOutput": "[[\"B\",\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[[\"E\"],[\"M\"],[\"E\"]],[0,0]]",
+        "label": "Single column with mine",
+        "weight": 4,
+        "expectedOutput": "[[\"1\"],[\"M\"],[\"E\"]]"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[[\"E\",\"M\"],[\"E\",\"E\"]],[0,0]]",
+        "label": "Corner empty adjacent to mine",
+        "weight": 4,
+        "expectedOutput": "[[\"1\",\"M\"],[\"E\",\"E\"]]"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\"],[\"E\",\"M\",\"E\"],[\"E\",\"E\",\"E\"]],[0,0]]",
+        "label": "Center empty adjacent to one mine",
+        "weight": 4,
+        "expectedOutput": "[[\"1\",\"E\",\"E\"],[\"E\",\"M\",\"E\"],[\"E\",\"E\",\"E\"]]"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\"]],[1,1]]",
+        "label": "Center empty with no mines",
+        "weight": 4,
+        "expectedOutput": "[[\"B\",\"B\",\"B\"],[\"B\",\"B\",\"B\"],[\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[[\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\"]],[0,0]]",
+        "label": "Mine click at corner",
+        "weight": 4,
+        "expectedOutput": "[[\"X\",\"E\",\"E\"],[\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\"]]"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\"],[\"E\",\"M\",\"E\"],[\"E\",\"E\",\"E\"]],[1,1]]",
+        "label": "Mine click at center",
+        "weight": 4,
+        "expectedOutput": "[[\"E\",\"E\",\"E\"],[\"E\",\"X\",\"E\"],[\"E\",\"E\",\"E\"]]"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[[\"B\",\"1\",\"E\"],[\"B\",\"1\",\"M\"],[\"B\",\"B\",\"B\"]],[0,2]]",
+        "label": "Numbered click-neighbor region",
+        "weight": 4,
+        "expectedOutput": "[[\"B\",\"1\",\"1\"],[\"B\",\"1\",\"M\"],[\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[[\"B\",\"1\",\"E\",\"E\"],[\"B\",\"1\",\"E\",\"M\"],[\"B\",\"B\",\"B\",\"B\"]],[0,2]]",
+        "label": "Existing revealed board, safe expansion",
+        "weight": 3,
+        "expectedOutput": "[[\"B\",\"1\",\"1\",\"E\"],[\"B\",\"1\",\"E\",\"M\"],[\"B\",\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[[\"M\",\"M\",\"M\"],[\"M\",\"E\",\"M\"],[\"M\",\"M\",\"M\"]],[1,1]]",
+        "label": "Dense mines around click",
+        "weight": 3,
+        "expectedOutput": "[[\"M\",\"M\",\"M\"],[\"M\",\"8\",\"M\"],[\"M\",\"M\",\"M\"]]"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[[\"M\",\"E\"],[\"E\",\"E\"]],[1,1]]",
+        "label": "Diagonal-only mine",
+        "weight": 3,
+        "expectedOutput": "[[\"M\",\"E\"],[\"E\",\"1\"]]"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"M\",\"E\",\"E\",\"E\",\"M\"]],[0,0]]",
+        "label": "Two separate safe regions",
+        "weight": 3,
+        "expectedOutput": "[[\"B\",\"1\",\"M\",\"E\",\"E\"],[\"1\",\"2\",\"E\",\"E\",\"E\"],[\"M\",\"E\",\"E\",\"E\",\"M\"]]"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[[\"B\",\"1\",\"E\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]],[0,2]]",
+        "label": "Snake of existing numbers",
+        "weight": 3,
+        "expectedOutput": "[[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"1\",\"M\",\"1\",\"B\"],[\"B\",\"1\",\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[[\"M\",\"M\",\"M\",\"M\"]],[0,3]]",
+        "label": "All mines row",
+        "weight": 3,
+        "expectedOutput": "[[\"M\",\"M\",\"M\",\"X\"]]"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\",\"E\",\"E\"]],[0,2]]",
+        "label": "All empty 1x5",
+        "weight": 3,
+        "expectedOutput": "[[\"B\",\"B\",\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[[\"E\"],[\"E\"],[\"E\"],[\"E\"],[\"E\"]],[2,0]]",
+        "label": "All empty 5x1",
+        "weight": 3,
+        "expectedOutput": "[[\"B\"],[\"B\"],[\"B\"],[\"B\"],[\"B\"]]"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[[\"E\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\"]],[0,0]]",
+        "label": "Mine near edge",
+        "weight": 3,
+        "expectedOutput": "[[\"1\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\"]]"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[[\"M\",\"M\",\"M\"],[\"M\",\"E\",\"M\"],[\"M\",\"M\",\"E\"]],[1,1]]",
+        "label": "Mine creates maximum count",
+        "weight": 3,
+        "expectedOutput": "[[\"M\",\"M\",\"M\"],[\"M\",\"7\",\"M\"],[\"M\",\"M\",\"E\"]]"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[[\"B\",\"1\",\"E\"],[\"1\",\"2\",\"E\"],[\"E\",\"E\",\"E\"]],[0,2]]",
+        "label": "Click E next to pre-revealed mine-count",
+        "weight": 3,
+        "expectedOutput": "[[\"B\",\"1\",\"B\"],[\"1\",\"2\",\"B\"],[\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[[\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\"]],[2,2]]",
+        "label": "Bottom-right expansion",
+        "weight": 3,
+        "expectedOutput": "[[\"M\",\"1\",\"B\"],[\"1\",\"1\",\"B\"],[\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[[\"E\",\"M\",\"E\"],[\"M\",\"E\",\"M\"],[\"E\",\"M\",\"E\"]],[1,1]]",
+        "label": "Cross-shaped mines",
+        "weight": 3,
+        "expectedOutput": "[[\"E\",\"M\",\"E\"],[\"M\",\"4\",\"M\"],[\"E\",\"M\",\"E\"]]"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[[\"M\",\"E\",\"E\"],[\"E\",\"M\",\"E\"],[\"E\",\"E\",\"E\"]],[0,2]]",
+        "label": "Corner with two mines",
+        "weight": 3,
+        "expectedOutput": "[[\"M\",\"E\",\"1\"],[\"E\",\"M\",\"E\"],[\"E\",\"E\",\"E\"]]"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[[\"B\",\"1\",\"E\",\"1\"],[\"B\",\"2\",\"M\",\"1\"],[\"B\",\"B\",\"B\",\"B\"],[\"E\",\"E\",\"E\",\"E\"]],[3,0]]",
+        "label": "Pre-revealed mixed board",
+        "weight": 3,
+        "expectedOutput": "[[\"B\",\"1\",\"E\",\"1\"],[\"B\",\"2\",\"M\",\"1\"],[\"B\",\"B\",\"B\",\"B\"],[\"B\",\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\",\"E\"],[\"E\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\"]],[2,3]]",
+        "label": "3x4 empty with central mine",
+        "weight": 3,
+        "expectedOutput": "[[\"E\",\"E\",\"1\",\"B\"],[\"E\",\"M\",\"1\",\"B\"],[\"E\",\"E\",\"1\",\"B\"]]"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[[\"E\",\"M\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"M\"],[\"E\",\"E\",\"E\",\"E\"]],[0,1]]",
+        "label": "3x4 two mines click mine",
+        "weight": 3,
+        "expectedOutput": "[[\"E\",\"X\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"M\"],[\"E\",\"E\",\"E\",\"E\"]]"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"M\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"M\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"E\",\"E\",\"E\",\"E\"]],[4,0]]",
+        "label": "5x5 sparse mines expansion",
+        "weight": 3,
+        "expectedOutput": "[[\"E\",\"E\",\"E\",\"E\",\"E\"],[\"E\",\"M\",\"E\",\"E\",\"E\"],[\"1\",\"1\",\"2\",\"M\",\"E\"],[\"B\",\"B\",\"1\",\"1\",\"1\"],[\"B\",\"B\",\"B\",\"B\",\"B\"]]"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[[\"M\",\"M\",\"M\",\"M\",\"M\"],[\"M\",\"E\",\"E\",\"E\",\"M\"],[\"M\",\"E\",\"E\",\"E\",\"M\"],[\"M\",\"E\",\"E\",\"E\",\"M\"],[\"M\",\"M\",\"M\",\"M\",\"M\"]],[2,2]]",
+        "label": "5x5 dense border mines safe center",
+        "weight": 3,
+        "expectedOutput": "[[\"M\",\"M\",\"M\",\"M\",\"M\"],[\"M\",\"5\",\"3\",\"5\",\"M\"],[\"M\",\"3\",\"B\",\"3\",\"M\"],[\"M\",\"5\",\"3\",\"5\",\"M\"],[\"M\",\"M\",\"M\",\"M\",\"M\"]]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[\"E\",\"E\",\"E\",\"E\",\"M\",\"E\",\"E\",\"E\",\"E\"]],[0,0]]",
+        "label": "Long chain with one mine",
+        "weight": 3,
+        "expectedOutput": "[[\"B\",\"B\",\"B\",\"1\",\"M\",\"E\",\"E\",\"E\",\"E\"]]"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q529",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <ctype.h>\n\ntypedef struct {\n    const char *s;\n    size_t pos;\n    size_t len;\n} Parser;\n\nstatic void skip_ws(Parser *p) {\n    while (p->pos < p->len && isspace((unsigned char)p->s[p->pos])) p->pos++;\n}\n\nstatic void expect(Parser *p, char ch) {\n    skip_ws(p);\n    if (p->pos >= p->len || p->s[p->pos] != ch) exit(EXIT_FAILURE);\n    p->pos++;\n}\n\nstatic char parse_char_string(Parser *p) {\n    skip_ws(p);\n    expect(p, '\"');\n    if (p->pos >= p->len) exit(EXIT_FAILURE);\n    char ch = p->s[p->pos++];\n    if (ch == '\\\\' && p->pos < p->len) ch = p->s[p->pos++];\n    expect(p, '\"');\n    return ch;\n}\n\nstatic int parse_int(Parser *p) {\n    skip_ws(p);\n    int sign = 1;\n    if (p->s[p->pos] == '-') {\n        sign = -1;\n        p->pos++;\n    }\n    int value = 0;\n    while (p->pos < p->len && isdigit((unsigned char)p->s[p->pos])) {\n        value = value * 10 + (p->s[p->pos++] - '0');\n    }\n    return sign * value;\n}\n\nstatic char **parse_board(Parser *p, int *rows_out, int **cols_out) {\n    expect(p, '[');\n\n    int rows_cap = 8;\n    int rows = 0;\n    char **board = (char **)malloc((size_t)rows_cap * sizeof(char *));\n    int *cols = (int *)malloc((size_t)rows_cap * sizeof(int));\n    if (!board || !cols) exit(EXIT_FAILURE);\n\n    skip_ws(p);\n    while (p->pos < p->len && p->s[p->pos] != ']') {\n        expect(p, '[');\n\n        int cap = 8;\n        int n = 0;\n        char *row = (char *)malloc((size_t)cap * sizeof(char));\n        if (!row) exit(EXIT_FAILURE);\n\n        skip_ws(p);\n        while (p->pos < p->len && p->s[p->pos] != ']') {\n            if (n == cap) {\n                cap *= 2;\n                row = (char *)realloc(row, (size_t)cap * sizeof(char));\n                if (!row) exit(EXIT_FAILURE);\n            }\n\n            row[n++] = parse_char_string(p);\n\n            skip_ws(p);\n            if (p->s[p->pos] == ',') {\n                p->pos++;\n                continue;\n            }\n            break;\n        }\n\n        expect(p, ']');\n\n        if (rows == rows_cap) {\n            rows_cap *= 2;\n            board = (char **)realloc(board, (size_t)rows_cap * sizeof(char *));\n            cols = (int *)realloc(cols, (size_t)rows_cap * sizeof(int));\n            if (!board || !cols) exit(EXIT_FAILURE);\n        }\n\n        board[rows] = row;\n        cols[rows] = n;\n        rows++;\n\n        skip_ws(p);\n        if (p->s[p->pos] == ',') {\n            p->pos++;\n            continue;\n        }\n        break;\n    }\n\n    expect(p, ']');\n    *rows_out = rows;\n    *cols_out = cols;\n    return board;\n}\n\nstatic int *parse_click(Parser *p) {\n    expect(p, '[');\n    int *click = (int *)malloc(2 * sizeof(int));\n    if (!click) exit(EXIT_FAILURE);\n    click[0] = parse_int(p);\n    expect(p, ',');\n    click[1] = parse_int(p);\n    expect(p, ']');\n    return click;\n}\n\nstatic char **updateBoard(char **board, int boardSize, int *boardColSize,\n                          int *click, int clickSize, int *returnSize,\n                          int **returnColumnSizes) {\n    *returnSize = 0;\n    *returnColumnSizes = NULL;\n    return NULL;\n}\n\nint main(void) {\n    size_t cap = 1024, len = 0;\n    char *input = (char *)malloc(cap);\n    if (!input) return 1;\n\n    int ch;\n    while ((ch = getchar()) != EOF) {\n        if (len + 1 >= cap) {\n            cap *= 2;\n            input = (char *)realloc(input, cap);\n            if (!input) return 1;\n        }\n        input[len++] = (char)ch;\n    }\n    input[len] = '\\0';\n\n    Parser p = {input, 0, len};\n\n    expect(&p, '[');\n    int boardSize = 0;\n    int *boardColSize = NULL;\n    char **board = parse_board(&p, &boardSize, &boardColSize);\n    expect(&p, ',');\n    int *click = parse_click(&p);\n    expect(&p, ']');\n\n    int returnSize = 0;\n    int *returnColumnSizes = NULL;\n    char **result = updateBoard(board, boardSize, boardColSize, click, 2,\n                                 &returnSize, &returnColumnSizes);\n\n    printf(\"[\");\n    for (int i = 0; i < returnSize; ++i) {\n        if (i) printf(\",\");\n        printf(\"[\");\n        for (int j = 0; j < returnColumnSizes[i]; ++j) {\n            if (j) printf(\",\");\n            printf(\"\\\"%c\\\"\", result[i][j]);\n        }\n        printf(\"]\");\n    }\n    printf(\"]\\n\");\n\n    for (int i = 0; i < boardSize; ++i) free(board[i]);\n    free(board);\n    free(boardColSize);\n    free(click);\n    free(returnColumnSizes);\n    free(input);\n\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<char>> updateBoard(vector<vector<char>>& board, vector<int>& click) {\n        return {};\n    }\n};\n\nclass Parser {\n    string s;\n    size_t pos = 0;\n\n    void skip() {\n        while (pos < s.size() && isspace(static_cast<unsigned char>(s[pos]))) ++pos;\n    }\n\npublic:\n    explicit Parser(string input) : s(std::move(input)) {}\n\n    void expect(char ch) {\n        skip();\n        if (pos >= s.size() || s[pos] != ch)\n            throw runtime_error(\"Unexpected token\");\n        ++pos;\n    }\n\n    string stringValue() {\n        skip();\n        expect('\"');\n        string out;\n        while (pos < s.size() && s[pos] != '\"') {\n            if (s[pos] == '\\\\' && pos + 1 < s.size()) ++pos;\n            out.push_back(s[pos++]);\n        }\n        expect('\"');\n        return out;\n    }\n\n    int integer() {\n        skip();\n        int sign = 1;\n        if (s[pos] == '-') {\n            sign = -1;\n            ++pos;\n        }\n        int value = 0;\n        while (pos < s.size() && isdigit(static_cast<unsigned char>(s[pos]))) {\n            value = value * 10 + (s[pos++] - '0');\n        }\n        return sign * value;\n    }\n\n    vector<vector<char>> board() {\n        vector<vector<char>> board;\n        expect('[');\n        skip();\n\n        while (pos < s.size() && s[pos] != ']') {\n            expect('[');\n            vector<char> row;\n            skip();\n\n            while (pos < s.size() && s[pos] != ']') {\n                row.push_back(stringValue()[0]);\n                skip();\n                if (s[pos] == ',') {\n                    ++pos;\n                    continue;\n                }\n                break;\n            }\n\n            expect(']');\n            board.push_back(row);\n\n            skip();\n            if (s[pos] == ',') {\n                ++pos;\n                continue;\n            }\n            break;\n        }\n\n        expect(']');\n        return board;\n    }\n\n    vector<int> click() {\n        vector<int> click;\n        expect('[');\n        click.push_back(integer());\n        expect(',');\n        click.push_back(integer());\n        expect(']');\n        return click;\n    }\n};\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n\n    string line;\n    getline(cin, line);\n    Parser p(line);\n\n    p.expect('[');\n    auto board = p.board();\n    p.expect(',');\n    auto click = p.click();\n    p.expect(']');\n\n    auto result = Solution().updateBoard(board, click);\n\n    cout << \"[\";\n    for (size_t i = 0; i < result.size(); ++i) {\n        if (i) cout << \",\";\n        cout << \"[\";\n        for (size_t j = 0; j < result[i].size(); ++j) {\n            if (j) cout << \",\";\n            cout << '\"' << result[i][j] << '\"';\n        }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public char[][] updateBoard(char[][] board, int[] click) {\n        return new char[0][];\n    }\n}\n\npublic class Main {\n    static class Parser {\n        private final String s;\n        private int pos = 0;\n\n        Parser(String s) { this.s = s; }\n\n        void skip() {\n            while (pos < s.length() &&\n                   Character.isWhitespace(s.charAt(pos))) pos++;\n        }\n\n        void expect(char ch) {\n            skip();\n            if (pos >= s.length() || s.charAt(pos) != ch)\n                throw new IllegalArgumentException(\"Expected \" + ch);\n            pos++;\n        }\n\n        String string() {\n            skip();\n            expect('\"');\n            StringBuilder sb = new StringBuilder();\n            while (pos < s.length() && s.charAt(pos) != '\"') {\n                char ch = s.charAt(pos++);\n                if (ch == '\\\\' && pos < s.length()) {\n                    sb.append(s.charAt(pos++));\n                } else {\n                    sb.append(ch);\n                }\n            }\n            expect('\"');\n            return sb.toString();\n        }\n\n        int integer() {\n            skip();\n            int sign = 1;\n            if (s.charAt(pos) == '-') {\n                sign = -1;\n                pos++;\n            }\n            int value = 0;\n            while (pos < s.length() && Character.isDigit(s.charAt(pos))) {\n                value = value * 10 + (s.charAt(pos++) - '0');\n            }\n            return sign * value;\n        }\n\n        char[][] board() {\n            expect('[');\n            skip();\n            if (s.charAt(pos) == ']') {\n                pos++;\n                return new char[0][0];\n            }\n\n            ArrayList<char[]> rows = new ArrayList<>();\n            while (true) {\n                expect('[');\n                ArrayList<Character> row = new ArrayList<>();\n                skip();\n                if (s.charAt(pos) != ']') {\n                    while (true) {\n                        row.add(string().charAt(0));\n                        skip();\n                        if (s.charAt(pos) == ',') {\n                            pos++;\n                            continue;\n                        }\n                        break;\n                    }\n                }\n                expect(']');\n\n                char[] r = new char[row.size()];\n                for (int i = 0; i < row.size(); i++) r[i] = row.get(i);\n                rows.add(r);\n\n                skip();\n                if (s.charAt(pos) == ',') {\n                    pos++;\n                    continue;\n                }\n                break;\n            }\n            expect(']');\n\n            return rows.toArray(new char[0][]);\n        }\n\n        int[] click() {\n            expect('[');\n            int a = integer();\n            expect(',');\n            int b = integer();\n            expect(']');\n            return new int[]{a, b};\n        }\n    }\n\n    static void printBoard(char[][] board) {\n        System.out.print(\"[\");\n        for (int i = 0; i < board.length; i++) {\n            if (i > 0) System.out.print(\",\");\n            System.out.print(\"[\");\n            for (int j = 0; j < board[i].length; j++) {\n                if (j > 0) System.out.print(\",\");\n                System.out.print(\"\\\"\");\n                System.out.print(board[i][j]);\n                System.out.print(\"\\\"\");\n            }\n            System.out.print(\"]\");\n        }\n        System.out.println(\"]\");\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        Parser p = new Parser(line);\n\n        p.expect('[');\n        char[][] board = p.board();\n        p.expect(',');\n        int[] click = p.click();\n        p.expect(']');\n\n        printBoard(new Solution().updateBoard(board, click));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def updateBoard(self, board: List[List[str]], click: List[int]) -> List[List[str]]:\n        pass\n\nif __name__ == \"__main__\":\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().updateBoard(args[0], args[1]), separators=(\",\", \":\")))\n",
+    "JavaScript": "const fs = require(\"fs\");\n\nfunction updateBoard(board, click) {\n    return [];\n}\n\nconst args = JSON.parse(fs.readFileSync(0, \"utf8\").trim());\nconsole.log(JSON.stringify(updateBoard(args[0], args[1])));\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "30–45 minutes",
+  "learningObjectives": [
+    "Apply DFS or BFS to a matrix with eight-directional adjacency.",
+    "Distinguish between boundary number cells and recursively expandable blank cells.",
+    "Track visited/revealed cells safely during graph traversal.",
+    "Analyze worst-case time and auxiliary space for matrix traversal."
+  ]
 }
