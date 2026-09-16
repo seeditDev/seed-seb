@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { 
-  FaDatabase, FaPlay, FaUndo, FaCheckCircle, 
+  FaDatabase, FaUndo, FaCheckCircle, 
   FaCircle, FaLightbulb, FaCheck, FaExclamationCircle, 
   FaTable, FaChevronDown, FaChevronUp, FaClock,
-  FaSun, FaMoon 
+  FaSun, FaMoon, FaBolt 
 } from 'react-icons/fa';
 import { remeasureMonacoFonts } from '../../../utils/monacoFontFix';
 import { 
@@ -34,6 +34,7 @@ const SQLInteractiveStage = ({
   const [query, setQuery] = useState(() => exercise?.defaultQuery || initialQuery);
   const queryRef = useRef(query);
   queryRef.current = query;
+  const userHasEditedRef = useRef(false);
 
   const [queryResult, setQueryResult] = useState(null);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -43,6 +44,15 @@ const SQLInteractiveStage = ({
   const [taskProgress, setTaskProgress] = useState(() => {
     return tasks.map((_, idx) => ({ id: idx, completed: false }));
   });
+
+  // Reset exercise state whenever exercise definition changes (prevents completion leaking between topics)
+  useEffect(() => {
+    userHasEditedRef.current = false;
+    setTaskProgress(tasks.map((_, idx) => ({ id: idx, completed: false })));
+    setQuery(exercise?.defaultQuery || initialQuery);
+    setQueryResult(null);
+    setActiveSolutionIdx(null);
+  }, [exercise, tasks, initialQuery]);
 
   const [activeSolutionIdx, setActiveSolutionIdx] = useState(null);
 
@@ -103,7 +113,7 @@ const SQLInteractiveStage = ({
   }, [db, activeTable]);
 
   // Execute Query & Validate Tasks
-  const handleRunQuery = useCallback((userQuery) => {
+  const handleRunQuery = useCallback((userQuery, validateTasks = true) => {
     const q = userQuery !== undefined ? userQuery : queryRef.current;
     if (!db || !dbReady) return;
     setIsExecuting(true);
@@ -111,8 +121,8 @@ const SQLInteractiveStage = ({
     const result = executeQuery(db, q);
     setQueryResult(result);
 
-    // Validate against each task
-    if (result.success && tasks.length > 0) {
+    // Validate against each task only when validateTasks is true (e.g. user writes/edits query)
+    if (validateTasks && result.success && tasks.length > 0) {
       setTaskProgress(prevProgress => {
         let anyNewlySolved = false;
         const updated = prevProgress.map((tp, idx) => {
@@ -140,7 +150,7 @@ const SQLInteractiveStage = ({
 
         const allSolved = updated.every(t => t.completed);
         if (allSolved && !prevProgress.every(t => t.completed)) {
-          toast.success('All tasks passed! Lesson completed.', { duration: 4000 });
+          toast.success('All tasks passed! Topic objective completed. Click "Next Lesson →" to continue.', { duration: 4500 });
           onComplete?.('sqlPassed');
         }
 
@@ -155,23 +165,24 @@ const SQLInteractiveStage = ({
   const handleEditorDidMount = useCallback((editor, monaco) => {
     remeasureMonacoFonts(monaco, editor);
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      handleRunQuery();
+      userHasEditedRef.current = true;
+      handleRunQuery(queryRef.current, true);
     });
   }, [handleRunQuery]);
 
-  // Debounced auto-execution on query change (real-time reactive feedback)
+  // Debounced auto-execution on query change (real-time reactive evaluation as user writes query)
   useEffect(() => {
     if (!dbReady || !db || !query?.trim()) return;
     const timer = setTimeout(() => {
-      handleRunQuery(query);
-    }, 400);
+      handleRunQuery(query, userHasEditedRef.current);
+    }, 350);
     return () => clearTimeout(timer);
   }, [query, dbReady, db, handleRunQuery]);
 
-  // Run default query once when DB is first ready
+  // Run initial query once when DB is first ready (for table preview only, without auto-validating tasks)
   useEffect(() => {
     if (dbReady && db && query) {
-      handleRunQuery(query);
+      handleRunQuery(query, false);
     }
   }, [dbReady]);
 
@@ -268,7 +279,7 @@ const SQLInteractiveStage = ({
               </span>
             </div>
             <p className="tasks-hint-text">
-              Modify the SQL query on the right. Matching the required task outputs will automatically check them off!
+              ⚡ Write your SQL query on the right. Your query executes in real-time as you type — matching the required task outputs will automatically check them off and complete this topic!
             </p>
           </div>
 
@@ -338,6 +349,10 @@ const SQLInteractiveStage = ({
               </div>
 
               <div className="toolbar-right">
+                <div className="live-eval-pill" title="Queries execute automatically in real-time as you write">
+                  <FaBolt className="live-bolt-icon" />
+                  <span>Auto-Evaluating</span>
+                </div>
                 <button
                   type="button"
                   className={`wb-action-btn theme-toggle ${editorTheme === 'vs-dark' ? 'dark' : 'light'}`}
@@ -365,15 +380,6 @@ const SQLInteractiveStage = ({
                 >
                   <FaUndo /> Reset
                 </button>
-                <button
-                  type="button"
-                  className="wb-action-btn run"
-                  onClick={() => handleRunQuery()}
-                  disabled={isExecuting}
-                  title="Run SQL Query (Ctrl+Enter)"
-                >
-                  <FaPlay /> {isExecuting ? 'Running...' : 'Run Query'}
-                </button>
               </div>
             </div>
 
@@ -385,7 +391,10 @@ const SQLInteractiveStage = ({
                 theme={editorTheme}
                 value={query}
                 onMount={handleEditorDidMount}
-                onChange={(val) => setQuery(val || '')}
+                onChange={(val) => {
+                  userHasEditedRef.current = true;
+                  setQuery(val || '');
+                }}
                 options={{
                   minimap: { enabled: false },
                   fontSize: 13.5,
@@ -418,7 +427,8 @@ const SQLInteractiveStage = ({
                 </div>
               ) : (
                 <div className="output-meta-pill idle">
-                  <span>Enter a SQL statement and click "Run Query"</span>
+                  <FaBolt style={{ color: '#10b981', marginRight: '4px' }} />
+                  <span>Type your SQL statement in the editor to view live results</span>
                 </div>
               )}
             </div>

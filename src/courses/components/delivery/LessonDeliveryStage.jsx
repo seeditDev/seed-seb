@@ -87,11 +87,14 @@ const LessonDeliveryStage = ({
           </div>
         )}
         <SQLInteractiveStage
+          key={topic.topicId}
           exercise={topic.sqlExercise}
           onComplete={() => {
             handleCheckpointPassed('sqlExercisePassed', 0);
             onCheckpointComplete?.('sqlExercisePassed');
-            onTopicComplete?.();
+            if (activeModule?.moduleId && topic?.topicId) {
+              learningEngineService.markTopicCompleted(uid, course, activeModule.moduleId, topic.topicId).catch(() => {});
+            }
           }}
           onNextLesson={() => {
             onTopicComplete?.();

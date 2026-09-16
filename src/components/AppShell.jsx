@@ -191,7 +191,25 @@ export default function AppShell({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDesktopApp, setIsDesktopApp] = useState(true);
+  const [simultaneousLoginAlert, setSimultaneousLoginAlert] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(3);
   const sessionUnsubscribeRef = useRef(null);
+
+  useEffect(() => {
+    if (!simultaneousLoginAlert) return;
+    setCountdownSeconds(3);
+    const timer = setInterval(() => {
+      setCountdownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          window.location.href = "/login?reason=simultaneous_login";
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [simultaneousLoginAlert]);
 
   useEffect(() => {
     const activeTheme = localStorage.getItem("portal_theme") || "seed-seb";
@@ -399,8 +417,7 @@ export default function AppShell({ children }) {
             clearAllStudentLocalData();
             auth.signOut().catch(() => {});
             sessionStorage.setItem("session_terminated_reason", "simultaneous_login");
-            alert("Simultaneous Login Detected: Your account has been logged in on another machine or browser. For exam security, this session has been ended.");
-            window.location.href = "/login?reason=simultaneous_login";
+            setSimultaneousLoginAlert(true);
           }
         }, (err) => {
           console.warn("[SessionGuard] Session listener non-fatal error:", err);
@@ -669,6 +686,138 @@ function EngineDisconnectedPopup() {
     </div>
   );
 }
+
+function SimultaneousLoginModal({ countdownSeconds }) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999999,
+        backgroundColor: "rgba(15, 23, 42, 0.88)",
+        backdropFilter: "blur(14px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "460px",
+          background: "#0f172a",
+          color: "#ffffff",
+          borderRadius: "20px",
+          border: "1.5px solid rgba(239, 68, 68, 0.4)",
+          boxShadow: "0 25px 60px -15px rgba(220, 38, 38, 0.45)",
+          padding: "32px 28px",
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "18px",
+        }}
+      >
+        <div
+          style={{
+            width: "60px",
+            height: "60px",
+            borderRadius: "50%",
+            background: "rgba(239, 68, 68, 0.15)",
+            border: "2px solid #ef4444",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#ef4444",
+            fontSize: "28px",
+            fontWeight: 800,
+          }}
+        >
+          ⚠
+        </div>
+        <div>
+          <h3
+            style={{
+              margin: "0 0 8px",
+              fontSize: "20px",
+              fontWeight: 800,
+              color: "#f87171",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Simultaneous Login Detected
+          </h3>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "14px",
+              color: "#cbd5e1",
+              lineHeight: 1.55,
+            }}
+          >
+            Your account has been logged in on another machine or browser.
+            For exam security, this session has been ended.
+          </p>
+        </div>
+
+        <div
+          style={{
+            width: "100%",
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "10px",
+            padding: "12px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            fontSize: "13px",
+            color: "#94a3b8",
+          }}
+        >
+          <span>Logging out and redirecting in</span>
+          <span
+            style={{
+              fontFamily: "monospace",
+              fontWeight: 800,
+              fontSize: "15px",
+              color: "#ef4444",
+              background: "rgba(239, 68, 68, 0.25)",
+              padding: "2px 8px",
+              borderRadius: "6px",
+            }}
+          >
+            {countdownSeconds}s
+          </span>
+        </div>
+
+        <div
+          style={{
+            width: "100%",
+            height: "4px",
+            borderRadius: "2px",
+            background: "rgba(255, 255, 255, 0.12)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${(countdownSeconds / 3) * 100}%`,
+              background: "#ef4444",
+              transition: "width 1s linear",
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+  if (simultaneousLoginAlert) {
+    return <SimultaneousLoginModal countdownSeconds={countdownSeconds} />;
+  }
 
   if (!isDesktopApp) {
     return <DesktopOnlyNotice onEnableWebAccess={handleEnableWebAccess} />;

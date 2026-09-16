@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from './router-compat';
-import { fetchQuestionsIndex } from '../services/codingQuestionBankService';
+import { fetchQuestionsIndex, sortQuestionsNaturally } from '../services/codingQuestionBankService';
 import { getFullProgress, syncProgressWithFirebase, getQuestionDisplayStatus, saveSheetProgress } from '../services/codingProgressService';
 import DataService from '../services/dataService';
 import { fetchArticleFile, fetchArticleJson } from '../utils/articleFetcher';
@@ -644,7 +644,7 @@ const PracticeHome = ({
       setDsaQuestionIds(dsaQids);
       setCourseQuestionIds(courseQidsMap || {});
 
-      setQuestions(indexQs);
+      setQuestions(sortQuestionsNaturally(indexQs));
       const completedList = progress.completedQuestions || progress.solvedProblems || [];
       const attemptedList = progress.attemptedQuestions || [];
       setSolvedIds(completedList);
@@ -1686,7 +1686,7 @@ const PracticeHome = ({
           const { fetchQuestionsForContest } = await import('../services/codingQuestionBankService');
           questionsList = await fetchQuestionsForContest(data.questionIds);
         }
-        setContestQuestions(questionsList);
+        setContestQuestions(sortQuestionsNaturally(questionsList));
       } catch (err) {
         console.error('Failed to load contest questions:', err);
         toast.error('Could not fetch questions list for this practice module.');
@@ -2395,7 +2395,7 @@ const PracticeHome = ({
                                   };
                                 });
 
-                                setPathModuleQuestions(prev => ({ ...prev, [mod.id]: enrichedItems }));
+                                setPathModuleQuestions(prev => ({ ...prev, [mod.id]: sortQuestionsNaturally(enrichedItems) }));
                               } catch (e) {
                                 console.error("Failed to load path module questions:", e);
                               }

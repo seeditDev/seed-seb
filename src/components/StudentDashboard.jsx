@@ -223,14 +223,27 @@ const StudentDashboard = () => {
     }
   }, [location.state]);
   const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('portal_primary_color') || 'green');
-  const [fontSize, setFontSize] = useState(() => localStorage.getItem('portal_font_size') || 'medium');
+  const [zoomLevel, setZoomLevel] = useState(() => {
+    const savedZoom = localStorage.getItem('portal_zoom_level');
+    if (savedZoom) return parseInt(savedZoom, 10) || 100;
+    const legacySize = localStorage.getItem('portal_font_size');
+    if (legacySize === 'small') return 90;
+    if (legacySize === 'large') return 112;
+    if (legacySize === 'xlarge') return 122;
+    return 100;
+  });
 
-  // Apply persisted font & page zoom level to root DOM
+  // Apply persisted page zoom level to root DOM
   useEffect(() => {
-    const savedFontSize = localStorage.getItem('portal_font_size') || 'medium';
-    document.documentElement.setAttribute('data-font-size', savedFontSize);
-    document.body.setAttribute('data-font-size', savedFontSize);
-  }, [fontSize]);
+    const pct = Math.max(70, Math.min(140, zoomLevel));
+    document.documentElement.style.zoom = `${pct / 100}`;
+    document.body.style.zoom = `${pct / 100}`;
+    localStorage.setItem('portal_zoom_level', String(pct));
+    const legacyCategory = pct < 95 ? 'small' : pct > 115 ? 'large' : 'medium';
+    document.documentElement.setAttribute('data-font-size', legacyCategory);
+    document.body.setAttribute('data-font-size', legacyCategory);
+    localStorage.setItem('portal_font_size', legacyCategory);
+  }, [zoomLevel]);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [practiceReminders, setPracticeReminders] = useState(true);
   const [assessmentAlerts, setAssessmentAlerts] = useState(true);
@@ -5016,11 +5029,17 @@ const StudentDashboard = () => {
       setPrimaryColor(colorId);
     };
 
-    const handleFontSizeChange = (size) => {
-      localStorage.setItem('portal_font_size', size);
-      document.documentElement.setAttribute('data-font-size', size);
-      document.body.setAttribute('data-font-size', size);
-      setFontSize(size);
+    const handleZoomChange = (newLevel) => {
+      const val = Math.max(70, Math.min(140, parseInt(newLevel, 10) || 100));
+      setZoomLevel(val);
+    };
+
+    const handleZoomStep = (delta) => {
+      setZoomLevel(prev => Math.max(70, Math.min(140, prev + delta)));
+    };
+
+    const handleZoomReset = () => {
+      setZoomLevel(100);
     };
 
     const toggleSection = (sectionId) => {
@@ -5212,43 +5231,136 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Font Size Selector */}
+            {/* Website Zoom & Interface Scaling */}
             <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Font Size</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Adjust the platform font size</div>
-              <div className="font-size-group">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-main)' }}>Website Zoom &amp; Interface Scaling</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    fontFamily: 'monospace',
+                    padding: '2px 10px',
+                    borderRadius: '8px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    color: '#10b981',
+                    border: '1px solid rgba(16, 185, 129, 0.3)'
+                  }}>
+                    {zoomLevel}%
+                  </span>
+                  {zoomLevel !== 100 && (
+                    <button
+                      type="button"
+                      onClick={handleZoomReset}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        fontSize: '11.5px',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Reset (100%)
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                Customise your portal display zoom using the slider or minus/plus buttons.
+              </div>
+
+              {/* Slider and Minus/Plus Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '520px' }}>
                 <button
                   type="button"
-                  className={`font-size-btn ${fontSize === 'small' ? 'active' : ''}`}
-                  onClick={() => handleFontSizeChange('small')}
-                  title="90% Scale — Reduce Size"
+                  onClick={() => handleZoomStep(-5)}
+                  disabled={zoomLevel <= 70}
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-main)',
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: zoomLevel <= 70 ? 'not-allowed' : 'pointer',
+                    opacity: zoomLevel <= 70 ? 0.4 : 1,
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Zoom Out (-5%)"
                 >
-                  A- Small (90%)
+                  −
                 </button>
+
+                <input
+                  type="range"
+                  min="70"
+                  max="140"
+                  step="1"
+                  value={zoomLevel}
+                  onChange={(e) => handleZoomChange(e.target.value)}
+                  style={{
+                    flex: 1,
+                    height: '6px',
+                    borderRadius: '3px',
+                    accentColor: '#10b981',
+                    cursor: 'pointer'
+                  }}
+                />
+
                 <button
                   type="button"
-                  className={`font-size-btn ${fontSize === 'medium' ? 'active' : ''}`}
-                  onClick={() => handleFontSizeChange('medium')}
-                  title="100% Scale — Default"
+                  onClick={() => handleZoomStep(5)}
+                  disabled={zoomLevel >= 140}
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-main)',
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: zoomLevel >= 140 ? 'not-allowed' : 'pointer',
+                    opacity: zoomLevel >= 140 ? 0.4 : 1,
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Zoom In (+5%)"
                 >
-                  Medium (100%)
+                  +
                 </button>
-                <button
-                  type="button"
-                  className={`font-size-btn ${fontSize === 'large' ? 'active' : ''}`}
-                  onClick={() => handleFontSizeChange('large')}
-                  title="112% Scale — Increase Size"
-                >
-                  A+ Large (112%)
-                </button>
-                <button
-                  type="button"
-                  className={`font-size-btn ${fontSize === 'xlarge' ? 'active' : ''}`}
-                  onClick={() => handleFontSizeChange('xlarge')}
-                  title="122% Scale — Extra Large"
-                >
-                  A++ X-Large (122%)
-                </button>
+              </div>
+
+              {/* Quick Preset Chips */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                {[80, 90, 100, 115, 125].map(pct => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => handleZoomChange(pct)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: zoomLevel === pct ? '1px solid #10b981' : '1px solid var(--border-color)',
+                      background: zoomLevel === pct ? 'rgba(16, 185, 129, 0.12)' : 'var(--bg-primary)',
+                      color: zoomLevel === pct ? '#10b981' : 'var(--text-muted)',
+                      fontSize: '11.5px',
+                      fontWeight: zoomLevel === pct ? 700 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {pct === 100 ? 'Default (100%)' : `${pct}%`}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -6010,7 +6122,7 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`} data-font-size={fontSize}>
+    <div className={`dashboard-container ${collapsed ? "sidebar-collapsed" : ""}`} data-font-size={zoomLevel < 95 ? 'small' : zoomLevel > 115 ? 'large' : 'medium'}>
 
       {showUpdatesModal && welcomeUpdates && (
         <div className="lw-overlay" style={{ zIndex: 1500 }}>
@@ -6700,8 +6812,6 @@ const StudentDashboard = () => {
           }}
         />
       )}
-
-      /* Premium Upgrade Modal removed in SEB environment */
 
       {/* Logout animation screen */}
       {showLogoutAnimation && (

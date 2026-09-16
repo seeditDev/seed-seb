@@ -37,10 +37,40 @@ export default function GitHubSyncModal({ isOpen, onClose, user, onSyncCompleted
   const [autoSyncInput, setAutoSyncInput] = useState(true);
 
   const [isOAuthConnecting, setIsOAuthConnecting] = useState(false);
+  const [isSyncingFromCloud, setIsSyncingFromCloud] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isBatchSyncing, setIsBatchSyncing] = useState(false);
   const [batchProgress, setBatchProgress] = useState(null);
   const [showPatSection, setShowPatSection] = useState(false);
+
+  // Sync GitHub config from Website Profile (Firestore users/{uid}/settings/githubSync)
+  const handleSyncFromCloud = async () => {
+    const uid = user?.uid;
+    if (!uid) {
+      toast.error('Student account not identified. Please re-login.');
+      return;
+    }
+    setIsSyncingFromCloud(true);
+    try {
+      const cloudCfg = await fetchGitHubConfigFromFirestore(uid);
+      if (cloudCfg && cloudCfg.isConnected) {
+        setConfig(cloudCfg);
+        setTokenInput(cloudCfg.token || '');
+        setRepoInput(cloudCfg.repo || DEFAULT_REPO_NAME);
+        setIsPrivateInput(cloudCfg.isPrivate || false);
+        setAutoSyncInput(cloudCfg.autoSync);
+        toast.success(`GitHub connected as @${cloudCfg.username} from your website profile!`);
+        if (onSyncCompleted) onSyncCompleted();
+      } else {
+        toast.info('No connected GitHub account found in your profile. Please connect your GitHub account under Website → Profile → GitHub Sync first, then click "Sync Here".');
+      }
+    } catch (err) {
+      console.error('[GitHubSyncModal] Cloud sync error:', err);
+      toast.error(err.message || 'Failed to sync GitHub configuration from profile.');
+    } finally {
+      setIsSyncingFromCloud(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -369,35 +399,92 @@ export default function GitHubSyncModal({ isOpen, onClose, user, onSyncCompleted
                 </div>
               </div>
 
-              {/* Method 1: One-Click Connect with GitHub (No PAT Needed!) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Connect via Website Profile Instructions & Sync Here */}
+              <div style={{
+                background: 'rgba(99, 102, 241, 0.05)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                borderRadius: '14px',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: '#24292f',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    flexShrink: 0
+                  }}>
+                    <FaGithub />
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>
+                      Connect via SEED-IT Website Profile
+                    </h4>
+                    <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: 'var(--text-muted, #64748b)', lineHeight: '1.45' }}>
+                      To sync solutions, link your GitHub account on the website, then sync it directly into this app:
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  border: '1px dashed rgba(99, 102, 241, 0.3)',
+                  borderRadius: '10px',
+                  padding: '12px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  fontSize: '12.5px',
+                  color: 'var(--text-secondary, #334155)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>1</span>
+                    <span>Go to <strong>SEED-IT Website → Profile → GitHub Sync</strong></span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>2</span>
+                    <span>Link your GitHub account &amp; repository there</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>3</span>
+                    <span>Click <strong>Sync Here</strong> below to activate and link this workspace</span>
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   className="ghm-save-btn"
-                  onClick={handleOAuthConnect}
-                  disabled={isOAuthConnecting}
+                  onClick={handleSyncFromCloud}
+                  disabled={isSyncingFromCloud}
                   style={{
                     width: '100%',
                     justifyContent: 'center',
                     padding: '12px 20px',
                     fontSize: '14px',
-                    background: '#24292f',
-                    boxShadow: '0 4px 14px rgba(36, 41, 47, 0.25)',
+                    background: '#6366f1',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: isSyncingFromCloud ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
+                    transition: 'all 0.2s'
                   }}
                 >
-                  {isOAuthConnecting ? (
-                    <>
-                      <div className="ghm-spinner" /> Authorizing via GitHub...
-                    </>
-                  ) : (
-                    <>
-                      <FaBolt style={{ color: '#fbbf24' }} /> Connect with GitHub (1-Click, No PAT Needed)
-                    </>
-                  )}
+                  <FaSyncAlt style={{ animation: isSyncingFromCloud ? 'spin 1s linear infinite' : 'none' }} />
+                  {isSyncingFromCloud ? 'Checking Website Profile...' : 'Sync Here (Fetch from Website Profile)'}
                 </button>
-                <div style={{ fontSize: '11.5px', color: '#64748b', textAlign: 'center' }}>
-                  Opens GitHub authorization popup to grant repository access automatically.
-                </div>
               </div>
 
               {/* Divider */}

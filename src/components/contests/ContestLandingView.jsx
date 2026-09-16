@@ -101,8 +101,7 @@ export default function ContestLandingView({
   const [isLaunching, setIsLaunching] = useState(false);
   const [passkeyInput, setPasskeyInput] = useState('');
   const [showPasskeyModal, setShowPasskeyModal] = useState(false);
-  const [selectedRoundForPasskey, setSelectedRoundForPasskey] = useState(null);
-  const [roundPasskeyInput, setRoundPasskeyInput] = useState('');
+  const [roundPasskeys, setRoundPasskeys] = useState({});
   const [leaderboard, setLeaderboard] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [participants, setParticipants] = useState([]);
@@ -402,15 +401,14 @@ export default function ContestLandingView({
       return;
     }
 
-    // Check if round requires a passkey
-    if (roundToEnter?.passkey && roundToEnter.passkey.trim() !== '' && !roundPasskey) {
-      setSelectedRoundForPasskey(roundToEnter);
-      setRoundPasskeyInput('');
-      return;
-    }
-
+    // Validate round passkey if configured
+    const effectivePasskey = (roundPasskey || roundPasskeys[roundToEnter?.roundNumber] || '').trim();
     if (roundToEnter?.passkey && roundToEnter.passkey.trim() !== '') {
-      if (roundPasskey.trim().toLowerCase() !== roundToEnter.passkey.trim().toLowerCase()) {
+      if (!effectivePasskey) {
+        toast.error(`Please enter the passkey for ${roundToEnter.name || `Round ${roundToEnter.roundNumber}`} in the text box near Enter Workspace.`);
+        return;
+      }
+      if (effectivePasskey.toLowerCase() !== roundToEnter.passkey.trim().toLowerCase()) {
         toast.error(`Invalid passkey for ${roundToEnter.name || `Round ${roundToEnter.roundNumber}`}. Check the live announcements banner for the broadcasted key.`);
         return;
       }
@@ -432,9 +430,7 @@ export default function ContestLandingView({
 
     setIsLaunching(true);
     try {
-      const targetUrl = await prepareContestMSAAssessment(contest, user, roundToEnter?.roundNumber, roundPasskey);
-      setSelectedRoundForPasskey(null);
-      setRoundPasskeyInput('');
+      const targetUrl = await prepareContestMSAAssessment(contest, user, roundToEnter?.roundNumber, effectivePasskey);
       if (onLaunchAssessment) {
         onLaunchAssessment(targetUrl);
       } else {
@@ -614,13 +610,24 @@ export default function ContestLandingView({
                       <FaCheck className="btn-icon" /> Round {activeRound?.roundNumber || 1} Completed
                     </button>
                   ) : isUserQualifiedForActiveRound ? (
-                    <button
-                      className="hero-primary-btn launch-btn"
-                      onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
-                      disabled={isLaunching}
-                    >
-                      <FaPlay className="btn-icon" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {activeRound?.passkey && (
+                        <input
+                          type="text"
+                          placeholder="Round Passkey..."
+                          value={roundPasskeys[activeRound?.roundNumber] || ''}
+                          onChange={(e) => setRoundPasskeys(prev => ({ ...prev, [activeRound?.roundNumber]: e.target.value }))}
+                          className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-900/90 text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 w-36 shadow-inner"
+                        />
+                      )}
+                      <button
+                        className="hero-primary-btn launch-btn"
+                        onClick={() => handleStartContestAssessment(activeRound?.roundNumber, roundPasskeys[activeRound?.roundNumber])}
+                        disabled={isLaunching}
+                      >
+                        <FaPlay className="btn-icon" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
+                      </button>
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <button className="hero-primary-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
@@ -1062,7 +1069,10 @@ export default function ContestLandingView({
                           {dynamicStatus === 'live' && isCurrentLive && isRegistered && isQualified && !isRoundCompleted(r.roundNumber) && (
                             <button
                               className="text-xs font-bold text-purple-600 hover:underline"
-                              onClick={() => handleStartContestAssessment(r.roundNumber)}
+                              onClick={() => {
+                                setActiveRound(r);
+                                setActiveTab('rounds');
+                              }}
                             >
                               Enter →
                             </button>
@@ -1257,13 +1267,24 @@ export default function ContestLandingView({
                           ) : dynamicStatus === 'live' && isCurrentLive ? (
                             isRegistered ? (
                               isQualified ? (
-                                <button
-                                  className="hero-primary-btn launch-btn py-1.5 px-4 text-xs font-bold"
-                                  onClick={() => handleStartContestAssessment(round.roundNumber)}
-                                  disabled={isLaunching}
-                                >
-                                  Enter Round {round.roundNumber} Workspace →
-                                </button>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {round.passkey && (
+                                    <input
+                                      type="text"
+                                      placeholder="Round Passkey..."
+                                      value={roundPasskeys[round.roundNumber] || ''}
+                                      onChange={(e) => setRoundPasskeys(prev => ({ ...prev, [round.roundNumber]: e.target.value }))}
+                                      className="px-3 py-1.5 rounded-lg border border-border bg-background text-foreground font-mono text-xs focus:outline-none focus:ring-1 focus:ring-primary w-36"
+                                    />
+                                  )}
+                                  <button
+                                    className="hero-primary-btn launch-btn py-1.5 px-4 text-xs font-bold"
+                                    onClick={() => handleStartContestAssessment(round.roundNumber, roundPasskeys[round.roundNumber])}
+                                    disabled={isLaunching}
+                                  >
+                                    Enter Round {round.roundNumber} Workspace →
+                                  </button>
+                                </div>
                               ) : (
                                 <span className="text-xs text-amber-500 font-medium">
                                   Not shortlisted for this round
@@ -1682,13 +1703,29 @@ export default function ContestLandingView({
                       <FaCheck className="mr-2" /> Round {activeRound?.roundNumber || 1} Completed
                     </button>
                   ) : isUserQualifiedForActiveRound ? (
-                    <button
-                      className="sidebar-cta-btn launch-btn"
-                      onClick={() => handleStartContestAssessment(activeRound?.roundNumber)}
-                      disabled={isLaunching}
-                    >
-                      <FaPlay className="mr-2" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
-                    </button>
+                    <div className="space-y-2">
+                      {activeRound?.passkey && (
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1 mb-1">
+                            <FaLock className="text-amber-400 text-xs" /> Round {activeRound?.roundNumber} Passkey:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Enter round passkey..."
+                            value={roundPasskeys[activeRound?.roundNumber] || ''}
+                            onChange={(e) => setRoundPasskeys(prev => ({ ...prev, [activeRound?.roundNumber]: e.target.value }))}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-700 bg-slate-900/90 text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 placeholder:text-slate-500"
+                          />
+                        </div>
+                      )}
+                      <button
+                        className="sidebar-cta-btn launch-btn"
+                        onClick={() => handleStartContestAssessment(activeRound?.roundNumber, roundPasskeys[activeRound?.roundNumber])}
+                        disabled={isLaunching}
+                      >
+                        <FaPlay className="mr-2" /> {isLaunching ? 'Entering Arena…' : `Enter Round ${activeRound?.roundNumber || 1} Workspace →`}
+                      </button>
+                    </div>
                   ) : (
                     <button className="sidebar-cta-btn" style={{ background: '#475569', cursor: 'not-allowed' }} disabled>
                       Shortlist Required for Round {activeRound?.roundNumber}
@@ -1844,57 +1881,6 @@ export default function ContestLandingView({
         </div>
       )}
 
-      {/* ROUND PASSKEY PROMPT MODAL */}
-      {selectedRoundForPasskey && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in">
-            <div className="flex items-center gap-3 text-amber-500">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-lg">
-                <FaLock />
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-foreground">
-                  Round Passkey Verification
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {selectedRoundForPasskey.name || `Round ${selectedRoundForPasskey.roundNumber}`}
-                </p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              This round is protected. Please enter the passkey broadcasted by the contest administrator to access this round.
-            </p>
-            <input
-              type="text"
-              placeholder="Enter Round Passkey..."
-              value={roundPasskeyInput}
-              onChange={(e) => setRoundPasskeyInput(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/30 font-mono text-sm tracking-wider focus:outline-none focus:ring-2 focus:ring-primary"
-              autoFocus
-            />
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                className="px-4 py-2 rounded-xl text-xs font-semibold hover:bg-muted text-muted-foreground"
-                onClick={() => {
-                  setSelectedRoundForPasskey(null);
-                  setRoundPasskeyInput('');
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-                disabled={!roundPasskeyInput.trim() || isLaunching}
-                onClick={() => handleStartContestAssessment(selectedRoundForPasskey.roundNumber, roundPasskeyInput)}
-              >
-                {isLaunching ? 'Validating...' : 'Unlock & Enter Round →'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

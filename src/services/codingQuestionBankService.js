@@ -271,11 +271,25 @@ export const fetchQuestion = async (questionId) => {
 
 
 /**
+ * Natural numerical comparator for question items / IDs.
+ * Correctly sorts 'Q0.1', 'Q0.2', ..., 'Q0.9', 'Q0.10', 'Q0.11' instead of lexicographic sort.
+ */
+export const sortQuestionsNaturally = (items = []) => {
+  if (!Array.isArray(items)) return [];
+  return [...items].sort((a, b) => {
+    const idA = String(a?.questionId || a?.id || a?.title || '');
+    const idB = String(b?.questionId || b?.id || b?.title || '');
+    return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+};
+
+/**
  * Fetch the central coding questions index manifest.
  */
 export const fetchQuestionsIndex = async () => {
   try {
-    return await fetchJson('coding/questions_index.json');
+    const res = await fetchJson('coding/questions_index.json');
+    return Array.isArray(res) ? sortQuestionsNaturally(res) : [];
   } catch (_) {
     return [];
   }
@@ -312,7 +326,7 @@ export const fetchQuestionsForContest = async (questionIds = []) => {
     return fetchQuestion(item); // plain string or number ID
   }));
 
-  return results
+  const list = results
     .map((r, i) => {
       const originalItem = questionIds[i];
       if (r.status === 'fulfilled' && r.value) {
@@ -326,6 +340,8 @@ export const fetchQuestionsForContest = async (questionIds = []) => {
       return null;
     })
     .filter(Boolean);
+
+  return sortQuestionsNaturally(list);
 };
 
 /**
@@ -478,4 +494,5 @@ export default {
   fetchAssessmentTest,
   fetchAssessmentAssignment,
   fetchAssessmentSeriesIndex,
+  sortQuestionsNaturally,
 };
