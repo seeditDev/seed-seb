@@ -81,7 +81,9 @@ const CourseMSAMCQSection = ({
       const chosen = selectedAnswers[idx];
       if (chosen === undefined || chosen === null) return;
 
-      const correctVal = q.correctAnswer !== undefined ? q.correctAnswer : q.correctIndex;
+      const correctVal = q.correctAnswer !== undefined 
+        ? q.correctAnswer 
+        : (q.correctIndex !== undefined ? q.correctIndex : q.correctOptionIndex);
       const chosenIdx = Number(chosen);
       const chosenLetter = ['A', 'B', 'C', 'D', 'E'][chosenIdx] || String(chosen).toUpperCase();
       const chosenText = String(q.options?.[chosenIdx]?.text || q.options?.[chosenIdx] || chosen).trim().toLowerCase();
@@ -108,7 +110,7 @@ const CourseMSAMCQSection = ({
     const resObj = {
       scorePct,
       correctCount,
-      totalCount: total,
+      totalCount: questions.length,
       passed,
       passingPercentage
     };
@@ -118,15 +120,15 @@ const CourseMSAMCQSection = ({
     onComplete?.(resObj);
   };
 
-  const currentQ = questions[currentIdx] || questions[0] || {};
   const answeredCount = Object.keys(selectedAnswers).length;
+  const currentQ = questions[currentIdx] || questions[0] || {};
 
   return (
-    <div className="course-msa-mcq-workspace">
-      {/* Top Section Progress Bar */}
-      <div className="msa-mcq-top-bar">
+    <div className="msa-mcq-container">
+      {/* Header Bar */}
+      <div className="msa-section-header-bar">
         <div className="mcq-header-left">
-          <span className="mcq-section-title">SECTION 1: CONCEPTUAL &amp; THEORETICAL MCQ</span>
+          <span className="msa-badge-pill">Section 1: Conceptual MCQs</span>
           <span className="mcq-progress-crumb">
             Question {currentIdx + 1} of {questions.length} • {answeredCount} Answered
           </span>
@@ -159,7 +161,7 @@ const CourseMSAMCQSection = ({
               </button>
             </div>
 
-            <h3 className="msa-q-statement">{renderMathAndCode(currentQ.question)}</h3>
+            <h3 className="msa-q-statement">{renderMathAndCode(currentQ.question || currentQ.prompt || currentQ.questionText || currentQ.title || '')}</h3>
 
             {(currentQ?.imageUrl || currentQ?.image || currentQ?.figure || currentQ?.diagram || currentQ?.questionImage || currentQ?.assetUrl || currentQ?.content?.imageUrl || currentQ?.content?.image) && (
               <div style={{ margin: '14px 0', textAlign: 'center' }}>

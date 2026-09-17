@@ -41,6 +41,7 @@ import {
   FaGraduationCap,
   FaGem,
   FaSyncAlt,
+  FaSpinner,
   FaChevronDown,
   FaChevronRight,
   FaBell,
@@ -370,6 +371,17 @@ const StudentDashboard = () => {
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const profileSaveTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (profileSaveTimeoutRef.current) {
+        clearTimeout(profileSaveTimeoutRef.current);
+      }
+    };
+  }, []);
   const [editRollNo, setEditRollNo] = useState('');
   const [editGithub, setEditGithub] = useState('');
   const [editLinkedin, setEditLinkedin] = useState('');
@@ -468,43 +480,94 @@ const StudentDashboard = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveProfile = async () => {
-    const updated = {
-      ...user,
-      name: editName.trim() || user.name,
-      phone: editPhone.trim(),
-      bio: editBio.trim(),
-      photoURL: avatarUrl,
-      github: editGithub.trim(),
-      linkedin: editLinkedin.trim(),
-      portfolio: editPortfolio.trim(),
-      leetcode: editLeetcode.trim(),
-      codechef: editCodechef.trim()
-    };
-    setUser(updated);
-    localStorage.setItem('auth_data', JSON.stringify(updated));
-    if (user?.uid) {
-      try {
-        await updateDoc(doc(db, 'users', user.uid), {
-          name: editName.trim() || user.name,
-          phone: editPhone.trim(),
-          bio: editBio.trim(),
-          photoURL: avatarUrl,
-          github: editGithub.trim(),
-          linkedin: editLinkedin.trim(),
-          portfolio: editPortfolio.trim(),
-          leetcode: editLeetcode.trim(),
-          codechef: editCodechef.trim()
-        });
-        if (studentUsername || user.username) {
-          publishPublicProfile(user.uid, updated, progressData || {}, typeof assessments !== 'undefined' ? assessments : []).catch(() => {});
-        }
-      } catch (e) {
-        console.warn('Failed to update user profile in Firestore:', e);
-      }
+  const handleCancelEditProfile = () => {
+    if (user) {
+      setEditName(user.name ?? user.Name ?? user.fullName ?? '');
+      setEditRollNo(user.rollNumber ?? user.RollNumber ?? user.rollNo ?? user.RollNo ?? user.regNo ?? user.RegNo ?? '');
+      setEditPhone(user.phone ?? user.phoneNumber ?? user.mobile ?? '');
+      setEditBio(user.bio || '');
+      setAvatarUrl(user.photoURL ?? '');
+      setEditGithub(user.github || user.githubUrl || '');
+      setEditLinkedin(user.linkedin || user.linkedIn || '');
+      setEditPortfolio(user.portfolio || user.portfolioUrl || user.website || '');
+      setEditLeetcode(user.leetcode || user.leetcodeUrl || '');
+      setEditCodechef(user.codechef || user.codechefUrl || '');
     }
     setIsEditingProfile(false);
-    toast.success('Profile details saved successfully!');
+    setIsProfileSaved(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (isSavingProfile) return;
+    setIsSavingProfile(true);
+    try {
+      const cleanName = String(editName ?? '').trim() || (user?.name ?? 'Student');
+      const cleanPhone = String(editPhone ?? '').trim();
+      const cleanBio = String(editBio ?? '').trim();
+      const cleanGithub = String(editGithub ?? '').trim();
+      const cleanLinkedin = String(editLinkedin ?? '').trim();
+      const cleanPortfolio = String(editPortfolio ?? '').trim();
+      const cleanLeetcode = String(editLeetcode ?? '').trim();
+      const cleanCodechef = String(editCodechef ?? '').trim();
+
+      const profilePatch = {
+        name: cleanName,
+        phone: cleanPhone,
+        bio: cleanBio,
+        photoURL: avatarUrl || '',
+        github: cleanGithub,
+        linkedin: cleanLinkedin,
+        portfolio: cleanPortfolio,
+        leetcode: cleanLeetcode,
+        codechef: cleanCodechef,
+      };
+
+      const updated = {
+        ...user,
+        ...profilePatch,
+      };
+
+      setUser(updated);
+      try {
+        localStorage.setItem('auth_data', JSON.stringify(updated));
+      } catch (_) {}
+
+      const effectiveUid = user?.uid || getAuthData()?.uid || auth?.currentUser?.uid;
+      if (effectiveUid && effectiveUid !== 'demo-student') {
+        try {
+          await setDoc(doc(db, 'users', effectiveUid), profilePatch, { merge: true });
+        } catch (e) {
+          console.warn('Failed to update user profile in Firestore:', e);
+        }
+
+        try {
+          if (studentUsername || user?.username) {
+            publishPublicProfile(
+              effectiveUid,
+              updated,
+              progressData || {},
+              typeof assessments !== 'undefined' ? assessments : []
+            ).catch(() => {});
+          }
+        } catch (_) {}
+      }
+
+      setIsEditingProfile(false);
+      setIsProfileSaved(true);
+      toast.success('Profile details saved successfully!');
+
+      if (profileSaveTimeoutRef.current) {
+        clearTimeout(profileSaveTimeoutRef.current);
+      }
+      profileSaveTimeoutRef.current = setTimeout(() => {
+        setIsProfileSaved(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      toast.error(`Failed to save profile: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const handleUpdatePassword = async () => {
@@ -3536,22 +3599,49 @@ const StudentDashboard = () => {
               <div className="profile-hero-right">
                 <button
                   type="button"
-                  className={`profile-action-btn ${isEditingProfile ? 'btn-save' : 'btn-edit'}`}
+                  className={`profile-action-btn ${
+                    isSavingProfile
+                      ? 'btn-saving'
+                      : isProfileSaved
+                      ? 'btn-saved'
+                      : isEditingProfile
+                      ? 'btn-save'
+                      : 'btn-edit'
+                  }`}
+                  disabled={isSavingProfile}
                   onClick={() => {
+                    if (isSavingProfile) return;
                     if (isEditingProfile) {
                       handleSaveProfile();
                     } else {
                       setIsEditingProfile(true);
+                      setIsProfileSaved(false);
                     }
                   }}
                 >
-                  {isEditingProfile ? <><FaCheck size={12} /> Save Changes</> : <><FaCog size={12} /> Edit Details</>}
+                  {isSavingProfile ? (
+                    <>
+                      <FaSpinner className="fa-spin" size={12} /> Saving...
+                    </>
+                  ) : isProfileSaved ? (
+                    <>
+                      <FaCheck size={12} /> Saved!
+                    </>
+                  ) : isEditingProfile ? (
+                    <>
+                      <FaCheck size={12} /> Save Changes
+                    </>
+                  ) : (
+                    <>
+                      <FaCog size={12} /> Edit Details
+                    </>
+                  )}
                 </button>
-                {isEditingProfile && (
+                {isEditingProfile && !isSavingProfile && (
                   <button
                     type="button"
                     className="profile-cancel-btn"
-                    onClick={() => setIsEditingProfile(false)}
+                    onClick={handleCancelEditProfile}
                   >
                     Cancel
                   </button>

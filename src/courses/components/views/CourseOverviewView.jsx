@@ -11,7 +11,7 @@ import {
 import { calculateCourseDuration } from '../../services/courseDurationCalculator';
 import { getCourseMetadata, addCourseReview, incrementCourseEnrollment } from '../../services/courseMetadataService';
 import { enrollCourse, unenrollCourse } from '../../services/learningEngineService';
-import { checkCourseEntitlement } from '../../services/courseEntitlementService';
+import { checkCourseEntitlement, useCourseEntitlement } from '../../services/courseEntitlementService';
 import { calculateCourseRewards } from '../../../utils/gamificationService';
 import SeedCreditCoin from '../../../components/SeedCreditCoin';
 import PremiumUpgradeModal from '../../../components/PremiumUpgradeModal';
@@ -93,9 +93,7 @@ const CourseOverviewView = ({
     Math.max(1, (course?.modules || []).findIndex(m => m.moduleId === progress?.currentModuleId) + 1 || 1)
   );
 
-  const entitlement = useMemo(() => {
-    return checkCourseEntitlement(course, user);
-  }, [course, user]);
+  const { entitlement } = useCourseEntitlement(course, user);
 
   // Enroll or Continue learning handler
   const handleEnrollOrResume = async () => {

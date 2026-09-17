@@ -13,6 +13,7 @@
  *    tenant/cohort mappings (only active if user's tenant is enabled).
  */
 
+import React from 'react';
 import { db } from '../../lib/firebase-config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { checkSubscriptionStatus } from '../../services/subscriptionValidator';
@@ -34,6 +35,9 @@ export const getCurrentAuthUser = () => {
   return null;
 };
 
+// Cache TTL in milliseconds (5 minutes)
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
 /**
  * Normalizes year strings (e.g. "2026", "2K26", "2k26" -> "2026")
  */
@@ -48,20 +52,26 @@ function normalizeYear(val) {
  * Fetch all entitled course IDs for the user.
  * Returns a Set of courseIds, or a Set containing '*' for active premium/admin users.
  */
-export const fetchUserEntitledCourseIds = async (user = null) => {
+export const fetchUserEntitledCourseIds = async (user = null, forceRefresh = false) => {
   const effectiveUser = user || getCurrentAuthUser();
   const uid = effectiveUser?.uid || effectiveUser?.id || 'anonymous';
 
-  // Check session cache
-  try {
-    const cached = sessionStorage.getItem(`${CACHE_KEY_PREFIX}${uid}`);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      memoryCache = new Set(parsed);
-      memoryCacheUid = uid;
-      return memoryCache;
-    }
-  } catch (_) {}
+  // Check session cache with TTL
+  if (!forceRefresh) {
+    try {
+      const cached = sessionStorage.getItem(`${CACHE_KEY_PREFIX}${uid}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const timestamp = parsed.timestamp || 0;
+        const items = parsed.items || (Array.isArray(parsed) ? parsed : null);
+        if (items && (Date.now() - timestamp < CACHE_TTL_MS || !parsed.timestamp)) {
+          memoryCache = new Set(items);
+          memoryCacheUid = uid;
+          return memoryCache;
+        }
+      }
+    } catch (_) {}
+  }
 
   // 1. Strict Subscription Validation: Check if user has active, unexpired SEED Premium
   const subStatus = checkSubscriptionStatus(effectiveUser);
@@ -73,13 +83,17 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
     memoryCache = allSet;
     memoryCacheUid = uid;
     try {
-      sessionStorage.setItem(`${CACHE_KEY_PREFIX}${uid}`, JSON.stringify(['*']));
+      sessionStorage.setItem(`${CACHE_KEY_PREFIX}${uid}`, JSON.stringify({
+        timestamp: Date.now(),
+        items: ['*']
+      }));
     } catch (_) {}
     return allSet;
   }
 
-  let tenantId = effectiveUser?.tenantId || effectiveUser?.college || effectiveUser?.institutionId;
+  let tenantId = effectiveUser?.tenantId || effectiveUser?.college || effectiveUser?.institutionId || effectiveUser?.collegeCode;
   let userCohort = effectiveUser?.cohortId || effectiveUser?.year;
+  const userDept = String(effectiveUser?.department || '').trim().toUpperCase();
   
   // Extract all directly owned / purchased courses (LIFETIME)
   let userAllocatedCourses = Array.isArray(effectiveUser?.assignedRealCourses) ? [...effectiveUser.assignedRealCourses] : [];
@@ -104,11 +118,14 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
           memoryCache = allSet;
           memoryCacheUid = uid;
           try {
-            sessionStorage.setItem(`${CACHE_KEY_PREFIX}${uid}`, JSON.stringify(['*']));
+            sessionStorage.setItem(`${CACHE_KEY_PREFIX}${uid}`, JSON.stringify({
+              timestamp: Date.now(),
+              items: ['*']
+            }));
           } catch (_) {}
           return allSet;
         }
-        tenantId = tenantId || uData.tenantId || uData.college || uData.collegeCode;
+        tenantId = tenantId || uData.tenantId || uData.college || uData.collegeCode || uData.institutionId;
         userCohort = userCohort || uData.cohortId || uData.year;
         if (Array.isArray(uData.assignedRealCourses)) {
           userAllocatedCourses = Array.from(new Set([...userAllocatedCourses, ...uData.assignedRealCourses]));
@@ -134,28 +151,47 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
   if (tenantId && isTenantActive && navigator.onLine) {
     try {
       const colRef = collection(db, ENTITLEMENTS_COLLECTION);
-      const q = query(
-        colRef,
-        where('tenantId', '==', tenantId),
-        where('status', '==', 'ACTIVE')
-      );
-      const snap = await getDocs(q);
-      snap.forEach((d) => {
-        const data = d.data();
-        const courseId = data.courseId;
-        if (!courseId) return;
+      
+      // Query candidate tenant IDs (exact, trimmed, lowercase/uppercase)
+      const candidateTenants = Array.from(new Set([
+        String(tenantId).trim(),
+        String(effectiveUser?.tenantId || '').trim(),
+        String(effectiveUser?.collegeCode || '').trim(),
+      ].filter(Boolean)));
 
-        const eCohort = String(data.cohortId || '').trim().toUpperCase();
-        if (!eCohort || eCohort === 'ALL') {
-          entitledSet.add(courseId);
-        } else if (userCohort) {
-          const uCohortNorm = normalizeYear(userCohort);
-          const eCohortNorm = normalizeYear(eCohort);
-          if (uCohortNorm && eCohortNorm && uCohortNorm === eCohortNorm) {
+      for (const tId of candidateTenants) {
+        const q = query(
+          colRef,
+          where('tenantId', '==', tId),
+          where('status', '==', 'ACTIVE')
+        );
+        const snap = await getDocs(q);
+        snap.forEach((d) => {
+          const data = d.data();
+          const courseId = data.courseId;
+          if (!courseId) return;
+
+          const eCohort = String(data.cohortId || '').trim().toUpperCase();
+          if (!eCohort || eCohort === 'ALL') {
             entitledSet.add(courseId);
+          } else if (userCohort) {
+            const uCohortNorm = normalizeYear(userCohort);
+            const eCohortNorm = normalizeYear(eCohort);
+            const rawUserCohort = String(userCohort).trim().toUpperCase();
+            
+            // 1. Direct equality or normalized year equality
+            const exactMatch = rawUserCohort === eCohort || (uCohortNorm && eCohortNorm && uCohortNorm === eCohortNorm);
+            
+            // 2. Department or cohort substring match (e.g. 2K27-CSE vs 2027)
+            const prefixMatch = uCohortNorm && (eCohortNorm.startsWith(uCohortNorm) || eCohort.startsWith(rawUserCohort));
+            const deptMatch = !userDept || eCohort.includes(userDept) || !eCohort.includes('-');
+
+            if (exactMatch || (prefixMatch && deptMatch)) {
+              entitledSet.add(courseId);
+            }
           }
-        }
-      });
+        });
+      }
     } catch (err) {
       console.warn('[courseEntitlementService] Failed to fetch tenant entitlements:', err);
     }
@@ -164,7 +200,10 @@ export const fetchUserEntitledCourseIds = async (user = null) => {
   memoryCache = entitledSet;
   memoryCacheUid = uid;
   try {
-    sessionStorage.setItem(`${CACHE_KEY_PREFIX}${uid}`, JSON.stringify(Array.from(entitledSet)));
+    sessionStorage.setItem(`${CACHE_KEY_PREFIX}${uid}`, JSON.stringify({
+      timestamp: Date.now(),
+      items: Array.from(entitledSet)
+    }));
   } catch (_) {}
 
   return entitledSet;
@@ -218,6 +257,7 @@ export const checkCourseEntitlement = (course, arg2 = null, arg3 = null) => {
   }
 
   const effectiveUser = userOverride || getCurrentAuthUser();
+  const uid = effectiveUser?.uid || effectiveUser?.id || 'anonymous';
   const courseId = course.courseId || course.id;
 
   // 1. LIFETIME ACCESS: Check if course was individually purchased or directly allocated
@@ -259,7 +299,22 @@ export const checkCourseEntitlement = (course, arg2 = null, arg3 = null) => {
   }
 
   // 4. Standard user: Check institutional tenant/cohort assignment
-  const rawSet = entitledCourseIds || memoryCache;
+  let rawSet = entitledCourseIds || memoryCache;
+  if (!rawSet && typeof window !== 'undefined' && window.sessionStorage) {
+    try {
+      const cached = sessionStorage.getItem(`${CACHE_KEY_PREFIX}${uid}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const items = parsed.items || (Array.isArray(parsed) ? parsed : null);
+        if (items) {
+          memoryCache = new Set(items);
+          memoryCacheUid = uid;
+          rawSet = memoryCache;
+        }
+      }
+    } catch (_) {}
+  }
+
   const set = (rawSet instanceof Set || (rawSet && typeof rawSet.has === 'function'))
     ? rawSet
     : (Array.isArray(rawSet) ? new Set(rawSet) : null);
@@ -283,7 +338,6 @@ export const checkCourseEntitlement = (course, arg2 = null, arg3 = null) => {
       ? 'Your SEED Premium has expired. Module 1 is available as Free Preview. Renew or buy lifetime access to continue.'
       : 'Free Preview: Module 1 is unlocked for you. Upgrade to SEED Premium or buy lifetime access to continue to Module 2 and beyond.',
     badge: '✨ Free Preview',
-    canPreview: true,
   };
 };
 
@@ -323,3 +377,38 @@ export const invalidateEntitlementsCache = () => {
     }
   } catch (_) {}
 };
+
+/**
+ * React hook to reactively resolve and update course entitlement state.
+ */
+export function useCourseEntitlement(course, user = null) {
+  const [entitlement, setEntitlement] = React.useState(() => checkCourseEntitlement(course, user));
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const effectiveUser = user || getCurrentAuthUser();
+    
+    // Immediate initial sync from memory/sessionStorage
+    setEntitlement(checkCourseEntitlement(course, effectiveUser));
+
+    // Live background resolution
+    fetchUserEntitledCourseIds(effectiveUser)
+      .then((entitledSet) => {
+        if (isMounted) {
+          setEntitlement(checkCourseEntitlement(course, effectiveUser, entitledSet));
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [course?.courseId || course?.id, user?.uid, user?.tenantId, user?.cohortId]);
+
+  return { entitlement, loading };
+}
+

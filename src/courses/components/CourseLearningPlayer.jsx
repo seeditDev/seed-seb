@@ -22,7 +22,7 @@ import learningEngineService, {
   findTopicInCourse
 } from '../services/learningEngineService';
 import { toast } from 'sonner';
-import { checkCourseEntitlement } from '../services/courseEntitlementService';
+import { checkCourseEntitlement, useCourseEntitlement } from '../services/courseEntitlementService';
 import { issueCourseCertificate } from '../services/certificateService';
 import { startCourseSession } from '../services/courseSessionTracker';
 import '../styles/CourseLearningPlayer.css';
@@ -38,9 +38,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   const [activePlayerView, setActivePlayerView] = useState(initialView); // 'CLASS' | 'OVERVIEW'
   const [activeStep, setActiveStep] = useState('LESSON'); // 'LESSON' | 'CHECKPOINTS' | 'EXAMPLES' | 'PRACTICE' | 'MSA'
 
-  const entitlement = useMemo(() => {
-    return checkCourseEntitlement(course, user);
-  }, [course, user]);
+  const { entitlement } = useCourseEntitlement(course, user);
 
   // Mount bounded active session tracker when in active learning class mode
   useEffect(() => {

@@ -424,6 +424,22 @@ export const buildCompactFirestoreProgress = (progress, course, uid) => {
   };
 };
 
+export function formatTimestampToISO(val) {
+  if (!val) return null;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number') return new Date(val).toISOString();
+  if (typeof val.toDate === 'function') {
+    try { return val.toDate().toISOString(); } catch (_) {}
+  }
+  if (typeof val.seconds === 'number') {
+    return new Date(val.seconds * 1000).toISOString();
+  }
+  if (typeof val._seconds === 'number') {
+    return new Date(val._seconds * 1000).toISOString();
+  }
+  return null;
+}
+
 /**
  * Hydrate frontend progress state from compact Firestore document.
  */
@@ -432,6 +448,7 @@ export const hydrateProgressFromFirestore = (firestoreData, course) => {
   if (!firestoreData) return base;
 
   const completedModSet = new Set(firestoreData.completedModules || []);
+  const safeLastActivity = formatTimestampToISO(firestoreData.lastActivityAt || firestoreData.lastActivityISO) || base.lastActivityAt;
 
   course.modules?.forEach((m, idx) => {
     const isCompleted = completedModSet.has(m.moduleId);
@@ -454,16 +471,16 @@ export const hydrateProgressFromFirestore = (firestoreData, course) => {
         codingScore: msaResult?.codingScore ?? null,
         passed: Boolean(msaResult?.passed || isCompleted),
         attempts: msaResult?.attempts || (isCompleted ? 1 : 0),
-        completedAt: msaResult?.completedAt || null
+        completedAt: formatTimestampToISO(msaResult?.completedAt) || null
       }
     };
   });
 
   const completedTopicSet = new Set(firestoreData.completedTopics || []);
-  const passedCpSet = new Set(firestoreData.passedCheckpoints || []);
-  const completedReadingSet = new Set(firestoreData.completedReadings || []);
+  const completedReadingSet = new Set(firestoreData.completedReading || firestoreData.completedReadings || []);
   const completedVideoSet = new Set(firestoreData.completedVideos || []);
   const completedExampleSet = new Set(firestoreData.completedExamples || []);
+  const passedCpSet = new Set(firestoreData.passedCheckpoints || []);
 
   course.modules?.forEach((m) => {
     m.topics?.forEach((t) => {
@@ -493,7 +510,7 @@ export const hydrateProgressFromFirestore = (firestoreData, course) => {
           exampleRun: isCompleted || completedExampleSet.has(t.topicId),
           examplesViewed: isCompleted || completedExampleSet.has(t.topicId)
         },
-        completedAt: isCompleted ? firestoreData.lastActivityAt : null
+        completedAt: isCompleted ? (formatTimestampToISO(firestoreData.completedAt || firestoreData.lastActivityAt) || safeLastActivity) : null
       };
     });
   });
@@ -507,10 +524,11 @@ export const hydrateProgressFromFirestore = (firestoreData, course) => {
   base.currentTopicId = firestoreData.ongoingTopicId || base.currentTopicId;
   base.percentage = firestoreData.progressPercent || 0;
   base.timeSpentSeconds = firestoreData.timeSpentSeconds || 0;
-  base.lastHeartbeatAt = firestoreData.lastHeartbeatAt || null;
+  base.lastHeartbeatAt = formatTimestampToISO(firestoreData.lastHeartbeatAt) || null;
   base.completedModules = (firestoreData.completedModules || []).length;
   base.completedTopics = (firestoreData.completedTopics || []).length;
-  base.lastActivityAt = firestoreData.lastActivityAt || base.lastActivityAt;
+  base.lastActivityAt = safeLastActivity;
+  base.recentSessions = Array.isArray(firestoreData.recentSessions) ? firestoreData.recentSessions : [];
   base.hasStarted = hasStarted;
   base.status = firestoreData.status || (hasStarted ? 'IN_PROGRESS' : 'NOT_STARTED');
 

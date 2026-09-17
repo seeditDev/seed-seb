@@ -124,7 +124,9 @@ const CourseMiniAssessmentView = ({
       const chosen = selectedAnswers[idx];
       if (chosen === undefined || chosen === null) return;
 
-      const correctVal = q.correctAnswer !== undefined ? q.correctAnswer : q.correctIndex;
+      const correctVal = q.correctAnswer !== undefined 
+        ? q.correctAnswer 
+        : (q.correctIndex !== undefined ? q.correctIndex : q.correctOptionIndex);
       const chosenIdx = Number(chosen);
       const chosenLetter = ['A', 'B', 'C', 'D', 'E'][chosenIdx] || String(chosen).toUpperCase();
       const chosenText = String(q.options?.[chosenIdx]?.text || q.options?.[chosenIdx] || chosen).trim().toLowerCase();
@@ -204,7 +206,7 @@ const CourseMiniAssessmentView = ({
                 Question {currentIdx + 1} of {questions.length}
               </div>
 
-              <h3 className="question-statement">{currentQ?.question}</h3>
+              <h3 className="question-statement">{currentQ?.question || currentQ?.prompt || currentQ?.questionText || ''}</h3>
 
               <div className="options-stack">
                 {(currentQ?.options || []).map((opt, oIdx) => {

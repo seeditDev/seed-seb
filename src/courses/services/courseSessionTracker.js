@@ -15,7 +15,17 @@
  */
 
 import { db } from '../../lib/firebase-config';
-import { doc, setDoc, increment, serverTimestamp } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  increment,
+  serverTimestamp,
+  collection,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+} from 'firebase/firestore';
 
 const IDLE_THRESHOLD_MS = 120 * 1000; // 120 seconds idle cutoff
 const FLUSH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes periodic flush
@@ -33,20 +43,27 @@ function getTodayDateStr() {
 export function startCourseSession(uid, courseId, userMetadata = {}) {
   // If already tracking another course session, cleanly flush and stop it first
   if (currentSession) {
-    stopCourseSession();
+    stopCourseSession('session_switch');
   }
 
   if (!uid || uid === 'demo' || !courseId) return () => {};
 
   const tenantId = userMetadata.tenantId || userMetadata.college || 'general';
   const cohortId = userMetadata.cohortId || userMetadata.year || 'general';
+  const nowISO = new Date().toISOString();
+  const todayDate = getTodayDateStr();
+  const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
   const session = {
+    sessionId,
     uid,
     courseId,
     tenantId,
     cohortId,
+    date: todayDate,
+    startedAt: nowISO,
     accumulatedSeconds: 0,
+    sessionTotalSeconds: 0,
     lastActiveTimestamp: Date.now(),
     isActive: true,
     intervalTimerId: null,
@@ -54,6 +71,42 @@ export function startCourseSession(uid, courseId, userMetadata = {}) {
   };
 
   currentSession = session;
+
+  // Record initial session start in Firestore asynchronously
+  try {
+    const userProgressRef = doc(db, 'users', uid, 'courseProgress', courseId);
+    setDoc(
+      userProgressRef,
+      {
+        courseId,
+        lastStartedAt: nowISO,
+        lastActivityAt: serverTimestamp(),
+        lastActivityISO: nowISO,
+        lastHeartbeatAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        latestSession: {
+          sessionId,
+          date: todayDate,
+          startedAt: nowISO,
+          lastActiveAt: nowISO,
+          status: 'ACTIVE',
+          durationSeconds: 0,
+        },
+      },
+      { merge: true }
+    ).catch((err) => console.warn('[courseSessionTracker] Session start log error:', err.message));
+
+    const sessionDocRef = doc(db, 'users', uid, 'courseProgress', courseId, 'sessionHistory', sessionId);
+    setDoc(sessionDocRef, {
+      id: sessionId,
+      date: todayDate,
+      startedAt: nowISO,
+      lastActiveAt: nowISO,
+      status: 'ACTIVE',
+      durationSeconds: 0,
+      createdAt: serverTimestamp(),
+    }, { merge: true }).catch(() => {});
+  } catch (_) {}
 
   // Activity listeners to detect presence and reset idle timer
   const handleUserActivity = () => {
@@ -93,12 +146,14 @@ export function startCourseSession(uid, courseId, userMetadata = {}) {
     } else {
       if (currentSession) {
         currentSession.lastActiveTimestamp = Date.now();
+        // Record resume event
+        flushActiveSessionTime('course_resumed');
       }
     }
   };
 
   const handleBeforeUnload = () => {
-    flushActiveSessionTime('page_unload');
+    flushActiveSessionTime('page_unload', true);
   };
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -111,45 +166,74 @@ export function startCourseSession(uid, courseId, userMetadata = {}) {
     });
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     window.removeEventListener('beforeunload', handleBeforeUnload);
-    stopCourseSession();
+    stopCourseSession('component_unmount');
   };
 }
 
 /**
- * Flush accumulated active seconds to Firestore.
+ * Flush accumulated active seconds to Firestore and update session history.
  */
-export async function flushActiveSessionTime(reason = 'milestone') {
+export async function flushActiveSessionTime(reason = 'milestone', isClosing = false) {
   if (!currentSession) return;
 
   const secondsToFlush = currentSession.accumulatedSeconds;
-  if (secondsToFlush < 5) {
-    // Skip trivial sub-5-second blips
+  if (secondsToFlush < 5 && !isClosing) {
+    // Skip trivial sub-5-second blips unless closing session
     return;
   }
 
   // Reset accumulator immediately to avoid double-flushing
   currentSession.accumulatedSeconds = 0;
+  currentSession.sessionTotalSeconds += secondsToFlush;
 
-  const { uid, courseId, tenantId, cohortId } = currentSession;
-  const dateStr = getTodayDateStr();
+  const { sessionId, uid, courseId, tenantId, cohortId, startedAt, date } = currentSession;
+  const dateStr = date || getTodayDateStr();
+  const nowISO = new Date().toISOString();
+
+  const sessionEntry = {
+    id: sessionId,
+    date: dateStr,
+    startedAt,
+    lastActiveAt: nowISO,
+    endedAt: isClosing ? nowISO : null,
+    durationSeconds: currentSession.sessionTotalSeconds,
+    status: isClosing ? 'EXITED' : 'ACTIVE',
+    lastExitReason: reason || 'unknown',
+  };
 
   try {
-    // 1. Update student's courseProgress document
+    // 1. Update student's courseProgress document with safe ISO timestamps and latestSession
     const userProgressRef = doc(db, 'users', uid, 'courseProgress', courseId);
     await setDoc(
       userProgressRef,
       {
         courseId,
-        timeSpentSeconds: increment(secondsToFlush),
+        ...(secondsToFlush > 0 ? { timeSpentSeconds: increment(secondsToFlush) } : {}),
         lastActivityAt: serverTimestamp(),
+        lastActivityISO: nowISO,
         lastHeartbeatAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        latestSession: sessionEntry,
+        lastSessionDate: dateStr,
+        lastStartedAt: startedAt,
+        ...(isClosing ? { lastExitedAt: nowISO, lastExitReason: reason } : {}),
+      },
+      { merge: true }
+    );
+
+    // 2. Append/update detailed sessionHistory subcollection
+    const sessionDocRef = doc(db, 'users', uid, 'courseProgress', courseId, 'sessionHistory', sessionId);
+    await setDoc(
+      sessionDocRef,
+      {
+        ...sessionEntry,
         updatedAt: serverTimestamp(),
       },
       { merge: true }
     );
 
-    // 2. Update daily aggregated cohort metrics document
-    if (tenantId && cohortId && tenantId !== 'general') {
+    // 3. Update daily aggregated cohort metrics document
+    if (secondsToFlush > 0 && tenantId && cohortId && tenantId !== 'general') {
       const metricDocId = `${tenantId}_${cohortId}_${dateStr}`;
       const metricRef = doc(db, 'dailyCourseMetrics', metricDocId);
 
@@ -168,9 +252,25 @@ export async function flushActiveSessionTime(reason = 'milestone') {
       );
     }
 
-    console.log(`[courseSessionTracker] Flushed ${secondsToFlush}s for ${courseId} (${reason})`);
+    console.log(`[courseSessionTracker] Flushed ${secondsToFlush}s for ${courseId} (${reason}, totalSession: ${currentSession.sessionTotalSeconds}s)`);
   } catch (err) {
     console.warn('[courseSessionTracker] Flush error (non-fatal):', err.message);
+  }
+}
+
+/**
+ * Retrieve session history log for a student and course.
+ */
+export async function getCourseSessionHistory(uid, courseId, limitCount = 30) {
+  if (!uid || !courseId) return [];
+  try {
+    const colRef = collection(db, 'users', uid, 'courseProgress', courseId, 'sessionHistory');
+    const q = query(colRef, orderBy('startedAt', 'desc'), limit(limitCount));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    console.warn('[courseSessionTracker] getCourseSessionHistory error:', err.message);
+    return [];
   }
 }
 
@@ -204,9 +304,9 @@ export async function recordDailyProblemMetric(tenantId, cohortId, courseId, isS
 }
 
 /**
- * Stop session and flush any remaining time.
+ * Stop session and flush remaining active time with exit reason.
  */
-export function stopCourseSession() {
+export function stopCourseSession(exitReason = 'course_exited') {
   if (!currentSession) return;
 
   if (currentSession.intervalTimerId) {
@@ -216,6 +316,6 @@ export function stopCourseSession() {
     clearInterval(currentSession.flushTimerId);
   }
 
-  flushActiveSessionTime('session_stop');
+  flushActiveSessionTime(exitReason, true);
   currentSession = null;
 }
