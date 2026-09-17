@@ -852,7 +852,13 @@ const StudentDashboard = () => {
 
       // 1-Question Streak Rule: Solving 1 question today maintains/advances streak for today!
       if (todaySolvedCount >= 1 && uid && uid !== 'guest') {
-        const cleanUserLastStreak = (user?.lastStreakDate || '').split('T')[0];
+        let cleanUserLastStreak = (user?.lastStreakDate || '').split('T')[0];
+        if (!cleanUserLastStreak) {
+          try {
+            const rawAuth = JSON.parse(localStorage.getItem('auth_data') || '{}');
+            cleanUserLastStreak = (rawAuth.lastStreakDate || '').split('T')[0];
+          } catch (_) {}
+        }
         if (cleanUserLastStreak !== todayStr) {
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
@@ -860,6 +866,15 @@ const StudentDashboard = () => {
           const nextStreak = (cleanUserLastStreak === yesterdayStr && userStreak > 0) ? (userStreak + 1) : Math.max(1, userStreak);
           setUserStreak(nextStreak);
           setUser(prev => prev ? { ...prev, lastStreakDate: todayStr, streak: nextStreak } : prev);
+          try {
+            const authRaw = localStorage.getItem('auth_data');
+            if (authRaw) {
+              const authObj = JSON.parse(authRaw);
+              authObj.lastStreakDate = todayStr;
+              authObj.streak = nextStreak;
+              localStorage.setItem('auth_data', JSON.stringify(authObj));
+            }
+          } catch (_) {}
           import('firebase/firestore').then(({ updateDoc, doc, serverTimestamp }) => {
             updateDoc(doc(db, 'users', uid), {
               streak: nextStreak,
@@ -899,14 +914,33 @@ const StudentDashboard = () => {
     }
   }, [user?.uid, user?.lastStreakDate, userStreak, seedCredits]);
 
+  const lastLoggedTabRef = useRef(null);
+  const debounceProgressTimerRef = useRef(null);
+
   useEffect(() => {
     initProgressAndGoals();
 
+    const debouncedInit = () => {
+      if (debounceProgressTimerRef.current) {
+        clearTimeout(debounceProgressTimerRef.current);
+      }
+      debounceProgressTimerRef.current = setTimeout(() => {
+        initProgressAndGoals();
+      }, 1500);
+    };
+
     const handleProgressUpdate = (e) => {
+      // StorageEvent guard: strictly ignore events from other windows/tabs that are NOT coding progress
+      if (e && e.type === 'storage') {
+        const key = e.key;
+        if (!key || (!key.startsWith('practice_progress_') && !key.startsWith('coding_progress_'))) {
+          return; // Ignore user_activities, auth_data, seed_daily_goals, etc.
+        }
+      }
       if (e?.detail?.progress) {
         setProgressData(e.detail.progress);
       }
-      initProgressAndGoals();
+      debouncedInit();
     };
 
     const handleGamificationUpdate = (e) => {
@@ -927,6 +961,9 @@ const StudentDashboard = () => {
     window.addEventListener('focus', handleProgressUpdate);
 
     return () => {
+      if (debounceProgressTimerRef.current) {
+        clearTimeout(debounceProgressTimerRef.current);
+      }
       window.removeEventListener('coding_progress_updated', handleProgressUpdate);
       window.removeEventListener('user_gamification_updated', handleGamificationUpdate);
       window.removeEventListener('storage', handleProgressUpdate);
@@ -952,15 +989,16 @@ const StudentDashboard = () => {
     }).catch(() => {});
   }, [navigate]);
 
-  // Log activity on Tab Change
+  // Log activity on Tab Change (Decoupled from user state changes to eliminate render-loop writes)
   useEffect(() => {
     const uid = user?.uid || auth?.currentUser?.uid || 'guest';
-    if (uid && uid !== 'guest') {
+    if (uid && uid !== 'guest' && lastLoggedTabRef.current !== activeTab) {
+      lastLoggedTabRef.current = activeTab;
       import('../services/activityLoggerService').then(mod => {
         mod.logUserActivity(uid, 'PAGE_VIEW', { tab: activeTab });
       }).catch(() => { });
     }
-  }, [activeTab, user]);
+  }, [activeTab]);
 
   const handleToggleGoal = async (idx) => {
     if (!dailyGoals || !dailyGoals[idx]) return;

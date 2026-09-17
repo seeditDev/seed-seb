@@ -426,7 +426,10 @@ export const buildCompactFirestoreProgress = (progress, course, uid) => {
 
 export function formatTimestampToISO(val) {
   if (!val) return null;
-  if (typeof val === 'string') return val;
+  if (typeof val === 'string') {
+    if (val.startsWith('[object') || val === 'Invalid Date' || val === 'undefined' || val === 'null') return null;
+    return val;
+  }
   if (typeof val === 'number') return new Date(val).toISOString();
   if (typeof val.toDate === 'function') {
     try { return val.toDate().toISOString(); } catch (_) {}

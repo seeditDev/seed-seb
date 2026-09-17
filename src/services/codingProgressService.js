@@ -946,8 +946,46 @@ export const getQuestionDisplayStatus = (
   return 'UNSOLVED';
 };
 
+// Activity Time Batching: Accumulate minutes and sync to Firestore at most once every 5 minutes
+const ACTIVITY_FLUSH_INTERVAL_MS = 5 * 60 * 1000;
+let pendingActivityMinutes = 0;
+let lastActivityFlushTime = Date.now();
+
+/**
+ * Flush any pending accumulated activity minutes immediately to Firestore.
+ */
+export const flushPendingActivityTime = async (uid) => {
+  if (!uid || pendingActivityMinutes <= 0 || !navigator.onLine) return;
+  try {
+    const { auth } = await import('../lib/firebase-config');
+    if (!auth.currentUser) return;
+
+    const local = await ensureHydratedProgress(uid);
+    const docRef = doc(db, COLLECTION, uid);
+    await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
+
+    let totalHours = 0;
+    Object.values(local.activity || {}).forEach(a => { totalHours += (a?.hours || 0); });
+    const roundedHours = Number(totalHours.toFixed(2));
+    const today = new Date().toISOString().split('T')[0];
+
+    await updateDoc(doc(db, 'users', uid), {
+      hoursPresent: roundedHours,
+      'stats.hoursPresent': roundedHours,
+      lastActiveDate: today,
+      updatedAt: serverTimestamp()
+    }).catch(() => {});
+
+    pendingActivityMinutes = 0;
+    lastActivityFlushTime = Date.now();
+  } catch (e) {
+    console.warn('[CodingProgressService] Pending activity flush failed:', e.message);
+  }
+};
+
 /**
  * Log portal usage time (in minutes) for today.
+ * Updates local cache instantly and batches Firestore writes in 5-minute windows.
  */
 export const logPortalActivityTime = async (uid, minutes = 1) => {
   if (!uid) return { success: false };
@@ -970,34 +1008,19 @@ export const logPortalActivityTime = async (uid, minutes = 1) => {
   
   saveLocalProgress(uid, local);
 
-  // Log activity to userActivities/{uid}/
+  // Log activity to local cache
   import('./activityLoggerService').then(mod => {
     mod.logUserActivity(uid, 'TIME_SPENT', { minutes, totalHoursToday: local.activity[today].hours });
   }).catch(() => {});
   
-  // Fire-and-forget sync — only if user is authenticated
-  if (navigator.onLine) {
-    try {
-      const { auth } = await import('../lib/firebase-config');
-      if (!auth.currentUser) return { success: true };
-      const docRef = doc(db, COLLECTION, uid);
-      await setDoc(docRef, sanitizeForFirestore(local), { merge: true });
+  pendingActivityMinutes += minutes;
 
-      // Calculate total hours and mirror to users/{uid}
-      let totalHours = 0;
-      Object.values(local.activity || {}).forEach(a => { totalHours += (a?.hours || 0); });
-      const roundedHours = Number(totalHours.toFixed(2));
-
-      updateDoc(doc(db, 'users', uid), {
-        hoursPresent: roundedHours,
-        'stats.hoursPresent': roundedHours,
-        lastActiveDate: today,
-        updatedAt: serverTimestamp()
-      }).catch(() => {});
-    } catch (e) {
-      console.warn('[CodingProgressService] Background sync failed:', e.message);
-    }
+  // Batch Firestore writes: only flush if 5 minutes have elapsed since last flush
+  const now = Date.now();
+  if (now - lastActivityFlushTime >= ACTIVITY_FLUSH_INTERVAL_MS) {
+    flushPendingActivityTime(uid).catch(() => {});
   }
+
   return { success: true };
 };
 
@@ -1044,6 +1067,7 @@ export default {
   syncProgressWithFirebase,
   getQuestionDisplayStatus,
   logPortalActivityTime,
+  flushPendingActivityTime,
   saveSheetProgress,
   isQuestionBankProblem,
 };

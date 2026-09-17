@@ -134,6 +134,7 @@ function VersionMismatchOverlay({ serverVersion, onUpdateNow }) {
 function PortalActivityTracker() {
   const location = useLocation();
 
+  // Teardown media/AI workers when navigating away from assessments
   useEffect(() => {
     const path = location.pathname;
     const isAssessment =
@@ -142,13 +143,15 @@ function PortalActivityTracker() {
       path.startsWith("/student/mcq/") ||
       path.startsWith("/student/practice/");
 
-    // Unconditionally terminate any lingering camera/mic/AI workers when navigating away from tests
     if (!isAssessment) {
       try {
         stopAllMediaAndAI();
       } catch (_) {}
     }
+  }, [location.pathname]);
 
+  // Track portal activity on a steady 60s interval while visible (no writes on route navigation)
+  useEffect(() => {
     const authRaw = localStorage.getItem("auth_data");
     if (!authRaw) return;
     let authUser;
@@ -157,27 +160,49 @@ function PortalActivityTracker() {
     } catch {
       return;
     }
-    // STRICT UID: logPortalActivityTime writes to codingProgress/{uid}.
-    // Do NOT fall back to Email — that writes to a different/legacy document.
     const uid = authUser?.uid;
     if (!uid) return;
 
-    if (isAssessment) return;
-
-    logPortalActivityTime(uid, 1).catch((err) =>
-      console.warn("Activity tracking failed:", err),
-    );
-
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
-        logPortalActivityTime(uid, 1).catch((err) =>
-          console.warn("Activity tracking failed:", err),
-        );
+        const path = window.location.pathname;
+        const isAssessment =
+          path.startsWith("/student/assessment/") ||
+          path.startsWith("/student/coding/") ||
+          path.startsWith("/student/mcq/") ||
+          path.startsWith("/student/practice/");
+
+        if (!isAssessment) {
+          logPortalActivityTime(uid, 1).catch((err) =>
+            console.warn("Activity tracking failed:", err),
+          );
+        }
       }
     }, 60_000);
 
-    return () => clearInterval(interval);
-  }, [location.pathname]);
+    const handleUnloadOrHide = () => {
+      import('../services/codingProgressService').then((mod) => {
+        if (typeof mod.flushPendingActivityTime === 'function') {
+          mod.flushPendingActivityTime(uid);
+        }
+      }).catch(() => {});
+    };
+
+    window.addEventListener('beforeunload', handleUnloadOrHide);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        handleUnloadOrHide();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleUnloadOrHide);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      handleUnloadOrHide();
+    };
+  }, []);
 
   return null;
 }

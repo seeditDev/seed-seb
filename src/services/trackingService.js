@@ -11,7 +11,7 @@ import {
 import timeService from './timeService';
 import { resolveTenant } from '../utils/tenant';
 
-const HEARTBEAT_MS = 30000;
+const HEARTBEAT_MS = 60000;
 const LIVE_COUNT_POLL_MS = 60000;
 const LIVE_COUNT_MIN_INTERVAL_MS = 20000;
 

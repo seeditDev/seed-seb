@@ -27,6 +27,17 @@ const resolveEffectiveUid = (uid) => {
   return null;
 };
 
+// Events that should NEVER trigger a network Firestore write
+const LOCAL_ONLY_ACTIVITY_TYPES = new Set([
+  'PAGE_VIEW',
+  'TAB_CHANGE',
+  'TIME_SPENT',
+  'QUESTION_ATTEMPT',
+  'QUESTION_SOLVED',
+  'GOAL_TOGGLED',
+  'STREAK_APPROVED'
+]);
+
 /**
  * Log a single activity event.
  * @param {string} uid User ID
@@ -51,12 +62,12 @@ export const logUserActivity = async (uid, type, details = {}) => {
     platform: 'SEED SEB Platform'
   };
 
-  // 1. LocalStorage Cache (Keep last 100 activities)
+  // 1. LocalStorage Cache (Keep last 50 activities)
   try {
     const cacheKey = `user_activities_${effectiveUid}`;
     const existing = JSON.parse(localStorage.getItem(cacheKey) || '[]');
     existing.unshift(activityRecord);
-    if (existing.length > 100) existing.length = 100;
+    if (existing.length > 50) existing.length = 50;
     localStorage.setItem(cacheKey, JSON.stringify(existing));
   } catch (_) {}
 
@@ -72,25 +83,19 @@ export const logUserActivity = async (uid, type, details = {}) => {
     } catch (_) {}
   }
 
-  // 3. Firestore userActivities/{uid}/logs/{logId}
-  if (effectiveUid && db) {
+  // 3. Firestore Sync (Guard: Never write high-frequency events or unrequested logs to Firestore)
+  // Subcollection userActivities/{uid}/logs/{logId} is omitted to prevent runaway writes.
+  const shouldPersistFirestore = details?.persistToFirestore === true && !LOCAL_ONLY_ACTIVITY_TYPES.has(type);
+  if (shouldPersistFirestore && effectiveUid && db) {
     try {
-      const logRef = doc(db, 'userActivities', effectiveUid, 'logs', logId);
       const userMetaRef = doc(db, 'userActivities', effectiveUid);
-
-      await Promise.all([
-        setDoc(logRef, {
-          ...activityRecord,
-          createdAt: serverTimestamp()
-        }),
-        setDoc(userMetaRef, {
-          uid: effectiveUid,
-          lastActive: timestamp,
-          lastActivityType: type,
-          lastActivityDetails: details || {},
-          updatedAt: serverTimestamp()
-        }, { merge: true })
-      ]);
+      await setDoc(userMetaRef, {
+        uid: effectiveUid,
+        lastActive: timestamp,
+        lastActivityType: type,
+        lastActivityDetails: details || {},
+        updatedAt: serverTimestamp()
+      }, { merge: true });
     } catch (err) {
       console.warn('[ActivityLogger] Firestore log write error:', err.message);
     }
@@ -102,3 +107,4 @@ export const logUserActivity = async (uid, type, details = {}) => {
 export default {
   logUserActivity
 };
+
