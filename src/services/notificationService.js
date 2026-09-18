@@ -16,6 +16,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase-config';
 
@@ -137,7 +138,7 @@ export function subscribeStudentNotifications(studentUser, onUpdate) {
   if (!onUpdate) return () => {};
 
   const colRef = collection(db, 'notifications');
-  const q = query(colRef, orderBy('createdAt', 'desc'));
+  const q = query(colRef, orderBy('createdAt', 'desc'), limit(25));
 
   const unsubscribe = onSnapshot(
     q,

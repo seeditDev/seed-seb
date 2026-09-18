@@ -222,6 +222,10 @@ export async function getSeriesTests(courseId: string, seriesId: string): Promis
   }
 }
 
+// In-memory memoization caches for course and series titles
+const courseTitleCache = new Map<string, string>();
+const seriesTitleCache = new Map<string, string>();
+
 /**
  * Given allowedModules from a cohort, fetch all TestDocs.
  * Also fetches course + series titles for UI display.
@@ -236,31 +240,34 @@ export async function getAllowedTests(allowedModules: string[]): Promise<TestDoc
   const seriesSet = new Map<string, { courseId: string; seriesId: string }>();
   const courseSet = new Set<string>();
   for (const k of parsed) {
-    seriesSet.set(`${k.courseId}::${k.seriesId}`, { courseId: k.courseId, seriesId: k.seriesId });
-    courseSet.add(k.courseId);
+    if (!seriesTitleCache.has(`${k.courseId}::${k.seriesId}`)) {
+      seriesSet.set(`${k.courseId}::${k.seriesId}`, { courseId: k.courseId, seriesId: k.seriesId });
+    }
+    if (!courseTitleCache.has(k.courseId)) {
+      courseSet.add(k.courseId);
+    }
   }
 
-  // Fetch course titles
-  const courseTitles = new Map<string, string>();
+  // Fetch missing course titles
   await Promise.all(
     Array.from(courseSet).map(async (cId) => {
       try {
         const snap = await getDoc(doc(db, "courses", cId));
-        if (snap.exists()) courseTitles.set(cId, String(snap.data()["title"] ?? cId));
+        if (snap.exists()) courseTitleCache.set(cId, String(snap.data()["title"] ?? cId));
       } catch {
         /* skip */
       }
     }),
   );
 
-  // Fetch series titles
-  const seriesTitles = new Map<string, string>();
+  // Fetch missing series titles
   await Promise.all(
     Array.from(seriesSet.values()).map(async ({ courseId, seriesId }) => {
+      const pairKey = `${courseId}::${seriesId}`;
       try {
         const snap = await getDoc(doc(db, "courses", courseId, "series", seriesId));
         if (snap.exists())
-          seriesTitles.set(`${courseId}::${seriesId}`, String(snap.data()["title"] ?? seriesId));
+          seriesTitleCache.set(pairKey, String(snap.data()["title"] ?? seriesId));
       } catch {
         /* skip */
       }
@@ -273,8 +280,8 @@ export async function getAllowedTests(allowedModules: string[]): Promise<TestDoc
     parsed.map(async ({ courseId, seriesId, testId }) => {
       const t = await getTest(courseId, seriesId, testId);
       if (t) {
-        t.courseTitle = courseTitles.get(courseId) ?? courseId;
-        t.seriesTitle = seriesTitles.get(`${courseId}::${seriesId}`) ?? seriesId;
+        t.courseTitle = courseTitleCache.get(courseId) ?? courseId;
+        t.seriesTitle = seriesTitleCache.get(`${courseId}::${seriesId}`) ?? seriesId;
         results.push(t);
       }
     }),

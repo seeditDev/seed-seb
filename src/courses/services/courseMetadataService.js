@@ -265,10 +265,15 @@ export const ensureCourseInFirestore = async (course) => {
   }
 };
 
+let memoryCoursesCache = null;
+let memoryCoursesCacheTime = 0;
+const COURSES_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 /**
  * Read and display only the real metadata of courses from realCourses/ collection in Firestore.
  * Merges with local curriculum modules so interactive player works seamlessly.
  * Filters out courses where enabled === false.
+ * Cached for 1 hour in memory and sessionStorage to prevent redundant collection reads.
  */
 export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
   const fallbackMap = {};
@@ -281,13 +286,28 @@ export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
     return fallbackList.filter(c => c.enabled !== false);
   }
 
+  // 1. Check in-memory / sessionStorage cache (1-hour TTL)
+  const now = Date.now();
+  if (memoryCoursesCache && (now - memoryCoursesCacheTime < COURSES_CACHE_TTL)) {
+    return memoryCoursesCache;
+  }
+  try {
+    const cached = sessionStorage.getItem('seed_live_courses_cache');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.timestamp && (now - parsed.timestamp < COURSES_CACHE_TTL) && Array.isArray(parsed.data)) {
+        memoryCoursesCache = parsed.data;
+        memoryCoursesCacheTime = parsed.timestamp;
+        return parsed.data;
+      }
+    }
+  } catch (_) {}
+
   try {
     const colRef = collection(db, REAL_COURSES_COLLECTION);
     const snap = await getDocs(colRef);
 
     if (snap.empty) {
-      // If collection is empty in Firestore, trigger background sync and return fallback
-      syncAllCoursesToFirestore(fallbackList);
       return fallbackList.filter(c => c.enabled !== false);
     }
 
@@ -327,69 +347,25 @@ export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
       firestoreCourses.push(mergedCourse);
     });
 
-    // If any courses from fallbackList (e.g. newly added in data/realCourses/*.json)
-    // are missing from Firestore, automatically create them in Firestore!
+    // Merge any courses from fallbackList not yet in firestore
     for (const fc of fallbackList) {
       const id = fc.courseId || fc.id || fc.slug;
       if (id && !firestoreCourses.some(c => c.courseId === id || c.id === id)) {
-        const baselineCount = BASELINE_ENROLLED_COUNTS[id] || fc.enrolledCount || 1050;
-        const modulesCount = fc.modules?.length || fc.modulesCount || 3;
-        let lessonsCount = fc.lessonsCount;
-        if (!lessonsCount && fc.modules) {
-          lessonsCount = fc.modules.reduce((acc, m) => acc + (m.topics?.length || 0), 0);
-        }
-        if (!lessonsCount) lessonsCount = 8;
-
-        let estimatedMinutes = 0;
-        if (fc.modules) {
-          estimatedMinutes = fc.modules.reduce((acc, m) => acc + (m.estimatedMinutes || 0), 0);
-        }
-        const estimatedHours = estimatedMinutes > 0 
-          ? Math.round((estimatedMinutes / 60) * 10) / 10 
-          : (fc.estimatedHours || 4.0);
-
-        const reviews = fc.reviews && fc.reviews.length > 0 ? fc.reviews : DEFAULT_BASE_REVIEWS;
-
-        const newFirestoreDoc = {
-          courseId: id,
-          id,
-          title: fc.title || 'Course Mastery',
-          slug: fc.slug || id,
-          category: fc.category || 'Computer Science',
-          level: fc.level || 'Intermediate',
-          description: fc.description || '',
-          enabled: fc.enabled !== undefined ? Boolean(fc.enabled) : true,
-          enrolledCount: baselineCount,
-          rating: fc.rating || 4.9,
-          reviewsCount: reviews.length,
-          reviews,
-          skills: fc.skills || [],
-          outcomes: fc.outcomes || [],
-          prerequisites: fc.prerequisites || [],
-          modulesCount,
-          lessonsCount,
-          estimatedHours,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
-
-        try {
-          const docRef = doc(db, REAL_COURSES_COLLECTION, id);
-          await setDoc(docRef, newFirestoreDoc, { merge: true });
-          console.log(`[courseMetadataService] Automatically created missing course in Firestore: "${newFirestoreDoc.title}" (${id})`);
-        } catch (syncErr) {
-          console.warn(`[courseMetadataService] Notice writing course ${id} to Firestore:`, syncErr.message);
-        }
-
         if (fc.enabled !== false) {
-          firestoreCourses.push({
-            ...fc,
-            ...newFirestoreDoc,
-            modules: fc.modules || []
-          });
+          firestoreCourses.push(fc);
         }
       }
     }
+
+    // Cache the result
+    memoryCoursesCache = firestoreCourses;
+    memoryCoursesCacheTime = Date.now();
+    try {
+      sessionStorage.setItem('seed_live_courses_cache', JSON.stringify({
+        data: firestoreCourses,
+        timestamp: memoryCoursesCacheTime
+      }));
+    } catch (_) {}
 
     return firestoreCourses;
   } catch (err) {

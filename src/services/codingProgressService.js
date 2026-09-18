@@ -764,15 +764,19 @@ export const syncProgressWithFirebase = async (uid) => {
       } catch (_) {}
     }
 
-    // Also query userSolutions/{uid}/allSubmissions for any accepted problems (QB only)
+    // Only query userSolutions/{uid}/allSubmissions as a fallback if remote has no solved problems recorded
     let acceptedFromSubs = [];
-    try {
-      const subSnap = await getDocs(query(collection(db, 'userSolutions', uid, 'allSubmissions'), where('status', '==', 'accepted')));
-      subSnap.forEach(d => {
-        const qId = d.data()?.questionId;
-        if (qId && isQuestionBankProblem(qId)) acceptedFromSubs.push(String(qId).trim());
-      });
-    } catch (_) {}
+    const hasRemoteSolved = (remote.completedQuestions && remote.completedQuestions.length > 0) ||
+                            (remote.solvedProblems && remote.solvedProblems.length > 0);
+    if (!hasRemoteSolved) {
+      try {
+        const subSnap = await getDocs(query(collection(db, 'userSolutions', uid, 'allSubmissions'), where('status', '==', 'accepted')));
+        subSnap.forEach(d => {
+          const qId = d.data()?.questionId;
+          if (qId && isQuestionBankProblem(qId)) acceptedFromSubs.push(String(qId).trim());
+        });
+      } catch (_) {}
+    }
 
     // Merge completedQuestions / solvedProblems (strictly QuestionBank problems)
     const remoteSolved = (remote.completedQuestions || remote.solvedProblems || []).filter(isQuestionBankProblem);

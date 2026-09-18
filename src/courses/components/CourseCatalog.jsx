@@ -219,10 +219,7 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
   useEffect(() => {
     let isMounted = true;
     async function initCatalogAndProgress() {
-      // 1. Sync all courses to Firestore in background (creates if missing, preserves reviews/enrollments)
-      syncAllCoursesToFirestore(COURSE_CATALOG);
-
-      // 2. Read and display real metadata from courses/ collection in Firestore
+      // 1. Read and display real metadata from courses/ collection in Firestore (with caching)
       const live = await fetchLiveCoursesFromFirestore(COURSE_CATALOG);
       const activeCourses = (live && live.length > 0) 
         ? live.filter(c => c.enabled !== false) 
@@ -230,7 +227,7 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
       
       if (isMounted) setCourses(activeCourses);
 
-      // 3. Load enrollments & progress
+      // 2. Load enrollments & progress
       const ids = await fetchEnrolledCourseIds(uid);
       if (isMounted) setEnrolledIds(ids);
 
@@ -238,8 +235,11 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
         if (isMounted) setEntitledSet(entitled);
       });
 
+      // 3. Only query progress for courses the student is actually enrolled in
       const map = {};
+      const enrolledSet = new Set(ids || []);
       for (const course of activeCourses) {
+        if (!enrolledSet.has(course.courseId)) continue;
         try {
           const prog = await getCourseProgress(uid, course);
           if (prog) {

@@ -365,6 +365,17 @@ class DataService {
                 return { valid: true };
             }
 
+            const cacheKey = `seed_tenant_status_${tenantId}`;
+            try {
+                const cached = sessionStorage.getItem(cacheKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (parsed.timestamp && (Date.now() - parsed.timestamp < 30 * 60 * 1000)) {
+                        return parsed.result;
+                    }
+                }
+            } catch (_) {}
+
             const tenantSnap = await getDoc(doc(db, "tenants", tenantId));
             if (!tenantSnap.exists()) return { valid: true };
 
@@ -386,7 +397,7 @@ class DataService {
                     reason: "Your college subscription has expired or is inactive. Please reach out to your placement department."
                 };
             }
-            return {
+            const result = {
                 valid: true,
                 tenant: {
                     id: tenantId,
@@ -395,6 +406,12 @@ class DataService {
                     validUntil: validUntil
                 }
             };
+
+            try {
+                sessionStorage.setItem(cacheKey, JSON.stringify({ result, timestamp: Date.now() }));
+            } catch (_) {}
+
+            return result;
         } catch (e) {
             console.warn('[DataService] verifyCurrentTenantStatus error:', e);
             return { valid: true };

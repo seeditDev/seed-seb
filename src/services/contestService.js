@@ -14,6 +14,7 @@ import {
   serverTimestamp,
   increment,
   getCountFromServer,
+  limit,
 } from 'firebase/firestore';
 
 const CONTESTS = 'contests';
@@ -848,9 +849,10 @@ async function updateLeaderboardEntry(contestId, userId, event) {
 /**
  * Subscribe to real-time contest leaderboard
  */
-export function subscribeContestLeaderboard(contestId, onUpdate) {
+export function subscribeContestLeaderboard(contestId, onUpdate, maxLimit = 100) {
   const col = collection(db, CONTESTS, contestId, 'leaderboard');
-  return onSnapshot(col, (snap) => {
+  const q = query(col, limit(maxLimit));
+  return onSnapshot(q, (snap) => {
     const list = snap.docs.map((d) => ({
       userId: d.id,
       ...d.data(),

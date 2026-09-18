@@ -80,7 +80,7 @@ import { isQuestionBankProblem } from '../services/codingProgressService';
 import SeedCreditCoin from './SeedCreditCoin';
 import '../styles/StudentDashboard.css';
 import '../styles/PracticeHome.css';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase-config';
 import TrackingService from '../services/trackingService';
 import DataService from '../services/dataService';
@@ -1469,7 +1469,7 @@ const StudentDashboard = () => {
         }
 
         const attemptsColRef = collection(db, 'users', uid, 'contestAttempts');
-        const q = query(attemptsColRef, where('completed', '==', false));
+        const q = query(attemptsColRef, where('completed', '==', false), limit(1));
         const snap = await getDocs(q);
 
         if (!snap.empty) {
