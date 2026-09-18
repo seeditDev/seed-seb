@@ -397,7 +397,7 @@ export default function AppShell({ children }) {
         if (sessionUnsubscribeRef.current) {
           sessionUnsubscribeRef.current();
         }
-        sessionUnsubscribeRef.current = onSnapshot(doc(db, "users", firebaseUser.uid), (docSnap) => {
+        sessionUnsubscribeRef.current = onSnapshot(doc(db, "userSessions", firebaseUser.uid), (docSnap) => {
           if (!docSnap.exists()) return;
           const remoteData = docSnap.data();
           const remoteSessionId = remoteData?.activeSessionId;
@@ -422,7 +422,7 @@ export default function AppShell({ children }) {
               const newSessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
               localStorage.setItem("active_session_id", newSessionId);
               sessionStorage.setItem("active_session_id", newSessionId);
-              setDoc(doc(db, "users", firebaseUser.uid), {
+              setDoc(doc(db, "userSessions", firebaseUser.uid), {
                 activeSessionId: newSessionId,
                 lastLoginAt: serverTimestamp()
               }, { merge: true }).catch(() => {});

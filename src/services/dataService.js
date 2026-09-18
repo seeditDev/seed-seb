@@ -153,6 +153,17 @@ class DataService {
             }
 
             try {
+                // Isolated session document to prevent onSnapshot listeners from reading users/{uid} on progress updates
+                await setDoc(doc(db, "userSessions", firebaseUser.uid), {
+                    activeSessionId: sessionId,
+                    lastLoginAt: serverTimestamp(),
+                    lastLoginDevice: {
+                        platform: typeof navigator !== 'undefined' ? navigator.platform : 'desktop',
+                        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'SEED-SEB Desktop',
+                        loginTimeISO: new Date().toISOString()
+                    }
+                }, { merge: true });
+
                 await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
                     activeSessionId: sessionId,
                     lastLoginAt: serverTimestamp(),
@@ -290,8 +301,16 @@ class DataService {
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp(),
                 };
+                await setDoc(doc(db, "userSessions", firebaseUser.uid), {
+                    activeSessionId: sessionId,
+                    lastLoginAt: serverTimestamp()
+                }, { merge: true }).catch(() => {});
                 await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), profile);
             } else {
+                await setDoc(doc(db, "userSessions", firebaseUser.uid), {
+                    activeSessionId: sessionId,
+                    lastLoginAt: serverTimestamp()
+                }, { merge: true }).catch(() => {});
                 await updateDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
                     activeSessionId: sessionId,
                     lastLoginAt: serverTimestamp()

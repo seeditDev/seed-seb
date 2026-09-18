@@ -106,6 +106,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     const [showInstructions, setShowInstructions] = useState(false);
     const [passkeyError, setPasskeyError] = useState('');
     const passkeyInputRef = useRef(null);
+    const hasUnsavedMCQChangesRef = useRef(false);
     const [proctoringData, setProctoringData] = useState({
         violationCount: 0,
         audioViolationCount: 0,
@@ -1126,6 +1127,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
         // Reset enter time to now for subsequent selections
         questionEnterTimeRef.current = now;
 
+        hasUnsavedMCQChangesRef.current = true;
         setAnswers({
             ...answers,
             [questionIndex]: option
@@ -1242,6 +1244,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
             };
 
             await MCQService.syncProgress(progressPayload);
+            hasUnsavedMCQChangesRef.current = false;
             const lastSyncISO = timeService.getNow().toISOString();
             setLastProgressSync(lastSyncISO);
             // sessionStorage.setItem('mcqLastProgressSync', lastSyncISO);
@@ -1899,13 +1902,14 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
     useEffect(() => {
         if (currentTest && !currentTest.submitted) {
             const interval = setInterval(() => {
+                if (!hasUnsavedMCQChangesRef.current) return; // Skip Firestore write if answers haven't changed
                 syncProgress('interval');
                 if (!navigator.onLine) {
                     setIsOnline(false);
                     setShowNetworkPopup(true);
                     setNetworkTimer(30);
                 }
-            }, 120000);
+            }, 300000);
             return () => clearInterval(interval);
         }
     }, [currentTest, syncProgress]);

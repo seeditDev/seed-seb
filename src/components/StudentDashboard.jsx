@@ -310,7 +310,6 @@ const StudentDashboard = () => {
     ensureUserHasUsername(user).then((handle) => {
       if (handle) {
         setStudentUsername(handle);
-        publishPublicProfile(user.uid, { ...user, username: handle }, progressData || {}, typeof assessments !== 'undefined' ? assessments : []).catch(() => {});
       }
     }).catch((e) => console.warn('[StudentDashboard] Error ensuring username:', e));
   }, [user?.uid]);
