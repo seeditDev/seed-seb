@@ -1800,8 +1800,8 @@ const MultiSectionAssessment = () => {
     localStorage.setItem(progressKey, JSON.stringify(snapshot));
     localStorage.setItem(`msaActiveAssessment_${assessment.id}`, JSON.stringify(assessment));
 
-    // Periodic cloud sync to assessmentResults & contestAttempts (throttled every 20s)
-    if (nowMs - lastCloudSyncRef.current > 20000) {
+    // Periodic cloud sync to assessmentResults & contestAttempts (throttled every 5 minutes / 300s)
+    if (nowMs - lastCloudSyncRef.current > 300000) {
       lastCloudSyncRef.current = nowMs;
       try {
         const tenant = requireTenant(user);

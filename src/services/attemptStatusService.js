@@ -133,14 +133,21 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
   const map = {};
   ids.forEach((id) => { map[id] = false; });
 
-  // 0. Merge from local storage completion list
+  // 0. Merge from local storage completion list (24-hour TTL)
   const localKey = `completed_assessments_${tenant.email.toLowerCase()}`;
   try {
-    const localList = JSON.parse(localStorage.getItem(localKey) || '[]');
-    if (Array.isArray(localList)) {
-      localList.forEach((id) => {
-        if (id in map) map[id] = true;
-      });
+    const rawLocal = localStorage.getItem(localKey);
+    if (rawLocal) {
+      const parsed = JSON.parse(rawLocal);
+      const isArray = Array.isArray(parsed);
+      const list = isArray ? parsed : (parsed?.items || []);
+      const timestamp = isArray ? 0 : (parsed?.timestamp || 0);
+      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+      if (isArray || Date.now() - timestamp < TWENTY_FOUR_HOURS) {
+        list.forEach((id) => {
+          if (id in map) map[id] = true;
+        });
+      }
     }
   } catch (_) { }
 
@@ -191,13 +198,35 @@ export async function fetchCompletionMap(userData, assessmentIds = [], options =
       if (tenantId) {
         try {
           const resFound = await queryResultPaths(liveUid, unknown, tenantId);
-          Object.keys(resFound).forEach((id) => { map[id] = true; });
+          const foundIds = Object.keys(resFound);
+          foundIds.forEach((id) => { map[id] = true; });
+
+          // Self-Healing Denormalization: write back resolved completions to users/{uid}
+          if (liveUid && liveUid !== 'demo-student' && liveUid !== 'DEMO-STUDENT-001') {
+            const userRef = doc(db, 'users', liveUid);
+            const updatePayload = {
+              completionIndexComplete: true
+            };
+            if (foundIds.length > 0) {
+              updatePayload.completedAssessmentIds = arrayUnion(...foundIds);
+            }
+            await updateDoc(userRef, updatePayload).catch(async () => {
+              await setDoc(userRef, updatePayload, { merge: true });
+            });
+            denormalisedComplete = true;
+          }
         } catch (e) {
           console.warn('[attemptStatusService] result lookup failed:', e?.message);
         }
       }
     }
   }
+
+  // Cache in localStorage with 24-hour TTL and sessionStorage
+  try {
+    const completedList = Object.keys(map).filter((k) => map[k]);
+    localStorage.setItem(localKey, JSON.stringify({ items: completedList, timestamp: Date.now() }));
+  } catch (_) {}
 
   writeCompletionCache(tenant.email, map);
   return map;

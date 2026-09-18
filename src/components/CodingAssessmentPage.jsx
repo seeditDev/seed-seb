@@ -2210,7 +2210,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 };
             });
 
-            backupProgress();
+            // Run Code: Persist exclusively to localStorage without cloud sync to eliminate write spikes
+            saveCurrentEditorToMap();
+            if (currentQuestion) {
+                localStorage.setItem("codingAssessmentCode", JSON.stringify(codeMapRef.current));
+                localStorage.setItem("codingQuestionRunHistory", JSON.stringify(questionRunHistoryRef.current));
+            }
         } catch (err) {
             console.error("Run code error:", err);
             const errText = `Run Code Error: ${err.message}`;

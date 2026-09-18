@@ -53,6 +53,10 @@ const SESSION_ID = (typeof crypto !== 'undefined' && crypto.randomUUID)
   ? crypto.randomUUID()
   : `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
+// In-memory tracker of attemptIds whose parent proctoringLogs doc has already been written.
+// Prevents redundant setDoc(parentRef) writes before every violation event subcollection append.
+const CREATED_PARENTS = new Set();
+
 // ─── Offline Queue ─────────────────────────────────────────────────────────────
 
 const OFFLINE_QUEUE_PREFIX     = 'proctor_offline_';
@@ -248,22 +252,19 @@ class ProctorService {
     };
 
     try {
-      // [P1] Ensure the parent proctoringLogs document exists BEFORE writing any
-      // event to the subcollection.  Firestore rules on events may require the
-      // parent to exist; writing the event first created a race where the very
-      // first event could fail if the rule evaluated before the parent was created.
-      //
-      // setDoc with merge:true is idempotent — safe to call on every event.
-      // Field names MUST match Firestore rules: userId (not uid), and attemptId
-      // is required for the structural ownership check (attemptId.matches('.*_'+uid)).
-      const parentRef = doc(db, 'proctoringLogs', attemptId);
-      await setDoc(parentRef, {
-        userId:       uid,        // rules check userId field
-        attemptId,               // required for ownership validation
-        assessmentId,
-        tenantId:     tenantId ?? '',
-        createdAt:    serverTimestamp(),
-      }, { merge: true });
+      // [Single Write Proctoring] Only write parent proctoringLogs document ONCE per session.
+      // Eliminates redundant parent writes on every violation event.
+      if (!CREATED_PARENTS.has(attemptId)) {
+        const parentRef = doc(db, 'proctoringLogs', attemptId);
+        await setDoc(parentRef, {
+          userId:       uid,        // rules check userId field
+          attemptId,               // required for ownership validation
+          assessmentId,
+          tenantId:     tenantId ?? '',
+          createdAt:    serverTimestamp(),
+        }, { merge: true });
+        CREATED_PARENTS.add(attemptId);
+      }
 
       // v2: proctoringLogs/{attemptId}/events/{eventId}
       const v2Ref  = collection(db, 'proctoringLogs', attemptId, 'events');
@@ -309,21 +310,20 @@ class ProctorService {
 
     const attemptId = `${assessmentId}_${uid}`;
 
-    // [P1] Write the parent log document before flushing any events.
-    // This mirrors the online path and ensures Firestore parent-existence
-    // rules are satisfied even when we are recovering from an offline episode.
-    try {
-      const parentRef = doc(db, 'proctoringLogs', attemptId);
-      await setDoc(parentRef, {
-        userId: uid,
-        attemptId,
-        assessmentId,
-      }, { merge: true });
-    } catch (parentErr) {
-      // If the parent write fails we cannot safely flush events — abort this
-      // attempt and leave the queue intact for the next flush cycle.
-      console.warn('[ProctorService] Offline flush aborted — parent write failed:', parentErr?.code);
-      return { uploaded: 0, failed: 0, retained: queue.length };
+    // [Single Write Proctoring] Only write parent document if not yet recorded
+    if (!CREATED_PARENTS.has(attemptId)) {
+      try {
+        const parentRef = doc(db, 'proctoringLogs', attemptId);
+        await setDoc(parentRef, {
+          userId: uid,
+          attemptId,
+          assessmentId,
+        }, { merge: true });
+        CREATED_PARENTS.add(attemptId);
+      } catch (parentErr) {
+        console.warn('[ProctorService] Offline flush aborted — parent write failed:', parentErr?.code);
+        return { uploaded: 0, failed: 0, retained: queue.length };
+      }
     }
 
     const remaining = [];
