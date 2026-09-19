@@ -35,6 +35,7 @@ export function buildResultDoc({
   sections = [],
   questions = [],
   codingSubmissions = [],
+  essaySubmissions = [],
   questionTiming = {},
   proctoring = {},
   speech = {},
@@ -130,6 +131,7 @@ export function buildResultDoc({
     sections,
     questions,
     codingSubmissions,
+    essaySubmissions,
 
     // Proctoring
     violationCount:      typeof proctoring?.violationCount === 'number' ? proctoring.violationCount : 0,

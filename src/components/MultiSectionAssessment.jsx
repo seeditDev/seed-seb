@@ -25,6 +25,7 @@ import ProctoringEngine from './ProctoringEngine';
 import AudioProctoringEngine from './AudioProctoringEngine';
 import CodingAssessmentPage from './CodingAssessmentPage';
 import SpokenEnglishAssessment from './SpokenEnglishAssessment';
+import EssaySectionView from './EssaySectionView';
 import AssessmentFeedback from './AssessmentFeedback';
 import timeService from '../services/timeService';
 import { getViolations, writeViolationToFirestore } from '../utils/proctorCache';
@@ -1238,6 +1239,14 @@ const MultiSectionAssessment = () => {
       .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), [])
       .map(c => buildCodingSubmission(c));
 
+    const aggregatedEssay = Object.values(combinedResults)
+      .filter(sec => sec.type === 'essay' || sec.type === 'essay_writing')
+      .map(sec => ({
+        sectionId: sec.sectionId || '',
+        sectionName: sec.sectionName || 'Essay Writing',
+        ...(sec.data || {})
+      }));
+
     const aggregatedQuestionTiming = Object.values(combinedResults)
       .filter(sec => sec.type === 'coding')
       .reduce((acc, sec) => {
@@ -1324,6 +1333,7 @@ const MultiSectionAssessment = () => {
       sections: sectionsList,
       questions: aggregatedQuestions,
       codingSubmissions: aggregatedCoding,
+      essaySubmissions: aggregatedEssay,
       questionTiming: aggregatedQuestionTiming,
       proctoring: {
         violationCount: totalViolations,
@@ -1865,8 +1875,9 @@ const MultiSectionAssessment = () => {
         (exam.sections || []).map(async (sec, idx) => {
           const processData = async (data, secType) => {
             const rawType = (secType || data.contentCategory || data.type || sec.type || '').toLowerCase();
-            const isMcq = rawType === 'mcq' || data.contentCategory === 'mcq';
-            const isCoding = rawType === 'coding' || rawType === 'code' || data.contentCategory === 'coding' || Array.isArray(data.challenges) || Array.isArray(data.codingQuestions) || Array.isArray(data.qids) || Array.isArray(data.questionIds) || Boolean(data.problem);
+            const isEssay = rawType === 'essay' || rawType === 'essay_writing' || data.contentCategory === 'essay';
+            const isMcq = !isEssay && (rawType === 'mcq' || data.contentCategory === 'mcq');
+            const isCoding = !isEssay && !isMcq && (rawType === 'coding' || rawType === 'code' || data.contentCategory === 'coding' || Array.isArray(data.challenges) || Array.isArray(data.codingQuestions) || Array.isArray(data.qids) || Array.isArray(data.questionIds) || Boolean(data.problem));
 
             if (isMcq) {
               // Normalize MCQ questions for student view (support both Firestore 'text'/'correctIndex' and static 'question'/'correctAnswer')
@@ -2363,6 +2374,14 @@ const MultiSectionAssessment = () => {
           .reduce((acc, sec) => acc.concat(sec.data.questions || sec.data.coding || []), [])
           .map(c => buildCodingSubmission(c));
 
+        const aggregatedEssay = Object.values(updatedResults)
+          .filter(sec => sec.type === 'essay' || sec.type === 'essay_writing')
+          .map(sec => ({
+            sectionId: sec.sectionId || '',
+            sectionName: sec.sectionName || 'Essay Writing',
+            ...(sec.data || {})
+          }));
+
         const aggregatedQuestionTiming = Object.values(updatedResults)
           .filter(sec => sec.type === 'coding')
           .reduce((acc, sec) => {
@@ -2502,6 +2521,7 @@ const MultiSectionAssessment = () => {
           sections: sectionsList,
           questions: aggregatedQuestions,
           codingSubmissions: aggregatedCoding,
+          essaySubmissions: aggregatedEssay,
           questionTiming: aggregatedQuestionTiming,
           proctoring: {
             violationCount: totalViolations,
@@ -2849,7 +2869,17 @@ const MultiSectionAssessment = () => {
       if (activeSection.questionTimer) return Array(qCount).fill(activeSection.questionTimer);
       return [];
     })();
-    const sectionSettings = activeSection.type === 'mcq'
+    const isEssay = activeSection.type === 'essay' || activeSection.type === 'essay_writing';
+    const sectionSettings = isEssay
+      ? {
+        timerRestrictedSubmit: false,
+        proctored: isTruthy(assessment.proctored) || isTruthy(activeSection.proctored),
+        maxViolations,
+        maxCameraViolations: maxViolations,
+        audioProctored: isTruthy(assessment.audioProctored) || isTruthy(activeSection.audioProctored),
+        maxAudioViolations
+      }
+      : activeSection.type === 'mcq'
       ? {
         timerRestrictedSubmit: isTruthy(activeSection.timerRestrictedSubmit),
         questionTimer: activeSection.questionTimer || 0,
@@ -2882,6 +2912,21 @@ const MultiSectionAssessment = () => {
           onBack={(res) => autoSubmitSection(res)}
         />
       )
+      : (activeSection.type === 'essay' || activeSection.type === 'essay_writing')
+        ? (
+          <EssaySectionView
+            key={`essay-${activeSection.sectionId || activeSection.id || currentSecIdx}`}
+            sectionData={activeSecData}
+            secTimer={secTimer}
+            secStarted={secStarted}
+            proctoringData={proctoringData}
+            settings={sectionSettings}
+            onSectionSubmit={(res) => autoSubmitSection(res)}
+            assessmentName={assessment.name ?? ''}
+            assessmentId={assessment.id ?? ''}
+            user={user}
+          />
+        )
       : activeSection.type === 'mcq'
         ? (
           <MCQSectionView
