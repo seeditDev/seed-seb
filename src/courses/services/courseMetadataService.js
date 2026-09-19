@@ -64,8 +64,13 @@ const BASELINE_ENROLLED_COUNTS = {
   system_design_mastery_course: 1260
 };
 
+let memoryCoursesCache = null;
+let memoryCoursesCacheTime = 0;
+const COURSES_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 /**
  * Get or initialize course metadata from Firestore 'realCourses/{courseId}'
+ * Uses in-memory cache and fallbackCourse data to eliminate unnecessary reads and writes.
  */
 export const getCourseMetadata = async (courseId, fallbackCourse = {}) => {
   if (!courseId) return null;
@@ -95,6 +100,26 @@ export const getCourseMetadata = async (courseId, fallbackCourse = {}) => {
     updatedAt: new Date().toISOString()
   };
 
+  // 1. If memory courses cache exists, use cached metadata to avoid an extra Firestore read
+  if (memoryCoursesCache && Array.isArray(memoryCoursesCache)) {
+    const cached = memoryCoursesCache.find(c => (c.courseId === courseId || c.slug === courseId || c.id === courseId));
+    if (cached) {
+      return {
+        ...defaultMeta,
+        ...cached,
+        reviews: cached.reviews && cached.reviews.length > 0 ? cached.reviews : defaultMeta.reviews,
+        enrolledCount: cached.enrolledCount !== undefined ? cached.enrolledCount : defaultMeta.enrolledCount,
+        rating: cached.rating !== undefined ? cached.rating : defaultMeta.rating,
+        reviewsCount: cached.reviewsCount !== undefined ? cached.reviewsCount : (cached.reviews?.length || defaultMeta.reviewsCount),
+      };
+    }
+  }
+
+  // 2. If fallbackCourse already has live reviews or enriched fields, use it directly (0 reads)
+  if (fallbackCourse && fallbackCourse.reviews && fallbackCourse.reviews.length > 0 && fallbackCourse.rating) {
+    return defaultMeta;
+  }
+
   try {
     const docRef = doc(db, REAL_COURSES_COLLECTION, courseId);
     const snap = await getDoc(docRef);
@@ -111,13 +136,6 @@ export const getCourseMetadata = async (courseId, fallbackCourse = {}) => {
         enabled: data.enabled !== undefined ? data.enabled : true
       };
     }
-
-    // Document does not exist yet -> auto seed in Firestore
-    await setDoc(docRef, {
-      ...defaultMeta,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    }, { merge: true });
 
     return defaultMeta;
   } catch (err) {
@@ -265,9 +283,7 @@ export const ensureCourseInFirestore = async (course) => {
   }
 };
 
-let memoryCoursesCache = null;
-let memoryCoursesCacheTime = 0;
-const COURSES_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 
 /**
  * Read and display only the real metadata of courses from realCourses/ collection in Firestore.

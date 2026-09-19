@@ -15,6 +15,7 @@ import {
 import { 
   getEnrolledCourseIds, 
   fetchEnrolledCourseIds, 
+  fetchUserCourseProgressMap,
   getCourseProgress, 
   enrollCourse,
   unenrollCourse
@@ -227,27 +228,16 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
       
       if (isMounted) setCourses(activeCourses);
 
-      // 2. Load enrollments & progress
-      const ids = await fetchEnrolledCourseIds(uid);
-      if (isMounted) setEnrolledIds(ids);
+      // 2. Load enrollments & progress in a single Firestore pass (eliminates N+1 reads)
+      const { enrolledIds: ids, progressMap: map } = await fetchUserCourseProgressMap(uid, activeCourses);
+      if (isMounted) {
+        setEnrolledIds(ids || []);
+        setProgressMap(map || {});
+      }
 
       fetchUserEntitledCourseIds(user).then((entitled) => {
         if (isMounted) setEntitledSet(entitled);
       });
-
-      // 3. Only query progress for courses the student is actually enrolled in
-      const map = {};
-      const enrolledSet = new Set(ids || []);
-      for (const course of activeCourses) {
-        if (!enrolledSet.has(course.courseId)) continue;
-        try {
-          const prog = await getCourseProgress(uid, course);
-          if (prog) {
-            map[course.courseId] = prog;
-          }
-        } catch (_) {}
-      }
-      if (isMounted) setProgressMap(map);
     }
 
     initCatalogAndProgress();

@@ -663,6 +663,85 @@ export const getCourseProgress = async (uid, course) => {
 };
 
 /**
+ * Asynchronously fetch enrolled course IDs and hydrated course progress map
+ * in a SINGLE Firestore getDocs call (eliminates the N+1 duplicate read).
+ */
+export const fetchUserCourseProgressMap = async (uid, catalog = []) => {
+  const localIds = getEnrolledCourseIds(uid);
+  const catalogList = Array.isArray(catalog) ? catalog : [];
+  const catalogMap = new Map();
+  catalogList.forEach(c => {
+    if (c.courseId) catalogMap.set(c.courseId, c);
+    if (c.slug) catalogMap.set(c.slug, c);
+  });
+
+  const progressMap = {};
+
+  // 1. Populate from local storage cache first for instant response
+  for (const cid of localIds) {
+    try {
+      const raw = localStorage.getItem(`${LOCAL_PROGRESS_PREFIX}${uid}_${cid}`);
+      if (raw) {
+        progressMap[cid] = JSON.parse(raw);
+      }
+    } catch (_) {}
+  }
+
+  if (!uid || uid === 'demo' || uid === 'demo-student' || !navigator.onLine) {
+    for (const cid of localIds) {
+      if (!progressMap[cid]) {
+        const catCourse = catalogMap.get(cid);
+        if (catCourse) progressMap[cid] = createInitialCourseProgress(catCourse);
+      }
+    }
+    return { enrolledIds: localIds, progressMap };
+  }
+
+  try {
+    const colRef = collection(db, 'users', uid, 'courseProgress');
+    const snap = await getDocs(colRef);
+    const firestoreIds = [];
+
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      const cid = docSnap.id;
+      if (data.isEnrolled !== false || data.progressPercent > 0 || (data.completedTopics && data.completedTopics.length > 0)) {
+        firestoreIds.push(cid);
+      }
+
+      // Hydrate progress directly from the fetched document!
+      const catCourse = catalogMap.get(cid);
+      if (catCourse) {
+        const hydrated = hydrateProgressFromFirestore(data, catCourse);
+        progressMap[cid] = hydrated;
+        saveLocalCourseProgress(uid, cid, hydrated);
+      }
+    });
+
+    const mergedIds = Array.from(new Set([...localIds, ...firestoreIds]));
+    try {
+      localStorage.setItem(`${LOCAL_ENROLLED_KEY}${uid}`, JSON.stringify(mergedIds));
+    } catch (_) {}
+
+    // Ensure all enrolled courses have a baseline progress object
+    for (const cid of mergedIds) {
+      if (!progressMap[cid]) {
+        const catCourse = catalogMap.get(cid);
+        if (catCourse) {
+          progressMap[cid] = createInitialCourseProgress(catCourse);
+          saveLocalCourseProgress(uid, cid, progressMap[cid]);
+        }
+      }
+    }
+
+    return { enrolledIds: mergedIds, progressMap };
+  } catch (e) {
+    console.warn('[LearningEngineService] fetchUserCourseProgressMap fallback to local:', e.message);
+    return { enrolledIds: localIds, progressMap };
+  }
+};
+
+/**
  * Save course progress locally.
  */
 export const saveLocalCourseProgress = (uid, courseId, progress) => {
@@ -692,13 +771,28 @@ export const syncCourseProgressToFirestore = async (uid, courseId, progress, cou
   }
 };
 
+// Bounded topic sync debouncer to eliminate rapid-fire setDoc calls on sidebar browsing
+const topicSyncTimers = new Map();
+const debounceTopicSync = (uid, courseId, progress, course) => {
+  if (!uid || uid === 'demo' || !navigator.onLine) return;
+  const key = `${uid}_${courseId}`;
+  if (topicSyncTimers.has(key)) {
+    clearTimeout(topicSyncTimers.get(key));
+  }
+  topicSyncTimers.set(key, setTimeout(() => {
+    topicSyncTimers.delete(key);
+    syncCourseProgressToFirestore(uid, courseId, progress, course);
+  }, 10000));
+};
+
 /**
  * Update the ongoing module & topic so user can resume exactly where they left off.
+ * Uses in-memory progress or local cache to avoid Firestore getDoc on topic clicks.
  */
-export const updateOngoingTopic = async (uid, course, moduleId, topicId) => {
+export const updateOngoingTopic = async (uid, course, moduleId, topicId, currentProgress = null) => {
   if (!course || !moduleId || !topicId) return null;
   const courseId = course.courseId;
-  const progress = getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
+  const progress = currentProgress || getLatestLocalProgress(uid, course) || await getCourseProgress(uid, course);
   if (!progress) return null;
 
   progress.currentModuleId = moduleId;
@@ -706,7 +800,7 @@ export const updateOngoingTopic = async (uid, course, moduleId, topicId) => {
   progress.lastActivityAt = new Date().toISOString();
 
   saveLocalCourseProgress(uid, courseId, progress);
-  syncCourseProgressToFirestore(uid, courseId, progress, course);
+  debounceTopicSync(uid, courseId, progress, course);
 
   return progress;
 };
@@ -1245,6 +1339,7 @@ export const submitMiniAssessment = async (uid, course, moduleId, score, passing
 export default {
   getEnrolledCourseIds,
   fetchEnrolledCourseIds,
+  fetchUserCourseProgressMap,
   enrollCourse,
   unenrollCourse,
   syncPracticeProblemToQuestionBank,

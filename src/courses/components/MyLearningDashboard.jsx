@@ -10,6 +10,7 @@ import { fetchLiveCoursesFromFirestore } from '../services/courseMetadataService
 import { 
   getEnrolledCourseIds, 
   fetchEnrolledCourseIds, 
+  fetchUserCourseProgressMap,
   getCourseProgress, 
   createInitialCourseProgress, 
   enrollCourse,
@@ -68,24 +69,12 @@ const MyLearningDashboard = ({ onOpenCourse, onExploreCourses, user, totalXP, se
       const catalog = (live && live.length > 0) ? live : COURSE_CATALOG;
       if (isMounted) setAllCourses(catalog);
 
-      // 2. Fetch enrolled course IDs
-      const liveIds = await fetchEnrolledCourseIds(uid);
+      // 2. Fetch enrolled IDs & hydrated progress map in a single pass (eliminates N+1 reads)
+      const { enrolledIds: liveIds, progressMap: map } = await fetchUserCourseProgressMap(uid, catalog);
       if (!isMounted) return;
-      setEnrolledIds(liveIds);
-
-      // 3. Hydrate course progress map
-      const map = {};
-      for (const cid of liveIds) {
-        const catalogCourse = catalog.find(c => c.courseId === cid || c.slug === cid);
-        if (catalogCourse) {
-          const prog = await getCourseProgress(uid, catalogCourse);
-          map[catalogCourse.courseId] = prog || createInitialCourseProgress(catalogCourse);
-        }
-      }
-      if (isMounted) {
-        setCourseProgressMap(map);
-        setLoading(false);
-      }
+      setEnrolledIds(liveIds || []);
+      setCourseProgressMap(map || {});
+      setLoading(false);
     }
 
     loadProgresses();

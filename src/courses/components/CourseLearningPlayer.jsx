@@ -196,7 +196,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
     setExpandedModules({ [module.moduleId]: true });
     setActivePlayerView('CLASS');
     setActiveStep('LESSON');
-    learningEngineService.updateOngoingTopic(uid, course, module.moduleId, topic.topicId);
+    learningEngineService.updateOngoingTopic(uid, course, module.moduleId, topic.topicId, progress);
 
     // On narrow screens auto-close sidebar so student sees content immediately
     if (typeof window !== 'undefined' && window.innerWidth <= 960) {
@@ -216,7 +216,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
     setExpandedModules({ [module.moduleId]: true });
     setActivePlayerView('CLASS');
     setActiveStep(subKey.toUpperCase());
-    learningEngineService.updateOngoingTopic(uid, course, module.moduleId, topic.topicId);
+    learningEngineService.updateOngoingTopic(uid, course, module.moduleId, topic.topicId, progress);
 
     if (typeof window !== 'undefined' && window.innerWidth <= 960) {
       setIsSidebarCollapsed(true);
@@ -1030,7 +1030,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
                       const nextTopic = activeModule.topics[currentTopicIdx + 1];
                       setSelectedTopicId(nextTopic.topicId);
                       setActiveStep('LESSON');
-                      learningEngineService.updateOngoingTopic(uid, course, activeModule.moduleId, nextTopic.topicId);
+                      learningEngineService.updateOngoingTopic(uid, course, activeModule.moduleId, nextTopic.topicId, finishedProg || progress);
                     } else {
                       handleSelectMSA(activeModule);
                     }

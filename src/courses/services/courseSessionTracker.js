@@ -143,12 +143,10 @@ export function startCourseSession(uid, courseId, userMetadata = {}) {
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'hidden') {
       flushActiveSessionTime('tab_hidden');
-    } else {
-      if (currentSession) {
-        currentSession.lastActiveTimestamp = Date.now();
-        // Record resume event
-        flushActiveSessionTime('course_resumed');
-      }
+    } else if (currentSession) {
+      currentSession.lastActiveTimestamp = Date.now();
+      currentSession.isActive = true;
+      // Do not flush on resume to prevent tab switching write bounces
     }
   };
 
