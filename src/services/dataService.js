@@ -727,8 +727,10 @@ class DataService {
                 authData = fresh;
             }
 
-            const { getAllowedTests, getGlobalTests } = await import('../lib/firestore/courses');
+            const { getAllowedTests, getGlobalTests, getCandidateDirectTests } = await import('../lib/firestore/courses');
             const { tenantId, cohortId } = authData;
+            const studentEmail = String(authData.email || auth?.currentUser?.email || '').trim().toLowerCase();
+            const studentRoll = String(authData.rollNumber || '').trim().toUpperCase();
 
             // 1. Fetch all active Global Contests (available to every SEED-IT user)
             let globalTests = [];
@@ -753,13 +755,82 @@ class DataService {
                 }
             }
 
-            // 3. Deduplicate by unique test id
-            const testMap = new Map();
-            for (const t of cohortTests) {
-                testMap.set(t.id, t);
+            // 3. Fetch candidate-specific tests directly assigned to this student email
+            let directTests = [];
+            if (studentEmail && typeof getCandidateDirectTests === 'function') {
+                try {
+                    directTests = await getCandidateDirectTests(studentEmail);
+                } catch (dErr) {
+                    console.warn('[DataService] getCandidateDirectTests error:', dErr);
+                }
             }
-            for (const t of globalTests) {
-                if (!testMap.has(t.id)) {
+
+            // 4. Candidate targeting filter (Approach A: Email / Roll Number / Cohort restriction)
+            const isStudentAuthorized = (t) => {
+                if (!t || !t.targeting) return true;
+                const { targetType, allowedEmails, allowedRollNumbers, allowedUserIds, tenantIds, years, departments } = t.targeting;
+
+                // Tenant/College restriction if specified
+                if (Array.isArray(tenantIds) && tenantIds.length > 0) {
+                    const sTenant = String(authData.tenantId || authData.College || authData.college || '').toLowerCase();
+                    if (!tenantIds.some(tid => String(tid || '').toLowerCase() === sTenant)) {
+                        return false;
+                    }
+                }
+
+                // Year restriction if specified
+                if (Array.isArray(years) && years.length > 0) {
+                    const sYear = String(authData.year || authData.Year || '').toLowerCase();
+                    if (!years.some(y => String(y || '').toLowerCase() === sYear)) {
+                        return false;
+                    }
+                }
+
+                // Department restriction if specified
+                if (Array.isArray(departments) && departments.length > 0) {
+                    const sDept = String(authData.department || authData.Department || '').toLowerCase();
+                    if (!departments.some(d => String(d || '').toLowerCase() === sDept)) {
+                        return false;
+                    }
+                }
+
+                // Candidate-specific targeting (Email / Roll / UID)
+                const isRestrictedToSpecific =
+                    targetType === 'specific_students' ||
+                    (Array.isArray(allowedEmails) && allowedEmails.length > 0) ||
+                    (Array.isArray(allowedRollNumbers) && allowedRollNumbers.length > 0) ||
+                    (Array.isArray(allowedUserIds) && allowedUserIds.length > 0);
+
+                if (isRestrictedToSpecific) {
+                    const studentUid = String(effectiveUid || authData.uid || auth?.currentUser?.uid || '').trim();
+
+                    const emailAllowed =
+                        Array.isArray(allowedEmails) &&
+                        allowedEmails.length > 0 &&
+                        allowedEmails.some(e => String(e || '').trim().toLowerCase() === studentEmail);
+
+                    const rollAllowed =
+                        Array.isArray(allowedRollNumbers) &&
+                        allowedRollNumbers.length > 0 &&
+                        allowedRollNumbers.some(r => String(r || '').trim().toUpperCase() === studentRoll);
+
+                    const uidAllowed =
+                        Array.isArray(allowedUserIds) &&
+                        allowedUserIds.length > 0 &&
+                        allowedUserIds.some(u => String(u || '').trim() === studentUid);
+
+                    if (!emailAllowed && !rollAllowed && !uidAllowed) {
+                        return false;
+                    }
+                }
+
+                return true;
+            };
+
+            // 5. Deduplicate and filter tests authorized for this candidate
+            const testMap = new Map();
+            for (const t of [...cohortTests, ...globalTests, ...directTests]) {
+                if (!testMap.has(t.id) && isStudentAuthorized(t)) {
                     testMap.set(t.id, t);
                 }
             }

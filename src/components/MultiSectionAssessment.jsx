@@ -1244,7 +1244,13 @@ const MultiSectionAssessment = () => {
       .map(sec => ({
         sectionId: sec.sectionId || '',
         sectionName: sec.sectionName || 'Essay Writing',
-        ...(sec.data || {})
+        ...(sec.data || {}),
+        studentTitle: sec.data?.studentTitle || sec.data?.submission?.studentTitle || '',
+        answerText: sec.data?.answerText || sec.data?.submission?.answerText || '',
+        wordCount: sec.data?.wordCount || sec.data?.submission?.wordCount || 0,
+        rubricScores: sec.data?.rubricScores || sec.data?.evaluation?.rubricScores || {},
+        rubricMax: sec.data?.rubricMax || sec.data?.evaluation?.rubricMax || {},
+        grammarAnalysis: sec.data?.grammarAnalysis || sec.data?.evaluation?.grammarAnalysis || {},
       }));
 
     const aggregatedQuestionTiming = Object.values(combinedResults)
@@ -1352,15 +1358,17 @@ const MultiSectionAssessment = () => {
         autoSubmitReason: reason || 'proctoring_violations',
       }).catch(() => { });
 
-      await setDoc(doc(db, v2DocPath), attemptData);
+      const sanitizedPayload = JSON.parse(JSON.stringify(attemptData));
+      await setDoc(doc(db, v2DocPath), sanitizedPayload);
       console.log('[MSA] Final result saved to Firestore canonical path:', v2DocPath);
     } catch (writeErr) {
       console.error('[MSA] Remote write failed, saving local envelope:', writeErr);
       const envKey = `msa_pending_submission_${userId}_${effectiveAssessment.id}`;
+      const sanitizedPayload = JSON.parse(JSON.stringify(attemptData));
       savePendingEnvelope(envKey, {
         uid: userId,
         assessmentId: effectiveAssessment.id,
-        resultPayload: attemptData,
+        resultPayload: sanitizedPayload,
         savedAt: new Date().toISOString(),
       }).catch(() => { });
     }
@@ -1623,6 +1631,79 @@ const MultiSectionAssessment = () => {
         localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
         navigate('/student/dashboard', { replace: true });
         return;
+      }
+    }
+
+    // Verify candidate targeting restrictions (Approach A: Email / Roll number / UID targeting)
+    if (assessmentData.targeting) {
+      const { targetType, allowedEmails, allowedRollNumbers, allowedUserIds, tenantIds, years, departments } = assessmentData.targeting;
+
+      if (Array.isArray(tenantIds) && tenantIds.length > 0) {
+        const sTenant = String(authData.tenantId || authData.College || authData.college || '').toLowerCase();
+        if (!tenantIds.some(tid => String(tid || '').toLowerCase() === sTenant)) {
+          toast.error('Access Restricted: This assessment is not available for your institution.');
+          sessionStorage.removeItem('multisectionAssessmentData');
+          localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+          navigate('/student/dashboard', { replace: true });
+          return;
+        }
+      }
+
+      if (Array.isArray(years) && years.length > 0) {
+        const sYear = String(authData.year || authData.Year || '').toLowerCase();
+        if (!years.some(y => String(y || '').toLowerCase() === sYear)) {
+          toast.error('Access Restricted: This assessment is not open to your academic year.');
+          sessionStorage.removeItem('multisectionAssessmentData');
+          localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+          navigate('/student/dashboard', { replace: true });
+          return;
+        }
+      }
+
+      if (Array.isArray(departments) && departments.length > 0) {
+        const sDept = String(authData.department || authData.Department || '').toLowerCase();
+        if (!departments.some(d => String(d || '').toLowerCase() === sDept)) {
+          toast.error('Access Restricted: This assessment is not open to your department.');
+          sessionStorage.removeItem('multisectionAssessmentData');
+          localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+          navigate('/student/dashboard', { replace: true });
+          return;
+        }
+      }
+
+      const isRestrictedToSpecific =
+        targetType === 'specific_students' ||
+        (Array.isArray(allowedEmails) && allowedEmails.length > 0) ||
+        (Array.isArray(allowedRollNumbers) && allowedRollNumbers.length > 0) ||
+        (Array.isArray(allowedUserIds) && allowedUserIds.length > 0);
+
+      if (isRestrictedToSpecific) {
+        const studentEmail = String(authData.email || auth?.currentUser?.email || '').trim().toLowerCase();
+        const studentRoll = String(authData.rollNumber || '').trim().toUpperCase();
+        const studentUid = String(authData.uid || auth?.currentUser?.uid || '').trim();
+
+        const emailAllowed =
+          Array.isArray(allowedEmails) &&
+          allowedEmails.length > 0 &&
+          allowedEmails.some(e => String(e || '').trim().toLowerCase() === studentEmail);
+
+        const rollAllowed =
+          Array.isArray(allowedRollNumbers) &&
+          allowedRollNumbers.length > 0 &&
+          allowedRollNumbers.some(r => String(r || '').trim().toUpperCase() === studentRoll);
+
+        const uidAllowed =
+          Array.isArray(allowedUserIds) &&
+          allowedUserIds.length > 0 &&
+          allowedUserIds.some(u => String(u || '').trim() === studentUid);
+
+        if (!emailAllowed && !rollAllowed && !uidAllowed) {
+          toast.error('Access Restricted: You are not authorized to take this assessment.');
+          sessionStorage.removeItem('multisectionAssessmentData');
+          localStorage.removeItem(`msaActiveAssessment_${assessmentData.id}`);
+          navigate('/student/dashboard', { replace: true });
+          return;
+        }
       }
     }
 
@@ -2379,7 +2460,13 @@ const MultiSectionAssessment = () => {
           .map(sec => ({
             sectionId: sec.sectionId || '',
             sectionName: sec.sectionName || 'Essay Writing',
-            ...(sec.data || {})
+            ...(sec.data || {}),
+            studentTitle: sec.data?.studentTitle || sec.data?.submission?.studentTitle || '',
+            answerText: sec.data?.answerText || sec.data?.submission?.answerText || '',
+            wordCount: sec.data?.wordCount || sec.data?.submission?.wordCount || 0,
+            rubricScores: sec.data?.rubricScores || sec.data?.evaluation?.rubricScores || {},
+            rubricMax: sec.data?.rubricMax || sec.data?.evaluation?.rubricMax || {},
+            grammarAnalysis: sec.data?.grammarAnalysis || sec.data?.evaluation?.grammarAnalysis || {},
           }));
 
         const aggregatedQuestionTiming = Object.values(updatedResults)
@@ -2549,7 +2636,8 @@ const MultiSectionAssessment = () => {
         // and return early — do NOT show "submitted" or navigate to dashboard.
         let resultWriteSuccess = false;
         try {
-          await setDoc(doc(db, v2DocPath), attemptData);
+          const sanitizedPayload = JSON.parse(JSON.stringify(attemptData));
+          await setDoc(doc(db, v2DocPath), sanitizedPayload);
           console.log('[MSA] Final result saved to Firestore canonical path:', v2DocPath);
           resultWriteSuccess = true;
 
@@ -2630,17 +2718,21 @@ const MultiSectionAssessment = () => {
         } catch (writeErr) {
           console.error('[MSA] handleFinalSubmit: Firestore write failed — preserving pending envelope:', writeErr);
           const envKey = `msa_pending_submission_${userId}_${assessment.id}`;
+          const sanitizedPayload = JSON.parse(JSON.stringify(attemptData));
           savePendingEnvelope(envKey, {
             uid: userId,
             assessmentId: assessment.id,
-            resultPayload: attemptData,
+            resultPayload: sanitizedPayload,
             savedAt: new Date().toISOString(),
             retryCount: 0,
           }).catch(() => { });
           // Transition attempt to FAILED_RECOVERABLE so resume/retry is possible
           transitionAttemptState(assessment?.id, ATTEMPT_STATES.FAILED_RECOVERABLE).catch(() => { });
+          const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
           toast.error(
-            'Submission pending — no network. Your answers are saved locally and will sync automatically when you reconnect. Do not close this window.',
+            isOffline
+              ? 'Submission pending — no network. Your answers are saved locally and will sync automatically when you reconnect. Do not close this window.'
+              : `Submission pending (${writeErr?.message || 'Sync queued'}). Your answers are saved locally.`,
             { duration: 12000 }
           );
           // Early return: student stays on page, not navigated away
@@ -2922,6 +3014,9 @@ const MultiSectionAssessment = () => {
             proctoringData={proctoringData}
             settings={sectionSettings}
             onSectionSubmit={(res) => autoSubmitSection(res)}
+            onBack={() => {
+              toast.info('Section in progress. You can save a draft or submit your essay to proceed.');
+            }}
             assessmentName={assessment.name ?? ''}
             assessmentId={assessment.id ?? ''}
             user={user}

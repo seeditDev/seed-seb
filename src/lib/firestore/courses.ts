@@ -65,6 +65,16 @@ export interface MSASection {
   forwardOnly: boolean;
 }
 
+export interface AssessmentTargeting {
+  tenantIds?: string[];
+  years?: string[];
+  departments?: string[];
+  targetType?: "all_in_cohort" | "specific_students";
+  allowedEmails?: string[];
+  allowedRollNumbers?: string[];
+  allowedUserIds?: string[];
+}
+
 export interface TestDoc {
   id: string;
   courseId: string;
@@ -91,6 +101,7 @@ export interface TestDoc {
   display_order: number;
   schedule: ScheduleConfig;
   settings: TestSettings;
+  targeting?: AssessmentTargeting | null;
   /** Populated at runtime with course/series metadata for UI display */
   courseTitle?: string;
   seriesTitle?: string;
@@ -168,6 +179,7 @@ function mapTest(
     entryFeeINR: d["entryFeeINR"] != null ? Number(d["entryFeeINR"]) : 0,
     display_order: Number(d["display_order"] ?? 999),
     schedule: (d["schedule"] as ScheduleConfig) ?? { start: null, end: null, autoClose: false },
+    targeting: (d["targeting"] as AssessmentTargeting) || null,
     settings: {
       shuffleQuestions: Boolean(s["shuffleQuestions"]),
       shuffleOptions: Boolean(s["shuffleOptions"]),
@@ -342,3 +354,59 @@ export async function getGlobalTests(): Promise<TestDoc[]> {
     return [];
   }
 }
+
+/**
+ * Fetch tests directly targeted to a specific candidate email
+ * via targeting.allowedEmails array-contains query.
+ */
+export async function getCandidateDirectTests(email: string): Promise<TestDoc[]> {
+  try {
+    if (!email) return [];
+    const db = getDb();
+    const cleanEmail = email.trim().toLowerCase();
+    const q = query(
+      collectionGroup(db, "tests"),
+      where("targeting.allowedEmails", "array-contains", cleanEmail)
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return [];
+
+    const results: TestDoc[] = [];
+    const courseTitles = new Map<string, string>();
+    const seriesTitles = new Map<string, string>();
+
+    for (const d of snap.docs) {
+      const pathParts = d.ref.path.split("/");
+      const courseId = pathParts[1] || "";
+      const seriesId = pathParts[3] || "";
+      const test = mapTest(d.id, courseId, seriesId, d.data() as Record<string, unknown>);
+      results.push(test);
+    }
+
+    await Promise.all(
+      results.map(async (t) => {
+        try {
+          if (t.courseId && !courseTitles.has(t.courseId)) {
+            const cSnap = await getDoc(doc(db, "courses", t.courseId));
+            if (cSnap.exists()) courseTitles.set(t.courseId, String(cSnap.data()["title"] ?? t.courseId));
+          }
+          if (t.courseId && t.seriesId && !seriesTitles.has(`${t.courseId}::${t.seriesId}`)) {
+            const sSnap = await getDoc(doc(db, "courses", t.courseId, "series", t.seriesId));
+            if (sSnap.exists()) seriesTitles.set(`${t.courseId}::${t.seriesId}`, String(sSnap.data()["title"] ?? t.seriesId));
+          }
+          t.courseTitle = courseTitles.get(t.courseId) ?? "Assigned Course";
+          t.seriesTitle = seriesTitles.get(`${t.courseId}::${t.seriesId}`) ?? "Special Allocation";
+        } catch {
+          t.courseTitle = "Assigned Course";
+          t.seriesTitle = "Special Allocation";
+        }
+      })
+    );
+
+    return results.sort((a, b) => a.display_order - b.display_order);
+  } catch (err) {
+    console.warn("[courses.ts] getCandidateDirectTests query error:", err);
+    return [];
+  }
+}
+
