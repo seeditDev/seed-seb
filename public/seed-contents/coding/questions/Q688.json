@@ -1,25 +1,17 @@
 {
-  "questionId": "Q688",
-  "title": "Knight Probability in Chessboard Problem",
   "slug": "knight-probability-in-chessboard",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Dynamic Programming",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "dynamic-programming"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "dynamic-programming"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Think of the problem as a probability DP indexed by the number of moves already considered and the knight's current cell.",
+    "An off-board destination has probability 0, but it still consumes one of the eight equally likely move choices.",
+    "Build the next DP layer from the previous layer by summing at most eight destination probabilities and dividing by 8.",
+    "Because only adjacent move layers interact, two n x n arrays are sufficient."
+  ],
+  "title": "Knight Probability in Chessboard Problem",
   "content": {
-    "problemStatement": "On an `n x n` chessboard, a knight starts at the cell `(row, column)` and attempts to make exactly `k` moves. The rows and columns are **0-indexed**, so the top-left cell is `(0, 0)`, and the bottom-right cell is `(n - 1, n - 1)`.\n\nA chess knight has eight possible moves it can make, as illustrated below. Each move is two cells in a cardinal direction, then one cell in an orthogonal direction.\n\n![](https://assets.leetcode.com/uploads/2018/10/12/knight.png)\n\nEach time the knight is to move, it chooses one of eight possible moves uniformly at random (even if the piece would go off the chessboard) and moves there.\n\nThe knight continues moving until it has made exactly `k` moves or has moved off the chessboard.\n\nOutput *the probability that the knight remains on the board after it has stopped moving*.\n\n**Example 1:**\n\n```\nInput: n = 3, k = 2, row = 0, column = 0\nOutput: 0.06250\nExplanation: There are two moves (to (1,2), (2,1)) that will keep the knight on the board.\nFrom each of those positions, there are also two moves that will keep the knight on the board.\nThe total probability the knight stays on the board is 0.0625.\n```\n\n**Example 2:**\n\n```\nInput: n = 1, k = 0, row = 0, column = 0\nOutput: 1.00000\n```\n\n**Constraints:**\n\n* `1 <= n <= 25`\n* `0 <= k <= 100`\n* `0 <= row, column <= n - 1`",
+    "notes": [
+      "The return value is a probability between 0 and 1 inclusive.",
+      "The eight knight moves remain equally likely even when some moves leave the board."
+    ],
     "constraints": [
       "1 <= n <= 25",
       "0 <= k <= 100",
@@ -33,279 +25,47 @@
         "type": "reg",
         "input": "[3,2,0,0]",
         "output": "0.06250",
-        "explanation": "There are two moves (to (1,2), (2,1)) that will keep the knight on the board.\nFrom each of those positions, there are also two moves that will keep the knight on the board.\nThe total probability the knight stays on the board is 0.0625."
+        "explanation": "There are two moves (to (1,2), (2,1)) that will keep the knight on the board. From each of those positions, there are also two moves that will keep the knight on the board. The total probability the knight stays on the board is 0.0625.",
+        "expectedOutput": "0.06250"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[1,0,0,0]",
         "output": "1.00000",
-        "explanation": ""
+        "explanation": "With zero moves, the knight has not moved, so it remains on the board with probability 1.",
+        "expectedOutput": "1.00000"
       }
     ],
-    "notes": []
+    "problemStatement": "On an `n x n` chessboard, a knight starts at the cell `(row, column)` and attempts to make exactly `k` moves. The rows and columns are **0-indexed**, so the top-left cell is `(0, 0)`, and the bottom-right cell is `(n - 1, n - 1)`.\n\nA chess knight has eight possible moves it can make, as illustrated below. Each move is two cells in a cardinal direction, then one cell in an orthogonal direction.\n\n![](https://assets.leetcode.com/uploads/2018/10/12/knight.png)\n\nEach time the knight is to move, it chooses one of eight possible moves uniformly at random (even if the piece would go off the chessboard) and moves there.\n\nThe knight continues moving until it has made exactly `k` moves or has moved off the chessboard.\n\nOutput *the probability that the knight remains on the board after it has stopped moving*.\n\n**Example 1:**\n\n```\nInput: n = 3, k = 2, row = 0, column = 0\nOutput: 0.06250\nExplanation: There are two moves (to (1,2), (2,1)) that will keep the knight on the board.\nFrom each of those positions, there are also two moves that will keep the knight on the board.\nThe total probability the knight stays on the board is 0.0625.\n```\n\n**Example 2:**\n\n```\nInput: n = 1, k = 0, row = 0, column = 0\nOutput: 1.00000\n```\n\n**Constraints:**\n\n* `1 <= n <= 25`\n* `0 <= k <= 100`\n* `0 <= row, column <= n - 1`"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Smallest input",
-        "input": "[1, 0, 0, 0]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Two elements",
-        "input": "[2, 1, 0, 1]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Strictly increasing",
-        "input": "[5, 1, 0, 0]",
-        "expectedOutput": "0.25",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Strictly decreasing",
-        "input": "[5, 5, 4, 3]",
-        "expectedOutput": "0.03369140625",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Largest input",
-        "input": "[25, 100, 24, 24]",
-        "expectedOutput": "0.0012193746331114292",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Memoization stress",
-        "input": "[10, 50, 5, 5]",
-        "expectedOutput": "0.00010383055349924423",
-        "weight": 10
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Repeated states",
-        "input": "[10, 10, 5, 5]",
-        "expectedOutput": "0.22588835656642914",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Impossible case",
-        "input": "[1, 1, 0, 0]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Answer spans full input",
-        "input": "[25, 100, 0, 0]",
-        "expectedOutput": "0.0012193746331114295",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "Answer is zero or empty",
-        "input": "[1, 100, 0, 0]",
-        "expectedOutput": "0",
-        "weight": 4
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "Alternating values",
-        "input": "[3, 2, 1, 1]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "Random large input",
-        "input": "[23, 95, 12, 18]",
-        "expectedOutput": "0.019770828578164805",
-        "weight": 2
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+  "judging": {
+    "notes": [],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
       3,
       3,
       3,
@@ -325,57 +85,344 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "dynamic-programming"
     ],
-    "notes": []
+    "category": "Dynamic Programming",
+    "isPremium": false,
+    "topicTags": [
+      "dynamic-programming"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses dynamic programming to calculate the probability of the knight remaining on the board after k moves, considering all possible moves from each cell.",
+    "notes": [
+      "The recurrence is backward-looking: the probability from a cell depends on the survival probabilities of the cells a knight could land on next.",
+      "At most eight transitions are inspected for each of the n^2 cells at each of k steps.",
+      "Rolling two layers avoid O(k * n^2) storage while preserving the O(k * n^2) running time."
+    ],
+    "approach": "Use bottom-up dynamic programming over board positions. Let dp[r][c] be the probability of remaining on the board for the current number of moves when starting that layer from cell (r,c). Before any moves, every on-board cell has survival probability 1. For each move, compute a new n x n table by summing the previous probabilities of all valid knight destinations and dividing by 8; destinations outside the board contribute 0. After k transitions, dp[row][column] is the required probability. Only the previous and current layers are needed.",
+    "editorial": {
+      "better": {
+        "complexity": "O(k * n^2) time, O(k * n^2) memoization space, and O(k) recursion depth.",
+        "description": "Memoize states (moves remaining, row, column). Each distinct state is evaluated once, and each evaluation examines at most eight moves. This removes the repeated subproblems in the recursive brute-force search."
+      },
+      "optimal": {
+        "complexity": "O(k * n^2) time and O(n^2) auxiliary space.",
+        "description": "Use iterative two-layer dynamic programming. The base layer is 1 for every board cell. For each move, a cell receives one-eighth of the survival probability of each legal destination. After exactly k layers, return the value at the starting cell."
+      },
+      "bruteForce": {
+        "complexity": "O(8^k) time and O(k) recursion depth.",
+        "description": "Enumerate every one of the 8^k possible move sequences and count sequences that remain on the board after all k moves. This directly follows the probability model but grows exponentially with k."
+      }
+    },
     "timeComplexity": "O(k * n^2)",
     "spaceComplexity": "O(n^2)",
     "code": {
-      "Python3": "# Time:  O(k * n^2)\n# Space: O(n^2)\n\nclass Solution(object):\n    def knightProbability(self, N, K, r, c):\n        \"\"\"\n        :type N: int\n        :type K: int\n        :type r: int\n        :type c: int\n        :rtype: float\n        \"\"\"\n        directions = \\\n            [[ 1, 2], [ 1, -2], [ 2, 1], [ 2, -1], \\\n             [-1, 2], [-1, -2], [-2, 1], [-2, -1]]\n        dp = [[[1 for _ in range(N)] for _ in range(N)] for _ in range(2)]\n        for step in range(1, K+1):\n            for i in range(N):\n                for j in range(N):\n                    dp[step%2][i][j] = 0\n                    for direction in directions:\n                        rr, cc = i+direction[0], j+direction[1]\n                        if 0 <= cc < N and 0 <= rr < N:\n                            dp[step%2][i][j] += 0.125 * dp[(step-1)%2][rr][cc]\n\n        return dp[K%2][r][c]"
-    },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "Python3": "class Solution:\n    def knightProbability(self, n: int, k: int, row: int, column: int) -> float:\n        moves = ((1, 2), (1, -2), (2, 1), (2, -1),\n                 (-1, 2), (-1, -2), (-2, 1), (-2, -1))\n        dp = [[1.0] * n for _ in range(n)]\n        for _ in range(k):\n            nxt = [[0.0] * n for _ in range(n)]\n            for r in range(n):\n                for c in range(n):\n                    total = 0.0\n                    for dr, dc in moves:\n                        nr, nc = r + dr, c + dc\n                        if 0 <= nr < n and 0 <= nc < n:\n                            total += dp[nr][nc]\n                    nxt[r][c] = total / 8.0\n            dp = nxt\n        return dp[row][column]",
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n\ndouble knightProbability(int n, int k, int row, int column) {\n    static const int moves[8][2] = {\n        {1,2}, {1,-2}, {2,1}, {2,-1},\n        {-1,2}, {-1,-2}, {-2,1}, {-2,-1}\n    };\n    size_t cells = (size_t)n * (size_t)n;\n    double *dp = malloc(cells * sizeof(double));\n    double *next = malloc(cells * sizeof(double));\n    if (!dp || !next) exit(EXIT_FAILURE);\n\n    for (size_t i = 0; i < cells; i++) dp[i] = 1.0;\n\n    for (int step = 0; step < k; step++) {\n        for (int r = 0; r < n; r++) {\n            for (int c = 0; c < n; c++) {\n                double total = 0.0;\n                for (int m = 0; m < 8; m++) {\n                    int nr = r + moves[m][0], nc = c + moves[m][1];\n                    if (0 <= nr && nr < n && 0 <= nc && nc < n) {\n                        total += dp[nr * n + nc];\n                    }\n                }\n                next[r * n + c] = total / 8.0;\n            }\n        }\n        double *tmp = dp; dp = next; next = tmp;\n    }\n\n    double ans = dp[row * n + column];\n    free(dp);\n    free(next);\n    return ans;\n}",
+      "C++": "class Solution {\npublic:\n    double knightProbability(int n, int k, int row, int column) {\n        static const int moves[8][2] = {\n            {1,2}, {1,-2}, {2,1}, {2,-1},\n            {-1,2}, {-1,-2}, {-2,1}, {-2,-1}\n        };\n        vector<vector<double>> dp(n, vector<double>(n, 1.0));\n        for (int step = 0; step < k; ++step) {\n            vector<vector<double>> next(n, vector<double>(n, 0.0));\n            for (int r = 0; r < n; ++r) {\n                for (int c = 0; c < n; ++c) {\n                    double total = 0.0;\n                    for (const auto &mv : moves) {\n                        int nr = r + mv[0], nc = c + mv[1];\n                        if (0 <= nr && nr < n && 0 <= nc && nc < n) {\n                            total += dp[nr][nc];\n                        }\n                    }\n                    next[r][c] = total / 8.0;\n                }\n            }\n            dp.swap(next);\n        }\n        return dp[row][column];\n    }\n};",
+      "Java": "class Solution {\n    public double knightProbability(int n, int k, int row, int column) {\n        int[][] moves = {\n            {1,2}, {1,-2}, {2,1}, {2,-1},\n            {-1,2}, {-1,-2}, {-2,1}, {-2,-1}\n        };\n        double[][] dp = new double[n][n];\n        for (int r = 0; r < n; r++) Arrays.fill(dp[r], 1.0);\n        for (int step = 0; step < k; step++) {\n            double[][] nxt = new double[n][n];\n            for (int r = 0; r < n; r++) {\n                for (int c = 0; c < n; c++) {\n                    double total = 0.0;\n                    for (int[] mv : moves) {\n                        int nr = r + mv[0], nc = c + mv[1];\n                        if (0 <= nr && nr < n && 0 <= nc && nc < n) {\n                            total += dp[nr][nc];\n                        }\n                    }\n                    nxt[r][c] = total / 8.0;\n                }\n            }\n            dp = nxt;\n        }\n        return dp[row][column];\n    }\n}",
+      "JavaScript": "const readline = require(\"readline\");\n\nfunction knightProbability(n, k, row, column) {\n    const moves = [\n        [1, 2], [1, -2], [2, 1], [2, -1],\n        [-1, 2], [-1, -2], [-2, 1], [-2, -1]\n    ];\n    let dp = Array.from({ length: n }, () => Array(n).fill(1));\n    for (let step = 0; step < k; step++) {\n        const next = Array.from({ length: n }, () => Array(n).fill(0));\n        for (let r = 0; r < n; r++) {\n            for (let c = 0; c < n; c++) {\n                let total = 0;\n                for (const [dr, dc] of moves) {\n                    const nr = r + dr;\n                    const nc = c + dc;\n                    if (0 <= nr && nr < n && 0 <= nc && nc < n) {\n                        total += dp[nr][nc];\n                    }\n                }\n                next[r][c] = total / 8;\n            }\n        }\n        dp = next;\n    }\n    return dp[row][column];\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\ndouble knightProbability(int n, int k, int row, int column) {\n    \n    return 0;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int n = parse_int(&tok);\n        int k = parse_int(&tok);\n        int row = parse_int(&tok);\n        int column = parse_int(&tok);\n        double result = knightProbability(n, k, row, column);\n        printf(\"%f\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def knightProbability(self, n: int, k: int, row: int, column: int) -> float:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _n = _args[0]\n    _k = _args[1]\n    _row = _args[2]\n    _column = _args[3]\n    _result = Solution().knightProbability(_n, _k, _row, _column)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number} n\n * @param {number} k\n * @param {number} row\n * @param {number} column\n * @return {number}\n */\nvar knightProbability = function(n, k, row, column) {\n    \n    return 0.0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = knightProbability(_args[0], _args[1], _args[2], _args[3]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public double knightProbability(int n, int k, int row, int column) {\n        \n        return 0.0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int n = Integer.parseInt(nextToken());\n        int k = Integer.parseInt(nextToken());\n        int row = Integer.parseInt(nextToken());\n        int column = Integer.parseInt(nextToken());\n        double result = new Solution().knightProbability(n, k, row, column);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    double knightProbability(int n, int k, int row, int column) {\n        \n        return 0.0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    int n = readInt(tok);\n    int k = readInt(tok);\n    int row = readInt(tok);\n    int column = readInt(tok);\n    auto result = Solution().knightProbability(n, k, row, column);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "k",
+        "type": "int"
+      },
+      {
+        "name": "row",
+        "type": "int"
+      },
+      {
+        "name": "column",
+        "type": "int"
+      }
+    ],
+    "methodName": "knightProbability"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How would you implement the same recurrence with top-down memoization instead of bottom-up DP?",
+    "What changes if the eight knight moves have different probabilities rather than being uniform?",
+    "How would you adapt the recurrence to an m x n rectangular board?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[1,0,0,0]",
+        "label": "Zero moves on minimum board",
+        "weight": 4,
+        "expectedOutput": "1.0"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[2,0,0,1]",
+        "label": "Zero moves at a non-corner cell",
+        "weight": 4,
+        "expectedOutput": "1.0"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[1,1,0,0]",
+        "label": "Single move on a one-cell board",
+        "weight": 4,
+        "expectedOutput": "0.0"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[2,1,0,0]",
+        "label": "Single move on a two-cell board",
+        "weight": 4,
+        "expectedOutput": "0.0"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[2,100,1,1]",
+        "label": "Many moves on an impossible two-cell board",
+        "weight": 4,
+        "expectedOutput": "0.0"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[3,1,0,0]",
+        "label": "Single move from corner on 3x3 board",
+        "weight": 4,
+        "expectedOutput": "0.25"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[3,1,1,1]",
+        "label": "Single move from center with no legal knight move",
+        "weight": 4,
+        "expectedOutput": "0.0"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[3,2,0,0]",
+        "label": "Two moves from corner on 3x3 board",
+        "weight": 4,
+        "expectedOutput": "0.0625"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[3,2,1,1]",
+        "label": "Two moves from center on 3x3 board",
+        "weight": 4,
+        "expectedOutput": "0.0"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[4,1,1,1]",
+        "label": "Single move from interior on 4x4 board",
+        "weight": 4,
+        "expectedOutput": "0.5"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[4,2,0,0]",
+        "label": "Two moves from corner on 4x4 board",
+        "weight": 3,
+        "expectedOutput": "0.125"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[4,2,1,1]",
+        "label": "Two moves from interior on 4x4 board",
+        "weight": 3,
+        "expectedOutput": "0.15625"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[4,3,1,1]",
+        "label": "Three moves from interior on 4x4 board",
+        "weight": 3,
+        "expectedOutput": "0.0703125"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[5,1,2,2]",
+        "label": "Single move from fully mobile center on 5x5 board",
+        "weight": 3,
+        "expectedOutput": "1.0"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[5,2,0,0]",
+        "label": "Two moves from corner on 5x5 board",
+        "weight": 3,
+        "expectedOutput": "0.1875"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[5,2,2,2]",
+        "label": "Two moves from center on 5x5 board",
+        "weight": 3,
+        "expectedOutput": "0.375"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[5,3,2,2]",
+        "label": "Three moves from center on 5x5 board",
+        "weight": 3,
+        "expectedOutput": "0.25"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[6,2,0,0]",
+        "label": "Two moves from corner on 6x6 board",
+        "weight": 3,
+        "expectedOutput": "0.1875"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[6,2,2,2]",
+        "label": "Two moves from central position on 6x6 board",
+        "weight": 3,
+        "expectedOutput": "0.53125"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[6,4,3,3]",
+        "label": "Four moves from board center on 6x6 board",
+        "weight": 3,
+        "expectedOutput": "0.2158203125"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[7,2,0,0]",
+        "label": "Two moves from corner on 7x7 board",
+        "weight": 3,
+        "expectedOutput": "0.1875"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[7,4,3,3]",
+        "label": "Four moves from board center on 7x7 board",
+        "weight": 3,
+        "expectedOutput": "0.35546875"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[8,5,4,4]",
+        "label": "Five moves from center on 8x8 board",
+        "weight": 3,
+        "expectedOutput": "0.35565185546875"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[10,10,0,0]",
+        "label": "Ten moves from corner on 10x10 board",
+        "weight": 3,
+        "expectedOutput": "0.031016146764159203"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[10,10,5,5]",
+        "label": "Ten moves from center on 10x10 board",
+        "weight": 3,
+        "expectedOutput": "0.22588835656642914"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[10,50,5,5]",
+        "label": "Fifty moves from center on 10x10 board",
+        "weight": 3,
+        "expectedOutput": "0.00010383055349924424"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[20,20,9,9]",
+        "label": "Twenty moves from center on 20x20 board",
+        "weight": 3,
+        "expectedOutput": "0.5426220046393063"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[25,100,0,0]",
+        "label": "Maximum board and move count from corner",
+        "weight": 3,
+        "expectedOutput": "0.0012193746331114292"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[25,100,12,12]",
+        "label": "Maximum board and move count from an interior cell",
+        "weight": 3,
+        "expectedOutput": "0.04742876069380137"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[25,99,24,24]",
+        "label": "Maximum board with near-maximum move count from corner",
+        "weight": 3,
+        "expectedOutput": "0.0012630548957154961"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q688",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n\ndouble knightProbability(int n, int k, int row, int column) {\n    return 0.0;\n}\n\nint main(void) {\n    char line[256];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    int n, k, row, column;\n    if (sscanf(line, \" [ %d , %d , %d , %d ]\", &n, &k, &row, &column) != 4) return 1;\n    printf(\"%.17g\\n\", knightProbability(n, k, row, column));\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    double knightProbability(int n, int k, int row, int column) {\n        return 0.0;\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    for (char &ch : line) {\n        if (ch == '[' || ch == ']' || ch == ',') ch = ' ';\n    }\n    stringstream ss(line);\n    int n, k, row, column;\n    ss >> n >> k >> row >> column;\n    cout << setprecision(17) << Solution().knightProbability(n, k, row, column) << '\\n';\n    return 0;\n}\n",
+    "Java": "import java.util.*;\n\nclass Solution {\n    public double knightProbability(int n, int k, int row, int column) {\n        return 0.0;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String line = sc.nextLine().trim();\n        String[] p = line.substring(1, line.length() - 1).split(\",\");\n        int n = Integer.parseInt(p[0].trim());\n        int k = Integer.parseInt(p[1].trim());\n        int row = Integer.parseInt(p[2].trim());\n        int column = Integer.parseInt(p[3].trim());\n        System.out.println(new Solution().knightProbability(n, k, row, column));\n    }\n}\n",
+    "Python3": "import sys, json\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def knightProbability(self, n: int, k: int, row: int, column: int) -> float:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    res = Solution().knightProbability(args[0], args[1], args[2], args[3])\n    print(json.dumps(res))\n",
+    "JavaScript": "\"use strict\";\n\nconst readline = require(\"readline\");\n\nfunction knightProbability(n, k, row, column) {\n    return 0;\n}\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on(\"line\", line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(knightProbability(args[0], args[1], args[2], args[3])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "25–45 min",
+  "learningObjectives": [
+    "Model probabilistic transitions with dynamic programming.",
+    "Derive and implement a state recurrence over move count and board position.",
+    "Use rolling DP layers to reduce memory.",
+    "Handle boundary transitions as zero-probability outcomes."
+  ]
 }

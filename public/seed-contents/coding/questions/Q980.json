@@ -1,31 +1,17 @@
 {
-  "questionId": "Q980",
-  "title": "Unique Paths III Problem",
   "slug": "unique-paths-iii",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "backtracking",
-      "bit-manipulation",
-      "matrix"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "backtracking",
-      "bit-manipulation",
-      "matrix"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Count how many squares are walkable, including the start and end. The final path must visit exactly that many squares.",
+    "Think of each visited walkable square as one bit. Then a search state only needs the current position and the visited bitmask.",
+    "When you reach the end square, count the path only if the visited mask contains every walkable square.",
+    "Cache states with the same current position and visited mask so repeated subproblems are solved once."
+  ],
+  "title": "Unique Paths III Problem",
   "content": {
-    "problemStatement": "You receive an `m x n` integer array `grid` where `grid[i][j]` could be:\n\n* `1` representing the starting square. There is exactly one starting square.\n* `2` representing the ending square. There is exactly one ending square.\n* `0` representing empty squares we can walk over.\n* `-1` representing obstacles that we cannot walk over.\n\nOutput *the number of 4-directional walks from the starting square to the ending square, that walk over every non-obstacle square exactly once*.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/08/02/lc-unique1.jpg)\n\n```\nInput: grid = [[1,0,0,0],[0,0,0,0],[0,0,2,-1]]\nOutput: 2\nExplanation: We have the following two paths: \n1. (0,0),(0,1),(0,2),(0,3),(1,3),(1,2),(1,1),(1,0),(2,0),(2,1),(2,2)\n2. (0,0),(1,0),(2,0),(2,1),(1,1),(0,1),(0,2),(0,3),(1,3),(1,2),(2,2)\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/08/02/lc-unique2.jpg)\n\n```\nInput: grid = [[1,0,0,0],[0,0,0,0],[0,0,0,2]]\nOutput: 4\nExplanation: We have the following four paths: \n1. (0,0),(0,1),(0,2),(0,3),(1,3),(1,2),(1,1),(1,0),(2,0),(2,1),(2,2),(2,3)\n2. (0,0),(0,1),(1,1),(1,0),(2,0),(2,1),(2,2),(1,2),(0,2),(0,3),(1,3),(2,3)\n3. (0,0),(1,0),(2,0),(2,1),(2,2),(1,2),(1,1),(0,1),(0,2),(0,3),(1,3),(2,3)\n4. (0,0),(1,0),(2,0),(2,1),(1,1),(0,1),(0,2),(0,3),(1,3),(1,2),(2,2),(2,3)\n```\n\n**Example 3:**\n\n![](https://assets.leetcode.com/uploads/2021/08/02/lc-unique3-.jpg)\n\n```\nInput: grid = [[0,1],[2,0]]\nOutput: 0\nExplanation: There is no path that walks over every empty square exactly once.\nNote that the starting and ending square can be anywhere in the grid.\n```\n\n**Constraints:**\n\n* `m == grid.length`\n* `n == grid[i].length`\n* `1 <= m, n <= 20`\n* `1 <= m * n <= 20`\n* `-1 <= grid[i][j] <= 2`\n* There is exactly one starting cell and one ending cell.",
+    "notes": [
+      "A valid walk must visit the start, every non-obstacle square, and the end exactly once.",
+      "The maximum number of non-obstacle cells is 20, so a visited-cell bitmask fits in a 32-bit integer."
+    ],
     "constraints": [
       "m == grid.length",
       "n == grid[i].length",
@@ -59,267 +45,35 @@
         "explanation": "There is no path that walks over every empty square exactly once.\nNote that the starting and ending square can be anywhere in the grid."
       }
     ],
-    "notes": []
+    "problemStatement": "You receive an `m x n` integer array `grid` where `grid[i][j]` could be:\n\n* `1` representing the starting square. There is exactly one starting square.\n* `2` representing the ending square. There is exactly one ending square.\n* `0` representing empty squares we can walk over.\n* `-1` representing obstacles that we cannot walk over.\n\nOutput *the number of 4-directional walks from the starting square to the ending square, that walk over every non-obstacle square exactly once*.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/08/02/lc-unique1.jpg)\n\n```\nInput: grid = [[1,0,0,0],[0,0,0,0],[0,0,2,-1]]\nOutput: 2\nExplanation: We have the following two paths: \n1. (0,0),(0,1),(0,2),(0,3),(1,3),(1,2),(1,1),(1,0),(2,0),(2,1),(2,2)\n2. (0,0),(1,0),(2,0),(2,1),(1,1),(0,1),(0,2),(0,3),(1,3),(1,2),(2,2)\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/08/02/lc-unique2.jpg)\n\n```\nInput: grid = [[1,0,0,0],[0,0,0,0],[0,0,0,2]]\nOutput: 4\nExplanation: We have the following four paths: \n1. (0,0),(0,1),(0,2),(0,3),(1,3),(1,2),(1,1),(1,0),(2,0),(2,1),(2,2),(2,3)\n2. (0,0),(0,1),(1,1),(1,0),(2,0),(2,1),(2,2),(1,2),(0,2),(0,3),(1,3),(2,3)\n3. (0,0),(1,0),(2,0),(2,1),(2,2),(1,2),(1,1),(0,1),(0,2),(0,3),(1,3),(2,3)\n4. (0,0),(1,0),(2,0),(2,1),(1,1),(0,1),(0,2),(0,3),(1,3),(1,2),(2,2),(2,3)\n```\n\n**Example 3:**\n\n![](https://assets.leetcode.com/uploads/2021/08/02/lc-unique3-.jpg)\n\n```\nInput: grid = [[0,1],[2,0]]\nOutput: 0\nExplanation: There is no path that walks over every empty square exactly once.\nNote that the starting and ending square can be anywhere in the grid.\n```\n\n**Constraints:**\n\n* `m == grid.length`\n* `n == grid[i].length`\n* `1 <= m, n <= 20`\n* `1 <= m * n <= 20`\n* `-1 <= grid[i][j] <= 2`\n* There is exactly one starting cell and one ending cell."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[[1, 2]]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Single element",
-        "input": "[[[1]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Two elements",
-        "input": "[[[1, 0], [0, 2]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "All elements same",
-        "input": "[[[1, 1, 1], [1, 1, 1], [1, 1, 2]]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Strictly increasing",
-        "input": "[[[1, 0, 0], [0, 0, 0], [0, 0, 2]]]",
-        "expectedOutput": "2",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Strictly decreasing",
-        "input": "[[[2, 0, 0], [0, 0, 0], [0, 0, 1]]]",
-        "expectedOutput": "2",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Random order",
-        "input": "[[[0, 1, 0], [0, 0, 0], [0, 0, 2]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Large negative values",
-        "input": "[[[-1, -1, -1], [-1, 1, -1], [-1, -1, 2]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "The input is guaranteed to contain exactly one start cell (1) and one end cell (2)."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -341,57 +95,333 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "backtracking",
+      "bit-manipulation",
+      "matrix"
     ],
-    "notes": []
+    "category": "Backtracking",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "backtracking",
+      "bit-manipulation",
+      "matrix"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses depth-first search with memoization to explore all possible paths from the starting square to the ending square, ensuring that every non-obstacle square is visited exactly once.",
-    "timeComplexity": "O(m * n * 2^(m * n))",
-    "spaceComplexity": "O(m * n * 2^(m * n))",
-    "code": {
-      "Python3": "# Time:  O(m * n * 2^(m * n))\n# Space: O(m * n * 2^(m * n))\n\nclass Solution(object):\n    def uniquePathsIII(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]\n        \n        def index(grid, r, c):\n            return 1 << (r*len(grid[0])+c)\n\n        def dp(grid, src, dst, todo, lookup):\n            if src == dst:\n                return int(todo == 0)\n            key = (src, todo)\n            if key in lookup:\n                return lookup[key]\n\n            result = 0\n            for d in directions:\n                r, c = src[0]+d[0], src[1]+d[1]\n                if 0 <= r < len(grid) and 0 <= c < len(grid[0]) and \\\n                   grid[r][c] % 2 == 0 and \\\n                   todo & index(grid, r, c):\n                    result += dp(grid, (r, c), dst, todo ^ index(grid, r, c), lookup)\n\n            lookup[key] = result\n            return lookup[key]\n\n        todo = 0\n        src, dst = None, None\n        for r, row in enumerate(grid):\n            for c, val in enumerate(row):\n                if val % 2 == 0:\n                    todo |= index(grid, r, c)\n                if val == 1:\n                    src = (r, c)\n                elif val == 2:\n                    dst = (r, c)\n        return dp(grid, src, dst, todo, {})"
-    },
-    "notes": [],
+    "notes": [
+      "K is the number of non-obstacle cells, with K <= 20.",
+      "Obstacle cells never enter the visited mask, and each memoized state is reused whenever the same cell and visited set recur."
+    ],
+    "approach": "Use depth-first search with a visited-cell bitmask and memoization. Each state is identified by the current cell and the set of non-obstacle cells already visited. When the search reaches the ending cell, it contributes one path only if every non-obstacle cell has been visited.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(K^2 * 2^K) worst-case time and O(K^2 * 2^K) worst-case memory when the visited-set representation costs O(K) per stored state.",
+        "description": "Memoize by current cell plus an immutable visited set. This removes repeated subproblems while avoiding a full dense memo table, but storing and hashing a K-element set/tuple adds overhead per state."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(K * 2^K) time and O(K * 2^K) space, where K is the number of non-obstacle cells.",
+        "description": "Map each non-obstacle cell to one bit. The memoized state is (current cell, visitedMask). From a state, move only to an unvisited walkable neighbor. Reaching the end is valid exactly when visitedMask equals the full non-obstacle mask. Since K <= 20, the bitmask is compact and the number of distinct states is O(K * 2^K)."
+      },
+      "bruteForce": {
+        "complexity": "Worst-case exponential time, O(4^K) as a simple upper bound, with O(K) recursion depth and visited-state storage.",
+        "description": "Backtrack from the start, marking each visited square and trying all four directions. When the end is reached, count the path only if every non-obstacle square has been used. Without memoization, the same partial state can be recomputed many times."
       }
+    },
+    "timeComplexity": "O(K * 2^K)",
+    "spaceComplexity": "O(K * 2^K)",
+    "code": {
+      "Python3": "import sys\nimport json\nfrom functools import lru_cache\nfrom typing import List\n\nclass Solution:\n    def uniquePathsIII(self, grid: List[List[int]]) -> int:\n        rows, cols = len(grid), len(grid[0])\n        start = end = -1\n        full_mask = 0\n        for r in range(rows):\n            for c in range(cols):\n                value = grid[r][c]\n                pos = r * cols + c\n                if value != -1:\n                    full_mask |= 1 << pos\n                if value == 1:\n                    start = pos\n                elif value == 2:\n                    end = pos\n\n        @lru_cache(maxsize=None)\n        def dfs(pos: int, mask: int) -> int:\n            if pos == end:\n                return 1 if mask == full_mask else 0\n            r, c = divmod(pos, cols)\n            total = 0\n            for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n                nr, nc = r + dr, c + dc\n                if 0 <= nr < rows and 0 <= nc < cols:\n                    nxt = nr * cols + nc\n                    bit = 1 << nxt\n                    if (full_mask & bit) and not (mask & bit):\n                        total += dfs(nxt, mask | bit)\n            return total\n\n        return dfs(start, 1 << start)"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint uniquePathsIII(int** grid, int gridSize, int* gridColSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int gridSize = 0;\n        int* gridColSize = NULL;\n        int** grid = parse_int_2d(&tok, &gridSize, &gridColSize);\n        int result = uniquePathsIII(grid, gridSize, gridColSize);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def uniquePathsIII(self, grid: List[List[int]]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _grid = _args[0]\n    _result = Solution().uniquePathsIII(_grid)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[][]} grid\n * @return {number}\n */\nvar uniquePathsIII = function(grid) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = uniquePathsIII(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int uniquePathsIII(int[][] grid) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[][] grid = toInt2D(nextToken());\n        int result = new Solution().uniquePathsIII(grid);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int uniquePathsIII(vector<vector<int>>& grid) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto grid = readInt2D(tok);\n    auto result = Solution().uniquePathsIII(grid);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "grid",
+        "type": "array<array<int>>"
+      }
+    ],
+    "methodName": "uniquePathsIII"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "What changes if duplicate or multiple start/end markers are allowed?",
+    "Can the visited-state representation be reduced further without changing the worst-case search?",
+    "How would you adapt the approach if the grid contained more than 20 walkable cells?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[[1,2]]]",
+        "label": "Minimum-size horizontal grid",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[[1],[0],[2]]]",
+        "label": "Minimum-width vertical corridor",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[[1,0,0,0,2]]]",
+        "label": "One-dimensional forced walk",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[[1,2],[0,0]]]",
+        "label": "Adjacent endpoints with required detour",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[[1,0],[0,2]]]",
+        "label": "Two-by-two parity trap",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[[1,0],[2,0]]]",
+        "label": "Two-by-two side endpoints",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[[1,0,0],[0,0,2]]]",
+        "label": "Two-by-three open corner-to-corner",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[[1,0,2],[0,0,0]]]",
+        "label": "Endpoint reached before all cells are visited",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[[1,0,-1],[0,2,0]]]",
+        "label": "Obstacle removes the only complete route",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[[1,0,0],[0,0,0],[0,0,2]]]",
+        "label": "Three-by-three open grid with multiple Hamiltonian paths",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[[1,0,0],[0,0,2],[0,0,0]]]",
+        "label": "Endpoint placement creates an impossible parity pattern",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[[1,0,0],[0,-1,0],[0,0,2]]]",
+        "label": "Central obstacle blocks full coverage",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[[1,-1,-1],[0,0,0],[0,0,2]]]",
+        "label": "Forced corridor created by top obstacles",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[[0,0,1],[0,0,2],[0,0,-1]]]",
+        "label": "Edge-adjacent endpoints with a blocked corner",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[[1,0,0,2],[0,0,0,0],[0,0,0,0]]]",
+        "label": "Three-by-four open grid with four valid paths",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[[1,0,0,0],[0,0,0,0],[0,0,0,2]]]",
+        "label": "Three-by-four corner-to-corner open grid",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[[1,0,0,-1],[0,-1,0,0],[0,0,0,2]]]",
+        "label": "Obstacle cluster creates dead-end branches",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[[1,-1,0,0],[0,-1,0,0],[0,0,0,2]]]",
+        "label": "Two obstacles leave a single full-coverage route",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[[1,0,0,0,2],[0,0,0,0,0],[0,0,0,0,0]]]",
+        "label": "Three-by-five open grid with eight valid paths",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[[1,0,0,0,0],[0,0,0,0,0],[0,0,2,0,0]]]",
+        "label": "Three-by-five non-corner endpoint arrangement",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[[1,0,0,0,0,2],[0,0,0,0,0,0],[0,0,0,0,0,0]]]",
+        "label": "Three-by-six open grid near the cell-count limit",
+        "weight": 3,
+        "expectedOutput": "16"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[[1,0,0,2],[0,0,0,0],[0,0,0,0],[0,0,0,0]]]",
+        "label": "Four-by-four open grid with multiple routes",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[[1,-1,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,2]]]",
+        "label": "Four-by-four grid with a single obstacle",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2]]]",
+        "label": "Maximum-cell one-row corridor",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[[1,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,2]]]",
+        "label": "Maximum 20-cell grid, corner-to-corner",
+        "weight": 3,
+        "expectedOutput": "20"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0],[0,0,0,1,0],[0,0,0,0,0],[0,0,0,0,2]]]",
+        "label": "Maximum 20-cell grid with an interior start",
+        "weight": 3,
+        "expectedOutput": "23"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[[1,-1,-1,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,2]]]",
+        "label": "Maximum 20-cell grid with two blocking obstacles",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[[1,-1,0,0,0],[0,-1,0,0,0],[0,0,0,0,0],[0,0,0,0,2]]]",
+        "label": "Maximum 20-cell grid with a narrow obstacle pattern",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[[1,0,2],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]]",
+        "label": "Five-by-three open grid with horizontal endpoints",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[1,0,0,2],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]]",
+        "label": "Twenty-cell five-by-four grid with horizontal endpoints",
+        "weight": 3,
+        "expectedOutput": "23"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q980",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <ctype.h>\n\nstatic int R, C, K;\nstatic int *cellId;\nstatic int endId;\nstatic int fullMask;\nstatic int *memo;\n\nstatic int dfs(int **grid, int pos, int mask) {\n    if (pos == endId) return mask == fullMask ? 1 : 0;\n    size_t stride = (size_t)1u << K;\n    size_t index = (size_t)pos * stride + (size_t)mask;\n    if (memo[index] != -1) return memo[index];\n\n    int r = -1, c = -1;\n    for (int rr = 0; rr < R; ++rr) {\n        for (int cc = 0; cc < C; ++cc) {\n            if (cellId[rr * C + cc] == pos) { r = rr; c = cc; break; }\n        }\n        if (r != -1) break;\n    }\n\n    int total = 0;\n    const int dr[4] = {1, -1, 0, 0};\n    const int dc[4] = {0, 0, 1, -1};\n    for (int d = 0; d < 4; ++d) {\n        int nr = r + dr[d], nc = c + dc[d];\n        if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;\n        int nextId = cellId[nr * C + nc];\n        if (nextId < 0) continue;\n        int bit = 1 << nextId;\n        if ((mask & bit) == 0) total += dfs(grid, nextId, mask | bit);\n    }\n    memo[index] = total;\n    return total;\n}\n\nint uniquePathsIII(int **grid, int gridSize, int *gridColSize) {\n    R = gridSize;\n    C = gridColSize[0];\n    cellId = (int *)malloc((size_t)R * C * sizeof(int));\n    if (!cellId) return 0;\n    for (int i = 0; i < R * C; ++i) cellId[i] = -1;\n\n    int startId = -1;\n    endId = -1;\n    K = 0;\n    for (int r = 0; r < R; ++r) {\n        for (int c = 0; c < C; ++c) {\n            if (grid[r][c] != -1) {\n                cellId[r * C + c] = K;\n                if (grid[r][c] == 1) startId = K;\n                else if (grid[r][c] == 2) endId = K;\n                ++K;\n            }\n        }\n    }\n\n    fullMask = (1 << K) - 1;\n    size_t stride = (size_t)1u << K;\n    memo = (int *)malloc((size_t)K * stride * sizeof(int));\n    if (!memo) { free(cellId); return 0; }\n    for (size_t i = 0; i < (size_t)K * stride; ++i) memo[i] = -1;\n\n    int result = dfs(grid, startId, 1 << startId);\n    free(memo);\n    free(cellId);\n    return result;\n}\n\nint main(void) {\n    char input[4096];\n    size_t len = fread(input, 1, sizeof(input) - 1, stdin);\n    input[len] = '\\0';\n\n    int grid[20][20];\n    int *rows[20];\n    int cols[20] = {0};\n    int depth = 0, rowCount = 0, currentCol = 0;\n    for (size_t i = 0; i < len;) {\n        if (input[i] == '[') {\n            ++depth;\n            if (depth == 3) currentCol = 0;\n            ++i;\n        } else if (input[i] == ']') {\n            if (depth == 3) { cols[rowCount] = currentCol; ++rowCount; }\n            --depth;\n            ++i;\n        } else if (depth == 3 && (input[i] == '-' || isdigit((unsigned char)input[i]))) {\n            int sign = 1;\n            if (input[i] == '-') { sign = -1; ++i; }\n            int value = 0;\n            while (i < len && isdigit((unsigned char)input[i])) {\n                value = value * 10 + (input[i] - '0');\n                ++i;\n            }\n            grid[rowCount][currentCol++] = sign * value;\n        } else {\n            ++i;\n        }\n    }\n    for (int r = 0; r < rowCount; ++r) rows[r] = grid[r];\n\n    int result = uniquePathsIII(rows, rowCount, cols);\n    printf(\"%d\\n\", result);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\n    int rows = 0, cols = 0, endPos = -1, fullMask = 0;\n    unordered_map<long long, int> memo;\n\n    int dfs(int pos, int mask) {\n        if (pos == endPos) return mask == fullMask ? 1 : 0;\n        long long key = (static_cast<long long>(mask) << 5) | pos;\n        auto it = memo.find(key);\n        if (it != memo.end()) return it->second;\n\n        int r = pos / cols;\n        int c = pos % cols;\n        int total = 0;\n        static const int dr[4] = {1, -1, 0, 0};\n        static const int dc[4] = {0, 0, 1, -1};\n        for (int k = 0; k < 4; ++k) {\n            int nr = r + dr[k], nc = c + dc[k];\n            if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;\n            int nxt = nr * cols + nc;\n            int bit = 1 << nxt;\n            if ((fullMask & bit) && !(mask & bit)) {\n                total += dfs(nxt, mask | bit);\n            }\n        }\n        memo[key] = total;\n        return total;\n    }\n\npublic:\n    int uniquePathsIII(vector<vector<int>>& grid) {\n        rows = static_cast<int>(grid.size());\n        cols = static_cast<int>(grid[0].size());\n        int start = -1;\n        endPos = -1;\n        fullMask = 0;\n        memo.clear();\n        for (int r = 0; r < rows; ++r) {\n            for (int c = 0; c < cols; ++c) {\n                int value = grid[r][c];\n                int pos = r * cols + c;\n                if (value != -1) fullMask |= (1 << pos);\n                if (value == 1) start = pos;\n                else if (value == 2) endPos = pos;\n            }\n        }\n        return dfs(start, 1 << start);\n    }\n};\n\nstatic vector<vector<int>> parseGrid(const string& s) {\n    vector<vector<int>> grid;\n    vector<int> row;\n    int depth = 0;\n    for (size_t i = 0; i < s.size();) {\n        char ch = s[i];\n        if (ch == '[') {\n            ++depth;\n            if (depth == 3) row.clear();\n            ++i;\n        } else if (ch == ']') {\n            if (depth == 3) grid.push_back(row);\n            --depth;\n            ++i;\n        } else if (depth == 3 && (ch == '-' || isdigit(static_cast<unsigned char>(ch)))) {\n            int sign = 1;\n            if (ch == '-') { sign = -1; ++i; }\n            int value = 0;\n            while (i < s.size() && isdigit(static_cast<unsigned char>(s[i]))) {\n                value = value * 10 + (s[i] - '0');\n                ++i;\n            }\n            row.push_back(sign * value);\n        } else {\n            ++i;\n        }\n    }\n    return grid;\n}\n\nint main() {\n    string line;\n    getline(cin, line);\n    auto grid = parseGrid(line);\n    cout << Solution().uniquePathsIII(grid) << '\\n';\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    private int rows;\n    private int cols;\n    private int end;\n    private int fullMask;\n    private final Map<Long, Integer> memo = new HashMap<>();\n\n    public int uniquePathsIII(int[][] grid) {\n        rows = grid.length;\n        cols = grid[0].length;\n        int start = -1;\n        end = -1;\n        fullMask = 0;\n        memo.clear();\n\n        for (int r = 0; r < rows; r++) {\n            for (int c = 0; c < cols; c++) {\n                int value = grid[r][c];\n                int pos = r * cols + c;\n                if (value != -1) fullMask |= (1 << pos);\n                if (value == 1) start = pos;\n                else if (value == 2) end = pos;\n            }\n        }\n        return dfs(start, 1 << start);\n    }\n\n    private int dfs(int pos, int mask) {\n        if (pos == end) return mask == fullMask ? 1 : 0;\n        long key = (((long) mask) << 5) | pos;\n        Integer cached = memo.get(key);\n        if (cached != null) return cached;\n\n        int r = pos / cols;\n        int c = pos % cols;\n        int total = 0;\n        int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};\n        for (int[] d : dirs) {\n            int nr = r + d[0];\n            int nc = c + d[1];\n            if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;\n            int nxt = nr * cols + nc;\n            int bit = 1 << nxt;\n            if ((fullMask & bit) != 0 && (mask & bit) == 0) {\n                total += dfs(nxt, mask | bit);\n            }\n        }\n        memo.put(key, total);\n        return total;\n    }\n}\n\npublic class Main {\n    private static int[][] parseGrid(String s) {\n        List<int[]> rows = new ArrayList<>();\n        List<Integer> current = null;\n        int depth = 0;\n        int i = 0;\n        while (i < s.length()) {\n            char ch = s.charAt(i);\n            if (ch == '[') {\n                depth++;\n                if (depth == 3) current = new ArrayList<>();\n                i++;\n            } else if (ch == ']') {\n                if (depth == 3 && current != null) {\n                    int[] row = new int[current.size()];\n                    for (int j = 0; j < current.size(); j++) row[j] = current.get(j);\n                    rows.add(row);\n                    current = null;\n                }\n                depth--;\n                i++;\n            } else if (depth == 3 && (ch == '-' || Character.isDigit(ch))) {\n                int sign = 1;\n                if (ch == '-') { sign = -1; i++; }\n                int value = 0;\n                while (i < s.length() && Character.isDigit(s.charAt(i))) {\n                    value = value * 10 + (s.charAt(i) - '0');\n                    i++;\n                }\n                current.add(sign * value);\n            } else {\n                i++;\n            }\n        }\n        return rows.toArray(new int[0][]);\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        int[][] grid = parseGrid(line);\n        System.out.println(new Solution().uniquePathsIII(grid));\n    }\n}\n",
+    "Python3": "import sys\nimport json\nfrom functools import lru_cache\nfrom typing import List\n\nclass Solution:\n    def uniquePathsIII(self, grid: List[List[int]]) -> int:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().uniquePathsIII(args[0])))\n",
+    "JavaScript": "\"use strict\";\nconst readline = require(\"readline\");\n\nfunction uniquePathsIII(grid) {\n    const rows = grid.length;\n    const cols = grid[0].length;\n    let start = -1;\n    let end = -1;\n    let fullMask = 0;\n\n    for (let r = 0; r < rows; r++) {\n        for (let c = 0; c < cols; c++) {\n            const value = grid[r][c];\n            const pos = r * cols + c;\n            if (value !== -1) fullMask |= (1 << pos);\n            if (value === 1) start = pos;\n            else if (value === 2) end = pos;\n        }\n    }\n\n    const memo = new Map();\n    function dfs(pos, mask) {\n        if (pos === end) return mask === fullMask ? 1 : 0;\n        const key = `${pos},${mask}`;\n        if (memo.has(key)) return memo.get(key);\n\n        const r = Math.floor(pos / cols);\n        const c = pos % cols;\n        let total = 0;\n        const dirs = [[1,0],[-1,0],[0,1],[0,-1]];\n        for (const [dr, dc] of dirs) {\n            const nr = r + dr;\n            const nc = c + dc;\n            if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;\n            const nxt = nr * cols + nc;\n            const bit = (1 << nxt);\n            if ((fullMask & bit) !== 0 && (mask & bit) === 0) {\n                total += dfs(nxt, mask | bit);\n            }\n        }\n        memo.set(key, total);\n        return total;\n    }\n\n    return dfs(start, 1 << start);\n}\n\nconst rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });\nrl.once('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(uniquePathsIII(args[0])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–60 minutes",
+  "learningObjectives": [
+    "Model grid traversal as depth-first search with backtracking.",
+    "Use a bitmask to represent a visited subset compactly.",
+    "Recognize and memoize repeated (position, visited-set) states.",
+    "Analyze exponential state spaces under a small maximum number of walkable cells."
+  ]
 }

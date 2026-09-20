@@ -16,14 +16,16 @@
         "type": "reg",
         "input": "[[1,2,3]]",
         "output": "6",
-        "explanation": "The optimal path is 2 -> 1 -> 3 with a path sum of 2 + 1 + 3 = 6."
+        "explanation": "The optimal path is 2 -> 1 -> 3 with a path sum of 2 + 1 + 3 = 6.",
+        "expectedOutput": "6"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[-10,9,20,null,null,15,7]]",
         "output": "42",
-        "explanation": "The optimal path is 15 -> 20 -> 7 with a path sum of 15 + 20 + 7 = 42."
+        "explanation": "The optimal path is 15 -> 20 -> 7 with a path sum of 15 + 20 + 7 = 42.",
+        "expectedOutput": "42"
       }
     ],
     "problemStatement": "A **path** in a binary tree is a sequence of nodes where each pair of adjacent nodes in the sequence has an edge connecting them. A node can only appear in the sequence **no more than once**. Keep in mind that the path does not need to pass through the root.\n\nThe **path sum** of a path is the sum of the node's values in the path.\n\nWith the `root` of a binary tree, output *the largest **path sum** of any **non-empty** path*.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2020/10/13/exx1.jpg)\n\n```\nInput: root = [1,2,3]\nOutput: 6\nExplanation: The optimal path is 2 -> 1 -> 3 with a path sum of 2 + 1 + 3 = 6.\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2020/10/13/exx2.jpg)\n\n```\nInput: root = [-10,9,20,null,null,15,7]\nOutput: 42\nExplanation: The optimal path is 15 -> 20 -> 7 with a path sum of 15 + 20 + 7 = 42.\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[1, 3 * 10^4]`.\n* `-1000 <= Node.val <= 1000`"
@@ -98,7 +100,7 @@
   },
   "solution": {
     "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(h), h is height of binary tree\n\nclass TreeNode(object):\n    def __init__(self, x):\n        self.val = x\n        self.left = None\n        self.right = None\n\n\nclass Solution(object):\n    # @param root, a tree node\n    # @return an integer\n    def maxPathSum(self, root):\n        def iter_dfs(node):\n            result = float(\"-inf\")\n            max_sum = [0]\n            stk = [(1, [node, max_sum])]\n            while stk:\n                step, params = stk.pop()\n                if step == 1:\n                    node, ret = params\n                    if not node:\n                        continue\n                    ret1, ret2 = [0], [0]\n                    stk.append((2, [node, ret1, ret2, ret]))\n                    stk.append((1, [node.right, ret2]))\n                    stk.append((1, [node.left, ret1]))\n                elif step == 2:\n                    node, ret1, ret2, ret = params\n                    result = max(result, node.val+max(ret1[0], 0)+max(ret2[0], 0))\n                    ret[0] = node.val+max(ret1[0], ret2[0], 0)\n            return result\n        \n        return iter_dfs(root)",
+      "Python3": "class Solution(object):\n\n    def maxPathSum(self, root):\n\n        def iter_dfs(node):\n            result = float('-inf')\n            max_sum = [0]\n            stk = [(1, [node, max_sum])]\n            while stk:\n                step, params = stk.pop()\n                if step == 1:\n                    node, ret = params\n                    if not node:\n                        continue\n                    ret1, ret2 = ([0], [0])\n                    stk.append((2, [node, ret1, ret2, ret]))\n                    stk.append((1, [node.right, ret2]))\n                    stk.append((1, [node.left, ret1]))\n                elif step == 2:\n                    node, ret1, ret2, ret = params\n                    result = max(result, node.val + max(ret1[0], 0) + max(ret2[0], 0))\n                    ret[0] = node.val + max(ret1[0], ret2[0], 0)\n            return result\n        return iter_dfs(root)",
       "C": "",
       "C++": "class Solution {\npublic:\n    int maxPathSum(TreeNode* root) {\n        \n        return 0;\n    }\n};",
       "Java": "",

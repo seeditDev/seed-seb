@@ -359,23 +359,48 @@ export async function getGlobalTests(): Promise<TestDoc[]> {
  * Fetch tests directly targeted to a specific candidate email
  * via targeting.allowedEmails array-contains query.
  */
-export async function getCandidateDirectTests(email: string): Promise<TestDoc[]> {
+export async function getCandidateDirectTests(email: string, rollNumber?: string): Promise<TestDoc[]> {
   try {
-    if (!email) return [];
     const db = getDb();
-    const cleanEmail = email.trim().toLowerCase();
-    const q = query(
-      collectionGroup(db, "tests"),
-      where("targeting.allowedEmails", "array-contains", cleanEmail)
-    );
-    const snap = await getDocs(q);
-    if (snap.empty) return [];
+    const cleanEmail = email ? String(email).trim().toLowerCase() : "";
+    const cleanRoll = rollNumber ? String(rollNumber).trim().toUpperCase() : "";
+    if (!cleanEmail && !cleanRoll) return [];
+
+    const docSnaps = new Map<string, any>();
+
+    if (cleanEmail) {
+      try {
+        const qEmail = query(
+          collectionGroup(db, "tests"),
+          where("targeting.allowedEmails", "array-contains", cleanEmail)
+        );
+        const snapEmail = await getDocs(qEmail);
+        snapEmail.docs.forEach((d) => docSnaps.set(d.id, d));
+      } catch (eErr) {
+        console.warn("[courses.ts] getCandidateDirectTests email query error:", eErr);
+      }
+    }
+
+    if (cleanRoll) {
+      try {
+        const qRoll = query(
+          collectionGroup(db, "tests"),
+          where("targeting.allowedRollNumbers", "array-contains", cleanRoll)
+        );
+        const snapRoll = await getDocs(qRoll);
+        snapRoll.docs.forEach((d) => docSnaps.set(d.id, d));
+      } catch (rErr) {
+        console.warn("[courses.ts] getCandidateDirectTests roll query error:", rErr);
+      }
+    }
+
+    if (docSnaps.size === 0) return [];
 
     const results: TestDoc[] = [];
     const courseTitles = new Map<string, string>();
     const seriesTitles = new Map<string, string>();
 
-    for (const d of snap.docs) {
+    for (const d of docSnaps.values()) {
       const pathParts = d.ref.path.split("/");
       const courseId = pathParts[1] || "";
       const seriesId = pathParts[3] || "";

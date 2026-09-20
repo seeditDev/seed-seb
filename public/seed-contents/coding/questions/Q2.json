@@ -40,21 +40,24 @@
         "type": "reg",
         "input": "[[2,4,3],[5,6,4]]",
         "output": "[7,0,8]",
-        "explanation": "342 + 465 = 807, represented in reverse order as [7,0,8]."
+        "explanation": "342 + 465 = 807, represented in reverse order as [7,0,8].",
+        "expectedOutput": "[7,0,8]"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[0],[0]]",
         "output": "[0]",
-        "explanation": "Both lists represent 0. Sum is 0."
+        "explanation": "Both lists represent 0. Sum is 0.",
+        "expectedOutput": "[0]"
       },
       {
         "id": "sample_3",
         "type": "reg",
         "input": "[[9,9,9,9,9,9,9],[9,9,9,9]]",
         "output": "[8,9,9,9,0,0,0,1]",
-        "explanation": "9,999,999 + 9,999 = 10,009,998 → reverse digits [8,9,9,9,0,0,0,1]."
+        "explanation": "9,999,999 + 9,999 = 10,009,998 → reverse digits [8,9,9,9,0,0,0,1].",
+        "expectedOutput": "[8,9,9,9,0,0,0,1]"
       }
     ]
   },
@@ -364,7 +367,7 @@
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\n// Define ListNode\ntypedef struct ListNode {\n    int val;\n    struct ListNode* next;\n} ListNode;\n\n// Helper to create a new node\nListNode* newNode(int v) {\n    ListNode* n = (ListNode*)malloc(sizeof(ListNode));\n    n->val = v; n->next = NULL; return n;\n}\n\n// Implement addTwoNumbers: returns head of new list\nListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {\n    ListNode dummy; dummy.next = NULL;\n    ListNode* cur = &dummy;\n    int carry = 0;\n    while (l1 != NULL || l2 != NULL || carry) {\n        int x = l1 ? l1->val : 0;\n        int y = l2 ? l2->val : 0;\n        int sum = x + y + carry;\n        carry = sum / 10;\n        cur->next = newNode(sum % 10);\n        cur = cur->next;\n        if (l1) l1 = l1->next;\n        if (l2) l2 = l2->next;\n    }\n    return dummy.next;\n}",
       "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct ListNode {\n    int val; ListNode* next; ListNode(int x): val(x), next(nullptr) {}\n};\n\nListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {\n    ListNode dummy(0);\n    ListNode* cur = &dummy;\n    int carry = 0;\n    while (l1 || l2 || carry) {\n        int x = l1 ? l1->val : 0;\n        int y = l2 ? l2->val : 0;\n        int sum = x + y + carry;\n        carry = sum / 10;\n        cur->next = new ListNode(sum % 10);\n        cur = cur->next;\n        if (l1) l1 = l1->next;\n        if (l2) l2 = l2->next;\n    }\n    return dummy.next;\n}",
       "Java": "class Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        ListNode dummy = new ListNode(0);\n        ListNode cur = dummy;\n        int carry = 0;\n        while (l1 != null || l2 != null || carry != 0) {\n            int x = (l1 != null) ? l1.val : 0;\n            int y = (l2 != null) ? l2.val : 0;\n            int sum = x + y + carry;\n            carry = sum / 10;\n            cur.next = new ListNode(sum % 10);\n            cur = cur.next;\n            if (l1 != null) l1 = l1.next;\n            if (l2 != null) l2 = l2.next;\n        }\n        return dummy.next;\n    }\n}",
-      "Python3": "import sys, json\n\nclass ListNode:\n    def __init__(self, x=0, next=None):\n        self.val = x\n        self.next = next\n\nclass Solution:\n    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:\n        dummy = ListNode(0)\n        cur = dummy\n        carry = 0\n        p, q = l1, l2\n        while p is not None or q is not None or carry:\n            x = p.val if p else 0\n            y = q.val if q else 0\n            total = x + y + carry\n            carry = total // 10\n            cur.next = ListNode(total % 10)\n            cur = cur.next\n            if p: p = p.next\n            if q: q = q.next\n        return dummy.next",
+      "Python3": "import sys, json\n\nclass Solution:\n\n    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:\n        dummy = ListNode(0)\n        cur = dummy\n        carry = 0\n        p, q = (l1, l2)\n        while p is not None or q is not None or carry:\n            x = p.val if p else 0\n            y = q.val if q else 0\n            total = x + y + carry\n            carry = total // 10\n            cur.next = ListNode(total % 10)\n            cur = cur.next\n            if p:\n                p = p.next\n            if q:\n                q = q.next\n        return dummy.next",
       "JavaScript": "'use strict';"
     },
     "notes": [

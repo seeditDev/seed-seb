@@ -1,27 +1,17 @@
 {
-  "questionId": "Q1531",
-  "title": "String Compression II Problem",
   "slug": "string-compression-ii",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Strings",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "string",
-      "dynamic-programming"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "string",
-      "dynamic-programming"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "The compressed length of a run changes only when its retained count moves from 1 to 2, 9 to 10, or 99 to 100.",
+    "At position i, consider keeping s[i] as the character of the next run. As you extend the run, every different character must be deleted.",
+    "Also consider deleting s[i] itself; otherwise the DP could miss optimal solutions where the first character of a segment is removed.",
+    "Memoize by the current index and the remaining deletion budget."
+  ],
+  "title": "String Compression II Problem",
   "content": {
-    "problemStatement": "[Run-length encoding](http://en.wikipedia.org/wiki/Run-length_encoding) is a string compression method that works by replacing consecutive identical characters (repeated 2 or more times) with the concatenation of the character and the number marking the count of the characters (length of the run). As an example, to compress the string `\"aabccc\"` we replace `\"aa\"` by `\"a2\"` and replace `\"ccc\"` by `\"c3\"`. Thus the compressed string becomes `\"a2bc3\"`.\n\nNotice that in this problem, we are not adding `'1'` after single characters.\n\nWith a string `s` and an integer `k`. You need to delete **no more than** `k` characters from `s` such that the run-length encoded version of `s` has smallest length.\n\nIdentify the *smallest length of the run-length encoded version of* `s` *after deleting no more than* `k` *characters*.\n\n**Example 1:**\n\n```\nInput: s = \"aaabcccd\", k = 2\nOutput: 4\nExplanation: Compressing s without deleting anything will give us \"a3bc3d\" of length 6. Deleting any of the characters 'a' or 'c' would at most decrease the length of the compressed string to 5, for instance delete 2 'a' then we will have s = \"abcccd\" which compressed is abc3d. Therefore, the optimal way is to delete 'b' and 'd', then the compressed version of s will be \"a3c3\" of length 4.\n```\n\n**Example 2:**\n\n```\nInput: s = \"aabbaa\", k = 2\nOutput: 2\nExplanation: If we delete both 'b' characters, the resulting compressed string would be \"a4\" of length 2.\n```\n\n**Example 3:**\n\n```\nInput: s = \"aaaaaaaaaaa\", k = 0\nOutput: 3\nExplanation: Since k is zero, we cannot delete anything. The compressed string is \"a11\" of length 3.\n```\n\n**Constraints:**\n\n* `1 <= s.length <= 100`\n* `0 <= k <= s.length`\n* `s` includes only lowercase English letters.",
+    "notes": [
+      "A run of length 1 contributes 1 character, length 2 through 9 contributes 2 characters, length 10 through 99 contributes 3 characters, and length 100 contributes 4 characters.",
+      "The deletion budget is an upper bound: using fewer than k deletions is allowed when it is optimal."
+    ],
     "constraints": [
       "1 <= s.length <= 100",
       "0 <= k <= s.length",
@@ -52,267 +42,36 @@
         "explanation": "Since k is zero, we cannot delete anything. The compressed string is \"a11\" of length 3."
       }
     ],
-    "notes": []
+    "problemStatement": "[Run-length encoding](http://en.wikipedia.org/wiki/Run-length_encoding) is a string compression method that works by replacing consecutive identical characters (repeated 2 or more times) with the concatenation of the character and the number marking the count of the characters (length of the run). As an example, to compress the string `\"aabccc\"` we replace `\"aa\"` by `\"a2\"` and replace `\"ccc\"` by `\"c3\"`. Thus the compressed string becomes `\"a2bc3\"`.\n\nNotice that in this problem, we are not adding `'1'` after single characters.\n\nWith a string `s` and an integer `k`. You need to delete **no more than** `k` characters from `s` such that the run-length encoded version of `s` has smallest length.\n\nIdentify the *smallest length of the run-length encoded version of* `s` *after deleting no more than* `k` *characters*.\n\n**Example 1:**\n\n```\nInput: s = \"aaabcccd\", k = 2\nOutput: 4\nExplanation: Compressing s without deleting anything will give us \"a3bc3d\" of length 6. Deleting any of the characters 'a' or 'c' would at most decrease the length of the compressed string to 5, for instance delete 2 'a' then we will have s = \"abcccd\" which compressed is abc3d. Therefore, the optimal way is to delete 'b' and 'd', then the compressed version of s will be \"a3c3\" of length 4.\n```\n\n**Example 2:**\n\n```\nInput: s = \"aabbaa\", k = 2\nOutput: 2\nExplanation: If we delete both 'b' characters, the resulting compressed string would be \"a4\" of length 2.\n```\n\n**Example 3:**\n\n```\nInput: s = \"aaaaaaaaaaa\", k = 0\nOutput: 3\nExplanation: Since k is zero, we cannot delete anything. The compressed string is \"a11\" of length 3.\n```\n\n**Constraints:**\n\n* `1 <= s.length <= 100`\n* `0 <= k <= s.length`\n* `s` includes only lowercase English letters."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Length 1",
-        "input": "[\"a\", 0]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Length 2",
-        "input": "[\"ab\", 0]",
-        "expectedOutput": "2",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Maximum length",
-        "input": "[\"abcdefghijklmnopqrstuvwxyz\", 0]",
-        "expectedOutput": "26",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Same characters",
-        "input": "[\"aaaaaaaaaa\", 0]",
-        "expectedOutput": "3",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Unique characters",
-        "input": "[\"abcdefghij\", 0]",
-        "expectedOutput": "10",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Palindrome",
-        "input": "[\"madam\", 0]",
-        "expectedOutput": "5",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Repeated substring",
-        "input": "[\"abcabcabc\", 3]",
-        "expectedOutput": "6",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Alternating characters",
-        "input": "[\"abababab\", 2]",
-        "expectedOutput": "5",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Prefix match",
-        "input": "[\"aaaaaa\", 0]",
-        "expectedOutput": "2",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "The output is a single integer: the minimum possible encoded length.",
+      "The solution must handle n <= 100 within the stated time and memory limits."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 3000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -334,57 +93,333 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "string",
+      "dynamic-programming"
     ],
-    "notes": []
+    "category": "Strings",
+    "isPremium": false,
+    "topicTags": [
+      "string",
+      "dynamic-programming"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses dynamic programming to find the minimum length of the run-length encoded version of the string after deleting at most k characters.",
+    "notes": [
+      "The run-length cost changes at counts 1, 2, 10, and 100, so the DP must model those thresholds exactly.",
+      "Because k is an upper bound, the transition that deletes s[i] and the base case n - i <= remaining are both necessary."
+    ],
+    "approach": "Use dynamic programming on the start position and the remaining deletion budget. For a state (i, remaining), either delete s[i], or keep a run beginning with s[i]. Extend that run to position j, keeping every occurrence of s[i] and deleting every different character inside the span. Then add the optimal cost for the suffix after j. This directly models deletions that merge separated equal characters into one run.",
+    "editorial": {
+      "better": {
+        "complexity": "O(n^2 * k) time and O(n^2 * k) space in the worst case when run length is capped by n.",
+        "description": "Use memoized DP with state (index, previous character, current run length, deletions remaining). At each character, either delete it or keep it and possibly increase the encoded length when the run count crosses 1→2, 9→10, or 99→100. This avoids enumerating all deletion subsets but uses a larger state space."
+      },
+      "optimal": {
+        "complexity": "O(n^2 * k) time and O(n * k) space.",
+        "description": "Use suffix DP f(i,k). If s[i] is deleted, move to f(i+1,k-1). Otherwise, form the next compressed run from s[i]: extend the segment to j, count how many copies of s[i] are retained, count all other characters as deletions, and add the encoded cost of that run to f(j+1,k-deletions). The memoized states are O(nk), and each state scans at most n positions."
+      },
+      "bruteForce": {
+        "complexity": "O(2^n * n)",
+        "description": "Enumerate every subset of positions to delete with at most k deletions, build the remaining string, and compute its run-length encoded length. This is straightforward but exponential in n."
+      }
+    },
     "timeComplexity": "O(n^2 * k)",
     "spaceComplexity": "O(n * k)",
     "code": {
-      "Python3": "# Time:  O(n^2 * k)\n# Space: O(n * k)\n\nclass Solution(object):\n    def getLengthOfOptimalCompression(self, s, k):\n        \"\"\"\n        :type s: str\n        :type k: int\n        :rtype: int\n        \"\"\"\n        def length(cnt):\n            l = 2 if cnt >= 2 else 1\n            while cnt >= 10:\n                l += 1\n                cnt //= 10\n            return l\n\n        dp = [[len(s)]*(k+1) for _ in range(len(s)+1)]\n        dp[0][0] = 0\n        for i in range(1, len(s)+1):\n            for j in range(k+1):\n                if i-1 >= 0 and j-1 >= 0:\n                    dp[i][j] = min(dp[i][j], dp[i-1][j-1])\n                keep = delete = 0\n                for m in range(i, len(s)+1):\n                    if s[i-1] == s[m-1]:\n                        keep += 1\n                    else:\n                        delete += 1\n                    if j+delete <= k:\n                        dp[m][j+delete] = min(dp[m][j+delete], dp[i-1][j]+length(keep))\n        return dp[len(s)][k]"
-    },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "Python3": "import sys\nimport json\nfrom functools import lru_cache\n\nclass Solution:\n    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:\n        n = len(s)\n\n        def run_cost(count: int) -> int:\n            if count == 1:\n                return 1\n            if count < 10:\n                return 2\n            if count < 100:\n                return 3\n            return 4\n\n        @lru_cache(maxsize=None)\n        def dp(i: int, remaining: int) -> int:\n            if i == n or n - i <= remaining:\n                return 0\n\n            best = dp(i + 1, remaining - 1) if remaining > 0 else n + 5\n            same = 0\n            deleted = 0\n\n            for j in range(i, n):\n                if s[j] == s[i]:\n                    same += 1\n                else:\n                    deleted += 1\n\n                if deleted > remaining:\n                    break\n\n                best = min(best, run_cost(same) + dp(j + 1, remaining - deleted))\n\n            return best\n\n        return dp(0, k)"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint getLengthOfOptimalCompression(char* s, int k) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        char* s = parse_string(&tok);\n        int k = parse_int(&tok);\n        int result = getLengthOfOptimalCompression(s, k);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _s = _args[0]\n    _k = _args[1]\n    _result = Solution().getLengthOfOptimalCompression(_s, _k)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string} s\n * @param {number} k\n * @return {number}\n */\nvar getLengthOfOptimalCompression = function(s, k) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = getLengthOfOptimalCompression(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int getLengthOfOptimalCompression(String s, int k) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        String s = nextToken().replaceAll(\"^\\\"|\\\"$\", \"\");\n        int k = Integer.parseInt(nextToken());\n        int result = new Solution().getLengthOfOptimalCompression(s, k);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int getLengthOfOptimalCompression(string s, int k) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    string s = readStr(tok);\n    int k = readInt(tok);\n    auto result = Solution().getLengthOfOptimalCompression(s, k);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      },
+      {
+        "name": "k",
+        "type": "integer"
+      }
+    ],
+    "methodName": "getLengthOfOptimalCompression"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How would the solution change if k had to be exactly the number of deletions rather than an upper bound?",
+    "How would you reduce the state further if the maximum string length were much larger?",
+    "Can the run-cost function be generalized if counts used more than two decimal digits?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[\"a\",0]",
+        "label": "Minimum-length input with no deletion",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[\"a\",1]",
+        "label": "Delete the only character",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[\"ab\",0]",
+        "label": "Two distinct single-character runs",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[\"aa\",0]",
+        "label": "Two-character run uses a count",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[\"aa\",1]",
+        "label": "Deleting inside a short run",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[\"aaaaaaaaa\",0]",
+        "label": "Count threshold at nine",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaa\",0]",
+        "label": "Count threshold at ten",
+        "weight": 4,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaab\",1]",
+        "label": "Delete a trailing singleton next to a ten-count run",
+        "weight": 4,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",0]",
+        "label": "Count threshold at ninety-nine",
+        "weight": 4,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",0]",
+        "label": "Maximum-length single run",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab\",1]",
+        "label": "Maximum-length input with one deletable separator",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",1]",
+        "label": "Delete separator to merge two large runs",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[\"aaabcccd\",2]",
+        "label": "Classic deletion-and-merge case",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[\"aabbaa\",2]",
+        "label": "Delete the middle run to merge equal characters",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[\"aba\",1]",
+        "label": "Delete the middle character to merge endpoints",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[\"abca\",1]",
+        "label": "Deletion choice changes the compressed suffix",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[\"abcabcabc\",3]",
+        "label": "Repeated pattern with several deletion choices",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[\"abababab\",2]",
+        "label": "Alternating characters with limited deletions",
+        "weight": 3,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[\"aabbcc\",2]",
+        "label": "Compare shortening runs with deleting a whole run",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[\"aabbbbaaa\",4]",
+        "label": "Merge large equal runs across a middle block",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[\"aaaaaaaaabaaaaaaaaa\",1]",
+        "label": "Merge two nine-character runs across a separator",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaabccccccccc\",1]",
+        "label": "Ten-count boundary competes with deleting a separator",
+        "weight": 3,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[\"aaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",1]",
+        "label": "Deleting the separator reaches ninety-nine a's",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",1]",
+        "label": "Deleting the separator reaches exactly one hundred a's",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[\"abcde\",5]",
+        "label": "Deletion budget can remove the entire string",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[\"abcde\",4]",
+        "label": "Deletion budget leaves exactly one character",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[\"aabbccddeeff\",6]",
+        "label": "Large deletion budget across many runs",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[\"zzzyyyxxxwwwvvvuuu\",8]",
+        "label": "Many runs with competing deletions",
+        "weight": 3,
+        "expectedOutput": "7"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaccccccccccccccccccccaaaaaaaaaaaaaaaaaaaa\",40]",
+        "label": "Large merge opportunities under a broad deletion budget",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzab\",50]",
+        "label": "Maximum-length mixed pattern with broad deletion budget",
+        "weight": 3,
+        "expectedOutput": "29"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q1531",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nstatic int n;\nstatic int budget;\nstatic char *text;\nstatic int memo[101][101];\n\nstatic int run_cost(int count) {\n    if (count == 1) return 1;\n    if (count < 10) return 2;\n    if (count < 100) return 3;\n    return 4;\n}\n\nstatic int dp(int i, int remaining) {\n    if (i == n || n - i <= remaining) return 0;\n    if (memo[i][remaining] != -1) return memo[i][remaining];\n\n    int best = remaining > 0 ? dp(i + 1, remaining - 1) : n + 5;\n    int same = 0;\n    int deleted = 0;\n\n    for (int j = i; j < n; ++j) {\n        if (text[j] == text[i]) ++same;\n        else ++deleted;\n        if (deleted > remaining) break;\n        int candidate = run_cost(same) + dp(j + 1, remaining - deleted);\n        if (candidate < best) best = candidate;\n    }\n\n    memo[i][remaining] = best;\n    return best;\n}\n\nstatic void fill_memo(void) {\n    for (int i = 0; i <= 100; ++i)\n        for (int j = 0; j <= 100; ++j)\n            memo[i][j] = -1;\n}\n\nint getLengthOfOptimalCompression(char *s, int k) {\n    text = s;\n    n = (int)strlen(s);\n    budget = k;\n    fill_memo();\n    return dp(0, budget);\n}\n\nint main(void) {\n    char line[1024];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n\n    char *q1 = strchr(line, '\"');\n    if (!q1) return 0;\n    char *q2 = strchr(q1 + 1, '\"');\n    if (!q2) return 0;\n\n    int len = (int)(q2 - q1 - 1);\n    char *s = (char *)malloc((size_t)len + 1);\n    if (!s) return 0;\n    memcpy(s, q1 + 1, (size_t)len);\n    s[len] = '\\0';\n\n    char *comma = strchr(q2, ',');\n    if (!comma) { free(s); return 0; }\n    int k = atoi(comma + 1);\n\n    printf(\"%d\\n\", getLengthOfOptimalCompression(s, k));\n    free(s);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\n    int n;\n    string s;\n    vector<vector<int>> memo;\n\n    int runCost(int count) {\n        if (count == 1) return 1;\n        if (count < 10) return 2;\n        if (count < 100) return 3;\n        return 4;\n    }\n\n    int dp(int i, int remaining) {\n        if (i == n || n - i <= remaining) return 0;\n        int &ans = memo[i][remaining];\n        if (ans != -1) return ans;\n\n        ans = remaining > 0 ? dp(i + 1, remaining - 1) : n + 5;\n        int same = 0;\n        int deleted = 0;\n\n        for (int j = i; j < n; ++j) {\n            if (s[j] == s[i]) ++same;\n            else ++deleted;\n            if (deleted > remaining) break;\n            ans = min(ans, runCost(same) + dp(j + 1, remaining - deleted));\n        }\n        return ans;\n    }\n\npublic:\n    int getLengthOfOptimalCompression(string s, int k) {\n        this->s = move(s);\n        n = (int)this->s.size();\n        memo.assign(n + 1, vector<int>(k + 1, -1));\n        return dp(0, k);\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    size_t q1 = line.find('\"');\n    size_t q2 = line.find('\"', q1 + 1);\n    string s = line.substr(q1 + 1, q2 - q1 - 1);\n    size_t comma = line.find(',', q2);\n    int k = stoi(line.substr(comma + 1, line.size() - comma - 2));\n    cout << Solution().getLengthOfOptimalCompression(s, k) << '\\n';\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    private int n;\n    private int[][] memo;\n    private String s;\n\n    private int runCost(int count) {\n        if (count == 1) return 1;\n        if (count < 10) return 2;\n        if (count < 100) return 3;\n        return 4;\n    }\n\n    private int dp(int i, int remaining) {\n        if (i == n || n - i <= remaining) return 0;\n        if (memo[i][remaining] != -1) return memo[i][remaining];\n\n        int best = remaining > 0 ? dp(i + 1, remaining - 1) : n + 5;\n        int same = 0;\n        int deleted = 0;\n\n        for (int j = i; j < n; j++) {\n            if (s.charAt(j) == s.charAt(i)) same++;\n            else deleted++;\n            if (deleted > remaining) break;\n            best = Math.min(best, runCost(same) + dp(j + 1, remaining - deleted));\n        }\n\n        memo[i][remaining] = best;\n        return best;\n    }\n\n    public int getLengthOfOptimalCompression(String s, int k) {\n        this.s = s;\n        this.n = s.length();\n        this.memo = new int[n + 1][k + 1];\n        for (int[] row : memo) Arrays.fill(row, -1);\n        return dp(0, k);\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        int firstQuote = line.indexOf('\"');\n        int secondQuote = line.indexOf('\"', firstQuote + 1);\n        String s = line.substring(firstQuote + 1, secondQuote);\n        int comma = line.indexOf(',', secondQuote);\n        int k = Integer.parseInt(line.substring(comma + 1, line.length() - 1).trim());\n        System.out.println(new Solution().getLengthOfOptimalCompression(s, k));\n    }\n}\n",
+    "Python3": "import sys\nimport json\nfrom functools import lru_cache\n\nclass Solution:\n    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().getLengthOfOptimalCompression(args[0], args[1])))\n",
+    "JavaScript": "\"use strict\";\nconst readline = require(\"readline\");\n\nfunction getLengthOfOptimalCompression(s, k) {\n    const n = s.length;\n    const memo = Array.from({ length: n + 1 }, () => Array(k + 1).fill(-1));\n\n    function runCost(count) {\n        if (count === 1) return 1;\n        if (count < 10) return 2;\n        if (count < 100) return 3;\n        return 4;\n    }\n\n    function dp(i, remaining) {\n        if (i === n || n - i <= remaining) return 0;\n        if (memo[i][remaining] !== -1) return memo[i][remaining];\n\n        let best = remaining > 0 ? dp(i + 1, remaining - 1) : n + 5;\n        let same = 0;\n        let deleted = 0;\n\n        for (let j = i; j < n; j++) {\n            if (s[j] === s[i]) same++;\n            else deleted++;\n            if (deleted > remaining) break;\n            best = Math.min(best, runCost(same) + dp(j + 1, remaining - deleted));\n        }\n\n        memo[i][remaining] = best;\n        return best;\n    }\n\n    return dp(0, k);\n}\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on(\"line\", line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(getLengthOfOptimalCompression(args[0], args[1])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–60 minutes",
+  "learningObjectives": [
+    "Model deletion-and-merge problems with dynamic programming.",
+    "Recognize threshold effects in run-length encoding costs.",
+    "Build transitions that simultaneously account for retained characters and deleted characters.",
+    "Use memoization to reduce an exponential deletion-search space."
+  ]
 }

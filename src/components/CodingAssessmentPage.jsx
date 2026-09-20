@@ -189,7 +189,11 @@ const normalizeQuestion = (q, idx = 0) => {
         ...(q.content?.boilerPlates || {}),
         ...(q.content?.boilerplates || {}),
         ...(q.boilerplates || {}),
-        ...(q.boilerPlates || {})
+        ...(q.boilerPlates || {}),
+        ...(q.starterCode || {}),
+        ...(q.starterCodes || {}),
+        ...(q.content?.starterCode || {}),
+        ...(q.content?.starterCodes || {})
     };
     const boilerPlates = {};
 
@@ -244,9 +248,16 @@ const normalizeQuestion = (q, idx = 0) => {
         id,
         title,
         description,
+        statement: description,
+        problemStatement: description,
+        inputFormat: q.content?.inputFormat || q.inputFormat || '',
+        outputFormat: q.content?.outputFormat || q.outputFormat || '',
         constraints,
         boilerPlates,
         boilerplates: boilerPlates,
+        starterCode: boilerPlates,
+        starterCodes: boilerPlates,
+        examples: Array.isArray(q.examples) ? q.examples : (q.content?.examples || []),
         sampleTestCases,
         sampleTests: sampleTestCases,
         hiddenTestCases: hidden,

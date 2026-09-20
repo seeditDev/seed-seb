@@ -22,18 +22,28 @@
     "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
+        "id": "sample_0",
+        "type": "reg",
+        "input": "[\"a\", \"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "Output is false."
+      },
+      {
         "id": "sample_1",
         "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGTA\",[\"AACCGGTA\"]]",
-        "output": "1",
-        "explanation": "The last character changes from T to A, so exactly one valid mutation is needed."
+        "input": "[\"aa\", \"ab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "Output is false."
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AACCGCTA\",\"AAACGGTA\"]]",
-        "output": "2",
-        "explanation": "A shortest valid path is AACCGGTT → AACCGGTA → AAACGGTA, requiring two mutations."
+        "input": "[\"aa\", \"aab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "Output is true."
       }
     ],
     "problemStatement": "With two strings `ransomNote` and `magazine`, output `true` *if* `ransomNote` *can be constructed by using the letters from* `magazine` *and* `false` *otherwise*.\n\nEach letter in `magazine` can only be used once in `ransomNote`.\n\n**Example 1:**\n\n```\nInput: ransomNote = \"a\", magazine = \"b\"\nOutput: false\n```\n\n**Example 2:**\n\n```\nInput: ransomNote = \"aa\", magazine = \"ab\"\nOutput: false\n```\n\n**Example 3:**\n\n```\nInput: ransomNote = \"aa\", magazine = \"aab\"\nOutput: true\n```\n\n**Constraints:**\n\n* `1 <= ransomNote.length, magazine.length <= 10^5`\n* `ransomNote` and `magazine` consist of lowercase English letters."
@@ -107,33 +117,13 @@
     "companyTags": []
   },
   "solution": {
-    "notes": [
-      "The bank has at most 10 genes, so direct neighbor generation is simple and efficient.",
-      "Mark genes visited when enqueuing them to prevent duplicate work."
-    ],
-    "approach": "Use breadth-first search over valid genes. From each current gene, try changing each of the 8 positions to each of the other three bases. Only enqueue mutations that appear in the bank and have not been visited. The first time endGene is reached gives the minimum number of mutations because BFS explores states in increasing distance order.",
-    "editorial": {
-      "better": {
-        "complexity": "O(B^2 * L) time and O(B^2) graph space.",
-        "description": "Treat the start gene and bank genes as graph nodes, connect two nodes when they differ at exactly one position, and run BFS. Building all pairwise edges costs O(B^2 * L), then BFS finds the shortest path."
-      },
-      "optimal": {
-        "complexity": "O(B * L * 4) time and O(B) auxiliary space; with L=8, this is O(B) time and O(B) space.",
-        "description": "Run BFS directly from the current gene. For each dequeued gene, generate all 8 × 3 one-character mutations and keep only mutations present in the bank. Because every edge represents one mutation, BFS returns the minimum number of mutations."
-      },
-      "bruteForce": {
-        "complexity": "Exponential in the number of mutation steps in the worst case.",
-        "description": "Enumerate every possible sequence of valid mutations without a visited set. This guarantees finding a valid route if one exists, but repeated exploration can grow exponentially because mutation sequences may revisit the same genes."
-      }
-    },
-    "timeComplexity": "O(B * L * 4), where B is the bank size and L is the fixed gene length 8; equivalently O(B) for this problem.",
-    "spaceComplexity": "O(B) auxiliary space for the visited set and BFS queue, with constant-size gene strings.",
+    "language": "Python3",
     "code": {
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nstatic char *parse_string(const char **p) {\n    while (**p && (**p == ' ' || **p == ',' || **p == '[' || **p == '\\n' || **p == '\\r' || **p == '\\t')) (*p)++;\n    if (**p != '\"') return NULL;\n    (*p)++;\n    const char *start = *p;\n    while (**p && **p != '\"') (*p)++;\n    size_t n = (size_t)(*p - start);\n    char *out = (char *)malloc(n + 1);\n    memcpy(out, start, n);\n    out[n] = '\\0';\n    if (**p == '\"') (*p)++;\n    return out;\n}\n\nstatic int parse_bank(const char **p, char ***out_bank) {\n    while (**p && (**p == ' ' || **p == ',' || **p == '\\n' || **p == '\\r' || **p == '\\t')) (*p)++;\n    if (**p != '[') return 0;\n    (*p)++;\n    char **bank = (char **)malloc(10 * sizeof(char *));\n    int n = 0;\n    for (;;) {\n        while (**p && (**p == ' ' || **p == ',' || **p == '\\n' || **p == '\\r' || **p == '\\t')) (*p)++;\n        if (**p == ']') { (*p)++; break; }\n        char *g = parse_string(p);\n        if (!g) break;\n        bank[n++] = g;\n    }\n    *out_bank = bank;\n    return n;\n}\n\nstatic int minMutation(char *startGene, char *endGene, char **bank, int bankSize) {\n    if (strcmp(startGene, endGene) == 0) return 0;\n\n    int endIndex = -1;\n    for (int i = 0; i < bankSize; ++i) {\n        if (strcmp(bank[i], endGene) == 0) { endIndex = i; break; }\n    }\n    if (endIndex < 0) return -1;\n\n    char **nodes = (char **)malloc((bankSize + 1) * sizeof(char *));\n    int count = 0;\n    nodes[count++] = startGene;\n    for (int i = 0; i < bankSize; ++i) nodes[count++] = bank[i];\n\n    int dist[11];\n    int used[11] = {0};\n    for (int i = 0; i < count; ++i) dist[i] = -1;\n    dist[0] = 0;\n\n    int queue[11], head = 0, tail = 0;\n    queue[tail++] = 0;\n    const char bases[] = \"ACGT\";\n\n    while (head < tail) {\n        int u = queue[head++];\n        if (strcmp(nodes[u], endGene) == 0) {\n            int ans = dist[u];\n            free(nodes);\n            return ans;\n        }\n        for (int v = 0; v < count; ++v) {\n            if (dist[v] != -1) continue;\n            int diff = 0;\n            for (int i = 0; i < 8; ++i) {\n                if (nodes[u][i] != nodes[v][i] && ++diff > 1) break;\n            }\n            if (diff == 1) {\n                dist[v] = dist[u] + 1;\n                queue[tail++] = v;\n            }\n        }\n    }\n\n    free(nodes);\n    return -1;\n}",
-      "C++": "class Solution {\npublic:\n    int minMutation(string start, string end, vector<string>& bank) {\n        unordered_set<string> bankSet(bank.begin(), bank.end());\n        if (start == end) return 0;\n        if (!bankSet.count(end)) return -1;\n\n        queue<pair<string,int>> q;\n        unordered_set<string> visited{start};\n        q.push({start, 0});\n        const string bases = \"ACGT\";\n\n        while (!q.empty()) {\n            auto [gene, steps] = q.front();\n            q.pop();\n            for (int i = 0; i < 8; ++i) {\n                char old = gene[i];\n                for (char base : bases) {\n                    if (base == old) continue;\n                    gene[i] = base;\n                    if (bankSet.count(gene) && !visited.count(gene)) {\n                        if (gene == end) return steps + 1;\n                        visited.insert(gene);\n                        q.push({gene, steps + 1});\n                    }\n                }\n                gene[i] = old;\n            }\n        }\n        return -1;\n    }\n};",
-      "Java": "class Solution {\n    public int minMutation(String start, String end, String[] bank) {\n        Set<String> bankSet = new HashSet<>(Arrays.asList(bank));\n        if (start.equals(end)) return 0;\n        if (!bankSet.contains(end)) return -1;\n\n        ArrayDeque<String> q = new ArrayDeque<>();\n        Map<String, Integer> dist = new HashMap<>();\n        q.offer(start);\n        dist.put(start, 0);\n        char[] bases = {'A', 'C', 'G', 'T'};\n\n        while (!q.isEmpty()) {\n            String gene = q.poll();\n            int steps = dist.get(gene);\n            char[] arr = gene.toCharArray();\n            for (int i = 0; i < 8; i++) {\n                char old = arr[i];\n                for (char base : bases) {\n                    if (base == old) continue;\n                    arr[i] = base;\n                    String next = new String(arr);\n                    if (bankSet.contains(next) && !dist.containsKey(next)) {\n                        if (next.equals(end)) return steps + 1;\n                        dist.put(next, steps + 1);\n                        q.offer(next);\n                    }\n                }\n                arr[i] = old;\n            }\n        }\n        return -1;\n    }\n}",
-      "Python3": "import sys\nimport json\nfrom collections import deque\n\nclass Solution:\n    def minMutation(self, start: str, end: str, bank: list[str]) -> int:\n        bank_set = set(bank)\n        if start == end:\n            return 0\n        if end not in bank_set:\n            return -1\n\n        q = deque([(start, 0)])\n        visited = {start}\n        bases = \"ACGT\"\n\n        while q:\n            gene, steps = q.popleft()\n            for i, old in enumerate(gene):\n                for base in bases:\n                    if base == old:\n                        continue\n                    nxt = gene[:i] + base + gene[i + 1:]\n                    if nxt in bank_set and nxt not in visited:\n                        if nxt == end:\n                            return steps + 1\n                        visited.add(nxt)\n                        q.append((nxt, steps + 1))\n        return -1",
-      "JavaScript": "const readline = require(\"readline\");\n\nfunction minMutation(start, end, bank) {\n    const bankSet = new Set(bank);\n    if (start === end) return 0;\n    if (!bankSet.has(end)) return -1;\n\n    const queue = [[start, 0]];\n    const visited = new Set([start]);\n    const bases = [\"A\", \"C\", \"G\", \"T\"];\n    let head = 0;\n\n    while (head < queue.length) {\n        const [gene, steps] = queue[head++];\n        for (let i = 0; i < gene.length; i++) {\n            for (const base of bases) {\n                if (base === gene[i]) continue;\n                const next = gene.slice(0, i) + base + gene.slice(i + 1);\n                if (bankSet.has(next) && !visited.has(next)) {\n                    if (next === end) return steps + 1;\n                    visited.add(next);\n                    queue.push([next, steps + 1]);\n                }\n            }\n        }\n    }\n    return -1;\n}"
+      "C": "bool canConstruct(char* ransomNote, char* magazine) {\n    int count[26] = {0};\n    for (int i = 0; magazine[i]; i++) count[magazine[i] - 'a']++;\n    for (int i = 0; ransomNote[i]; i++) {\n        if (--count[ransomNote[i] - 'a'] < 0) return false;\n    }\n    return true;\n}",
+      "C++": "class Solution {\npublic:\n    bool canConstruct(string ransomNote, string magazine) {\n        int count[26] = {0};\n        for (char c : magazine) count[c - 'a']++;\n        for (char c : ransomNote) {\n            if (--count[c - 'a'] < 0) return false;\n        }\n        return true;\n    }\n};",
+      "Java": "class Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n        int[] count = new int[26];\n        for (char c : magazine.toCharArray()) count[c - 'a']++;\n        for (char c : ransomNote.toCharArray()) {\n            if (--count[c - 'a'] < 0) return false;\n        }\n        return true;\n    }\n}",
+      "Python3": "from collections import Counter\n\nclass Solution:\n    def canConstruct(self, ransomNote: str, magazine: str) -> bool:\n        c1 = Counter(ransomNote)\n        c2 = Counter(magazine)\n        for ch, count in c1.items():\n            if c2[ch] < count:\n                return False\n        return True",
+      "JavaScript": "var canConstruct = function(ransomNote, magazine) {\n    const count = new Array(26).fill(0);\n    for (let i = 0; i < magazine.length; i++) {\n        count[magazine.charCodeAt(i) - 97]++;\n    }\n    for (let i = 0; i < ransomNote.length; i++) {\n        if (--count[ransomNote.charCodeAt(i) - 97] < 0) return false;\n    }\n    return true;\n};"
     }
   },
   "verified": true,
@@ -164,243 +154,213 @@
     "hidden": [
       {
         "id": "tc_01",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGTT\",[]]",
-        "label": "Start equals end with empty bank",
-        "weight": 4,
-        "expectedOutput": "0"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"a\", \"a\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_02",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGTA\",[\"AACCGGTA\"]]",
-        "label": "One mutation at final position",
-        "weight": 4,
-        "expectedOutput": "1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"abc\", \"cba\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_03",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"CACCGGTT\",[\"CACCGGTT\"]]",
-        "label": "One mutation at first position",
-        "weight": 4,
-        "expectedOutput": "1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"aab\", \"baa\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_04",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AAACGGTA\"]]",
-        "label": "Two-step mutation through required intermediate",
-        "weight": 4,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"fffbfg\", \"effjfggbffjdgbjjhhcgfieghfailk\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_05",
-        "type": "reg",
-        "input": "[\"AAAAACCC\",\"AACACCCC\",[\"AAAACCCC\",\"AAACACCC\",\"AACACCCC\"]]",
-        "label": "Three-step mutation chain",
-        "weight": 4,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"bg\", \"efjbdfbdgfjhhaiigfhbaejahgfbbgbjaihifhdagahdaibhidghex\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_06",
-        "type": "reg",
-        "input": "[\"AAAAAAAA\",\"CCCCAAAA\",[\"CAAAAAAA\",\"CCAAAAAA\",\"CCCAAAAA\",\"CCCCAAAA\"]]",
-        "label": "Four-step mutation chain",
-        "weight": 4,
-        "expectedOutput": "4"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"cbadcefab\", \"fdefebbbccdcadebb\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_07",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGTA\",[\"AACCGGTC\",\"AACCGGAA\"]]",
-        "label": "Target absent from bank",
-        "weight": 4,
-        "expectedOutput": "-1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"beaffe\", \"eadbceabc\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_08",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AAACGGTC\"]]",
-        "label": "Missing intermediate makes target unreachable",
-        "weight": 4,
-        "expectedOutput": "-1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"eace\", \"cfdefa\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_09",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AACCGCTA\",\"CCCCCCCC\",\"CCCCCCCA\",\"AAACGGTA\"]]",
-        "label": "Disconnected valid mutation component",
-        "weight": 4,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"deafcdaa\", \"dadfeadfbdcbebfdbee\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_10",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AACCGGGA\",\"AACCGCTA\",\"AAACGGTA\"]]",
-        "label": "Multiple shortest paths",
-        "weight": 4,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"aef\", \"dfadbfad\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_11",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AAACGGTA\",\"AACCGCTA\",\"AACCGGTA\"]]",
-        "label": "Bank order must not affect answer",
-        "weight": 3,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"ddbeaa\", \"ebaeeefbefbfbcecf\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_12",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGTA\",[\"AACCGGTA\",\"AACCGGTC\",\"AACCGCTA\"]]",
-        "label": "Start not present in bank",
-        "weight": 3,
-        "expectedOutput": "1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"ee\", \"fcdadbafb\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_13",
-        "type": "reg",
-        "input": "[\"AAAAAAAA\",\"CCCCCCCC\",[\"CAAAAAAA\",\"CCAAAAAA\",\"CCCAAAAA\",\"CCCCAAAA\",\"CCCCCAAA\",\"CCCCCCAA\",\"CCCCCCCA\",\"CCCCCCCC\"]]",
-        "label": "Target requires all eight positions changed",
-        "weight": 3,
-        "expectedOutput": "8"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"cabdcec\", \"bcdceeffedebcdfee\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_14",
-        "type": "reg",
-        "input": "[\"AAAAAAAA\",\"CCCCCCCC\",[\"CAAAAAAA\",\"CCAAAAAA\",\"CCCAAAAA\",\"CCCCAAAA\",\"CCCCCAAA\",\"CCCCCCAA\",\"CCCCCCCA\",\"CCCCCCCC\",\"GAAAAAAA\",\"GGAAAAAA\"]]",
-        "label": "Eight-step chain with distractors",
-        "weight": 3,
-        "expectedOutput": "8"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"fdbc\", \"fbcbfdccfebd\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_15",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AACCGCTA\",\"AAACGGTA\",\"AACCGGTC\",\"CACCGGTT\",\"CACCGGTA\",\"CACCGCTA\",\"CCCCCCCC\",\"TTTTTTTT\",\"GGGGGGGG\"]]",
-        "label": "Maximum bank size reachable",
-        "weight": 3,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"bebedfadb\", \"dadaedceee\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_16",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AACCGCTA\",\"AACCGGTC\",\"CACCGGTT\",\"CACCGGTA\",\"CACCGGTC\",\"CCCCCCCC\",\"TTTTTTTT\",\"GGGGGGGG\",\"GCGGGGGG\"]]",
-        "label": "Maximum bank size unreachable",
-        "weight": 3,
-        "expectedOutput": "-1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"afeeebfd\", \"dabfddfedcbeb\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_17",
-        "type": "reg",
-        "input": "[\"ATATATAT\",\"CGCGCGCG\",[\"CTATATAT\",\"CTCTATAT\",\"CGCTATAT\",\"CGCGATAT\",\"CGCGCTAT\",\"CGCGCGAT\",\"CGCGCGCG\"]]",
-        "label": "Three mutations with repeated base changes",
-        "weight": 3,
-        "expectedOutput": "-1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"efbeaaf\", \"adfcbceacac\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_18",
-        "type": "reg",
-        "input": "[\"ACGTACGT\",\"TCGTTCGT\",[\"TCGTACGT\",\"TCGTTCGT\"]]",
-        "label": "Mutation in alternating positions",
-        "weight": 3,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"bdebaffbf\", \"fefffedaeafdce\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_19",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AAACGGTA\",[\"AACCGGTA\",\"AACCGGTC\",\"AACCGGCC\",\"AAACGGTA\"]]",
-        "label": "Dead-end branch cannot reach target",
-        "weight": 3,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"bdfefdcbc\", \"dbcaafbdabcbbcefb\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_20",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGAA\",[\"AACCGGTA\",\"AACCGCTA\",\"AACCGCAA\",\"AACCGGAA\"]]",
-        "label": "Cycle in mutation graph",
-        "weight": 3,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"eceecdfaa\", \"bfbdedecadbba\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_21",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGAT\",[\"AACCGGTA\",\"AACCGGCA\",\"AACCGGAT\"]]",
-        "label": "Target one mutation away after branch",
-        "weight": 3,
-        "expectedOutput": "1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"cecc\", \"dfabcabfcdb\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_22",
-        "type": "reg",
-        "input": "[\"AAAAAAAA\",\"TTTTTTTT\",[\"TAAAAAAA\",\"TTAAAAAA\",\"TTTAAAAA\",\"TTTTAAAA\",\"TTTTTAAA\",\"TTTTTTAA\",\"TTTTTTTA\",\"TTTTTTTT\"]]",
-        "label": "All four bases represented in path",
-        "weight": 3,
-        "expectedOutput": "8"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"fec\", \"cceeedbf\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_23",
-        "type": "reg",
-        "input": "[\"AAAAAAAA\",\"CCAAAAAA\",[\"CAAAAAAA\",\"CCAAAAAA\",\"AAAAAAAC\",\"AAAAAACG\",\"CCAAAAAA\"]]",
-        "label": "Same-distance alternatives with different branches",
-        "weight": 3,
-        "expectedOutput": "2"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"aeea\", \"ecfffbdeeabfecef\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_24",
-        "type": "reg",
-        "input": "[\"AAAAAAAA\",\"CCAACAAA\",[\"CAAAAAAA\",\"CCAAAAAA\",\"AAAAAAAC\",\"AAAAAACC\"]]",
-        "label": "Same-distance alternatives with different branches",
-        "weight": 3,
-        "expectedOutput": "-1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"ecbfcfacb\", \"dffbabcdebbb\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_25",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"CCCCCCCC\",[\"AACCGGTA\",\"AACCGGTC\",\"CCCCCCCG\",\"CCCCCCCA\"]]",
-        "label": "End in bank but isolated from start component",
-        "weight": 3,
-        "expectedOutput": "-1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"c\", \"fcecefebecaacbbdba\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_26",
-        "type": "reg",
-        "input": "[\"AAAAAAAA\",\"CCCCCAAA\",[\"CAAAAAAA\",\"CCAAAAAA\",\"CCCAAAAA\",\"CCCCAAAA\",\"CCCCCAAA\"]]",
-        "label": "Five-step route",
-        "weight": 3,
-        "expectedOutput": "5"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"effbac\", \"cbecec\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_27",
-        "type": "reg",
-        "input": "[\"ACAAAAAA\",\"CGCCAAAA\",[\"CCAAAAAA\",\"CCCAAAAA\",\"CCCCAAAA\",\"CGCCAAAA\"]]",
-        "label": "Six-step route with different mutation positions",
-        "weight": 3,
-        "expectedOutput": "4"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"faebfabcb\", \"beaafafdbfafbf\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_28",
-        "type": "reg",
-        "input": "[\"TGCATGCA\",\"TGCATGCA\",[\"AAAAAAAA\",\"CCCCCCCC\",\"TGCATGCA\"]]",
-        "label": "No mutation needed despite bank alternatives",
-        "weight": 3,
-        "expectedOutput": "0"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"eeccfbdae\", \"cdebcaffcebecaeabf\"]",
+        "expectedOutput": "true"
       },
       {
         "id": "tc_29",
-        "type": "reg",
-        "input": "[\"AACCGGTT\",\"AACCGGGC\",[\"AACCGGTA\",\"AACCGGGA\",\"AACCGGGC\",\"AACCGCTA\"]]",
-        "label": "Target requires choosing the correct intermediate",
-        "weight": 3,
-        "expectedOutput": "3"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"aaae\", \"fcdadddbfafeebfccf\"]",
+        "expectedOutput": "false"
       },
       {
         "id": "tc_30",
-        "type": "reg",
-        "input": "[\"GGGGGGGG\",\"CCCCCCCC\",[]]",
-        "label": "Boundary bank length zero unreachable",
-        "weight": 3,
-        "expectedOutput": "-1"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[\"db\", \"cbcdaebafafbdec\"]",
+        "expectedOutput": "true"
       }
     ],
     "totalWeight": 100,
@@ -409,11 +369,11 @@
   "updatedAt": "2026-07-10",
   "questionId": "Q383",
   "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nstatic char *parse_string(const char **p) {\n    while (**p && (**p == ' ' || **p == ',' || **p == '[' || **p == '\\n' || **p == '\\r' || **p == '\\t')) (*p)++;\n    if (**p != '\"') return NULL;\n    (*p)++;\n    const char *start = *p;\n    while (**p && **p != '\"') (*p)++;\n    size_t n = (size_t)(*p - start);\n    char *out = (char *)malloc(n + 1);\n    memcpy(out, start, n);\n    out[n] = '\\0';\n    if (**p == '\"') (*p)++;\n    return out;\n}\n\nstatic int parse_bank(const char **p, char ***out_bank) {\n    while (**p && (**p == ' ' || **p == ',' || **p == '\\n' || **p == '\\r' || **p == '\\t')) (*p)++;\n    if (**p != '[') return 0;\n    (*p)++;\n    char **bank = (char **)malloc(10 * sizeof(char *));\n    int n = 0;\n    for (;;) {\n        while (**p && (**p == ' ' || **p == ',' || **p == '\\n' || **p == '\\r' || **p == '\\t')) (*p)++;\n        if (**p == ']') { (*p)++; break; }\n        char *g = parse_string(p);\n        if (!g) break;\n        bank[n++] = g;\n    }\n    *out_bank = bank;\n    return n;\n}\n\nstatic int minMutation(char *startGene, char *endGene, char **bank, int bankSize) {\n    return 0;\n}\n\nint main(void) {\n    char line[4096];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    const char *p = line;\n    while (*p && *p != '[') ++p;\n    if (*p == '[') ++p;\n\n    char *startGene = parse_string(&p);\n    char *endGene = parse_string(&p);\n    char **bank = NULL;\n    int bankSize = parse_bank(&p, &bank);\n\n    int result = minMutation(startGene, endGene, bank, bankSize);\n    printf(\"%d\\n\", result);\n\n    free(startGene);\n    free(endGene);\n    for (int i = 0; i < bankSize; ++i) free(bank[i]);\n    free(bank);\n    return 0;\n}\n",
-    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minMutation(string start, string end, vector<string>& bank) {\n        return 0;\n    }\n};\n\nstatic string nextQuoted(const string& s, size_t& p) {\n    while (p < s.size() && s[p] != '\"') ++p;\n    if (p >= s.size()) return {};\n    ++p;\n    size_t start = p;\n    while (p < s.size() && s[p] != '\"') ++p;\n    string out = s.substr(start, p - start);\n    if (p < s.size()) ++p;\n    return out;\n}\n\nstatic vector<string> parseStrings(const string& s) {\n    vector<string> out;\n    size_t p = 0;\n    while (p < s.size()) {\n        size_t q = s.find('\"', p);\n        if (q == string::npos) break;\n        p = q;\n        string x = nextQuoted(s, p);\n        if (!x.empty()) out.push_back(x);\n        if (p < s.size()) ++p;\n    }\n    return out;\n}\n\nint main() {\n    string line;\n    getline(cin, line);\n    auto all = parseStrings(line);\n    if (all.size() < 2) return 0;\n    string start = all[0], end = all[1];\n    vector<string> bank(all.begin() + 2, all.end());\n    cout << Solution().minMutation(start, end, bank) << '\\n';\n    return 0;\n}\n",
-    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public int minMutation(String start, String end, String[] bank) {\n        return 0;\n    }\n}\n\npublic class Main {\n    private static List<String> quotedStrings(String s) {\n        List<String> result = new ArrayList<>();\n        boolean in = false;\n        StringBuilder cur = new StringBuilder();\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '\"') {\n                if (in) {\n                    result.add(cur.toString());\n                    cur.setLength(0);\n                }\n                in = !in;\n            } else if (in) {\n                cur.append(c);\n            }\n        }\n        return result;\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        List<String> values = quotedStrings(line);\n        if (values.size() < 2) return;\n        String start = values.get(0);\n        String end = values.get(1);\n        String[] bank = values.subList(2, values.size()).toArray(new String[0]);\n        System.out.println(new Solution().minMutation(start, end, bank));\n    }\n}\n",
-    "Python3": "import sys\nimport json\nfrom collections import deque\n\nclass Solution:\n    def minMutation(self, start: str, end: str, bank: list[str]) -> int:\n        pass\n\nif __name__ == \"__main__\":\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().minMutation(args[0], args[1], args[2])))\n",
-    "JavaScript": "\"use strict\";\nconst readline = require(\"readline\");\n\nfunction minMutation(start, end, bank) {\n    return 0;\n}\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on(\"line\", (line) => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(minMutation(args[0], args[1], args[2])));\n    rl.close();\n});\n"
+    "C": "#include <stdio.h>\n#include <stdbool.h>\n#include <string.h>\n\nbool canConstruct(char* ransomNote, char* magazine) {\n    /* YOUR CODE HERE */\n    return false;\n}",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canConstruct(string ransomNote, string magazine) {\n        /* YOUR CODE HERE */\n        return false;\n    }\n};\n\nint main() {\n    string line;\n    if (getline(cin, line)) {\n        // parse two strings\n    }\n    return 0;\n}",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n        /* YOUR CODE HERE */\n        return false;\n    }\n}",
+    "Python3": "class Solution:\n    def canConstruct(self, ransomNote: str, magazine: str) -> bool:\n        pass\n\nif __name__ == '__main__':\n    import sys, json\n    raw = sys.stdin.read().strip()\n    if raw:\n        args = json.loads(raw)\n        print(str(Solution().canConstruct(args[0], args[1])).lower())",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar canConstruct = function(ransomNote, magazine) {\n    /* YOUR CODE HERE */\n    return false;\n};\n\nconst rl = readline.createInterface({ input: process.stdin, output: process.stdout });\nlet input = '';\nrl.on('data', chunk => { input += chunk; });\nrl.on('end', () => {\n    if (input.trim()) {\n        const args = JSON.parse(input.trim());\n        console.log(String(canConstruct(args[0], args[1])).toLowerCase());\n    }\n});"
   },
   "acceptanceRate": null,
   "similarProblems": [],

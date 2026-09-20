@@ -1,32 +1,20 @@
 {
-  "questionId": "Q538",
-  "title": "Convert BST to Greater Tree Problem",
   "slug": "convert-bst-to-greater-tree",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Searching",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "tree",
-      "depth-first-search",
-      "binary-search-tree",
-      "binary-tree"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "tree",
-      "depth-first-search",
-      "binary-search-tree",
-      "binary-tree"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "In a BST, an in-order traversal visits values in ascending order. What traversal would visit them from largest to smallest?",
+    "Maintain a running sum while visiting nodes from largest to smallest.",
+    "For the current node, update the running sum with its original value and store that sum back into the node."
+  ],
+  "title": "Convert BST to Greater Tree Problem",
   "content": {
-    "problemStatement": "With the `root` of a Binary Search Tree (BST), convert it to a Greater Tree such that every key of the original BST is changed to the original key plus the sum of all keys greater than the original key in BST.\n\nAs a reminder, a *binary search tree* is a tree that satisfies these constraints:\n\n* The left subtree of a node includes only nodes with keys **less than** the node's key.\n* The right subtree of a node includes only nodes with keys **greater than** the node's key.\n* Both the left and right subtrees must also be binary search trees.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2019/05/02/tree.png)\n\n```\nInput: root = [4,1,6,0,2,5,7,null,null,null,3,null,null,null,8]\nOutput: [30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]\n```\n\n**Example 2:**\n\n```\nInput: root = [0,null,1]\nOutput: [1,null,1]\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[0, 10^4]`.\n* `-10^4 <= Node.val <= 10^4`\n* All the values in the tree are **unique**.\n* `root` is guaranteed to be a valid binary search tree.\n\n**Note:** This question is the same as 1038: <https://leetcode.com/problems/binary-search-tree-to-greater-sum-tree/>",
+    "notes": [
+      "The input tree is serialized in level-order; null entries represent missing children.",
+      "The output uses the same level-order tree serialization with trailing null entries removed."
+    ],
     "constraints": [
+      "The number of nodes in the tree is in the range [0, 10^4].",
+      "-10^4 <= Node.val <= 10^4.",
+      "All the values in the tree are unique.",
       "The left subtree of a node contains only nodes with keys less than the node's key.",
       "The right subtree of a node contains only nodes with keys greater than the node's key.",
       "Both the left and right subtrees must also be binary search trees."
@@ -39,277 +27,45 @@
         "type": "reg",
         "input": "[[4,1,6,0,2,5,7,null,null,null,3,null,null,null,8]]",
         "output": "[30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]",
-        "explanation": ""
+        "explanation": "Traverse the BST in reverse in-order (right, root, left). Each node receives its original value plus the running sum of all larger keys.",
+        "expectedOutput": "[30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[0,null,1]]",
         "output": "[1,null,1]",
-        "explanation": ""
+        "explanation": "The right node 1 stays 1. Then the root 0 becomes 0 + 1 = 1.",
+        "expectedOutput": "[1,null,1]"
       }
     ],
-    "notes": []
+    "problemStatement": "With the `root` of a Binary Search Tree (BST), convert it to a Greater Tree such that every key of the original BST is changed to the original key plus the sum of all keys greater than the original key in BST.\n\nAs a reminder, a *binary search tree* is a tree that satisfies these constraints:\n\n* The left subtree of a node includes only nodes with keys **less than** the node's key.\n* The right subtree of a node includes only nodes with keys **greater than** the node's key.\n* Both the left and right subtrees must also be binary search trees.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2019/05/02/tree.png)\n\n```\nInput: root = [4,1,6,0,2,5,7,null,null,null,3,null,null,null,8]\nOutput: [30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]\n```\n\n**Example 2:**\n\n```\nInput: root = [0,null,1]\nOutput: [1,null,1]\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[0, 10^4]`.\n* `-10^4 <= Node.val <= 10^4`\n* All the values in the tree are **unique**.\n* `root` is guaranteed to be a valid binary search tree.\n\n**Note:** This question is the same as 1038: <https://leetcode.com/problems/binary-search-tree-to-greater-sum-tree/>"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Middle element is answer",
-        "input": "[[4, 1, 6]]",
-        "expectedOutput": "[10, 11, 6]",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Single element array — found",
-        "input": "[[0]]",
-        "expectedOutput": "[0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Single element array — not found",
-        "input": "[[10]]",
-        "expectedOutput": "[10]",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Duplicate values — lower bound",
-        "input": "[[5, 5, 5]]",
-        "expectedOutput": "[10, 15, 5]",
-        "weight": 4
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Maximum constraints",
-        "input": "[[10000, 9999, 9998, 9997, 9996, 9995, 9994, 9993, 9992, 9991]]",
-        "expectedOutput": "[39987, 69973, 19992, 89962, 49983, 29987, 9994, 99955, 79965, 59974]",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "All same values",
-        "input": "[[0, 0, 0]]",
-        "expectedOutput": "[0, 0, 0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Two elements",
-        "input": "[[53]]",
-        "expectedOutput": "[53]",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+  "judging": {
+    "notes": [],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      3,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -331,57 +87,339 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 2,
+  "metadata": {
+    "tags": [
+      "tree",
+      "depth-first-search",
+      "binary-search-tree",
+      "binary-tree"
     ],
-    "notes": []
+    "category": "Tree",
+    "isPremium": false,
+    "topicTags": [
+      "tree",
+      "depth-first-search",
+      "binary-search-tree",
+      "binary-tree"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses a recursive helper function to perform a reverse in-order traversal of the BST, updating each node's value by adding the sum of all keys greater than the original key.",
-    "timeComplexity": "O(n)",
-    "spaceComplexity": "O(h)",
-    "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(h)\n\nclass Solution(object):\n    def convertBST(self, root):\n        \"\"\"\n        :type root: TreeNode\n        :rtype: TreeNode\n        \"\"\"\n        def convertBSTHelper(root, cur_sum):\n            if not root:\n                return cur_sum\n\n            if root.right:\n                cur_sum = convertBSTHelper(root.right, cur_sum)\n            cur_sum += root.val\n            root.val = cur_sum\n            if root.left:\n                cur_sum = convertBSTHelper(root.left, cur_sum)\n            return cur_sum\n\n        convertBSTHelper(root, 0)\n        return root"
-    },
-    "notes": [],
+    "notes": [
+      "The transformation is done in place.",
+      "The running sum must use at least 32-bit signed integer range safely under the given constraints; wider integer types are also valid."
+    ],
+    "approach": "Perform a reverse in-order traversal (right, node, left). Maintain a running sum of the original keys already visited; because reverse in-order visits keys from largest to smallest in a BST, the running sum is exactly the sum of all keys greater than the current original key. Add the current original value to the running sum and write that sum back into the node.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "Time: O(n), Space: O(h).",
+        "description": "Use the BST property to avoid sorting: perform a reverse in-order traversal and carry a running sum. This removes the sorting step."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "Time: O(n), Space: O(h) auxiliary recursion stack.",
+        "description": "Visit right subtree, current node, then left subtree. After processing the right subtree, the running sum contains all original keys greater than the current node. Add the current original value, store the new sum in the node, and continue left."
+      },
+      "bruteForce": {
+        "complexity": "Time: O(n log n), Space: O(n).",
+        "description": "Collect all node values using any traversal, sort them, compute a suffix sum, and then traverse the tree again to replace each value. This is straightforward but sorting costs O(n log n)."
       }
+    },
+    "timeComplexity": "O(n)",
+    "spaceComplexity": "O(h) auxiliary space for recursion, where h is the tree height.",
+    "code": {
+      "Python3": "from typing import Optional\n\nclass Solution:\n\n    def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:\n        total = 0\n\n        def dfs(node):\n            nonlocal total\n            if node is None:\n                return\n            dfs(node.right)\n            total += node.val\n            node.val = total\n            dfs(node.left)\n        dfs(root)\n        return root",
+      "C++": "class Solution {\n    long long total = 0;\n\n    void dfs(TreeNode* node) {\n        if (node == nullptr) return;\n        dfs(node->right);\n        total += node->val;\n        node->val = static_cast<int>(total);\n        dfs(node->left);\n    }\n\npublic:\n    TreeNode* convertBST(TreeNode* root) {\n        total = 0;\n        dfs(root);\n        return root;\n    }\n};",
+      "Java": "class Solution {\n    private int total;\n\n    private void dfs(TreeNode node) {\n        if (node == null) return;\n        dfs(node.right);\n        total += node.val;\n        node.val = total;\n        dfs(node.left);\n    }\n\n    public TreeNode convertBST(TreeNode root) {\n        total = 0;\n        dfs(root);\n        return root;\n    }\n}",
+      "JavaScript": "/**\n * @param {TreeNode|null} root\n * @return {TreeNode|null}\n */\nvar convertBST = function(root) {\n    let total = 0;\n\n    function dfs(node) {\n        if (node === null) return;\n        dfs(node.right);\n        total += node.val;\n        node.val = total;\n        dfs(node.left);\n    }\n\n    dfs(root);\n    return root;\n};",
+      "C": "static void dfs(struct TreeNode* node, long long* total) {\n    if (node == NULL) return;\n    dfs(node->right, total);\n    *total += node->val;\n    node->val = (int)(*total);\n    dfs(node->left, total);\n}\n\nstruct TreeNode* convertBST(struct TreeNode* root) {\n    long long total = 0;\n    dfs(root, &total);\n    return root;\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     struct TreeNode *left;\n *     struct TreeNode *right;\n * };\n */\nstruct TreeNode* convertBST(struct TreeNode* root) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        // TODO: unpack logic for treenode root\n        int result = convertBST(root);\n        printf(\"/* Unknown return type formatting */\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\nclass ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val; self.next = next\n    @staticmethod\n    def from_list(lst):\n        if not lst: return None\n        h = ListNode(lst[0]); c = h\n        for v in lst[1:]:\n            c.next = ListNode(v); c = c.next\n        return h\n    def to_list(self):\n        r=[]; c=self\n        while c: r.append(c.val); c=c.next\n        return r\n\nclass TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val=val; self.left=left; self.right=right\n    @staticmethod\n    def from_list(lst):\n        if not lst: return None\n        root=TreeNode(lst[0]); q=[root]; i=1\n        while q and i<len(lst):\n            c=q.pop(0)\n            if i<len(lst) and lst[i] is not None:\n                c.left=TreeNode(lst[i]); q.append(c.left)\n            i+=1\n            if i<len(lst) and lst[i] is not None:\n                c.right=TreeNode(lst[i]); q.append(c.right)\n            i+=1\n        return root\n    def to_list(self):\n        if not self: return []\n        r=[]; q=[self]\n        while q:\n            c=q.pop(0)\n            if c: r.append(c.val); q.append(c.left); q.append(c.right)\n            else: r.append(None)\n        while r and r[-1] is None: r.pop()\n        return r\n\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Definition for a binary tree node.\n# class TreeNode:\n#     def __init__(self, val=0, left=None, right=None):\n#         self.val = val\n#         self.left = left\n#         self.right = right\nclass Solution:\n    def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _root = TreeNode.from_list(_args[0])\n    _result = Solution().convertBST(_root)\n    _result = _result.to_list() if _result else []\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for a binary tree node.\n * function TreeNode(val, left, right) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.left = (left===undefined ? null : left)\n *     this.right = (right===undefined ? null : right)\n * }\n */\n/**\n * @param {TreeNode} root\n * @return {TreeNode}\n */\nvar convertBST = function(root) {\n    \n    return null;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = convertBST(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\n/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode() {}\n *     TreeNode(int val) { this.val = val; }\n *     TreeNode(int val, TreeNode left, TreeNode right) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\nclass Solution {\n    public TreeNode convertBST(TreeNode root) {\n        \n        return null;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        // TODO: parse TreeNode for root\n        TreeNode result = new Solution().convertBST(root);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode() : val(0), left(nullptr), right(nullptr) {}\n *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}\n *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}\n * };\n */\nclass Solution {\npublic:\n    TreeNode* convertBST(TreeNode* root) {\n        \n        return nullptr;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    /* TODO: parse TreeNode* for root */\n    auto result = Solution().convertBST(root);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "root",
+        "type": "TreeNode"
+      }
+    ],
+    "methodName": "convertBST"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Can you implement the same transformation iteratively with an explicit stack?",
+    "How would the solution change if duplicate keys were allowed under a defined duplicate policy?",
+    "How does the auxiliary space change between a balanced BST and a completely skewed BST?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[]]",
+        "label": "Empty tree",
+        "weight": 4,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[0]]",
+        "label": "Single node zero",
+        "weight": 4,
+        "expectedOutput": "[0]"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[-10000]]",
+        "label": "Single node minimum key",
+        "weight": 4,
+        "expectedOutput": "[-10000]"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[10000]]",
+        "label": "Single node maximum key",
+        "weight": 4,
+        "expectedOutput": "[10000]"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[0,-5]]",
+        "label": "Two-node left child",
+        "weight": 4,
+        "expectedOutput": "[0,-5]"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[0,null,5]]",
+        "label": "Two-node right child",
+        "weight": 4,
+        "expectedOutput": "[5,null,5]"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[0,-2,3]]",
+        "label": "Balanced three-node BST",
+        "weight": 4,
+        "expectedOutput": "[3,1,3]"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[2,-1,7,-3,0,4,9]]",
+        "label": "Balanced seven-node BST",
+        "weight": 4,
+        "expectedOutput": "[22,21,16,18,22,20,9]"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[-1,-3,null,-5,null,-7,null,-9]]",
+        "label": "Left-skewed negative chain",
+        "weight": 4,
+        "expectedOutput": "[-1,-4,null,-9,null,-16,null,-25]"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[1,null,3,null,5,null,7,null,9]]",
+        "label": "Right-skewed positive chain",
+        "weight": 4,
+        "expectedOutput": "[25,null,24,null,21,null,16,null,9]"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[0,-4,4,null,-2,2,null,-3,null,null,3]]",
+        "label": "Zig-zag on both sides",
+        "weight": 3,
+        "expectedOutput": "[9,0,4,null,7,9,null,4,null,null,7]"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[-5,-15,-2,-20,-10,-3,-1]]",
+        "label": "All-negative balanced BST",
+        "weight": 3,
+        "expectedOutput": "[-11,-36,-3,-56,-21,-6,-1]"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[0,-4,8,-10,-1,2,15]]",
+        "label": "Mixed negative and positive balanced BST",
+        "weight": 3,
+        "expectedOutput": "[25,20,23,10,24,25,15]"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[0,-9999,9999,-10000,-50,50,10000]]",
+        "label": "Minimum and maximum endpoints",
+        "weight": 3,
+        "expectedOutput": "[20049,10000,19999,0,19999,20049,10000]"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[-4,-6,-1,-7,-5,-2,0,-8,null,null,null,-3]]",
+        "label": "Consecutive keys with negative root",
+        "weight": 3,
+        "expectedOutput": "[-10,-21,-1,-28,-15,-3,0,-36,null,null,null,-6]"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[10,-5,20,null,0,15,30,null,null,null,null,25]]",
+        "label": "Sparse asymmetric BST",
+        "weight": 3,
+        "expectedOutput": "[100,95,75,null,100,90,30,null,null,null,null,55]"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[10,5,30,0,null,null,null,-15,null,-20]]",
+        "label": "Root positive with deep negative left",
+        "weight": 3,
+        "expectedOutput": "[40,45,30,45,null,null,null,30,null,10]"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[-10,-30,0,null,null,null,5,null,12,null,20]]",
+        "label": "Root negative with deep positive right",
+        "weight": 3,
+        "expectedOutput": "[27,-3,37,null,null,null,37,null,32,null,20]"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[0,-4,4,-6,-2,2,6,-7,-5,-3,-1,1,3,5,7]]",
+        "label": "Perfect four-level BST",
+        "weight": 3,
+        "expectedOutput": "[28,18,22,7,25,27,13,0,13,22,27,28,25,18,7]"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[8,3,12,-2,5,null,15,null,0]]",
+        "label": "Reverse-shaped left spine with branching",
+        "weight": 3,
+        "expectedOutput": "[35,43,27,41,40,null,15,null,43]"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[4,2,6,1,3,5,7]]",
+        "label": "Closely spaced unique values",
+        "weight": 3,
+        "expectedOutput": "[22,27,13,28,25,18,7]"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[1,-5000,5000,-10000,-1,2,10000]]",
+        "label": "Large magnitude mixed keys",
+        "weight": 3,
+        "expectedOutput": "[15003,10002,15000,2,15002,15002,10000]"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[0,-8,8,-12,-4,4,12,-14,-10,-6,-2,2,6,10,14,-15,-13,-11,-9,-7,-5,-3,-1,1,3,5,7,9,11,13,15]]",
+        "label": "Balanced 31-node BST",
+        "weight": 3,
+        "expectedOutput": "[120,84,92,42,110,114,54,15,65,99,117,119,105,75,29,0,29,54,75,92,105,114,119,120,117,110,99,84,65,42,15]"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[-15,null,-14,null,-13,null,-12,null,-11,null,-10,null,-9,null,-8,null,-7,null,-6,null,-5,null,-4,null,-3,null,-2,null,-1,null,0,null,1,null,2,null,3,null,4,null,5,null,6,null,7,null,8,null,9,null,10,null,11,null,12,null,13,null,14,null,15]]",
+        "label": "Right-skewed 31-node BST",
+        "weight": 3,
+        "expectedOutput": "[0,null,15,null,29,null,42,null,54,null,65,null,75,null,84,null,92,null,99,null,105,null,110,null,114,null,117,null,119,null,120,null,120,null,119,null,117,null,114,null,110,null,105,null,99,null,92,null,84,null,75,null,65,null,54,null,42,null,29,null,15]"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[15,14,null,13,null,12,null,11,null,10,null,9,null,8,null,7,null,6,null,5,null,4,null,3,null,2,null,1,null,0,null,-1,null,-2,null,-3,null,-4,null,-5,null,-6,null,-7,null,-8,null,-9,null,-10,null,-11,null,-12,null,-13,null,-14,null,-15]]",
+        "label": "Left-skewed 31-node BST",
+        "weight": 3,
+        "expectedOutput": "[15,29,null,42,null,54,null,65,null,75,null,84,null,92,null,99,null,105,null,110,null,114,null,117,null,119,null,120,null,120,null,119,null,117,null,114,null,110,null,105,null,99,null,92,null,84,null,75,null,65,null,54,null,42,null,29,null,15,null,0]"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[-30,-70,1,-90,-50,-10,20,-100,-80,-60,-40,-20,-1,10,100]]",
+        "label": "Alternating-scale balanced BST",
+        "weight": 3,
+        "expectedOutput": "[70,-150,131,-320,-20,120,120,-420,-230,-80,30,100,130,130,100]"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[0,-50,50,-90,-20,10,90,null,null,-30,-10,null,null,70]]",
+        "label": "Highly asymmetric balanced-depth BST",
+        "weight": 3,
+        "expectedOutput": "[220,110,210,20,190,220,90,null,null,160,210,null,null,160]"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[0,-16,16,-24,-8,8,24,-28,-20,-12,-4,4,12,20,28,-30,-26,-22,-18,-14,-10,-6,-2,2,6,10,14,18,22,26,30,-31,-29,-27,-25,-23,-21,-19,-17,-15,-13,-11,-9,-7,-5,-3,-1,1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31]]",
+        "label": "Balanced 63-node BST",
+        "weight": 3,
+        "expectedOutput": "[496,360,376,196,460,468,220,90,286,418,486,490,430,306,118,31,145,243,325,391,441,475,493,495,481,451,405,343,265,171,61,0,61,118,171,220,265,306,343,376,405,430,451,468,481,490,495,496,493,486,475,460,441,418,391,360,325,286,243,196,145,90,31]"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[-9969,-9985,9984,-9993,-9977,9976,9992,-9997,-9989,-9981,-9973,9972,9980,9988,9996,-9999,-9995,-9991,-9987,-9983,-9979,-9975,-9971,9970,9974,9978,9982,9986,9990,9994,9998,-10000,-9998,-9996,-9994,-9992,-9990,-9988,-9986,-9984,-9982,-9980,-9978,-9976,-9974,-9972,-9970,9969,9971,9973,9975,9977,9979,9981,9983,9985,9987,9989,9991,9993,9995,9997,9999]]",
+        "label": "Wide-range 63-node BST",
+        "weight": 3,
+        "expectedOutput": "[299535,139895,159864,59979,219747,239700,79964,19997,99945,179829,259649,279594,199790,119922,39990,0,39990,79964,119922,159864,199790,239700,279594,299535,259649,219747,179829,139895,99945,59979,19997,-10000,9999,29994,49985,69972,89955,109934,129909,149880,169847,189810,209769,229724,249675,269622,289565,309504,289565,269622,249675,229724,209769,189810,169847,149880,129909,109934,89955,69972,49985,29994,9999]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[-50,null,-49,null,-48,null,-47,null,-46,null,-45,null,-44,null,-43,null,-42,null,-41,null,-40,null,-39,null,-38,null,-37,null,-36,null,-35,null,-34,null,-33,null,-32,null,-31,null,-30,null,-29,null,-28,null,-27,null,-26,null,-25,null,-24,null,-23,null,-22,null,-21,null,-20,null,-19,null,-18,null,-17,null,-16,null,-15,null,-14,null,-13,null,-12,null,-11,null,-10,null,-9,null,-8,null,-7,null,-6,null,-5,null,-4,null,-3,null,-2,null,-1,null,0,null,1,null,2,null,3,null,4,null,5,null,6,null,7,null,8,null,9,null,10,null,11,null,12,null,13,null,14,null,15,null,16,null,17,null,18,null,19,null,20,null,21,null,22,null,23,null,24,null,25,null,26,null,27,null,28,null,29,null,30,null,31,null,32,null,33,null,34,null,35,null,36,null,37,null,38,null,39,null,40,null,41,null,42,null,43,null,44,null,45,null,46,null,47,null,48,null,49]]",
+        "label": "Moderate deep right-skewed BST",
+        "weight": 3,
+        "expectedOutput": "[-50,null,0,null,49,null,97,null,144,null,190,null,235,null,279,null,322,null,364,null,405,null,445,null,484,null,522,null,559,null,595,null,630,null,664,null,697,null,729,null,760,null,790,null,819,null,847,null,874,null,900,null,925,null,949,null,972,null,994,null,1015,null,1035,null,1054,null,1072,null,1089,null,1105,null,1120,null,1134,null,1147,null,1159,null,1170,null,1180,null,1189,null,1197,null,1204,null,1210,null,1215,null,1219,null,1222,null,1224,null,1225,null,1225,null,1224,null,1222,null,1219,null,1215,null,1210,null,1204,null,1197,null,1189,null,1180,null,1170,null,1159,null,1147,null,1134,null,1120,null,1105,null,1089,null,1072,null,1054,null,1035,null,1015,null,994,null,972,null,949,null,925,null,900,null,874,null,847,null,819,null,790,null,760,null,729,null,697,null,664,null,630,null,595,null,559,null,522,null,484,null,445,null,405,null,364,null,322,null,279,null,235,null,190,null,144,null,97,null,49]"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-09-16",
+  "questionId": "Q538",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nstruct TreeNode {\n    int val;\n    struct TreeNode *left;\n    struct TreeNode *right;\n};\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nstruct TreeNode* convertBST(struct TreeNode* root) {\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nstatic struct TreeNode* buildTree(char** items, int count) {\n    if (count == 0 || strcmp(items[0], \"null\") == 0 || strlen(items[0]) == 0) return NULL;\n    struct TreeNode* root = (struct TreeNode*)malloc(sizeof(struct TreeNode));\n    root->val = atoi(items[0]);\n    root->left = NULL; root->right = NULL;\n    struct TreeNode** queue = (struct TreeNode**)malloc((count + 1) * sizeof(struct TreeNode*));\n    int head = 0, tail = 0;\n    queue[tail++] = root;\n    int i = 1;\n    while (head < tail && i < count) {\n        struct TreeNode* curr = queue[head++];\n        if (i < count) {\n            if (strcmp(items[i], \"null\") != 0 && strlen(items[i]) > 0) {\n                curr->left = (struct TreeNode*)malloc(sizeof(struct TreeNode));\n                curr->left->val = atoi(items[i]);\n                curr->left->left = NULL; curr->left->right = NULL;\n                queue[tail++] = curr->left;\n            }\n            i++;\n        }\n        if (i < count) {\n            if (strcmp(items[i], \"null\") != 0 && strlen(items[i]) > 0) {\n                curr->right = (struct TreeNode*)malloc(sizeof(struct TreeNode));\n                curr->right->val = atoi(items[i]);\n                curr->right->left = NULL; curr->right->right = NULL;\n                queue[tail++] = curr->right;\n            }\n            i++;\n        }\n    }\n    free(queue);\n    return root;\n}\n\nstatic void printTree(struct TreeNode* root) {\n    if (!root) { printf(\"[]\\n\"); return; }\n    char** list = (char**)malloc(100000 * sizeof(char*));\n    int list_count = 0;\n    struct TreeNode** queue = (struct TreeNode**)malloc(100000 * sizeof(struct TreeNode*));\n    int head = 0, tail = 0;\n    queue[tail++] = root;\n    while (head < tail) {\n        struct TreeNode* curr = queue[head++];\n        if (curr) {\n            char* buf = (char*)malloc(32);\n            sprintf(buf, \"%d\", curr->val);\n            list[list_count++] = buf;\n            queue[tail++] = curr->left;\n            queue[tail++] = curr->right;\n        } else {\n            list[list_count++] = \"null\";\n        }\n    }\n    while (list_count > 0 && strcmp(list[list_count - 1], \"null\") == 0) list_count--;\n    printf(\"[\");\n    for (int i = 0; i < list_count; i++) {\n        printf(\"%s%s\", list[i], (i + 1 < list_count) ? \",\" : \"\");\n    }\n    printf(\"]\\n\");\n    free(queue);\n}\n\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) line[--len] = '\\0';\n        char* start = line;\n        while (*start == ' ' || *start == '[') start++;\n        char* end = line + len - 1;\n        while (end > start && (*end == ' ' || *end == ']')) *end-- = '\\0';\n        if (start > end || strlen(start) == 0) { printf(\"[]\\n\"); return 0; }\n        int count = 1;\n        for (char* p = start; *p; p++) if (*p == ',') count++;\n        char** items = (char**)malloc(count * sizeof(char*));\n        int idx = 0;\n        char* tok = strtok(start, \",\");\n        while (tok) {\n            while (*tok == ' ' || *tok == '\\\"') tok++;\n            int tlen = strlen(tok);\n            while (tlen > 0 && (tok[tlen - 1] == ' ' || tok[tlen - 1] == '\\\"')) tok[--tlen] = '\\0';\n            items[idx++] = tok;\n            tok = strtok(NULL, \",\");\n        }\n        struct TreeNode* root = buildTree(items, idx);\n        struct TreeNode* res = convertBST(root);\n        printTree(res);\n        free(items);\n    }\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct TreeNode {\n    int val;\n    TreeNode *left;\n    TreeNode *right;\n    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}\n};\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    TreeNode* convertBST(TreeNode* root) {\n        return nullptr;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nTreeNode* buildTree(const vector<string>& nodes) {\n    if (nodes.empty() || nodes[0] == \"null\") return nullptr;\n    TreeNode* root = new TreeNode(stoi(nodes[0]));\n    queue<TreeNode*> q;\n    q.push(root);\n    size_t i = 1;\n    while (!q.empty() && i < nodes.size()) {\n        TreeNode* curr = q.front();\n        q.pop();\n        if (i < nodes.size()) {\n            if (nodes[i] != \"null\") {\n                curr->left = new TreeNode(stoi(nodes[i]));\n                q.push(curr->left);\n            }\n            i++;\n        }\n        if (i < nodes.size()) {\n            if (nodes[i] != \"null\") {\n                curr->right = new TreeNode(stoi(nodes[i]));\n                q.push(curr->right);\n            }\n            i++;\n        }\n    }\n    return root;\n}\n\nvoid printTree(TreeNode* root) {\n    if (!root) { cout << \"[]\\n\"; return; }\n    vector<string> res;\n    queue<TreeNode*> q;\n    q.push(root);\n    while (!q.empty()) {\n        TreeNode* curr = q.front();\n        q.pop();\n        if (curr) {\n            res.push_back(to_string(curr->val));\n            q.push(curr->left);\n            q.push(curr->right);\n        } else {\n            res.push_back(\"null\");\n        }\n    }\n    while (!res.empty() && res.back() == \"null\") res.pop_back();\n    cout << \"[\";\n    for (size_t i = 0; i < res.size(); i++) {\n        cout << res[i] << (i + 1 < res.size() ? \",\" : \"\");\n    }\n    cout << \"]\\n\";\n}\n\nint main() {\n    string line;\n    if (getline(cin, line)) {\n        size_t first = line.find('[');\n        size_t last = line.rfind(']');\n        if (first == string::npos || last == string::npos || first >= last) {\n            cout << \"[]\\n\";\n            return 0;\n        }\n        string content = line.substr(first + 1, last - first - 1);\n        if (content.find('[') != string::npos) {\n            size_t innerFirst = content.find('[');\n            size_t innerLast = content.rfind(']');\n            content = content.substr(innerFirst + 1, innerLast - innerFirst - 1);\n        }\n        stringstream ss(content);\n        string token;\n        vector<string> nodes;\n        while (getline(ss, token, ',')) {\n            while (!token.empty() && (token.front() == ' ' || token.front() == '\\\"')) token.erase(token.begin());\n            while (!token.empty() && (token.back() == ' ' || token.back() == '\\\"')) token.pop_back();\n            if (!token.empty()) nodes.push_back(token);\n        }\n        TreeNode* root = buildTree(nodes);\n        TreeNode* res = Solution().convertBST(root);\n        printTree(res);\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass TreeNode {\n    int val;\n    TreeNode left;\n    TreeNode right;\n    TreeNode(int x) { val = x; }\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public TreeNode convertBST(TreeNode root) {\n        return null;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static TreeNode buildTree(String[] nodes) {\n        if (nodes.length == 0 || nodes[0].equals(\"null\") || nodes[0].isEmpty()) return null;\n        TreeNode root = new TreeNode(Integer.parseInt(nodes[0]));\n        Queue<TreeNode> q = new LinkedList<>();\n        q.add(root);\n        int i = 1;\n        while (!q.isEmpty() && i < nodes.length) {\n            TreeNode curr = q.poll();\n            if (i < nodes.length) {\n                if (!nodes[i].equals(\"null\") && !nodes[i].isEmpty()) {\n                    curr.left = new TreeNode(Integer.parseInt(nodes[i]));\n                    q.add(curr.left);\n                }\n                i++;\n            }\n            if (i < nodes.length) {\n                if (!nodes[i].equals(\"null\") && !nodes[i].isEmpty()) {\n                    curr.right = new TreeNode(Integer.parseInt(nodes[i]));\n                    q.add(curr.right);\n                }\n                i++;\n            }\n        }\n        return root;\n    }\n\n    static void printTree(TreeNode root) {\n        if (root == null) {\n            System.out.println(\"[]\");\n            return;\n        }\n        List<String> list = new ArrayList<>();\n        Queue<TreeNode> q = new LinkedList<>();\n        q.add(root);\n        while (!q.isEmpty()) {\n            TreeNode curr = q.poll();\n            if (curr != null) {\n                list.add(String.valueOf(curr.val));\n                q.add(curr.left);\n                q.add(curr.right);\n            } else {\n                list.add(\"null\");\n            }\n        }\n        while (!list.isEmpty() && list.get(list.size() - 1).equals(\"null\")) {\n            list.remove(list.size() - 1);\n        }\n        System.out.println(\"[\" + String.join(\",\", list) + \"]\");\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[[\") && line.endsWith(\"]]\")) {\n            line = line.substring(1, line.length() - 1);\n        }\n        if (line.startsWith(\"[\")) line = line.substring(1);\n        if (line.endsWith(\"]\")) line = line.substring(0, line.length() - 1);\n        line = line.trim();\n        if (line.isEmpty()) {\n            System.out.println(\"[]\");\n            return;\n        }\n        String[] parts = line.split(\",\");\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replace(\"\\\"\", \"\");\n        TreeNode root = buildTree(parts);\n        TreeNode res = new Solution().convertBST(root);\n        printTree(res);\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import Optional\n\nclass TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n\n    @staticmethod\n    def from_list(values):\n        if not values:\n            return None\n        root = TreeNode(values[0])\n        queue = [root]\n        i = 1\n        while queue and i < len(values):\n            node = queue.pop(0)\n            if i < len(values) and values[i] is not None:\n                node.left = TreeNode(values[i])\n                queue.append(node.left)\n            i += 1\n            if i < len(values) and values[i] is not None:\n                node.right = TreeNode(values[i])\n                queue.append(node.right)\n            i += 1\n        return root\n\n    def to_list(self):\n        result = []\n        queue = [self]\n        while queue:\n            node = queue.pop(0)\n            if node:\n                result.append(node.val)\n                queue.append(node.left)\n                queue.append(node.right)\n            else:\n                result.append(None)\n        while result and result[-1] is None:\n            result.pop()\n        return result\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    root = TreeNode.from_list(args[0])\n    res = Solution().convertBST(root)\n    print(json.dumps(res.to_list() if res else []))\n",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nfunction TreeNode(val, left, right) {\n    this.val = (val===undefined ? 0 : val);\n    this.left = (left===undefined ? null : left);\n    this.right = (right===undefined ? null : right);\n}\n\nfunction buildTree(arr) {\n    if (!arr || arr.length === 0 || arr[0] === null) return null;\n    const root = new TreeNode(arr[0]);\n    const queue = [root];\n    let i = 1;\n    while (queue.length > 0 && i < arr.length) {\n        const node = queue.shift();\n        if (i < arr.length && arr[i] !== null && arr[i] !== undefined) {\n            node.left = new TreeNode(arr[i]);\n            queue.push(node.left);\n        }\n        i++;\n        if (i < arr.length && arr[i] !== null && arr[i] !== undefined) {\n            node.right = new TreeNode(arr[i]);\n            queue.push(node.right);\n        }\n        i++;\n    }\n    return root;\n}\n\nfunction treeToArray(root) {\n    if (!root) return [];\n    const result = [];\n    const queue = [root];\n    while (queue.length > 0) {\n        const node = queue.shift();\n        if (node) {\n            result.push(node.val);\n            queue.push(node.left);\n            queue.push(node.right);\n        } else {\n            result.push(null);\n        }\n    }\n    while (result.length > 0 && result[result.length - 1] === null) {\n        result.pop();\n    }\n    return result;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {TreeNode|null} root\n * @return {TreeNode|null}\n */\nvar convertBST = function(root) {\n    return null;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    const root = buildTree(args[0]);\n    const res = convertBST(root);\n    console.log(JSON.stringify(treeToArray(res)));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [
+    "Q1038"
+  ],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "30–45 minutes",
+  "learningObjectives": [
+    "Use the BST ordering property to choose an efficient traversal.",
+    "Apply reverse in-order traversal to process BST keys in descending order.",
+    "Maintain and update a running aggregate during tree traversal.",
+    "Analyze recursive tree algorithms using time and auxiliary-space complexity."
+  ]
 }

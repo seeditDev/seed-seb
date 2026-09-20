@@ -24,21 +24,24 @@
         "type": "reg",
         "input": "[[1,2,3],[2]]",
         "output": "1",
-        "explanation": "The heater at position 2 covers houses 1, 2, and 3 with radius 1."
+        "explanation": "The heater at position 2 covers houses 1, 2, and 3 with radius 1.",
+        "expectedOutput": "1"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[1,2,3,4],[1,4]]",
         "output": "1",
-        "explanation": "Each house is within distance 1 of at least one of the heaters at positions 1 and 4."
+        "explanation": "Each house is within distance 1 of at least one of the heaters at positions 1 and 4.",
+        "expectedOutput": "1"
       },
       {
         "id": "sample_3",
         "type": "reg",
         "input": "[[1,5],[2]]",
         "output": "3",
-        "explanation": "The closest heater to house 1 is at distance 1, while house 5 is at distance 3, so radius 3 is necessary."
+        "explanation": "The closest heater to house 1 is at distance 1, while house 5 is at distance 3, so radius 3 is necessary.",
+        "expectedOutput": "3"
       }
     ],
     "problemStatement": "Winter is coming! During the contest, your first job is to design a standard heater with a fixed warm radius to warm all the houses.\n\nEvery house can be warmed, as long as the house is within the heater's warm radius range.\n\nWith the positions of `houses` and `heaters` on a horizontal line, output *the smallest radius standard of heaters so that those heaters could cover all houses.*\n\n**Notice** that all the `heaters` follow your radius standard, and the warm radius will be the same.\n\n**Example 1:**\n\n```\nInput: houses = [1,2,3], heaters = [2]\nOutput: 1\nExplanation: The only heater was placed in the position 2, and if we use the radius 1 standard, then all the houses can be warmed.\n```\n\n**Example 2:**\n\n```\nInput: houses = [1,2,3,4], heaters = [1,4]\nOutput: 1\nExplanation: The two heaters were placed at positions 1 and 4. We need to use a radius 1 standard, then all the houses can be warmed.\n```\n\n**Example 3:**\n\n```\nInput: houses = [1,5], heaters = [2]\nOutput: 3\n```\n\n**Constraints:**\n\n* `1 <= houses.length, heaters.length <= 30 * 10^4`\n* `1 <= houses[i], heaters[i] <= 10^9`"
@@ -415,7 +418,7 @@
     "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n\ntypedef struct { int *a; int n; } Arr;\nstatic int cmp_int(const void* p,const void* q){ int x=*(const int*)p,y=*(const int*)q; return (x>y)-(x<y); }\nstatic char* extract_array(const char* s,int which){int depth=0,count=0,start=-1,end=-1;for(int i=0;s[i];i++){if(s[i]=='['){depth++;if(depth==2){count++;if(count==which)start=i;}}else if(s[i]==']'){if(depth==2&&count==which){end=i;break;}depth--;}}if(start<0||end<0)return NULL;int len=end-start+1;char*out=malloc((size_t)len+1);memcpy(out,s+start,(size_t)len);out[len]='\\0';return out;}\nstatic Arr parse_array(const char*s){Arr r={NULL,0}; if(!s||strcmp(s,\"[]\")==0)return r; int cap=16; r.a=malloc((size_t)cap*sizeof(int)); int i=1; while(s[i]&&s[i]!=']'){while(s[i]==' '||s[i]==',')i++; if(s[i]==']'||!s[i])break; char*e; long v=strtol(s+i,&e,10); if(r.n==cap){cap*=2;r.a=realloc(r.a,(size_t)cap*sizeof(int));} r.a[r.n++]=(int)v; i=(int)(e-s);} return r;}\nstatic int lower_bound_int(const int*a,int n,int x){int l=0,r=n;while(l<r){int m=l+(r-l)/2;if(a[m]<x)l=m+1;else r=m;}return l;}\nint findRadius(int*houses,int housesSize,int*heaters,int heatersSize){\n    return 0;\n}\nint main(void){char line[1000000];if(!fgets(line,sizeof(line),stdin))return 0;char*a=extract_array(line,1),*b=extract_array(line,2);Arr h=parse_array(a),he=parse_array(b);printf(\"%d\\n\",findRadius(h.a,h.n,he.a,he.n));free(a);free(b);free(h.a);free(he.a);return 0;}\n",
     "C++": "#include <bits/stdc++.h>\nusing namespace std;\nclass Solution {\npublic:\n    int findRadius(vector<int>& houses, vector<int>& heaters) {\n        return 0;\n    }\n};\nstatic vector<string> splitTop(const string& s){\n    string in=s.substr(1,s.size()-2); vector<string> out; int d=0,st=0;\n    for(int i=0;i<(int)in.size();i++){ char c=in[i]; if(c=='[')d++; else if(c==']')d--; else if(c==','&&d==0){out.push_back(in.substr(st,i-st)); st=i+1;} }\n    out.push_back(in.substr(st)); return out;\n}\nstatic vector<int> parseArray(const string& s){\n    if(s==\"[]\") return {};\n    string in=s.substr(1,s.size()-2); vector<int> a; stringstream ss(in); string x;\n    while(getline(ss,x,',')) a.push_back(stoi(x)); return a;\n}\nint main(){ string line; getline(cin,line); auto top=splitTop(line); auto h=parseArray(top[0]); auto he=parseArray(top[1]); cout << Solution().findRadius(h, he) << '\\n'; }\n",
     "Java": "import java.io.*;\nimport java.util.*;\nclass Solution {\n    public int findRadius(int[] houses, int[] heaters) {\n        return 0;\n    }\n}\npublic class Main {\n    static List<String> splitTop(String s) {\n        s=s.trim(); String inner=s.substring(1,s.length()-1);\n        List<String> out=new ArrayList<>(); int depth=0,start=0;\n        for(int i=0;i<inner.length();i++){char c=inner.charAt(i); if(c=='[')depth++; else if(c==']')depth--; else if(c==','&&depth==0){out.add(inner.substring(start,i).trim()); start=i+1;}}\n        out.add(inner.substring(start).trim()); return out;\n    }\n    static int[] parseArray(String s) {\n        s=s.trim(); if(s.equals(\"[]\")) return new int[0];\n        String inner=s.substring(1,s.length()-1).trim();\n        String[] p=inner.split(\",\"); int[] a=new int[p.length];\n        for(int i=0;i<p.length;i++) a[i]=Integer.parseInt(p[i].trim()); return a;\n    }\n    public static void main(String[] args)throws Exception{\n        BufferedReader br=new BufferedReader(new InputStreamReader(System.in));\n        String line=br.readLine().trim(); List<String> top=splitTop(line);\n        System.out.println(new Solution().findRadius(parseArray(top.get(0)),parseArray(top.get(1))));\n    }\n}\n",
-    "Python3": "import sys, json, bisect\nclass Solution:\n    def findRadius(self, houses, heaters):\n        pass\n\na=json.loads(sys.stdin.readline())\nprint(json.dumps(Solution().findRadius(a[0], a[1])))\n",
+    "Python3": "import sys, json\n\nclass Solution:\n    def findRadius(self, houses, heaters):\n        pass\n\nif __name__ == '__main__':\n    line = sys.stdin.readline()\n    if line.strip():\n        a = json.loads(line)\n        print(json.dumps(Solution().findRadius(a[0], a[1])))\n",
     "JavaScript": "\"use strict\";\nconst readline = require('readline');\nfunction findRadius(houses, heaters) {\n    return 0;\n}\nconst rl=readline.createInterface({input:process.stdin});\nrl.on('line',line=>{const a=JSON.parse(line.trim()); console.log(JSON.stringify(findRadius(a[0],a[1]))); rl.close();});\n"
   },
   "acceptanceRate": null,

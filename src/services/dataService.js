@@ -755,11 +755,11 @@ class DataService {
                 }
             }
 
-            // 3. Fetch candidate-specific tests directly assigned to this student email
+            // 3. Fetch candidate-specific tests directly assigned to this student email or roll number
             let directTests = [];
-            if (studentEmail && typeof getCandidateDirectTests === 'function') {
+            if ((studentEmail || studentRoll) && typeof getCandidateDirectTests === 'function') {
                 try {
-                    directTests = await getCandidateDirectTests(studentEmail);
+                    directTests = await getCandidateDirectTests(studentEmail, studentRoll);
                 } catch (dErr) {
                     console.warn('[DataService] getCandidateDirectTests error:', dErr);
                 }

@@ -21,14 +21,16 @@
         "type": "reg",
         "input": "[[9,3,15,20,7],[9,15,7,20,3]]",
         "output": "[3,9,20,null,null,15,7]",
-        "explanation": ""
+        "explanation": "",
+        "expectedOutput": "[3,9,20,null,null,15,7]"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[-1],[-1]]",
         "output": "[-1]",
-        "explanation": ""
+        "explanation": "",
+        "expectedOutput": "[-1]"
       }
     ],
     "problemStatement": "With two integer arrays `inorder` and `postorder` where `inorder` is the inorder traversal of a binary tree and `postorder` is the postorder traversal of the same tree, construct and output *the binary tree*.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/02/19/tree.jpg)\n\n```\nInput: inorder = [9,3,15,20,7], postorder = [9,15,7,20,3]\nOutput: [3,9,20,null,null,15,7]\n```\n\n**Example 2:**\n\n```\nInput: inorder = [-1], postorder = [-1]\nOutput: [-1]\n```\n\n**Constraints:**\n\n* `1 <= inorder.length <= 3000`\n* `postorder.length == inorder.length`\n* `-3000 <= inorder[i], postorder[i] <= 3000`\n* `inorder` and `postorder` consist of **unique** values.\n* Each value of `postorder` also appears in `inorder`.\n* `inorder` is **guaranteed** to be the inorder traversal of the tree.\n* `postorder` is **guaranteed** to be the postorder traversal of the tree."
@@ -105,7 +107,7 @@
   },
   "solution": {
     "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(n)\n\nclass TreeNode(object):\n    def __init__(self, x):\n        self.val = x\n        self.left = None\n        self.right = None\n\nclass Solution(object):\n    # @param inorder, a list of integers\n    # @param postorder, a list of integers\n    # @return a tree node\n    def buildTree(self, inorder, postorder):\n        lookup = {}\n        for i, num in enumerate(inorder):\n            lookup[num] = i\n        return self.buildTreeRecu(lookup, postorder, inorder, len(postorder), 0, len(inorder))\n\n    def buildTreeRecu(self, lookup, postorder, inorder, post_end, in_start, in_end):\n        if in_start == in_end:\n            return None\n        node = TreeNode(postorder[post_end - 1])\n        i = lookup[postorder[post_end - 1]]\n        node.left = self.buildTreeRecu(lookup, postorder, inorder, post_end - 1 - (in_end - i - 1), in_start, i)\n        node.right = self.buildTreeRecu(lookup, postorder, inorder, post_end - 1, i + 1, in_end)\n        return node",
+      "Python3": "import sys\nsys.setrecursionlimit(50000)\nclass Solution(object):\n\n    def buildTree(self, inorder, postorder):\n        lookup = {}\n        for i, num in enumerate(inorder):\n            lookup[num] = i\n        return self.buildTreeRecu(lookup, postorder, inorder, len(postorder), 0, len(inorder))\n\n    def buildTreeRecu(self, lookup, postorder, inorder, post_end, in_start, in_end):\n        if in_start == in_end:\n            return None\n        node = TreeNode(postorder[post_end - 1])\n        i = lookup[postorder[post_end - 1]]\n        node.left = self.buildTreeRecu(lookup, postorder, inorder, post_end - 1 - (in_end - i - 1), in_start, i)\n        node.right = self.buildTreeRecu(lookup, postorder, inorder, post_end - 1, i + 1, in_end)\n        return node",
       "C": "",
       "C++": "class Solution {\npublic:\n    TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {\n        \n        return nullptr;\n    }\n};",
       "Java": "",

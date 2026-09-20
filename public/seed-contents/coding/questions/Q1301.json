@@ -1,31 +1,22 @@
 {
-  "questionId": "Q1301",
-  "title": "Count of Paths with Max Score",
   "slug": "number-of-paths-with-max-score",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "dynamic-programming",
-      "matrix"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "dynamic-programming",
-      "matrix"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Work backward from S because every allowed move from the current cell points toward the lower-right.",
+    "For each cell, keep two values: the best score reachable from it and how many paths achieve that score.",
+    "When multiple successors have the same best score, add their path counts modulo 10^9 + 7.",
+    "E contributes zero to the score, while S initializes the DP with score 0 and one path."
+  ],
+  "title": "Count of Paths with Max Score",
   "content": {
-    "problemStatement": "You receive a square `board` of characters. You can move on the board starting at the bottom right square marked with the character `'S'`.\n\nYou need to reach the top left square marked with the character `'E'`. The rest of the squares are labeled either with a numeric character `1, 2, ..., 9` or with an obstacle `'X'`. In one move you can go up, left or up-left (diagonally) only if there is no obstacle there.\n\nOutput a list of two integers: the first integer is the largest sum of numeric characters you can collect, and the second is the number of such paths that you can take to get that largest sum, **taken modulo `10^9 + 7`**.\n\nIn case there is no path, output `[0, 0]`.\n\n**Example 1:**\n\n```\nInput: board = [\"E23\",\"2X2\",\"12S\"]\r\nOutput: [7,1]\r\n```\n\n**Example 2:**\n\n```\nInput: board = [\"E12\",\"1X1\",\"21S\"]\r\nOutput: [4,2]\r\n```\n\n**Example 3:**\n\n```\nInput: board = [\"E11\",\"XXX\",\"11S\"]\r\nOutput: [0,0]\r\n```\n\n**Constraints:**\n\n* `2 <= board.length == board[i].length <= 100`",
+    "notes": [
+      "Moves are allowed only up, left, or up-left.",
+      "The value of E and S is not added to the score.",
+      "The number of maximum-score paths is returned modulo 10^9 + 7."
+    ],
     "constraints": [
-      "2 <= board.length == board[i].length <= 100"
+      "2 <= board.length == board[i].length <= 100",
+      "board[0][0] == 'E' and board[n-1][n-1] == 'S'",
+      "Every other cell is a digit '1' through '9' or 'X'."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -35,284 +26,52 @@
         "type": "reg",
         "input": "[[\"E23\",\"2X2\",\"12S\"]]",
         "output": "[7,1]",
-        "explanation": ""
+        "explanation": "The only maximum-scoring route collects 2 + 3 + 2 = 7."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[\"E12\",\"1X1\",\"21S\"]]",
         "output": "[4,2]",
-        "explanation": ""
+        "explanation": "Two valid routes attain the same maximum score of 4."
       },
       {
         "id": "sample_3",
         "type": "reg",
         "input": "[[\"E11\",\"XXX\",\"11S\"]]",
         "output": "[0,0]",
-        "explanation": ""
+        "explanation": "The full obstacle row separates E from S, so no valid path exists."
       }
     ],
-    "notes": []
+    "problemStatement": "You receive a square `board` of characters. You can move on the board starting at the bottom right square marked with the character `'S'`.\n\nYou need to reach the top left square marked with the character `'E'`. The rest of the squares are labeled either with a numeric character `1, 2, ..., 9` or with an obstacle `'X'`. In one move you can go up, left or up-left (diagonally) only if there is no obstacle there.\n\nOutput a list of two integers: the first integer is the largest sum of numeric characters you can collect, and the second is the number of such paths that you can take to get that largest sum, **taken modulo `10^9 + 7`**.\n\nIn case there is no path, output `[0, 0]`.\n\n**Example 1:**\n\n```\nInput: board = [\"E23\",\"2X2\",\"12S\"]\r\nOutput: [7,1]\r\n```\n\n**Example 2:**\n\n```\nInput: board = [\"E12\",\"1X1\",\"21S\"]\r\nOutput: [4,2]\r\n```\n\n**Example 3:**\n\n```\nInput: board = [\"E11\",\"XXX\",\"11S\"]\r\nOutput: [0,0]\r\n```\n\n**Constraints:**\n\n* `2 <= board.length == board[i].length <= 100`"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Zero values",
-        "input": "[[\"E00\", \"0X0\", \"00S\"]]",
-        "expectedOutput": "[0, 4]",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[\"E11\", \"1X1\", \"11S\"]]",
-        "expectedOutput": "[3, 2]",
-        "weight": 4
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[\"E23\", \"2X2\", \"12S\"]]",
-        "expectedOutput": "[7, 1]",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[\"E12\", \"1X1\", \"21S\"]]",
-        "expectedOutput": "[4, 2]",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[\"E11\", \"XXX\", \"11S\"]]",
-        "expectedOutput": "[0, 0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Answer spans entire array",
-        "input": "[[\"E99\", \"9X9\", \"99S\"]]",
-        "expectedOutput": "[27, 2]",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Standard case (if applicable)",
-        "input": "[[\"E11\", \"XXX\", \"XXX\"]]",
-        "expectedOutput": "[0, 0]",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Maximum constraints stress",
-        "input": "[[\"E99\", \"9X9\", \"99S\", \"9X9\", \"99S\", \"9X9\", \"99S\", \"9X9\", \"99S\", \"9X9\", \"99S\"]]",
-        "expectedOutput": "[99, 1]",
-        "weight": 10
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Random large array",
-        "input": "[[\"E43\", \"4X7\", \"47S\", \"7X4\", \"74S\", \"4X7\", \"47S\", \"7X4\", \"74S\", \"4X7\", \"47S\"]]",
-        "expectedOutput": "[59, 1]",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "The judge supplies one JSON-serialized argument array per invocation."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      2,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -334,57 +93,333 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "dynamic-programming",
+      "matrix",
+      "grid"
     ],
-    "notes": []
+    "category": "Dynamic Programming",
+    "isPremium": false,
+    "topicTags": [
+      "dynamic-programming",
+      "matrix",
+      "grid",
+      "path-counting"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses dynamic programming to track the maximum sum and the number of paths to achieve that sum, exploring all possible moves (up, left, diagonally) from the start to the end of the board.",
+    "notes": [
+      "A rolling-row implementation reduces auxiliary space to O(n), while the full-table formulation uses O(n^2).",
+      "The path count must be accumulated only from successors achieving the current maximum score."
+    ],
+    "approach": "Dynamic programming from S toward E. For each reachable cell, store the maximum score obtainable from that cell to S and the number of ways to obtain that score. Compare the three successor cells (down, right, and down-right in board coordinates), keep only the largest successor score, and sum counts for ties modulo 10^9 + 7. Do not add the value of E or S.",
+    "editorial": {
+      "better": {
+        "complexity": "O(n^2) time and O(n^2) space.",
+        "description": "Use dynamic programming to avoid recomputing the best score for every suffix path. For each cell, combine results from its reachable successors and retain the best score plus the count of ways to attain it."
+      },
+      "optimal": {
+        "complexity": "O(n^2) time and O(n^2) space, or O(n) auxiliary space with rolling rows.",
+        "description": "Process cells from bottom-right to top-left. At each non-obstacle cell, inspect down, right, and down-right states, select the largest successor score, sum the counts of all successors tied for that score, and then add the current digit unless the cell is E. Return [0,0] when E is unreachable."
+      },
+      "bruteForce": {
+        "complexity": "Exponential in the worst case in n.",
+        "description": "Enumerate every valid path from S to E using the three allowed moves, compute its score, and keep the maximum score and its count. The number of paths grows exponentially, so this is unsuitable for large boards."
+      }
+    },
     "timeComplexity": "O(n^2)",
     "spaceComplexity": "O(n^2)",
     "code": {
-      "Python3": "# Time:  O(n^2)\n# Space: O(n)\n\nclass Solution(object):\n    def pathsWithMaxScore(self, board):\n        \"\"\"\n        :type board: List[str]\n        :rtype: List[int]\n        \"\"\"\n        MOD = 10**9+7\n        directions = [[1, 0], [0, 1], [1, 1]]\n        dp = [[[0, 0] for r in range(len(board[0])+1)]\n              for r in range(2)]\n        dp[(len(board)-1)%2][len(board[0])-1] = [0, 1]\n        for r in reversed(range(len(board))):\n            for c in reversed(range(len(board[0]))):\n                if board[r][c] in \"XS\":\n                    continue\n                dp[r%2][c] = [0, 0]\n                for dr, dc in directions:\n                    if dp[r%2][c][0] < dp[(r+dr)%2][c+dc][0]:\n                        dp[r%2][c] = dp[(r+dr)%2][c+dc][:]\n                    elif dp[r%2][c][0] == dp[(r+dr)%2][c+dc][0]:\n                        dp[r%2][c][1] = (dp[r%2][c][1]+dp[(r+dr)%2][c+dc][1]) % MOD\n                if dp[r%2][c][1] and board[r][c] != 'E':\n                    dp[r%2][c][0] += int(board[r][c])\n        return dp[0][0]"
-    },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "Python3": "import sys,json\nfrom typing import List\n\nclass Solution:\n def pathsWithMaxScore(self, board: List[str]) -> List[int]:\n  MOD=1000000007; n=len(board); best=[[-1]*n for _ in range(n)]; ways=[[0]*n for _ in range(n)]; best[-1][-1]=0; ways[-1][-1]=1\n  for r in range(n-1,-1,-1):\n   for c in range(n-1,-1,-1):\n    ch=board[r][c]\n    if ch in 'XS': continue\n    mx=-1; cnt=0\n    for dr,dc in ((1,0),(0,1),(1,1)):\n     nr,nc=r+dr,c+dc\n     if nr<n and nc<n and ways[nr][nc]:\n      if best[nr][nc]>mx: mx=best[nr][nc]; cnt=ways[nr][nc]\n      elif best[nr][nc]==mx: cnt=(cnt+ways[nr][nc])%MOD\n    if cnt: best[r][c]=mx+(0 if ch=='E' else int(ch)); ways[r][c]=cnt\n  return [best[0][0],ways[0][0]%MOD] if ways[0][0] else [0,0]"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n\n\n/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* pathsWithMaxScore(char ** board, int boardSize, int* returnSize){\n\n    *returnSize = 0;\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        // TODO: unpack logic for list<string> board\n        int returnSize = 0;\n        int* result = pathsWithMaxScore(board, &returnSize);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; i++) {\n            printf(\"%d\", result[i]);\n            if (i < returnSize - 1) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def pathsWithMaxScore(self, board: List[str]) -> List[int]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _board = _args[0]\n    _result = Solution().pathsWithMaxScore(_board)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string[]} board\n * @return {number[]}\n */\nvar pathsWithMaxScore = function(board) {\n    \n    return [];\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = pathsWithMaxScore(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int[] pathsWithMaxScore(List<String> board) {\n        \n        return new int[0];\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        // TODO: parse List<String> for board\n        int[] result = new Solution().pathsWithMaxScore(board);\n        System.out.println(java.util.Arrays.toString(result).replace(\", \", \",\").replace(\" \", \"\"));\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    vector<int> pathsWithMaxScore(vector<string>& board) {\n        \n        return {};\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    int board = readInt(tok);\n    auto result = Solution().pathsWithMaxScore(board);\n    cout << \"[\";\n    for(int i=0;i<(int)result.size();i++){\n        cout << result[i];\n        if(i+1<(int)result.size()) cout << \",\";\n    }\n    cout << \"]\" << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "board",
+        "type": "List<String>"
+      }
+    ],
+    "methodName": "pathsWithMaxScore"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How can the DP be implemented with O(n) auxiliary space?",
+    "What changes if diagonal moves are removed?",
+    "How would the state change if each cell could have a negative score?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[\"E1\",\"1S\"]]",
+        "label": "Minimum board with two equal optimal paths",
+        "weight": 4,
+        "expectedOutput": "[1,2]"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[\"E9\",\"9S\"]]",
+        "label": "Maximum digit on minimum board",
+        "weight": 4,
+        "expectedOutput": "[9,2]"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[\"EX\",\"1S\"]]",
+        "label": "Right neighbor blocked",
+        "weight": 4,
+        "expectedOutput": "[1,1]"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[\"E1\",\"XS\"]]",
+        "label": "Lower neighbor blocked",
+        "weight": 4,
+        "expectedOutput": "[1,1]"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[\"E2\",\"3S\"]]",
+        "label": "Two-digit minimum board",
+        "weight": 4,
+        "expectedOutput": "[3,1]"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[\"E11\",\"111\",\"11S\"]]",
+        "label": "All-one 3x3 with many optimal paths",
+        "weight": 4,
+        "expectedOutput": "[3,6]"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[\"E99\",\"999\",\"99S\"]]",
+        "label": "All-nine 3x3 with many optimal paths",
+        "weight": 4,
+        "expectedOutput": "[27,6]"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[\"E23\",\"2X2\",\"12S\"]]",
+        "label": "Obstacle forces unique optimum",
+        "weight": 4,
+        "expectedOutput": "[7,1]"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[\"E12\",\"1X1\",\"21S\"]]",
+        "label": "Two optimal routes around obstacle",
+        "weight": 4,
+        "expectedOutput": "[4,2]"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[\"E11\",\"XXX\",\"11S\"]]",
+        "label": "Disconnected by full obstacle row",
+        "weight": 4,
+        "expectedOutput": "[0,0]"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[\"E12\",\"345\",\"67S\"]]",
+        "label": "Increasing digits",
+        "weight": 3,
+        "expectedOutput": "[16,1]"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[\"E99\",\"191\",\"99S\"]]",
+        "label": "High-value center detour",
+        "weight": 3,
+        "expectedOutput": "[27,1]"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[\"E11\",\"919\",\"11S\"]]",
+        "label": "Central high digit",
+        "weight": 3,
+        "expectedOutput": "[19,1]"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[\"E11\",\"191\",\"11S\"]]",
+        "label": "High center with alternate ties",
+        "weight": 3,
+        "expectedOutput": "[11,4]"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[\"E111\",\"1111\",\"1111\",\"111S\"]]",
+        "label": "All-one 4x4 path-count case",
+        "weight": 3,
+        "expectedOutput": "[5,20]"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[\"E999\",\"9999\",\"9999\",\"999S\"]]",
+        "label": "All-nine 4x4 maximum-score tie case",
+        "weight": 3,
+        "expectedOutput": "[45,20]"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[\"E12\",\"567\",\"92S\"]]",
+        "label": "Mixed digits and diagonal transitions",
+        "weight": 3,
+        "expectedOutput": "[18,1]"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[\"E1111\",\"1XX1\",\"1111\",\"1XXS\"]]",
+        "label": "Narrow corridors and blocked branches",
+        "weight": 3,
+        "expectedOutput": "[5,2]"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[\"E1111\",\"1111\",\"1XX1\",\"111S\"]]",
+        "label": "Lower-right obstacle corridor",
+        "weight": 3,
+        "expectedOutput": "[5,5]"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[\"E1111\",\"XX11\",\"1111\",\"111S\"]]",
+        "label": "Upper-left blocked band",
+        "weight": 3,
+        "expectedOutput": "[5,4]"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[\"E9999\",\"9XX9\",\"9999\",\"999S\"]]",
+        "label": "High-value corridors with obstacles",
+        "weight": 3,
+        "expectedOutput": "[45,5]"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[\"E1919\",\"9191\",\"1919\",\"919S\"]]",
+        "label": "Alternating high and low digits",
+        "weight": 3,
+        "expectedOutput": "[29,13]"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[\"E9876\",\"5432\",\"1987\",\"654S\"]]",
+        "label": "Reverse-pattern mixed digits",
+        "weight": 3,
+        "expectedOutput": "[37,1]"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[\"E11111\",\"11111\",\"11X11\",\"11111\",\"1111S\"]]",
+        "label": "5x5 single obstacle",
+        "weight": 3,
+        "expectedOutput": "[7,34]"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[\"E1X11\",\"11X11\",\"11111\",\"1X111\",\"1111S\"]]",
+        "label": "5x5 multiple obstacles",
+        "weight": 3,
+        "expectedOutput": "[7,19]"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[\"E8218X\",\"118986\",\"441766\",\"X261X2\",\"X87517\",\"XXXX4S\"]]",
+        "label": "Deterministic randomized 6x6 case 1",
+        "weight": 3,
+        "expectedOutput": "[56,2]"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[\"EX7278\",\"619X49\",\"351X95\",\"6XX178\",\"98781X\",\"XXX4XS\"]]",
+        "label": "Deterministic randomized 6x6 case 2",
+        "weight": 3,
+        "expectedOutput": "[48,1]"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[\"E84114\",\"X18X49\",\"361175\",\"71215X\",\"X5X517\",\"X66X9S\"]]",
+        "label": "Deterministic randomized 6x6 case 3",
+        "weight": 3,
+        "expectedOutput": "[44,1]"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[\"EXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"X1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XX\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1X\",\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXS\"]]",
+        "label": "Maximum 100x100 board with a single diagonal path",
+        "weight": 3,
+        "expectedOutput": "[98,1]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[\"E1X1\",\"XX11\",\"1X11\",\"111S\"]]",
+        "label": "Disconnected obstacle pockets with a surviving detour",
+        "weight": 3,
+        "expectedOutput": "[4,3]"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q1301",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint* pathsWithMaxScore(char** a,int n,int* rs){int M=1000000007,*b=malloc(n*n*sizeof(int)),*w=calloc(n*n,sizeof(int));for(int i=0;i<n*n;i++)b[i]=-1;b[(n-1)*n+n-1]=0;w[(n-1)*n+n-1]=1;for(int r=n-1;r>=0;r--)for(int c=n-1;c>=0;c--){char ch=a[r][c];if(ch=='X'||ch=='S')continue;int mx=-1,cnt=0,dr[3]={1,0,1},dc[3]={0,1,1};for(int k=0;k<3;k++){int nr=r+dr[k],nc=c+dc[k];if(nr<n&&nc<n&&w[nr*n+nc]){int q=nr*n+nc;if(b[q]>mx){mx=b[q];cnt=w[q];}else if(b[q]==mx)cnt=(cnt+w[q])%M;}}if(cnt){int q=r*n+c;b[q]=mx+(ch=='E'?0:ch-'0');w[q]=cnt;}}int*o=malloc(2*sizeof(int));o[0]=w[0]?b[0]:0;o[1]=w[0]?w[0]:0;*rs=2;free(b);free(w);return o;}int main(){char s[20000];if(!fgets(s,sizeof(s),stdin))return 0;char*a[100];int n=0;for(char*p=s;*p&&n<100;p++)if(*p=='\"'){char*q=strchr(p+1,'\"');if(!q)break;*q=0;a[n++]=p+1;p=q;}int rs;int*r=pathsWithMaxScore(a,n,&rs);printf(\"[%d,%d]\\n\",r[0],r[1]);free(r);}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;class Solution{public:vector<int> pathsWithMaxScore(vector<string>& a){const int M=1000000007;int n=a.size();vector<vector<int>>b(n,vector<int>(n,-1)),w(n,vector<int>(n));b[n-1][n-1]=0;w[n-1][n-1]=1;for(int r=n-1;r>=0;r--)for(int c=n-1;c>=0;c--){char ch=a[r][c];if(ch=='X'||ch=='S')continue;int mx=-1,cnt=0;for(auto[d,e]:vector<pair<int,int>>{{1,0},{0,1},{1,1}}){int nr=r+d,nc=c+e;if(nr<n&&nc<n&&w[nr][nc]){if(b[nr][nc]>mx){mx=b[nr][nc];cnt=w[nr][nc];}else if(b[nr][nc]==mx)cnt=(cnt+w[nr][nc])%M;}}if(cnt){b[r][c]=mx+(ch=='E'?0:ch-'0');w[r][c]=cnt;}}return w[0][0]?vector<int>{b[0][0],w[0][0]}:vector<int>{0,0};}};int main(){string s;getline(cin,s);vector<string>a;for(size_t i=0;i<s.size();){if(s[i]=='\"'){size_t j=s.find('\"',i+1);a.push_back(s.substr(i+1,j-i-1));i=j+1;}else i++;}auto r=Solution().pathsWithMaxScore(a);cout<<\"[\"<<r[0]<<\",\"<<r[1]<<\"]\\n\";}\n",
+    "Java": "import java.io.*;import java.util.*;import java.util.regex.*;\nclass Solution{public int[] pathsWithMaxScore(List<String> board){final int MOD=1000000007,n=board.size();int[][] b=new int[n][n],w=new int[n][n];for(int[] x:b)Arrays.fill(x,-1);b[n-1][n-1]=0;w[n-1][n-1]=1;for(int r=n-1;r>=0;r--)for(int c=n-1;c>=0;c--){char ch=board.get(r).charAt(c);if(ch=='X'||ch=='S')continue;int mx=-1,cnt=0;int[][] ds={{1,0},{0,1},{1,1}};for(int[] d:ds){int nr=r+d[0],nc=c+d[1];if(nr<n&&nc<n&&w[nr][nc]>0){if(b[nr][nc]>mx){mx=b[nr][nc];cnt=w[nr][nc];}else if(b[nr][nc]==mx)cnt=(int)((cnt+(long)w[nr][nc])%MOD);}}if(cnt>0){b[r][c]=mx+(ch=='E'?0:ch-'0');w[r][c]=cnt;}}return w[0][0]==0?new int[]{0,0}:new int[]{b[0][0],w[0][0]};}}\npublic class Main{public static void main(String[]z)throws Exception{String s=new BufferedReader(new InputStreamReader(System.in)).readLine();String[] t=s.split(\"\\\"\");List<String> a=new ArrayList<>();for(int i=1;i<t.length;i+=2)a.add(t[i]);System.out.println(Arrays.toString(new Solution().pathsWithMaxScore(a)).replace(\" \",\"\"));}}\n",
+    "Python3": "import sys,json\nfrom typing import List\n\nclass Solution:\n    pass\n\nif __name__=='__main__':\n a=json.loads(sys.stdin.readline()); print(json.dumps(Solution().pathsWithMaxScore(a[0]),separators=(',',':')))\n",
+    "JavaScript": "const fs=require('fs');\nfunction pathsWithMaxScore(board){const MOD=1000000007,n=board.length,b=Array.from({length:n},()=>Array(n).fill(-1)),w=Array.from({length:n},()=>Array(n).fill(0));b[n-1][n-1]=0;w[n-1][n-1]=1;for(let r=n-1;r>=0;r--)for(let c=n-1;c>=0;c--){const ch=board[r][c];if(ch==='X'||ch==='S')continue;let mx=-1,cnt=0;for(const [dr,dc] of [[1,0],[0,1],[1,1]]){const nr=r+dr,nc=c+dc;if(nr<n&&nc<n&&w[nr][nc]){if(b[nr][nc]>mx){mx=b[nr][nc];cnt=w[nr][nc]}else if(b[nr][nc]===mx)cnt=(cnt+w[nr][nc])%MOD}}if(cnt){b[r][c]=mx+(ch==='E'?0:Number(ch));w[r][c]=cnt}}return w[0][0]?[b[0][0],w[0][0]%MOD]:[0,0]}\nconst a=JSON.parse(fs.readFileSync(0,'utf8'));console.log(JSON.stringify(pathsWithMaxScore(a[0])));\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–60 min",
+  "learningObjectives": [
+    "Design grid dynamic programming states.",
+    "Count optimal paths while optimizing a score.",
+    "Handle unreachable states and modular path counts.",
+    "Reduce two-dimensional DP space using rolling rows."
+  ]
 }

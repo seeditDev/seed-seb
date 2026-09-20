@@ -20,18 +20,20 @@
     "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
-        "id": "sample_1",
+        "id": "sample_0",
         "type": "reg",
-        "input": "[\"abc\",\"ababc\"]",
-        "output": "[0,2]",
-        "explanation": "Initially s = \"?????\".\n- Place stamp at index 0 to get \"abc??\".\n- Place stamp at index 2 to get \"ababc\".\n[1,0,2] would also be accepted as an answer, as well as some other answers."
+        "input": "[[1, 2, 3]]",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": "The largest divisible subset is [1, 2]."
       },
       {
-        "id": "sample_2",
+        "id": "sample_1",
         "type": "reg",
-        "input": "[\"abca\",\"aabcaca\"]",
-        "output": "[3,0,1]",
-        "explanation": "Initially s = \"???????\".\n- Place stamp at index 3 to get \"???abca\".\n- Place stamp at index 0 to get \"abcabca\".\n- Place stamp at index 1 to get \"aabcaca\"."
+        "input": "[[1, 2, 4, 8]]",
+        "output": "[1, 2, 4, 8]",
+        "expectedOutput": "[1, 2, 4, 8]",
+        "explanation": "The largest divisible subset is [1, 2, 4, 8]."
       }
     ],
     "problemStatement": "With a set of **distinct** positive integers `nums`, output the largest subset `answer` such that every pair `(answer[i], answer[j])` of elements in this subset satisfies:\n\n* `answer[i] % answer[j] == 0`, or\n* `answer[j] % answer[i] == 0`\n\nIf there are multiple solutions, output any of them.\n\n**Example 1:**\n\n```\nInput: nums = [1,2,3]\nOutput: [1,2]\nExplanation: [1,3] is also accepted.\n```\n\n**Example 2:**\n\n```\nInput: nums = [1,2,4,8]\nOutput: [1,2,4,8]\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 1000`\n* `1 <= nums[i] <= 2000000000 * 10^9`\n* All the integers in `nums` are **unique**."
@@ -105,34 +107,13 @@
     "companyTags": []
   },
   "solution": {
-    "notes": [
-      "A reverse erasure is safe only when every non-'?' character in the window matches the corresponding stamp character and at least one character is erased.",
-      "Each target position is erased at most once, and each window is completed at most once.",
-      "The forward answer is the reverse of the reverse-erasure order."
-    ],
-    "approach": "Work backwards from target. Treat '?' as an already erased character. For each possible stamp window, keep the positions that already match the stamp (made) and the positions that still conflict (todo). Windows with no todo can be erased immediately. Put every newly erased position into a queue; when an erased position removes the final todo entry of a neighboring window, that window becomes erasable and is queued as well. If every target position is erased, reverse the collected window indices to obtain a valid forward stamping order; otherwise return an empty array.",
-    "editorial": {
-      "better": {
-        "complexity": "O(n * (n - m + 1) * m) worst-case time and O(n) to O(nm) space depending on the implementation.",
-        "description": "Work backwards from target and repeatedly scan every possible window. Whenever a window contains only matching characters and at least one not-yet-erased character, replace its matching characters with '?'. Repeat until no progress is possible. This removes the need to enumerate forward sequences, but repeated full rescans can be quadratic in the target length."
-      },
-      "optimal": {
-        "complexity": "O((n - m + 1) * m) time and O((n - m + 1) * m) space.",
-        "description": "Use the same reverse-erasure idea with a queue. For each window, store its matching positions in made and its mismatching positions in todo. Fully matching windows are immediately erasable. When a character becomes '?', only windows containing that character can change, so inspect those nearby windows instead of rescanning the entire target. Once a window's todo set becomes empty, erase it and enqueue its made positions. If all positions are erased, reverse the collected indices."
-      },
-      "bruteForce": {
-        "complexity": "Exponential in the number of possible stamp placements and turns; impractical for the constraints.",
-        "description": "Try sequences of stamp positions from the initial all-'?' string and simulate each sequence until the target is reached or the turn limit is exceeded. This explores an exponential search space and is useful only for very small inputs."
-      }
-    },
-    "timeComplexity": "O((n - m + 1) * m), where n = target.length and m = stamp.length.",
-    "spaceComplexity": "O((n - m + 1) * m) for the per-window made/todo state and O(n) auxiliary queue/state.",
+    "language": "Python3",
     "code": {
-      "C": "/* YOUR SOLUTION */\nint* movesToStamp(char* stamp, char* target, int* returnSize) {\n    int m = (int)strlen(stamp);\n    int n = (int)strlen(target);\n    int windows = n - m + 1;\n\n    int* made = (int*)calloc(windows * m, sizeof(int));\n    int* madeCount = (int*)calloc(windows, sizeof(int));\n    int* todo = (int*)calloc(windows * m, sizeof(int));\n    int* todoCount = (int*)calloc(windows, sizeof(int));\n    bool* erased = (bool*)calloc(n, sizeof(bool));\n    int* queue = (int*)malloc(n * sizeof(int));\n    int qHead = 0, qTail = 0;\n    int* answer = (int*)malloc(n * sizeof(int));\n    int answerCount = 0;\n\n    for (int i = 0; i < windows; ++i) {\n        for (int j = 0; j < m; ++j) {\n            int p = i + j;\n            if (target[p] == stamp[j])\n                made[i * m + madeCount[i]++] = p;\n            else\n                todo[i * m + todoCount[i]++] = p;\n        }\n        if (todoCount[i] == 0) {\n            answer[answerCount++] = i;\n            for (int k = 0; k < madeCount[i]; ++k) {\n                int p = made[i * m + k];\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue[qTail++] = p;\n                }\n            }\n        }\n    }\n\n    while (qHead < qTail) {\n        int pos = queue[qHead++];\n        int start = pos - m + 1;\n        if (start < 0) start = 0;\n        int end = pos;\n        if (end > n - m) end = n - m;\n\n        for (int i = start; i <= end; ++i) {\n            bool found = false;\n            for (int k = 0; k < todoCount[i]; ++k) {\n                if (todo[i * m + k] == pos) {\n                    todo[i * m + k] = todo[i * m + (--todoCount[i])];\n                    found = true;\n                    break;\n                }\n            }\n            if (!found || todoCount[i] != 0) continue;\n\n            answer[answerCount++] = i;\n            for (int k = 0; k < madeCount[i]; ++k) {\n                int p = made[i * m + k];\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue[qTail++] = p;\n                }\n            }\n        }\n    }\n\n    for (int i = 0; i < n; ++i) {\n        if (!erased[i]) {\n            free(made); free(madeCount); free(todo); free(todoCount);\n            free(erased); free(queue); free(answer);\n            *returnSize = 0;\n            return NULL;\n        }\n    }\n\n    for (int i = 0; i < answerCount / 2; ++i) {\n        int tmp = answer[i];\n        answer[i] = answer[answerCount - 1 - i];\n        answer[answerCount - 1 - i] = tmp;\n    }\n\n    free(made); free(madeCount); free(todo); free(todoCount);\n    free(erased); free(queue);\n    *returnSize = answerCount;\n    return answer;\n}",
-      "C++": "class Solution {\npublic:\n    vector<int> movesToStamp(string stamp, string target) {\n        int m = stamp.size(), n = target.size();\n        vector<vector<int>> made(n - m + 1);\n        vector<unordered_set<int>> todo(n - m + 1);\n        queue<int> q;\n        vector<char> erased(n, false);\n        vector<int> answer;\n\n        for (int i = 0; i <= n - m; ++i) {\n            for (int j = 0; j < m; ++j) {\n                if (target[i + j] == stamp[j]) made[i].push_back(i + j);\n                else todo[i].insert(i + j);\n            }\n            if (todo[i].empty()) {\n                answer.push_back(i);\n                for (int p : made[i]) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        q.push(p);\n                    }\n                }\n            }\n        }\n\n        while (!q.empty()) {\n            int pos = q.front();\n            q.pop();\n            int start = max(0, pos - m + 1);\n            int end = min(n - m, pos);\n            for (int i = start; i <= end; ++i) {\n                auto it = todo[i].find(pos);\n                if (it == todo[i].end()) continue;\n                todo[i].erase(it);\n                if (!todo[i].empty()) continue;\n                answer.push_back(i);\n                for (int p : made[i]) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        q.push(p);\n                    }\n                }\n            }\n        }\n\n        for (char x : erased) if (!x) return {};\n        reverse(answer.begin(), answer.end());\n        return answer;\n    }\n};",
-      "Java": "class Solution {\n    public int[] movesToStamp(String stamp, String target) {\n        int m = stamp.length(), n = target.length();\n        List<int[]> made = new ArrayList<>();\n        List<Set<Integer>> todo = new ArrayList<>();\n        ArrayDeque<Integer> queue = new ArrayDeque<>();\n        boolean[] erased = new boolean[n];\n        List<Integer> answer = new ArrayList<>();\n\n        for (int i = 0; i <= n - m; i++) {\n            List<Integer> madeList = new ArrayList<>();\n            Set<Integer> todoSet = new HashSet<>();\n            for (int j = 0; j < m; j++) {\n                if (target.charAt(i + j) == stamp.charAt(j)) {\n                    madeList.add(i + j);\n                } else {\n                    todoSet.add(i + j);\n                }\n            }\n            int[] madeArray = new int[madeList.size()];\n            for (int k = 0; k < madeList.size(); k++) madeArray[k] = madeList.get(k);\n            made.add(madeArray);\n            todo.add(todoSet);\n\n            if (todoSet.isEmpty()) {\n                answer.add(i);\n                for (int p : madeArray) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        queue.add(p);\n                    }\n                }\n            }\n        }\n\n        while (!queue.isEmpty()) {\n            int pos = queue.remove();\n            int start = Math.max(0, pos - m + 1);\n            int end = Math.min(n - m, pos);\n            for (int i = start; i <= end; i++) {\n                if (!todo.get(i).remove(pos)) continue;\n                if (!todo.get(i).isEmpty()) continue;\n                answer.add(i);\n                for (int p : made.get(i)) {\n                    if (!erased[p]) {\n                        erased[p] = true;\n                        queue.add(p);\n                    }\n                }\n            }\n        }\n\n        if (!allErased(erased)) return new int[0];\n        int[] result = new int[answer.size()];\n        for (int i = 0; i < answer.size(); i++) {\n            result[i] = answer.get(answer.size() - 1 - i);\n        }\n        return result;\n    }\n\n    private boolean allErased(boolean[] erased) {\n        for (boolean x : erased) if (!x) return false;\n        return true;\n    }\n}",
-      "Python3": "from collections import deque\nfrom typing import List\n\nclass Solution:\n    def movesToStamp(self, stamp: str, target: str) -> List[int]:\n        m, n = len(stamp), len(target)\n        windows = []\n        queue = deque()\n        erased = [False] * n\n        answer = []\n\n        for i in range(n - m + 1):\n            made = set()\n            todo = set()\n            for j, ch in enumerate(stamp):\n                if target[i + j] == ch:\n                    made.add(i + j)\n                else:\n                    todo.add(i + j)\n            windows.append([made, todo])\n\n            if not todo:\n                answer.append(i)\n                for pos in made:\n                    if not erased[pos]:\n                        erased[pos] = True\n                        queue.append(pos)\n\n        while queue:\n            pos = queue.popleft()\n            start = max(0, pos - m + 1)\n            end = min(n - m, pos) + 1\n            for i in range(start, end):\n                made, todo = windows[i]\n                if pos not in todo:\n                    continue\n                todo.remove(pos)\n                if todo:\n                    continue\n                answer.append(i)\n                for p in made:\n                    if not erased[p]:\n                        erased[p] = True\n                        queue.append(p)\n\n        return answer[::-1] if all(erased) else []",
-      "JavaScript": "const readline = require('readline');\n\nvar movesToStamp = function(stamp, target) {\n    const m = stamp.length, n = target.length;\n    const made = new Array(n - m + 1);\n    const todo = new Array(n - m + 1);\n    const queue = [];\n    const erased = new Array(n).fill(false);\n    const answer = [];\n\n    for (let i = 0; i <= n - m; i++) {\n        made[i] = [];\n        todo[i] = [];\n        for (let j = 0; j < m; j++) {\n            if (target[i + j] === stamp[j]) made[i].push(i + j);\n            else todo[i].push(i + j);\n        }\n        if (todo[i].length === 0) {\n            answer.push(i);\n            for (const p of made[i]) {\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue.push(p);\n                }\n            }\n        }\n    }\n\n    let head = 0;\n    while (head < queue.length) {\n        const pos = queue[head++];\n        const start = Math.max(0, pos - m + 1);\n        const end = Math.min(n - m, pos);\n        for (let i = start; i <= end; i++) {\n            const idx = todo[i].indexOf(pos);\n            if (idx === -1) continue;\n            todo[i].splice(idx, 1);\n            if (todo[i].length !== 0) continue;\n            answer.push(i);\n            for (const p of made[i]) {\n                if (!erased[p]) {\n                    erased[p] = true;\n                    queue.push(p);\n                }\n            }\n        }\n    }\n\n    return erased.every(Boolean) ? answer.reverse() : [];\n};"
+      "C": "int* largestDivisibleSubset(int* nums, int numsSize, int* returnSize) {\n    if (numsSize == 0) { *returnSize = 0; return NULL; }\n    // Bubble or qsort nums\n    for (int i = 0; i < numsSize - 1; i++) {\n        for (int j = 0; j < numsSize - i - 1; j++) {\n            if (nums[j] > nums[j + 1]) { int t = nums[j]; nums[j] = nums[j + 1]; nums[j + 1] = t; }\n        }\n    }\n    int* dp = (int*)malloc(numsSize * sizeof(int));\n    int* parent = (int*)malloc(numsSize * sizeof(int));\n    for (int i = 0; i < numsSize; i++) { dp[i] = 1; parent[i] = -1; }\n    int max_idx = 0;\n    for (int i = 0; i < numsSize; i++) {\n        for (int j = 0; j < i; j++) {\n            if (nums[i] % nums[j] == 0 && dp[j] + 1 > dp[i]) {\n                dp[i] = dp[j] + 1;\n                parent[i] = j;\n            }\n        }\n        if (dp[i] > dp[max_idx]) max_idx = i;\n    }\n    *returnSize = dp[max_idx];\n    int* res = (int*)malloc(dp[max_idx] * sizeof(int));\n    int curr = max_idx, idx = dp[max_idx] - 1;\n    while (curr != -1) {\n        res[idx--] = nums[curr];\n        curr = parent[curr];\n    }\n    free(dp); free(parent);\n    return res;\n}",
+      "C++": "class Solution {\npublic:\n    vector<int> largestDivisibleSubset(vector<int>& nums) {\n        if (nums.empty()) return {};\n        sort(nums.begin(), nums.end());\n        int n = nums.size();\n        vector<int> dp(n, 1), parent(n, -1);\n        int max_idx = 0;\n        for (int i = 0; i < n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (nums[i] % nums[j] == 0 && dp[j] + 1 > dp[i]) {\n                    dp[i] = dp[j] + 1;\n                    parent[i] = j;\n                }\n            }\n            if (dp[i] > dp[max_idx]) max_idx = i;\n        }\n        vector<int> res;\n        int curr = max_idx;\n        while (curr != -1) {\n            res.push_back(nums[curr]);\n            curr = parent[curr];\n        }\n        reverse(res.begin(), res.end());\n        return res;\n    }\n};",
+      "Java": "class Solution {\n    public List<Integer> largestDivisibleSubset(int[] nums) {\n        if (nums == null || nums.length == 0) return new ArrayList<>();\n        Arrays.sort(nums);\n        int n = nums.length;\n        int[] dp = new int[n];\n        int[] parent = new int[n];\n        Arrays.fill(dp, 1);\n        Arrays.fill(parent, -1);\n        int max_idx = 0;\n        for (int i = 0; i < n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (nums[i] % nums[j] == 0 && dp[j] + 1 > dp[i]) {\n                    dp[i] = dp[j] + 1;\n                    parent[i] = j;\n                }\n            }\n            if (dp[i] > dp[max_idx]) max_idx = i;\n        }\n        List<Integer> res = new ArrayList<>();\n        int curr = max_idx;\n        while (curr != -1) {\n            res.add(nums[curr]);\n            curr = parent[curr];\n        }\n        Collections.reverse(res);\n        return res;\n    }\n}",
+      "Python3": "from typing import List\n\nclass Solution:\n    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:\n        if not nums:\n            return []\n        nums.sort()\n        n = len(nums)\n        dp = [1] * n\n        parent = [-1] * n\n        max_idx = 0\n        for i in range(n):\n            for j in range(i):\n                if nums[i] % nums[j] == 0 and dp[j] + 1 > dp[i]:\n                    dp[i] = dp[j] + 1\n                    parent[i] = j\n            if dp[i] > dp[max_idx]:\n                max_idx = i\n        res = []\n        curr = max_idx\n        while curr != -1:\n            res.append(nums[curr])\n            curr = parent[curr]\n        return res[::-1]",
+      "JavaScript": "var largestDivisibleSubset = function(nums) {\n    if (!nums || nums.length === 0) return [];\n    nums.sort((a, b) => a - b);\n    const n = nums.length;\n    const dp = new Array(n).fill(1);\n    const parent = new Array(n).fill(-1);\n    let max_idx = 0;\n    for (let i = 0; i < n; i++) {\n        for (let j = 0; j < i; j++) {\n            if (nums[i] % nums[j] === 0 && dp[j] + 1 > dp[i]) {\n                dp[i] = dp[j] + 1;\n                parent[i] = j;\n            }\n        }\n        if (dp[i] > dp[max_idx]) max_idx = i;\n    }\n    const res = [];\n    let curr = max_idx;\n    while (curr !== -1) {\n        res.push(nums[curr]);\n        curr = parent[curr];\n    }\n    return res.reverse();\n};"
     }
   },
   "verified": true,
@@ -160,243 +141,213 @@
     "hidden": [
       {
         "id": "tc_01",
-        "type": "reg",
-        "input": "[\"a\",\"a\"]",
-        "label": "Single-character exact match",
-        "weight": 4,
-        "expectedOutput": "[0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1]]",
+        "expectedOutput": "[1]"
       },
       {
         "id": "tc_02",
-        "type": "reg",
-        "input": "[\"ab\",\"ab\"]",
-        "label": "Stamp equals target",
-        "weight": 4,
-        "expectedOutput": "[0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[2, 3]]",
+        "expectedOutput": "[2]"
       },
       {
         "id": "tc_03",
-        "type": "reg",
-        "input": "[\"aaa\",\"aaaa\"]",
-        "label": "Single overlap with repeated characters",
-        "weight": 4,
-        "expectedOutput": "[1,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[4, 8, 10, 240]]",
+        "expectedOutput": "[4, 8, 240]"
       },
       {
         "id": "tc_04",
-        "type": "reg",
-        "input": "[\"abc\",\"abc\"]",
-        "label": "Unique-character exact match",
-        "weight": 4,
-        "expectedOutput": "[0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[3, 4, 16, 8]]",
+        "expectedOutput": "[4, 8, 16]"
       },
       {
         "id": "tc_05",
-        "type": "reg",
-        "input": "[\"abc\",\"acb\"]",
-        "label": "Impossible same-length permutation",
-        "weight": 4,
-        "expectedOutput": "[]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[5, 9, 18, 54, 108, 540, 90, 180, 360, 720]]",
+        "expectedOutput": "[9, 18, 90, 180, 360, 720]"
       },
       {
         "id": "tc_06",
-        "type": "reg",
-        "input": "[\"a\",\"b\"]",
-        "label": "Impossible one-character target",
-        "weight": 4,
-        "expectedOutput": "[]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[2, 3, 4, 9, 8]]",
+        "expectedOutput": "[2, 4, 8]"
       },
       {
         "id": "tc_07",
-        "type": "reg",
-        "input": "[\"a\",\"aaaa\"]",
-        "label": "Length-one stamp covers every position",
-        "weight": 4,
-        "expectedOutput": "[3,2,1,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 2, 4, 8, 16, 32]]",
+        "expectedOutput": "[1, 2, 4, 8, 16, 32]"
       },
       {
         "id": "tc_08",
-        "type": "reg",
-        "input": "[\"ab\",\"ababababab\"]",
-        "label": "Repeated alternating target",
-        "weight": 4,
-        "expectedOutput": "[7,5,3,1,8,6,4,2,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[7, 14, 28, 56]]",
+        "expectedOutput": "[7, 14, 28, 56]"
       },
       {
         "id": "tc_09",
-        "type": "reg",
-        "input": "[\"aba\",\"ababa\"]",
-        "label": "Overlapping palindrome stamp",
-        "weight": 4,
-        "expectedOutput": "[1,2,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 3, 9, 27, 81]]",
+        "expectedOutput": "[1, 3, 9, 27, 81]"
       },
       {
         "id": "tc_10",
-        "type": "reg",
-        "input": "[\"abc\",\"abcabc\"]",
-        "label": "Two non-overlapping placements",
-        "weight": 4,
-        "expectedOutput": "[2,1,3,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[2, 5, 10, 20, 40]]",
+        "expectedOutput": "[2, 10, 20, 40]"
       },
       {
         "id": "tc_11",
-        "type": "reg",
-        "input": "[\"aba\",\"abaaba\"]",
-        "label": "Overlapping repeated stamp",
-        "weight": 3,
-        "expectedOutput": "[2,1,3,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[194, 10, 14, 52, 149, 153, 122, 27, 157, 159]]",
+        "expectedOutput": "[10]"
       },
       {
         "id": "tc_12",
-        "type": "reg",
-        "input": "[\"ab\",\"aab\"]",
-        "label": "Overlapping placement requiring overwrite",
-        "weight": 3,
-        "expectedOutput": "[0,1]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[99, 35, 72, 200, 108, 118, 86, 87, 26, 30, 191]]",
+        "expectedOutput": "[26]"
       },
       {
         "id": "tc_13",
-        "type": "reg",
-        "input": "[\"abca\",\"aabcaca\"]",
-        "label": "Sample-pattern overlap",
-        "weight": 3,
-        "expectedOutput": "[2,3,0,1]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[35, 4, 164, 136, 105, 108, 176, 147, 52, 122, 124, 61, 126]]",
+        "expectedOutput": "[4, 52]"
       },
       {
         "id": "tc_14",
-        "type": "reg",
-        "input": "[\"abc\",\"ababcababc\"]",
-        "label": "Multiple overlapping placements",
-        "weight": 3,
-        "expectedOutput": "[6,4,3,1,5,0,7,2]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[193, 173, 14, 148, 150, 126]]",
+        "expectedOutput": "[14, 126]"
       },
       {
         "id": "tc_15",
-        "type": "reg",
-        "input": "[\"abc\",\"abcabcabcabc\"]",
-        "label": "Disjoint placements covering target",
-        "weight": 3,
-        "expectedOutput": "[8,7,5,4,2,1,9,6,3,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[162, 101, 134, 103, 137, 77, 14, 143, 144, 175, 147, 149, 23]]",
+        "expectedOutput": "[14]"
       },
       {
         "id": "tc_16",
-        "type": "reg",
-        "input": "[\"aa\",\"aaaaa\"]",
-        "label": "Repeated-character overlap",
-        "weight": 3,
-        "expectedOutput": "[3,2,1,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[193, 50, 19, 21, 53, 118]]",
+        "expectedOutput": "[19]"
       },
       {
         "id": "tc_17",
-        "type": "reg",
-        "input": "[\"ab\",\"aabb\"]",
-        "label": "Conflicting overlap resolved by overwrite",
-        "weight": 3,
-        "expectedOutput": "[2,0,1]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[128, 33, 100, 103, 199, 40, 77, 174, 144, 147, 85]]",
+        "expectedOutput": "[33]"
       },
       {
         "id": "tc_18",
-        "type": "reg",
-        "input": "[\"abc\",\"abbc\"]",
-        "label": "Impossible near-match with local compatibility trap",
-        "weight": 3,
-        "expectedOutput": "[]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[32, 121, 72, 184]]",
+        "expectedOutput": "[32]"
       },
       {
         "id": "tc_19",
-        "type": "reg",
-        "input": "[\"abc\",\"abcc\"]",
-        "label": "Boundary overlap producing final suffix",
-        "weight": 3,
-        "expectedOutput": "[1,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[128, 193, 100, 197, 68, 140, 113, 85, 152, 155, 120, 157]]",
+        "expectedOutput": "[68]"
       },
       {
         "id": "tc_20",
-        "type": "reg",
-        "input": "[\"a\",\"bbbb\"]",
-        "label": "Impossible maximum-value alphabet mismatch",
-        "weight": 3,
-        "expectedOutput": "[]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[72, 98, 36]]",
+        "expectedOutput": "[36, 72]"
       },
       {
         "id": "tc_21",
-        "type": "reg",
-        "input": "[\"abcd\",\"aabcababcd\"]",
-        "label": "Heavy overlap with four-character stamp",
-        "weight": 3,
-        "expectedOutput": "[3,2,0,5,1,4,6]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[97, 50, 154]]",
+        "expectedOutput": "[50]"
       },
       {
         "id": "tc_22",
-        "type": "reg",
-        "input": "[\"xyz\",\"xyzxyxyzxyzxxyz\"]",
-        "label": "Nontrivial overlapping placements",
-        "weight": 3,
-        "expectedOutput": "[10,9,4,2,1,11,7,6,3,12,8,5,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[96, 193, 194, 35, 66, 180, 84, 151]]",
+        "expectedOutput": "[35]"
       },
       {
         "id": "tc_23",
-        "type": "reg",
-        "input": "[\"abca\",\"ababcabca\"]",
-        "label": "Long stamp with overlapping placements",
-        "weight": 3,
-        "expectedOutput": "[1,4,3,0,5,2]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[64, 193, 129, 162, 196, 166, 199, 104, 198, 42, 10, 16, 19, 121]]",
+        "expectedOutput": "[16, 64]"
       },
       {
         "id": "tc_24",
-        "type": "reg",
-        "input": "[\"abc\",\"ababc\"]",
-        "label": "Alternative valid two-placement construction",
-        "weight": 3,
-        "expectedOutput": "[1,0,2]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[62, 82, 174, 150]]",
+        "expectedOutput": "[62]"
       },
       {
         "id": "tc_25",
-        "type": "reg",
-        "input": "[\"abc\",\"abcabca\"]",
-        "label": "Impossible repeated-prefix suffix trap",
-        "weight": 3,
-        "expectedOutput": "[]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[192, 130, 131, 132, 133, 103, 74, 49, 51, 88, 158]]",
+        "expectedOutput": "[49]"
       },
       {
         "id": "tc_26",
-        "type": "reg",
-        "input": "[\"aba\",\"aababa\"]",
-        "label": "Overlapping palindrome adversarial case",
-        "weight": 3,
-        "expectedOutput": "[2,0,3,1]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[35, 5, 102, 71, 47, 82, 22, 87, 184, 89]]",
+        "expectedOutput": "[5, 35]"
       },
       {
         "id": "tc_27",
-        "type": "reg",
-        "input": "[\"abcd\",\"abcabcdd\"]",
-        "label": "Overlapping long-stamp case",
-        "weight": 3,
-        "expectedOutput": "[2,1,4,0,3]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[194, 133, 136, 44, 174, 16]]",
+        "expectedOutput": "[16]"
       },
       {
         "id": "tc_28",
-        "type": "reg",
-        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
-        "label": "Maximum stamp and target lengths with repeated characters",
-        "weight": 3,
-        "expectedOutput": "[500,499,498,497,496,495,494,493,492,491,490,489,488,487,486,485,484,483,482,481,480,479,478,477,476,475,474,473,472,471,470,469,468,467,466,465,464,463,462,461,460,459,458,457,456,455,454,453,452,451,450,449,448,447,446,445,444,443,442,441,440,439,438,437,436,435,434,433,432,431,430,429,428,427,426,425,424,423,422,421,420,419,418,417,416,415,414,413,412,411,410,409,408,407,406,405,404,403,402,401,400,399,398,397,396,395,394,393,392,391,390,389,388,387,386,385,384,383,382,381,380,379,378,377,376,375,374,373,372,371,370,369,368,367,366,365,364,363,362,361,360,359,358,357,356,355,354,353,352,351,350,349,348,347,346,345,344,343,342,341,340,339,338,337,336,335,334,333,332,331,330,329,328,327,326,325,324,323,322,321,320,319,318,317,316,315,314,313,312,311,310,309,308,307,306,305,304,303,302,301,300,299,298,297,296,295,294,293,292,291,290,289,288,287,286,285,284,283,282,281,280,279,278,277,276,275,274,273,272,271,270,269,268,267,266,265,264,263,262,261,260,259,258,257,256,255,254,253,252,251,250,249,248,247,246,245,244,243,242,241,240,239,238,237,236,235,234,233,232,231,230,229,228,227,226,225,224,223,222,221,220,219,218,217,216,215,214,213,212,211,210,209,208,207,206,205,204,203,202,201,200,199,198,197,196,195,194,193,192,191,190,189,188,187,186,185,184,183,182,181,180,179,178,177,176,175,174,173,172,171,170,169,168,167,166,165,164,163,162,161,160,159,158,157,156,155,154,153,152,151,150,149,148,147,146,145,144,143,142,141,140,139,138,137,136,135,134,133,132,131,130,129,128,127,126,125,124,123,122,121,120,119,118,117,116,115,114,113,112,111,110,109,108,107,106,105,104,103,102,101,100,99,98,97,96,95,94,93,92,91,90,89,88,87,86,85,84,83,82,81,80,79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,61,60,59,58,57,56,55,54,53,52,51,50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[97, 129, 39, 136, 110, 116, 120, 158]]",
+        "expectedOutput": "[39]"
       },
       {
         "id": "tc_29",
-        "type": "reg",
-        "input": "[\"ab\",\"abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab\"]",
-        "label": "Maximum target length with dense overlapping coverage",
-        "weight": 3,
-        "expectedOutput": "[997,995,993,991,989,987,985,983,981,979,977,975,973,971,969,967,965,963,961,959,957,955,953,951,949,947,945,943,941,939,937,935,933,931,929,927,925,923,921,919,917,915,913,911,909,907,905,903,901,899,897,895,893,891,889,887,885,883,881,879,877,875,873,871,869,867,865,863,861,859,857,855,853,851,849,847,845,843,841,839,837,835,833,831,829,827,825,823,821,819,817,815,813,811,809,807,805,803,801,799,797,795,793,791,789,787,785,783,781,779,777,775,773,771,769,767,765,763,761,759,757,755,753,751,749,747,745,743,741,739,737,735,733,731,729,727,725,723,721,719,717,715,713,711,709,707,705,703,701,699,697,695,693,691,689,687,685,683,681,679,677,675,673,671,669,667,665,663,661,659,657,655,653,651,649,647,645,643,641,639,637,635,633,631,629,627,625,623,621,619,617,615,613,611,609,607,605,603,601,599,597,595,593,591,589,587,585,583,581,579,577,575,573,571,569,567,565,563,561,559,557,555,553,551,549,547,545,543,541,539,537,535,533,531,529,527,525,523,521,519,517,515,513,511,509,507,505,503,501,499,497,495,493,491,489,487,485,483,481,479,477,475,473,471,469,467,465,463,461,459,457,455,453,451,449,447,445,443,441,439,437,435,433,431,429,427,425,423,421,419,417,415,413,411,409,407,405,403,401,399,397,395,393,391,389,387,385,383,381,379,377,375,373,371,369,367,365,363,361,359,357,355,353,351,349,347,345,343,341,339,337,335,333,331,329,327,325,323,321,319,317,315,313,311,309,307,305,303,301,299,297,295,293,291,289,287,285,283,281,279,277,275,273,271,269,267,265,263,261,259,257,255,253,251,249,247,245,243,241,239,237,235,233,231,229,227,225,223,221,219,217,215,213,211,209,207,205,203,201,199,197,195,193,191,189,187,185,183,181,179,177,175,173,171,169,167,165,163,161,159,157,155,153,151,149,147,145,143,141,139,137,135,133,131,129,127,125,123,121,119,117,115,113,111,109,107,105,103,101,99,97,95,93,91,89,87,85,83,81,79,77,75,73,71,69,67,65,63,61,59,57,55,53,51,49,47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,998,996,994,992,990,988,986,984,982,980,978,976,974,972,970,968,966,964,962,960,958,956,954,952,950,948,946,944,942,940,938,936,934,932,930,928,926,924,922,920,918,916,914,912,910,908,906,904,902,900,898,896,894,892,890,888,886,884,882,880,878,876,874,872,870,868,866,864,862,860,858,856,854,852,850,848,846,844,842,840,838,836,834,832,830,828,826,824,822,820,818,816,814,812,810,808,806,804,802,800,798,796,794,792,790,788,786,784,782,780,778,776,774,772,770,768,766,764,762,760,758,756,754,752,750,748,746,744,742,740,738,736,734,732,730,728,726,724,722,720,718,716,714,712,710,708,706,704,702,700,698,696,694,692,690,688,686,684,682,680,678,676,674,672,670,668,666,664,662,660,658,656,654,652,650,648,646,644,642,640,638,636,634,632,630,628,626,624,622,620,618,616,614,612,610,608,606,604,602,600,598,596,594,592,590,588,586,584,582,580,578,576,574,572,570,568,566,564,562,560,558,556,554,552,550,548,546,544,542,540,538,536,534,532,530,528,526,524,522,520,518,516,514,512,510,508,506,504,502,500,498,496,494,492,490,488,486,484,482,480,478,476,474,472,470,468,466,464,462,460,458,456,454,452,450,448,446,444,442,440,438,436,434,432,430,428,426,424,422,420,418,416,414,412,410,408,406,404,402,400,398,396,394,392,390,388,386,384,382,380,378,376,374,372,370,368,366,364,362,360,358,356,354,352,350,348,346,344,342,340,338,336,334,332,330,328,326,324,322,320,318,316,314,312,310,308,306,304,302,300,298,296,294,292,290,288,286,284,282,280,278,276,274,272,270,268,266,264,262,260,258,256,254,252,250,248,246,244,242,240,238,236,234,232,230,228,226,224,222,220,218,216,214,212,210,208,206,204,202,200,198,196,194,192,190,188,186,184,182,180,178,176,174,172,170,168,166,164,162,160,158,156,154,152,150,148,146,144,142,140,138,136,134,132,130,128,126,124,122,120,118,116,114,112,110,108,106,104,102,100,98,96,94,92,90,88,86,84,82,80,78,76,74,72,70,68,66,64,62,60,58,56,54,52,50,48,46,44,42,40,38,36,34,32,30,28,26,24,22,20,18,16,14,12,10,8,6,4,2,0]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[128, 109, 184, 57, 156]]",
+        "expectedOutput": "[57]"
       },
       {
         "id": "tc_30",
-        "type": "reg",
-        "input": "[\"abc\",\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]",
-        "label": "Maximum target length with impossible pattern",
-        "weight": 3,
-        "expectedOutput": "[]"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[4, 37, 71, 139, 148, 191]]",
+        "expectedOutput": "[4, 148]"
       }
     ],
     "totalWeight": 100,
@@ -405,11 +356,11 @@
   "updatedAt": "2026-07-10",
   "questionId": "Q368",
   "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' ||\n           t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' &&\n               t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n    }\n    int token_len = t->pos - start;\n    char* token = (char*)malloc((size_t)token_len + 1);\n    memcpy(token, t->s + start, (size_t)token_len);\n    token[token_len] = '\\0';\n    return token;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = (int)strlen(tok);\n        char* res = (char*)malloc((size_t)len - 1);\n        memcpy(res, tok + 1, (size_t)len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\n/* YOUR SOLUTION */\nint* movesToStamp(char* stamp, char* target, int* returnSize) {\n    *returnSize = 0;\n    return NULL;\n}\n\nint main() {\n    char line[1000005];\n    if (fgets(line, sizeof(line), stdin)) {\n        int len = (int)strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[--len] = '\\0';\n        }\n        char* raw = (char*)malloc((size_t)len - 1);\n        memcpy(raw, line + 1, (size_t)len - 2);\n        raw[len - 2] = '\\0';\n\n        Tok tok = {raw, 0, (int)strlen(raw)};\n        char* stamp = parse_string(&tok);\n        char* target = parse_string(&tok);\n\n        int returnSize = 0;\n        int* result = movesToStamp(stamp, target, &returnSize);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; ++i) {\n            if (i) printf(\",\");\n            printf(\"%d\", result[i]);\n        }\n        printf(\"]\\n\");\n\n        free(result);\n        free(stamp);\n        free(target);\n        free(raw);\n    }\n    return 0;\n}\n",
-    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\n/* YOUR SOLUTION */\nclass Solution {\npublic:\n    vector<int> movesToStamp(string stamp, string target) {\n        return {};\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    int pos = 0;\n\n    auto readString = [&]() {\n        while (pos < (int)line.size() && (line[pos] != '\"')) ++pos;\n        ++pos;\n        int start = pos;\n        while (pos < (int)line.size() && line[pos] != '\"') ++pos;\n        string s = line.substr(start, pos - start);\n        ++pos;\n        return s;\n    };\n\n    string stamp = readString();\n    string target = readString();\n    vector<int> result = Solution().movesToStamp(stamp, target);\n\n    cout << \"[\";\n    for (int i = 0; i < (int)result.size(); ++i) {\n        if (i) cout << \",\";\n        cout << result[i];\n    }\n    cout << \"]\\n\";\n    return 0;\n}\n",
-    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public int[] movesToStamp(String stamp, String target) {\n        return new int[0];\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        int[] cursor = {0};\n\n        String stamp = readString(line, cursor);\n        String target = readString(line, cursor);\n\n        int[] result = new Solution().movesToStamp(stamp, target);\n        System.out.println(Arrays.toString(result).replace(\", \", \",\"));\n    }\n\n    private static String readString(String s, int[] cursor) {\n        while (cursor[0] < s.length() && s.charAt(cursor[0]) != '\"') cursor[0]++;\n        cursor[0]++;\n        int start = cursor[0];\n        while (cursor[0] < s.length() && s.charAt(cursor[0]) != '\"') cursor[0]++;\n        String result = s.substring(start, cursor[0]);\n        cursor[0]++;\n        return result;\n    }\n}\n",
-    "Python3": "from collections import deque\nfrom typing import List\n\nclass Solution:\n    def movesToStamp(self, stamp: str, target: str) -> List[int]:\n        pass\n\nif __name__ == \"__main__\":\n    import json, sys\n    args = json.loads(sys.stdin.readline())\n    result = Solution().movesToStamp(args[0], args[1])\n    print(json.dumps(result, separators=(\",\", \":\")))\n",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar movesToStamp = function(stamp, target) {\n    return [];\n};\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    const result = movesToStamp(args[0], args[1]);\n    console.log(JSON.stringify(result));\n    rl.close();\n});\n"
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint* largestDivisibleSubset(int* nums, int numsSize, int* returnSize) {\n    /* YOUR CODE HERE */\n    *returnSize = 0;\n    return NULL;\n}",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> largestDivisibleSubset(vector<int>& nums) {\n        /* YOUR CODE HERE */\n        return {};\n    }\n};\n\nint main() {\n    string line;\n    if (getline(cin, line)) {\n        vector<int> nums;\n        stringstream ss(line);\n        char ch; int val;\n        while (ss >> ch) {\n            if (isdigit(ch) || ch == '-') {\n                ss.putback(ch);\n                ss >> val;\n                nums.push_back(val);\n            }\n        }\n        Solution sol;\n        vector<int> res = sol.largestDivisibleSubset(nums);\n        cout << \"[\";\n        for (size_t i = 0; i < res.size(); i++) {\n            cout << res[i] << (i + 1 < res.size() ? \",\" : \"\");\n        }\n        cout << \"]\" << endl;\n    }\n    return 0;\n}",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public List<Integer> largestDivisibleSubset(int[] nums) {\n        /* YOUR CODE HERE */\n        return new ArrayList<>();\n    }\n}",
+    "Python3": "from typing import List\n\nclass Solution:\n    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:\n        pass\n\nif __name__ == '__main__':\n    import sys, json\n    raw = sys.stdin.read().strip()\n    if raw:\n        args = json.loads(raw)\n        nums = args[0] if isinstance(args, list) and len(args) == 1 and isinstance(args[0], list) else args\n        print(json.dumps(Solution().largestDivisibleSubset(nums)))",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar largestDivisibleSubset = function(nums) {\n    /* YOUR CODE HERE */\n    return [];\n};\n\nconst rl = readline.createInterface({ input: process.stdin, output: process.stdout });\nlet input = '';\nrl.on('data', chunk => { input += chunk; });\nrl.on('end', () => {\n    if (input.trim()) {\n        const args = JSON.parse(input.trim());\n        const nums = (Array.isArray(args) && args.length === 1 && Array.isArray(args[0])) ? args[0] : args;\n        console.log(JSON.stringify(largestDivisibleSubset(nums)));\n    }\n});"
   },
   "acceptanceRate": null,
   "similarProblems": [],

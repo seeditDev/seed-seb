@@ -20,18 +20,20 @@
     "outputFormat": "Single line: JSON-serialised return value",
     "sampleTestCases": [
       {
-        "id": "sample_1",
+        "id": "sample_0",
         "type": "reg",
-        "input": "[43261596]",
-        "output": "964176192",
-        "explanation": "Reversing all 32 bits of 43261596 produces 964176192."
+        "input": "[[1, 2, 3, 0, 2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "The maximum profit achievable is 3."
       },
       {
-        "id": "sample_2",
+        "id": "sample_1",
         "type": "reg",
-        "input": "[2147483644]",
-        "output": "1073741822",
-        "explanation": "Reversing the 32-bit representation of 2147483644 produces 1073741822."
+        "input": "[[1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "The maximum profit achievable is 0."
       }
     ],
     "problemStatement": "You receive an array `prices` where `prices[i]` is the price of a given stock on the `i^th` day.\n\nIdentify the largest profit you can achieve. You may complete as many transactions as you like (i.e., buy one and sell one share of the stock multiple times) with the following restrictions:\n\n* After you sell your stock, you cannot buy stock on the next day (i.e., cooldown one day).\n\n**Note:** You may not engage in multiple transactions simultaneously (i.e., you must sell the stock before you buy again).\n\n**Example 1:**\n\n```\nInput: prices = [1,2,3,0,2]\nOutput: 3\nExplanation: transactions = [buy, sell, cooldown, buy, sell]\n```\n\n**Example 2:**\n\n```\nInput: prices = [1]\nOutput: 0\n```\n\n**Constraints:**\n\n* `1 <= prices.length <= 5000`\n* `0 <= prices[i] <= 1000`"
@@ -103,33 +105,13 @@
     "companyTags": []
   },
   "solution": {
-    "notes": [
-      "The returned value is serialized in the range 0 to 2^32-1.",
-      "For many repeated calls, a lookup table for reversed bytes can reduce each reversal to four table lookups plus shifts and masks."
-    ],
-    "approach": "Treat n as a 32-bit unsigned bit pattern and reverse exactly 32 bits. The reference implementation extracts the least-significant bit, appends it to the result, and shifts right for 32 iterations. This avoids signed-shift ambiguity across languages.",
-    "editorial": {
-      "better": {
-        "complexity": "Time O(1); space O(1).",
-        "description": "Reverse the number in groups using masks and swaps: exchange the two 16-bit halves, then swap 8-bit, 4-bit, 2-bit, and 1-bit groups. This performs a fixed number of bitwise operations."
-      },
-      "optimal": {
-        "complexity": "Time O(1); space O(1).",
-        "description": "Use fixed-width unsigned bit operations and the mask-and-swap sequence. The key invariant is that after each stage, increasingly small bit groups have been reversed while preserving the already-correct group boundaries."
-      },
-      "bruteForce": {
-        "complexity": "Time O(32) = O(1); space O(1).",
-        "description": "Process the 32 bit positions one at a time. Read the lowest bit of n, append it to the result, then unsigned-shift n right. After exactly 32 iterations, the result is the reversed 32-bit pattern."
-      }
-    },
-    "timeComplexity": "O(32) = O(1)",
-    "spaceComplexity": "O(1)",
+    "language": "Python3",
     "code": {
-      "Python3": "class Solution:\n    def reverseBits(self, n: int) -> int:\n        n &= 0xFFFFFFFF\n        result = 0\n        for _ in range(32):\n            result = (result << 1) | (n & 1)\n            n >>= 1\n        return result",
-      "C": "#include <stdio.h>\n#include <stdint.h>\n#include <inttypes.h>\n#include <stdlib.h>\n\nuint32_t reverseBits(uint32_t n) {\n    n = (n >> 16) | (n << 16);\n    n = ((n & UINT32_C(0xff00ff00)) >> 8) | ((n & UINT32_C(0x00ff00ff)) << 8);\n    n = ((n & UINT32_C(0xf0f0f0f0)) >> 4) | ((n & UINT32_C(0x0f0f0f0f)) << 4);\n    n = ((n & UINT32_C(0xcccccccc)) >> 2) | ((n & UINT32_C(0x33333333)) << 2);\n    n = ((n & UINT32_C(0xaaaaaaaa)) >> 1) | ((n & UINT32_C(0x55555555)) << 1);\n    return n;\n}",
-      "C++": "class Solution {\npublic:\n    uint32_t reverseBits(uint32_t n) {\n        n = (n >> 16) | (n << 16);\n        n = ((n & 0xff00ff00u) >> 8) | ((n & 0x00ff00ffu) << 8);\n        n = ((n & 0xf0f0f0f0u) >> 4) | ((n & 0x0f0f0f0fu) << 4);\n        n = ((n & 0xccccccccu) >> 2) | ((n & 0x33333333u) << 2);\n        n = ((n & 0xaaaaaaaau) >> 1) | ((n & 0x55555555u) << 1);\n        return n;\n    }\n};",
-      "Java": "class Solution {\n    public long reverseBits(long n) {\n        n &= 0xFFFFFFFFL;\n        long result = 0;\n        for (int i = 0; i < 32; i++) {\n            result = (result << 1) | (n & 1L);\n            n >>>= 1;\n        }\n        return result;\n    }\n}",
-      "JavaScript": "const readline = require('readline');\n\nvar reverseBits = function(n) {\n    n = n >>> 0;\n    let result = 0;\n    for (let i = 0; i < 32; i++) {\n        result = (result << 1) | (n & 1);\n        n >>>= 1;\n    }\n    return result >>> 0;\n};"
+      "C": "int maxProfit(int* prices, int pricesSize) {\n    if (pricesSize <= 1) return 0;\n    int sold = 0, held = -1000000000, reset = 0;\n    for (int i = 0; i < pricesSize; i++) {\n        int pre_sold = sold;\n        sold = held + prices[i];\n        if (reset - prices[i] > held) held = reset - prices[i];\n        if (pre_sold > reset) reset = pre_sold;\n    }\n    return sold > reset ? sold : reset;\n}",
+      "C++": "class Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n        if (prices.empty()) return 0;\n        int sold = 0, held = -1e9, reset = 0;\n        for (int p : prices) {\n            int pre_sold = sold;\n            sold = held + p;\n            held = max(held, reset - p);\n            reset = max(reset, pre_sold);\n        }\n        return max(sold, reset);\n    }\n};",
+      "Java": "class Solution {\n    public int maxProfit(int[] prices) {\n        if (prices == null || prices.length == 0) return 0;\n        int sold = 0, held = -1000000000, reset = 0;\n        for (int p : prices) {\n            int pre_sold = sold;\n            sold = held + p;\n            held = Math.max(held, reset - p);\n            reset = Math.max(reset, pre_sold);\n        }\n        return Math.max(sold, reset);\n    }\n}",
+      "Python3": "from typing import List\n\nclass Solution:\n    def maxProfit(self, prices: List[int]) -> int:\n        if not prices:\n            return 0\n        sold, held, reset = 0, -float('inf'), 0\n        for price in prices:\n            pre_sold = sold\n            sold = held + price\n            held = max(held, reset - price)\n            reset = max(reset, pre_sold)\n        return max(sold, reset)",
+      "JavaScript": "var maxProfit = function(prices) {\n    if (!prices || prices.length === 0) return 0;\n    let sold = 0, held = -Infinity, reset = 0;\n    for (let p of prices) {\n        let pre_sold = sold;\n        sold = held + p;\n        held = Math.max(held, reset - p);\n        reset = Math.max(reset, pre_sold);\n    }\n    return Math.max(sold, reset);\n};"
     }
   },
   "verified": true,
@@ -152,243 +134,213 @@
     "hidden": [
       {
         "id": "tc_01",
-        "type": "reg",
-        "input": "[0]",
-        "label": "Zero / minimum value",
-        "weight": 4,
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[]]",
         "expectedOutput": "0"
       },
       {
         "id": "tc_02",
-        "type": "reg",
-        "input": "[1]",
-        "label": "Single low bit",
-        "weight": 4,
-        "expectedOutput": "2147483648"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[5]]",
+        "expectedOutput": "0"
       },
       {
         "id": "tc_03",
-        "type": "reg",
-        "input": "[2]",
-        "label": "Single bit near low end",
-        "weight": 4,
-        "expectedOutput": "1073741824"
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "input": "[4]",
-        "label": "Single bit at position 2",
-        "weight": 4,
-        "expectedOutput": "536870912"
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "input": "[6]",
-        "label": "Two adjacent low bits",
-        "weight": 4,
-        "expectedOutput": "1610612736"
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "input": "[10]",
-        "label": "Sparse bits in low byte",
-        "weight": 4,
-        "expectedOutput": "1342177280"
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "input": "[12]",
-        "label": "Multiple low bits",
-        "weight": 4,
-        "expectedOutput": "805306368"
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "input": "[14]",
-        "label": "Three low bits",
-        "weight": 4,
-        "expectedOutput": "1879048192"
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "input": "[16]",
-        "label": "Single bit at position 4",
-        "weight": 4,
-        "expectedOutput": "134217728"
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "input": "[24]",
-        "label": "Two separated low bits",
-        "weight": 4,
-        "expectedOutput": "402653184"
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "input": "[26]",
-        "label": "Sparse mixed low bits",
-        "weight": 3,
-        "expectedOutput": "1476395008"
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "input": "[28]",
-        "label": "Dense low bits",
-        "weight": 3,
-        "expectedOutput": "939524096"
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "input": "[30]",
-        "label": "All low five bits set",
-        "weight": 3,
-        "expectedOutput": "2013265920"
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "input": "[42]",
-        "label": "Alternating pattern in low byte",
-        "weight": 3,
-        "expectedOutput": "1409286144"
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "input": "[100]",
-        "label": "Mixed small value",
-        "weight": 3,
-        "expectedOutput": "637534208"
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "input": "[255]",
-        "label": "All bits set in low byte",
-        "weight": 3,
-        "expectedOutput": "4278190080"
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "input": "[256]",
-        "label": "Single bit at position 8",
-        "weight": 3,
-        "expectedOutput": "8388608"
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "input": "[510]",
-        "label": "Low nine bits except lowest set",
-        "weight": 3,
-        "expectedOutput": "2139095040"
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "input": "[1024]",
-        "label": "Single bit at position 10",
-        "weight": 3,
-        "expectedOutput": "2097152"
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "input": "[65534]",
-        "label": "All lower 16 bits except lowest",
-        "weight": 3,
-        "expectedOutput": "2147418112"
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "input": "[65536]",
-        "label": "Single bit at position 16",
-        "weight": 3,
-        "expectedOutput": "32768"
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "input": "[131070]",
-        "label": "All lower 17 bits except lowest",
-        "weight": 3,
-        "expectedOutput": "2147450880"
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "input": "[2147483646]",
-        "label": "Maximum signed positive even value",
-        "weight": 3,
-        "expectedOutput": "2147483646"
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "input": "[2147483647]",
-        "label": "Maximum signed positive value",
-        "weight": 3,
-        "expectedOutput": "4294967294"
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "input": "[2147483648]",
-        "label": "Highest 32-bit bit set",
-        "weight": 3,
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 2]]",
         "expectedOutput": "1"
       },
       {
+        "id": "tc_04",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[2, 1]]",
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_05",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 2, 4]]",
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_06",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[4, 2, 1]]",
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_07",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 2, 3, 4, 5]]",
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_08",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[5, 4, 3, 2, 1]]",
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_09",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 1, 1, 1]]",
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_10",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 4, 2, 7]]",
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_11",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[6, 1, 3, 2, 4, 7]]",
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_12",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 2, 3, 0, 2, 4, 1, 5, 2]]",
+        "expectedOutput": "7"
+      },
+      {
+        "id": "tc_13",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[38, 0, 17, 25, 30, 26, 29]]",
+        "expectedOutput": "30"
+      },
+      {
+        "id": "tc_14",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[7, 23, 82, 33, 52, 0, 69, 28, 15, 87, 86, 86, 78, 79, 3, 74, 98, 76, 95, 11, 40, 2, 33, 0, 31, 82, 64, 21, 20, 15, 8, 58, 50, 100]]",
+        "expectedOutput": "514"
+      },
+      {
+        "id": "tc_15",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[86, 20, 56, 67, 92, 53, 23, 46, 55, 28, 40, 5, 99, 64, 23, 81, 94, 69, 44, 63, 13, 70, 32, 10, 3, 6, 43]]",
+        "expectedOutput": "366"
+      },
+      {
+        "id": "tc_16",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[72, 91, 71, 68, 12, 83, 6, 51, 10, 38, 30, 19, 70, 84, 47, 39, 12, 43, 43, 2, 88, 4, 76, 27, 0, 38, 10, 17, 80]]",
+        "expectedOutput": "401"
+      },
+      {
+        "id": "tc_17",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[33, 83, 74, 23, 3, 19, 40, 29, 47, 67, 35, 14, 48, 34, 0, 14, 56, 8, 68, 76, 76, 19, 56, 0, 31, 44, 28]]",
+        "expectedOutput": "280"
+      },
+      {
+        "id": "tc_18",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[75, 51, 63, 46, 0, 82, 10, 7, 16, 46, 95, 63, 62, 80, 63, 75, 57, 40, 90, 56, 1, 26, 15, 12, 27, 7, 70, 71, 72, 66, 85, 10, 28, 82, 77, 98]]",
+        "expectedOutput": "428"
+      },
+      {
+        "id": "tc_19",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[72, 91, 56, 72, 66, 9, 7, 29, 12, 72]]",
+        "expectedOutput": "84"
+      },
+      {
+        "id": "tc_20",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[62, 93, 94, 51, 73, 95, 24, 34, 85, 49, 76, 24, 20, 38, 30, 81, 12, 80]]",
+        "expectedOutput": "212"
+      },
+      {
+        "id": "tc_21",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[87, 67, 1, 32, 73, 62]]",
+        "expectedOutput": "72"
+      },
+      {
+        "id": "tc_22",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[78, 14, 94, 26, 95]]",
+        "expectedOutput": "81"
+      },
+      {
+        "id": "tc_23",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[94, 98, 44, 62, 61, 30, 50, 14, 70]]",
+        "expectedOutput": "74"
+      },
+      {
+        "id": "tc_24",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[1, 13, 44, 88, 25, 65, 16, 78, 85, 55, 23, 78, 66, 54, 8, 60, 68, 54, 25]]",
+        "expectedOutput": "271"
+      },
+      {
+        "id": "tc_25",
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[58, 93, 84, 86, 36, 59, 43, 49, 34, 65, 30, 33, 92, 99, 38]]",
+        "expectedOutput": "155"
+      },
+      {
         "id": "tc_26",
-        "type": "reg",
-        "input": "[4294967294]",
-        "label": "Maximum 32-bit even value",
-        "weight": 3,
-        "expectedOutput": "2147483647"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[11, 24, 55, 54, 8, 87, 20, 64, 68, 79, 97, 13, 80, 18, 10, 64, 78]]",
+        "expectedOutput": "273"
       },
       {
         "id": "tc_27",
-        "type": "reg",
-        "input": "[4294967295]",
-        "label": "All 32 bits set",
-        "weight": 3,
-        "expectedOutput": "4294967295"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[66, 34, 78, 98, 48]]",
+        "expectedOutput": "64"
       },
       {
         "id": "tc_28",
-        "type": "reg",
-        "input": "[305419896]",
-        "label": "Hex-pattern mixed bits",
-        "weight": 3,
-        "expectedOutput": "510274632"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[83, 13, 11, 88, 66, 29, 22, 6, 24, 80, 11]]",
+        "expectedOutput": "151"
       },
       {
         "id": "tc_29",
-        "type": "reg",
-        "input": "[4000000000]",
-        "label": "Large unsigned boundary-region value",
-        "weight": 3,
-        "expectedOutput": "1365623"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[54, 21, 95, 58, 44, 61, 75, 91, 28, 86]]",
+        "expectedOutput": "163"
       },
       {
         "id": "tc_30",
-        "type": "reg",
-        "input": "[4294967292]",
-        "label": "Maximum value minus three",
-        "weight": 3,
-        "expectedOutput": "1073741823"
+        "type": "hidden",
+        "weight": 1,
+        "input": "[[46, 84, 16, 64, 74, 29, 89, 24, 46, 4, 59, 98, 93, 61, 0, 63, 63, 57, 61, 13, 5, 17, 72, 91, 64, 64, 64]]",
+        "expectedOutput": "355"
       }
     ],
     "totalWeight": 100,
@@ -397,11 +349,11 @@
   "updatedAt": "2026-09-09",
   "questionId": "Q309",
   "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdint.h>\n#include <inttypes.h>\n#include <stdlib.h>\n\nuint32_t reverseBits(uint32_t n) {\n    return NULL;\n}\n\nint main(void) {\n    char line[128];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    char *p = line;\n    while (*p && *p != '[') ++p;\n    ++p;\n    uint64_t value = strtoull(p, NULL, 10);\n    uint32_t result = reverseBits((uint32_t)value);\n    printf(\"%\" PRIu32 \"\\n\", result);\n    return 0;\n}\n",
-    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    uint32_t reverseBits(uint32_t n) {\n        return {};\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    auto l = line.find('[');\n    auto r = line.find(']', l);\n    uint64_t value = stoull(line.substr(l + 1, r - l - 1));\n    uint32_t result = Solution().reverseBits(static_cast<uint32_t>(value));\n    cout << result << '\\n';\n    return 0;\n}\n",
-    "Java": "import java.io.*;\n\nclass Solution {\n    public long reverseBits(long n) {\n        return 0;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String raw = line.substring(1, line.length() - 1).trim();\n        long n = Long.parseLong(raw);\n        System.out.println(new Solution().reverseBits(n));\n    }\n}\n",
-    "Python3": "import sys, json\n\nclass Solution:\n    def reverseBits(self, n: int) -> int:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().reverseBits(args[0])))\n",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar reverseBits = function(n) {\n    return 0;\n};\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(reverseBits(args[0])));\n    rl.close();\n});\n"
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint maxProfit(int* prices, int pricesSize) {\n    /* YOUR CODE HERE */\n    return 0;\n}\n\nint main() {\n    int n;\n    if (scanf(\"%d\", &n) != 1) return 0;\n    int* prices = (int*)malloc(n * sizeof(int));\n    for (int i = 0; i < n; i++) scanf(\"%d\", &prices[i]);\n    printf(\"%d\\n\", maxProfit(prices, n));\n    free(prices);\n    return 0;\n}",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n        /* YOUR CODE HERE */\n        return 0;\n    }\n};\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        while (!line.empty() && (line.back() == '\\r' || line.back() == ' ')) line.pop_back();\n        if (line.empty()) return 0;\n        vector<int> prices;\n        stringstream ss(line);\n        char ch;\n        int val;\n        while (ss >> ch) {\n            if (isdigit(ch) || ch == '-') {\n                ss.putback(ch);\n                ss >> val;\n                prices.push_back(val);\n            }\n        }\n        Solution sol;\n        cout << sol.maxProfit(prices) << endl;\n    }\n    return 0;\n}",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public int maxProfit(int[] prices) {\n        /* YOUR CODE HERE */\n        return 0;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null || line.trim().isEmpty()) return;\n        line = line.trim();\n        line = line.replaceAll(\"[\\[\\],]\", \" \");\n        Scanner sc = new Scanner(line);\n        List<Integer> list = new ArrayList<>();\n        while (sc.hasNextInt()) list.add(sc.nextInt());\n        int[] prices = new int[list.size()];\n        for (int i = 0; i < list.size(); i++) prices[i] = list.get(i);\n        Solution sol = new Solution();\n        System.out.println(sol.maxProfit(prices));\n    }\n}",
+    "Python3": "from typing import List\n\nclass Solution:\n    def maxProfit(self, prices: List[int]) -> int:\n        pass\n\nif __name__ == '__main__':\n    import sys, json\n    raw = sys.stdin.read().strip()\n    if raw:\n        args = json.loads(raw)\n        prices = args[0] if isinstance(args, list) and len(args) == 1 and isinstance(args[0], list) else args\n        print(Solution().maxProfit(prices))",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\nvar maxProfit = function(prices) {\n    /* YOUR CODE HERE */\n    return 0;\n};\n\nconst rl = readline.createInterface({ input: process.stdin, output: process.stdout });\nlet input = '';\nrl.on('data', chunk => { input += chunk; });\nrl.on('end', () => {\n    if (input.trim()) {\n        const args = JSON.parse(input.trim());\n        const prices = (Array.isArray(args) && args.length === 1 && Array.isArray(args[0])) ? args[0] : args;\n        console.log(maxProfit(prices));\n    }\n});"
   },
   "acceptanceRate": null,
   "similarProblems": [],

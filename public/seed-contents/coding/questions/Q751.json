@@ -1,294 +1,66 @@
 {
-  "questionId": "Q751",
-  "title": "IP to CIDR Problem",
   "slug": "ip-to-cidr",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Strings",
-    "difficulty": "Medium",
-    "isPremium": true,
-    "tags": [
-      "string",
-      "bit-manipulation"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "string",
-      "bit-manipulation"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Convert the IPv4 address into a 32-bit integer so alignment can be tested numerically.",
+    "A CIDR block can only start at an address aligned to its block size.",
+    "The lowest set bit of the starting address gives the largest aligned power-of-two block available; handle start = 0 separately.",
+    "Also cap the block by the largest power of two that does not exceed the remaining number of addresses."
+  ],
+  "title": "IP to CIDR Problem",
   "content": {
-    "problemStatement": "",
+    "notes": [],
     "constraints": [
-      "None"
+      "ip is a valid IPv4 address.",
+      "1 <= n <= 1000.",
+      "The n consecutive addresses starting from ip fit within the IPv4 address space."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
-    "notes": []
-  },
-  "testCases": {
-    "hidden": [
+    "sampleTestCases": [
       {
-        "id": "tc_01",
+        "id": "sample_1",
         "type": "reg",
-        "label": "Maximum length",
-        "input": "[\"192.168.0.1\", 32]",
-        "expectedOutput": "[\"192.168.0.1/32\", \"192.168.0.2/31\", \"192.168.0.4/30\", \"192.168.0.8/29\", \"192.168.0.16/28\", \"192.168.0.32/32\"]",
-        "weight": 2
+        "input": "[\"255.0.0.7\",10]",
+        "output": "[\"255.0.0.7/32\",\"255.0.0.8/29\",\"255.0.0.16/32\"]",
+        "explanation": "The range begins at an address that is not aligned to a larger power-of-two block, so the first block is a single address. The remaining addresses are covered by larger aligned blocks.",
+        "expectedOutput": "[\"255.0.0.7/32\",\"255.0.0.8/29\",\"255.0.0.16/32\"]"
       },
       {
-        "id": "tc_02",
+        "id": "sample_2",
         "type": "reg",
-        "label": "Same characters",
-        "input": "[\"111.111.111.111\", 24]",
-        "expectedOutput": "[\"111.111.111.111/32\", \"111.111.111.112/28\", \"111.111.111.128/30\", \"111.111.111.132/31\", \"111.111.111.134/32\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Digits only",
-        "input": "[\"123.456.789.0\", 24]",
-        "expectedOutput": "[\"124.203.21.0/28\", \"124.203.21.16/29\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Palindrome",
-        "input": "[\"123.321.123.321\", 16]",
-        "expectedOutput": "[\"124.65.124.65/32\", \"124.65.124.66/31\", \"124.65.124.68/30\", \"124.65.124.72/29\", \"124.65.124.80/32\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "No match",
-        "input": "[\"255.255.255.255\", 32]",
-        "expectedOutput": "[\"255.255.255.255/32\", \"0.0.0.0/28\", \"0.0.0.16/29\", \"0.0.0.24/30\", \"0.0.0.28/31\", \"0.0.0.30/32\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Repeated substring",
-        "input": "[\"10.10.10.10\", 24]",
-        "expectedOutput": "[\"10.10.10.10/31\", \"10.10.10.12/30\", \"10.10.10.16/28\", \"10.10.10.32/31\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Alternating characters",
-        "input": "[\"101.101.101.101\", 16]",
-        "expectedOutput": "[\"101.101.101.101/32\", \"101.101.101.102/31\", \"101.101.101.104/29\", \"101.101.101.112/30\", \"101.101.101.116/32\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Entire string is the answer",
-        "input": "[\"192.168.0.1\", 24]",
-        "expectedOutput": "[\"192.168.0.1/32\", \"192.168.0.2/31\", \"192.168.0.4/30\", \"192.168.0.8/29\", \"192.168.0.16/29\", \"192.168.0.24/32\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Two-character alphabet stress",
-        "input": "[\"11.11.11.11\", 24]",
-        "expectedOutput": "[\"11.11.11.11/32\", \"11.11.11.12/30\", \"11.11.11.16/28\", \"11.11.11.32/31\", \"11.11.11.34/32\"]",
-        "weight": 10
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "input": "[\"192.168.0.1\",4]",
+        "output": "[\"192.168.0.1/32\",\"192.168.0.2/31\",\"192.168.0.4/32\"]",
+        "explanation": "The first address is unaligned, so it is emitted as /32. The next two addresses form a /31 block, followed by the final address.",
+        "expectedOutput": "[\"192.168.0.1/32\",\"192.168.0.2/31\",\"192.168.0.4/32\"]"
       }
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "problemStatement": "You are given a starting IPv4 address `ip` and a positive integer `n`. Return the smallest possible list of CIDR blocks that exactly covers `n` consecutive IPv4 addresses starting from `ip`.\n\nEach returned CIDR block must cover only addresses in that consecutive range, the blocks must be contiguous with no gaps or overlaps, and the result should use the fewest CIDR blocks possible.\n\nA CIDR block `x.x.x.x/k` represents all IPv4 addresses sharing the first `k` network bits; its size is `2^(32-k)` addresses.\n\n**Example 1:**\n\n```text\nInput: ip = \"255.0.0.7\", n = 10\nOutput: [\"255.0.0.7/32\", \"255.0.0.8/29\", \"255.0.0.16/31\"]\n```\n\n**Example 2:**\n\n```text\nInput: ip = \"192.168.0.1\", n = 4\nOutput: [\"192.168.0.1/32\", \"192.168.0.2/31\", \"192.168.0.4/32\"]\n```\n\n**Constraints:**\n\n* `ip` is a valid IPv4 address.\n* `1 <= n <= 1000`.\n* The `n` consecutive addresses starting from `ip` fit within the IPv4 address space."
+  },
+  "judging": {
+    "notes": [],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -310,57 +82,335 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "string",
+      "bit-manipulation"
     ],
-    "notes": []
+    "category": "Strings",
+    "isPremium": true,
+    "topicTags": [
+      "string",
+      "bit-manipulation"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses bitwise operations to convert IP addresses to integers and vice versa, then iteratively calculates the CIDR notation by finding the maximum mask for each IP address.",
-    "timeComplexity": "o(n)",
-    "spaceComplexity": "o(n)",
-    "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(1) (excluding result storage)\n\nclass Solution(object):\n    def ipToCIDR(self, ip, n):\n        \"\"\"\n        :type ip: str\n        :type n: int\n        :rtype: List[str]\n        \"\"\"\n        def ipToInt(ip):\n            result = 0\n            for i in ip.split('.'):\n                result = 256 * result + int(i)\n            return result\n\n        def intToIP(n):\n            return \".\".join(str((n >> i) % 256) \\\n                            for i in (24, 16, 8, 0))\n\n        start = ipToInt(ip)\n        result = []\n        while n:\n            mask = max(33-(start & ~(start-1)).bit_length(), \\\n                       33-n.bit_length())\n            result.append(intToIP(start) + '/' + str(mask))\n            start += 1 << (32-mask)\n            n -= 1 << (32-mask)\n        return result"
-    },
-    "notes": [],
+    "notes": [
+      "k is the number of CIDR blocks returned; each iteration emits one block."
+    ],
+    "approach": "Convert the IPv4 address to a 32-bit integer. At each step, choose the largest power-of-two-sized aligned block that does not exceed the remaining number of addresses. The alignment is determined by the lowest set bit of the current starting address; address 0 is aligned to the full 2^32 space. Convert each block back to dotted IPv4 form and use the corresponding CIDR prefix length.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(k log n) time in a straightforward implementation, with O(k) output space.",
+        "description": "At each position, grow the block while the current address remains aligned and the block does not exceed the remaining count. This reduces the number of emitted blocks but still needs careful alignment handling."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(k) iterations with O(k) output space, where k is the number of CIDR blocks returned.",
+        "description": "Represent the address as an integer. The largest aligned block beginning at start is given by its lowest set bit; for start = 0, the whole IPv4 space is aligned. Intersect that alignment limit with the largest power of two not greater than the remaining count. Emit the resulting CIDR block, advance by its size, and repeat."
+      },
+      "bruteForce": {
+        "complexity": "O(n) time and O(n) output space.",
+        "description": "Take one IPv4 address at a time and emit it as a /32 block. This is correct but can require one block per address."
       }
+    },
+    "timeComplexity": "O(k)",
+    "spaceComplexity": "O(k)",
+    "code": {
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdint.h>\n#include <string.h>\n\nstatic uint64_t ipToInt(const char* ip){unsigned a,b,c,d;sscanf(ip,\"%u.%u.%u.%u\",&a,&b,&c,&d);return ((uint64_t)a<<24)|((uint64_t)b<<16)|((uint64_t)c<<8)|d;}\nstatic void intToIp(uint64_t v,char* out){sprintf(out,\"%u.%u.%u.%u\",(unsigned)((v>>24)&255),(unsigned)((v>>16)&255),(unsigned)((v>>8)&255),(unsigned)(v&255));}\nchar** ipToCIDR(char* ip,int n,int* returnSize){\n    int cap=32,sz=0; char** out=(char**)malloc(cap*sizeof(char*)); uint64_t start=ipToInt(ip);\n    while(n>0){\n      uint64_t align=start==0?(1ULL<<32):(start&(~start+1)); uint64_t size=1; while(size*2<=(unsigned)n) size*=2; uint64_t block=align<size?align:size;\n      int bits=0; for(uint64_t t=block;t>1;t/=2) bits++; if(sz==cap){cap*=2;out=(char**)realloc(out,cap*sizeof(char*));}\n      out[sz]=(char*)malloc(32); char buf[32]; intToIp(start,buf); sprintf(out[sz],\"%s/%d\",buf,32-bits); sz++; start+=block; n-=(int)block;\n    } *returnSize=sz; return out;\n}",
+      "C++": "class Solution{\npublic:\n vector<string> ipToCIDR(string ip,int n){\n   vector<int> p; stringstream ss(ip); string x; while(getline(ss,x,'.')) p.push_back(stoi(x));\n   unsigned long long start=((unsigned long long)p[0]<<24)|((unsigned long long)p[1]<<16)|((unsigned long long)p[2]<<8)|p[3];\n   vector<string> out;\n   while(n>0){\n     unsigned long long align=start==0?(1ULL<<32):(start&(~start+1));\n     unsigned long long size=1; while(size*2<=(unsigned)n) size*=2;\n     unsigned long long block=min(align,size);\n     int bits=0; for(auto t=block;t>1;t/=2) bits++;\n     out.push_back(toIp(start)+\"/\"+to_string(32-bits)); start+=block; n-=(int)block;\n   } return out;\n }\n string toIp(unsigned long long v){ return to_string((v>>24)&255)+\".\"+to_string((v>>16)&255)+\".\"+to_string((v>>8)&255)+\".\"+to_string(v&255); }\n};",
+      "Java": "class Solution {\n    public List<String> ipToCIDR(String ip, int n) {\n        long start=0; for(String p:ip.split(\"\\\\.\")) start=start*256+Integer.parseInt(p);\n        List<String> out=new ArrayList<>();\n        while(n>0){\n            long align = start==0 ? (1L<<32) : (start & -start);\n            long size=1; while(size*2<=n) size*=2;\n            long block=Math.min(align,size);\n            int bits=0; for(long t=block;t>1;t/=2) bits++;\n            out.add(toIp(start)+\"/\"+(32-bits));\n            start+=block; n-=(int)block;\n        }\n        return out;\n    }\n    private String toIp(long v){ return ((v>>24)&255)+\".\"+((v>>16)&255)+\".\"+((v>>8)&255)+\".\"+(v&255); }\n}",
+      "Python3": "import sys, json\nclass Solution:\n    def ipToCIDR(self, ip, n):\n        def ip_to_int(s):\n            v=0\n            for part in s.split(\".\"):\n                v=v*256+int(part)\n            return v\n        def int_to_ip(v):\n            return \".\".join(str((v >> sh) & 255) for sh in (24,16,8,0))\n        start=ip_to_int(ip)\n        ans=[]\n        while n:\n            align=(1<<32) if start==0 else (start & -start)\n            size=1 << (n.bit_length()-1)\n            block=min(align,size)\n            prefix=32-int(math.log2(block))\n            ans.append(int_to_ip(start)+\"/\"+str(prefix))\n            start += block; n -= block\n        return ans\n\nimport math",
+      "JavaScript": "const readline=require('readline');\nfunction ipToCIDR(ip,n){\n  const parts=ip.split('.').map(Number);\n  let start=parts[0]*256*256*256+parts[1]*256*256+parts[2]*256+parts[3];\n  const toIp=v=>[Math.floor(v/16777216)%256,Math.floor(v/65536)%256,Math.floor(v/256)%256,v%256].join('.');\n  const highestPow2=x=>{let p=1;while(p*2<=x)p*=2;return p;};\n  const out=[];\n  while(n>0){\n    let align=1;\n    if(start!==0){while(start%(align*2)===0)align*=2;} else align=4294967296;\n    const block=Math.min(align,highestPow2(n));\n    let bits=0,t=block; while(t>1){t/=2;bits++;}\n    out.push(toIp(start)+'/'+(32-bits));\n    start+=block; n-=block;\n  }\n  return out;\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/* Solution stub not found */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        char* ip = parse_string(&tok);\n        int n = parse_int(&tok);\n        int* result = ipToCIDR(ip, n);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; i++) {\n            printf(\"%d\", result[i]);\n            if (i < returnSize - 1) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def ipToCIDR(self, ip: str, n: int) -> Any:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _ip = _args[0]\n    _n = _args[1]\n    _result = Solution().ipToCIDR(_ip, _n)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nvar ipToCIDR = function(ip, n) {\n    // Write your code here\n    return null;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = ipToCIDR(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public List<String> ipToCIDR(String ip, int n) {\n        // Write your code here\n        return new ArrayList<>();\n        return new ArrayList<>();\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        String ip = nextToken().replaceAll(\"^\\\"|\\\"$\", \"\");\n        int n = Integer.parseInt(nextToken());\n        List<String> result = new Solution().ipToCIDR(ip, n);\n        System.out.println(result.toString().replace(\", \", \",\").replace(\" \", \"\"));\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int ipToCIDR(string ip, int n) {\n        // Write your code here\n        return {};\n        return {};\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    string ip = readStr(tok);\n    int n = readInt(tok);\n    auto result = Solution().ipToCIDR(ip, n);\n    cout << \"[\";\n    for(int i=0;i<(int)result.size();i++){\n        cout << \"\\\"\" << result[i] << \"\\\"\";\n        if(i+1<(int)result.size()) cout << \",\";\n    }\n    cout << \"]\" << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "ip",
+        "type": "string"
+      },
+      {
+        "name": "n",
+        "type": "integer"
+      }
+    ],
+    "methodName": "ipToCIDR"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How would the implementation change if n could be much larger than 1000?",
+    "Why must the current starting address be aligned to the chosen block size?",
+    "How would you adapt the solution if IPv6 addresses were supported?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[\"0.0.0.0\",1]",
+        "label": "Minimum range at address zero",
+        "weight": 4,
+        "expectedOutput": "[\"0.0.0.0/32\"]"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[\"0.0.0.0\",2]",
+        "label": "Small aligned block at address zero",
+        "weight": 4,
+        "expectedOutput": "[\"0.0.0.0/31\"]"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[\"0.0.0.0\",256]",
+        "label": "Exact /24 block from zero",
+        "weight": 4,
+        "expectedOutput": "[\"0.0.0.0/24\"]"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[\"0.0.0.0\",257]",
+        "label": "Power-of-two boundary plus remainder",
+        "weight": 4,
+        "expectedOutput": "[\"0.0.0.0/24\",\"0.0.1.0/32\"]"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[\"255.255.255.255\",1]",
+        "label": "Last IPv4 address single block",
+        "weight": 4,
+        "expectedOutput": "[\"255.255.255.255/32\"]"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[\"255.255.255.254\",2]",
+        "label": "Last two IPv4 addresses",
+        "weight": 4,
+        "expectedOutput": "[\"255.255.255.254/31\"]"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[\"255.255.255.0\",256]",
+        "label": "Exact /24 block at upper boundary",
+        "weight": 4,
+        "expectedOutput": "[\"255.255.255.0/24\"]"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[\"192.168.0.1\",32]",
+        "label": "Unaligned start with moderate range",
+        "weight": 4,
+        "expectedOutput": "[\"192.168.0.1/32\",\"192.168.0.2/31\",\"192.168.0.4/30\",\"192.168.0.8/29\",\"192.168.0.16/28\",\"192.168.0.32/32\"]"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[\"192.168.0.0\",256]",
+        "label": "Private network exact /24 block",
+        "weight": 4,
+        "expectedOutput": "[\"192.168.0.0/24\"]"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[\"192.168.1.5\",100]",
+        "label": "Unaligned start crossing a /26 boundary",
+        "weight": 4,
+        "expectedOutput": "[\"192.168.1.5/32\",\"192.168.1.6/31\",\"192.168.1.8/29\",\"192.168.1.16/28\",\"192.168.1.32/27\",\"192.168.1.64/27\",\"192.168.1.96/29\",\"192.168.1.104/32\"]"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[\"10.0.0.0\",1000]",
+        "label": "Large aligned range",
+        "weight": 3,
+        "expectedOutput": "[\"10.0.0.0/23\",\"10.0.2.0/24\",\"10.0.3.0/25\",\"10.0.3.128/26\",\"10.0.3.192/27\",\"10.0.3.224/29\"]"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[\"10.0.0.255\",1000]",
+        "label": "Range crossing multiple octets",
+        "weight": 3,
+        "expectedOutput": "[\"10.0.0.255/32\",\"10.0.1.0/24\",\"10.0.2.0/23\",\"10.0.4.0/25\",\"10.0.4.128/26\",\"10.0.4.192/27\",\"10.0.4.224/30\",\"10.0.4.228/31\",\"10.0.4.230/32\"]"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[\"10.0.1.0\",999]",
+        "label": "Near-maximum count from aligned address",
+        "weight": 3,
+        "expectedOutput": "[\"10.0.1.0/24\",\"10.0.2.0/23\",\"10.0.4.0/25\",\"10.0.4.128/26\",\"10.0.4.192/27\",\"10.0.4.224/30\",\"10.0.4.228/31\",\"10.0.4.230/32\"]"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[\"172.16.31.255\",2]",
+        "label": "Range crossing third-octet boundary",
+        "weight": 3,
+        "expectedOutput": "[\"172.16.31.255/32\",\"172.16.32.0/32\"]"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[\"172.16.32.0\",2]",
+        "label": "Two addresses from aligned boundary",
+        "weight": 3,
+        "expectedOutput": "[\"172.16.32.0/31\"]"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[\"128.0.0.0\",1000]",
+        "label": "High-bit network address",
+        "weight": 3,
+        "expectedOutput": "[\"128.0.0.0/23\",\"128.0.2.0/24\",\"128.0.3.0/25\",\"128.0.3.128/26\",\"128.0.3.192/27\",\"128.0.3.224/29\"]"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[\"127.255.255.255\",1000]",
+        "label": "Range ending at IPv4 maximum",
+        "weight": 3,
+        "expectedOutput": "[\"127.255.255.255/32\",\"128.0.0.0/23\",\"128.0.2.0/24\",\"128.0.3.0/25\",\"128.0.3.128/26\",\"128.0.3.192/27\",\"128.0.3.224/30\",\"128.0.3.228/31\",\"128.0.3.230/32\"]"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[\"1.2.3.4\",1]",
+        "label": "Single unaligned address",
+        "weight": 3,
+        "expectedOutput": "[\"1.2.3.4/32\"]"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[\"1.2.3.4\",2]",
+        "label": "Two addresses from unaligned start",
+        "weight": 3,
+        "expectedOutput": "[\"1.2.3.4/31\"]"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[\"1.2.3.4\",3]",
+        "label": "Three addresses from unaligned start",
+        "weight": 3,
+        "expectedOutput": "[\"1.2.3.4/31\",\"1.2.3.6/32\"]"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[\"1.2.3.4\",8]",
+        "label": "Small range requiring multiple CIDR sizes",
+        "weight": 3,
+        "expectedOutput": "[\"1.2.3.4/30\",\"1.2.3.8/30\"]"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[\"1.2.3.4\",16]",
+        "label": "Sixteen-address unaligned range",
+        "weight": 3,
+        "expectedOutput": "[\"1.2.3.4/30\",\"1.2.3.8/29\",\"1.2.3.16/30\"]"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[\"1.2.3.128\",128]",
+        "label": "Exact /25-aligned range",
+        "weight": 3,
+        "expectedOutput": "[\"1.2.3.128/25\"]"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[\"1.2.3.129\",127]",
+        "label": "Unaligned range after /25 boundary",
+        "weight": 3,
+        "expectedOutput": "[\"1.2.3.129/32\",\"1.2.3.130/31\",\"1.2.3.132/30\",\"1.2.3.136/29\",\"1.2.3.144/28\",\"1.2.3.160/27\",\"1.2.3.192/26\"]"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[\"8.8.8.8\",1000]",
+        "label": "Public DNS address unaligned range",
+        "weight": 3,
+        "expectedOutput": "[\"8.8.8.8/29\",\"8.8.8.16/28\",\"8.8.8.32/27\",\"8.8.8.64/26\",\"8.8.8.128/25\",\"8.8.9.0/24\",\"8.8.10.0/24\",\"8.8.11.0/25\",\"8.8.11.128/26\",\"8.8.11.192/27\",\"8.8.11.224/28\"]"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[\"203.0.113.17\",50]",
+        "label": "Documentation-range address with mixed blocks",
+        "weight": 3,
+        "expectedOutput": "[\"203.0.113.17/32\",\"203.0.113.18/31\",\"203.0.113.20/30\",\"203.0.113.24/29\",\"203.0.113.32/27\",\"203.0.113.64/31\",\"203.0.113.66/32\"]"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[\"198.51.100.254\",100]",
+        "label": "Range crossing documentation subnet boundary",
+        "weight": 3,
+        "expectedOutput": "[\"198.51.100.254/31\",\"198.51.101.0/26\",\"198.51.101.64/27\",\"198.51.101.96/31\"]"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[\"100.64.0.0\",512]",
+        "label": "Carrier-grade NAT aligned half-page",
+        "weight": 3,
+        "expectedOutput": "[\"100.64.0.0/23\"]"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[\"169.254.255.1\",300]",
+        "label": "Link-local range crossing octet boundary",
+        "weight": 3,
+        "expectedOutput": "[\"169.254.255.1/32\",\"169.254.255.2/31\",\"169.254.255.4/30\",\"169.254.255.8/29\",\"169.254.255.16/28\",\"169.254.255.32/27\",\"169.254.255.64/26\",\"169.254.255.128/25\",\"169.255.0.0/27\",\"169.255.0.32/29\",\"169.255.0.40/30\",\"169.255.0.44/32\"]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[\"224.0.0.1\",999]",
+        "label": "Multicast address range near block boundary",
+        "weight": 3,
+        "expectedOutput": "[\"224.0.0.1/32\",\"224.0.0.2/31\",\"224.0.0.4/30\",\"224.0.0.8/29\",\"224.0.0.16/28\",\"224.0.0.32/27\",\"224.0.0.64/26\",\"224.0.0.128/25\",\"224.0.1.0/24\",\"224.0.2.0/24\",\"224.0.3.0/25\",\"224.0.3.128/26\",\"224.0.3.192/27\",\"224.0.3.224/29\"]"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q751",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdint.h>\n#include <string.h>\n\nstatic uint64_t ipToInt(const char* ip){unsigned a,b,c,d;sscanf(ip,\"%u.%u.%u.%u\",&a,&b,&c,&d);return ((uint64_t)a<<24)|((uint64_t)b<<16)|((uint64_t)c<<8)|d;}\nstatic void intToIp(uint64_t v,char* out){sprintf(out,\"%u.%u.%u.%u\",(unsigned)((v>>24)&255),(unsigned)((v>>16)&255),(unsigned)((v>>8)&255),(unsigned)(v&255));}\nchar** ipToCIDR(char* ip,int n,int* returnSize){\n    *returnSize = 0;\n    return NULL;\n}\nint main(){char line[256]; if(!fgets(line,sizeof(line),stdin)) return 0; char ip[32]; int n; if(sscanf(line,\"[\\\"%31[^\\\"]\\\",%d]\",ip,&n)!=2 && sscanf(line,\"[\\\"%31[^\\\"]\\\", %d]\",ip,&n)!=2) return 1; int sz=0; char** r=ipToCIDR(ip,n,&sz); printf(\"[\"); for(int i=0;i<sz;i++){if(i)printf(\",\");printf(\"\\\"%s\\\"\",r[i]);free(r[i]);} printf(\"]\\n\"); free(r);}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\nclass Solution {\npublic:\n    vector<string> ipToCIDR(string ip,int n) {\n        return {};\n    }\n};\nint main(){string line;getline(cin,line); size_t q1=line.find('\"'),q2=line.find('\"',q1+1),c=line.find(',',q2); string ip=line.substr(q1+1,q2-q1-1); int n=stoi(line.substr(c+1)); auto r=Solution().ipToCIDR(ip,n); cout<<\"[\"; for(size_t i=0;i<r.size();++i){if(i)cout<<\",\";cout<<'\"'<<r[i]<<'\"';} cout<<\"]\\n\";}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\nclass Solution {\n    public List<String> ipToCIDR(String ip, int n) {\n        return new ArrayList<>();\n    }\n}\npublic class Main {\n  public static void main(String[] args) throws Exception {\n    BufferedReader br=new BufferedReader(new InputStreamReader(System.in));\n    String line=br.readLine().trim();\n    int q1=line.indexOf('\"'), q2=line.indexOf('\"',q1+1), comma=line.indexOf(',',q2);\n    String ip=line.substring(q1+1,q2); int n=Integer.parseInt(line.substring(comma+1,line.length()-1).trim());\n    List<String> result=new Solution().ipToCIDR(ip,n); StringBuilder sb=new StringBuilder(\"[\"); for(int i=0;i<result.size();i++){ if(i>0) sb.append(\",\"); sb.append(\"\\\"\").append(result.get(i)).append(\"\\\"\"); } sb.append(\"]\"); System.out.println(sb);\n  }\n}\n",
+    "Python3": "import sys, json\nclass Solution:\n    def ipToCIDR(self, ip, n):\n        pass\n\nimport math\nif __name__=='__main__':\n    a=json.loads(sys.stdin.readline()); print(json.dumps(Solution().ipToCIDR(a[0],a[1]),separators=(\",\",\":\")))\n",
+    "JavaScript": "'use strict';\nconst readline=require('readline');\nfunction ipToCIDR(ip,n){\n    return [];\n}\nconst rl=readline.createInterface({input:process.stdin});\nrl.on('line',line=>{const a=JSON.parse(line);console.log(JSON.stringify(ipToCIDR(a[0],a[1])));rl.close();});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "30–40 min",
+  "learningObjectives": [
+    "Convert IPv4 dotted-decimal addresses to integer representations.",
+    "Use bit-level alignment to construct minimal CIDR coverage.",
+    "Reason about powers of two, prefix lengths, and greedy partitioning."
+  ]
 }

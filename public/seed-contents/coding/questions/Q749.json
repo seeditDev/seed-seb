@@ -1,33 +1,18 @@
 {
-  "questionId": "Q749",
-  "title": "Contain Virus Problem",
   "slug": "contain-virus",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "depth-first-search",
-      "breadth-first-search",
-      "matrix",
-      "simulation"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "depth-first-search",
-      "breadth-first-search",
-      "matrix",
-      "simulation"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Find every 4-directionally connected infected region before allowing any spread.",
+    "For each region, keep a set of distinct uninfected cells it threatens and separately count its infected-to-uninfected boundary edges.",
+    "Quarantine only the region with the largest threatened-cell set; all other regions spread simultaneously.",
+    "A threatened cell can be adjacent to multiple infected cells, but it is counted once for deciding which region is quarantined."
+  ],
+  "title": "Contain Virus Problem",
   "content": {
-    "problemStatement": "A virus is spreading rapidly, and your task is to quarantine the infected area by installing walls.\n\nThe world is modeled as an `m x n` binary grid `isInfected`, where `isInfected[i][j] == 0` represents uninfected cells, and `isInfected[i][j] == 1` represents cells contaminated with the virus. A wall (and only one wall) can be installed between any two **4-directionally** adjacent cells, on the shared boundary.\n\nEvery night, the virus spreads to all neighboring cells in all four directions unless blocked by a wall. Resources are limited. Each day, you can install walls around only one region (i.e., the affected area (continuous block of infected cells) that threatens the most uninfected cells the following night). There **will never be a tie**.\n\nOutput *the number of walls used to quarantine all the infected regions*. If the world will become fully infected, output the number of walls used.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/06/01/virus11-grid.jpg)\n\n```\nInput: isInfected = [[0,1,0,0,0,0,0,1],[0,1,0,0,0,0,0,1],[0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0]]\nOutput: 10\nExplanation: There are 2 contaminated regions.\nOn the first day, add 5 walls to quarantine the viral region on the left. The board after the virus spreads is:\n![](https://assets.leetcode.com/uploads/2021/06/01/virus12edited-grid.jpg)\nOn the second day, add 5 walls to quarantine the viral region on the right. The virus is fully contained.\n![](https://assets.leetcode.com/uploads/2021/06/01/virus13edited-grid.jpg)\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/06/01/virus2-grid.jpg)\n\n```\nInput: isInfected = [[1,1,1],[1,0,1],[1,1,1]]\nOutput: 4\nExplanation: Even though there is only one cell saved, there are 4 walls built.\nNotice that walls are only built on the shared boundary of two different cells.\n```\n\n**Example 3:**\n\n```\nInput: isInfected = [[1,1,1,0,0,0,0,0,0],[1,0,1,0,1,1,1,1,1],[1,1,1,0,0,0,0,0,0]]\nOutput: 13\nExplanation: The region on the left only builds two new walls.\n```\n\n**Constraints:**\n\n* `m == isInfected.length`\n* `n == isInfected[i].length`\n* `1 <= m, n <= 50`\n* `isInfected[i][j]` is either `0` or `1`.\n* There is always a contiguous viral region throughout the described process that will **infect strictly more uncontaminated squares** in the next round.",
+    "notes": [
+      "Each night, only the unquarantined infected regions spread into their distinct neighboring uninfected cells.",
+      "For every region, count both its distinct threatened cells and the number of walls needed along its infected-to-uninfected boundary.",
+      "Quarantine the region threatening the largest number of distinct uninfected cells, then spread all remaining regions simultaneously."
+    ],
     "constraints": [
       "m == isInfected.length",
       "n == isInfected[i].length",
@@ -43,284 +28,55 @@
         "type": "reg",
         "input": "[[[0,1,0,0,0,0,0,1],[0,1,0,0,0,0,0,1],[0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0]]]",
         "output": "10",
-        "explanation": "There are 2 contaminated regions.\nOn the first day, add 5 walls to quarantine the viral region on the left. The board after the virus spreads is:\n\nOn the second day, add 5 walls to quarantine the viral region on the right. The virus is fully contained."
+        "explanation": "There are 2 contaminated regions.\nOn the first day, add 5 walls to quarantine the viral region on the left. The board after the virus spreads is:\n\nOn the second day, add 5 walls to quarantine the viral region on the right. The virus is fully contained.",
+        "expectedOutput": "10"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
         "output": "4",
-        "explanation": "Even though there is only one cell saved, there are 4 walls built.\nNotice that walls are only built on the shared boundary of two different cells."
+        "explanation": "Even though there is only one cell saved, there are 4 walls built.\nNotice that walls are only built on the shared boundary of two different cells.",
+        "expectedOutput": "4"
       },
       {
         "id": "sample_3",
         "type": "reg",
         "input": "[[[1,1,1,0,0,0,0,0,0],[1,0,1,0,1,1,1,1,1],[1,1,1,0,0,0,0,0,0]]]",
         "output": "13",
-        "explanation": "The region on the left only builds two new walls."
+        "explanation": "The region on the left only builds two new walls.",
+        "expectedOutput": "13"
       }
     ],
-    "notes": []
+    "problemStatement": "A virus is spreading rapidly, and your task is to quarantine the infected area by installing walls.\n\nThe world is modeled as an `m x n` binary grid `isInfected`, where `isInfected[i][j] == 0` represents uninfected cells, and `isInfected[i][j] == 1` represents cells contaminated with the virus. A wall (and only one wall) can be installed between any two **4-directionally** adjacent cells, on the shared boundary.\n\nEvery night, the virus spreads to all neighboring cells in all four directions unless blocked by a wall. Resources are limited. Each day, you can install walls around only one region (i.e., the affected area (continuous block of infected cells) that threatens the most uninfected cells the following night). There **will never be a tie**.\n\nOutput *the number of walls used to quarantine all the infected regions*. If the world will become fully infected, output the number of walls used.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/06/01/virus11-grid.jpg)\n\n```\nInput: isInfected = [[0,1,0,0,0,0,0,1],[0,1,0,0,0,0,0,1],[0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0]]\nOutput: 10\nExplanation: There are 2 contaminated regions.\nOn the first day, add 5 walls to quarantine the viral region on the left. The board after the virus spreads is:\n![](https://assets.leetcode.com/uploads/2021/06/01/virus12edited-grid.jpg)\nOn the second day, add 5 walls to quarantine the viral region on the right. The virus is fully contained.\n![](https://assets.leetcode.com/uploads/2021/06/01/virus13edited-grid.jpg)\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/06/01/virus2-grid.jpg)\n\n```\nInput: isInfected = [[1,1,1],[1,0,1],[1,1,1]]\nOutput: 4\nExplanation: Even though there is only one cell saved, there are 4 walls built.\nNotice that walls are only built on the shared boundary of two different cells.\n```\n\n**Example 3:**\n\n```\nInput: isInfected = [[1,1,1,0,0,0,0,0,0],[1,0,1,0,1,1,1,1,1],[1,1,1,0,0,0,0,0,0]]\nOutput: 13\nExplanation: The region on the left only builds two new walls.\n```\n\n**Constraints:**\n\n* `m == isInfected.length`\n* `n == isInfected[i].length`\n* `1 <= m, n <= 50`\n* `isInfected[i][j]` is either `0` or `1`.\n* There is always a contiguous viral region throughout the described process that will **infect strictly more uncontaminated squares** in the next round."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[[0, 1], [0, 0]]]",
-        "expectedOutput": "2",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Zero values",
-        "input": "[[[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]]",
-        "expectedOutput": "0",
-        "weight": 4
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[[0, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]]",
-        "expectedOutput": "4",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[[1, 0, 0, 0, 0], [1, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]]",
-        "expectedOutput": "3",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[[0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]]",
-        "expectedOutput": "6",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 1]]]",
-        "expectedOutput": "2",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Maximum constraints stress",
-        "input": "[[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]]",
-        "expectedOutput": "0",
-        "weight": 10
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "The reference implementation repeatedly identifies all infected regions, quarantines the region with the largest frontier, and spreads the remaining regions."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      10,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -342,57 +98,340 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "depth-first-search",
+      "breadth-first-search",
+      "matrix",
+      "simulation"
     ],
-    "notes": []
+    "category": "Arrays",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "depth-first-search",
+      "breadth-first-search",
+      "matrix",
+      "simulation"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses depth-first search (DFS) to identify and quarantine infected regions, prioritizing the region that threatens the most uninfected cells.",
-    "timeComplexity": "O((m * n)^(4/3))",
-    "spaceComplexity": "O(m * n)",
-    "code": {
-      "Python3": "# Time:  O((m * n)^(4/3)), days = O((m * n)^(1/3))\n# Space: O(m * n)\n\nclass Solution(object):\n    def containVirus(self, grid):\n        \"\"\"\n        :type grid: List[List[int]]\n        :rtype: int\n        \"\"\"\n        directions = [(0, 1), (0, -1), (-1, 0), (1, 0)]\n\n        def dfs(grid, r, c, lookup, regions, frontiers, perimeters):\n            if (r, c) in lookup:\n                return\n            lookup.add((r, c))\n            regions[-1].add((r, c))\n            for d in directions:\n                nr, nc = r+d[0], c+d[1]\n                if not (0 <= nr < len(grid) and \\\n                        0 <= nc < len(grid[r])):\n                    continue\n                if grid[nr][nc] == 1:\n                    dfs(grid, nr, nc, lookup, regions, frontiers, perimeters)\n                elif grid[nr][nc] == 0:\n                    frontiers[-1].add((nr, nc))\n                    perimeters[-1] += 1\n\n        result = 0\n        while True:\n            lookup, regions, frontiers, perimeters = set(), [], [], []\n            for r, row in enumerate(grid):\n                for c, val in enumerate(row):\n                    if val == 1 and (r, c) not in lookup:\n                        regions.append(set())\n                        frontiers.append(set())\n                        perimeters.append(0)\n                        dfs(grid, r, c, lookup, regions, frontiers, perimeters)\n\n            if not regions: break\n\n            triage_idx = frontiers.index(max(frontiers, key = len))\n            for i, region in enumerate(regions):\n                if i == triage_idx:\n                    result += perimeters[i]\n                    for r, c in region:\n                        grid[r][c] = -1\n                    continue\n                for r, c in region:\n                    for d in directions:\n                        nr, nc = r+d[0], c+d[1]\n                        if not (0 <= nr < len(grid) and \\\n                                0 <= nc < len(grid[r])):\n                            continue\n                        if grid[nr][nc] == 0:\n                            grid[nr][nc] = 1\n\n        return result"
-    },
-    "notes": [],
+    "notes": [
+      "Each round examines the whole grid and may permanently quarantine cells; there are at most mn effective rounds.",
+      "Using a set for each region is important because several infected cells can threaten the same uninfected cell.",
+      "The wall count counts each infected-to-uninfected shared boundary edge, including boundaries along the outside of the grid only when an actual uninfected cell is on the other side; outer grid edges do not require walls."
+    ],
+    "approach": "Simulate the process one round at a time. Discover every connected infected region, record the distinct uninfected cells it would infect and the number of walls required to isolate it, quarantine the region with the largest frontier, then spread every other region. Repeat until no region can infect an uninfected cell.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O((mn)^2) worst-case time and O(mn) auxiliary space.",
+        "description": "Use connected-component traversal to process each infected region once per round. For every region, collect its distinct frontier cells in a set and count every shared infected-to-uninfected edge as a wall. Choose the region with the largest frontier before applying any spread."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O((mn)^2) worst-case time and O(mn) auxiliary space.",
+        "description": "The production simulation is the component-based round-by-round method: identify all regions, calculate each region's distinct threatened cells and wall count, quarantine the unique most-threatening region, spread all other regions simultaneously, and repeat. The key invariant is that the chosen region is evaluated before the night's spread."
+      },
+      "bruteForce": {
+        "complexity": "At least O((mn)^2) time in the worst case and O(mn) space.",
+        "description": "At each round, enumerate every possible one-step spread from every infected cell and repeatedly recompute the complete grid state. This follows the process definition but performs unnecessary work and makes it easy to double-count shared threatened cells."
       }
+    },
+    "timeComplexity": "O((mn)^2) in the worst case",
+    "spaceComplexity": "O(mn)",
+    "code": {
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n\ntypedef struct {\n    int *cr, *cc;\n    int *fr, *fc;\n    int cn, fn, walls;\n} Region;\n\nstatic int containVirus(int **grid, int m, int n) {\n    int total = 0;\n    int dr[4] = {1,-1,0,0}, dc[4] = {0,0,1,-1};\n\n    while (1) {\n        int **seen = (int**)calloc((size_t)m, sizeof(int*));\n        for (int i=0; i<m; ++i) seen[i] = (int*)calloc((size_t)n, sizeof(int));\n        Region *regions = NULL;\n        int regionCount = 0;\n\n        for (int r=0; r<m; ++r) {\n            for (int c=0; c<n; ++c) {\n                if (grid[r][c] != 1 || seen[r][c]) continue;\n                Region reg;\n                reg.cr = (int*)malloc((size_t)m*n*sizeof(int));\n                reg.cc = (int*)malloc((size_t)m*n*sizeof(int));\n                reg.fr = (int*)malloc((size_t)m*n*sizeof(int));\n                reg.fc = (int*)malloc((size_t)m*n*sizeof(int));\n                reg.cn = reg.fn = reg.walls = 0;\n                int *qx = (int*)malloc((size_t)m*n*sizeof(int));\n                int *qy = (int*)malloc((size_t)m*n*sizeof(int));\n                int *marked = (int*)calloc((size_t)m*n, sizeof(int));\n                int head=0, tail=0;\n                qx[tail]=r; qy[tail++]=c; seen[r][c]=1;\n\n                while (head < tail) {\n                    int x=qx[head], y=qy[head++];\n                    reg.cr[reg.cn]=x; reg.cc[reg.cn++]=y;\n                    for (int k=0;k<4;++k) {\n                        int nx=x+dr[k], ny=y+dc[k];\n                        if (nx<0 || nx>=m || ny<0 || ny>=n) continue;\n                        if (grid[nx][ny]==1 && !seen[nx][ny]) {\n                            seen[nx][ny]=1; qx[tail]=nx; qy[tail++]=ny;\n                        } else if (grid[nx][ny]==0) {\n                            reg.walls++;\n                            int id=nx*n+ny;\n                            if (!marked[id]) {\n                                marked[id]=1; reg.fr[reg.fn]=nx; reg.fc[reg.fn++]=ny;\n                            }\n                        }\n                    }\n                }\n                free(qx); free(qy); free(marked);\n                regions=(Region*)realloc(regions,(size_t)(regionCount+1)*sizeof(Region));\n                regions[regionCount++]=reg;\n            }\n        }\n\n        for (int i=0;i<m;++i) free(seen[i]);\n        free(seen);\n        if (regionCount==0) { free(regions); return total; }\n\n        int chosen=0;\n        for (int i=1;i<regionCount;++i) if (regions[i].fn > regions[chosen].fn) chosen=i;\n        if (regions[chosen].fn==0) {\n            for(int i=0;i<regionCount;++i){free(regions[i].cr);free(regions[i].cc);free(regions[i].fr);free(regions[i].fc);}\n            free(regions); return total;\n        }\n\n        total += regions[chosen].walls;\n        for (int z=0; z<regions[chosen].cn; ++z) grid[regions[chosen].cr[z]][regions[chosen].cc[z]]=-1;\n        for (int i=0; i<regionCount; ++i) if (i!=chosen)\n            for (int z=0; z<regions[i].fn; ++z) grid[regions[i].fr[z]][regions[i].fc[z]]=1;\n\n        for(int i=0;i<regionCount;++i){free(regions[i].cr);free(regions[i].cc);free(regions[i].fr);free(regions[i].fc);}\n        free(regions);\n    }\n}\n\nstatic void parseGrid(const char *s, int rows[50][50], int *m, int *n) {\n    int depth=0, r=-1, c=-1, maxc=0;\n    for (int i=0; s[i]; ++i) {\n        if (s[i]=='[') { ++depth; if (depth==3) { ++r; c=-1; } }\n        else if (s[i]==']') { --depth; }\n        else if ((s[i]=='0' || s[i]=='1') && depth==3) { rows[r][++c]=s[i]-'0'; if(c+1>maxc) maxc=c+1; }\n    }\n    *m=r+1; *n=maxc;\n}",
+      "C++": "class Solution {\npublic:\n    int containVirus(vector<vector<int>>& grid) {\n        int m = grid.size(), n = grid[0].size(), total = 0;\n        const int dr[4] = {1, -1, 0, 0};\n        const int dc[4] = {0, 0, 1, -1};\n\n        while (true) {\n            vector<vector<int>> seen(m, vector<int>(n, 0));\n            vector<vector<pair<int,int>>> cells;\n            vector<set<pair<int,int>>> frontiers;\n            vector<int> walls;\n\n            for (int r = 0; r < m; ++r) {\n                for (int c = 0; c < n; ++c) {\n                    if (grid[r][c] != 1 || seen[r][c]) continue;\n                    vector<pair<int,int>> cur;\n                    set<pair<int,int>> frontier;\n                    int w = 0;\n                    queue<pair<int,int>> q;\n                    q.push({r,c});\n                    seen[r][c] = 1;\n                    while (!q.empty()) {\n                        auto [x,y] = q.front(); q.pop();\n                        cur.push_back({x,y});\n                        for (int k = 0; k < 4; ++k) {\n                            int nx = x + dr[k], ny = y + dc[k];\n                            if (nx < 0 || nx >= m || ny < 0 || ny >= n) continue;\n                            if (grid[nx][ny] == 1 && !seen[nx][ny]) {\n                                seen[nx][ny] = 1;\n                                q.push({nx,ny});\n                            } else if (grid[nx][ny] == 0) {\n                                frontier.insert({nx,ny});\n                                ++w;\n                            }\n                        }\n                    }\n                    cells.push_back(move(cur));\n                    frontiers.push_back(move(frontier));\n                    walls.push_back(w);\n                }\n            }\n\n            if (cells.empty()) return total;\n            int chosen = 0;\n            for (int i = 1; i < (int)cells.size(); ++i)\n                if (frontiers[i].size() > frontiers[chosen].size()) chosen = i;\n            if (frontiers[chosen].empty()) return total;\n\n            total += walls[chosen];\n            for (auto [x,y] : cells[chosen]) grid[x][y] = -1;\n            for (int i = 0; i < (int)cells.size(); ++i) {\n                if (i == chosen) continue;\n                for (auto [x,y] : frontiers[i]) grid[x][y] = 1;\n            }\n        }\n    }\n};",
+      "Java": "class Solution {\n    public int containVirus(int[][] grid) {\n        int m = grid.length, n = grid[0].length, total = 0;\n        int[][] d = {{1,0},{-1,0},{0,1},{0,-1}};\n\n        while (true) {\n            boolean[][] seen = new boolean[m][n];\n            List<List<int[]>> regions = new ArrayList<>();\n            List<Set<Integer>> frontiers = new ArrayList<>();\n            List<Integer> wallCounts = new ArrayList<>();\n\n            for (int r = 0; r < m; r++) {\n                for (int c = 0; c < n; c++) {\n                    if (grid[r][c] != 1 || seen[r][c]) continue;\n                    ArrayDeque<int[]> q = new ArrayDeque<>();\n                    List<int[]> cells = new ArrayList<>();\n                    Set<Integer> frontier = new HashSet<>();\n                    int walls = 0;\n                    q.add(new int[]{r,c});\n                    seen[r][c] = true;\n                    while (!q.isEmpty()) {\n                        int[] cur = q.removeFirst();\n                        int x = cur[0], y = cur[1];\n                        cells.add(cur);\n                        for (int[] dir : d) {\n                            int nx = x + dir[0], ny = y + dir[1];\n                            if (nx < 0 || nx >= m || ny < 0 || ny >= n) continue;\n                            if (grid[nx][ny] == 1 && !seen[nx][ny]) {\n                                seen[nx][ny] = true;\n                                q.addLast(new int[]{nx,ny});\n                            } else if (grid[nx][ny] == 0) {\n                                frontier.add(nx * n + ny);\n                                walls++;\n                            }\n                        }\n                    }\n                    regions.add(cells);\n                    frontiers.add(frontier);\n                    wallCounts.add(walls);\n                }\n            }\n\n            if (regions.isEmpty()) return total;\n            int chosen = 0;\n            for (int i = 1; i < regions.size(); i++)\n                if (frontiers.get(i).size() > frontiers.get(chosen).size()) chosen = i;\n            if (frontiers.get(chosen).isEmpty()) return total;\n\n            total += wallCounts.get(chosen);\n            for (int[] cell : regions.get(chosen)) grid[cell[0]][cell[1]] = -1;\n            for (int i = 0; i < regions.size(); i++) {\n                if (i == chosen) continue;\n                for (int key : frontiers.get(i)) grid[key / n][key % n] = 1;\n            }\n        }\n    }\n}",
+      "Python3": "import sys\nimport json\nfrom typing import List\n\nclass Solution:\n    def containVirus(self, isInfected: List[List[int]]) -> int:\n        m = len(isInfected)\n        n = len(isInfected[0])\n        total = 0\n        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]\n\n        while True:\n            seen = [[False] * n for _ in range(m)]\n            regions = []\n\n            for r in range(m):\n                for c in range(n):\n                    if isInfected[r][c] != 1 or seen[r][c]:\n                        continue\n                    stack = [(r, c)]\n                    seen[r][c] = True\n                    cells = []\n                    frontier = set()\n                    walls = 0\n\n                    while stack:\n                        x, y = stack.pop()\n                        cells.append((x, y))\n                        for dx, dy in directions:\n                            nx, ny = x + dx, y + dy\n                            if 0 <= nx < m and 0 <= ny < n:\n                                if isInfected[nx][ny] == 1 and not seen[nx][ny]:\n                                    seen[nx][ny] = True\n                                    stack.append((nx, ny))\n                                elif isInfected[nx][ny] == 0:\n                                    frontier.add((nx, ny))\n                                    walls += 1\n\n                    regions.append((len(frontier), walls, cells, frontier))\n\n            if not regions:\n                return total\n\n            chosen = max(range(len(regions)), key=lambda i: regions[i][0])\n            if regions[chosen][0] == 0:\n                return total\n\n            total += regions[chosen][1]\n\n            for x, y in regions[chosen][2]:\n                isInfected[x][y] = -1\n\n            for i, (_, _, _, frontier) in enumerate(regions):\n                if i == chosen:\n                    continue\n                for x, y in frontier:\n                    isInfected[x][y] = 1",
+      "JavaScript": "const fs = require(\"fs\");\n\nfunction containVirus(isInfected) {\n    const m = isInfected.length;\n    const n = isInfected[0].length;\n    const directions = [[1,0],[-1,0],[0,1],[0,-1]];\n    let total = 0;\n\n    while (true) {\n        const seen = Array.from({ length: m }, () => Array(n).fill(false));\n        const regions = [];\n\n        for (let r = 0; r < m; r++) {\n            for (let c = 0; c < n; c++) {\n                if (isInfected[r][c] !== 1 || seen[r][c]) continue;\n                const stack = [[r,c]];\n                seen[r][c] = true;\n                const cells = [];\n                const frontier = new Set();\n                let walls = 0;\n\n                while (stack.length) {\n                    const [x,y] = stack.pop();\n                    cells.push([x,y]);\n                    for (const [dx,dy] of directions) {\n                        const nx = x + dx, ny = y + dy;\n                        if (nx < 0 || nx >= m || ny < 0 || ny >= n) continue;\n                        if (isInfected[nx][ny] === 1 && !seen[nx][ny]) {\n                            seen[nx][ny] = true;\n                            stack.push([nx,ny]);\n                        } else if (isInfected[nx][ny] === 0) {\n                            frontier.add(nx + \",\" + ny);\n                            walls++;\n                        }\n                    }\n                }\n                regions.push({ frontier, cells, walls });\n            }\n        }\n\n        if (regions.length === 0) return total;\n        let chosen = 0;\n        for (let i = 1; i < regions.length; i++) {\n            if (regions[i].frontier.size > regions[chosen].frontier.size) chosen = i;\n        }\n        if (regions[chosen].frontier.size === 0) return total;\n\n        total += regions[chosen].walls;\n        for (const [x,y] of regions[chosen].cells) isInfected[x][y] = -1;\n        for (let i = 0; i < regions.length; i++) {\n            if (i === chosen) continue;\n            for (const key of regions[i].frontier) {\n                const [x,y] = key.split(\",\").map(Number);\n                isInfected[x][y] = 1;\n            }\n        }\n    }\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint containVirus(int** isInfected, int isInfectedSize, int* isInfectedColSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int isInfectedSize = 0;\n        int* isInfectedColSize = NULL;\n        int** isInfected = parse_int_2d(&tok, &isInfectedSize, &isInfectedColSize);\n        int result = containVirus(isInfected, isInfectedSize, isInfectedColSize);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def containVirus(self, isInfected: List[List[int]]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _isInfected = _args[0]\n    _result = Solution().containVirus(_isInfected)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[][]} isInfected\n * @return {number}\n */\nvar containVirus = function(isInfected) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = containVirus(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int containVirus(int[][] isInfected) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[][] isInfected = toInt2D(nextToken());\n        int result = new Solution().containVirus(isInfected);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int containVirus(vector<vector<int>>& isInfected) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto isInfected = readInt2D(tok);\n    auto result = Solution().containVirus(isInfected);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": false,
+  "_internal": {
+    "params": [
+      {
+        "name": "isInfected",
+        "type": "int[][]"
+      }
+    ],
+    "methodName": "containVirus"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Why must the threatened-cell count use distinct cells rather than counting infected-to-uninfected edges?",
+    "How would the simulation change if more than one region could be quarantined each day?",
+    "Can the region discovery and frontier calculation be organized to reduce repeated grid scans?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[[0,1],[0,0]]]",
+        "label": "Minimum grid with a single corner infection",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[[1,0],[0,0]]]",
+        "label": "Single infected cell on a corner boundary",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[[1,1],[1,0]]]",
+        "label": "Compact region touches two sides",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[[1,0],[0,1]]]",
+        "label": "Two disconnected diagonal infections",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[[1,1,0]]]",
+        "label": "Single row with adjacent infection pair",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[[0,1,1]]]",
+        "label": "Single row infection away from an edge",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[[1,0,1]]]",
+        "label": "Single row with separated infections",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[[0,1,0]]]",
+        "label": "Single row isolated center infection",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[[1,1,1],[0,0,0]]]",
+        "label": "Full top row region",
+        "weight": 4,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[[1,0,1],[0,0,0]]]",
+        "label": "Two-cell regions separated by empty column",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[[1,1,0],[0,0,1]]]",
+        "label": "Two regions compete for nearby cells",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[[1,0,0],[1,1,0],[0,0,0]]]",
+        "label": "L-shaped region near corner",
+        "weight": 3,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[[0,1,0],[1,1,0],[0,0,0]]]",
+        "label": "Diagonal-touching infected cells remain separate regions",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[[1,0,0,0],[1,1,0,0],[0,0,0,0]]]",
+        "label": "L-shaped region with shared frontier",
+        "weight": 3,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[[0,1,1,0],[0,0,1,0],[0,0,0,0]]]",
+        "label": "Offset compact region near center",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[[1,1,0,0],[1,0,0,1],[0,0,1,1]]]",
+        "label": "Multiple regions with different frontiers",
+        "weight": 3,
+        "expectedOutput": "9"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[[1,0,1],[1,0,1],[0,0,0]]]",
+        "label": "Two vertical regions compete for expansion",
+        "weight": 3,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[[0,0,0],[1,1,1],[0,0,0]]]",
+        "label": "Wide horizontal region near center",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[[1,1,1],[1,0,1],[0,0,0]]]",
+        "label": "Boundary region with a concave gap",
+        "weight": 3,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[[1,0,0,1],[1,0,0,1],[0,0,0,0]]]",
+        "label": "Separated vertical boundary regions",
+        "weight": 3,
+        "expectedOutput": "7"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[[1,0,1,0],[0,1,0,1],[1,0,1,0]]]",
+        "label": "Alternating checkerboard frontier",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[[0,1,1,1,0],[0,0,0,1,0],[0,1,1,1,0]]]",
+        "label": "Three-part region with narrow passage",
+        "weight": 3,
+        "expectedOutput": "10"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[[1,1,0,0,1],[1,0,0,0,1],[1,1,0,0,1]]]",
+        "label": "Symmetric regions with central gap",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[[1,0,0,0,1],[1,1,0,1,1],[0,0,0,0,0]]]",
+        "label": "Two regions around a central corridor",
+        "weight": 3,
+        "expectedOutput": "9"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[[0,1,0,1,0],[1,1,1,1,0],[0,0,0,0,0]]]",
+        "label": "Dense overlapping frontiers",
+        "weight": 3,
+        "expectedOutput": "11"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[[1,1,1,0,0],[0,1,0,0,1],[0,0,1,1,1]]]",
+        "label": "Irregular three-region configuration",
+        "weight": 3,
+        "expectedOutput": "9"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[[1,0,0,1,0],[0,1,1,0,1],[1,0,0,1,0]]]",
+        "label": "Symmetric diagonal regions",
+        "weight": 3,
+        "expectedOutput": "6"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[[1,1,1,1,1],[0,0,0,0,0],[1,1,1,1,1]]]",
+        "label": "Two horizontal bands separated by empty row",
+        "weight": 3,
+        "expectedOutput": "5"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[[1,0,1,0,1],[1,0,1,0,1],[0,0,0,0,0]]]",
+        "label": "Multiple vertical bands with shared threats",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]]",
+        "label": "Maximum grid dimensions with one central infection",
+        "weight": 3,
+        "expectedOutput": "4"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-09-16",
+  "questionId": "Q749",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n\ntypedef struct {\n    int *cr, *cc;\n    int *fr, *fc;\n    int cn, fn, walls;\n} Region;\n\nstatic int containVirus(int **grid, int m, int n) {\n    return 0;\n}\n\nstatic void parseGrid(const char *s, int rows[50][50], int *m, int *n) {\n    int depth=0, r=-1, c=-1, maxc=0;\n    for (int i=0; s[i]; ++i) {\n        if (s[i]=='[') { ++depth; if (depth==3) { ++r; c=-1; } }\n        else if (s[i]==']') { --depth; }\n        else if ((s[i]=='0' || s[i]=='1') && depth==3) { rows[r][++c]=s[i]-'0'; if(c+1>maxc) maxc=c+1; }\n    }\n    *m=r+1; *n=maxc;\n}\n\nint main(void) {\n    char line[1000000];\n    if (!fgets(line,sizeof(line),stdin)) return 0;\n    int rows[50][50]={{0}}, m=0, n=0;\n    parseGrid(line,rows,&m,&n);\n    int **grid=(int**)malloc((size_t)m*sizeof(int*));\n    for(int i=0;i<m;++i){grid[i]=(int*)malloc((size_t)n*sizeof(int));for(int j=0;j<n;++j)grid[i][j]=rows[i][j];}\n    printf(\"%d\\n\",containVirus(grid,m,n));\n    for(int i=0;i<m;++i)free(grid[i]); free(grid);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int containVirus(vector<vector<int>>& grid) {\n        return 0;\n    }\n};\n\nstatic vector<int> parseRow(const string& s) {\n    vector<int> v; int num = 0; bool inNum = false;\n    for (char ch : s) {\n        if (ch == '0' || ch == '1') { num = num * 10 + ch - '0'; inNum = true; }\n        else if (inNum) { v.push_back(num); num = 0; inNum = false; }\n    }\n    if (inNum) v.push_back(num);\n    return v;\n}\n\nstatic vector<vector<int>> parseGrid(const string& s) {\n    vector<vector<int>> g; int depth = 0; size_t start = 0;\n    for (size_t i = 0; i < s.size(); ++i) {\n        if (s[i] == '[') ++depth;\n        else if (s[i] == ']') {\n            --depth;\n            if (depth == 2) {\n                string row = s.substr(start, i - start + 1);\n                g.push_back(parseRow(row));\n                start = i + 1;\n            }\n        }\n    }\n    return g;\n}\n\nint main() {\n    string line; getline(cin, line);\n    auto grid = parseGrid(line);\n    cout << Solution().containVirus(grid) << '\\n';\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public int containVirus(int[][] grid) {\n        return 0;\n    }\n}\n\npublic class Main {\n    static List<String> rows(String s) {\n        List<String> out = new ArrayList<>();\n        int depth = 0, start = -1;\n        for (int i = 0; i < s.length(); i++) {\n            char ch = s.charAt(i);\n            if (ch == '[') {\n                depth++;\n                if (depth == 3) start = i;\n            } else if (ch == ']') {\n                if (depth == 3) out.add(s.substring(start, i + 1));\n                depth--;\n            }\n        }\n        return out;\n    }\n\n    static int[] parseRow(String s) {\n        ArrayList<Integer> v = new ArrayList<>();\n        for (int i = 0; i < s.length(); i++) {\n            char ch = s.charAt(i);\n            if (ch == '0' || ch == '1') v.add(ch - '0');\n        }\n        int[] a = new int[v.size()];\n        for (int i = 0; i < a.length; i++) a[i] = v.get(i);\n        return a;\n    }\n\n    static int[][] parseGrid(String line) {\n        List<String> rs = rows(line);\n        int[][] g = new int[rs.size()][];\n        for (int i = 0; i < rs.size(); i++) g[i] = parseRow(rs.get(i));\n        return g;\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        System.out.println(new Solution().containVirus(parseGrid(line)));\n    }\n}\n",
+    "Python3": "import sys\nimport json\nfrom typing import List\n\nclass Solution:\n    def containVirus(self, isInfected: List[List[int]]) -> int:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().containVirus(args[0])))\n",
+    "JavaScript": "\"use strict\";\n\nconst fs = require(\"fs\");\n\nfunction containVirus(isInfected) {\n    return 0;\n}\n\nconst input = fs.readFileSync(0, \"utf8\").trim();\nif (input) {\n    const args = JSON.parse(input);\n    console.log(JSON.stringify(containVirus(args[0])));\n}\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–60 min",
+  "learningObjectives": [
+    "Identify connected components in a binary grid using graph traversal.",
+    "Distinguish a region's boundary-wall count from its distinct threatened-cell count.",
+    "Simulate a multi-round greedy process without mixing decisions from different rounds.",
+    "Analyze the time and auxiliary-space cost of repeated grid traversals."
+  ]
 }

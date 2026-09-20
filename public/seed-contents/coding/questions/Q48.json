@@ -1,6 +1,11 @@
 {
   "slug": "rotate-image",
-  "hints": [],
+  "hints": [
+    "Rotate 90 degrees clockwise can be decomposed into two simpler matrix operations: reversing the matrix vertically, followed by transposing it.",
+    "First, reverse the order of the rows in the matrix (the first row swaps with the last row, second row with second-to-last, etc.).",
+    "Next, transpose the matrix along its main diagonal: swap matrix[i][j] with matrix[j][i] for all j > i.",
+    "Alternatively, you can rotate the matrix layer-by-layer from the outermost ring to the innermost, performing a 4-way cyclical element swap."
+  ],
   "title": "Rotate Image Problem",
   "content": {
     "notes": [],
@@ -14,16 +19,18 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "[[1,2,3],[4,5,6],[7,8,9]]",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]]]",
         "output": "[[7,4,1],[8,5,2],[9,6,3]]",
-        "explanation": "Applying the rules of Rotate Image to this input produces [[7,4,1],[8,5,2],[9,6,3]]."
+        "explanation": "Applying the rules of Rotate Image to this input produces [[7,4,1],[8,5,2],[9,6,3]].",
+        "expectedOutput": "[[7,4,1],[8,5,2],[9,6,3]]"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "[[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]",
+        "input": "[[[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]]",
         "output": "[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]",
-        "explanation": "Applying the rules of Rotate Image to this input produces [[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]."
+        "explanation": "Applying the rules of Rotate Image to this input produces [[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]].",
+        "expectedOutput": "[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]"
       }
     ],
     "problemStatement": "You receive an `n x n` 2D `matrix` representing an image, rotate the image by **90** degrees (clockwise).\n\nYou have to rotate the image [**in-place**](https://en.wikipedia.org/wiki/In-place_algorithm), which means you have to modify the input 2D matrix directly. **DO NOT** allocate another 2D matrix and do the rotation."
@@ -96,41 +103,53 @@
   },
   "solution": {
     "code": {
-      "C": "",
-      "C++": "class Solution {\npublic:\n    void rotate(vector<vector<int>>& matrix) {\n        \n    }\n};",
-      "Java": "",
-      "Python3": "class Solution:\n    def rotate(self, matrix: list) -> None:\n        n = len(matrix)\n        matrix.reverse()\n        for i in range(n):\n            for j in range(i + 1, n):\n                matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]\n\nif __name__ == '__main__':\n    import sys, json\n    args = json.loads(sys.stdin.readline())\n    matrix = args[0] if len(args) == 1 and isinstance(args[0], list) and (len(args[0]) == 0 or isinstance(args[0][0], list)) else args\n    Solution().rotate(matrix)\n    print(json.dumps(matrix))\n",
-      "JavaScript": ""
+      "C": "void rotate(int** matrix, int matrixSize, int* matrixColSize) {\n    for (int i = 0; i < matrixSize / 2; i++) {\n        int* temp = matrix[i];\n        matrix[i] = matrix[matrixSize - 1 - i];\n        matrix[matrixSize - 1 - i] = temp;\n    }\n    for (int i = 0; i < matrixSize; i++) {\n        for (int j = i + 1; j < matrixSize; j++) {\n            int temp = matrix[i][j];\n            matrix[i][j] = matrix[j][i];\n            matrix[j][i] = temp;\n        }\n    }\n}",
+      "C++": "class Solution {\npublic:\n    void rotate(vector<vector<int>>& matrix) {\n        int n = matrix.size();\n        reverse(matrix.begin(), matrix.end());\n        for (int i = 0; i < n; ++i) {\n            for (int j = i + 1; j < n; ++j) {\n                swap(matrix[i][j], matrix[j][i]);\n            }\n        }\n    }\n};",
+      "Java": "class Solution {\n    public void rotate(int[][] matrix) {\n        int n = matrix.length;\n        for (int i = 0; i < n / 2; i++) {\n            int[] temp = matrix[i];\n            matrix[i] = matrix[n - 1 - i];\n            matrix[n - 1 - i] = temp;\n        }\n        for (int i = 0; i < n; i++) {\n            for (int j = i + 1; j < n; j++) {\n                int temp = matrix[i][j];\n                matrix[i][j] = matrix[j][i];\n                matrix[j][i] = temp;\n            }\n        }\n    }\n}",
+      "Python3": "class Solution:\n    def rotate(self, matrix: list) -> None:\n        n = len(matrix)\n        matrix.reverse()\n        for i in range(n):\n            for j in range(i + 1, n):\n                matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]\n",
+      "JavaScript": "var rotate = function(matrix) {\n    const n = matrix.length;\n    matrix.reverse();\n    for (let i = 0; i < n; i++) {\n        for (let j = i + 1; j < n; j++) {\n            const temp = matrix[i][j];\n            matrix[i][j] = matrix[j][i];\n            matrix[j][i] = temp;\n        }\n    }\n};"
     },
     "notes": [],
-    "approach": "",
+    "approach": "Rotate the matrix 90 degrees clockwise in-place by first reversing the rows top-to-bottom, and then transposing the matrix across its main diagonal (swapping elements across the diagonal). Both operations are performed entirely in-place with O(1) auxiliary space.",
     "editorial": {
-      "better": {
-        "complexity": "",
-        "description": ""
-      },
       "optimal": {
-        "complexity": "",
-        "description": ""
+        "complexity": "Time: O(n^2), Space: O(1)",
+        "description": "First reverse the matrix rows vertically in O(n^2), swapping row i with row n - 1 - i. Then transpose the matrix in-place by swapping matrix[i][j] with matrix[j][i] for all 0 <= i < j < n. This achieves the 90-degree clockwise rotation in-place using O(1) auxiliary memory."
+      },
+      "better": {
+        "complexity": "Time: O(n^2), Space: O(1)",
+        "description": "Rotate the matrix ring by ring from the outer border to the center. For each layer at depth layer, perform a 4-way cyclical element swap among the four corresponding edges: top, right, bottom, and left."
       },
       "bruteForce": {
-        "complexity": "",
-        "description": ""
+        "complexity": "Time: O(n^2), Space: O(n^2)",
+        "description": "Allocate a separate n x n matrix and place each element matrix[i][j] into newMatrix[j][n - 1 - i], then copy the elements back to the original matrix. While correct, this violates the in-place constraint."
       }
     },
-    "timeComplexity": "",
-    "spaceComplexity": ""
+    "timeComplexity": "O(n^2)",
+    "spaceComplexity": "O(1)"
   },
   "verified": true,
-  "_internal": {},
+  "_internal": {
+    "params": [
+      {
+        "name": "matrix",
+        "type": "integer[][]"
+      }
+    ],
+    "methodName": "rotate"
+  },
   "createdAt": "2026-07-15",
-  "followUps": [],
+  "followUps": [
+    "How would you rotate the matrix by 90 degrees counter-clockwise in-place?",
+    "How would you rotate the matrix by 180 degrees in-place?",
+    "Can you rotate an arbitrary m x n rectangular matrix in-place without auxiliary storage?"
+  ],
   "testCases": {
     "hidden": [
       {
         "id": "tc_01",
         "type": "reg",
-        "input": "[[5]]",
+        "input": "[[[5]]]",
         "label": "Single element",
         "weight": 4,
         "expectedOutput": "[[5]]"
@@ -354,7 +373,10 @@
       {
         "id": "tc_29",
         "type": "reg",
-        "input": "[[[1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000], [1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000]]]",
+        "input": "[[[1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000]]]",
+        "label": "Nineteen by nineteen corner extremes",
+        "weight": 3,
+        "expectedOutput": "[[1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000]]]",
         "label": "Nineteen by nineteen corner extremes",
         "weight": 3,
         "expectedOutput": "[[1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000],[-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000,-1000]]"
@@ -371,18 +393,23 @@
     "totalWeight": 100,
     "totalTestCases": 30
   },
-  "updatedAt": "2026-07-15",
+  "updatedAt": "2026-09-20",
   "questionId": "Q48",
   "boilerPlates": {
-    "C": "void rotate(int** matrix, int matrixSize, int* matrixColSize) {\n    \n}",
-    "C++": "class Solution {\npublic:\n    void rotate(vector<vector<int>>& matrix) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public void rotate(int[][] matrix) {\n        \n    }\n}",
-    "Python3": "class Solution:\n    def rotate(self, matrix: list) -> None:\n        pass\n\nif __name__ == '__main__':\n    import sys, json\n    args = json.loads(sys.stdin.readline())\n    matrix = args[0] if len(args) == 1 and isinstance(args[0], list) and (len(args[0]) == 0 or isinstance(args[0][0], list)) else args\n    Solution().rotate(matrix)\n    print(json.dumps(matrix))\n",
-    "JavaScript": "/**\n * @param {number[][]} matrix\n * @return {void} Do not return anything, modify matrix in-place instead.\n */\nvar rotate = function(matrix) {\n    \n};"
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\nvoid rotate(int** matrix, int matrixSize, int* matrixColSize) {\n    /* Write your code here */\n}\n\nint main(void) {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        if (len == 0) return 0;\n        char* raw;\n        if (len >= 3 && line[0] == '[' && line[1] == '[' && line[2] == '[') {\n            raw = (char*)malloc(len - 1);\n            strncpy(raw, line + 1, len - 2);\n            raw[len - 2] = '\\0';\n        } else {\n            raw = (char*)malloc(len + 1);\n            strcpy(raw, line);\n        }\n        Tok tok = { raw, 0, (int)strlen(raw) };\n\n        int matrixSize = 0;\n        int* matrixColSize = NULL;\n        int** matrix = parse_int_2d(&tok, &matrixSize, &matrixColSize);\n        rotate(matrix, matrixSize, matrixColSize);\n        printf(\"[\");\n        for (int i = 0; i < matrixSize; i++) {\n            printf(\"[\");\n            for (int j = 0; j < matrixColSize[i]; j++) {\n                printf(\"%d\", matrix[i][j]);\n                if (j + 1 < matrixColSize[i]) printf(\",\");\n            }\n            printf(\"]\");\n            if (i + 1 < matrixSize) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\n\nstatic string innerArr(const string& s){ return s.substr(1,s.size()-2); }\n\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\n\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\n\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\n\nclass Solution {\npublic:\n    void rotate(vector<vector<int>>& matrix) {\n        // Write your code here\n    }\n};\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    string line;\n    if (!getline(cin, line)) return 0;\n    while (!line.empty() && (line.back() == '\\r' || line.back() == '\\n')) line.pop_back();\n    if (line.empty()) return 0;\n\n    Tok tok;\n    if (line.size() >= 3 && line[0] == '[' && line[1] == '[' && line[2] == '[') {\n        tok.s = line.substr(1, line.size() - 2);\n    } else {\n        tok.s = line;\n    }\n    tok.pos = 0;\n    auto matrix = readInt2D(tok);\n    Solution().rotate(matrix);\n    cout << \"[\";\n    for (size_t i = 0; i < matrix.size(); i++) {\n        cout << \"[\";\n        for (size_t j = 0; j < matrix[i].size(); j++) {\n            cout << matrix[i][j];\n            if (j + 1 < matrix[i].size()) cout << \",\";\n        }\n        cout << \"]\";\n        if (i + 1 < matrix.size()) cout << \",\";\n    }\n    cout << \"]\\n\";\n    return 0;\n}\n",
+    "Java": "import java.util.*;\nimport java.io.*;\n\nclass Solution {\n    public void rotate(int[][] matrix) {\n        // Write your code here\n    }\n}\n\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[') depth++;\n            else if (c == ']') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n\n    public static void main(String[] args) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null || line.trim().isEmpty()) return;\n        line = line.trim();\n        int[][] matrix;\n        if (line.startsWith(\"[[[\") || line.equals(\"[[]]\")) {\n            matrix = toInt2D(line.substring(1, line.length() - 1));\n        } else {\n            matrix = toInt2D(line);\n        }\n        new Solution().rotate(matrix);\n        System.out.println(Arrays.deepToString(matrix).replace(\" \", \"\"));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def rotate(self, matrix: List[List[int]]) -> None:\n        # Write your code here\n        pass\n\nif __name__ == '__main__':\n    line = sys.stdin.readline().strip()\n    if line:\n        args = json.loads(line)\n        matrix = args[0] if len(args) == 1 and isinstance(args[0], list) and (len(args[0]) == 0 or isinstance(args[0][0], list)) else args\n        Solution().rotate(matrix)\n        print(json.dumps(matrix))\n",
+    "JavaScript": "const fs = require('fs');\n\n/**\n * @param {number[][]} matrix\n * @return {void} Do not return anything, modify matrix in-place instead.\n */\nvar rotate = function(matrix) {\n    // Write your code here\n};\n\nconst input = fs.readFileSync(0, 'utf8').trim();\nif (input) {\n    const args = JSON.parse(input);\n    const matrix = (args.length === 1 && Array.isArray(args[0]) && (args[0].length === 0 || Array.isArray(args[0][0]))) ? args[0] : args;\n    rotate(matrix);\n    console.log(JSON.stringify(matrix));\n}\n"
   },
   "acceptanceRate": null,
   "similarProblems": [],
   "recommendedAfter": [],
-  "estimatedSolveTime": "",
-  "learningObjectives": []
+  "estimatedSolveTime": "15–20 minutes",
+  "learningObjectives": [
+    "In-place 2D matrix manipulation",
+    "Matrix transposition and reflection",
+    "Layer-by-layer ring rotation",
+    "In-place coordinate geometry transformations"
+  ]
 }

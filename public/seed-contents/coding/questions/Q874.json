@@ -1,29 +1,18 @@
 {
-  "questionId": "Q874",
-  "title": "Walking Robot Simulation Problem",
   "slug": "walking-robot-simulation",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "hash-table",
-      "simulation"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "hash-table",
-      "simulation"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Represent the four directions in clockwise order so a turn only changes a small direction index.",
+    "Put every obstacle coordinate in a hash set so you can test whether the next square is blocked without scanning all obstacles.",
+    "For a forward command, try each unit step separately and stop immediately when the next coordinate is an obstacle.",
+    "Update the maximum squared distance after each successful move, not only after each whole command."
+  ],
+  "title": "Walking Robot Simulation Problem",
   "content": {
-    "problemStatement": "A robot on an infinite XY-plane starts at point `(0, 0)` facing north. The robot receives an array of integers `commands`, which represents a sequence of moves that it needs to execute. There are only three possible types of instructions the robot can receive:\n\n* `-2`: Turn left `90` degrees.\n* `-1`: Turn right `90` degrees.\n* `1 <= k <= 9`: Move forward `k` units, one unit at a time.\n\nSome of the grid squares are `obstacles`. The `i^th` obstacle is at grid point `obstacles[i] = (x_i, y_i)`. If the robot runs into an obstacle, it will stay in its current location (on the block adjacent to the obstacle) and move onto the next command.\n\nOutput the **largest squared Euclidean distance** that the robot reaches at any point in its path (i.e. if the distance is `5`, output `25`).\n\n**Note:**\n\n* There can be an obstacle at `(0, 0)`. If this happens, the robot will ignore the obstacle until it has moved off the origin. However, it will be unable to output to `(0, 0)` due to the obstacle.\n* North means +Y direction.\n* East means +X direction.\n* South means -Y direction.\n* West means -X direction.\n\n**Example 1:**\n\n**Input:** commands = [4,-1,3], obstacles = []\n\n**Output:** 25\n\n**Explanation:**\n\nThe robot starts at `(0, 0)`:\n\n1. Move north 4 units to `(0, 4)`.\n2. Turn right.\n3. Move east 3 units to `(3, 4)`.\n\nThe furthest point the robot ever gets from the origin is `(3, 4)`, which squared is `3^2 + 4^2 = 25` units away.\n\n**Example 2:**\n\n**Input:** commands = [4,-1,4,-2,4], obstacles = [[2,4]]\n\n**Output:** 65\n\n**Explanation:**\n\nThe robot starts at `(0, 0)`:\n\n1. Move north 4 units to `(0, 4)`.\n2. Turn right.\n3. Move east 1 unit and get blocked by the obstacle at `(2, 4)`, robot is at `(1, 4)`.\n4. Turn left.\n5. Move north 4 units to `(1, 8)`.\n\nThe furthest point the robot ever gets from the origin is `(1, 8)`, which squared is `1^2 + 8^2 = 65` units away.\n\n**Example 3:**\n\n**Input:** commands = [6,-1,-1,6], obstacles = [[0,0]]\n\n**Output:** 36\n\n**Explanation:**\n\nThe robot starts at `(0, 0)`:\n\n1. Move north 6 units to `(0, 6)`.\n2. Turn right.\n3. Turn right.\n4. Move south 5 units and get blocked by the obstacle at `(0,0)`, robot is at `(0, 1)`.\n\nThe furthest point the robot ever gets from the origin is `(0, 6)`, which squared is `6^2 = 36` units away.\n\n**Constraints:**\n\n* `1 <= commands.length <= 10^4`\n* `commands[i]` is either `-2`, `-1`, or an integer in the range `[1, 9]`.\n* `0 <= obstacles.length <= 10^4`\n* `-3 * 10^4 <= x_i, y_i <= 3 * 10^4`\n* The answer is guaranteed to be less than `2^31`.",
+    "notes": [
+      "The robot checks each one-unit move against the obstacle set and stops the current forward command at the first blocked square.",
+      "The answer is the maximum value of x^2 + y^2 reached after any successful one-unit move; turns do not change the distance.",
+      "An obstacle at the origin does not prevent the robot from starting there; it only prevents a later move back onto (0,0)."
+    ],
     "constraints": [
       "1 <= commands.length <= 10^4",
       "commands[i] is either -2, -1, or an integer in the range [1, 9].",
@@ -33,268 +22,59 @@
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
-    "notes": []
-  },
-  "testCases": {
-    "hidden": [
+    "sampleTestCases": [
       {
-        "id": "tc_01",
+        "id": "sample_1",
         "type": "reg",
-        "label": "Large negative values",
-        "input": "[[-2, -1], [[-30000, -30000]]]",
-        "expectedOutput": "0",
-        "weight": 2
+        "input": "[[4,-1,3],[]]",
+        "output": "25",
+        "explanation": "The robot moves north to (0,4), turns right, then moves east to (3,4). The maximum squared distance is 3^2 + 4^2 = 25."
       },
       {
-        "id": "tc_02",
+        "id": "sample_2",
         "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[1, 1, 1], [[1, 1], [1, 1]]]",
-        "expectedOutput": "9",
-        "weight": 4
+        "input": "[[4,-1,4,-2,4],[[2,4]]]",
+        "output": "65",
+        "explanation": "The obstacle at (2,4) stops the eastward movement at (1,4). After turning left, the robot moves north to (1,8), giving 1^2 + 8^2 = 65."
       },
       {
-        "id": "tc_03",
+        "id": "sample_3",
         "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[-1, 1, -2, 2], [[-1, -1], [1, 1]]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[4, -1, 3, -1, 4], [[2, 4]]]",
-        "expectedOutput": "17",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[4, -1, 3, -2, 4], [[2, 4]]]",
-        "expectedOutput": "65",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Maximum constraints stress",
-        "input": "[[9, 9, 9, 9, 9, 9, 9, 9, 9, 9], [[30000, 30000], [30000, 30000], [30000, 30000], [30000, 30000], [30000, 30000], [30000, 30000], [30000, 30000], [30000, 30000], [30000, 30000], [30000, 30000]]]",
-        "expectedOutput": "8100",
-        "weight": 10
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Random large array",
-        "input": "[[8, 5, 2, 9, 1, 4, 7, 6, 3, 8], [[1000, 2000], [3000, 4000], [5000, 6000], [7000, 8000], [9000, 10000]]]",
-        "expectedOutput": "2809",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "input": "[[6,-1,-1,6],[[0,0]]]",
+        "output": "36",
+        "explanation": "The robot reaches (0,6), turns south, and is stopped at (0,1) by the obstacle at the origin. The maximum squared distance is 36."
       }
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "problemStatement": "A robot on an infinite XY-plane starts at point `(0, 0)` facing north. The robot receives an array of integers `commands`, which represents a sequence of moves that it needs to execute. There are only three possible types of instructions the robot can receive:\n\n* `-2`: Turn left `90` degrees.\n* `-1`: Turn right `90` degrees.\n* `1 <= k <= 9`: Move forward `k` units, one unit at a time.\n\nSome of the grid squares are `obstacles`. The `i^th` obstacle is at grid point `obstacles[i] = (x_i, y_i)`. If the robot runs into an obstacle, it will stay in its current location (on the block adjacent to the obstacle) and move onto the next command.\n\nOutput the **largest squared Euclidean distance** that the robot reaches at any point in its path (i.e. if the distance is `5`, output `25`).\n\n**Note:**\n\n* There can be an obstacle at `(0, 0)`. If this happens, the robot will ignore the obstacle until it has moved off the origin. However, it will be unable to output to `(0, 0)` due to the obstacle.\n* North means +Y direction.\n* East means +X direction.\n* South means -Y direction.\n* West means -X direction.\n\n**Example 1:**\n\n**Input:** commands = [4,-1,3], obstacles = []\n\n**Output:** 25\n\n**Explanation:**\n\nThe robot starts at `(0, 0)`:\n\n1. Move north 4 units to `(0, 4)`.\n2. Turn right.\n3. Move east 3 units to `(3, 4)`.\n\nThe furthest point the robot ever gets from the origin is `(3, 4)`, which squared is `3^2 + 4^2 = 25` units away.\n\n**Example 2:**\n\n**Input:** commands = [4,-1,4,-2,4], obstacles = [[2,4]]\n\n**Output:** 65\n\n**Explanation:**\n\nThe robot starts at `(0, 0)`:\n\n1. Move north 4 units to `(0, 4)`.\n2. Turn right.\n3. Move east 1 unit and get blocked by the obstacle at `(2, 4)`, robot is at `(1, 4)`.\n4. Turn left.\n5. Move north 4 units to `(1, 8)`.\n\nThe furthest point the robot ever gets from the origin is `(1, 8)`, which squared is `1^2 + 8^2 = 65` units away.\n\n**Example 3:**\n\n**Input:** commands = [6,-1,-1,6], obstacles = [[0,0]]\n\n**Output:** 36\n\n**Explanation:**\n\nThe robot starts at `(0, 0)`:\n\n1. Move north 6 units to `(0, 6)`.\n2. Turn right.\n3. Turn right.\n4. Move south 5 units and get blocked by the obstacle at `(0,0)`, robot is at `(0, 1)`.\n\nThe furthest point the robot ever gets from the origin is `(0, 6)`, which squared is `6^2 = 36` units away.\n\n**Constraints:**\n\n* `1 <= commands.length <= 10^4`\n* `commands[i]` is either `-2`, `-1`, or an integer in the range `[1, 9]`.\n* `0 <= obstacles.length <= 10^4`\n* `-3 * 10^4 <= x_i, y_i <= 3 * 10^4`\n* The answer is guaranteed to be less than `2^31`."
+  },
+  "judging": {
+    "notes": [
+      "All advertised boilerplates use the user-facing signature robotSim(commands, obstacles) and the platform's single-line JSON argument format.",
+      "The reference approach uses O(n + m) expected time with hash-based obstacle lookup, where n is the number of commands and m is the number of obstacles."
+    ],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
       4,
-      2,
-      2,
-      2,
-      10,
-      2,
-      3,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -316,57 +96,335 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "hash-table",
+      "simulation"
     ],
-    "notes": []
+    "category": "Arrays / Hash Table / Simulation",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "hash-table",
+      "simulation"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses a simulation technique, iterating through each command and updating the robot's position and direction accordingly, while checking for obstacles and keeping track of the maximum squared Euclidean distance.",
-    "timeComplexity": "O(n + m)",
-    "spaceComplexity": "O(m)",
-    "code": {
-      "Python3": "# Time:  O(n + k)\n# Space: O(k)\n\nclass Solution(object):\n    def robotSim(self, commands, obstacles):\n        \"\"\"\n        :type commands: List[int]\n        :type obstacles: List[List[int]]\n        :rtype: int\n        \"\"\"\n        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]\n        x, y, i = 0, 0, 0\n        lookup = set(map(tuple, obstacles))\n        result = 0\n        for cmd in commands:\n            if cmd == -2:\n                i = (i-1) % 4\n            elif cmd == -1:\n                i = (i+1) % 4\n            else:\n                for k in range(cmd):\n                    if (x+directions[i][0], y+directions[i][1]) not in lookup:\n                        x += directions[i][0]\n                        y += directions[i][1]\n                        result = max(result, x*x + y*y)\n        return result"
-    },
-    "notes": [],
+    "notes": [
+      "The obstacle set is the key optimization: checking every obstacle for every step would be unnecessarily slow.",
+      "Because each command moves at most 9 units, S is O(n) under the stated command constraints."
+    ],
+    "approach": "Simulate the robot one unit at a time. Store obstacle coordinates in a hash set for constant-time expected membership checks. Maintain the direction as one of north, east, south, or west; rotate on -2/-1, and for each forward command attempt each unit step, stopping immediately before an obstacle. After every successful step, update the maximum x^2 + y^2.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "Time O(S + m) expected; space O(m).",
+        "description": "Simulate one unit at a time while storing obstacle coordinates in a hash set. This removes the linear obstacle scan and gives expected constant-time obstacle checks."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "Time O(n + m) expected; space O(m).",
+        "description": "Use the standard hash-set simulation: encode each obstacle coordinate as a hashable key, track direction with four vectors, stop a forward command at the first blocked cell, and update the maximum squared distance after every successful step. Since every forward command has at most 9 steps, the total simulated steps are O(n)."
+      },
+      "bruteForce": {
+        "complexity": "Time O(S*m); space O(1) auxiliary beyond the input.",
+        "description": "Simulate the robot and, for every attempted unit step, scan the entire obstacle list to determine whether the next square is blocked. This is correct but can perform O(S*m) obstacle checks."
       }
+    },
+    "timeComplexity": "O(S + m) expected, where S is the total number of forward units commanded (S <= 9n) and m is the number of obstacles.",
+    "spaceComplexity": "O(m)",
+    "code": {
+      "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def robotSim(self, commands: List[int], obstacles: List[List[int]]) -> int:\n        directions=((0,1),(1,0),(0,-1),(-1,0))\n        blocked={tuple(o) for o in obstacles}\n        x=y=d=ans=0\n        for command in commands:\n            if command == -2:\n                d=(d+3)%4\n            elif command == -1:\n                d=(d+1)%4\n            else:\n                dx,dy=directions[d]\n                for _ in range(command):\n                    nx,ny=x+dx,y+dy\n                    if (nx,ny) in blocked: break\n                    x,y=nx,ny\n                    ans=max(ans,x*x+y*y)\n        return ans"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint robotSim(int* commands, int commandsSize, int** obstacles, int obstaclesSize, int* obstaclesColSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int commandsSize = 0;\n        int* commands = parse_int_array(&tok, &commandsSize);\n        int obstaclesSize = 0;\n        int* obstaclesColSize = NULL;\n        int** obstacles = parse_int_2d(&tok, &obstaclesSize, &obstaclesColSize);\n        int result = robotSim(commands, commandsSize, obstacles, obstaclesSize, obstaclesColSize);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def robotSim(self, commands: List[int], obstacles: List[List[int]]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _commands = _args[0]\n    _obstacles = _args[1]\n    _result = Solution().robotSim(_commands, _obstacles)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[]} commands\n * @param {number[][]} obstacles\n * @return {number}\n */\nvar robotSim = function(commands, obstacles) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = robotSim(_args[0], _args[1]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int robotSim(int[] commands, int[][] obstacles) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[] commands = toIntArray(nextToken());\n        int[][] obstacles = toInt2D(nextToken());\n        int result = new Solution().robotSim(commands, obstacles);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int robotSim(vector<int>& commands, vector<vector<int>>& obstacles) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto commands = readIntVec(tok);\n    auto obstacles = readInt2D(tok);\n    auto result = Solution().robotSim(commands, obstacles);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "commands",
+        "type": "int[]"
+      },
+      {
+        "name": "obstacles",
+        "type": "int[][]"
+      }
+    ],
+    "methodName": "robotSim"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How would the implementation change if commands could contain much larger forward distances?",
+    "Can you reduce memory if obstacle coordinates arrive in a streaming input?",
+    "What changes if obstacles can be added or removed while the robot is moving?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[1],[]]",
+        "label": "Minimum command, one step",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[9],[]]",
+        "label": "Maximum single forward command",
+        "weight": 4,
+        "expectedOutput": "81"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[-2],[]]",
+        "label": "Single left turn with no movement",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[-1],[]]",
+        "label": "Single right turn with no movement",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[1,-1,1],[]]",
+        "label": "Two perpendicular moves",
+        "weight": 4,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[9,-1,9,-1,9,-1,9],[]]",
+        "label": "Full square returns to origin",
+        "weight": 4,
+        "expectedOutput": "162"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[9,-1,9,-1,9],[]]",
+        "label": "Three-sided square path",
+        "weight": 4,
+        "expectedOutput": "162"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[4,-1,3],[]]",
+        "label": "Sample path without obstacles",
+        "weight": 4,
+        "expectedOutput": "25"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[4,-1,4,-2,4],[[2,4]]]",
+        "label": "Obstacle stops eastward movement",
+        "weight": 4,
+        "expectedOutput": "65"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[6,-1,-1,6],[[0,0]]]",
+        "label": "Origin obstacle blocks return",
+        "weight": 4,
+        "expectedOutput": "36"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[5,-1,5,-1,5,-1,5],[[0,3],[2,5],[2,2],[0,1]]]",
+        "label": "Multiple directional blockers",
+        "weight": 3,
+        "expectedOutput": "50"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[3,-1,3,-1,3,-1,3],[[0,1],[1,3],[-1,2]]]",
+        "label": "Repeated obstacle stops",
+        "weight": 3,
+        "expectedOutput": "18"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[9,-2,9,-2,9],[]]",
+        "label": "Three directions after left turns",
+        "weight": 3,
+        "expectedOutput": "162"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[8,-1,2,-1,8,-1,2],[]]",
+        "label": "Long alternating turns",
+        "weight": 3,
+        "expectedOutput": "68"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[1,1,1,1,1],[[0,1]]]",
+        "label": "Immediate repeated obstacle block",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[2,-1,2,-1,2,-1,2],[[1,0],[1,1],[0,1],[-1,1]]]",
+        "label": "Corner blockers around origin",
+        "weight": 3,
+        "expectedOutput": "8"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[7,-1,7,-1,7,-1,7,-1],[[0,4],[3,7],[-3,0],[0,-3]]]",
+        "label": "Four-axis obstacles",
+        "weight": 3,
+        "expectedOutput": "65"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[9,-1,9,-1,9,-1,9,-1,9],[[0,9],[1,9],[9,0],[-9,0]]]",
+        "label": "Boundary blockers on multiple axes",
+        "weight": 3,
+        "expectedOutput": "145"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[1,-2,2,-2,3,-2,4],[[0,1],[-1,1],[-1,-1],[1,-1]]]",
+        "label": "Left-turn obstacle maze",
+        "weight": 3,
+        "expectedOutput": "13"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[9,-1,1,-1,9,-1,1],[[9,1],[8,-8],[0,-1]]]",
+        "label": "Blocker at segment end",
+        "weight": 3,
+        "expectedOutput": "82"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[2,-1,9,-1,2,-1,9],[[1,0],[2,9],[-7,9]]]",
+        "label": "Blocker at first step and later",
+        "weight": 3,
+        "expectedOutput": "85"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[9,-2,9,-2,9,-2,9],[[0,8],[-8,0],[0,-8],[8,0]]]",
+        "label": "Symmetric blockers on axes",
+        "weight": 3,
+        "expectedOutput": "130"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[3,-1,6,-1,3,-1,6,-1,3],[[2,3],[3,1],[0,-2],[-2,-3]]]",
+        "label": "Mixed obstacles and repeated turns",
+        "weight": 3,
+        "expectedOutput": "34"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[9,9,9,9,9,9,9,9,9,9],[[0,20],[5,9],[-20,0],[9,5]]]",
+        "label": "Ten maximum-length commands",
+        "weight": 3,
+        "expectedOutput": "361"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[9,-1,9,-1,9,-1,9,-1,9,-1,9],[]]",
+        "label": "Repeated full cycles",
+        "weight": 3,
+        "expectedOutput": "162"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[1,-1,1,-1,1,-1,1,-1,1],[[1,0],[0,1],[-1,0],[0,-1]]]",
+        "label": "Immediate four-direction blocks",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[9,-1,9,-1,9],[[1,9],[0,-1],[-1,-9]]]",
+        "label": "Dense blocker choices",
+        "weight": 3,
+        "expectedOutput": "81"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[9,-1,9,-2,9,-1,9,-2,9],[[5,0],[0,5],[-5,0],[0,-5]]]",
+        "label": "Alternating turns with central obstacles",
+        "weight": 3,
+        "expectedOutput": "808"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9],[[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000],[30000,30000]]]",
+        "label": "Large valid command and obstacle collections",
+        "weight": 3,
+        "expectedOutput": "81000000"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6,-2,-1,1,9,4,7,2,8,3,6],[[-3000,-3000],[-2863,-2743],[-2726,-2486],[-2589,-2229],[-2452,-1972],[-2315,-1715],[-2178,-1458],[-2041,-1201],[-1904,-944],[-1767,-687],[-1630,-430],[-1493,-173],[-1356,84],[-1219,341],[-1082,598],[-945,855],[-808,1112],[-671,1369],[-534,1626],[-397,1883],[-260,2140],[-123,2397],[14,2654],[151,2911],[288,-2833],[425,-2576],[562,-2319],[699,-2062],[836,-1805],[973,-1548],[1110,-1291],[1247,-1034],[1384,-777],[1521,-520],[1658,-263],[1795,-6],[1932,251],[2069,508],[2206,765],[2343,1022],[2480,1279],[2617,1536],[2754,1793],[2891,2050],[-2973,2307],[-2836,2564],[-2699,2821],[-2562,-2923],[-2425,-2666],[-2288,-2409],[-2151,-2152],[-2014,-1895],[-1877,-1638],[-1740,-1381],[-1603,-1124],[-1466,-867],[-1329,-610],[-1192,-353],[-1055,-96],[-918,161],[-781,418],[-644,675],[-507,932],[-370,1189],[-233,1446],[-96,1703],[41,1960],[178,2217],[315,2474],[452,2731],[589,2988],[726,-2756],[863,-2499],[1000,-2242],[1137,-1985],[1274,-1728],[1411,-1471],[1548,-1214],[1685,-957],[1822,-700],[1959,-443],[2096,-186],[2233,71],[2370,328],[2507,585],[2644,842],[2781,1099],[2918,1356],[-2946,1613],[-2809,1870],[-2672,2127],[-2535,2384],[-2398,2641],[-2261,2898],[-2124,-2846],[-1987,-2589],[-1850,-2332],[-1713,-2075],[-1576,-1818],[-1439,-1561],[-1302,-1304],[-1165,-1047],[-1028,-790],[-891,-533],[-754,-276],[-617,-19],[-480,238],[-343,495],[-206,752],[-69,1009],[68,1266],[205,1523],[342,1780],[479,2037],[616,2294],[753,2551],[890,2808],[1027,-2936],[1164,-2679],[1301,-2422],[1438,-2165],[1575,-1908],[1712,-1651],[1849,-1394],[1986,-1137],[2123,-880],[2260,-623],[2397,-366],[2534,-109],[2671,148],[2808,405],[2945,662],[-2919,919],[-2782,1176],[-2645,1433],[-2508,1690],[-2371,1947],[-2234,2204],[-2097,2461],[-1960,2718],[-1823,2975],[-1686,-2769],[-1549,-2512],[-1412,-2255],[-1275,-1998],[-1138,-1741],[-1001,-1484],[-864,-1227],[-727,-970],[-590,-713],[-453,-456],[-316,-199],[-179,58],[-42,315],[95,572],[232,829],[369,1086],[506,1343],[643,1600],[780,1857],[917,2114],[1054,2371],[1191,2628],[1328,2885],[1465,-2859],[1602,-2602],[1739,-2345],[1876,-2088],[2013,-1831],[2150,-1574],[2287,-1317],[2424,-1060],[2561,-803],[2698,-546],[2835,-289],[2972,-32],[-2892,225],[-2755,482],[-2618,739],[-2481,996],[-2344,1253],[-2207,1510],[-2070,1767],[-1933,2024],[-1796,2281],[-1659,2538],[-1522,2795],[-1385,-2949],[-1248,-2692],[-1111,-2435],[-974,-2178],[-837,-1921],[-700,-1664],[-563,-1407],[-426,-1150],[-289,-893],[-152,-636],[-15,-379],[122,-122],[259,135],[396,392],[533,649],[670,906],[807,1163],[944,1420],[1081,1677],[1218,1934],[1355,2191],[1492,2448],[1629,2705],[1766,2962],[1903,-2782],[2040,-2525],[2177,-2268],[2314,-2011],[2451,-1754],[2588,-1497],[2725,-1240],[2862,-983],[2999,-726],[-2865,-469],[-2728,-212],[-2591,45],[-2454,302],[-2317,559],[-2180,816],[-2043,1073],[-1906,1330],[-1769,1587],[-1632,1844],[-1495,2101],[-1358,2358],[-1221,2615],[-1084,2872],[-947,-2872],[-810,-2615],[-673,-2358],[-536,-2101],[-399,-1844],[-262,-1587],[-125,-1330],[12,-1073],[149,-816],[286,-559],[423,-302],[560,-45],[697,212],[834,469],[971,726],[1108,983],[1245,1240],[1382,1497],[1519,1754],[1656,2011],[1793,2268],[1930,2525],[2067,2782],[2204,-2962],[2341,-2705],[2478,-2448],[2615,-2191],[2752,-1934],[2889,-1677],[-2975,-1420],[-2838,-1163],[-2701,-906],[-2564,-649],[-2427,-392],[-2290,-135],[-2153,122],[-2016,379],[-1879,636],[-1742,893],[-1605,1150],[-1468,1407],[-1331,1664],[-1194,1921],[-1057,2178],[-920,2435],[-783,2692],[-646,2949],[-509,-2795],[-372,-2538],[-235,-2281],[-98,-2024],[39,-1767],[176,-1510],[313,-1253],[450,-996],[587,-739],[724,-482],[861,-225],[998,32],[1135,289],[1272,546],[1409,803],[1546,1060],[1683,1317],[1820,1574],[1957,1831],[2094,2088],[2231,2345],[2368,2602],[2505,2859],[2642,-2885],[2779,-2628],[2916,-2371],[-2948,-2114],[-2811,-1857],[-2674,-1600],[-2537,-1343],[-2400,-1086],[-2263,-829],[-2126,-572],[-1989,-315],[-1852,-58],[-1715,199],[-1578,456],[-1441,713],[-1304,970],[-1167,1227],[-1030,1484],[-893,1741],[-756,1998],[-619,2255],[-482,2512],[-345,2769],[-208,-2975],[-71,-2718],[66,-2461],[203,-2204],[340,-1947],[477,-1690],[614,-1433],[751,-1176],[888,-919],[1025,-662],[1162,-405],[1299,-148],[1436,109],[1573,366],[1710,623],[1847,880],[1984,1137],[2121,1394],[2258,1651],[2395,1908],[2532,2165],[2669,2422],[2806,2679],[2943,2936],[-2921,-2808],[-2784,-2551],[-2647,-2294],[-2510,-2037],[-2373,-1780],[-2236,-1523],[-2099,-1266],[-1962,-1009],[-1825,-752],[-1688,-495],[-1551,-238],[-1414,19],[-1277,276],[-1140,533],[-1003,790],[-866,1047],[-729,1304],[-592,1561],[-455,1818],[-318,2075],[-181,2332],[-44,2589],[93,2846],[230,-2898],[367,-2641],[504,-2384],[641,-2127],[778,-1870],[915,-1613],[1052,-1356],[1189,-1099],[1326,-842],[1463,-585],[1600,-328],[1737,-71],[1874,186],[2011,443],[2148,700],[2285,957],[2422,1214],[2559,1471],[2696,1728],[2833,1985],[2970,2242],[-2894,2499],[-2757,2756],[-2620,-2988],[-2483,-2731],[-2346,-2474],[-2209,-2217],[-2072,-1960],[-1935,-1703],[-1798,-1446],[-1661,-1189],[-1524,-932],[-1387,-675],[-1250,-418],[-1113,-161],[-976,96],[-839,353],[-702,610],[-565,867],[-428,1124],[-291,1381],[-154,1638],[-17,1895],[120,2152],[257,2409],[394,2666],[531,2923],[668,-2821],[805,-2564],[942,-2307],[1079,-2050],[1216,-1793],[1353,-1536],[1490,-1279],[1627,-1022],[1764,-765],[1901,-508],[2038,-251],[2175,6],[2312,263],[2449,520],[2586,777],[2723,1034],[2860,1291],[2997,1548],[-2867,1805],[-2730,2062],[-2593,2319],[-2456,2576],[-2319,2833],[-2182,-2911],[-2045,-2654],[-1908,-2397],[-1771,-2140],[-1634,-1883],[-1497,-1626],[-1360,-1369],[-1223,-1112],[-1086,-855],[-949,-598],[-812,-341],[-675,-84],[-538,173],[-401,430],[-264,687],[-127,944],[10,1201],[147,1458],[284,1715],[421,1972],[558,2229],[695,2486],[832,2743],[969,3000],[1106,-2744],[1243,-2487],[1380,-2230],[1517,-1973],[1654,-1716],[1791,-1459],[1928,-1202],[2065,-945],[2202,-688],[2339,-431],[2476,-174],[2613,83],[2750,340],[2887,597],[-2977,854],[-2840,1111],[-2703,1368],[-2566,1625],[-2429,1882],[-2292,2139],[-2155,2396],[-2018,2653],[-1881,2910],[-1744,-2834],[-1607,-2577],[-1470,-2320],[-1333,-2063],[-1196,-1806],[-1059,-1549],[-922,-1292],[-785,-1035],[-648,-778]]]",
+        "label": "Large mixed commands with bounded coordinates",
+        "weight": 3,
+        "expectedOutput": "4000000"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q874",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n#include <stdint.h>\n\ntypedef struct { char* s; int pos; int len; } Tok;\nstatic void skipWS(Tok* t){ while(t->pos<t->len && (t->s[t->pos]==' '||t->s[t->pos]==','||t->s[t->pos]=='\\t'||t->s[t->pos]=='\\n'||t->s[t->pos]=='\\r')) t->pos++; }\nstatic char* nextToken(Tok* t){\n    skipWS(t); if(t->pos>=t->len) return NULL; int start=t->pos;\n    if(t->s[t->pos]=='['){ int depth=0; while(t->pos<t->len){ char c=t->s[t->pos++]; if(c=='[') depth++; else if(c==']' && --depth==0) break; } }\n    else { while(t->pos<t->len && t->s[t->pos]!=',' && t->s[t->pos]!=']' && t->s[t->pos]!='[') t->pos++; }\n    int n=t->pos-start; char* out=(char*)malloc((size_t)n+1); memcpy(out,t->s+start,(size_t)n); out[n]='\\0'; return out;\n}\nstatic int* parse_int_array(Tok* t,int* sz){\n    char* tok=nextToken(t); if(!tok || strcmp(tok,\"[]\")==0){ free(tok); *sz=0; return NULL; }\n    int len=(int)strlen(tok); char* inner=(char*)malloc((size_t)len-1); memcpy(inner,tok+1,(size_t)len-2); inner[len-2]='\\0'; free(tok);\n    int count=1; for(int i=0;inner[i];i++) if(inner[i]==',') count++;\n    int* a=(int*)malloc((size_t)count*sizeof(int)); Tok t2={inner,0,(int)strlen(inner)};\n    for(int i=0;i<count;i++){ char* x=nextToken(&t2); a[i]=atoi(x); free(x); }\n    free(inner); *sz=count; return a;\n}\nstatic int** parse_int_2d(Tok* t,int* rows,int** cols){\n    char* tok=nextToken(t); if(!tok || strcmp(tok,\"[]\")==0){ free(tok); *rows=0; *cols=NULL; return NULL; }\n    int len=(int)strlen(tok); char* inner=(char*)malloc((size_t)len-1); memcpy(inner,tok+1,(size_t)len-2); inner[len-2]='\\0'; free(tok);\n    int r=0,depth=0; for(int i=0;inner[i];i++){ if(inner[i]=='['){ if(depth==0) r++; depth++; } else if(inner[i]==']') depth--; }\n    int** mat=(int**)malloc((size_t)r*sizeof(int*)); int* cs=(int*)malloc((size_t)r*sizeof(int)); Tok t2={inner,0,(int)strlen(inner)};\n    for(int i=0;i<r;i++) mat[i]=parse_int_array(&t2,&cs[i]);\n    free(inner); *rows=r; *cols=cs; return mat;\n}\n\nstatic uint64_t mix64(uint64_t x){ x^=x>>30; x*=UINT64_C(0xbf58476d1ce4e5b9); x^=x>>27; x*=UINT64_C(0x94d049bb133111eb); return x^(x>>31); }\nstatic int64_t keyxy(int x,int y){ return ((int64_t)x<<32) ^ (uint32_t)y; }\nstatic void set_add(int64_t* table,int cap,int64_t key){ int p=(int)(mix64((uint64_t)key)&(uint64_t)(cap-1)); while(table[p]!=INT64_MIN && table[p]!=key) p=(p+1)&(cap-1); table[p]=key; }\nstatic bool set_has(int64_t* table,int cap,int64_t key){ int p=(int)(mix64((uint64_t)key)&(uint64_t)(cap-1)); while(table[p]!=INT64_MIN){ if(table[p]==key) return true; p=(p+1)&(cap-1); } return false; }\n\nint robotSim(int* commands,int commandsSize,int** obstacles,int obstaclesSize,int* obstaclesColSize){\n    (void)obstaclesColSize;\n    int cap=1; while(cap < obstaclesSize*4+8) cap<<=1;\n    int64_t* table=(int64_t*)malloc((size_t)cap*sizeof(int64_t)); for(int i=0;i<cap;i++) table[i]=INT64_MIN;\n    for(int i=0;i<obstaclesSize;i++) set_add(table,cap,keyxy(obstacles[i][0],obstacles[i][1]));\n    const int dx[4]={0,1,0,-1}, dy[4]={1,0,-1,0}; int x=0,y=0,d=0,ans=0;\n    for(int i=0;i<commandsSize;i++){\n        int c=commands[i];\n        if(c==-2) d=(d+3)%4; else if(c==-1) d=(d+1)%4;\n        else for(int s=0;s<c;s++){ int nx=x+dx[d],ny=y+dy[d]; if(set_has(table,cap,keyxy(nx,ny))) break; x=nx; y=ny; int dist=x*x+y*y; if(dist>ans) ans=dist; }\n    }\n    free(table); return ans;\n}\n\nint main(){\n    char line[1000000]; if(!fgets(line,sizeof(line),stdin)) return 0; int len=(int)strlen(line); while(len&& (line[len-1]=='\\n'||line[len-1]=='\\r')) line[--len]='\\0';\n    char* raw=(char*)malloc((size_t)len-1); memcpy(raw,line+1,(size_t)len-2); raw[len-2]='\\0'; Tok tok={raw,0,(int)strlen(raw)};\n    int cs=0,os=0,*cols=NULL; int* commands=parse_int_array(&tok,&cs); int** obstacles=parse_int_2d(&tok,&os,&cols);\n    int result=robotSim(commands,cs,obstacles,os,cols); printf(\"%d\\n\",result);\n    for(int i=0;i<os;i++) free(obstacles[i]); free(obstacles); free(cols); free(commands); free(raw); return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\nstatic vector<string> splitTop(const string& s){ vector<string> out; int depth=0,start=0; for(int i=0;i<(int)s.size();++i){ if(s[i]=='[') ++depth; else if(s[i]==']') --depth; else if(s[i]==','&&depth==0){out.push_back(s.substr(start,i-start));start=i+1;} } out.push_back(s.substr(start)); return out; }\nstatic vector<int> readIntVec(const string& s){ if(s==\"[]\") return {}; auto p=splitTop(s.substr(1,s.size()-2)); vector<int> v; for(auto &x:p) v.push_back(stoi(x)); return v; }\nstatic vector<vector<int>> readInt2D(const string& s){ if(s==\"[]\") return {}; auto p=splitTop(s.substr(1,s.size()-2)); vector<vector<int>> v; for(auto &x:p) v.push_back(readIntVec(x)); return v; }\nstatic pair<string,string> readArgs(const string& line){ string s=line.substr(1,line.size()-2); int depth=0,split=-1; for(int i=0;i<(int)s.size();++i){ if(s[i]=='[') ++depth; else if(s[i]==']') --depth; else if(s[i]==','&&depth==0){split=i;break;} } return {s.substr(0,split),s.substr(split+1)}; }\nclass Solution { public: int robotSim(vector<int>& commands, vector<vector<int>>& obstacles){ unordered_set<long long> obs; obs.reserve(obstacles.size()*2+1); auto key=[](int x,int y)->long long{return (static_cast<long long>(x)<<32) ^ static_cast<unsigned int>(y);}; for(auto&o:obstacles) obs.insert(key(o[0],o[1])); int dx[4]={0,1,0,-1},dy[4]={1,0,-1,0},x=0,y=0,d=0,ans=0; for(int c:commands){ if(c==-2)d=(d+3)%4; else if(c==-1)d=(d+1)%4; else for(int s=0;s<c;++s){int nx=x+dx[d],ny=y+dy[d]; if(obs.count(key(nx,ny)))break; x=nx;y=ny;ans=max(ans,x*x+y*y);} } return ans; } };\nint main(){ios::sync_with_stdio(false);cin.tie(nullptr); string line; getline(cin,line); auto [a,b]=readArgs(line); auto commands=readIntVec(a); auto obstacles=readInt2D(b); cout<<Solution().robotSim(commands,obstacles)<<'\\n';}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\nclass Solution {\n    public int robotSim(int[] commands, int[][] obstacles) {\n        Set<Long> obs = new HashSet<>(Math.max(16, obstacles.length * 2));\n        for (int[] o : obstacles) obs.add(key(o[0], o[1]));\n        int[] dx={0,1,0,-1}, dy={1,0,-1,0};\n        int x=0,y=0,d=0,ans=0;\n        for(int c:commands){\n            if(c==-2) d=(d+3)%4;\n            else if(c==-1) d=(d+1)%4;\n            else for(int s=0;s<c;s++){\n                int nx=x+dx[d], ny=y+dy[d];\n                if(obs.contains(key(nx,ny))) break;\n                x=nx; y=ny; ans=Math.max(ans,x*x+y*y);\n            }\n        }\n        return ans;\n    }\n    private long key(int x,int y){ return (((long)x)<<32) ^ (y & 0xffffffffL); }\n}\npublic class Main {\n    static int pos; static String raw;\n    static String next(){ while(pos<raw.length() && (raw.charAt(pos)==','||raw.charAt(pos)==' '))pos++; int st=pos,depth=0; if(pos<raw.length()&&raw.charAt(pos)=='['){ do{char c=raw.charAt(pos++); if(c=='[')depth++; else if(c==']')depth--;}while(pos<raw.length()&&depth>0); return raw.substring(st,pos);} while(pos<raw.length()&&raw.charAt(pos)!=',')pos++; return raw.substring(st,pos).trim(); }\n    static int[] ints(String s){ if(s.equals(\"[]\"))return new int[0]; String z=s.substring(1,s.length()-1); if(z.isEmpty())return new int[0]; String[] p=z.split(\",\"); int[] a=new int[p.length]; for(int i=0;i<p.length;i++)a[i]=Integer.parseInt(p[i].trim()); return a; }\n    static int[][] ints2(String s){ if(s.equals(\"[]\"))return new int[0][]; String z=s.substring(1,s.length()-1); if(z.isEmpty())return new int[0][]; List<String> rows=new ArrayList<>(); int d=0,st=0; for(int i=0;i<z.length();i++){char c=z.charAt(i);if(c=='[')d++;else if(c==']')d--;else if(c==','&&d==0){rows.add(z.substring(st,i).trim());st=i+1;}} rows.add(z.substring(st).trim()); int[][] a=new int[rows.size()][]; for(int i=0;i<a.length;i++)a[i]=ints(rows.get(i)); return a; }\n    public static void main(String[] args)throws Exception{BufferedReader br=new BufferedReader(new InputStreamReader(System.in));String line=br.readLine().trim();raw=line.substring(1,line.length()-1);pos=0;int[] c=ints(next());int[][] o=ints2(next());System.out.println(new Solution().robotSim(c,o));}\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def robotSim(self, commands: List[int], obstacles: List[List[int]]) -> int:\n        pass\n\nif __name__=='__main__':\n    args=json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().robotSim(args[0],args[1])))\n",
+    "JavaScript": "\"use strict\";\nconst readline=require('readline');\nfunction robotSim(commands, obstacles){\n  const blocked=new Set(obstacles.map(([x,y])=>`${x},${y}`));\n  const dx=[0,1,0,-1],dy=[1,0,-1,0]; let x=0,y=0,d=0,ans=0;\n  for(const c of commands){\n    if(c===-2)d=(d+3)%4; else if(c===-1)d=(d+1)%4;\n    else for(let s=0;s<c;s++){const nx=x+dx[d],ny=y+dy[d]; if(blocked.has(`${nx},${ny}`))break; x=nx;y=ny;ans=Math.max(ans,x*x+y*y);}\n  }\n  return ans;\n}\nconst rl=readline.createInterface({input:process.stdin});\nrl.on('line',line=>{const args=JSON.parse(line.trim());console.log(JSON.stringify(robotSim(args[0],args[1])));rl.close();});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "25–35 min",
+  "learningObjectives": [
+    "Implement deterministic state-machine simulation.",
+    "Use a hash set for efficient two-dimensional coordinate membership.",
+    "Handle directional rotation and obstacle blocking correctly.",
+    "Track a path-dependent maximum using an invariant after each successful move."
+  ]
 }

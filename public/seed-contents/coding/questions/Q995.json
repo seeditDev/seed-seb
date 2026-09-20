@@ -24,21 +24,24 @@
         "type": "reg",
         "input": "[[0,1,0],1]",
         "output": "2",
-        "explanation": "Flip nums[0], then flip nums[2]."
+        "explanation": "Flip nums[0], then flip nums[2].",
+        "expectedOutput": "2"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[1,1,0],2]",
         "output": "-1",
-        "explanation": "No matter how we flip subarrays of size 2, we cannot make the array become [1,1,1]."
+        "explanation": "No matter how we flip subarrays of size 2, we cannot make the array become [1,1,1].",
+        "expectedOutput": "-1"
       },
       {
         "id": "sample_3",
         "type": "reg",
         "input": "[[0,0,0,1,0,1,1,0],3]",
         "output": "3",
-        "explanation": "Flip nums[0],nums[1],nums[2]: nums becomes [1,1,1,1,0,1,1,0]\nFlip nums[4],nums[5],nums[6]: nums becomes [1,1,1,1,1,0,0,0]\nFlip nums[5],nums[6],nums[7]: nums becomes [1,1,1,1,1,1,1,1]"
+        "explanation": "Flip nums[0],nums[1],nums[2]: nums becomes [1,1,1,1,0,1,1,0]\nFlip nums[4],nums[5],nums[6]: nums becomes [1,1,1,1,1,0,0,0]\nFlip nums[5],nums[6],nums[7]: nums becomes [1,1,1,1,1,1,1,1]",
+        "expectedOutput": "3"
       }
     ],
     "problemStatement": "You receive a binary array `nums` and an integer `k`.\n\nA **k-bit flip** is choosing a **subarray** of length `k` from `nums` and simultaneously changing every `0` in the subarray to `1`, and every `1` in the subarray to `0`.\n\nOutput *the smallest number of **k-bit flips** required so that there is no* `0` *in the array*. If it is not possible, output `-1`.\n\nA **subarray** is a **contiguous** part of an array.\n\n**Example 1:**\n\n```\nInput: nums = [0,1,0], k = 1\nOutput: 2\nExplanation: Flip nums[0], then flip nums[2].\n```\n\n**Example 2:**\n\n```\nInput: nums = [1,1,0], k = 2\nOutput: -1\nExplanation: No matter how we flip subarrays of size 2, we cannot make the array become [1,1,1].\n```\n\n**Example 3:**\n\n```\nInput: nums = [0,0,0,1,0,1,1,0], k = 3\nOutput: 3\nExplanation: \nFlip nums[0],nums[1],nums[2]: nums becomes [1,1,1,1,0,1,1,0]\nFlip nums[4],nums[5],nums[6]: nums becomes [1,1,1,1,1,0,0,0]\nFlip nums[5],nums[6],nums[7]: nums becomes [1,1,1,1,1,1,1,1]\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 10^5`\n* `1 <= k <= nums.length`"
@@ -415,8 +418,8 @@
   "boilerPlates": {
     "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint minKBitFlips(int* nums, int numsSize, int k) {\n    return 0;\n}\n\nint main(void) {\n    char line[1000000];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    int cap = 16, size = 0, k = 0;\n    int* nums = (int*)malloc(cap * sizeof(int));\n    char* p = line;\n    while (*p && *p != '[') ++p;\n    if (*p == '[') ++p;\n    while (*p && *p != ']') {\n        while (*p == ' ' || *p == ',') ++p;\n        if (*p == '0' || *p == '1') {\n            if (size == cap) { cap *= 2; nums = (int*)realloc(nums, cap * sizeof(int)); }\n            nums[size++] = *p - '0';\n            ++p;\n        } else if (*p) ++p;\n    }\n    while (*p && *p != ',') ++p;\n    if (*p == ',') ++p;\n    k = atoi(p);\n    printf(\"%d\\n\", minKBitFlips(nums, size, k));\n    free(nums);\n    return 0;\n}\n",
     "C++": "#include <iostream>\n#include <vector>\n#include <string>\nusing namespace std;\n\nint minKBitFlips(vector<int>& nums, int k) {\n        return 0;\n    }\n\nint main() {\n    string s;\n    getline(cin, s);\n    vector<int> nums;\n    int k = 0, i = 0, n = (int)s.size();\n    while (i < n && s[i] != '[') ++i;\n    ++i;\n    while (i < n && s[i] != ']') {\n        while (i < n && (s[i] == ' ' || s[i] == ',')) ++i;\n        if (i < n && s[i] == ']') break;\n        if (i < n && (s[i] == '0' || s[i] == '1')) { nums.push_back(s[i]-'0'); ++i; }\n        else ++i;\n    }\n    while (i < n && s[i] != ',') ++i;\n    if (i < n) ++i;\n    while (i < n && (s[i] == ' ' || s[i] == '[' || s[i] == ']')) ++i;\n    while (i < n && s[i] >= '0' && s[i] <= '9') { k = k * 10 + (s[i]-'0'); ++i; }\n    cout << minKBitFlips(nums, k) << '\\n';\n    return 0;\n}\n",
-    "Java": "import java.io.*;\n\nclass Solution {\n    public int minKBitFlips(int[] nums, int k) {\n        return 0;\n    }\n}\n",
-    "Python3": "from typing import List\n\nclass Solution:\n    def minKBitFlips(self, nums: List[int], k: int) -> int:\n        pass\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public int minKBitFlips(int[] nums, int k) {\n        return 0;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        int idx = line.lastIndexOf(',');\n        int k = Integer.parseInt(line.substring(idx + 1).replace(\"]\", \"\").trim());\n        String arrPart = line.substring(line.indexOf('[') + 1, line.indexOf(']'));\n        String[] parts = arrPart.split(\",\");\n        int[] nums = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) nums[i] = Integer.parseInt(parts[i].trim());\n        System.out.println(new Solution().minKBitFlips(nums, k));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def minKBitFlips(self, nums: List[int], k: int) -> int:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().minKBitFlips(args[0], args[1])))\n",
     "JavaScript": "\"use strict\";\n\nvar minKBitFlips = function(nums, k) {\n    return 0;\n};\n\nconst fs = require('fs');\nconst line = fs.readFileSync(0, 'utf8').trim();\nif (line) {\n    const args = JSON.parse(line);\n    console.log(JSON.stringify(minKBitFlips(args[0], args[1])));\n}\n"
   },
   "acceptanceRate": null,

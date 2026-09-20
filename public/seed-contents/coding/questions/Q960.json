@@ -1,29 +1,17 @@
 {
-  "questionId": "Q960",
-  "title": "Delete Columns to Make Sorted III Problem",
   "slug": "delete-columns-to-make-sorted-iii",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "string",
-      "dynamic-programming"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "string",
-      "dynamic-programming"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Think of a column as one value for every row, not as an independent character.",
+    "If you keep column i before column j, what condition must hold simultaneously for every string?",
+    "After defining when one column can precede another, this becomes a longest-chain dynamic programming problem over the columns.",
+    "The answer is the number of original columns minus the maximum number of columns that can be kept."
+  ],
+  "title": "Delete Columns to Make Sorted III Problem",
   "content": {
-    "problemStatement": "You receive an array of `n` strings `strs`, all of the same length.\n\nWe may choose any deletion indices, and we delete all the characters in those indices for each string.\n\nAs an example, if we have `strs = [\"abcdef\",\"uvwxyz\"]` and deletion indices `{0, 2, 3}`, then the final array after deletions is `[\"bef\", \"vyz\"]`.\n\nSuppose we chose a set of deletion indices `answer` such that after deletions, the final array has **every string (row) in lexicographic** order. (i.e., `(strs[0][0] <= strs[0][1] <= ... <= strs[0][strs[0].length - 1])`, and `(strs[1][0] <= strs[1][1] <= ... <= strs[1][strs[1].length - 1])`, and so on). Output *the smallest possible value of* `answer.length`.\n\n**Example 1:**\n\n```\nInput: strs = [\"babca\",\"bbazb\"]\nOutput: 3\nExplanation: After deleting columns 0, 1, and 4, the final array is strs = [\"bc\", \"az\"].\nBoth these rows are individually in lexicographic order (ie. strs[0][0] <= strs[0][1] and strs[1][0] <= strs[1][1]).\nNote that strs[0] > strs[1] - the array strs is not necessarily in lexicographic order.\n```\n\n**Example 2:**\n\n```\nInput: strs = [\"edcba\"]\nOutput: 4\nExplanation: If we delete less than 4 columns, the only row will not be lexicographically sorted.\n```\n\n**Example 3:**\n\n```\nInput: strs = [\"ghi\",\"def\",\"abc\"]\nOutput: 0\nExplanation: All rows are already lexicographically sorted.\n```\n\n**Constraints:**\n\n* `n == strs.length`\n* `1 <= n <= 100`\n* `1 <= strs[i].length <= 100`\n* `strs[i]` is composed of lowercase English letters.",
+    "notes": [
+      "The same set of columns is deleted from every string.",
+      "The remaining characters in each string must be nondecreasing from left to right; the strings do not need to be ordered relative to one another."
+    ],
     "constraints": [
       "n == strs.length",
       "1 <= n <= 100",
@@ -55,267 +43,35 @@
         "explanation": "All rows are already lexicographically sorted."
       }
     ],
-    "notes": []
+    "problemStatement": "You receive an array of `n` strings `strs`, all of the same length.\n\nWe may choose any deletion indices, and we delete all the characters in those indices for each string.\n\nAs an example, if we have `strs = [\"abcdef\",\"uvwxyz\"]` and deletion indices `{0, 2, 3}`, then the final array after deletions is `[\"bef\", \"vyz\"]`.\n\nSuppose we chose a set of deletion indices `answer` such that after deletions, the final array has **every string (row) in lexicographic** order. (i.e., `(strs[0][0] <= strs[0][1] <= ... <= strs[0][strs[0].length - 1])`, and `(strs[1][0] <= strs[1][1] <= ... <= strs[1][strs[1].length - 1])`, and so on). Output *the smallest possible value of* `answer.length`.\n\n**Example 1:**\n\n```\nInput: strs = [\"babca\",\"bbazb\"]\nOutput: 3\nExplanation: After deleting columns 0, 1, and 4, the final array is strs = [\"bc\", \"az\"].\nBoth these rows are individually in lexicographic order (ie. strs[0][0] <= strs[0][1] and strs[1][0] <= strs[1][1]).\nNote that strs[0] > strs[1] - the array strs is not necessarily in lexicographic order.\n```\n\n**Example 2:**\n\n```\nInput: strs = [\"edcba\"]\nOutput: 4\nExplanation: If we delete less than 4 columns, the only row will not be lexicographically sorted.\n```\n\n**Example 3:**\n\n```\nInput: strs = [\"ghi\",\"def\",\"abc\"]\nOutput: 0\nExplanation: All rows are already lexicographically sorted.\n```\n\n**Constraints:**\n\n* `n == strs.length`\n* `1 <= n <= 100`\n* `1 <= strs[i].length <= 100`\n* `strs[i]` is composed of lowercase English letters."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[\"a\"]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Zero values",
-        "input": "[[\"aaaa\", \"aaaa\"]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[\"abcde\", \"abcde\", \"abcde\"]]",
-        "expectedOutput": "0",
-        "weight": 4
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[\"abc\", \"def\", \"ghi\"]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[\"aabc\", \"abbc\"]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[\"abcc\", \"abdc\"]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[\"abca\", \"abda\"]]",
-        "expectedOutput": "1",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Answer spans entire array",
-        "input": "[[\"dcba\", \"dcba\"]]",
-        "expectedOutput": "3",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Standard case (if applicable)",
-        "input": "[[\"a\", \"a\"]]",
-        "expectedOutput": "0",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "The reference algorithm runs in O(n * L^2) time and O(L) auxiliary space, where L is the common string length."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -337,57 +93,332 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "string",
+      "dynamic-programming"
     ],
-    "notes": []
+    "category": "Arrays",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "string",
+      "dynamic-programming"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses dynamic programming to find the longest increasing subsequence in each string, then returns the difference between the length of the string and the maximum length of the increasing subsequences.",
-    "timeComplexity": "O(n * l^2)",
-    "spaceComplexity": "O(l)",
-    "code": {
-      "Python3": "# Time:  O(n * l^2)\n# Space: O(l)\n\nclass Solution(object):\n    def minDeletionSize(self, A):\n        \"\"\"\n        :type A: List[str]\n        :rtype: int\n        \"\"\"\n        dp = [1] * len(A[0])\n        for j in range(1, len(A[0])):\n            for i in range(j):\n                if all(A[k][i] <= A[k][j] for k in range(len(A))):\n                    dp[j] = max(dp[j], dp[i]+1)\n        return len(A[0]) - max(dp)"
-    },
-    "notes": [],
+    "notes": [
+      "This is a longest-increasing-subsequence-style dynamic program over columns, not a separate LIS computed independently for each row.",
+      "Equality is allowed because each remaining row only needs to be nondecreasing.",
+      "The original reference approach was repaired to use the cross-row column condition explicitly."
+    ],
+    "approach": "Treat every column as a vector across all rows. Two columns i < j can both be kept in that order exactly when strs[r][i] <= strs[r][j] for every row r. The kept columns therefore form a longest chain under this component-wise order. Let dp[j] be the maximum number of columns in a valid chain ending at column j. For every i < j, if column i can precede column j, update dp[j] = max(dp[j], dp[i] + 1). The minimum deletions are L - max(dp).",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n * L^2) time and O(L) memo/recursion space.",
+        "description": "Use top-down dynamic programming on columns. For each ending column j, recursively compute the longest valid chain starting at j and memoize the result. A transition from i to j is valid when every row satisfies strs[r][i] <= strs[r][j]. This removes the exponential subset enumeration, though it has the same asymptotic bound as the bottom-up formulation."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n * L^2) time and O(L) auxiliary space.",
+        "description": "Use bottom-up DP. For each pair of columns i < j, check the component-wise ordering across all n rows. If valid, extend the best chain ending at i. The longest chain gives the maximum number of columns that can remain, so answer = L - longestChain."
+      },
+      "bruteForce": {
+        "complexity": "O(2^L * n * L) time and O(L) auxiliary space.",
+        "description": "Enumerate every subset of columns, keep the subsets whose retained columns make every row nondecreasing, and minimize the number of deleted columns. This is only practical for very small L."
       }
+    },
+    "timeComplexity": "O(n * L^2)",
+    "spaceComplexity": "O(L)",
+    "code": {
+      "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def minDeletionSize(self, strs: List[str]) -> int:\n        m = len(strs[0])\n        dp = [1] * m\n        for j in range(1, m):\n            for i in range(j):\n                if all(row[i] <= row[j] for row in strs):\n                    dp[j] = max(dp[j], dp[i] + 1)\n        return m - max(dp)"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nint minDeletionSize(char** strs, int strsSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        // TODO: unpack logic for string[] strs\n        int result = minDeletionSize(strs);\n        printf(\"%d\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def minDeletionSize(self, strs: List[str]) -> int:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _strs = _args[0]\n    _result = Solution().minDeletionSize(_strs)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string[]} strs\n * @return {number}\n */\nvar minDeletionSize = function(strs) {\n    \n    return 0;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = minDeletionSize(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public int minDeletionSize(String[] strs) {\n        \n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        String[] strs = toStringArray(nextToken());\n        int result = new Solution().minDeletionSize(strs);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int minDeletionSize(vector<string>& strs) {\n        \n        return 0;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto strs = readStrVec(tok);\n    auto result = Solution().minDeletionSize(strs);\n    cout << result << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "strs",
+        "type": "string[]"
+      }
+    ],
+    "methodName": "minDeletionSize"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "What changes when there is only one input string? Can the classic O(L log L) LIS technique be used?",
+    "How would the implementation change if the strings could contain arbitrary Unicode characters rather than lowercase English letters?",
+    "Can the same column-chain formulation be written iteratively and recursively, and what recursion-depth considerations apply?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[\"a\"]]",
+        "label": "Minimum length one-character input",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[\"aaaa\",\"aaaa\"]]",
+        "label": "All characters equal across rows",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[\"abcde\",\"abcde\",\"abcde\"]]",
+        "label": "Identical already sorted rows with duplicates",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[\"edcba\"]]",
+        "label": "Single row strictly decreasing",
+        "weight": 4,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[\"babca\",\"bbazb\"]]",
+        "label": "Cross-row adversarial sample-pattern case",
+        "weight": 4,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[\"abc\",\"def\",\"ghi\"]]",
+        "label": "All rows already sorted",
+        "weight": 4,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[\"abcc\",\"abdc\"]]",
+        "label": "Single deletion in the middle",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[\"abca\",\"abda\"]]",
+        "label": "Single deletion at the end",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[\"dcba\",\"dcba\"]]",
+        "label": "Repeated descending rows",
+        "weight": 4,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[\"ba\",\"ab\"]]",
+        "label": "Two rows with opposite order",
+        "weight": 4,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[\"cba\",\"abc\"]]",
+        "label": "Conflicting rows requiring multiple deletions",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[\"azbycx\"]]",
+        "label": "Alternating high-low single row",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[\"acb\",\"cab\"]]",
+        "label": "Row-independent strategy counterexample",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[\"aaa\",\"aba\"]]",
+        "label": "First-row-only strategy counterexample",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[\"acbd\",\"aaaa\"]]",
+        "label": "Irregular row with neutral companion row",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[\"zxy\",\"abc\"]]",
+        "label": "Extreme values with mixed row behavior",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[\"aaaaa\",\"zzzzz\"]]",
+        "label": "Constant rows with different values",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[\"abcba\",\"edcde\"]]",
+        "label": "Near-palindromic rows",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[\"aabbaa\",\"ababab\"]]",
+        "label": "Repeated patterns and duplicates",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[\"mnop\",\"qrst\",\"uvwx\"]]",
+        "label": "Multiple rows already sorted",
+        "weight": 3,
+        "expectedOutput": "0"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[\"jihg\",\"fedc\",\"cbax\"]]",
+        "label": "Multiple descending rows with varying prefixes",
+        "weight": 3,
+        "expectedOutput": "3"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[\"azby\",\"axcy\"]]",
+        "label": "Shared prefix and incompatible middle columns",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[\"baaa\",\"abaa\"]]",
+        "label": "Equal-run greedy counterexample",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[\"cab\",\"abc\",\"bbc\"]]",
+        "label": "Constraint revealed after the first column",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[\"acbd\",\"bbca\",\"ccdd\"]]",
+        "label": "Mixed constraints with later compatible columns",
+        "weight": 3,
+        "expectedOutput": "2"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[\"zyxwvutsrq\",\"abcdefghij\"]]",
+        "label": "Long opposite-order rows",
+        "weight": 3,
+        "expectedOutput": "9"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[\"abcdefghij\",\"jihgfedcba\"]]",
+        "label": "Opposite monotone rows",
+        "weight": 3,
+        "expectedOutput": "9"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[\"aaaaabaaaaa\",\"zzzzzyzzzzz\"]]",
+        "label": "Mostly constant rows with one perturbation",
+        "weight": 3,
+        "expectedOutput": "1"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[\"abacabad\",\"bbccddaa\"]]",
+        "label": "Duplicate-heavy adversarial pattern",
+        "weight": 3,
+        "expectedOutput": "4"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[\"ahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkr\",\"rblvfpzjtdnqakueoyiscmpzjtdnxhrbloyiscmwgqaknxhrblvfpzjmwgqakueoyilvfpzjtdnxhkueoyiscmwgjtdnxhrblvfi\",\"ivivivbobobhuhuhuananagtgtgtzmzmzfsfsfsylylyerererxkxkxdqdqdqwjwjwcpcpcpvivivbobobouhuhuananantgtgtz\",\"zpfveukajzpyoeudtjziyoxndtcsiyhxnwmcsbrhxgwmvlbraqgwfvlukaqzpfveuktjzpyoeudtjsiyoxndtcsirhxnwmcsbrhq\",\"qjcohamfykdpibngzlexjcohamfykdwibngzlexjcvhamfykdwibugzlexjcvhatfykdwibugzsexjcvhatfyrdwibugzsexqcvh\",\"hdzokzvkgvrgcynjyujfuqfbxmixtietpeawlhwshdsodzvkgvrgcrncyujfuqfbqmbxtietpeaplawshdsodzokzvrgcrncynjy\",\"yxpogfxwonfxwonfewvnmewvnmedvumldvumldcutlkcutlkcbtskjbtskjbasrjiasrjiazrqihzrqihzyqphgyqphgyxpogfxp\",\"prmojegbwytoqlnidfavxsnpkmhcezuwrmojlgbdytvqlnikfacxsupkmhjezbwrtojlgidyavqsnikfhcxzuprmhjegbwytoqlg\",\"gljhmkigljhfkigljhfkigejhfkigejhfdigejhfdigechfdigechfdbgechfdbgecafdbgecafdbzecafdbzecaydbzecaydbzx\",\"xfghijrstuvwefghiqrstuvdefghpqrstucdefgopqrstbcdefnopqrsabcdemnopqrzabcdlmnopqyzabcklmnopxyzabjklmno\",\"ozdhlptxbfjnycgkoswaeimxbfjnrvzdhlwaeimquycgkvzdhlptxbfjuycgkoswaeitxbfjnrvzdhswaeimquycgrvzdhlptxbf\",\"fmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipw\",\"wgqakueoyisvfpzjtdnxhrueoyiscmwgqtdnxhrblvfpscmwgqakueorblvfpzjtdnqakueoyiscmpzjtdnxhrbloyiscmwgqakn\",\"nananagtgtgmzmzmzfsfsflylylyererekxkxkxdqdqdjwjwjwcpcpcivivivbobobhuhuhuananagtgtgtzmzmzfsfsfsylylye\",\"eukajzpfoeudtjziyoendtcsiyhxndmcsbrhxgwmclbraqgwfvlbkaqzpfveukajzpyoeudtjziyoxndtcsiyhxnwmcsbrhxgwmv\",\"vohtmfrkdpiungsleqjcohtmfrkdpibngsleqjcohamfrkdpibngzleqjcohamfykdpibngzlexjcohamfykdwibngzlexjcvham\",\"mietpeaplawlhdsodzokzvkgcrncynjyujfbqmbxmixtieaplawlhwshdzokzvkgvrgcynjyujfuqfbxmixtietpeawlhwshdsod\",\"dcutlkcbtskcbtskjbasrjbasrjiazrqiazrqihzyqphzyqphgyxpogyxpogfxwonfxwonfewvnmewvnmedvumldvumldcutlkcu\",\"uwrtojlgbdytvqsnikfacxsuprmhjezbwrtoqlgidyavqsnpkfhcxzuprmojegbwytoqlnidfavxsnpkmhcezuwrmojlgbdytvql\",\"lqomrpnlqomkpnlqomkpnljomkpnljomkinljomkinljhmkinljhmkigljhmkigljhfkigljhfkigejhfkigejhfdigejhfdigec\",\"cklmnowxyzabjklmnvwxyzaijklmuvwxyzhijkltuvwxyghijkstuvwxfghijrstuvwefghiqrstuvdefghpqrstucdefgopqrst\",\"teimquycgkosdhlptxbfjnrcgkoswaeimqbfjnrvzdhlpaeimquycgkozdhlptxbfjnycgkoswaeimxbfjnrvzdhlwaeimquycgk\",\"kryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnub\",\"blvfpzjtdnxakueoyiscmwzjtdnxhrblvyiscmwgqakuxhrblvfpzjtwgqakueoyisvfpzjtdnxhrueoyiscmwgqtdnxhrblvfps\",\"sfsfsflylylrererekxkxkqdqdqdjwjwjpcpcpciviviobobobhuhuhnananagtgtgmzmzmzfsfsflylylyererekxkxkxdqdqdj\",\"jzpfoeuktjziyoendtjsiyhxndmcsirhxgwmclbrhqgwfvlbkaqgpfveukajzpfoeudtjziyoendtcsiyhxndmcsbrhxgwmclbra\",\"atmyrkwpiunzslxqjvohtmyrkwpiungslxqjvohtmfrkwpiungsleqjvohtmfrkdpiungsleqjcohtmfrkdpibngsleqjcohamfr\",\"rnjyujfuqfbqmixtietpeaplhwshdsodzokgvrgcrncynjfuqfbqmbxmietpeaplawlhdsodzokzvkgcrncynjyujfbqmbxmixti\",\"ihzyqphgyxphgyxpogfxwogfxwonfewvnfewvnmedvumedvumldcutldcutlkcbtskcbtskjbasrjbasrjiazrqiazrqihzyqphz\",\"zbwytoqlgidyavxsnpkfhcxzuwrmojegbwytvqlnidfavxsupkmhcezuwrtojlgbdytvqsnikfacxsuprmhjezbwrtoqlgidyavq\",\"qvtrwusqvtrpusqvtrpusqotrpusqotrpnsqotrpnsqomrpnsqomrpnlqomrpnlqomkpnlqomkpnljomkpnljomkinljomkinljh\",\"hpqrstbcdefgopqrsabcdefnopqrzabcdemnopqyzabcdlmnopxyzabcklmnowxyzabjklmnvwxyzaijklmuvwxyzhijkltuvwxy\",\"yjnrvzdhlptximquycgkoswhlptxbfjnrvgkoswaeimqufjnrvzdhlpteimquycgkosdhlptxbfjnrcgkoswaeimqbfjnrvzdhlp\",\"pwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszg\",\"gqakueoyiscfpzjtdnxhrbeoyiscmwgqadnxhrblvfpzcmwgqakueoyblvfpzjtdnxakueoyiscmwzjtdnxhrblvyiscmwgqakux\",\"xkxkxkqdqdqwjwjwjpcpcpviviviobobouhuhuhnanantgtgtgmzmzmsfsfsflylylrererekxkxkqdqdqdjwjwjpcpcpcivivio\",\"oeuktjzpyoendtjsiyoxndmcsirhxnwmclbrhqgwmvlbkaqgpfvlukajzpfoeuktjziyoendtjsiyhxndmcsirhxgwmclbrhqgwf\",\"fyrdwpbunzsexqcvoatmyrdwpbunzslxqcvoatmyrkwpbunzslxqjvoatmyrkwpiunzslxqjvohtmyrkwpiungslxqjvohtmfrkw\",\"wsodzokzvkgvrncynjyujfuqmbxmixtietplawlhwshdsokzvkgvrgcrnjyujfuqfbqmixtietpeaplhwshdsodzokgvrgcrncyn\",\"nmedvumldcumldcutlkcbtlkcbtskjbaskjbasrjiazrjiazrqihzyqihzyqphgyxphgyxpogfxwogfxwonfewvnfewvnmedvume\",\"egbdytvqlnidfacxsupkmhcezbwrtojlgbdyavqsnikfacxzuprmhjezbwytoqlgidyavxsnpkfhcxzuwrmojegbwytvqlnidfav\",\"vaywbzxvaywuzxvaywuzxvtywuzxvtywusxvtywusxvtrwusxvtrwusqvtrwusqvtrpusqvtrpusqotrpusqotrpnsqotrpnsqom\",\"muvwxyghijkltuvwxfghijkstuvwefghijrstuvdefghiqrstucdefghpqrstbcdefgopqrsabcdefnopqrzabcdemnopqyzabcd\",\"doswaeimquycnrvzdhlptxbmquycgkoswalptxbfjnrvzkoswaeimquyjnrvzdhlptximquycgkoswhlptxbfjnrvgkoswaeimqu\",\"ubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxel\",\"lvfpzjtdnxhkueoyiscmwgjtdnxhrblvfiscmwgqakuehrblvfpzjtdgqakueoyiscfpzjtdnxhrbeoyiscmwgqadnxhrblvfpzc\",\"cpcpcpvivivbobobouhuhuananantgtgtzmzmzmsfsfsylylylrererxkxkxkqdqdqwjwjwjpcpcpviviviobobouhuhuhnanant\",\"tjzpyoeudtjsiyoxndtcsirhxnwmcsbrhqgwmvlbraqgpfvlukaqzpfoeuktjzpyoendtjsiyoxndmcsirhxnwmclbrhqgwmvlbk\",\"kdwibugzsexjcvhatfyrdwibugzsexqcvhatfyrdwpbugzsexqcvoatfyrdwpbunzsexqcvoatmyrdwpbunzslxqcvoatmyrkwpb\",\"bxtietpeaplawshdsodzokzvrgcrncynjyuqfbqmbxmixtpeaplawlhwsodzokzvkgvrncynjyujfuqmbxmixtietplawlhwshds\",\"srjiazrqihzrqihzyqphgyqphgyxpogfxpogfxwonfewonfewvnmedvnmedvumldcumldcutlkcbtlkcbtskjbaskjbasrjiazrj\",\"jlgidyavqsnikfhcxzuprmhjegbwytoqlgidfavxsnpkfhcezuwrmojegbdytvqlnidfacxsupkmhcezbwrtojlgbdyavqsnikfa\",\"afdbgecafdbzecafdbzecaydbzecaydbzxcaydbzxcaywbzxcaywbzxvaywbzxvaywuzxvaywuzxvtywuzxvtywusxvtywusxvtr\",\"rzabcdlmnopqyzabcklmnopxyzabjklmnowxyzaijklmnvwxyzhijklmuvwxyghijkltuvwxfghijkstuvwefghijrstuvdefghi\",\"itxbfjnrvzdhswaeimquycgrvzdhlptxbfquycgkoswaeptxbfjnrvzdoswaeimquycnrvzdhlptxbmquycgkoswalptxbfjnrvz\",\"zgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjq\",\"qakueoyiscmpzjtdnxhrbloyiscmwgqaknxhrblvfpzjmwgqakueoyilvfpzjtdnxhkueoyiscmwgjtdnxhrblvfiscmwgqakueh\",\"huhuhuananagtgtgtzmzmzfsfsfsylylyerererxkxkxdqdqdqwjwjwcpcpcpvivivbobobouhuhuananantgtgtzmzmzmsfsfsy\",\"yoeudtjziyoxndtcsiyhxnwmcsbrhxgwmvlbraqgwfvlukaqzpfveuktjzpyoeudtjsiyoxndtcsirhxnwmcsbrhqgwmvlbraqgp\",\"pibngzlexjcohamfykdwibngzlexjcvhamfykdwibugzlexjcvhatfykdwibugzsexjcvhatfyrdwibugzsexqcvhatfyrdwpbug\",\"gcynjyujfuqfbxmixtietpeawlhwshdsodzvkgvrgcrncyujfuqfbqmbxtietpeaplawshdsodzokzvrgcrncynjyuqfbqmbxmix\",\"xwonfewvnmewvnmedvumldvumldcutlkcutlkcbtskjbtskjbasrjiasrjiazrqihzrqihzyqphgyqphgyxpogfxpogfxwonfewo\",\"oqlnidfavxsnpkmhcezuwrmojlgbdytvqlnikfacxsupkmhjezbwrtojlgidyavqsnikfhcxzuprmhjegbwytoqlgidfavxsnpkf\",\"fkigljhfkigejhfkigejhfdigejhfdigechfdigechfdbgechfdbgecafdbgecafdbzecafdbzecaydbzecaydbzxcaydbzxcayw\",\"wefghiqrstuvdefghpqrstucdefgopqrstbcdefnopqrsabcdemnopqrzabcdlmnopqyzabcklmnopxyzabjklmnowxyzaijklmn\",\"nycgkoswaeimxbfjnrvzdhlwaeimquycgkvzdhlptxbfjuycgkoswaeitxbfjnrvzdhswaeimquycgrvzdhlptxbfquycgkoswae\",\"elszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahov\",\"vfpzjtdnxhrueoyiscmwgqtdnxhrblvfpscmwgqakueorblvfpzjtdnqakueoyiscmpzjtdnxhrbloyiscmwgqaknxhrblvfpzjm\",\"mzmzmzfsfsflylylyererekxkxkxdqdqdjwjwjwcpcpcivivivbobobhuhuhuananagtgtgtzmzmzfsfsfsylylyerererxkxkxd\",\"dtjziyoendtcsiyhxndmcsbrhxgwmclbraqgwfvlbkaqzpfveukajzpyoeudtjziyoxndtcsiyhxnwmcsbrhxgwmvlbraqgwfvlu\",\"ungsleqjcohtmfrkdpibngsleqjcohamfrkdpibngzleqjcohamfykdpibngzlexjcohamfykdwibngzlexjcvhamfykdwibugzl\",\"lhdsodzokzvkgcrncynjyujfbqmbxmixtieaplawlhwshdzokzvkgvrgcynjyujfuqfbxmixtietpeawlhwshdsodzvkgvrgcrnc\",\"cbtskjbasrjbasrjiazrqiazrqihzyqphzyqphgyxpogyxpogfxwonfxwonfewvnmewvnmedvumldvumldcutlkcutlkcbtskjbt\",\"tvqsnikfacxsuprmhjezbwrtoqlgidyavqsnpkfhcxzuprmojegbwytoqlnidfavxsnpkmhcezuwrmojlgbdytvqlnikfacxsupk\",\"kpnlqomkpnljomkpnljomkinljomkinljhmkinljhmkigljhmkigljhfkigljhfkigejhfkigejhfdigejhfdigechfdigechfdb\",\"bjklmnvwxyzaijklmuvwxyzhijkltuvwxyghijkstuvwxfghijrstuvwefghiqrstuvdefghpqrstucdefgopqrstbcdefnopqrs\",\"sdhlptxbfjnrcgkoswaeimqbfjnrvzdhlpaeimquycgkozdhlptxbfjnycgkoswaeimxbfjnrvzdhlwaeimquycgkvzdhlptxbfj\",\"jqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmta\",\"akueoyiscmwzjtdnxhrblvyiscmwgqakuxhrblvfpzjtwgqakueoyisvfpzjtdnxhrueoyiscmwgqtdnxhrblvfpscmwgqakueor\",\"rererekxkxkqdqdqdjwjwjpcpcpciviviobobobhuhuhnananagtgtgmzmzmzfsfsflylylyererekxkxkxdqdqdjwjwjwcpcpci\",\"iyoendtjsiyhxndmcsirhxgwmclbrhqgwfvlbkaqgpfveukajzpfoeudtjziyoendtcsiyhxndmcsbrhxgwmclbraqgwfvlbkaqz\",\"zslxqjvohtmyrkwpiungslxqjvohtmfrkwpiungsleqjvohtmfrkdpiungsleqjcohtmfrkdpibngsleqjcohamfrkdpibngzleq\",\"qmixtietpeaplhwshdsodzokgvrgcrncynjfuqfbqmbxmietpeaplawlhdsodzokzvkgcrncynjyujfbqmbxmixtieaplawlhwsh\",\"hgyxpogfxwogfxwonfewvnfewvnmedvumedvumldcutldcutlkcbtskcbtskjbasrjbasrjiazrqiazrqihzyqphzyqphgyxpogy\",\"yavxsnpkfhcxzuwrmojegbwytvqlnidfavxsupkmhcezuwrtojlgbdytvqsnikfacxsuprmhjezbwrtoqlgidyavqsnpkfhcxzup\",\"pusqvtrpusqotrpusqotrpnsqotrpnsqomrpnsqomrpnlqomrpnlqomkpnlqomkpnljomkpnljomkinljomkinljhmkinljhmkig\",\"gopqrsabcdefnopqrzabcdemnopqyzabcdlmnopxyzabcklmnowxyzabjklmnvwxyzaijklmuvwxyzhijkltuvwxyghijkstuvwx\",\"ximquycgkoswhlptxbfjnrvgkoswaeimqufjnrvzdhlpteimquycgkosdhlptxbfjnrcgkoswaeimqbfjnrvzdhlpaeimquycgko\",\"ovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryf\",\"fpzjtdnxhrbeoyiscmwgqadnxhrblvfpzcmwgqakueoyblvfpzjtdnxakueoyiscmwzjtdnxhrblvyiscmwgqakuxhrblvfpzjtw\",\"wjwjwjpcpcpviviviobobouhuhuhnanantgtgtgmzmzmsfsfsflylylrererekxkxkqdqdqdjwjwjpcpcpciviviobobobhuhuhn\",\"ndtjsiyoxndmcsirhxnwmclbrhqgwmvlbkaqgpfvlukajzpfoeuktjziyoendtjsiyhxndmcsirhxgwmclbrhqgwfvlbkaqgpfve\",\"exqcvoatmyrdwpbunzslxqcvoatmyrkwpbunzslxqjvoatmyrkwpiunzslxqjvohtmyrkwpiungslxqjvohtmfrkwpiungsleqjv\",\"vrncynjyujfuqmbxmixtietplawlhwshdsokzvkgvrgcrnjyujfuqfbqmixtietpeaplhwshdsodzokgvrgcrncynjfuqfbqmbxm\",\"mldcutlkcbtlkcbtskjbaskjbasrjiazrjiazrqihzyqihzyqphgyxphgyxpogfxwogfxwonfewvnfewvnmedvumedvumldcutld\",\"dfacxsupkmhcezbwrtojlgbdyavqsnikfacxzuprmhjezbwytoqlgidyavxsnpkfhcxzuwrmojegbwytvqlnidfavxsupkmhcezu\",\"uzxvaywuzxvtywuzxvtywusxvtywusxvtrwusxvtrwusqvtrwusqvtrpusqvtrpusqotrpusqotrpnsqotrpnsqomrpnsqomrpnl\",\"ltuvwxfghijkstuvwefghijrstuvdefghiqrstucdefghpqrstbcdefgopqrsabcdefnopqrzabcdemnopqyzabcdlmnopxyzabc\",\"cnrvzdhlptxbmquycgkoswalptxbfjnrvzkoswaeimquyjnrvzdhlptximquycgkoswhlptxbfjnrvgkoswaeimqufjnrvzdhlpt\",\"tahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdkryfmtahovcjqxelszgnubipwdk\"]]",
+        "label": "Constraint-boundary 100x100 structured input with incompatible column vectors",
+        "weight": 3,
+        "expectedOutput": "99"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q960",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint minDeletionSize(char** strs, int strsSize) {\n    int m = (int)strlen(strs[0]);\n    int* dp = (int*)malloc((size_t)m * sizeof(int));\n    for (int j = 0; j < m; ++j) dp[j] = 1;\n\n    for (int j = 1; j < m; ++j) {\n        for (int i = 0; i < j; ++i) {\n            int ok = 1;\n            for (int r = 0; r < strsSize; ++r) {\n                if (strs[r][i] > strs[r][j]) {\n                    ok = 0;\n                    break;\n                }\n            }\n            if (ok && dp[i] + 1 > dp[j]) dp[j] = dp[i] + 1;\n        }\n    }\n\n    int best = dp[0];\n    for (int j = 1; j < m; ++j)\n        if (dp[j] > best) best = dp[j];\n\n    free(dp);\n    return m - best;\n}\n\nint main(void) {\n    char line[20000];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n\n    int capacity = 128, count = 0;\n    char** strs = (char**)malloc((size_t)capacity * sizeof(char*));\n\n    for (char* p = line; *p; ) {\n        if (*p != '\"') {\n            ++p;\n            continue;\n        }\n\n        ++p;\n        char* start = p;\n        while (*p && *p != '\"') ++p;\n        if (!*p) break;\n\n        size_t len = (size_t)(p - start);\n        char* s = (char*)malloc(len + 1);\n        memcpy(s, start, len);\n        s[len] = '\\0';\n\n        if (count == capacity) {\n            capacity *= 2;\n            strs = (char**)realloc(strs, (size_t)capacity * sizeof(char*));\n        }\n        strs[count++] = s;\n\n        ++p;\n    }\n\n    if (count > 0) {\n        printf(\"%d\\n\", minDeletionSize(strs, count));\n    }\n\n    for (int i = 0; i < count; ++i) free(strs[i]);\n    free(strs);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minDeletionSize(vector<string>& strs) {\n        int m = (int)strs[0].size();\n        vector<int> dp(m, 1);\n        for (int j = 1; j < m; ++j) {\n            for (int i = 0; i < j; ++i) {\n                bool ok = true;\n                for (const string& row : strs) {\n                    if (row[i] > row[j]) {\n                        ok = false;\n                        break;\n                    }\n                }\n                if (ok) dp[j] = max(dp[j], dp[i] + 1);\n            }\n        }\n        return m - *max_element(dp.begin(), dp.end());\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    vector<string> strs;\n    for (size_t i = 0; i < line.size();) {\n        if (line[i] == '\"') {\n            size_t j = i + 1;\n            while (j < line.size() && line[j] != '\"') ++j;\n            strs.push_back(line.substr(i + 1, j - i - 1));\n            i = (j < line.size()) ? j + 1 : line.size();\n        } else {\n            ++i;\n        }\n    }\n    cout << Solution().minDeletionSize(strs) << '\\n';\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\nimport java.util.regex.*;\n\nclass Solution {\n    public int minDeletionSize(String[] strs) {\n        int m = strs[0].length();\n        int[] dp = new int[m];\n        Arrays.fill(dp, 1);\n        for (int j = 1; j < m; j++) {\n            for (int i = 0; i < j; i++) {\n                boolean ok = true;\n                for (String row : strs) {\n                    if (row.charAt(i) > row.charAt(j)) {\n                        ok = false;\n                        break;\n                    }\n                }\n                if (ok) dp[j] = Math.max(dp[j], dp[i] + 1);\n            }\n        }\n        int best = 0;\n        for (int x : dp) best = Math.max(best, x);\n        return m - best;\n    }\n}\n\npublic class Main {\n    static String[] parseStrings(String line) {\n        Matcher m = Pattern.compile(\"\\\"([a-z]+)\\\"\").matcher(line);\n        List<String> list = new ArrayList<>();\n        while (m.find()) list.add(m.group(1));\n        return list.toArray(new String[0]);\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        String[] strs = parseStrings(line);\n        System.out.println(new Solution().minDeletionSize(strs));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def minDeletionSize(self, strs: List[str]) -> int:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().minDeletionSize(args[0])))\n",
+    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n/**\n * @param {string[]} strs\n * @return {number}\n */\nfunction minDeletionSize(strs) {\n    const m = strs[0].length;\n    const dp = Array(m).fill(1);\n    for (let j = 1; j < m; j++) {\n        for (let i = 0; i < j; i++) {\n            let ok = true;\n            for (const row of strs) {\n                if (row[i] > row[j]) {\n                    ok = false;\n                    break;\n                }\n            }\n            if (ok) dp[j] = Math.max(dp[j], dp[i] + 1);\n        }\n    }\n    return m - Math.max(...dp);\n}\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(minDeletionSize(args[0])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–60 minutes",
+  "learningObjectives": [
+    "Model a multi-string constraint as a partial order on columns.",
+    "Recognize and implement longest-increasing-subsequence-style dynamic programming beyond a single array.",
+    "Handle equality correctly in nondecreasing-order problems.",
+    "Design adversarial tests that distinguish global cross-row correctness from per-row or greedy shortcuts."
+  ]
 }

@@ -1,306 +1,83 @@
 {
-  "questionId": "Q490",
-  "title": "The Maze Problem",
   "slug": "the-maze",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Medium",
-    "isPremium": true,
-    "tags": [
-      "array",
-      "depth-first-search",
-      "breadth-first-search",
-      "matrix"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "depth-first-search",
-      "breadth-first-search",
-      "matrix"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Think of each position where the ball can stop as a graph node.",
+    "For one move, continue in the chosen direction until the next step would hit a wall or the boundary.",
+    "Do not mark every cell visited merely because the ball passes through it; mark stopping positions.",
+    "Use BFS or DFS with a visited set to avoid revisiting the same stopping state."
+  ],
+  "title": "The Maze Problem",
   "content": {
-    "problemStatement": "",
-    "constraints": [
-      "None"
+    "notes": [
+      "A move is a complete roll, not a single-cell step.",
+      "The ball stops at the last open cell before a wall or the maze boundary.",
+      "Only positions where the ball stops need to be treated as graph states."
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
-    "notes": []
-  },
-  "testCases": {
-    "hidden": [
+    "constraints": [
+      "1 <= maze.length <= 30",
+      "1 <= maze[i].length <= 30",
+      "maze[i][j] is 0 or 1.",
+      "start.length == 2",
+      "destination.length == 2",
+      "start and destination are valid positions inside maze.",
+      "maze[start[0]][start[1]] == 0",
+      "maze[destination[0]][destination[1]] == 0"
+    ],
+    "inputFormat": "Single line: JSON array of all arguments, in the order [maze, start, destination].",
+    "outputFormat": "Single line: JSON-serialised boolean return value (`true` or `false`).",
+    "sampleTestCases": [
       {
-        "id": "tc_01",
+        "id": "sample_1",
         "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[[0, 0]], [0, 0], [0, 0]]",
-        "expectedOutput": "true",
-        "weight": 2
+        "input": "[[[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]],[0,4],[4,4]]",
+        "output": "true",
+        "explanation": "The ball can roll through several stopping positions and eventually stop at [4,4].",
+        "expectedOutput": "true"
       },
       {
-        "id": "tc_02",
+        "id": "sample_2",
         "type": "reg",
-        "label": "Maximum array size",
-        "input": "[[[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9]], [0, 0], [9, 9]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Two elements",
-        "input": "[[[0, 0], [1, 1]], [0, 0], [1, 1]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "All elements same",
-        "input": "[[[0, 0], [0, 0], [0, 0]], [0, 0], [0, 0]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Strictly increasing",
-        "input": "[[[0, 1], [2, 3], [4, 5]], [0, 0], [4, 5]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Strictly decreasing",
-        "input": "[[[5, 4], [3, 2], [1, 0]], [5, 5], [0, 0]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Random order",
-        "input": "[[[3, 2], [1, 4], [0, 5]], [3, 3], [1, 1]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Large positive values",
-        "input": "[[[100000, 100001], [100002, 100003], [100004, 100005]], [100000, 100000], [100005, 100005]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Large negative values",
-        "input": "[[[-100000, -99999], [-99998, -99997], [-99996, -99995]], [-100000, -100000], [-99995, -99995]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[[1, 1], [1, 1], [1, 1]], [1, 1], [1, 1]]",
-        "expectedOutput": "true",
-        "weight": 4
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[[-1, 1], [1, -1], [-1, -1]], [0, 0], [1, 1]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[[0, 0], [1, 1], [2, 2]], [0, 0], [1, 1]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[[0, 0], [1, 1], [2, 2]], [1, 1], [1, 1]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[[0, 0], [1, 1], [2, 2]], [2, 2], [2, 2]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "Answer spans entire array",
-        "input": "[[[0, 2], [0, 2], [0, 2]], [0, 0], [2, 2]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "Standard case (if applicable)",
-        "input": "[[[1, 1], [1, 1], [1, 1]], [2, 2], [2, 2]]",
-        "expectedOutput": "true",
-        "weight": 2
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "Maximum constraints stress",
-        "input": "[[[100000, 100000], [100000, 100000], [100000, 100000]], [100000, 100000], [100000, 100000]]",
-        "expectedOutput": "true",
-        "weight": 10
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "Random large array",
-        "input": "[[[54321, 98765], [12345, 54321], [98765, 12345]], [54321, 54321], [98765, 98765]]",
-        "expectedOutput": "false",
-        "weight": 2
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "input": "[[[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]],[0,4],[3,2]]",
+        "output": "false",
+        "explanation": "Although [3,2] is an open cell, the ball cannot stop there after a roll, so the destination is unreachable.",
+        "expectedOutput": "false"
       }
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "problemStatement": "There is a ball in a maze with empty spaces (represented by 0) and walls (represented by 1). The ball can roll in one of the four directions: up, down, left, or right. The ball keeps rolling until it hits a wall or the boundary of the maze; it then stops at the cell immediately before the wall or boundary.\n\nGiven the `maze` represented by a 2D array, the ball's `start` position, and the `destination` position, return `true` if the ball can stop at the destination after some sequence of moves. Otherwise, return `false.\n\nYou may assume that the ball and destination are in empty cells.\n\n**Example 1:**\n\n```text\nInput: maze = [[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]], start = [0,4], destination = [4,4]\nOutput: true\n```\n\n**Example 2:**\n\n```text\nInput: maze = [[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]], start = [0,4], destination = [3,2]\nOutput: false\n```\n\n**Constraints:**\n\n* `1 <= maze.length <= 30`\n* `1 <= maze[i].length <= 30`\n* `maze[i][j]` is `0` or `1`.\n* `start.length == 2`\n* `destination.length == 2`\n* `0 <= start[0], destination[0] < maze.length`\n* `0 <= start[1], destination[1] < maze[i].length`\n* `maze[start[0]][start[1]] == 0`\n* `maze[destination[0]][destination[1]] == 0`"
+  },
+  "judging": {
+    "notes": [],
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      2,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
       3,
       3,
       3,
@@ -314,57 +91,348 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "matrix",
+      "depth-first-search",
+      "breadth-first-search",
+      "graph",
+      "simulation"
     ],
-    "notes": []
+    "category": "Matrix / Graph Traversal",
+    "isPremium": true,
+    "topicTags": [
+      "matrix",
+      "graph-traversal",
+      "dfs",
+      "bfs",
+      "simulation"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The solution uses a breadth-first search (BFS) algorithm to explore all possible paths in the maze from the start point.",
-    "timeComplexity": "O(r * c * w)",
-    "spaceComplexity": "O(w)",
-    "code": {
-      "Python3": "# Time:  O(max(r, c) * w)\n# Space: O(w)\n\nimport collections\n\n\nclass Solution(object):\n    def hasPath(self, maze, start, destination):\n        \"\"\"\n        :type maze: List[List[int]]\n        :type start: List[int]\n        :type destination: List[int]\n        :rtype: bool\n        \"\"\"\n        def neighbors(maze, node):\n            for i, j in [(-1, 0), (0, 1), (0, -1), (1, 0)]:\n                x, y = node\n                while 0 <= x + i < len(maze) and \\\n                      0 <= y + j < len(maze[0]) and \\\n                      not maze[x+i][y+j]:\n                    x += i\n                    y += j\n                yield x, y\n\n        start, destination = tuple(start), tuple(destination)\n        queue = collections.deque([start])\n        visited = set()\n        while queue:\n            node = queue.popleft()\n            if node in visited: continue\n            if node == destination:\n                return True\n            visited.add(node)\n            for neighbor in neighbors(maze, node):\n                queue.append(neighbor)\n\n        return False"
-    },
-    "notes": [],
+    "notes": [
+      "Checking the destination only when the ball stops avoids incorrectly accepting a cell that the ball merely passes over.",
+      "A visited set is essential because rolling can create cycles among stopping positions."
+    ],
+    "approach": "Model the maze as a graph whose states are the positions where the ball comes to rest. From each state, simulate a roll in each of the four directions until the next wall or boundary, then enqueue the resulting stopping cell if it has not been visited. BFS or DFS then determines whether the destination is reachable as a stopping position.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(m * n * max(m, n)) time and O(m * n) space.",
+        "description": "Use DFS with a visited matrix over stopping positions. For every unvisited stopping cell, simulate all four rolls and continue recursively. The visited set removes cycles and avoids repeated exploration."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(m * n * max(m, n)) time and O(m * n) space.",
+        "description": "Use BFS with the same stopping-position graph. Each state is a stopping cell; for each direction, roll until blocked and enqueue the final cell if it has not been visited. Return true only when a dequeued stopping cell equals the destination."
+      },
+      "bruteForce": {
+        "complexity": "Exponential in the number of reachable stopping states in the worst case.",
+        "description": "Try every possible sequence of rolls recursively without recording visited stopping positions. This can revisit the same states many times and can grow exponentially on mazes containing cycles."
       }
+    },
+    "timeComplexity": "O(m * n * max(m, n)) in the worst case, because each reachable stopping cell is processed once and each of its four rolls may scan a full row or column.",
+    "spaceComplexity": "O(m * n) for the visited set and BFS queue.",
+    "code": {
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n\nstatic const char *p;\n\nstatic void skip_ws(void) {\n    while (*p == ' ' || *p == '\\t' || *p == '\\n' || *p == '\\r' || *p == ',') p++;\n}\n\nstatic int read_int(void) {\n    skip_ws();\n    int sign = 1, value = 0;\n    if (*p == '-') { sign = -1; p++; }\n    while (*p >= '0' && *p <= '9') {\n        value = value * 10 + (*p - '0');\n        p++;\n    }\n    return value * sign;\n}\n\nstatic int *parse_int_array(int *size) {\n    skip_ws();\n    if (*p == '[') p++;\n    int cap = 4, n = 0;\n    int *a = (int *)malloc(cap * sizeof(int));\n    while (1) {\n        skip_ws();\n        if (*p == ']') { p++; break; }\n        if (n == cap) {\n            cap *= 2;\n            a = (int *)realloc(a, cap * sizeof(int));\n        }\n        a[n++] = read_int();\n        skip_ws();\n    }\n    *size = n;\n    return a;\n}\n\nstatic int **parse_matrix(int *rows, int **cols) {\n    skip_ws();\n    if (*p == '[') p++;\n    int row_cap = 16, r = 0;\n    int **mat = (int **)malloc(row_cap * sizeof(int *));\n    *cols = (int *)malloc(row_cap * sizeof(int));\n\n    while (1) {\n        skip_ws();\n        if (*p == ']') { p++; break; }\n        int n = 0;\n        int *row = parse_int_array(&n);\n        if (r == row_cap) {\n            row_cap *= 2;\n            mat = (int **)realloc(mat, row_cap * sizeof(int *));\n            *cols = (int *)realloc(*cols, row_cap * sizeof(int));\n        }\n        mat[r] = row;\n        (*cols)[r] = n;\n        r++;\n        skip_ws();\n    }\n    *rows = r;\n    return mat;\n}\n\nbool hasPath(int **maze, int mazeSize, int *mazeColSize,\n            int *start, int startSize, int *destination, int destinationSize) {\n    (void)startSize;\n    (void)destinationSize;\n    int rows = mazeSize, cols = mazeColSize[0];\n    int total = rows * cols;\n    int *qx = (int *)malloc(total * sizeof(int));\n    int *qy = (int *)malloc(total * sizeof(int));\n    bool *visited = (bool *)calloc((size_t)total, sizeof(bool));\n    int head = 0, tail = 0;\n    int dx[4] = {-1, 0, 1, 0};\n    int dy[4] = {0, 1, 0, -1};\n\n    qx[tail] = start[0];\n    qy[tail++] = start[1];\n    visited[start[0] * cols + start[1]] = true;\n\n    while (head < tail) {\n        int x = qx[head], y = qy[head++];\n        if (x == destination[0] && y == destination[1]) {\n            free(qx); free(qy); free(visited);\n            return true;\n        }\n        for (int d = 0; d < 4; ++d) {\n            int nx = x, ny = y;\n            while (nx + dx[d] >= 0 && nx + dx[d] < rows &&\n                   ny + dy[d] >= 0 && ny + dy[d] < cols &&\n                   maze[nx + dx[d]][ny + dy[d]] == 0) {\n                nx += dx[d];\n                ny += dy[d];\n            }\n            int idx = nx * cols + ny;\n            if (!visited[idx]) {\n                visited[idx] = true;\n                qx[tail] = nx;\n                qy[tail++] = ny;\n            }\n        }\n    }\n\n    free(qx); free(qy); free(visited);\n    return false;\n}",
+      "C++": "class Solution {\npublic:\n    bool hasPath(vector<vector<int>>& maze, vector<int>& start, vector<int>& destination) {\n        int rows = maze.size(), cols = maze[0].size();\n        queue<pair<int,int>> q;\n        set<pair<int,int>> visited;\n        q.push({start[0], start[1]});\n        visited.insert({start[0], start[1]});\n        int dirs[4][2] = {{-1,0},{0,1},{1,0},{0,-1}};\n\n        while (!q.empty()) {\n            auto [x, y] = q.front(); q.pop();\n            if (x == destination[0] && y == destination[1]) return true;\n\n            for (auto &d : dirs) {\n                int nx = x, ny = y;\n                while (nx + d[0] >= 0 && nx + d[0] < rows &&\n                       ny + d[1] >= 0 && ny + d[1] < cols &&\n                       maze[nx + d[0]][ny + d[1]] == 0) {\n                    nx += d[0];\n                    ny += d[1];\n                }\n                if (!visited.count({nx, ny})) {\n                    visited.insert({nx, ny});\n                    q.push({nx, ny});\n                }\n            }\n        }\n        return false;\n    }\n};",
+      "Java": "class Solution {\n    public boolean hasPath(int[][] maze, int[] start, int[] destination) {\n        int rows = maze.length, cols = maze[0].length;\n        boolean[][] visited = new boolean[rows][cols];\n        ArrayDeque<int[]> queue = new ArrayDeque<>();\n        queue.offer(new int[]{start[0], start[1]});\n        visited[start[0]][start[1]] = true;\n        int[][] dirs = {{-1,0},{0,1},{1,0},{0,-1}};\n\n        while (!queue.isEmpty()) {\n            int[] cur = queue.poll();\n            int x = cur[0], y = cur[1];\n            if (x == destination[0] && y == destination[1]) return true;\n\n            for (int[] d : dirs) {\n                int nx = x, ny = y;\n                while (nx + d[0] >= 0 && nx + d[0] < rows &&\n                       ny + d[1] >= 0 && ny + d[1] < cols &&\n                       maze[nx + d[0]][ny + d[1]] == 0) {\n                    nx += d[0];\n                    ny += d[1];\n                }\n                if (!visited[nx][ny]) {\n                    visited[nx][ny] = true;\n                    queue.offer(new int[]{nx, ny});\n                }\n            }\n        }\n        return false;\n    }\n}",
+      "Python3": "import sys, json\nfrom typing import List\nfrom collections import deque\n\nclass Solution:\n    def hasPath(self, maze: List[List[int]], start: List[int], destination: List[int]) -> bool:\n        rows, cols = len(maze), len(maze[0])\n        target = (destination[0], destination[1])\n        start_pos = (start[0], start[1])\n        q = deque([start_pos])\n        visited = {start_pos}\n        directions = [(-1, 0), (0, 1), (1, 0), (0, -1)]\n\n        while q:\n            x, y = q.popleft()\n            if (x, y) == target:\n                return True\n\n            for dx, dy in directions:\n                nx, ny = x, y\n                while 0 <= nx + dx < rows and 0 <= ny + dy < cols and maze[nx + dx][ny + dy] == 0:\n                    nx += dx\n                    ny += dy\n\n                stop = (nx, ny)\n                if stop not in visited:\n                    visited.add(stop)\n                    q.append(stop)\n\n        return False",
+      "JavaScript": "const readline = require('readline');\n\nfunction hasPath(maze, start, destination) {\n    const rows = maze.length;\n    const cols = maze[0].length;\n    const target = `${destination[0]},${destination[1]}`;\n    const queue = [[start[0], start[1]]];\n    const visited = new Set([`${start[0]},${start[1]}`]);\n    const directions = [[-1,0],[0,1],[1,0],[0,-1]];\n    let head = 0;\n\n    while (head < queue.length) {\n        const [x, y] = queue[head++];\n        if (`${x},${y}` === target) return true;\n\n        for (const [dx, dy] of directions) {\n            let nx = x, ny = y;\n            while (nx + dx >= 0 && nx + dx < rows && ny + dy >= 0 && ny + dy < cols && maze[nx + dx][ny + dy] === 0) {\n                nx += dx;\n                ny += dy;\n            }\n            const key = `${nx},${ny}`;\n            if (!visited.has(key)) {\n                visited.add(key);\n                queue.push([nx, ny]);\n            }\n        }\n    }\n    return false;\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/* Solution stub not found */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int mazeSize = 0;\n        int* mazeColSize = NULL;\n        int** maze = parse_int_2d(&tok, &mazeSize, &mazeColSize);\n        int startSize = 0;\n        int* start = parse_int_array(&tok, &startSize);\n        int destinationSize = 0;\n        int* destination = parse_int_array(&tok, &destinationSize);\n        bool result = hasPath(maze, mazeSize, mazeColSize, start, startSize, destination, destinationSize);\n        printf(\"%s\\n\", result ? \"true\" : \"false\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def hasPath(self, maze: List[List[int]], start: List[int], destination: List[int]) -> bool:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _maze = _args[0]\n    _start = _args[1]\n    _destination = _args[2]\n    _result = Solution().hasPath(_maze, _start, _destination)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nvar hasPath = function(maze, start, destination) {\n    // Write your code here\n    return false;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = hasPath(_args[0], _args[1], _args[2]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public boolean hasPath(int[][] maze, int[] start, int[] destination) {\n        // Write your code here\n        return false;\n        return false;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int[][] maze = toInt2D(nextToken());\n        int[] start = toIntArray(nextToken());\n        int[] destination = toIntArray(nextToken());\n        boolean result = new Solution().hasPath(maze, start, destination);\n        System.out.println(result);\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    bool hasPath(vector<vector<int>>& maze, vector<int>& start, vector<int>& destination) {\n        // Write your code here\n        return false;\n        return false;\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto maze = readInt2D(tok);\n    auto start = readIntVec(tok);\n    auto destination = readIntVec(tok);\n    auto result = Solution().hasPath(maze, start, destination);\n    cout << (result ? \"true\" : \"false\") << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "maze",
+        "type": "int[][]"
+      },
+      {
+        "name": "start",
+        "type": "int[]"
+      },
+      {
+        "name": "destination",
+        "type": "int[]"
+      }
+    ],
+    "methodName": "hasPath"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How would the approach change if the task asked for the minimum number of rolls instead of only reachability?",
+    "Can the same stopping-position graph be reused for multiple start and destination queries?",
+    "What changes if the maze can be updated between queries?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[[0]],[0,0],[0,0]]",
+        "label": "Single-cell maze with identical start and destination",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0]],[0,0],[0,4]]",
+        "label": "One-row corridor with reachable endpoint",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0]],[0,0],[0,2]]",
+        "label": "One-row corridor with non-stopping interior destination",
+        "weight": 4,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[[0],[0],[0],[0],[0]],[0,0],[4,0]]",
+        "label": "One-column corridor with reachable endpoint",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[[0],[0],[0],[0],[0]],[0,0],[2,0]]",
+        "label": "One-column corridor with non-stopping interior destination",
+        "weight": 4,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]],[0,4],[4,4]]",
+        "label": "Standard maze with valid rolling route",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]],[0,4],[3,2]]",
+        "label": "Standard maze where destination is not a stopping point",
+        "weight": 4,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[[0,1,0],[0,1,0],[0,0,0]],[0,0],[0,2]]",
+        "label": "Destination blocked by immediate wall",
+        "weight": 4,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0],[1,1,0,1,1],[0,0,0,0,0],[0,1,0,1,0],[0,0,0,0,0]],[0,0],[4,4]]",
+        "label": "Alternating corridors requiring multiple direction changes",
+        "weight": 4,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[[0,1,1,1,0],[0,1,0,1,0],[0,1,0,1,0],[0,1,0,1,0],[0,0,0,1,0]],[0,0],[0,4]]",
+        "label": "Separated chambers with unreachable destination",
+        "weight": 4,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0],[0,1,1,1,0],[0,0,0,0,0],[0,1,1,1,0],[0,0,0,0,0]],[0,0],[0,2]]",
+        "label": "Destination inside an open lane but not a stopping cell",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[[0,0,0,1,0],[1,1,0,1,0],[0,0,0,0,0],[0,1,1,1,1],[0,0,0,0,0]],[0,0],[4,4]]",
+        "label": "Route requiring a late reversal and bottom corridor",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[[0,0,1,0,0,0],[1,0,1,1,1,0],[0,0,0,0,0,0],[0,1,1,1,1,1],[0,0,0,0,0,0],[1,1,1,1,1,0]],[0,0],[5,5]]",
+        "label": "Zig-zag corridors with constrained stops",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[[0,0,0],[0,1,0],[0,0,0]],[0,0],[0,0]]",
+        "label": "Revisiting the start position through a loop",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[[0,0,0],[0,1,0],[0,0,0]],[0,0],[1,2]]",
+        "label": "Open loop with interior destination",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[[0,0,1,0],[0,0,1,0],[1,0,0,0],[0,0,0,0]],[2,1],[2,1]]",
+        "label": "Identical start and destination in connected maze",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[[0,1,0,1,0],[0,1,0,1,0],[0,0,0,0,0],[1,1,1,1,0],[0,0,0,0,0]],[0,0],[4,4]]",
+        "label": "Dense wall pattern with forced central crossing",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[[0,0,0],[0,1,0],[0,0,0]],[0,0],[2,0]]",
+        "label": "Destination at a reachable dead-end stop",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0,0,0]],[0,0],[0,3]]",
+        "label": "Interior destination on a long unobstructed segment",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[[0,0,1,0,0],[0,0,0,0,0],[0,0,1,0,0]],[0,0],[0,1]]",
+        "label": "Wall creates exact stopping positions",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[[0,0,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],[0,0],[0,3]]",
+        "label": "Multiple reachable stopping points with valid destination",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[[0,0,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],[0,0],[2,1]]",
+        "label": "Multiple reachable stops but interior destination fails",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0],[0,1,1,1,1,0],[0,0,0,0,1,0],[0,1,1,0,1,0],[0,1,0,0,0,0],[0,0,0,1,1,0]],[0,0],[5,5]]",
+        "label": "Spiral-like corridor requiring careful rolling",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[[0,0,1,1,1],[0,0,1,0,0],[1,1,1,0,1],[0,0,0,0,1],[0,1,1,1,1]],[0,0],[1,3]]",
+        "label": "Destination region disconnected by a wall barrier",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,0,0,1,0,0,1,0,0,0],[1,0,1,1,1,1,1,1,0,1],[0,0,0,1,0,0,1,0,0,0],[0,0,0,1,0,0,1,0,0,0],[0,0,0,1,0,0,1,0,0,0],[0,0,0,1,0,0,1,0,0,0],[1,0,1,1,1,1,1,1,0,1],[0,0,0,1,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0,0]],[0,0],[9,9]]",
+        "label": "Ten-by-ten cross-barrier maze",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]],[0,0],[3,5]]",
+        "label": "Fully open rectangle corner to corner",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]],[0,0],[2,3]]",
+        "label": "Fully open rectangle with interior destination",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],[0,0],[29,29]]",
+        "label": "Constraint-boundary 30x30 maze with offset barriers",
+        "weight": 3,
+        "expectedOutput": "true"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[[0,0,0,1,0,0],[1,1,0,1,0,1],[0,0,0,0,0,0],[0,1,1,1,1,0],[0,0,0,0,0,0]],[0,0],[0,4]]",
+        "label": "Rolling-ball invariant adversarial maze",
+        "weight": 3,
+        "expectedOutput": "false"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[0,0,1,0,0,0,0],[0,0,1,0,1,1,0],[0,0,0,0,0,0,0],[0,1,1,1,1,1,0],[0,0,0,0,0,0,0]],[0,0],[4,6]]",
+        "label": "Complex disconnected-looking maze with valid bottom route",
+        "weight": 3,
+        "expectedOutput": "true"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q490",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <stdbool.h>\n\nstatic const char *p;\n\nstatic void skip_ws(void) {\n    while (*p == ' ' || *p == '\\t' || *p == '\\n' || *p == '\\r' || *p == ',') p++;\n}\n\nstatic int read_int(void) {\n    skip_ws();\n    int sign = 1, value = 0;\n    if (*p == '-') { sign = -1; p++; }\n    while (*p >= '0' && *p <= '9') {\n        value = value * 10 + (*p - '0');\n        p++;\n    }\n    return value * sign;\n}\n\nstatic int *parse_int_array(int *size) {\n    skip_ws();\n    if (*p == '[') p++;\n    int cap = 4, n = 0;\n    int *a = (int *)malloc(cap * sizeof(int));\n    while (1) {\n        skip_ws();\n        if (*p == ']') { p++; break; }\n        if (n == cap) {\n            cap *= 2;\n            a = (int *)realloc(a, cap * sizeof(int));\n        }\n        a[n++] = read_int();\n        skip_ws();\n    }\n    *size = n;\n    return a;\n}\n\nstatic int **parse_matrix(int *rows, int **cols) {\n    skip_ws();\n    if (*p == '[') p++;\n    int row_cap = 16, r = 0;\n    int **mat = (int **)malloc(row_cap * sizeof(int *));\n    *cols = (int *)malloc(row_cap * sizeof(int));\n\n    while (1) {\n        skip_ws();\n        if (*p == ']') { p++; break; }\n        int n = 0;\n        int *row = parse_int_array(&n);\n        if (r == row_cap) {\n            row_cap *= 2;\n            mat = (int **)realloc(mat, row_cap * sizeof(int *));\n            *cols = (int *)realloc(*cols, row_cap * sizeof(int));\n        }\n        mat[r] = row;\n        (*cols)[r] = n;\n        r++;\n        skip_ws();\n    }\n    *rows = r;\n    return mat;\n}\n\nbool hasPath(int **maze, int mazeSize, int *mazeColSize,\n            int *start, int startSize, int *destination, int destinationSize) {\n    return false;\n}\n\nint main(void) {\n    char line[1000000];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    p = line;\n\n    skip_ws();\n    if (*p == '[') p++;  /* outer arguments array */\n\n    int mazeSize = 0, *mazeColSize = NULL;\n    int **maze = parse_matrix(&mazeSize, &mazeColSize);\n    int startSize = 0, destinationSize = 0;\n    int *start = parse_int_array(&startSize);\n    int *destination = parse_int_array(&destinationSize);\n\n    bool result = hasPath(maze, mazeSize, mazeColSize, start, startSize,\n                          destination, destinationSize);\n    printf(\"%s\\n\", result ? \"true\" : \"false\");\n\n    for (int i = 0; i < mazeSize; ++i) free(maze[i]);\n    free(maze);\n    free(mazeColSize);\n    free(start);\n    free(destination);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool hasPath(vector<vector<int>>& maze, vector<int>& start, vector<int>& destination) {\n        return false;\n    }\n};\n\nstatic vector<string> splitTop(const string& s) {\n    vector<string> parts;\n    int depth = 0, start = 0;\n    for (int i = 0; i < (int)s.size(); ++i) {\n        if (s[i] == '[') ++depth;\n        else if (s[i] == ']') --depth;\n        else if (s[i] == ',' && depth == 0) {\n            parts.push_back(s.substr(start, i - start));\n            start = i + 1;\n        }\n    }\n    if (start < (int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\n\nstatic vector<int> parseIntArray(string s) {\n    s.erase(remove(s.begin(), s.end(), ' '), s.end());\n    if (s == \"[]\") return {};\n    s = s.substr(1, s.size() - 2);\n    if (s.empty()) return {};\n    vector<string> parts = splitTop(s);\n    vector<int> a;\n    for (const string& p : parts) a.push_back(stoi(p));\n    return a;\n}\n\nstatic vector<vector<int>> parseMatrix(string s) {\n    s.erase(remove(s.begin(), s.end(), ' '), s.end());\n    if (s == \"[]\") return {};\n    s = s.substr(1, s.size() - 2);\n    vector<string> rows = splitTop(s);\n    vector<vector<int>> m;\n    for (const string& row : rows) m.push_back(parseIntArray(row));\n    return m;\n}\n\nint main() {\n    string line; getline(cin, line);\n    line = line.substr(1, line.size() - 2);\n    vector<string> args = splitTop(line);\n    auto maze = parseMatrix(args[0]);\n    auto start = parseIntArray(args[1]);\n    auto destination = parseIntArray(args[2]);\n    cout << (Solution().hasPath(maze, start, destination) ? \"true\" : \"false\") << '\\n';\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public boolean hasPath(int[][] maze, int[] start, int[] destination) {\n        return false;\n    }\n}\n\npublic class Main {\n    static List<String> splitTop(String s) {\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[') depth++;\n            else if (c == ']') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        if (start < s.length()) parts.add(s.substring(start).trim());\n        return parts;\n    }\n\n    static int[] parseIntArray(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new int[0];\n        String inner = s.substring(1, s.length() - 1).trim();\n        if (inner.isEmpty()) return new int[0];\n        String[] parts = inner.split(\",\");\n        int[] a = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) a[i] = Integer.parseInt(parts[i].trim());\n        return a;\n    }\n\n    static int[][] parseIntMatrix(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new int[0][0];\n        String inner = s.substring(1, s.length() - 1).trim();\n        List<String> rows = splitTop(inner);\n        int[][] matrix = new int[rows.size()][];\n        for (int i = 0; i < rows.size(); i++) matrix[i] = parseIntArray(rows.get(i));\n        return matrix;\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String outer = line.substring(1, line.length() - 1);\n        List<String> argsList = splitTop(outer);\n        int[][] maze = parseIntMatrix(argsList.get(0));\n        int[] start = parseIntArray(argsList.get(1));\n        int[] destination = parseIntArray(argsList.get(2));\n        System.out.println(new Solution().hasPath(maze, start, destination));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\nfrom collections import deque\n\nclass Solution:\n    def hasPath(self, maze: List[List[int]], start: List[int], destination: List[int]) -> bool:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    result = Solution().hasPath(args[0], args[1], args[2])\n    print(json.dumps(result))\n",
+    "JavaScript": "\"use strict\";\nconst readline = require('readline');\n\nfunction hasPath(maze, start, destination) {\n    return false;\n}\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(hasPath(args[0], args[1], args[2])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "30–45 min",
+  "learningObjectives": [
+    "Model a rolling-motion grid as a graph of stopping states.",
+    "Apply BFS or DFS to reachability problems with cyclic state spaces.",
+    "Distinguish passing through a cell from stopping at a cell.",
+    "Analyze traversal cost when each graph transition requires simulation."
+  ]
 }

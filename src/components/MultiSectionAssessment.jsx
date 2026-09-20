@@ -90,8 +90,8 @@ const normalizeQuestion = (q, idx = 0) => {
   const rawId = q.questionId || q.id || q.challengeId || q._id;
   const id = String(rawId !== undefined && rawId !== null && String(rawId).trim() !== '' ? rawId : `q_${idx}`).trim();
   const title = q.title || q.name || (q.content?.title ?? '');
-  const description = q.content?.problemStatement || q.description || (q.problemStatement ?? '');
-  const instructions = q.content?.inputFormat || (q.instructions ?? '');
+  const description = q.content?.problemStatement || q.description || q.problemStatement || q.statement || '';
+  const instructions = q.content?.inputFormat || q.inputFormat || (q.instructions ?? '');
   const constraints = Array.isArray(q.content?.constraints)
     ? q.content.constraints.join('\n')
     : (q.constraints ?? '');
@@ -113,7 +113,11 @@ const normalizeQuestion = (q, idx = 0) => {
     ...(q.content?.boilerPlates || {}),
     ...(q.content?.boilerplates || {}),
     ...(q.boilerplates || {}),
-    ...(q.boilerPlates || {})
+    ...(q.boilerPlates || {}),
+    ...(q.starterCode || {}),
+    ...(q.starterCodes || {}),
+    ...(q.content?.starterCode || {}),
+    ...(q.content?.starterCodes || {})
   };
   const boilerPlates = {};
 
@@ -171,10 +175,17 @@ const normalizeQuestion = (q, idx = 0) => {
     questionId: id,
     title,
     description,
+    statement: description,
+    problemStatement: description,
     instructions,
+    inputFormat: instructions,
+    outputFormat: q.content?.outputFormat || q.outputFormat || '',
     constraints,
     boilerPlates,
     boilerplates: boilerPlates,
+    starterCode: boilerPlates,
+    starterCodes: boilerPlates,
+    examples: Array.isArray(q.examples) ? q.examples : (q.content?.examples || []),
     sampleTestCases: testCases,
     sampleTests: testCases,
     hiddenTestCases: hidden,
@@ -2344,6 +2355,36 @@ const MultiSectionAssessment = () => {
     const secsubmittedAt = new Date().toISOString();
     const secTimeSpentSeconds = Math.round((new Date(secsubmittedAt).getTime() - new Date(secstartedAt).getTime()) / 1000);
 
+    let finalSectionResults = sectionResults;
+    if (!finalSectionResults && (activeSection.type === 'essay' || activeSection.type === 'essay_writing')) {
+      // Auto timer expired without sectionResults: retrieve local draft and take only first 500 words
+      try {
+        const draftKey = `essay_draft_${assessment.id}_${activeSection.sectionId || activeSection.name || 'default'}`;
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft) {
+          const parsedDraft = JSON.parse(savedDraft);
+          const rawText = parsedDraft.answerText || '';
+          const maxLimit = Number(activeSection.maxWords || activeSection.essayPrompt?.maxWords) || 500;
+          const words = rawText.trim().split(/\s+/).filter(Boolean);
+          const trimmedText = words.slice(0, maxLimit).join(' ');
+          const title = parsedDraft.studentTitle || activeSection.name || 'Essay';
+          finalSectionResults = {
+            studentTitle: title,
+            answerText: trimmedText,
+            wordCount: Math.min(words.length, maxLimit),
+            originalWordCount: words.length,
+            score: Math.min(words.length, maxLimit) >= (Number(activeSection.minWords) || 100) ? (Number(activeSection.maxScore) || 20) * 0.75 : 0,
+            maxScore: Number(activeSection.maxScore) || 20,
+            autoSubmitted: true,
+            autoTrimmedTo500: words.length > maxLimit
+          };
+          try { localStorage.removeItem(draftKey); } catch (_) {}
+        }
+      } catch (err) {
+        console.warn('[MSA] Error auto-recovering essay draft on timer expiry:', err);
+      }
+    }
+
     const updatedResults = {
       ...examResults,
       [activeSection.sectionId]: {
@@ -2352,8 +2393,8 @@ const MultiSectionAssessment = () => {
         startedAt: secstartedAt,
         submittedAt: secsubmittedAt,
         timeSpentSeconds: secTimeSpentSeconds,
-        questionTiming: sectionResults?.questionTiming || {},
-        data: sectionResults || {}
+        questionTiming: finalSectionResults?.questionTiming || {},
+        data: finalSectionResults || {}
       }
     };
 

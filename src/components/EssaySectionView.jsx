@@ -422,8 +422,9 @@ const EssaySectionView = ({
       return;
     }
 
-    if (wordCount > maxWords * 1.5) {
-      toast.warning(`Essay exceeds the maximum limit of ${maxWords} words. Submitting anyway...`);
+    if (wordCount > maxWords) {
+      toast.error(`Essay exceeds the maximum limit of ${maxWords} words (currently ${wordCount}). Please trim your essay to submit.`);
+      return;
     }
 
     setIsSubmitting(true);
@@ -506,6 +507,88 @@ const EssaySectionView = ({
     sectionData
   ]);
 
+  // ── Auto-submit when section timer hits 0: Trim to 1st 500 words if unsubmitted ──
+  const autoSubmittedRef = useRef(false);
+
+  useEffect(() => {
+    if (secStarted && secTimer <= 1 && !isSubmitting && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true;
+      console.log('[EssaySectionView] Section timer expired. Auto-saving and trimming to first 500 words if unsubmitted.');
+      
+      const effectiveLimit = maxWords || 500;
+      const rawWords = (answerText || '').trim().split(/\s+/).filter(Boolean);
+      const isExceeding = rawWords.length > effectiveLimit;
+      const trimmedText = isExceeding ? rawWords.slice(0, effectiveLimit).join(' ') : (answerText || '').trim();
+      const effectiveWordCount = isExceeding ? effectiveLimit : rawWords.length;
+      const effectiveTitle = (studentTitle || '').trim() || prompt.title || 'Essay Submission';
+
+      try {
+        const evaluation = evaluateEssay(effectiveTitle, trimmedText, prompt, rubric);
+        const payload = {
+          score: evaluation.score,
+          totalMarks: evaluation.maxScore,
+          maxScore: evaluation.maxScore,
+          percentage: evaluation.percentage,
+          passed: evaluation.passed,
+          timeSpentSeconds: activeTypingSeconds,
+          studentTitle: effectiveTitle,
+          answerText: trimmedText,
+          wordCount: effectiveWordCount,
+          originalWordCount: rawWords.length,
+          autoSubmitted: true,
+          autoTrimmedToLimit: isExceeding,
+          rubricScores: evaluation.rubricScores,
+          rubricMax: evaluation.rubricMax,
+          grammarAnalysis: evaluation.grammarAnalysis,
+          evaluation: evaluation,
+          typingAnalytics: {
+            wpm: grossWpm,
+            keystrokes: keystrokesRef.current,
+            pasteCount: pasteCountRef.current,
+            pasteChars: pasteCharsRef.current,
+            deletions: deleteCountRef.current,
+            revisions: revisionCountRef.current,
+            activeTypingSeconds
+          },
+          prompt: {
+            title: prompt.title || sectionData?.name || 'Essay Topic',
+            question: prompt.question || '',
+            minWords,
+            maxWords,
+            maxMarks: prompt.maxMarks || 20
+          },
+          sectionName: sectionData?.name || 'Essay Writing',
+          type: 'essay'
+        };
+
+        try {
+          localStorage.removeItem(storageDraftKey);
+        } catch (_) {}
+
+        if (onSectionSubmit) {
+          onSectionSubmit(payload);
+        }
+      } catch (autoErr) {
+        console.error('[EssaySectionView] Auto timer submission error:', autoErr);
+      }
+    }
+  }, [
+    secTimer,
+    secStarted,
+    isSubmitting,
+    answerText,
+    maxWords,
+    minWords,
+    studentTitle,
+    prompt,
+    rubric,
+    activeTypingSeconds,
+    grossWpm,
+    storageDraftKey,
+    onSectionSubmit,
+    sectionData
+  ]);
+
   return (
     <div className={`essay-view-wrapper ${isFullscreen ? 'is-fullscreen-mode' : ''}`}>
       {/* ── TOP HEADER BAR ── */}
@@ -519,24 +602,26 @@ const EssaySectionView = ({
           <span>Back to Assessment</span>
         </button>
 
-        <div className="essay-top-right">
-          <div className="essay-timer-pill">
-            <Clock className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0" />
+        {/* Center: Title / Topic Breadcrumb */}
+        <div className="essay-header-center">
+          <span className="essay-header-tag">Section</span>
+          <span className="essay-header-sep">•</span>
+          <span className="essay-header-title">{prompt.title || 'Essay Writing'}</span>
+          <span className="essay-header-sep">•</span>
+          <span className="essay-header-limit">
+            Limit: {minWords}-{maxWords} words
+          </span>
+        </div>
+
+        {/* Right: Section Timer */}
+        <div className="essay-header-right">
+          <div className="essay-timer-badge">
+            <Clock className="w-4 h-4 text-blue-600 animate-pulse" />
             <div className="essay-timer-text">
               <span className="essay-timer-label">Time Left</span>
               <span className="essay-timer-val">{formatTimer(secTimer)}</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            className="essay-submit-btn"
-            onClick={handleSubmit}
-            disabled={isSubmitting || wordCount < minWords}
-          >
-            <Send className="w-4 h-4 mr-2" />
-            <span>{isSubmitting ? 'Submitting...' : 'Submit Assessment'}</span>
-          </button>
         </div>
       </header>
 
@@ -893,8 +978,8 @@ const EssaySectionView = ({
               </div>
               <div className="essay-metric-info">
                 <span className="essay-metric-label">Words</span>
-                <span className="essay-metric-value">
-                  {wordCount} / {maxWords}
+                <span className={`essay-metric-value ${wordCount > maxWords ? 'text-red-500 font-bold' : (wordCount >= minWords ? 'text-emerald-600' : '')}`}>
+                  {wordCount} / {maxWords} {wordCount > maxWords ? '(Exceeds Limit)' : ''}
                 </span>
               </div>
             </div>
@@ -969,10 +1054,17 @@ const EssaySectionView = ({
               type="button"
               className="essay-submit-action-btn"
               onClick={handleSubmit}
-              disabled={isSubmitting || wordCount < minWords}
+              disabled={isSubmitting || wordCount < minWords || wordCount > maxWords}
+              title={
+                wordCount < minWords
+                  ? `Minimum ${minWords} words required (currently ${wordCount}).`
+                  : wordCount > maxWords
+                  ? `Essay exceeds ${maxWords} words limit (currently ${wordCount}). Please trim to submit.`
+                  : ''
+              }
             >
               <Send className="w-4 h-4 mr-2" />
-              <span>{isSubmitting ? 'Evaluating...' : 'Submit Assessment'}</span>
+              <span>{isSubmitting ? 'Evaluating & Submitting...' : 'Submit Assessment'}</span>
             </button>
           </div>
         </main>

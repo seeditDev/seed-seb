@@ -1,318 +1,72 @@
 {
-  "questionId": "Q943",
-  "title": "Determine the Shortest Superstring",
   "slug": "find-the-shortest-superstring",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Hard",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "string",
-      "dynamic-programming",
-      "bit-manipulation",
-      "bitmask"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "string",
-      "dynamic-programming",
-      "bit-manipulation",
-      "bitmask"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Think of arranging the words in an order. What matters when placing one word after another is the largest suffix-prefix overlap between the two words.",
+    "If a partial ordering uses a set of words and ends at a particular word, the future only needs that set and the last word; this suggests subset dynamic programming.",
+    "Maximizing total overlap is equivalent to minimizing the final superstring length because the total input length is fixed.",
+    "Store predecessor information while computing the best overlap so you can reconstruct the optimal ordering."
+  ],
+  "title": "Determine the Shortest Superstring",
   "content": {
-    "problemStatement": "With an array of strings `words`, output *the smallest string that includes each string in* `words` *as a substring*. If there are multiple valid strings of the smallest length, output **any of them**.\n\nYou may assume that no string in `words` is a substring of another string in `words`.\n\n**Example 1:**\n\n```\nInput: words = [\"alex\",\"loves\",\"leetcode\"]\nOutput: \"alexlovesleetcode\"\nExplanation: All permutations of \"alex\",\"loves\",\"leetcode\" would also be accepted.\n```\n\n**Example 2:**\n\n```\nInput: words = [\"catg\",\"ctaagt\",\"gcta\",\"ttca\",\"atgcatc\"]\nOutput: \"gctaagttcatgcatc\"\n```\n\n**Constraints:**\n\n* `1 <= words.length <= 12`\n* `1 <= words[i].length <= 20`\n* `words[i]` is composed of lowercase English letters.\n* All the strings of `words` are **unique**.",
+    "notes": [
+      "The task permits any shortest valid superstring; hidden expected outputs are deterministic reference witnesses.",
+      "A production judge should validate that the returned string contains every word and has the minimum possible length rather than requiring one specific shortest-string spelling."
+    ],
     "constraints": [
       "1 <= words.length <= 12",
       "1 <= words[i].length <= 20",
       "words[i] consists of lowercase English letters.",
-      "All the strings of words are unique."
+      "All the strings of words are unique.",
+      "No string in words is a substring of another string in words."
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
+    "inputFormat": "Single line: JSON array containing the function arguments, for example [[\"alex\",\"loves\",\"leetcode\"]].",
+    "outputFormat": "Single line: JSON-serialised string return value.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "type": "reg",
         "input": "[[\"alex\",\"loves\",\"leetcode\"]]",
         "output": "\"alexlovesleetcode\"",
-        "explanation": "All permutations of \"alex\",\"loves\",\"leetcode\" would also be accepted."
+        "explanation": "The three words have no positive-length pairwise overlap, so concatenating them in any order gives a shortest valid superstring."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[\"catg\",\"ctaagt\",\"gcta\",\"ttca\",\"atgcatc\"]]",
         "output": "\"gctaagttcatgcatc\"",
-        "explanation": ""
+        "explanation": "The words can be arranged so each consecutive pair shares the maximum useful suffix-prefix overlap, producing a shortest superstring of length 16."
       }
     ],
-    "notes": []
+    "problemStatement": "With an array of strings `words`, output *the smallest string that includes each string in* `words` *as a substring*. If there are multiple valid strings of the smallest length, output **any of them**.\n\nYou may assume that no string in `words` is a substring of another string in `words`.\n\n**Example 1:**\n\n```\nInput: words = [\"alex\",\"loves\",\"leetcode\"]\nOutput: \"alexlovesleetcode\"\nExplanation: All permutations of \"alex\",\"loves\",\"leetcode\" would also be accepted.\n```\n\n**Example 2:**\n\n```\nInput: words = [\"catg\",\"ctaagt\",\"gcta\",\"ttca\",\"atgcatc\"]\nOutput: \"gctaagttcatgcatc\"\n```\n\n**Constraints:**\n\n* `1 <= words.length <= 12`\n* `1 <= words[i].length <= 20`\n* `words[i]` is composed of lowercase English letters.\n* All the strings of `words` are **unique**."
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[\"a\"]]",
-        "expectedOutput": "\"a\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Two elements",
-        "input": "[[\"a\", \"b\"]]",
-        "expectedOutput": "\"ab\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "All elements same",
-        "input": "[[\"a\", \"a\", \"a\", \"a\", \"a\", \"a\", \"a\", \"a\", \"a\", \"a\", \"a\", \"a\"]]",
-        "expectedOutput": "\"aaaaaaaaaaaa\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Zero values",
-        "input": "[[\"a\", \"b\", \"c\"]]",
-        "expectedOutput": "\"abc\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[\"abc\", \"abc\", \"def\"]]",
-        "expectedOutput": "\"abcabcdef\"",
-        "weight": 4
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[\"abc\", \"bcd\", \"cde\"]]",
-        "expectedOutput": "\"abcde\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[\"abc\", \"def\", \"ghi\", \"jkl\", \"mno\", \"pqr\"]]",
-        "expectedOutput": "\"abcdefghijklmnopqr\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[\"abc\", \"bcd\", \"cde\", \"efg\", \"fgh\", \"ghi\", \"hij\", \"ijk\", \"jkl\", \"klm\", \"lmn\", \"mno\"]]",
-        "expectedOutput": "\"abcdefghijklmno\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Answer spans entire array",
-        "input": "[[\"a\", \"b\", \"c\", \"d\", \"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"k\", \"l\"]]",
-        "expectedOutput": "\"abcdefghijkl\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "The problem permits multiple shortest superstrings. The production judge must use semantic output validation: accept any returned string that contains every input word and has minimum possible length.",
+      "Each expectedOutput is one valid optimal witness for reference validation; it must not be treated as the only accepted answer."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "Python3",
+      "Java",
+      "JavaScript",
+      "C",
+      "C++"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -334,57 +88,335 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "string",
+      "dynamic-programming",
+      "bit-manipulation",
+      "bitmask"
     ],
-    "notes": []
+    "category": "Dynamic Programming",
+    "isPremium": false,
+    "topicTags": [
+      "array",
+      "string",
+      "dynamic-programming",
+      "bit-manipulation",
+      "bitmask"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Hard",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses dynamic programming to find the shortest superstring by calculating overlaps between all pairs of strings and then selecting the optimal order to minimize the total length.",
-    "timeComplexity": "O(n^2 * (l^2 + 2^n))",
-    "spaceComplexity": "O(n^2)",
-    "code": {
-      "Python3": "# Time:  O(n^2 * (l^2 + 2^n))\n# Space: O(n^2)\n\nclass Solution(object):\n    def shortestSuperstring(self, A):\n        \"\"\"\n        :type A: List[str]\n        :rtype: str\n        \"\"\"\n        n = len(A)\n        overlaps = [[0]*n for _ in range(n)]\n        for i, x in enumerate(A):\n            for j, y in enumerate(A):\n                for l in reversed(range(min(len(x), len(y)))):\n                    if y[:l].startswith(x[len(x)-l:]):\n                        overlaps[i][j] = l\n                        break\n\n        dp = [[0]*n for _ in range(1<<n)]\n        prev = [[None]*n for _ in range(1<<n)]\n        for mask in range(1, 1<<n):\n            for bit in range(n):\n                if ((mask>>bit) & 1) == 0:\n                    continue\n                prev_mask = mask^(1<<bit)\n                for i in range(n):\n                    if ((prev_mask>>i) & 1) == 0:\n                        continue\n                    value = dp[prev_mask][i] + overlaps[i][bit]\n                    if value > dp[mask][bit]:\n                        dp[mask][bit] = value\n                        prev[mask][bit] = i\n        \n        bit = max(range(n), key = dp[-1].__getitem__)\n        words = []\n        mask = (1<<n)-1\n        while bit is not None:\n            words.append(bit)\n            mask, bit = mask^(1<<bit), prev[mask][bit]\n        words.reverse()\n        lookup = set(words)\n        words.extend([i for i in range(n) if i not in lookup])\n\n        result = [A[words[0]]]\n        for i in range(1, len(words)):\n            overlap = overlaps[words[i-1]][words[i]]\n            result.append(A[words[i]][overlap:])\n        return \"\".join(result)"
-    },
-    "notes": [],
+    "notes": [
+      "Because no input word is a substring of another, the pairwise suffix-to-prefix overlap model is sufficient without a separate containment-removal step.",
+      "The deterministic tie-breaking affects only which optimal string is returned, not the minimum achievable length."
+    ],
+    "approach": "Compute the directed overlap length for every ordered pair of words. Then use subset dynamic programming: dp[mask][last] stores the maximum total overlap achievable by an ordering that uses exactly the words in mask and ends at last. Parent pointers reconstruct an optimal ordering, and the words are concatenated while removing the stored overlaps. Ties are resolved deterministically by preferring the larger predecessor index and then the larger final index.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n^3 * L^2) time with straightforward rescanning, but not guaranteed optimal",
+        "description": "A greedy strategy repeatedly merges the pair with the largest current overlap. It is much faster on typical inputs, but it is not guaranteed to produce a globally shortest superstring, so it is useful only as a heuristic. The hidden suite includes a counterexample to this strategy."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n^2 * L^2 + 2^n * n^2) time and O(2^n * n) auxiliary space",
+        "description": "Precompute all pairwise overlaps, then solve the ordering problem with Held-Karp-style subset DP. For each state (mask, last), consider every possible previous word and maximize total overlap. Store parent pointers for reconstruction. Since the final superstring length equals the sum of input lengths minus the total selected overlap, maximizing overlap is equivalent to minimizing the final length."
+      },
+      "bruteForce": {
+        "complexity": "O(n^2 * L^2 + n! * n * L)",
+        "description": "Try every permutation of the n words. For each permutation, concatenate the words while removing the maximum suffix-prefix overlap between consecutive words, then keep the shortest result. This is exact but factorial in n."
       }
+    },
+    "timeComplexity": "O(n^2 * L^2 + 2^n * n^2), where n is the number of words and L is the maximum word length.",
+    "spaceComplexity": "O(2^n * n) auxiliary space.",
+    "code": {
+      "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def shortestSuperstring(self, words: List[str]) -> str:\n        n = len(words)\n        overlap = [[0] * n for _ in range(n)]\n\n        for i, a in enumerate(words):\n            for j, b in enumerate(words):\n                max_k = min(len(a), len(b))\n                for k in range(max_k, 0, -1):\n                    if a[-k:] == b[:k]:\n                        overlap[i][j] = k\n                        break\n\n        states = 1 << n\n        dp = [[-1] * n for _ in range(states)]\n        parent = [[-1] * n for _ in range(states)]\n\n        for i in range(n):\n            dp[1 << i][i] = 0\n\n        for mask in range(1, states):\n            for last in range(n):\n                if (mask & (1 << last)) == 0:\n                    continue\n                prev_mask = mask ^ (1 << last)\n                if prev_mask == 0:\n                    continue\n\n                best_overlap = -1\n                best_prev = -1\n                for prev in range(n):\n                    if (prev_mask & (1 << prev)) == 0:\n                        continue\n                    value = dp[prev_mask][prev] + overlap[prev][last]\n                    if value > best_overlap or (\n                        value == best_overlap and prev > best_prev\n                    ):\n                        best_overlap = value\n                        best_prev = prev\n\n                dp[mask][last] = best_overlap\n                parent[mask][last] = best_prev\n\n        mask = states - 1\n        last = max(range(n), key=lambda i: (dp[mask][i], i))\n\n        order = []\n        while last != -1:\n            order.append(last)\n            previous = parent[mask][last]\n            mask ^= 1 << last\n            last = previous\n\n        order.reverse()\n\n        result = words[order[0]]\n        for i in range(1, len(order)):\n            a = order[i - 1]\n            b = order[i]\n            result += words[b][overlap[a][b]:]\n\n        return result"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nchar* shortestSuperstring(char** words, int wordsSize) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        // TODO: unpack logic for string[] words\n        char* result = shortestSuperstring(words);\n        printf(\"\\\"%s\\\"\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def shortestSuperstring(self, words: List[str]) -> str:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _words = _args[0]\n    _result = Solution().shortestSuperstring(_words)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string[]} words\n * @return {string}\n */\nvar shortestSuperstring = function(words) {\n    \n    return \"\";\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = shortestSuperstring(_args[0]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public String shortestSuperstring(String[] words) {\n        \n        return \"\";\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        String[] words = toStringArray(nextToken());\n        String result = new Solution().shortestSuperstring(words);\n        System.out.println(\"\\\"\"+result+\"\\\"\" );\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    string shortestSuperstring(vector<string>& words) {\n        \n        return \"\";\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    auto words = readStrVec(tok);\n    auto result = Solution().shortestSuperstring(words);\n    cout << \"\\\"\" << result << \"\\\"\" << endl;\n    return 0;\n}"
+  "verified": false,
+  "_internal": {
+    "params": [
+      {
+        "name": "words",
+        "type": "string[]"
+      }
+    ],
+    "methodName": "shortestSuperstring"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How would the solution change if one input word could be a substring of another?",
+    "Can you reconstruct an optimal answer with the same asymptotic time while changing the memory layout?",
+    "How would you handle the problem if the number of words became much larger than 12?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[\"a\"]]",
+        "label": "Minimum number of words, single character",
+        "weight": 4,
+        "expectedOutput": "\"a\""
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[\"a\",\"b\"]]",
+        "label": "Two words with no overlap",
+        "weight": 4,
+        "expectedOutput": "\"ab\""
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[\"az\",\"za\"]]",
+        "label": "One-character overlap at boundary",
+        "weight": 4,
+        "expectedOutput": "\"aza\""
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[\"abc\",\"bcd\"]]",
+        "label": "Two-word two-character overlap",
+        "weight": 4,
+        "expectedOutput": "\"abcd\""
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[\"abc\",\"cde\",\"efg\"]]",
+        "label": "Three-word overlap chain",
+        "weight": 4,
+        "expectedOutput": "\"abcdefg\""
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[\"efg\",\"cde\",\"abc\"]]",
+        "label": "Reverse input order of overlap chain",
+        "weight": 4,
+        "expectedOutput": "\"abcdefg\""
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[\"abcx\",\"bcya\"]]",
+        "label": "Partial overlap with different suffix and prefix",
+        "weight": 4,
+        "expectedOutput": "\"bcyabcx\""
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[\"aaaaab\",\"aaabac\"]]",
+        "label": "Long repeated-character overlap",
+        "weight": 4,
+        "expectedOutput": "\"aaaaabac\""
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[\"zxy\",\"xyz\",\"yza\"]]",
+        "label": "Overlapping chain using boundary letters",
+        "weight": 4,
+        "expectedOutput": "\"zxyza\""
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[\"abca\",\"bcab\",\"cabc\"]]",
+        "label": "Cyclic-style overlaps",
+        "weight": 4,
+        "expectedOutput": "\"abcabc\""
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[\"dad\",\"dcaac\",\"acdb\",\"acbac\"]]",
+        "label": "Greedy counterexample",
+        "weight": 3,
+        "expectedOutput": "\"dadcaacbacdb\""
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[\"gcat\",\"catg\",\"atgc\"]]",
+        "label": "Multiple equally long overlap directions",
+        "weight": 3,
+        "expectedOutput": "\"gcatgc\""
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[\"abab\",\"baba\",\"babx\"]]",
+        "label": "Repeated pattern with competing overlaps",
+        "weight": 3,
+        "expectedOutput": "\"bababx\""
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[\"a\",\"b\",\"c\",\"d\",\"e\",\"f\",\"g\",\"h\",\"i\",\"j\",\"k\",\"l\"]]",
+        "label": "Maximum word count with length-one words",
+        "weight": 3,
+        "expectedOutput": "\"abcdefghijkl\""
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[\"abcdefghijklmnopqrst\"]]",
+        "label": "Maximum word length with one word",
+        "weight": 3,
+        "expectedOutput": "\"abcdefghijklmnopqrst\""
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[\"abcdefghijklmnopqrst\",\"klmnopqrstzzzzzzzzzz\"]]",
+        "label": "Maximum word length with strong directional overlap",
+        "weight": 3,
+        "expectedOutput": "\"abcdefghijklmnopqrstzzzzzzzzzz\""
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[\"ccaca\",\"cdaac\",\"cbbaa\",\"cbdad\",\"bcbba\",\"aacda\"]]",
+        "label": "Second greedy counterexample with competing merge choices",
+        "weight": 3,
+        "expectedOutput": "\"ccacabcbbaacdaacbdad\""
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[\"za\",\"azb\",\"zbc\",\"bcd\"]]",
+        "label": "Alternating one/two-character overlaps",
+        "weight": 3,
+        "expectedOutput": "\"zazbcd\""
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[\"mnop\",\"opqr\",\"qrst\",\"stuv\",\"uvwx\"]]",
+        "label": "Five-word overlap chain",
+        "weight": 3,
+        "expectedOutput": "\"mnopqrstuvwx\""
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[\"aaaaabbbbb\",\"bbbbbaaaaa\"]]",
+        "label": "Large overlap with repeated blocks",
+        "weight": 3,
+        "expectedOutput": "\"aaaaabbbbbaaaaa\""
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[\"abcabc\",\"bcabca\",\"cabcab\"]]",
+        "label": "Periodic strings with competing overlaps",
+        "weight": 3,
+        "expectedOutput": "\"abcabcab\""
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[\"qwert\",\"werty\",\"ertyu\"]]",
+        "label": "Increasing overlap chain",
+        "weight": 3,
+        "expectedOutput": "\"qwertyu\""
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[\"lmnop\",\"opq\",\"qrsxyz\",\"stuv\"]]",
+        "label": "Mixed overlap lengths without containment",
+        "weight": 3,
+        "expectedOutput": "\"lmnopqrsxyzstuv\""
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[\"hello\",\"world\",\"low\",\"owl\"]]",
+        "label": "Overlap chain with distracting words",
+        "weight": 3,
+        "expectedOutput": "\"worldhellowl\""
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[\"cat\",\"tac\",\"acg\",\"cga\"]]",
+        "label": "Reverse-like overlaps",
+        "weight": 3,
+        "expectedOutput": "\"catacga\""
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[\"abxd\",\"bxdy\",\"xdyz\",\"dyza\"]]",
+        "label": "Four-stage diagonal overlap",
+        "weight": 3,
+        "expectedOutput": "\"abxdyza\""
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[\"foo\",\"oob\",\"obar\",\"barz\"]]",
+        "label": "Short cascading overlaps",
+        "weight": 3,
+        "expectedOutput": "\"foobarz\""
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[\"ab\",\"cd\",\"ef\",\"gh\",\"ij\",\"kl\",\"mn\",\"op\",\"qr\",\"st\",\"uv\",\"wx\"]]",
+        "label": "Maximum word count with no useful overlaps",
+        "weight": 3,
+        "expectedOutput": "\"abcdefghijklmnopqrstuvwx\""
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[\"dadad\",\"adabc\",\"dabce\",\"abcef\"]]",
+        "label": "Repeated prefix and suffix adversarial chain",
+        "weight": 3,
+        "expectedOutput": "\"dadadabcef\""
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[\"rhrwewyfoo\",\"yfooqjifmb\",\"ifmbrkohou\",\"ohoucgyoom\",\"yoomirmmhw\",\"mmhwevgujf\",\"gujfcqbskc\",\"bskcubogcw\",\"ogcwcqrvlk\",\"rvlkfyqgps\",\"qgpsbrdzsx\",\"dzsxrahzht\"]]",
+        "label": "Maximum word count with a 12-word overlap chain",
+        "weight": 3,
+        "expectedOutput": "\"rhrwewyfooqjifmbrkohoucgyoomirmmhwevgujfcqbskcubogcwcqrvlkfyqgpsbrdzsxrahzht\""
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q943",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nstatic int overlap_len(const char *a, const char *b) {\n    int la = (int)strlen(a);\n    int lb = (int)strlen(b);\n    int max_k = la < lb ? la : lb;\n\n    for (int k = max_k; k >= 1; --k) {\n        int ok = 1;\n        for (int p = 0; p < k; ++p) {\n            if (a[la - k + p] != b[p]) {\n                ok = 0;\n                break;\n            }\n        }\n        if (ok) return k;\n    }\n    return 0;\n}\n\nchar *shortestSuperstring(char **words, int wordsSize) {\n    int n = wordsSize;\n    int states = 1 << n;\n\n    int *overlap = (int *)calloc((size_t)n * n, sizeof(int));\n    int *dp = (int *)malloc((size_t)states * n * sizeof(int));\n    int *parent = (int *)malloc((size_t)states * n * sizeof(int));\n\n    for (int mask = 0; mask < states; ++mask) {\n        for (int i = 0; i < n; ++i) {\n            dp[mask * n + i] = -1;\n            parent[mask * n + i] = -1;\n        }\n    }\n\n    for (int i = 0; i < n; ++i) {\n        for (int j = 0; j < n; ++j) {\n            overlap[i * n + j] = overlap_len(words[i], words[j]);\n        }\n        dp[(1 << i) * n + i] = 0;\n    }\n\n    for (int mask = 1; mask < states; ++mask) {\n        for (int last = 0; last < n; ++last) {\n            if ((mask & (1 << last)) == 0) continue;\n\n            int prevMask = mask ^ (1 << last);\n            if (prevMask == 0) continue;\n\n            int bestOverlap = -1;\n            int bestPrev = -1;\n\n            for (int prev = 0; prev < n; ++prev) {\n                if ((prevMask & (1 << prev)) == 0) continue;\n\n                int value = dp[prevMask * n + prev] + overlap[prev * n + last];\n                if (value > bestOverlap ||\n                    (value == bestOverlap && prev > bestPrev)) {\n                    bestOverlap = value;\n                    bestPrev = prev;\n                }\n            }\n\n            dp[mask * n + last] = bestOverlap;\n            parent[mask * n + last] = bestPrev;\n        }\n    }\n\n    int mask = states - 1;\n    int last = 0;\n    for (int i = 1; i < n; ++i) {\n        int a = dp[mask * n + i];\n        int b = dp[mask * n + last];\n        if (a > b || (a == b && i > last)) last = i;\n    }\n\n    int *order = (int *)malloc((size_t)n * sizeof(int));\n    int pos = n - 1;\n\n    while (last != -1) {\n        order[pos--] = last;\n        int previous = parent[mask * n + last];\n        mask ^= 1 << last;\n        last = previous;\n    }\n\n    int capacity = 256;\n    char *result = (char *)malloc((size_t)capacity);\n    result[0] = '\\0';\n\n    for (int k = 0; k < n; ++k) {\n        int idx = order[k];\n        const char *part = words[idx];\n        if (k > 0) {\n            int prev = order[k - 1];\n            part += overlap[prev * n + idx];\n        }\n\n        int need = (int)strlen(result) + (int)strlen(part) + 1;\n        if (need > capacity) {\n            while (capacity < need) capacity *= 2;\n            result = (char *)realloc(result, (size_t)capacity);\n        }\n        strcat(result, part);\n    }\n\n    free(overlap);\n    free(dp);\n    free(parent);\n    free(order);\n    return result;\n}\n\nstatic char **parse_words(const char *line, int *count) {\n    int capacity = 16;\n    int size = 0;\n    char **words = (char **)malloc((size_t)capacity * sizeof(char *));\n\n    for (const char *p = line; *p; ++p) {\n        if (*p != '\"') continue;\n\n        const char *start = ++p;\n        while (*p && *p != '\"') ++p;\n        int len = (int)(p - start);\n\n        if (size == capacity) {\n            capacity *= 2;\n            words = (char **)realloc(words, (size_t)capacity * sizeof(char *));\n        }\n\n        words[size] = (char *)malloc((size_t)len + 1);\n        memcpy(words[size], start, (size_t)len);\n        words[size][len] = '\\0';\n        ++size;\n\n        if (!*p) break;\n    }\n\n    *count = size;\n    return words;\n}\n\nint main(void) {\n    char line[4096];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n\n    int wordsSize = 0;\n    char **words = parse_words(line, &wordsSize);\n\n    char *result = shortestSuperstring(words, wordsSize);\n    printf(\"\\\"%s\\\"\\n\", result);\n\n    free(result);\n    for (int i = 0; i < wordsSize; ++i) free(words[i]);\n    free(words);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    string shortestSuperstring(vector<string>& words) {\n        int n = (int)words.size();\n        vector<vector<int>> overlap(n, vector<int>(n, 0));\n\n        for (int i = 0; i < n; ++i) {\n            for (int j = 0; j < n; ++j) {\n                int maxK = min(words[i].size(), words[j].size());\n                for (int k = maxK; k >= 1; --k) {\n                    if (words[i].compare(words[i].size() - k, k, words[j], 0, k) == 0) {\n                        overlap[i][j] = k;\n                        break;\n                    }\n                }\n            }\n        }\n\n        int states = 1 << n;\n        vector<vector<int>> dp(states, vector<int>(n, -1));\n        vector<vector<int>> parent(states, vector<int>(n, -1));\n\n        for (int i = 0; i < n; ++i) dp[1 << i][i] = 0;\n\n        for (int mask = 1; mask < states; ++mask) {\n            for (int last = 0; last < n; ++last) {\n                if ((mask & (1 << last)) == 0) continue;\n                int prevMask = mask ^ (1 << last);\n                if (prevMask == 0) continue;\n\n                int bestOverlap = -1;\n                int bestPrev = -1;\n                for (int prev = 0; prev < n; ++prev) {\n                    if ((prevMask & (1 << prev)) == 0) continue;\n                    int value = dp[prevMask][prev] + overlap[prev][last];\n                    if (value > bestOverlap ||\n                        (value == bestOverlap && prev > bestPrev)) {\n                        bestOverlap = value;\n                        bestPrev = prev;\n                    }\n                }\n                dp[mask][last] = bestOverlap;\n                parent[mask][last] = bestPrev;\n            }\n        }\n\n        int mask = states - 1;\n        int last = 0;\n        for (int i = 1; i < n; ++i) {\n            if (dp[mask][i] > dp[mask][last] ||\n                (dp[mask][i] == dp[mask][last] && i > last)) {\n                last = i;\n            }\n        }\n\n        vector<int> order;\n        while (last != -1) {\n            order.push_back(last);\n            int previous = parent[mask][last];\n            mask ^= 1 << last;\n            last = previous;\n        }\n        reverse(order.begin(), order.end());\n\n        string result = words[order[0]];\n        for (int i = 1; i < (int)order.size(); ++i) {\n            int a = order[i - 1];\n            int b = order[i];\n            result += words[b].substr(overlap[a][b]);\n        }\n        return result;\n    }\n};\n\nstatic vector<string> parseWords(const string& line) {\n    vector<string> words;\n    for (size_t i = 0; i < line.size();) {\n        if (line[i] != '\"') {\n            ++i;\n            continue;\n        }\n        size_t j = i + 1;\n        while (j < line.size() && line[j] != '\"') ++j;\n        words.push_back(line.substr(i + 1, j - i - 1));\n        i = (j == line.size() ? j : j + 1);\n    }\n    return words;\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n\n    string line;\n    getline(cin, line);\n    vector<string> words = parseWords(line);\n    string result = Solution().shortestSuperstring(words);\n    cout << '\"' << result << '\"' << '\\n';\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public String shortestSuperstring(String[] words) {\n        int n = words.length;\n        int[][] overlap = new int[n][n];\n\n        for (int i = 0; i < n; i++) {\n            for (int j = 0; j < n; j++) {\n                int max = Math.min(words[i].length(), words[j].length());\n                for (int k = max; k >= 1; k--) {\n                    if (words[i].regionMatches(words[i].length() - k, words[j], 0, k)) {\n                        overlap[i][j] = k;\n                        break;\n                    }\n                }\n            }\n        }\n\n        int states = 1 << n;\n        int[][] dp = new int[states][n];\n        int[][] parent = new int[states][n];\n        for (int[] row : dp) Arrays.fill(row, -1);\n        for (int[] row : parent) Arrays.fill(row, -1);\n\n        for (int i = 0; i < n; i++) dp[1 << i][i] = 0;\n\n        for (int mask = 1; mask < states; mask++) {\n            for (int last = 0; last < n; last++) {\n                if ((mask & (1 << last)) == 0) continue;\n                int prevMask = mask ^ (1 << last);\n                if (prevMask == 0) continue;\n\n                int bestOverlap = -1;\n                int bestPrev = -1;\n                for (int prev = 0; prev < n; prev++) {\n                    if ((prevMask & (1 << prev)) == 0) continue;\n                    int value = dp[prevMask][prev] + overlap[prev][last];\n                    if (value > bestOverlap || (value == bestOverlap && prev > bestPrev)) {\n                        bestOverlap = value;\n                        bestPrev = prev;\n                    }\n                }\n                dp[mask][last] = bestOverlap;\n                parent[mask][last] = bestPrev;\n            }\n        }\n\n        int mask = states - 1;\n        int last = 0;\n        for (int i = 1; i < n; i++) {\n            if (dp[mask][i] > dp[mask][last] ||\n                (dp[mask][i] == dp[mask][last] && i > last)) {\n                last = i;\n            }\n        }\n\n        int[] order = new int[n];\n        int pos = n - 1;\n        while (last != -1) {\n            order[pos--] = last;\n            int previous = parent[mask][last];\n            mask ^= 1 << last;\n            last = previous;\n        }\n\n        StringBuilder result = new StringBuilder();\n        result.append(words[order[0]]);\n        for (int i = 1; i < n; i++) {\n            int a = order[i - 1];\n            int b = order[i];\n            result.append(words[b].substring(overlap[a][b]));\n        }\n        return result.toString();\n    }\n}\n\npublic class Main {\n    static List<String> parseWords(String line) {\n        List<String> words = new ArrayList<>();\n        int i = 0;\n        while (i < line.length()) {\n            if (line.charAt(i) != '\"') {\n                i++;\n                continue;\n            }\n            int j = i + 1;\n            while (j < line.length() && line.charAt(j) != '\"') j++;\n            words.add(line.substring(i + 1, j));\n            i = j + 1;\n        }\n        return words;\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        List<String> list = parseWords(line);\n        String[] words = list.toArray(new String[0]);\n        String result = new Solution().shortestSuperstring(words);\n        System.out.println(\"\\\"\" + result + \"\\\"\");\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\n\nclass Solution:\n    def shortestSuperstring(self, words: List[str]) -> str:\n        pass\n\nif __name__ == \"__main__\":\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().shortestSuperstring(args[0])))\n",
+    "JavaScript": "const fs = require('fs');\n\nfunction shortestSuperstring(words) {\n    const n = words.length;\n    const overlap = Array.from({ length: n }, () => Array(n).fill(0));\n\n    for (let i = 0; i < n; i++) {\n        for (let j = 0; j < n; j++) {\n            const maxK = Math.min(words[i].length, words[j].length);\n            for (let k = maxK; k >= 1; k--) {\n                if (words[i].slice(-k) === words[j].slice(0, k)) {\n                    overlap[i][j] = k;\n                    break;\n                }\n            }\n        }\n    }\n\n    const states = 1 << n;\n    const dp = Array.from({ length: states }, () => Array(n).fill(-1));\n    const parent = Array.from({ length: states }, () => Array(n).fill(-1));\n\n    for (let i = 0; i < n; i++) dp[1 << i][i] = 0;\n\n    for (let mask = 1; mask < states; mask++) {\n        for (let last = 0; last < n; last++) {\n            if ((mask & (1 << last)) === 0) continue;\n            const prevMask = mask ^ (1 << last);\n            if (prevMask === 0) continue;\n\n            let bestOverlap = -1;\n            let bestPrev = -1;\n\n            for (let prev = 0; prev < n; prev++) {\n                if ((prevMask & (1 << prev)) === 0) continue;\n                const value = dp[prevMask][prev] + overlap[prev][last];\n                if (value > bestOverlap || (value === bestOverlap && prev > bestPrev)) {\n                    bestOverlap = value;\n                    bestPrev = prev;\n                }\n            }\n\n            dp[mask][last] = bestOverlap;\n            parent[mask][last] = bestPrev;\n        }\n    }\n\n    let mask = states - 1;\n    let last = 0;\n    for (let i = 1; i < n; i++) {\n        if (dp[mask][i] > dp[mask][last] ||\n            (dp[mask][i] === dp[mask][last] && i > last)) {\n            last = i;\n        }\n    }\n\n    const order = [];\n    while (last !== -1) {\n        order.push(last);\n        const previous = parent[mask][last];\n        mask ^= 1 << last;\n        last = previous;\n    }\n    order.reverse();\n\n    let result = words[order[0]];\n    for (let i = 1; i < order.length; i++) {\n        const a = order[i - 1];\n        const b = order[i];\n        result += words[b].slice(overlap[a][b]);\n    }\n    return result;\n}\n\nconst input = fs.readFileSync(0, 'utf8').trim();\nconst args = JSON.parse(input);\nconsole.log(JSON.stringify(shortestSuperstring(args[0])));\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "45–75 minutes",
+  "learningObjectives": [
+    "Model shortest-superstring construction as an ordering problem over pairwise overlaps.",
+    "Apply bitmask subset dynamic programming to a permutation-style optimization problem.",
+    "Use parent pointers to reconstruct an optimal sequence from DP states.",
+    "Recognize why a locally optimal maximum-overlap greedy merge is not sufficient for global optimality."
+  ]
 }

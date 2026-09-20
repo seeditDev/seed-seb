@@ -8,6 +8,8 @@
  *   Local public path → fetch → JSON parse → return data
  */
 import { fetchArticleFile } from '../utils/articleFetcher';
+import { db } from '../lib/firebase-config';
+import { doc, getDoc } from 'firebase/firestore';
 
 const LOCAL_BASE = '/seed-contents';
 
@@ -51,7 +53,16 @@ export const isCompleteQuestion = (q) => {
     (Array.isArray(q.testCases) && q.testCases.some(tc => tc.hidden || tc.isHidden)) ||
     (Array.isArray(q.hidden_test_cases) && q.hidden_test_cases.length > 0)
   );
-  return hasStatement && hasSampleTestCases && hasHiddenTestCases;
+  const hasBoilerplates = Boolean(
+    (q.boilerplates && Object.keys(q.boilerplates).length > 0) ||
+    (q.boilerPlates && Object.keys(q.boilerPlates).length > 0) ||
+    (q.starterCode && Object.keys(q.starterCode).length > 0) ||
+    (q.starterCodes && Object.keys(q.starterCodes).length > 0) ||
+    (q.content?.boilerplates && Object.keys(q.content.boilerplates).length > 0) ||
+    (q.content?.boilerPlates && Object.keys(q.content.boilerPlates).length > 0) ||
+    (q.content?.starterCode && Object.keys(q.content.starterCode).length > 0)
+  );
+  return hasStatement && hasSampleTestCases && hasHiddenTestCases && hasBoilerplates;
 };
 
 export const mergeQuestionObjects = (fullQ, stub) => {
@@ -125,8 +136,58 @@ export const mergeQuestionObjects = (fullQ, stub) => {
     hiddenTestCases,
     hiddenTests: hiddenTestCases,
     testCases: resolvedTestCases,
-    boilerPlates: fullQ.boilerPlates || fullQ.content?.boilerPlates || stub.boilerPlates || {},
-    boilerplates: fullQ.boilerplates || fullQ.content?.boilerplates || stub.boilerplates || {},
+    boilerPlates: {
+      ...(stub.boilerPlates || {}),
+      ...(stub.boilerplates || {}),
+      ...(stub.starterCode || {}),
+      ...(stub.starterCodes || {}),
+      ...(fullQ.boilerPlates || {}),
+      ...(fullQ.boilerplates || {}),
+      ...(fullQ.starterCode || {}),
+      ...(fullQ.starterCodes || {}),
+      ...(fullQ.content?.boilerPlates || {}),
+      ...(fullQ.content?.boilerplates || {}),
+      ...(stub.content?.boilerPlates || {}),
+      ...(stub.content?.boilerplates || {}),
+    },
+    boilerplates: {
+      ...(stub.boilerplates || {}),
+      ...(stub.boilerPlates || {}),
+      ...(stub.starterCode || {}),
+      ...(stub.starterCodes || {}),
+      ...(fullQ.boilerplates || {}),
+      ...(fullQ.boilerPlates || {}),
+      ...(fullQ.starterCode || {}),
+      ...(fullQ.starterCodes || {}),
+      ...(fullQ.content?.boilerplates || {}),
+      ...(fullQ.content?.boilerPlates || {}),
+      ...(stub.content?.boilerplates || {}),
+      ...(stub.content?.boilerPlates || {}),
+    },
+    starterCode: {
+      ...(fullQ.starterCode || {}),
+      ...(fullQ.starterCodes || {}),
+      ...(fullQ.boilerplates || {}),
+      ...(fullQ.boilerPlates || {}),
+      ...(stub.starterCode || {}),
+      ...(stub.starterCodes || {}),
+      ...(stub.boilerplates || {}),
+      ...(stub.boilerPlates || {}),
+    },
+    starterCodes: {
+      ...(fullQ.starterCode || {}),
+      ...(fullQ.starterCodes || {}),
+      ...(fullQ.boilerplates || {}),
+      ...(fullQ.boilerPlates || {}),
+      ...(stub.starterCode || {}),
+      ...(stub.starterCodes || {}),
+      ...(stub.boilerplates || {}),
+      ...(stub.boilerPlates || {}),
+    },
+    examples: fullQ.examples || stub.examples || [],
+    inputFormat: fullQ.inputFormat || stub.inputFormat || '',
+    outputFormat: fullQ.outputFormat || stub.outputFormat || '',
+    constraints: fullQ.constraints || stub.constraints || '',
     marks: Number(stub.marks || fullQ.marks || 100),
   };
 };
@@ -255,11 +316,55 @@ export const fetchQuestion = async (questionId) => {
     } catch (_) {}
   }
 
-  // 6. Last resort fetch
+  // 6. Last resort static fetch
   if (!result) {
     try {
       result = await fetchJson(`coding/questions/${normId}.json`);
     } catch (_) {}
+  }
+
+  // 7. Firestore codingChallenges fallback (for custom questions created in SEED Admin)
+  if (!result && db) {
+    const candidates = [normId, rawId, originalObj?.id, originalObj?.questionId, originalObj?.slug].filter(Boolean);
+    const seen = new Set();
+    for (const cid of candidates) {
+      if (seen.has(cid)) continue;
+      seen.add(cid);
+      try {
+        const snap = await getDoc(doc(db, 'codingChallenges', cid));
+        if (snap.exists()) {
+          const d = snap.data();
+          const starter = d.starterCode || d.starterCodes || d.boilerplates || d.boilerPlates || {};
+          const tcs = Array.isArray(d.testCases) ? d.testCases : [];
+          result = {
+            id: snap.id,
+            questionId: snap.id,
+            title: d.title || originalObj?.title || '',
+            slug: d.slug || snap.id,
+            difficulty: d.difficulty || 'Medium',
+            category: d.category || 'custom',
+            description: d.description || d.statement || '',
+            statement: d.description || d.statement || '',
+            problemStatement: d.description || d.statement || '',
+            inputFormat: d.inputFormat || '',
+            outputFormat: d.outputFormat || '',
+            constraints: d.constraints || '',
+            examples: Array.isArray(d.examples) ? d.examples : [],
+            starterCode: starter,
+            starterCodes: starter,
+            boilerplates: starter,
+            boilerPlates: starter,
+            testCases: tcs,
+            sampleTestCases: tcs.filter(tc => !tc.hidden && !tc.isHidden),
+            hiddenTestCases: tcs.filter(tc => tc.hidden || tc.isHidden),
+            marks: Number(d.maxScore || 100),
+          };
+          break;
+        }
+      } catch (fsErr) {
+        console.warn(`[codingQuestionBankService] Firestore fallback error for ${cid}:`, fsErr);
+      }
+    }
   }
 
   if (result && originalObj) {
