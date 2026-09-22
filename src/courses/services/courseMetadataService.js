@@ -319,11 +319,20 @@ export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
 
   // 1. Check in-memory / sessionStorage cache (1-hour TTL)
   const now = Date.now();
+  const CACHE_KEY = 'seed_live_courses_cache_v4';
+
+  // Purge any legacy caches
+  try {
+    ['seed_live_courses_cache', 'seed_live_courses_cache_v2', 'seed_live_courses_cache_v3'].forEach(k => {
+      sessionStorage.removeItem(k);
+    });
+  } catch (_) {}
+
   if (memoryCoursesCache && (now - memoryCoursesCacheTime < COURSES_CACHE_TTL)) {
     return memoryCoursesCache;
   }
   try {
-    const cached = sessionStorage.getItem('seed_live_courses_cache');
+    const cached = sessionStorage.getItem(CACHE_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
       if (parsed.timestamp && (now - parsed.timestamp < COURSES_CACHE_TTL) && Array.isArray(parsed.data)) {
@@ -342,24 +351,36 @@ export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
       return fallbackList.filter(c => c.enabled !== false);
     }
 
+    const seenIds = new Set();
+    const seenSlugs = new Set();
+    const seenTitles = new Set();
     const firestoreCourses = [];
+
     snap.forEach(docSnap => {
       const data = docSnap.data();
       const courseId = docSnap.id;
+      const slug = data.slug || courseId;
+      const normTitle = (data.title || '').trim().toLowerCase();
 
-      // Check enabled status (default true if enabled field is missing or true)
+      // Check enabled status
       const isEnabled = data.enabled !== undefined ? Boolean(data.enabled) : true;
       if (!isEnabled) {
         return; // Filter out disabled courses
       }
 
+      // Prevent duplicate documents from appearing in catalog
+      if (seenIds.has(courseId) || seenSlugs.has(slug) || (normTitle && seenTitles.has(normTitle))) {
+        return;
+      }
+
       // Merge with local rich course modules and topics
-      const localCourse = fallbackMap[courseId] || {};
+      const localCourse = fallbackMap[courseId] || fallbackMap[slug] || fallbackMap[data.id] || {};
       const mergedCourse = {
         ...localCourse,
         ...data,
         courseId,
         id: courseId,
+        slug,
         title: data.title || localCourse.title || 'Course Mastery',
         description: data.description || localCourse.description || '',
         category: data.category || localCourse.category || 'Computer Science',
@@ -375,16 +396,28 @@ export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
         prerequisites: data.prerequisites || localCourse.prerequisites || []
       };
 
+      seenIds.add(courseId);
+      seenSlugs.add(slug);
+      if (normTitle) seenTitles.add(normTitle);
+
       firestoreCourses.push(mergedCourse);
     });
 
     // Merge any courses from fallbackList not yet in firestore
     for (const fc of fallbackList) {
       const id = fc.courseId || fc.id || fc.slug;
-      if (id && !firestoreCourses.some(c => c.courseId === id || c.id === id)) {
-        if (fc.enabled !== false) {
-          firestoreCourses.push(fc);
-        }
+      const slug = fc.slug || id;
+      const normTitle = (fc.title || '').trim().toLowerCase();
+
+      if (seenIds.has(id) || seenSlugs.has(slug) || (normTitle && seenTitles.has(normTitle))) {
+        continue;
+      }
+
+      if (fc.enabled !== false) {
+        seenIds.add(id);
+        seenSlugs.add(slug);
+        if (normTitle) seenTitles.add(normTitle);
+        firestoreCourses.push(fc);
       }
     }
 
@@ -392,7 +425,7 @@ export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
     memoryCoursesCache = firestoreCourses;
     memoryCoursesCacheTime = Date.now();
     try {
-      sessionStorage.setItem('seed_live_courses_cache', JSON.stringify({
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({
         data: firestoreCourses,
         timestamp: memoryCoursesCacheTime
       }));
